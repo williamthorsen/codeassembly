@@ -26,8 +26,12 @@ export type CheckScope = 'vault' | 'patterns' | 'vs';
 /**
  * Renders the default human output. Findings are grouped by file in path order, each line reading
  * `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints `✓ no findings (N notes
- * checked)`; a run that checked nothing prints a zero-match line worded for its `scope` — naming the config targets
- * for a whole-vault run, and a scope-appropriate line for a targeted one — without the `✓`, since no check ran.
+ * checked)`; a run that checked nothing prints a zero-match line worded for its `scope` (naming the config targets for
+ * a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since no check ran.
+ *
+ * A run can check no notes and still carry vault-scoped findings, which describe the store rather than any note. The
+ * zero-match line then heads the report instead of replacing it: it explains why no note was checked, and the findings
+ * follow.
  */
 export function formatHuman(input: {
   summary: CheckSummary;
@@ -37,7 +41,7 @@ export function formatHuman(input: {
 }): string {
   const { summary, findings, targets, scope } = input;
 
-  if (summary.notes === 0) {
+  if (summary.notes === 0 && findings.length === 0) {
     return `${zeroMatchLine(scope, targets)}\n`;
   }
   if (findings.length === 0) {
@@ -45,6 +49,9 @@ export function formatHuman(input: {
   }
 
   const lines: string[] = [];
+  if (summary.notes === 0) {
+    lines.push(zeroMatchLine(scope, targets), '');
+  }
   for (const [path, group] of groupByPath(findings)) {
     lines.push(path);
     for (const finding of group) {

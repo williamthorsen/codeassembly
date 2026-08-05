@@ -8,7 +8,7 @@ It underpins the knowledge-base skills — among them `kb-retrieve` (assertion r
 
 ## Exports
 
-The package exposes ten subpath entries plus a root barrel:
+The package exposes twelve subpath entries plus a root barrel:
 
 | Entry               | Description                                                                    |
 | ------------------- | ------------------------------------------------------------------------------ |
@@ -19,9 +19,11 @@ The package exposes ten subpath entries plus a root barrel:
 | `./discovery`       | KB root discovery and `kb.yaml` registry loading, merging, and writing         |
 | `./filesystem`      | Filesystem-existence helpers with an explicit absence policy                   |
 | `./frontmatter`     | Note parsing into typed frontmatter and writing it back to YAML                |
+| `./layout`          | The store's on-disk layout: every path inside a `.kb/` store derives from here |
 | `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
 | `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
 | `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
+| `./taxonomy`        | `.kb/taxonomy.yaml` loading and comment-preserving domain declaration          |
 | `./vault-integrity` | Type-blind `[[link]]` resolution and basename-uniqueness over a note set       |
 
 Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
@@ -112,6 +114,8 @@ missing files (when a path is given) throw.
 
 The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
 
+`taxonomyFindings({ notes, taxonomy, config, taxonomyPath })` reports where a store's assertion folders and its declared taxonomy disagree (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Its findings carry `scope: 'vault'`: they describe the store rather than any one note, so a consumer that narrows a report to selected notes must keep them rather than filter them out by path.
+
 ```ts
 import { checkVaultIntegrity } from '@williamthorsen/kb/vault-integrity';
 
@@ -120,7 +124,7 @@ const findings = checkVaultIntegrity(notes);
 
 ## Checking a store
 
-`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml` and `.kb/tag-aliases.yaml`, enumerates the notes the config selects, and composes whole-vault integrity with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
+`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes the config selects, and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
 
 ```ts
 import { check } from '@williamthorsen/kb/check';
@@ -128,7 +132,7 @@ import { check } from '@williamthorsen/kb/check';
 const { notes, findings } = await check({ kbRoot });
 ```
 
-A structural defect in either loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
+A structural defect in any loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
 
 ### Which notes are checked: `.kb/config.yaml`
 
@@ -149,9 +153,39 @@ exclude:
 
 Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@williamthorsen/kb/config`.
 
+### The declared structure: `.kb/taxonomy.yaml`
+
+`.kb/taxonomy.yaml` states where a store's assertions are meant to live. It is the source of truth for intended structure: folders on disk are derived from it, not the reverse. It governs `content/assertions/` only, since `content/events/` is flat and ULID-keyed.
+
+```yaml
+# .kb/taxonomy.yaml
+domains:
+  engineering: Software engineering practice
+  engineering/tooling: Build, test, and development tooling
+provisional:
+  engineering/tooling/versioning: Release and version management
+  languages:
+```
+
+Two disjoint maps of domain path to one-line description. `domains` holds reviewed declarations and `provisional` holds those declared but not yet reviewed; promotion is writing a description and moving the line up. A domain may be declared without a description, as `languages` is above.
+
+Keys are relative to `content/assertions/` and may nest to any depth. Parents are not implied: declaring `engineering/tooling` does not declare `engineering`. A path declared in both maps fails the load, as does a malformed key — one restating the `content/assertions/` prefix, or carrying a leading or trailing slash, an empty segment, or a `.`/`..` segment.
+
+An absent taxonomy, and one present but declaring nothing, are both valid and report nothing, so the rules apply only to a store that has adopted a taxonomy. Three warnings report drift once one has:
+
+| Rule                  | Meaning                                         |
+| --------------------- | ----------------------------------------------- |
+| `taxonomy.undeclared` | A folder holds notes but no domain declares it. |
+| `taxonomy.unused`     | A declared domain has no note at or beneath it. |
+| `taxonomy.orphan`     | A declared domain's parent is undeclared.       |
+
+A domain counts as used when any note lives at or beneath it, so a grouping domain that holds only subfolders is not reported unused. A domain inside a `config.exclude` subtree is exempt from `taxonomy.unused`, since its notes never enumerate.
+
+`loadTaxonomy({ kbRoot })` reads both blocks into one map of domain path to `{ description, provisional }`, and `writeTaxonomy({ kbRoot, declarations })` declares domains while preserving the file's existing comments, key order, and formatting. Both are exported from `@williamthorsen/kb/taxonomy`.
+
 ## The `kb` command
 
-The package ships a `kb` bin with three subcommands: `create`, `set-default`, and `check`.
+The package ships a `kb` bin with four subcommands: `check`, `create`, `set-default`, and `taxonomy`.
 
 ### kb create
 
@@ -213,15 +247,31 @@ Because the exit code reflects only the selected notes, a per-batch or pre-commi
 
 Exit codes:
 
-| Code | Meaning                                                                                                                     |
-| ---- | --------------------------------------------------------------------------------------------------------------------------- |
-| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that selects no notes also exits 0.           |
-| `1`  | One or more error-severity findings in the checked notes.                                                                   |
-| `2`  | A usage error, an unresolvable store or `--vs` ref, a path matching no note, or a malformed `config` or `tag-aliases` file. |
+| Code | Meaning                                                                                                                                  |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that selects no notes also exits 0.                        |
+| `1`  | One or more error-severity findings in the checked notes.                                                                                |
+| `2`  | A usage error, an unresolvable store or `--vs` ref, a path matching no note, or a malformed `config`, `tag-aliases`, or `taxonomy` file. |
+
+A finding carrying `scope: 'vault'` describes the store rather than any one note, so it is reported under every run, including a targeted one, a `--vs` one, and one that matched no notes at all. The taxonomy rules are the ones that produce them.
+
+### kb taxonomy
+
+`kb taxonomy init` derives a starting taxonomy from the notes a store already holds, so a taxonomy can be introduced to a populated store without every folder reporting as undeclared.
+
+```bash
+kb taxonomy init             # declare every folder holding notes, and its ancestors
+kb taxonomy init --kb coding # back-fill the named store from the kb.yaml registry
+kb taxonomy init --merge     # add only the domains an existing taxonomy omits
+```
+
+Every derived domain lands under `provisional:` with no description: the command cannot invent descriptions, and provisional already means "declared, not yet reviewed". Because the derivation reads the same enumeration `kb check` does, a back-filled store reports no taxonomy drift.
+
+Without `--merge`, a store that already declares a taxonomy is left untouched and the command exits 2.
 
 ## Error and exception model
 
-The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
+The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`, `loadTaxonomy`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability
 

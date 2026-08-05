@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { check } from '../../check/check.ts';
+import { TAXONOMY_FILE } from '../../layout/index.ts';
 import {
   commitAll,
   getRegistryPathFor,
@@ -14,6 +15,8 @@ import {
   seedRegistry,
 } from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
+
+const { check: realCheck } = await vi.importActual<typeof import('../../check/check.ts')>('../../check/check.ts');
 
 // Mock `check` with a passthrough to the real implementation so most tests run
 // against real stores; the non-loader-error pass-through test overrides it per-call.
@@ -135,6 +138,26 @@ describe(run, () => {
       store: { name: 'coding', path: store },
       summary: { notes: 1, total: 1, errors: 1, warnings: 0 },
     });
+  });
+
+  it('names a discovered store from its registry entry in the JSON report', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    const home = await makeHome('coding', store);
+
+    const result = await run({ argv: ['check', '--json'], cwd: store, home });
+
+    const payload: unknown = JSON.parse(result.stdout);
+    expect(payload).toMatchObject({ store: { name: 'coding', path: store } });
+  });
+
+  it('reports a discovered store with no registry entry as unnamed', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['check', '--json'], cwd: store, home });
+
+    const payload: unknown = JSON.parse(result.stdout);
+    expect(payload).toMatchObject({ store: { name: null, path: store } });
   });
 
   it('resolves a store from a project-local registry entry', async () => {
@@ -325,6 +348,95 @@ describe('kb check targeting', () => {
   });
 });
 
+describe('kb check vault-scoped findings', () => {
+  it('reports a vault-scoped finding on a whole-vault run', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    stubVaultFinding();
+
+    const result = await run({ argv: ['check'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('taxonomy.undeclared');
+  });
+
+  it('keeps a vault-scoped finding under a path-targeted run', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Other.md': VALID });
+    stubVaultFinding();
+
+    const result = await run({ argv: ['check', 'content/Clean.md'], cwd: store });
+
+    expect(result.stdout).toContain('taxonomy.undeclared');
+    expect(result.stdout).toContain('in 1 notes');
+  });
+
+  it('keeps a vault-scoped finding under a --vs run', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    initGitRepo(store);
+    const base = commitAll(store, 'base');
+    await writeFile(join(store, 'content', 'Added.md'), VALID, 'utf8');
+    commitAll(store, 'add a note');
+    stubVaultFinding();
+
+    const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+
+    expect(result.stdout).toContain('taxonomy.undeclared');
+  });
+
+  it('reports a vault-scoped finding after the zero-match line when no notes were checked', async () => {
+    const store = await makeStore({ 'Loose.md': VALID });
+    stubVaultFinding();
+
+    const result = await run({ argv: ['check'], cwd: store });
+
+    expect(result.stdout).toContain('no notes matched content/**/*.md (0 checked)');
+    expect(result.stdout).toContain('taxonomy.undeclared');
+    expect(result.stdout).toContain('in 0 notes');
+  });
+
+  it('drops an unselected note-scoped finding while keeping the vault-scoped one', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': UNRESOLVED_LINK });
+    stubVaultFinding();
+
+    const result = await run({ argv: ['check', 'content/Clean.md'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain('wikilinks.unresolved');
+    expect(result.stdout).toContain('taxonomy.undeclared');
+  });
+
+  it('reports real taxonomy drift under a run targeting an unrelated note', async () => {
+    const store = await makeStore({
+      '.kb/taxonomy.yaml': 'domains:\n  languages: Programming languages\n',
+      'content/assertions/engineering/Note.md': VALID,
+      'content/assertions/languages/Other.md': VALID,
+    });
+
+    const result = await run({ argv: ['check', 'content/assertions/languages/Other.md'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('taxonomy.undeclared');
+    expect(result.stdout).toContain('"engineering"');
+  });
+
+  it('stays silent on a store that declares no taxonomy', async () => {
+    const store = await makeStore({ 'content/assertions/engineering/Note.md': VALID });
+
+    const result = await run({ argv: ['check'], cwd: store });
+
+    expect(result.stdout).toBe('✓ no findings (1 notes checked)\n');
+  });
+
+  it('carries the scope through the JSON report', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    stubVaultFinding();
+
+    const result = await run({ argv: ['check', '--json'], cwd: store });
+    const payload: unknown = JSON.parse(result.stdout);
+
+    expect(payload).toMatchObject({ findings: [{ rule: 'taxonomy.undeclared', scope: 'vault' }] });
+  });
+});
+
 // region | Helpers
 
 /** Stands up an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
@@ -332,6 +444,29 @@ async function makeHome(name: string, storePath: string): Promise<string> {
   const home = await makeTempDir('kb-cli-home-');
   await seedRegistry(getRegistryPathFor(home), `kbs:\n  ${name}:\n    path: ${storePath}\n`);
   return home;
+}
+
+/**
+ * Makes the next `check` call return its real result plus one vault-scoped finding, so the CLI's handling of a finding
+ * that describes the store rather than a note can be exercised independently of the rules that produce them.
+ */
+function stubVaultFinding(): void {
+  vi.mocked(check).mockImplementationOnce(async (input) => {
+    const result = await realCheck(input);
+    return {
+      ...result,
+      findings: [
+        ...result.findings,
+        {
+          path: join(input.kbRoot, TAXONOMY_FILE),
+          scope: 'vault',
+          rule: 'taxonomy.undeclared',
+          severity: 'warning',
+          message: 'folder "engineering" holds notes but no domain declares it',
+        },
+      ],
+    };
+  });
 }
 
 // endregion | Helpers

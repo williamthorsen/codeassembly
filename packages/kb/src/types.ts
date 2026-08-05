@@ -86,8 +86,14 @@ export type FindingSeverity = 'error' | 'warning';
 
 /** A single validation finding produced by a rule. */
 export interface Finding {
-  /** Path or label of the note the finding applies to. */
+  /** Path or label the finding applies to: a note, or the store file that declares the rule's subject. */
   path: string;
+  /**
+   * What the finding describes, defaulting to `note` when absent. A note-scoped finding is dropped when a run's
+   * selection excludes its note; a vault-scoped one describes the store itself, so it survives every selection,
+   * including one matching no notes at all.
+   */
+  scope?: 'note' | 'vault';
   /** 1-based source line number, when known. */
   line?: number;
   /** Rule code, e.g. `frontmatter.required`. */

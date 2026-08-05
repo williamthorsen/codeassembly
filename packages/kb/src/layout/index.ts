@@ -16,4 +16,5 @@ export {
   resolveEventPath,
   resolveEventsDir,
   resolveKbDir,
+  TAXONOMY_FILE,
 } from './store-layout.ts';

@@ -9,7 +9,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { ALIASES_FILE, CONFIG_FILE, resolveKbDir } from '../layout/index.ts';
+import { ALIASES_FILE, CONFIG_FILE, resolveKbDir, TAXONOMY_FILE } from '../layout/index.ts';
 import type { Finding, KbRoot } from '../types.ts';
 
 /** Stages everything under `dir` and commits it with `message`, returning the new commit SHA. */
@@ -38,11 +38,14 @@ export function kbRootAt(path: string): KbRoot {
 }
 
 /** Stands up a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */
-export async function makeKbRoot(seeds: { config?: string; aliases?: string } = {}): Promise<KbRoot> {
+export async function makeKbRoot(
+  seeds: { aliases?: string; config?: string; taxonomy?: string } = {},
+): Promise<KbRoot> {
   const path = await makeTempDir('kb-root-');
   await mkdir(resolveKbDir(path), { recursive: true });
-  if (seeds.config !== undefined) await writeFile(join(path, CONFIG_FILE), seeds.config, 'utf8');
   if (seeds.aliases !== undefined) await writeFile(join(path, ALIASES_FILE), seeds.aliases, 'utf8');
+  if (seeds.config !== undefined) await writeFile(join(path, CONFIG_FILE), seeds.config, 'utf8');
+  if (seeds.taxonomy !== undefined) await writeFile(join(path, TAXONOMY_FILE), seeds.taxonomy, 'utf8');
   return kbRootAt(path);
 }
 
@@ -76,15 +79,20 @@ export async function makeTree(files: Record<string, string>): Promise<string> {
   return root;
 }
 
-/** Sorts findings by path, then line, then rule, into a canonical order for order-independent comparison. */
+/**
+ * Sorts findings by path, then line, then rule, then message, into a canonical order for order-independent
+ * comparison. Message breaks the tie because a vault-scoped rule reports every one of its findings against the same
+ * file with no line, so path, line, and rule alone leave them indistinguishable.
+ */
 export function normalizeFindings(findings: readonly Finding[]): Finding[] {
   return findings.toSorted((a, b) => {
     if (a.path !== b.path) return a.path < b.path ? -1 : 1;
     const lineA = a.line ?? 0;
     const lineB = b.line ?? 0;
     if (lineA !== lineB) return lineA - lineB;
-    if (a.rule === b.rule) return 0;
-    return a.rule < b.rule ? -1 : 1;
+    if (a.rule !== b.rule) return a.rule < b.rule ? -1 : 1;
+    if (a.message === b.message) return 0;
+    return a.message < b.message ? -1 : 1;
   });
 }
 

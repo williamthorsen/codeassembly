@@ -85,7 +85,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 /**
  * Runs the helper end to end: parses args, resolves a single KB, enumerates and parses every note, runs detection
- * across all five categories, and (under `--apply`) performs the two safe fixes before re-reporting residual
+ * across all six categories, and (under `--apply`) performs the two safe fixes before re-reporting residual
  * findings. Recoverable failures (invalid args, no resolvable KB, a readonly KB under `--apply`) become structured
  * `{ ok: false, ... }` results. System failures propagate to `main`'s try/catch.
  *
@@ -153,7 +153,7 @@ type GuardedCheck =
   { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } } | { ok: false; failure: CurateResult };
 
 /**
- * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config or aliases) to a structured
+ * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config, aliases, or taxonomy) to a structured
  * `invalid-config` failure. Any other throw — an enumeration or detection crash — propagates as a real failure rather
  * than being relabeled as a config error. Both `runCurate` check calls route through here so the guard cannot drift.
  */
