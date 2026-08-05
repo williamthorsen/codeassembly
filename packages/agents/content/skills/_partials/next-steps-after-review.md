@@ -228,7 +228,7 @@ Next steps:
 **A1 — Deviations from ticket:**
 
 Proposed edit to the acceptance criteria:
-- Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
+- Drop: A `--strict` flag gates the new validation
 
 1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is
