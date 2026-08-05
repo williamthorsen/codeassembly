@@ -28,6 +28,9 @@ export const CONFIG_FILE = `${KB_DIR}/config.yaml`;
 /** The directory holding the store's event records. */
 export const EVENTS_DIR = `${CONTENT_DIR}/events`;
 
+/** The declared assertion taxonomy. */
+export const TAXONOMY_FILE = `${KB_DIR}/taxonomy.yaml`;
+
 /**
  * Builds an event record's store-relative path. Posix-separated, so it serves as the path half of a git object spec
  * (`@{upstream}:content/events/<id>.md`) as well as an argument to `join`.

@@ -9,7 +9,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { ALIASES_FILE, CONFIG_FILE, resolveKbDir } from '../layout/index.ts';
+import { ALIASES_FILE, CONFIG_FILE, resolveKbDir, TAXONOMY_FILE } from '../layout/index.ts';
 import type { Finding, KbRoot } from '../types.ts';
 
 /** Stages everything under `dir` and commits it with `message`, returning the new commit SHA. */
@@ -38,11 +38,14 @@ export function kbRootAt(path: string): KbRoot {
 }
 
 /** Stands up a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */
-export async function makeKbRoot(seeds: { config?: string; aliases?: string } = {}): Promise<KbRoot> {
+export async function makeKbRoot(
+  seeds: { aliases?: string; config?: string; taxonomy?: string } = {},
+): Promise<KbRoot> {
   const path = await makeTempDir('kb-root-');
   await mkdir(resolveKbDir(path), { recursive: true });
-  if (seeds.config !== undefined) await writeFile(join(path, CONFIG_FILE), seeds.config, 'utf8');
   if (seeds.aliases !== undefined) await writeFile(join(path, ALIASES_FILE), seeds.aliases, 'utf8');
+  if (seeds.config !== undefined) await writeFile(join(path, CONFIG_FILE), seeds.config, 'utf8');
+  if (seeds.taxonomy !== undefined) await writeFile(join(path, TAXONOMY_FILE), seeds.taxonomy, 'utf8');
   return kbRootAt(path);
 }
 

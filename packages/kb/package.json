@@ -76,6 +76,11 @@
       "types": "./dist/esm/tags/index.d.ts",
       "import": "./dist/esm/tags/index.js"
     },
+    "./taxonomy": {
+      "source": "./src/taxonomy/index.ts",
+      "types": "./dist/esm/taxonomy/index.d.ts",
+      "import": "./dist/esm/taxonomy/index.js"
+    },
     "./vault-integrity": {
       "source": "./src/vault-integrity/index.ts",
       "types": "./dist/esm/vault-integrity/index.d.ts",
