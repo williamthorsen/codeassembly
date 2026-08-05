@@ -1,6 +1,7 @@
 import { type CommandOutput, runCheck } from './commands/check.ts';
 import { runCreate } from './commands/create.ts';
 import { runSetDefault } from './commands/set-default.ts';
+import { runTaxonomy } from './commands/taxonomy.ts';
 import type { SelectKbPrompt } from './select-kb-prompt.ts';
 
 /** Top-level usage text for the `kb` bin. */
@@ -10,16 +11,17 @@ Commands:
   check        Validate a knowledge base, optionally scoped to selected notes.
   create       Scaffold a new knowledge base and register it in the kb.yaml registry.
   set-default  Set, clear, or choose the default knowledge base.
+  taxonomy     Derive a knowledge base's taxonomy from the notes it already holds.
 
 Run "kb <command> --help" for command options.
 `;
 
 /**
  * Dispatches a `kb` subcommand and returns its {@link CommandOutput} without touching `process`, so tests drive the
- * command directly. `check`, `create`, and `set-default` are the subcommands; a bare invocation or `--help`/`-h` prints
- * top-level usage (exit 0), and an unknown command prints usage to stderr (exit 2). The optional `selectKb` picker is
- * forwarded to `set-default`'s interactive form and to `create`'s ambiguous default-KB prompt; `cli/index.ts` supplies
- * it only when stdin is a TTY.
+ * command directly. `check`, `create`, `set-default`, and `taxonomy` are the subcommands; a bare invocation or
+ * `--help`/`-h` prints top-level usage (exit 0), and an unknown command prints usage to stderr (exit 2). The optional
+ * `selectKb` picker is forwarded to `set-default`'s interactive form and to `create`'s ambiguous default-KB prompt;
+ * `cli/index.ts` supplies it only when stdin is a TTY.
  */
 export async function run(input: {
   argv: readonly string[];
@@ -44,6 +46,10 @@ export async function run(input: {
       ...(input.home !== undefined && { home: input.home }),
       ...(input.selectKb !== undefined && { selectKb: input.selectKb }),
     });
+  }
+
+  if (command === 'taxonomy') {
+    return runTaxonomy({ argv: rest, cwd: input.cwd, ...(input.home !== undefined && { home: input.home }) });
   }
 
   if (command === 'set-default') {
