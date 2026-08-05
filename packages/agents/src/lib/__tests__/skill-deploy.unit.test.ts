@@ -41,7 +41,7 @@ describe(deploySkill, () => {
 
   it('strips the build-only harnesses directive from the deployed SKILL.md', async () => {
     await writeLibrarySkill('rovo-only', {
-      'SKILL.md': '---\nname: rovo-only\nharnesses: [rovo]\n---\n\n# Rovo only\n',
+      'SKILL.md': '---\nname: rovo-only\nsupported-harnesses: [rovo]\n---\n\n# Rovo only\n',
     });
     const destDir = path.join(destParent, 'rovo-only');
 

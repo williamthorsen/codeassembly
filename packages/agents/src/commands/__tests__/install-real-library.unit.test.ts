@@ -6,6 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { ALL_HARNESS_IDS, HARNESSES } from '../../lib/harness.ts';
 import { isEnoent } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
@@ -20,10 +21,12 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
 
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-install-int-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
-    await mkdir(path.join(tempDir, '.claude', 'agents'), { recursive: true });
-    await mkdir(path.join(tempDir, '.rovodev', 'skills'), { recursive: true });
-    await mkdir(path.join(tempDir, '.rovodev', 'subagents'), { recursive: true });
+    // Seed from the harness table rather than from literals, so a harness added there is detected here without an edit.
+    for (const harnessId of ALL_HARNESS_IDS) {
+      const { homeDir, skillsDirName, subagentsDirName } = HARNESSES[harnessId];
+      await mkdir(path.join(tempDir, homeDir, skillsDirName), { recursive: true });
+      await mkdir(path.join(tempDir, homeDir, subagentsDirName), { recursive: true });
+    }
   });
 
   afterEach(async () => {
@@ -55,6 +58,19 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
     // No installed Markdown link points at a bare-relative target (all are rewritten to absolute/tilde paths).
     const linkViolations = await collectBareRelativeLinks(tempDir);
     expect(linkViolations, formatViolations(linkViolations)).toEqual([]);
+  });
+
+  // `installHarnessGuidance` resolves its source as `guidance/_harnesses/{harnessId}/` and warns rather than throwing
+  // when that directory is absent, so a content directory left behind by a harness rename is otherwise silent — and the
+  // orphan prune that follows deletes whatever the previous install put there.
+  it('installs each harness the guidance file its own content directory supplies', async () => {
+    await installCommand(makeOptions(), tempDir);
+
+    for (const harnessId of ALL_HARNESS_IDS) {
+      const { homeDir, guidanceFileName } = HARNESSES[harnessId];
+      const guidancePath = path.join(tempDir, homeDir, guidanceFileName);
+      expect(existsSync(guidancePath), `missing ${homeDir}/${guidanceFileName}`).toBe(true);
+    }
   });
 
   it('does not bypass path rewriting in link mode', async () => {
