@@ -30,9 +30,13 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  it('init --global then sync --global deploys the whole catalog with transforms applied', async () => {
+  it('init --global then sync --global deploys the seeded collections with transforms applied', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
-    expect(await readFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), 'utf8')).toContain('- all');
+    const declaration = await readFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), 'utf8');
+    expect(declaration).toContain('- recommended');
+    expect(declaration).toContain('- triage');
+    // The personal collection is offered as a comment, so an uncommenting reader gets a slug that resolves.
+    expect(declaration).toContain('# - williamthorsen');
 
     // A throw here means the real catalog failed to resolve, transform, or write end-to-end.
     await syncGlobalCommand(makeOptions(), homeDir);
@@ -55,7 +59,7 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     const designAndPlan = await readFile(path.join(skillsDir, 'design-and-plan', 'SKILL.md'), 'utf8');
     expect(designAndPlan).not.toContain('{tool:');
 
-    // Subagents and rulebooks reach the home domain through `@library` too.
+    // Subagents and rulebooks reach the home domain through a collection's members too.
     expect((await readdir(path.join(homeDir, '.claude', 'agents'))).length).toBeGreaterThan(0);
     expect(existsSync(path.join(skillsDir, 'consult-shell-conventions', 'SKILL.md'))).toBe(true);
   });

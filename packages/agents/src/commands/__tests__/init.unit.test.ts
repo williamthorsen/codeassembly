@@ -84,22 +84,23 @@ describe(initGlobalCommand, () => {
 
   const declarationPath = (): string => path.join(homeDir, '.agents', 'codeassembly.yaml');
 
-  it('creates the home codeassembly.yaml seeded with the all collection, creating .agents if absent', async () => {
+  it('creates the home codeassembly.yaml seeded with the dispositioned collections, creating .agents if absent', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
     const content = await readFile(declarationPath(), 'utf8');
     expect(content).toContain('collections:');
-    expect(content).toContain('- all');
+    expect(content).toContain('- recommended');
+    expect(content).toContain('- triage');
   });
 
-  it('scaffolds a file that declares the all collection', async () => {
+  it('scaffolds a file that declares the seeded collections and leaves the personal one commented', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
     expect(await resolveDeclaration({ cwd: homeDir })).toEqual({
       rulebooks: [],
       skills: [],
       subagents: [],
-      collections: ['all'],
+      collections: ['recommended', 'triage'],
       packages: [],
       declinedPackages: [],
       sources: [],
