@@ -59,7 +59,7 @@ A rulebook may link only into `skills/` and `scripts/`, the two trees whose sour
 
 A link to a sibling rulebook is rejected too, and its error names the `{rulebook:<slug>}` token that addresses it instead. A rulebook is invoked rather than read: the skill it deploys is discovered by name, so an invocation resolves wherever it was deployed, while a path would be right in one domain and dead in the other. _(Validated on parse.)_
 
-A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.test.ts`, which also resolves a fragment carried on such a target to exactly one heading in the file it points into. _(Enforced by test.)_
+A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.unit.test.ts`, which also resolves a fragment carried on such a target to exactly one heading in the file it points into. _(Enforced by test.)_
 
 One limitation is worth knowing before writing a rulebook that documents linking: rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Invocation tokens rewrite the same way, so an example token keeps the `<slug>` placeholder rather than naming a real artifact.
 
@@ -93,7 +93,7 @@ A collection enumerates every member, not just its dependency roots. Roots-only 
 
 ### Dispositions
 
-Declaring a collection is a claim about its members, so every artifact carries a disposition recording which claim it is under. An artifact under none is an oversight rather than a decision. _(Enforced by `collection-dispositions.test.ts`.)_
+Declaring a collection is a claim about its members, so every artifact carries a disposition recording which claim it is under. An artifact under none is an oversight rather than a decision. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 
 Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
 
@@ -118,7 +118,7 @@ Deciding a disposition takes two reading passes, and the second is the one that 
 
 **Triage** (`triage` here) holds what has not been examined. It is where new content lands, and it shrinks by promotion rather than growing.
 
-A vetted collection is closed under its dependency edges, which is what makes the vetting real: without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure reaches. _(Enforced by `collection-dispositions.test.ts`.)_
+A vetted collection is closed under its dependency edges, which is what makes the vetting real: without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure reaches. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 
 ## Frontmatter fields
 
@@ -141,4 +141,4 @@ A `codeassembly-` prefix marks an artifact governing this repository's own mecha
 
 Behavioural rules that govern an agent's output -- the recommendation gradient, the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs, then restated at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when it sits beside the action it governs than when it was read once at session start, and it imitates a nearby concrete example more reliably still than it follows a directive.
 
-Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.test.ts` and `spec-inlining.test.ts`.)_
+Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
