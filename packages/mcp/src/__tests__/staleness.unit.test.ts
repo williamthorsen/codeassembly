@@ -1,4 +1,4 @@
-import { mkdir, utimes, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -23,11 +23,8 @@ interface FakePackageOptions {
   omitCliJs?: boolean;
 }
 
-let tmpCounter = 0;
-
 async function createFakePackage(opts: FakePackageOptions): Promise<string> {
-  tmpCounter += 1;
-  const base = join(tmpdir(), `mcp-staleness-test-${Date.now()}-${tmpCounter.toString()}`);
+  const base = await mkdtemp(join(tmpdir(), 'mcp-staleness-test-'));
 
   // Always create dist/esm/ with staleness.js (the "compiled file" we reference)
   const distEsm = join(base, 'dist', 'esm');
@@ -164,8 +161,8 @@ describe('isBuildStale', () => {
 // -- Warning delivery tests (protocol-level, mocked isBuildStale) --
 
 describe('stale build warning delivery', () => {
-  // Use vi.mock to control isBuildStale for these tests.
-  // We need dynamic imports + resetModules to get fresh hasWarned state.
+  // Use vi.doMock to control isBuildStale for these tests.
+  // Reset modules so the dynamic import below picks up the mock rather than a cached module.
   let mockIsBuildStale: ReturnType<typeof vi.fn<() => Promise<boolean>>>;
 
   beforeEach(() => {
@@ -226,9 +223,9 @@ describe('stale build warning delivery', () => {
       });
       const items = getContentItems(result);
       expect(items.length).toBeGreaterThanOrEqual(2);
-      expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u{26A0}\u{FE0F} MCP server build is stale/u);
       // Data content remains in a separate item — not corrupted by the warning
-      expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u26A0\uFE0F/);
+      expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u{26A0}\u{FE0F}/u);
     } finally {
       await cleanup();
     }
@@ -246,7 +243,7 @@ describe('stale build warning delivery', () => {
       });
       const items1 = getContentItems(result1);
       expect(items1.length).toBeGreaterThanOrEqual(2);
-      expect(getStringField(itemAt(items1, 0), 'text')).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      expect(getStringField(itemAt(items1, 0), 'text')).toMatch(/^\u{26A0}\u{FE0F} MCP server build is stale/u);
 
       // Second call - should NOT have warning (single content item)
       const result2 = await client.callTool({
@@ -255,7 +252,7 @@ describe('stale build warning delivery', () => {
       });
       const items2 = getContentItems(result2);
       expect(items2).toHaveLength(1);
-      expect(getStringField(itemAt(items2, 0), 'text')).not.toMatch(/\u26A0\uFE0F/);
+      expect(getStringField(itemAt(items2, 0), 'text')).not.toMatch(/\u{26A0}\u{FE0F}/u);
     } finally {
       await cleanup();
     }
@@ -278,9 +275,9 @@ describe('stale build warning delivery', () => {
 
       const items = getContentItems(result);
       expect(items.length).toBeGreaterThanOrEqual(2);
-      expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u{26A0}\u{FE0F} MCP server build is stale/u);
       // Error text is in a separate item, not mixed with the warning
-      expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u26A0\uFE0F/);
+      expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u{26A0}\u{FE0F}/u);
     } finally {
       await cleanup();
     }
@@ -297,7 +294,7 @@ describe('stale build warning delivery', () => {
       });
       const items = getContentItems(result);
       expect(items).toHaveLength(1);
-      expect(getStringField(itemAt(items, 0), 'text')).not.toMatch(/\u26A0\uFE0F/);
+      expect(getStringField(itemAt(items, 0), 'text')).not.toMatch(/\u{26A0}\u{FE0F}/u);
     } finally {
       await cleanup();
     }
