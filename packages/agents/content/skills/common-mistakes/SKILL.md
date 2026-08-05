@@ -6,6 +6,10 @@ dependencies:
   rulebooks:
     - williamthorsen-code-layout-preferences
     - williamthorsen-typescript-preferences
+  skills:
+    - development-workflows
+    - testing-conventions
+    - typescript-testing-conventions
 ---
 
 # Common mistakes
