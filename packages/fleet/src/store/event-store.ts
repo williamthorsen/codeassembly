@@ -126,7 +126,14 @@ export function createEventStore(input: { eventsDir: string; retentionMs: number
     return changed;
   }
 
-  return { listLanes: () => [...lanes.values()].map((entry) => entry.state), scanAndFold };
+  return {
+    listLanes: () =>
+      lanes
+        .values()
+        .map((entry) => entry.state)
+        .toArray(),
+    scanAndFold,
+  };
 }
 
 // region | Helpers

@@ -29,7 +29,9 @@ const TICKET: TicketFacts = {
 const pollers: ForgePoller[] = [];
 
 afterEach(() => {
-  for (const poller of pollers.splice(0)) {
+  const pending = [...pollers];
+  pollers.length = 0;
+  for (const poller of pending) {
     poller.stop();
   }
   vi.useRealTimers();

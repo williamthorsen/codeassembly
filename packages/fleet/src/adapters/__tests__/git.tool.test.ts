@@ -3,80 +3,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { createGitAdapter, type GitAdapter, type GitObservation, type GitTarget, probeWorktree } from '../git.ts';
-
-let adapter: GitAdapter | undefined;
-let scratchDir: string;
-
-/** A complete observation with every git field answered; tests override fields as needed. */
-function composeObservation(overrides: Partial<GitObservation> = {}): GitObservation {
-  return {
-    worktreeExists: true,
-    branch: 'main',
-    dirtyFiles: 0,
-    ahead: 0,
-    behind: 0,
-    baseBranch: 'origin/main',
-    ...overrides,
-  };
-}
-
-/** Initializes a repository with one commit on `main` in a fresh subdirectory of the scratch dir. */
-function createRepo(name: string): string {
-  const dir = join(scratchDir, name);
-  mkdirSync(dir);
-  runGitCommand(dir, 'init', '--initial-branch=main');
-  commitEmpty(dir, 'one');
-  return dir;
-}
-
-/** Adds an empty commit with identity supplied inline, so the test never depends on global git config. */
-function commitEmpty(dir: string, message: string): void {
-  execFileSync(
-    'git',
-    [
-      '-C',
-      dir,
-      '-c',
-      'user.name=fleet-test',
-      '-c',
-      'user.email=fleet@test.invalid',
-      '-c',
-      'commit.gpgsign=false',
-      'commit',
-      '--allow-empty',
-      '--message',
-      message,
-    ],
-    { stdio: 'ignore' },
-  );
-}
-
-/** Runs a git command against `dir`, discarding output. */
-function runGitCommand(dir: string, ...args: string[]): void {
-  execFileSync('git', ['-C', dir, ...args], { stdio: 'ignore' });
-}
-
-/** Waits until `condition` holds, polling briefly; fails the test after the timeout. */
-async function waitFor(condition: () => boolean, timeoutMs = 2_000): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (!condition() && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 5));
-  }
-  expect(condition()).toBe(true);
-}
-
-beforeEach(() => {
-  scratchDir = mkdtempSync(join(tmpdir(), 'fleet-git-'));
-});
-
-afterEach(() => {
-  adapter?.stop();
-  adapter = undefined;
-  rmSync(scratchDir, { recursive: true, force: true });
-});
 
 describe('probeWorktree', () => {
   it('reports a clean repository in sync with its base branch', async () => {
@@ -128,7 +57,7 @@ describe('probeWorktree', () => {
   });
 
   it('reports a missing worktree without probing git', async () => {
-    expect(await probeWorktree(join(scratchDir, 'gone'))).toEqual({
+    expect(await probeWorktree(join(createScratchDir(), 'gone'))).toEqual({
       worktreeExists: false,
       branch: null,
       dirtyFiles: null,
@@ -139,7 +68,7 @@ describe('probeWorktree', () => {
   });
 
   it('degrades a non-repository directory to null git fields', async () => {
-    const dir = join(scratchDir, 'not-a-repo');
+    const dir = join(createScratchDir(), 'not-a-repo');
     mkdirSync(dir);
 
     expect(await probeWorktree(dir)).toEqual({
@@ -156,7 +85,7 @@ describe('probeWorktree', () => {
 describe('createGitAdapter', () => {
   it('probes each target and exposes observations after the first pass', async () => {
     let changes = 0;
-    adapter = createGitAdapter({
+    const adapter = startAdapter({
       listTargets: () => [{ laneKey: 'acme/app/101', cwd: '/work/101' }],
       onChange: () => {
         changes += 1;
@@ -173,7 +102,7 @@ describe('createGitAdapter', () => {
   it('drops the observation of a target that disappears', async () => {
     let changes = 0;
     let targets: GitTarget[] = [{ laneKey: 'acme/app/101', cwd: '/work/101' }];
-    adapter = createGitAdapter({
+    const adapter = startAdapter({
       listTargets: () => targets,
       onChange: () => {
         changes += 1;
@@ -185,12 +114,12 @@ describe('createGitAdapter', () => {
     expect(adapter.getObservations().has('acme/app/101')).toBe(true);
 
     targets = [];
-    await waitFor(() => !(adapter?.getObservations().has('acme/app/101') ?? true));
+    await waitFor(() => !adapter.getObservations().has('acme/app/101'));
   });
 
   it('degrades a throwing probe to an unanswered observation', async () => {
     let changes = 0;
-    adapter = createGitAdapter({
+    const adapter = startAdapter({
       listTargets: () => [{ laneKey: 'acme/app/101', cwd: '/work/101' }],
       onChange: () => {
         changes += 1;
@@ -214,7 +143,7 @@ describe('createGitAdapter', () => {
   it('skips ticks while a pass is still running', async () => {
     let probeCalls = 0;
     const blocked = Promise.withResolvers<GitObservation>();
-    adapter = createGitAdapter({
+    startAdapter({
       listTargets: () => [{ laneKey: 'acme/app/101', cwd: '/work/101' }],
       onChange: () => {},
       pollMs: 10,
@@ -230,3 +159,79 @@ describe('createGitAdapter', () => {
     blocked.resolve(composeObservation());
   });
 });
+
+// region | Helpers
+
+/** Adds an empty commit with identity supplied inline, so the test never depends on global git config. */
+function commitEmpty(dir: string, message: string): void {
+  execFileSync(
+    'git',
+    [
+      '-C',
+      dir,
+      '-c',
+      'user.name=fleet-test',
+      '-c',
+      'user.email=fleet@test.invalid',
+      '-c',
+      'commit.gpgsign=false',
+      'commit',
+      '--allow-empty',
+      '--message',
+      message,
+    ],
+    { stdio: 'ignore' },
+  );
+}
+
+/** A complete observation with every git field answered; tests override fields as needed. */
+function composeObservation(overrides: Partial<GitObservation> = {}): GitObservation {
+  return {
+    worktreeExists: true,
+    branch: 'main',
+    dirtyFiles: 0,
+    ahead: 0,
+    behind: 0,
+    baseBranch: 'origin/main',
+    ...overrides,
+  };
+}
+
+/** Initializes a repository with one commit on `main` inside a scratch directory of its own. */
+function createRepo(name: string): string {
+  const dir = join(createScratchDir(), name);
+  mkdirSync(dir);
+  runGitCommand(dir, 'init', '--initial-branch=main');
+  commitEmpty(dir, 'one');
+  return dir;
+}
+
+/** Creates a fresh scratch directory, removed when the test finishes. */
+function createScratchDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'fleet-git-'));
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
+/** Runs a git command against `dir`, discarding output. */
+function runGitCommand(dir: string, ...args: string[]): void {
+  execFileSync('git', ['-C', dir, ...args], { stdio: 'ignore' });
+}
+
+/** Starts an adapter stopped when the test finishes. */
+function startAdapter(input: Parameters<typeof createGitAdapter>[0]): GitAdapter {
+  const adapter = createGitAdapter(input);
+  onTestFinished(() => adapter.stop());
+  return adapter;
+}
+
+/** Waits until `condition` holds, polling briefly; fails the test after the timeout. */
+async function waitFor(condition: () => boolean, timeoutMs = 2_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition() && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  expect(condition()).toBe(true);
+}
+
+// endregion | Helpers

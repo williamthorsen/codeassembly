@@ -2,7 +2,7 @@ import { appendFileSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, assert, beforeEach, describe, expect, it, vi } from 'vitest';
+import { assert, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { createEventStore } from '../event-store.ts';
 
@@ -10,40 +10,12 @@ const BASE_TS = '2026-07-19T05:00:00.000Z';
 const NOW = Date.parse(BASE_TS);
 const RETENTION_MS = 1_800_000;
 
-let eventsDir: string;
-
-/** Serializes one event envelope as a JSONL line. */
-function composeLine(type: string, overrides: Record<string, unknown> = {}): string {
-  return `${JSON.stringify({
-    id: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
-    ts: BASE_TS,
-    type,
-    cwd: '/work/repo',
-    payload: {},
-    ...overrides,
-  })}\n`;
-}
-
-/** Resolves a session file's path under the events root, creating its lane directories. */
-function composeSessionPath(repo: string, branch: string, session: string): string {
-  const dir = join(eventsDir, ...repo.split('/'), branch);
-  mkdirSync(dir, { recursive: true });
-  return join(dir, `${session}.jsonl`);
-}
-
-beforeEach(() => {
-  eventsDir = mkdtempSync(join(tmpdir(), 'event-store-'));
-});
-
-afterEach(() => {
-  rmSync(eventsDir, { recursive: true, force: true });
-});
-
 describe('createEventStore', () => {
   it('backfills every lane and session on the first scan', () => {
-    writeFileSync(composeSessionPath('acme/app', '101', 'sess-a'), composeLine('turn.started'));
+    const eventsDir = createEventsDir();
+    writeFileSync(composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a'), composeLine('turn.started'));
     writeFileSync(
-      composeSessionPath('acme/app', '102', 'sess-b'),
+      composeSessionPath(eventsDir, 'acme/app', '102', 'sess-b'),
       composeLine('turn.started') + composeLine('turn.completed'),
     );
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
@@ -62,9 +34,10 @@ describe('createEventStore', () => {
   });
 
   it('folds two session files under one branch into a single lane', () => {
-    writeFileSync(composeSessionPath('acme/app', '101', 'sess-a'), composeLine('turn.started'));
+    const eventsDir = createEventsDir();
+    writeFileSync(composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a'), composeLine('turn.started'));
     writeFileSync(
-      composeSessionPath('acme/app', '101', 'sess-b'),
+      composeSessionPath(eventsDir, 'acme/app', '101', 'sess-b'),
       composeLine('turn.started') + composeLine('turn.completed'),
     );
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
@@ -79,7 +52,8 @@ describe('createEventStore', () => {
   });
 
   it('folds appended lines incrementally without double-counting on repeated scans', () => {
-    const filePath = composeSessionPath('acme/app', '101', 'sess-a');
+    const eventsDir = createEventsDir();
+    const filePath = composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a');
     writeFileSync(filePath, composeLine('turn.started'));
     const onChange = vi.fn();
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS, onChange });
@@ -99,6 +73,7 @@ describe('createEventStore', () => {
   });
 
   it('serves an empty fleet when the events root does not exist', () => {
+    const eventsDir = createEventsDir();
     const store = createEventStore({ eventsDir: join(eventsDir, 'not-created-yet'), retentionMs: RETENTION_MS });
 
     store.scanAndFold(NOW);
@@ -107,8 +82,9 @@ describe('createEventStore', () => {
   });
 
   it('skips malformed lines while folding valid ones from the same file', () => {
+    const eventsDir = createEventsDir();
     writeFileSync(
-      composeSessionPath('acme/app', '101', 'sess-a'),
+      composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a'),
       `not json at all\n${composeLine('turn.started')}{"missing":"envelope fields"}\n`,
     );
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
@@ -119,6 +95,7 @@ describe('createEventStore', () => {
   });
 
   it('ignores files that are not lane-path leaves', () => {
+    const eventsDir = createEventsDir();
     writeFileSync(join(eventsDir, 'stray.jsonl'), composeLine('turn.started'));
     mkdirSync(join(eventsDir, 'acme', 'app', '101', 'too-deep'), { recursive: true });
     writeFileSync(join(eventsDir, 'acme', 'app', '101', 'too-deep', 'sess.jsonl'), composeLine('turn.started'));
@@ -130,7 +107,8 @@ describe('createEventStore', () => {
   });
 
   it('re-folds a truncated file from scratch instead of keeping stale state', () => {
-    const filePath = composeSessionPath('acme/app', '101', 'sess-a');
+    const eventsDir = createEventsDir();
+    const filePath = composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a');
     writeFileSync(filePath, composeLine('turn.started') + composeLine('session.ended'));
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
     store.scanAndFold(NOW);
@@ -143,7 +121,8 @@ describe('createEventStore', () => {
   });
 
   it('evicts a lane once its newest event ages past the retention window', () => {
-    writeFileSync(composeSessionPath('acme/app', '101', 'sess-a'), composeLine('turn.started'));
+    const eventsDir = createEventsDir();
+    writeFileSync(composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a'), composeLine('turn.started'));
     const onChange = vi.fn();
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS, onChange });
 
@@ -157,7 +136,8 @@ describe('createEventStore', () => {
   });
 
   it('retains a lane whose newest event is still within the window', () => {
-    writeFileSync(composeSessionPath('acme/app', '101', 'sess-a'), composeLine('turn.started'));
+    const eventsDir = createEventsDir();
+    writeFileSync(composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a'), composeLine('turn.started'));
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
 
     store.scanAndFold(NOW);
@@ -167,7 +147,8 @@ describe('createEventStore', () => {
   });
 
   it('rediscovers a branch that starts a new session after eviction', () => {
-    writeFileSync(composeSessionPath('acme/app', '101', 'sess-a'), composeLine('turn.started'));
+    const eventsDir = createEventsDir();
+    writeFileSync(composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a'), composeLine('turn.started'));
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
 
     store.scanAndFold(NOW);
@@ -176,7 +157,7 @@ describe('createEventStore', () => {
 
     // A resumed branch means a new session file, whose creation bumps the branch directory's mtime.
     writeFileSync(
-      composeSessionPath('acme/app', '101', 'sess-b'),
+      composeSessionPath(eventsDir, 'acme/app', '101', 'sess-b'),
       composeLine('turn.started', { ts: '2026-07-19T05:30:00.000Z' }),
     );
     store.scanAndFold(NOW + RETENTION_MS + 1);
@@ -187,7 +168,8 @@ describe('createEventStore', () => {
   });
 
   it('does not tail a retired branch whose directory has aged out', () => {
-    const filePath = composeSessionPath('acme/app', '101', 'sess-a');
+    const eventsDir = createEventsDir();
+    const filePath = composeSessionPath(eventsDir, 'acme/app', '101', 'sess-a');
     writeFileSync(filePath, composeLine('turn.started'));
     const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
 
@@ -204,3 +186,33 @@ describe('createEventStore', () => {
     expect(store.listLanes()).toEqual([]);
   });
 });
+
+// region | Helpers
+
+/** Serializes one event envelope as a JSONL line. */
+function composeLine(type: string, overrides: Record<string, unknown> = {}): string {
+  return `${JSON.stringify({
+    id: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
+    ts: BASE_TS,
+    type,
+    cwd: '/work/repo',
+    payload: {},
+    ...overrides,
+  })}\n`;
+}
+
+/** Resolves a session file's path under `eventsDir`, creating its lane directories. */
+function composeSessionPath(eventsDir: string, repo: string, branch: string, session: string): string {
+  const dir = join(eventsDir, ...repo.split('/'), branch);
+  mkdirSync(dir, { recursive: true });
+  return join(dir, `${session}.jsonl`);
+}
+
+/** Creates a fresh events root, removed when the test finishes. */
+function createEventsDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'event-store-'));
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
+// endregion | Helpers
