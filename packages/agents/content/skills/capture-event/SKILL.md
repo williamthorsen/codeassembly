@@ -56,6 +56,7 @@ Amend is a plain in-place edit and does not consult push state. To correct an ev
 ## Runtime dependencies
 
 - **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
+- **A `kb.yaml` registry naming the store** — the helper resolves `--store` through `.agents/kb.yaml` in the project or `~/.agents/kb.yaml`. Where no registry declares the named store, every capture is refused rather than written somewhere else.
 
 ## Process
 
