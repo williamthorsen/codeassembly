@@ -39,7 +39,7 @@ describe('guidance installation', () => {
     return claudeHome;
   }
 
-  async function setupRovodevHome(): Promise<string> {
+  async function setupRovoHome(): Promise<string> {
     const rovoHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovoHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovoHome, 'subagents'), { recursive: true });
@@ -137,7 +137,7 @@ describe('guidance installation', () => {
     });
 
     it('installs AGENTS.md and standalone guidance to ~/.rovodev/ for rovo harness', async () => {
-      const rovoHome = await setupRovodevHome();
+      const rovoHome = await setupRovoHome();
 
       await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
@@ -154,7 +154,7 @@ describe('guidance installation', () => {
     });
 
     it('inlines shared and harness-specific content into rovo AGENTS.md in source order', async () => {
-      const rovoHome = await setupRovodevHome();
+      const rovoHome = await setupRovoHome();
 
       await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
@@ -167,7 +167,7 @@ describe('guidance installation', () => {
 
     it('renders an empty ambient region into the guidance file of each harness', async () => {
       const claudeHome = await setupClaudeHome();
-      const rovoHome = await setupRovodevHome();
+      const rovoHome = await setupRovoHome();
 
       await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
 

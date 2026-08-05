@@ -118,15 +118,9 @@ const DEFAULT_HARNESS_SKILLS: Record<HarnessId, Record<string, Record<string, st
   },
   rovo: {
     'rovo-only': {
-      'SKILL.md': [
-        '---',
-        'name: rovo-only',
-        'description: Rovodev-only fixture skill',
-        '---',
-        '',
-        '# Rovodev only',
-        '',
-      ].join('\n'),
+      'SKILL.md': ['---', 'name: rovo-only', 'description: Rovo-only fixture skill', '---', '', '# Rovo only', ''].join(
+        '\n',
+      ),
     },
   },
 };
@@ -197,7 +191,7 @@ const DEFAULT_HARNESS_GUIDANCE: Record<HarnessId, Record<string, string>> = {
       '<!-- codeassembly-ambient:end -->',
       '',
     ].join('\n'),
-    'codeassembly-guidance.md': '## Fixture interaction\n\nRovodev-specific body.\n',
+    'codeassembly-guidance.md': '## Fixture interaction\n\nRovo-specific body.\n',
   },
 };
 

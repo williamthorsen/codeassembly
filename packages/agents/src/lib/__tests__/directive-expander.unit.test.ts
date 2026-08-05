@@ -43,11 +43,11 @@ describe(expandIncludes, () => {
         'harnesses/rovo/AGENTS.md',
         ['<!-- include: ./codeassembly-guidance.md / -->', ''].join('\n'),
       );
-      await writeSource('harnesses/rovo/codeassembly-guidance.md', 'Rovodev-specific.\n');
+      await writeSource('harnesses/rovo/codeassembly-guidance.md', 'Rovo-specific.\n');
 
       const result = await expandIncludes(host, contentDir);
 
-      expect(result).toBe('Rovodev-specific.\n');
+      expect(result).toBe('Rovo-specific.\n');
     });
 
     it('replaces multiple directives in order', async () => {

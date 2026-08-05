@@ -36,7 +36,7 @@ describe(installCommand, () => {
     return claudeHome;
   }
 
-  async function setupRovodevHome(): Promise<string> {
+  async function setupRovoHome(): Promise<string> {
     const rovoHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovoHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovoHome, 'subagents'), { recursive: true });
@@ -207,7 +207,7 @@ describe(installCommand, () => {
   });
 
   it('installs support directories for rovo but no harness-specific skill directories', async () => {
-    const rovoHome = await setupRovodevHome();
+    const rovoHome = await setupRovoHome();
 
     await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
@@ -272,7 +272,7 @@ describe(installCommand, () => {
 
   it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {
     const claudeHome = await setupClaudeHome();
-    const rovoHome = await setupRovodevHome();
+    const rovoHome = await setupRovoHome();
 
     // Seed on-disk files representing what a previous install would have planted.
     const legacySkillDir = path.join(claudeHome, 'skills', 'claude-only');
