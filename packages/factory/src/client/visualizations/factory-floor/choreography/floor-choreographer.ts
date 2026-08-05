@@ -4,7 +4,7 @@ import { vec } from 'excalibur';
 import { FlyingArtifactActor } from '../../catwalk/actors/FlyingArtifactActor.js';
 import type { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';
 import type { StationAgentActor } from '../../catwalk/actors/StationAgentActor.js';
-import { runActorAnimation } from '../../shared/run-actor-animation.js';
+import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.js';
 import type { FactoryFloorLayoutResult } from '../layout/factory-floor-layout.js';
 import type { FactoryFloorDiff, StationArtifactConfig } from '../types.js';
 
@@ -87,7 +87,9 @@ async function choreographDelivery(
       const direction = layout.zoneOf(originStation) === 'upper' ? 'descend' : 'ascend';
       const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, direction);
       refs.addActor(flyer);
-      ascendPromises.push(runActorAnimation(() => (direction === 'ascend' ? flyer.ascend() : flyer.descend())));
+      ascendPromises.push(
+        runAnimationSuppressingErrors(() => (direction === 'ascend' ? flyer.ascend() : flyer.descend())),
+      );
     }
     await Promise.all(ascendPromises);
   }
@@ -99,7 +101,7 @@ async function choreographDelivery(
 
   // Step 3: Walk to destination
   const destPos = layout.orchestratorPosition(destStation);
-  await runActorAnimation(() => orchestrator.animateMoveTo(vec(destPos.x, destPos.y)));
+  await runAnimationSuppressingErrors(() => orchestrator.animateMoveTo(vec(destPos.x, destPos.y)));
 
   if (hasChute) {
     // Step 4: Descend/ascend at destination chute
@@ -110,7 +112,9 @@ async function choreographDelivery(
       const direction = destZone === 'upper' ? 'ascend' : 'descend';
       const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, direction);
       refs.addActor(flyer);
-      descendPromises.push(runActorAnimation(() => (direction === 'ascend' ? flyer.ascend() : flyer.descend())));
+      descendPromises.push(
+        runAnimationSuppressingErrors(() => (direction === 'ascend' ? flyer.ascend() : flyer.descend())),
+      );
     }
     await Promise.all(descendPromises);
   }
@@ -130,7 +134,7 @@ function applyImmediate(diff: FactoryFloorDiff, layout: FactoryFloorLayoutResult
     if (diff.orchestrator.moved !== null) {
       const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
       // Fire-and-forget: no sequencing needed
-      void runActorAnimation(() => orchestrator.animateMoveTo(vec(pos.x, pos.y)));
+      void runAnimationSuppressingErrors(() => orchestrator.animateMoveTo(vec(pos.x, pos.y)));
     }
 
     if (diff.orchestrator.workingChanged !== null) {

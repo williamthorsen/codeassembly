@@ -1,7 +1,7 @@
 import type { Actor } from 'excalibur';
 import { vec } from 'excalibur';
 
-import { runActorAnimation } from '../../shared/run-actor-animation.js';
+import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.js';
 import { FlyingArtifactActor } from '../actors/FlyingArtifactActor.js';
 import type { GateActor } from '../actors/GateActor.js';
 import type { OrchestratorActor } from '../actors/OrchestratorActor.js';
@@ -85,7 +85,7 @@ async function choreographDelivery(
     const endpoints = layout.chuteEndpoints(originStation, 0, originAgentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'ascend');
     refs.addActor(flyer);
-    ascendPromises.push(runActorAnimation(() => flyer.ascend()));
+    ascendPromises.push(runAnimationSuppressingErrors(() => flyer.ascend()));
   }
   await Promise.all(ascendPromises);
 
@@ -96,7 +96,7 @@ async function choreographDelivery(
 
   // Step 3: Walk -- slide orchestrator to destination
   const destPos = layout.orchestratorPosition(destStation);
-  await runActorAnimation(() => orchestrator.animateMoveTo(vec(destPos.x, destPos.y)));
+  await runAnimationSuppressingErrors(() => orchestrator.animateMoveTo(vec(destPos.x, destPos.y)));
 
   // Step 4: Descend -- flying artifacts drop down the destination station chute
   const descendPromises: Promise<void>[] = [];
@@ -105,7 +105,7 @@ async function choreographDelivery(
     const endpoints = layout.chuteEndpoints(destStation, 0, destAgentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
-    descendPromises.push(runActorAnimation(() => flyer.descend()));
+    descendPromises.push(runAnimationSuppressingErrors(() => flyer.descend()));
   }
   await Promise.all(descendPromises);
 
@@ -124,7 +124,7 @@ function applyImmediate(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: Sc
     if (diff.orchestrator.moved !== null) {
       const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
       // Fire-and-forget: no sequencing needed
-      void runActorAnimation(() => orchestrator.animateMoveTo(vec(pos.x, pos.y)));
+      void runAnimationSuppressingErrors(() => orchestrator.animateMoveTo(vec(pos.x, pos.y)));
     }
 
     if (diff.orchestrator.workingChanged !== null) {

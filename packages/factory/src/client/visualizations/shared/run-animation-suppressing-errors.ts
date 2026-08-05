@@ -3,7 +3,7 @@
  * mid-playback, as happens when a scene is cleared during playback. Any other rejection is logged
  * instead of propagating, so callers may leave the result unawaited.
  */
-export async function runActorAnimation(animate: () => Promise<void>): Promise<void> {
+export async function runAnimationSuppressingErrors(animate: () => Promise<void>): Promise<void> {
   try {
     await animate();
   } catch (error: unknown) {
