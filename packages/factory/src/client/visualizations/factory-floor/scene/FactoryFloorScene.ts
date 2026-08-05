@@ -47,9 +47,8 @@ export class FactoryFloorScene extends Scene {
   }
 
   override onInitialize(): void {
-    loadAllCatwalkSprites().catch((error: unknown) => {
-      console.error('Failed to load catwalk sprites:', error);
-    });
+    // The animation cache is populated before the returned promise settles, so buildScene may run immediately.
+    void this.loadSprites();
     this.buildScene();
     this.positionCamera();
   }
@@ -70,6 +69,15 @@ export class FactoryFloorScene extends Scene {
         this.applyDiff(diff, nextConfig, layout);
       }
       this.prevConfig = nextConfig;
+    }
+  }
+
+  /** Load the catwalk sprites, logging a failure rather than propagating it. */
+  private async loadSprites(): Promise<void> {
+    try {
+      await loadAllCatwalkSprites();
+    } catch (error: unknown) {
+      console.error('Failed to load catwalk sprites:', error);
     }
   }
 
@@ -114,37 +122,39 @@ export class FactoryFloorScene extends Scene {
     const refs = this.buildSceneRefs();
     this.choreographyInProgress = true;
 
-    choreographFloor(diff, layout, refs)
-      .then(() => {
-        this.choreographyInProgress = false;
+    void this.runChoreography(diff, layout, refs);
+  }
 
-        if (
-          diff.orchestrator.celebratingChanged !== null &&
-          diff.orchestrator.celebratingChanged.to &&
-          this.orchestratorRef !== undefined
-        ) {
-          this.orchestratorRef.celebrate();
-        }
+  /** Run the choreographer to completion, then apply whatever diff arrived while it was animating. */
+  private async runChoreography(
+    diff: FactoryFloorDiff,
+    layout: FactoryFloorLayoutResult,
+    refs: FloorSceneRefs,
+  ): Promise<void> {
+    try {
+      await choreographFloor(diff, layout, refs);
+      this.choreographyInProgress = false;
 
-        this.positionCamera();
+      if (
+        diff.orchestrator.celebratingChanged !== null &&
+        diff.orchestrator.celebratingChanged.to &&
+        this.orchestratorRef !== undefined
+      ) {
+        this.orchestratorRef.celebrate();
+      }
 
-        if (this.pendingDiff !== undefined) {
-          const pending = this.pendingDiff;
-          this.pendingDiff = undefined;
-          this.applyDiff(pending.diff, pending.config, pending.layout);
-        }
-        return;
-      })
-      .catch((error: unknown) => {
-        console.error('Choreography error:', error);
-        this.choreographyInProgress = false;
+      this.positionCamera();
+    } catch (error: unknown) {
+      console.error('Choreography error:', error);
+      this.choreographyInProgress = false;
+    }
 
-        if (this.pendingDiff !== undefined) {
-          const pending = this.pendingDiff;
-          this.pendingDiff = undefined;
-          this.applyDiff(pending.diff, pending.config, pending.layout);
-        }
-      });
+    // Apply any buffered diff so the scene does not get stuck
+    if (this.pendingDiff !== undefined) {
+      const pending = this.pendingDiff;
+      this.pendingDiff = undefined;
+      this.applyDiff(pending.diff, pending.config, pending.layout);
+    }
   }
 
   private buildSceneRefs(): FloorSceneRefs {
