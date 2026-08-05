@@ -1,5 +1,5 @@
 /** Supported harness identifiers. */
-export type HarnessId = 'claude' | 'rovodev';
+export type HarnessId = 'claude' | 'rovo';
 
 /** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
 export interface AgentsManifest {

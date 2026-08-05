@@ -26,7 +26,7 @@ Telemetry must never break the work it watches. The helper therefore **always ex
 | `--type`    | The event type. See the vocabulary below.                                             | Yes      |
 | `--payload` | A JSON **object** carrying the event's detail. Defaults to `{}`.                      | No       |
 | `--session` | Session id, overriding the environment-derived one. Only a relaying harness needs it. | No       |
-| `--harness` | The agent platform (`claude`, `rovodev`); install-injected — keep as-is.              | Injected |
+| `--harness` | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                 | Injected |
 
 A value-bearing flag accepts both `--type value` and `--type=value`.
 

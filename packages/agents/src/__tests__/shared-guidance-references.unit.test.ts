@@ -108,7 +108,7 @@ async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
 
 /**
  * Returns the names that `delivery: skill` rulebooks deploy their skills under, read off the deploy path rather than
- * recomputed here. Rulebook frontmatter carries no `harnesses:` field, so every such skill reaches all of them.
+ * recomputed here. Rulebook frontmatter carries no `supported-harnesses:` field, so every such skill reaches all of them.
  */
 async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
   const resolver = libraryResolver(CONTENT_ROOT);
@@ -118,7 +118,7 @@ async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Returns the slugs of every catalog skill that reaches all harnesses: one whose frontmatter declares no `harnesses:`
+ * Returns the slugs of every catalog skill that reaches all harnesses: one whose frontmatter declares no `supported-harnesses:`
  * narrowing. Shared guidance serves every harness, so a skill only some of them receive is as dead a pointer there as
  * one that does not exist.
  */

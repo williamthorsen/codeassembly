@@ -15,7 +15,7 @@
  * non-zero hook exits as control signals rather than as failures.
  *
  * Flags:
- *   --harness <id>      The harness whose hook fired (`claude`, `rovodev`). Required.
+ *   --harness <id>      The harness whose hook fired (`claude`, `rovo`). Required.
  *   --hook <name>       The harness's own name for the hook, e.g. `SessionStart`. Required.
  *   --home <path>       Events-root override, so a test can point the write at a fixture directory.
  *   --sentinel <token>  Ownership marker the configured hook entries carry so the config tools can find them again.

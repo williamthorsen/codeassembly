@@ -224,7 +224,7 @@ describe(runCapture, () => {
     await mkdir(join(storePath, 'content', 'events'), { recursive: true });
     await writeFile(
       join(storePath, 'content', 'events', `${ID}.md`),
-      `---\nrecordType: event\nid: ${ID}\ncaptured-at: 2026-06-04T06:57:22Z\nsession: ''\ncwd: /tmp/work\nsummary: Original summary\nharness: rovodev\n---\n\nOriginal body.\n`,
+      `---\nrecordType: event\nid: ${ID}\ncaptured-at: 2026-06-04T06:57:22Z\nsession: ''\ncwd: /tmp/work\nsummary: Original summary\nharness: rovo\n---\n\nOriginal body.\n`,
       'utf8',
     );
 
@@ -242,7 +242,7 @@ describe(runCapture, () => {
       const written = await readFile(amended.path, 'utf8');
       expect(written).not.toMatch(/^session:/m);
       expect(written).toContain('summary: Corrected summary');
-      expect(written).toContain('harness: rovodev');
+      expect(written).toContain('harness: rovo');
       expect(written).toContain('cwd: /tmp/work');
     }
   });

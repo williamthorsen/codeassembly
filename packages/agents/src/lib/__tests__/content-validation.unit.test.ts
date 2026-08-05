@@ -109,7 +109,7 @@ describe(validateContentRoot, () => {
   });
 
   it('names the affected harnesses when a defect reaches only some of them', async () => {
-    await writeSkill(root, 'alpha', { body: 'Invoke {tool:NoSuchTool}.', harnesses: ['claude'] });
+    await writeSkill(root, 'alpha', { body: 'Invoke {tool:NoSuchTool}.', supportedHarnesses: ['claude'] });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
 
@@ -205,14 +205,16 @@ async function writeSkill(
   options: {
     body?: string;
     dependencies?: Record<string, ReadonlyArray<string>>;
-    harnesses?: ReadonlyArray<string>;
+    supportedHarnesses?: ReadonlyArray<string>;
   } = {},
 ): Promise<void> {
   const frontmatter = [
     '---',
     `name: ${slug}`,
     `description: ${slug} fixture skill`,
-    ...(options.harnesses === undefined ? [] : ['harnesses:', ...options.harnesses.map((id) => `  - ${id}`)]),
+    ...(options.supportedHarnesses === undefined
+      ? []
+      : ['supported-harnesses:', ...options.supportedHarnesses.map((id) => `  - ${id}`)]),
     ...renderDependencies(options.dependencies),
     '---',
   ];

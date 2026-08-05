@@ -39,11 +39,11 @@ describe('guidance installation', () => {
     return claudeHome;
   }
 
-  async function setupRovodevHome(): Promise<string> {
-    const rovodevHome = path.join(tempDir, '.rovodev');
-    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
-    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
-    return rovodevHome;
+  async function setupRovoHome(): Promise<string> {
+    const rovoHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovoHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovoHome, 'subagents'), { recursive: true });
+    return rovoHome;
   }
 
   describe('shared guidance', () => {
@@ -136,29 +136,29 @@ describe('guidance installation', () => {
       expect(content).not.toContain('<!-- include:');
     });
 
-    it('installs AGENTS.md and standalone guidance to ~/.rovodev/ for rovodev harness', async () => {
-      const rovodevHome = await setupRovodevHome();
+    it('installs AGENTS.md and standalone guidance to ~/.rovodev/ for rovo harness', async () => {
+      const rovoHome = await setupRovoHome();
 
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
-      const rovodevAgentsMd = path.join(rovodevHome, 'AGENTS.md');
-      expect(existsSync(rovodevAgentsMd)).toBe(true);
-      const content = await readFile(rovodevAgentsMd, 'utf8');
+      const rovoAgentsMd = path.join(rovoHome, 'AGENTS.md');
+      expect(existsSync(rovoAgentsMd)).toBe(true);
+      const content = await readFile(rovoAgentsMd, 'utf8');
       expect(content).toContain('# Fixture shared guidance');
       expect(content).not.toContain('<!-- include:');
 
       // The standalone guidance file is installed separately from being inlined into AGENTS.md.
-      const standalone = path.join(rovodevHome, 'codeassembly-guidance.md');
+      const standalone = path.join(rovoHome, 'codeassembly-guidance.md');
       expect(existsSync(standalone)).toBe(true);
       expect(await readFile(standalone, 'utf8')).toContain('## Fixture interaction');
     });
 
-    it('inlines shared and harness-specific content into rovodev AGENTS.md in source order', async () => {
-      const rovodevHome = await setupRovodevHome();
+    it('inlines shared and harness-specific content into rovo AGENTS.md in source order', async () => {
+      const rovoHome = await setupRovoHome();
 
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
-      const content = await readFile(path.join(rovodevHome, 'AGENTS.md'), 'utf8');
+      const content = await readFile(path.join(rovoHome, 'AGENTS.md'), 'utf8');
       const sharedIndex = content.indexOf('# Fixture shared guidance');
       const harnessIndex = content.indexOf('## Fixture interaction');
       expect(sharedIndex).toBeGreaterThanOrEqual(0);
@@ -167,11 +167,11 @@ describe('guidance installation', () => {
 
     it('renders an empty ambient region into the guidance file of each harness', async () => {
       const claudeHome = await setupClaudeHome();
-      const rovodevHome = await setupRovodevHome();
+      const rovoHome = await setupRovoHome();
 
       await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
 
-      for (const guidancePath of [path.join(claudeHome, 'CLAUDE.md'), path.join(rovodevHome, 'AGENTS.md')]) {
+      for (const guidancePath of [path.join(claudeHome, 'CLAUDE.md'), path.join(rovoHome, 'AGENTS.md')]) {
         const content = await readFile(guidancePath, 'utf8');
         expect(hasAmbientRegion(content)).toBe(true);
         expect(extractAmbientRegionContent(content)).toBe('');
@@ -424,7 +424,7 @@ describe('guidance installation', () => {
     async function buildFakeContentTree(fakeContentDir: string, options: { brokenClaudeBody: string }): Promise<void> {
       await mkdir(path.join(fakeContentDir, 'guidance', 'shared'), { recursive: true });
       await mkdir(path.join(fakeContentDir, 'guidance', '_harnesses', 'claude'), { recursive: true });
-      await mkdir(path.join(fakeContentDir, 'guidance', '_harnesses', 'rovodev'), { recursive: true });
+      await mkdir(path.join(fakeContentDir, 'guidance', '_harnesses', 'rovo'), { recursive: true });
       await mkdir(path.join(fakeContentDir, 'skills'), { recursive: true });
       await mkdir(path.join(fakeContentDir, 'subagents'), { recursive: true });
       await mkdir(path.join(fakeContentDir, 'scripts'), { recursive: true });

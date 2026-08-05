@@ -10,6 +10,7 @@ import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
+import { SUPPORTED_HARNESSES_KEY } from '../lib/skill-deploy.ts';
 import { isRecord } from '../lib/type-guards.ts';
 
 /** A single artifact's normalized listing fields, before its type and emoji are attached. */
@@ -239,17 +240,18 @@ function padType(emoji: string, label: string, colWidth: number): string {
 }
 
 /**
- * Reads a skill's `harnesses:` frontmatter for the delivery column, formatting it as the comma-joined harness list a
- * skill targets, or `—` when the field is absent or empty (meaning all harnesses). Display-only and tolerant: a
+ * Reads a skill's `supported-harnesses:` frontmatter for the delivery column, formatting it as the comma-joined harness
+ * list a skill targets, or `—` when the field is absent or empty (meaning all harnesses). Display-only and tolerant: a
  * non-string entry is dropped rather than rejected.
  */
 function readHarnessAffinity(content: string): string {
   const { lines } = parseFrontmatter(content);
   const parsed: unknown = parseYaml(lines.join('\n'));
-  if (!isRecord(parsed) || parsed.harnesses === undefined || parsed.harnesses === null) {
+  const declared = isRecord(parsed) ? parsed[SUPPORTED_HARNESSES_KEY] : undefined;
+  if (declared === undefined || declared === null) {
     return NO_DELIVERY_MODE;
   }
-  const values = Array.isArray(parsed.harnesses) ? parsed.harnesses : [parsed.harnesses];
+  const values = Array.isArray(declared) ? declared : [declared];
   const harnesses = values.filter((value): value is string => typeof value === 'string');
   return harnesses.length === 0 ? NO_DELIVERY_MODE : harnesses.join(', ');
 }

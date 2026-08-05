@@ -67,7 +67,7 @@ describe(libraryListCommand, () => {
     const { output } = await captureList(contentDir);
     const lines = output.split('\n');
 
-    expect(lines.find((line) => line.includes('charlie-skill'))).toContain('rovodev');
+    expect(lines.find((line) => line.includes('charlie-skill'))).toContain('rovo');
   });
 
   it('lists a subagent with an em-dash delivery, since a subagent has no delivery mode', async () => {
@@ -201,7 +201,7 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   await writeFile(path.join(skills, 'bravo', 'SKILL.md'), frontmatter({ name: 'bravo-skill', description: 'Bravo.' }));
   await writeFile(
     path.join(skills, 'charlie', 'SKILL.md'),
-    frontmatter({ name: 'charlie-skill', description: 'Charlie.', harnesses: '[rovodev]' }),
+    frontmatter({ name: 'charlie-skill', description: 'Charlie.', 'supported-harnesses': '[rovo]' }),
   );
   await writeFile(path.join(skills, '_data', 'reserved.md'), frontmatter({ name: 'reserved' }));
 

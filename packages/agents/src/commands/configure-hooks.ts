@@ -88,7 +88,7 @@ export async function ensureHarnessHookEntries(harnessId: HarnessId, baseDir?: s
       ? `  ✅ Wired session-lifecycle hooks in ${paths.configFile}`
       : `  Session-lifecycle hooks already wired in ${paths.configFile}`,
   );
-  if (result.changed && harnessId === 'rovodev') {
+  if (result.changed && harnessId === 'rovo') {
     console.info('  ⚠️ Rovo Dev reads its config at startup: restart any running session to pick up the hooks.');
   }
 }
@@ -103,7 +103,7 @@ export async function removeHarnessHookEntries(harnessId: HarnessId, baseDir?: s
 
   if (result.changed) {
     console.info(`  ✅ Removed ${result.removedCount} session-lifecycle hook entries from ${paths.configFile}`);
-    if (harnessId === 'rovodev') {
+    if (harnessId === 'rovo') {
       console.info('  ⚠️ Rovo Dev reads its config at startup: restart any running session to drop the hooks.');
     }
   }

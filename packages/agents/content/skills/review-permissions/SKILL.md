@@ -2,7 +2,7 @@
 name: review-permissions
 description: Use at end of session to recommend updates to the Claude Code permissions allow list based on commands used
 user-invocable: true
-harnesses: [claude]
+supported-harnesses: [claude]
 ---
 
 # Review permissions

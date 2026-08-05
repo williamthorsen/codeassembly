@@ -11,9 +11,17 @@ import { statusCommand } from './commands/status.ts';
 import { syncCommand, syncGlobalCommand } from './commands/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
+import { ALL_HARNESS_IDS } from './lib/harness.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
-const VALID_HARNESS_IDS = new Set<string>(['claude', 'rovodev', 'all']);
+/** Every accepted `--harness` value: the known harness ids plus the `all` sentinel. */
+const HARNESS_ARG_VALUES: ReadonlyArray<string> = [...ALL_HARNESS_IDS, 'all'];
+
+/** Membership set for `isValidHarness`, widened to `string` so an arbitrary value tests without a type assertion. */
+const VALID_HARNESS_IDS: ReadonlySet<string> = new Set(HARNESS_ARG_VALUES);
+
+/** The accepted `--harness` values, rendered for the help and error text that must list them. */
+const HARNESS_ARG_LIST = HARNESS_ARG_VALUES.join(', ');
 
 /**
  * Main CLI entry point.
@@ -193,9 +201,9 @@ function parseHarnessArg(
   args: ReadonlyArray<string>,
   index: number,
 ): { harness: HarnessId | 'all'; nextIndex: number } {
-  const { value, nextIndex } = parseValueArg(args, index, '--harness', 'claude, rovodev, or all');
+  const { value, nextIndex } = parseValueArg(args, index, '--harness', HARNESS_ARG_LIST);
   if (!isValidHarness(value)) {
-    console.error(`Error: Invalid harness "${value}". Valid options: claude, rovodev, all`);
+    console.error(`Error: Invalid harness "${value}". Valid options: ${HARNESS_ARG_LIST}`);
     process.exit(1);
   }
   return { harness: value, nextIndex };
@@ -235,7 +243,7 @@ Commands:
 
 Options:
   --content <dir>   Content root to validate; defaults to codeassembly.content in ./package.json (validate only)
-  --harness <name>  Target harness: claude, rovodev, or all (default: all)
+  --harness <name>  Target harness: ${HARNESS_ARG_LIST} (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)

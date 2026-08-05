@@ -36,11 +36,11 @@ describe(installCommand, () => {
     return claudeHome;
   }
 
-  async function setupRovodevHome(): Promise<string> {
-    const rovodevHome = path.join(tempDir, '.rovodev');
-    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
-    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
-    return rovodevHome;
+  async function setupRovoHome(): Promise<string> {
+    const rovoHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovoHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovoHome, 'subagents'), { recursive: true });
+    return rovoHome;
   }
 
   it('installs support directories and guidance with a manifest', async () => {
@@ -203,17 +203,17 @@ describe(installCommand, () => {
     const skills = await readdir(path.join(claudeHome, 'skills'));
     expect(skills).toContain('_data');
     expect(skills).not.toContain('claude-only');
-    expect(skills).not.toContain('rovodev-only');
+    expect(skills).not.toContain('rovo-only');
   });
 
-  it('installs support directories for rovodev but no harness-specific skill directories', async () => {
-    const rovodevHome = await setupRovodevHome();
+  it('installs support directories for rovo but no harness-specific skill directories', async () => {
+    const rovoHome = await setupRovoHome();
 
-    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
-    const skills = await readdir(path.join(rovodevHome, 'skills'));
+    const skills = await readdir(path.join(rovoHome, 'skills'));
     expect(skills).toContain('_data');
-    expect(skills).not.toContain('rovodev-only');
+    expect(skills).not.toContain('rovo-only');
     expect(skills).not.toContain('claude-only');
   });
 
@@ -272,13 +272,13 @@ describe(installCommand, () => {
 
   it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {
     const claudeHome = await setupClaudeHome();
-    const rovodevHome = await setupRovodevHome();
+    const rovoHome = await setupRovoHome();
 
     // Seed on-disk files representing what a previous install would have planted.
     const legacySkillDir = path.join(claudeHome, 'skills', 'claude-only');
     await mkdir(legacySkillDir, { recursive: true });
     await writeFile(path.join(legacySkillDir, 'SKILL.md'), '---\nname: claude-only\n---\n', 'utf8');
-    const promptsYmlPath = path.join(rovodevHome, 'prompts.yml');
+    const promptsYmlPath = path.join(rovoHome, 'prompts.yml');
     await writeFile(promptsYmlPath, 'prompts: []\n', 'utf8');
     const promptsYmlHash = await computeContentHash(promptsYmlPath);
 
@@ -295,8 +295,8 @@ describe(installCommand, () => {
             { relativePath: 'skills/claude-only', contentHash: 'sha256:dir:skills/claude-only', linked: false },
           ],
         },
-        rovodev: {
-          harness: 'rovodev',
+        rovo: {
+          harness: 'rovo',
           version: '0.1.0',
           installedAt: new Date().toISOString(),
           entries: [{ relativePath: 'prompts.yml', contentHash: promptsYmlHash, linked: false }],
@@ -305,16 +305,16 @@ describe(installCommand, () => {
     });
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
 
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only'))).toBe(false);
     expect(existsSync(promptsYmlPath)).toBe(false);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     const claudePaths = manifest.harnesses.claude?.entries.map((e) => e.relativePath) ?? [];
-    const rovodevPaths = manifest.harnesses.rovodev?.entries.map((e) => e.relativePath) ?? [];
+    const rovoPaths = manifest.harnesses.rovo?.entries.map((e) => e.relativePath) ?? [];
     expect(claudePaths).not.toContain('skills/claude-only');
-    expect(rovodevPaths).not.toContain('prompts.yml');
+    expect(rovoPaths).not.toContain('prompts.yml');
   });
 
   describe('session-lifecycle hooks', () => {

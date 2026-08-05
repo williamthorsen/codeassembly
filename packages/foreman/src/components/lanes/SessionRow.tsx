@@ -6,7 +6,7 @@ import { Badge, Group, Text } from '../../integrations/mantine/index.ts';
 
 const HARNESS_COLORS: Record<string, string> = {
   claude: 'violet',
-  rovodev: 'cyan',
+  rovo: 'cyan',
 };
 
 interface SessionRowProps {

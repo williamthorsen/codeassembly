@@ -1492,14 +1492,14 @@ describe(syncCommand, () => {
   });
 
   describe('harness-targeted skills', () => {
-    /** Writes a fixture skill `<slug>/SKILL.md`, with an optional `harnesses:` line and body override. */
+    /** Writes a fixture skill `<slug>/SKILL.md`, with an optional `supported-harnesses:` line and body override. */
     async function writeLibrarySkill(
       slug: string,
-      { harnesses, body }: { harnesses?: string; body?: string } = {},
+      { supportedHarnesses, body }: { supportedHarnesses?: string; body?: string } = {},
     ): Promise<void> {
       const dir = path.join(contentDir, 'skills', slug);
       await mkdir(dir, { recursive: true });
-      const harnessLine = harnesses === undefined ? '' : `harnesses: ${harnesses}\n`;
+      const harnessLine = supportedHarnesses === undefined ? '' : `supported-harnesses: ${supportedHarnesses}\n`;
       const content = body ?? `# ${slug}\n\nBody.`;
       await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${harnessLine}---\n\n${content}\n`, 'utf8');
     }
@@ -1512,7 +1512,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `skills:\n${useBlock}`, 'utf8');
     }
 
-    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovodev. */
+    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovo. */
     async function detectBothHarnesses(): Promise<void> {
       await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
       await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
@@ -1520,7 +1520,7 @@ describe(syncCommand, () => {
 
     it('deploys a harness-targeted skill only into its target harness, while all-harness skills reach both', async () => {
       await detectBothHarnesses();
-      await writeLibrarySkill('rovo-only', { harnesses: '[rovodev]' });
+      await writeLibrarySkill('rovo-only', { supportedHarnesses: '[rovo]' });
       await writeLibrarySkill('everywhere');
       await declareSkills('rovo-only', 'everywhere');
 
@@ -1534,12 +1534,12 @@ describe(syncCommand, () => {
 
     it('does not render a harness-targeted skill against a non-target harness whose tool map would reject it', async () => {
       await detectBothHarnesses();
-      // rovodev maps Read; claude does not, so rendering this skill against claude would throw on the unmapped tool.
+      // rovo maps Read; claude does not, so rendering this skill against claude would throw on the unmapped tool.
       const overlays = path.join(contentDir, 'subagents', '_data');
       await mkdir(overlays, { recursive: true });
-      await writeFile(path.join(overlays, 'rovodev.yaml'), '_tools:\n  Read: open_files\n', 'utf8');
+      await writeFile(path.join(overlays, 'rovo.yaml'), '_tools:\n  Read: open_files\n', 'utf8');
       await writeFile(path.join(overlays, 'claude.yaml'), '_tools:\n  Edit: Edit\n', 'utf8');
-      await writeLibrarySkill('rovo-tool', { harnesses: '[rovodev]', body: 'Use {tool:Read}.' });
+      await writeLibrarySkill('rovo-tool', { supportedHarnesses: '[rovo]', body: 'Use {tool:Read}.' });
       await declareSkills('rovo-tool');
 
       await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
@@ -1556,7 +1556,7 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('was-everywhere', '.claude'))).toBe(true);
       expect(existsSync(skillPath('was-everywhere', '.rovodev'))).toBe(true);
 
-      await writeLibrarySkill('was-everywhere', { harnesses: '[rovodev]' });
+      await writeLibrarySkill('was-everywhere', { supportedHarnesses: '[rovo]' });
       await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
 
       expect(existsSync(path.dirname(skillPath('was-everywhere', '.claude')))).toBe(false);
@@ -1565,7 +1565,7 @@ describe(syncCommand, () => {
   });
 
   describe('rulebook body rendering', () => {
-    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovodev. */
+    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovo. */
     async function detectBothHarnesses(): Promise<void> {
       await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
       await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
@@ -1702,7 +1702,7 @@ describe(syncCommand, () => {
       const dataDir = path.join(contentDir, 'subagents', '_data');
       await mkdir(dataDir, { recursive: true });
       await writeFile(path.join(dataDir, 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
-      await writeFile(path.join(dataDir, 'rovodev.yaml'), ROVO_OVERLAY, 'utf8');
+      await writeFile(path.join(dataDir, 'rovo.yaml'), ROVO_OVERLAY, 'utf8');
     }
 
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
@@ -1880,11 +1880,11 @@ describe(syncCommand, () => {
       await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
 
       const claude = await readFile(subagentPath('canary', '.claude', 'agents'), 'utf8');
-      const rovodev = await readFile(subagentPath('canary', '.rovodev', 'subagents'), 'utf8');
+      const rovo = await readFile(subagentPath('canary', '.rovodev', 'subagents'), 'utf8');
       expect(claude).toContain('Use Read;');
       expect(claude).toContain('~/.claude/scripts/x.sh');
-      expect(rovodev).toContain('Use open_files;');
-      expect(rovodev).toContain('~/.rovodev/scripts/x.sh');
+      expect(rovo).toContain('Use open_files;');
+      expect(rovo).toContain('~/.rovodev/scripts/x.sh');
     });
 
     it('previews declared-subagent writes and retractions in dry-run without writing', async () => {
@@ -1957,7 +1957,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('internal-skill', 'user-invocable: false');
       await declareSkills('public-skill', 'internal-skill');
 
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain('# codeassembly:managed:start');
@@ -1970,10 +1970,10 @@ describe(syncCommand, () => {
     it('leaves prompts.yml byte-identical on re-sync with no skill changes', async () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
       const first = await readFile(promptsYmlPath(), 'utf8');
 
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(first);
     });
@@ -1983,7 +1983,7 @@ describe(syncCommand, () => {
       await declareSkills('public-skill');
       await seedHandAuthoredPromptsYml();
 
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain("name: 'hand-authored'");
@@ -1995,11 +1995,11 @@ describe(syncCommand, () => {
     it('removes the region and deletes the file when undeclaring leaves nothing foreign', async () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
       expect(existsSync(promptsYmlPath())).toBe(true);
 
       await declareSkills();
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
 
       expect(existsSync(promptsYmlPath())).toBe(false);
     });
@@ -2008,11 +2008,11 @@ describe(syncCommand, () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
       await seedHandAuthoredPromptsYml();
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
       expect(await readFile(promptsYmlPath(), 'utf8')).toContain('# codeassembly:managed:start');
 
       await declareSkills();
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain("name: 'hand-authored'");
@@ -2026,7 +2026,7 @@ describe(syncCommand, () => {
       const flowAuthored = "prompts: [{ name: 'foreign', content_file: custom.md }]\n";
       await writeFile(promptsYmlPath(), flowAuthored, 'utf8');
 
-      await expect(syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir)).rejects.toThrow(
         /block-style/,
       );
 
@@ -2038,7 +2038,7 @@ describe(syncCommand, () => {
       const handAuthored = await readFile(promptsYmlPath(), 'utf8');
       await declareSkills();
 
-      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(handAuthored);
     });
@@ -2050,7 +2050,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ harness: 'rovodev', dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, contentDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -2169,13 +2169,13 @@ describe(syncGlobalCommand, () => {
 
   it('injects the ambient region of every targeted harness guidance file', async () => {
     const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
-    const rovodevMd = await seedGuidanceFile('.rovodev', 'AGENTS.md');
+    const rovoMd = await seedGuidanceFile('.rovodev', 'AGENTS.md');
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
     await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
 
-    for (const guidanceFile of [claudeMd, rovodevMd]) {
+    for (const guidanceFile of [claudeMd, rovoMd]) {
       expect(await readFile(guidanceFile, 'utf8')).toContain('<!-- rulebook:alpha -->');
     }
   });
@@ -2392,7 +2392,7 @@ describe(syncGlobalCommand, () => {
     await writeLibrarySkill('people-report');
     await declareRaw('skills:\n  use:\n    - people-report\n');
 
-    await syncGlobalCommand(makeOptions({ harness: 'rovodev' }), homeDir, contentDir);
+    await syncGlobalCommand(makeOptions({ harness: 'rovo' }), homeDir, contentDir);
 
     const prompts = await readFile(path.join(homeDir, '.rovodev', 'prompts.yml'), 'utf8');
     expect(prompts).toContain('# codeassembly:managed:start');
@@ -2410,7 +2410,7 @@ describe(syncGlobalCommand, () => {
       'utf8',
     );
 
-    await syncGlobalCommand(makeOptions({ harness: 'rovodev' }), homeDir, contentDir);
+    await syncGlobalCommand(makeOptions({ harness: 'rovo' }), homeDir, contentDir);
 
     const prompts = await readFile(path.join(homeDir, '.rovodev', 'prompts.yml'), 'utf8');
     expect(prompts).toContain("name: 'hand-authored'");

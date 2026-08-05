@@ -28,7 +28,7 @@ A **skill-caused mistake** — an error a clearer skill definition would have pr
 | `--store`   | Registry name of the event store, or `@default` for the `default_kb`.             | Yes      |
 | `--skill`   | The skill the event relates to.                                                   | No       |
 | `--model`   | The model identifier in play.                                                     | No       |
-| `--harness` | The agent platform (`claude`, `rovodev`); install-injected — keep as-is.          | Injected |
+| `--harness` | The agent platform (`claude`, `rovo`); install-injected — keep as-is.             | Injected |
 | `--tags`    | Comma-separated tag list.                                                         | No       |
 | `--impact`  | Impact rating: one of `low`, `medium`, `high`, `critical`. Omit to leave unrated. | No       |
 | `--amend`   | Id of an existing event to rewrite in place instead of capturing a new one.       | No       |
@@ -38,7 +38,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 ### Auto-filled vs agent-supplied
 
 - **Auto-filled by the helper:** `recordType` (`event`), `id` (ULID), `captured-at`, `cwd`, `session` (`CLAUDE_CODE_SESSION_ID`, best-effort — omitted silently on a harness that exposes no session id), and `repo` (the `owner/name` git remote at `cwd`, best-effort — omitted silently when no remote resolves).
-- **Template-injected:** `harness` — `codeassembly` writes the agent platform (`claude` or `rovodev`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
+- **Template-injected:** `harness` — `codeassembly` writes the agent platform (`claude` or `rovo`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
 - **Agent-supplied:** `summary`, the optional `skill`/`model`/`tags`/`impact`, and the body.
 
 ### Store selection

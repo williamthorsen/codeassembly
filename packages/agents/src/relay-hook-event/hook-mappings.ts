@@ -19,7 +19,7 @@ const HOOK_MAPPINGS: Readonly<Record<HarnessId, Readonly<Record<string, HookMapp
     UserPromptSubmit: { type: 'turn.started', discriminators: [] },
     Stop: { type: 'turn.completed', discriminators: [] },
   },
-  rovodev: {
+  rovo: {
     // Rovo carries its per-event detail in an `attributes` object rather than at the payload's top level, and
     // `on_session_end` covers exit, session switch, and fork alike — so what distinguishes them is inside `attributes`.
     on_session_start: { type: 'session.started', discriminators: ['attributes'] },

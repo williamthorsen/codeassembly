@@ -59,7 +59,7 @@ describe(renderSubagentForHarness, () => {
     expect(output).not.toContain('{tool:Read}');
   });
 
-  it('applies the harness-native tool name and home dir for rovodev', () => {
+  it('applies the harness-native tool name and home dir for rovo', () => {
     const output = renderSubagentForHarness(SOURCE, {
       overlayYaml: ROVO_OVERLAY,
       toolMapping: loadToolMapping(ROVO_OVERLAY),
@@ -67,7 +67,7 @@ describe(renderSubagentForHarness, () => {
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.rovodev'),
       homeDir: '.rovodev',
-      harnessId: 'rovodev',
+      harnessId: 'rovo',
       skillSigil: '!',
       subagentSigil: '',
     });
@@ -110,7 +110,7 @@ describe(renderSubagentForHarness, () => {
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.rovodev'),
       homeDir: '.rovodev',
-      harnessId: 'rovodev',
+      harnessId: 'rovo',
       skillSigil: '!',
       subagentSigil: '',
     });
@@ -206,7 +206,7 @@ describe(renderSubagentForHarness, () => {
 
   it.each([
     { harnessId: 'claude', overlayYaml: CLAUDE_OVERLAY, homeDir: '.claude', skillSigil: '/', subagentSigil: '' },
-    { harnessId: 'rovodev', overlayYaml: ROVO_OVERLAY, homeDir: '.rovodev', skillSigil: '!', subagentSigil: '' },
+    { harnessId: 'rovo', overlayYaml: ROVO_OVERLAY, homeDir: '.rovodev', skillSigil: '!', subagentSigil: '' },
   ])(
     'produces the same $harnessId output as the standalone merge → tools → invocations → markdown-path → template steps',
     ({ harnessId, overlayYaml, homeDir, skillSigil, subagentSigil }) => {
