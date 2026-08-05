@@ -1,6 +1,6 @@
 {
   "name": "codeassembly-run-core",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "description": "Core runtime for orchestrated development runs",
   "type": "module",

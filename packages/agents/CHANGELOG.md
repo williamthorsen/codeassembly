@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 — 2026-08-05
+
+### 🎉 Features
+
+- Recognize and strip guidance-hook directives at every render seam (#1173)
+
+  Adds initial support for guidance hooks: Hooks can now be declared in any deployable guidance file. A faulty hook declaration -- such as an unsupported name or duplicate declaration -- aborts the deployment with a diagnostic error message.
+
+  Substitution of actual content for the hook will come later. For now, the hooks are simply stripped from the deployed content.
+
+- Deliver a source's skill support files into its own namespace (#1178)
+
+  Guidance packages can now ship the shared reference files their skills and rulebooks read, and those files reach every harness a consumer syncs to. A package can name those files freely, including names another package or the built-in library already uses.
+
+- Move personal collaboration and workflow preferences into declarable rulebooks (#1181)
+
+  Extracts the maintainer's personal instructions on persona, prompt formatting, and workflow from the shared agent guidance into separate rulebooks: `williamthorsen-collaboration-preferences` and `williamthorsen-workflow-preferences`. The latter includes new preferences relating to ticket structure, splitting, and relationship to PRs. Commit-convention guidance is reduced to a reference to the commit skill.
+
+- 🚨 **Breaking:** Adopt the repository-root AGENTS.md as the project guidance slot (#1183)
+
+  Project guidance has been moved from the custom `.agents/PROJECT.md` file to the conventional `AGENTS.md` location in the project root. The `update-project-guidance` skill is corrected to point the `.claude/CLAUDE.md` include directive to that location.
+
+  The package now publishes readiness checks for the existence, correctness, and freshness of the guidance file. `check-project-staleness.sh`, `claude.sh`, and `rovo.sh` are removed along with their installer entries.
+
+### 🧪 Tests
+
+- Name every test file's isolation tier (#1185)
+
+  Every test file now embeds the name of its tier (unit or tool), each of which can be run separately (`nmr test:unit` or `nmr test:tool`). Git isolation settings that had previously been removed from the root-level test configurations are now restored.
+
 ## 0.4.0 — 2026-08-04
 
 ### 🎉 Features

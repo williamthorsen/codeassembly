@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.1 — 2026-08-05
+
+### 🧪 Tests
+
+- Name every test file's isolation tier (#1185)
+
+  Every test file now embeds the name of its tier (unit or tool), each of which can be run separately (`nmr test:unit` or `nmr test:tool`). Git isolation settings that had previously been removed from the root-level test configurations are now restored.
+
 ## 0.2.0 — 2026-08-04
 
 ### 🎉 Features

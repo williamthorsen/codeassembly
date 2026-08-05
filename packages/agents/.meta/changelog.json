@@ -1,5 +1,49 @@
 [
   {
+    "version": "0.5.0",
+    "date": "2026-08-05",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Recognize and strip guidance-hook directives at every render seam (#1173)",
+            "body": "Adds initial support for guidance hooks: Hooks can now be declared in any deployable guidance file. A faulty hook declaration -- such as an unsupported name or duplicate declaration -- aborts the deployment with a diagnostic error message.\n\nSubstitution of actual content for the hook will come later. For now, the hooks are simply stripped from the deployed content.",
+            "hash": "47cb7beb1301405dbaa7cd4cbd37910fae4d87d2"
+          },
+          {
+            "description": "Deliver a source's skill support files into its own namespace (#1178)",
+            "body": "Guidance packages can now ship the shared reference files their skills and rulebooks read, and those files reach every harness a consumer syncs to. A package can name those files freely, including names another package or the built-in library already uses.",
+            "hash": "e3d7ab1ec4ca6d43a2baec2a6c1aa5df6870e764"
+          },
+          {
+            "description": "Move personal collaboration and workflow preferences into declarable rulebooks (#1181)",
+            "body": "Extracts the maintainer's personal instructions on persona, prompt formatting, and workflow from the shared agent guidance into separate rulebooks: `williamthorsen-collaboration-preferences` and `williamthorsen-workflow-preferences`. The latter includes new preferences relating to ticket structure, splitting, and relationship to PRs. Commit-convention guidance is reduced to a reference to the commit skill.",
+            "hash": "613d4d77998f50d9af26119d40183f5de2f09338"
+          },
+          {
+            "description": "Adopt the repository-root AGENTS.md as the project guidance slot (#1183)",
+            "body": "Project guidance has been moved from the custom `.agents/PROJECT.md` file to the conventional `AGENTS.md` location in the project root. The `update-project-guidance` skill is corrected to point the `.claude/CLAUDE.md` include directive to that location.\r\n\r\nThe package now publishes readiness checks for the existence, correctness, and freshness of the guidance file. `check-project-staleness.sh`, `claude.sh`, and `rovo.sh` are removed along with their installer entries.",
+            "breaking": true,
+            "hash": "8a7b5f2d06c63116c6bd427c6577422f4bae67a1"
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Name every test file's isolation tier (#1185)",
+            "body": "Every test file now embeds the name of its tier (unit or tool), each of which can be run separately (`nmr test:unit` or `nmr test:tool`). Git isolation settings that had previously been removed from the root-level test configurations are now restored.",
+            "hash": "b53e4acfb3cff7eeaee6b1a6cbc6da01c01b8ac2"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.0",
     "date": "2026-08-04",
     "sections": [

@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.2.1",
+    "date": "2026-08-05",
+    "sections": [
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Name every test file's isolation tier (#1185)",
+            "body": "Every test file now embeds the name of its tier (unit or tool), each of which can be run separately (`nmr test:unit` or `nmr test:tool`). Git isolation settings that had previously been removed from the root-level test configurations are now restored.",
+            "hash": "b53e4acfb3cff7eeaee6b1a6cbc6da01c01b8ac2"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.0",
     "date": "2026-08-04",
     "sections": [
