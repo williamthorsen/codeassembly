@@ -34,7 +34,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
 | `status`            | Show the current state of installed items                                                                  |
-| `validate`          | Check a content root for defects that would fail at a consumer; writes nothing                             |
+| `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
@@ -324,7 +324,7 @@ Authoring the artifacts themselves is no different from authoring library conten
 codeassembly validate
 ```
 
-It reads no `codeassembly.yaml`, so a package that produces guidance without consuming any still has a gate: wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness the root could deploy to, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file.
+It reads no `codeassembly.yaml`, so a package that produces guidance without consuming any still has a gate: wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness the root could deploy to, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file. One check has no `sync` counterpart, and catches what nothing else would: a skill declaring the retired `harnesses:` key, which narrows nothing and survives into the deployed file rather than failing anywhere.
 
 Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that carry no `SKILL.md`. Link-target existence and cross-file anchors are not checked — a target resolves against the deployed tree, which unions this content with the library's and with every other declared source's.
 

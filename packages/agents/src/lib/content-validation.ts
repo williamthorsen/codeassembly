@@ -54,7 +54,9 @@ export interface ContentDefect {
 /**
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
  * first. Runs the checks a consumer's `sync` runs before writing — dependency closure, artifact resolution, delivery
- * collisions, and a per-harness render — over a whole content root instead of over one consumer's declared closure.
+ * collisions, and a per-harness render — over a whole content root instead of over one consumer's declared closure,
+ * plus one pass `sync` has no counterpart for: the retired frontmatter key, which reaches a consumer intact rather
+ * than failing there.
  *
  * Nothing here reads a `codeassembly.yaml`. The root is resolved as if it were a declared source with the built-in
  * library behind it, which is the shape a consumer deploys it in, so a producing package with no consuming project
