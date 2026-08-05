@@ -104,10 +104,13 @@ export const CHARACTER_ROLE_MAP: Record<string, CharacterName> = {
   orchestrator: 'Adam',
 };
 
+/** Phases whose agents draw from the rotating reviewer character pool. */
+const REVIEWER_PHASES: ReadonlySet<string> = new Set(['holistic', 'review', 'simplifier']);
+
 /** Resolve the character sprite name for a given phase and agent ID. */
 export function resolveCharacterName(phase: string, agentId: string): CharacterName {
   // Reviewer phases use a rotating pool based on agent ID hash
-  if (phase === 'review' || phase === 'simplifier' || phase === 'holistic') {
+  if (REVIEWER_PHASES.has(phase)) {
     // Compute a stable index using a djb2-style multiplicative hash for better distribution
     let hash = 5_381;
     for (let i = 0; i < agentId.length; i++) {
