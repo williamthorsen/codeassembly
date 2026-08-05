@@ -579,7 +579,7 @@ describe('choreograph', () => {
     });
   });
 
-  describe('suppressKilledActorError', () => {
+  describe('animation error handling', () => {
     it('silently swallows known killed-actor rejections', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
