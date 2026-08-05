@@ -214,7 +214,7 @@ Four collections ship, each carrying a claim a reader can act on:
 
 An artifact in none of them is standalone: deliberate, declared directly where wanted, and too rarely invoked to repay a standing line in the skill index. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
 
-`codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`, and offers `williamthorsen` as a commented line; a project adds a collection for repo deployment by declaring it explicitly.
+`codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`; add any other collection to that file yourself. A project adds a collection for repo deployment by declaring it explicitly.
 
 #### The `@library` token
 
