@@ -237,7 +237,7 @@ Commands:
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
   uninstall        Remove installed guidance, skills, subagents, and hook entries
   status           Show the current state of installed items, including hook entries
-  validate         Check a content root for defects that would fail at a consumer; writes nothing
+  validate         Check a content root for defects that reach a consumer; writes nothing
   library list     List available library artifacts (rulebooks, skills, subagents)
   generate <target> Generate a configuration file (e.g., label-map)
 
