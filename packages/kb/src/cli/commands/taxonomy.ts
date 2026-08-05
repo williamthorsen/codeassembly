@@ -29,16 +29,17 @@ Options:
 
 Exit codes:
   0  the taxonomy was written, or already declared every derived domain
-  2  usage error, unresolvable store, malformed config or taxonomy, or an
-     existing taxonomy without --merge
+  2  usage error, unresolvable store, a store marked readonly in kb.yaml,
+     malformed config or taxonomy, or an existing taxonomy without --merge
 `;
 
 /**
  * Runs `kb taxonomy`: parses options, resolves the store, derives the domains its notes imply, and declares them.
  *
  * The derivation reads the same enumeration `kb check` does, so a store back-filled by this command reports no
- * taxonomy drift. A malformed `.kb/config.yaml` or `.kb/taxonomy.yaml` surfaces as a `KbLoaderError` and maps to exit
- * 2; any other error propagates to the caller as a real crash.
+ * taxonomy drift. A store the registry marks `readonly` is refused, matching `kb-curate --apply`. A malformed
+ * `.kb/config.yaml` or `.kb/taxonomy.yaml` surfaces as a `KbLoaderError` and maps to exit 2; any other error
+ * propagates to the caller as a real crash.
  */
 export async function runTaxonomy(input: {
   argv: readonly string[];
@@ -67,6 +68,11 @@ export async function runTaxonomy(input: {
   });
   if (!resolved.ok) {
     return { exitCode: 2, stdout: '', stderr: `kb taxonomy: ${resolved.message}\n` };
+  }
+  if (resolved.readonly) {
+    const name = resolved.store.name ?? resolved.store.path;
+    const message = `knowledge base "${name}" is marked readonly in kb.yaml; taxonomy init is refused`;
+    return { exitCode: 2, stdout: '', stderr: `kb taxonomy: ${message}\n` };
   }
   const kbRoot: KbRoot = { path: resolved.store.path, kbDir: resolveKbDir(resolved.store.path) };
 

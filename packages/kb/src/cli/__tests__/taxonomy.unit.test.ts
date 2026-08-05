@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { check } from '../../check/check.ts';
 import { TAXONOMY_FILE } from '../../layout/index.ts';
-import { makeStore, makeTempDir } from '../../test-utils/scaffolding.ts';
+import { getRegistryPathFor, makeStore, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
 
 const VALID =
@@ -77,6 +77,32 @@ describe('kb taxonomy init', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('already declares every derived domain');
     expect(await readTaxonomy(store)).toBe(first);
+  });
+
+  it('merges into a taxonomy whose block header has nothing under it', async () => {
+    const store = await makeStore({
+      ...POPULATED,
+      [TAXONOMY_FILE]: 'domains:\n  languages: Languages\nprovisional:\n',
+    });
+
+    const result = await run({ argv: ['taxonomy', 'init', '--merge'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(await readTaxonomy(store)).toBe(
+      'domains:\n  languages: Languages\nprovisional:\n  engineering:\n  engineering/tooling:\n  engineering/tooling/versioning:\n',
+    );
+  });
+
+  it('refuses a store the registry marks readonly', async () => {
+    const store = await makeStore(POPULATED);
+    const home = await makeTempDir('kb-taxonomy-home-');
+    await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${store}\n    readonly: true\n`);
+
+    const result = await run({ argv: ['taxonomy', 'init', '--kb', 'mirror'], cwd: store, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('readonly');
+    await expect(readTaxonomy(store)).rejects.toThrow(/ENOENT/);
   });
 
   it('writes nothing for a store whose assertion folders hold no notes', async () => {
