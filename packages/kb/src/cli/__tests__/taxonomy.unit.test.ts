@@ -95,14 +95,34 @@ describe('kb taxonomy init', () => {
 
   it('refuses a store the registry marks readonly', async () => {
     const store = await makeStore(POPULATED);
-    const home = await makeTempDir('kb-taxonomy-home-');
-    await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${store}\n    readonly: true\n`);
+    const home = await makeReadonlyHome(store);
 
     const result = await run({ argv: ['taxonomy', 'init', '--kb', 'mirror'], cwd: store, home });
 
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('readonly');
     await expect(readTaxonomy(store)).rejects.toThrow(/ENOENT/);
+  });
+
+  it('refuses a readonly store discovered from inside it', async () => {
+    const store = await makeStore(POPULATED);
+    const home = await makeReadonlyHome(store);
+
+    const result = await run({ argv: ['taxonomy', 'init'], cwd: store, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('readonly');
+    await expect(readTaxonomy(store)).rejects.toThrow(/ENOENT/);
+  });
+
+  it('writes to a discovered store the registry does not mark readonly', async () => {
+    const store = await makeStore(POPULATED);
+    const home = await makeTempDir('kb-taxonomy-home-');
+    await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${store}\n`);
+
+    const result = await run({ argv: ['taxonomy', 'init'], cwd: store, home });
+
+    expect(result.exitCode).toBe(0);
   });
 
   it('writes nothing for a store whose assertion folders hold no notes', async () => {
@@ -175,6 +195,13 @@ describe('kb taxonomy init', () => {
 });
 
 // region | Helpers
+
+/** Stands up an isolated home registering `storePath` as a readonly KB named `mirror`; returns the home dir. */
+async function makeReadonlyHome(storePath: string): Promise<string> {
+  const home = await makeTempDir('kb-taxonomy-home-');
+  await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${storePath}\n    readonly: true\n`);
+  return home;
+}
 
 /** Reads the store's taxonomy file as raw text, so a test can assert on formatting rather than parsed content. */
 function readTaxonomy(storePath: string): Promise<string> {
