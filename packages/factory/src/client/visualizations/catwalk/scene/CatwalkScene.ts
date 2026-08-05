@@ -2,6 +2,7 @@ import { Actor, Color, Rectangle, Scene, vec } from 'excalibur';
 
 import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
 import {
   ArtifactActor,
   CatwalkStationActor,
@@ -55,7 +56,7 @@ export class CatwalkScene extends Scene {
 
   override onInitialize(): void {
     // The animation cache is populated before the returned promise settles, so buildScene may run immediately.
-    void this.loadSprites();
+    void loadSceneSprites(loadAllCatwalkSprites, 'Failed to load catwalk sprites:');
     this.buildScene();
     this.positionCamera();
   }
@@ -76,15 +77,6 @@ export class CatwalkScene extends Scene {
         this.applyDiff(diff, nextConfig, layout);
       }
       this.prevConfig = nextConfig;
-    }
-  }
-
-  /** Load the catwalk sprites, logging a failure rather than propagating it. */
-  private async loadSprites(): Promise<void> {
-    try {
-      await loadAllCatwalkSprites();
-    } catch (error: unknown) {
-      console.error('Failed to load catwalk sprites:', error);
     }
   }
 

@@ -1,6 +1,7 @@
 import { Actor, Canvas, Color, type ImageSource, Rectangle, Scene, vec } from 'excalibur';
 
 import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
 import { mapRunToLogicalScene } from '../../shared/run-to-logical-scene.js';
 import type { LogicalSceneState } from '../../shared/types.js';
 import { CANVAS_HEIGHT_PX, CANVAS_WIDTH_PX, TILE_SIZE } from '../constants/dimensions.js';
@@ -78,7 +79,7 @@ export class OfficeScene extends Scene {
     // If sprite loading fails the scene will render with fallback/empty graphics.
     // This is intentional silent degradation — the office remains interactive but visually broken.
     // TODO(#333): consider aborting initialization or retrying on sprite-load failure.
-    void this.loadSprites();
+    void loadSceneSprites(loadOfficeSprites, '[OfficeScene] Failed to load sprites:');
 
     this.drawBackground();
     this.placeFurniture();
@@ -90,15 +91,6 @@ export class OfficeScene extends Scene {
   updateStatus(status: CanonicalRunStatus): void {
     this.status = status;
     this.updateState(mapRunToLogicalScene(status));
-  }
-
-  /** Load the office sprites, logging a failure rather than propagating it. */
-  private async loadSprites(): Promise<void> {
-    try {
-      await loadOfficeSprites();
-    } catch (error: unknown) {
-      console.error('[OfficeScene] Failed to load sprites:', error);
-    }
   }
 
   /** Apply a new logical scene state, running the spatial pipeline. */

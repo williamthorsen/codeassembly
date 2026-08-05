@@ -6,6 +6,7 @@ import { ChuteActor } from '../../catwalk/actors/ChuteActor.js';
 import { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';
 import { StationAgentActor } from '../../catwalk/actors/StationAgentActor.js';
 import { loadAllCatwalkSprites } from '../../catwalk/sprites/catwalk-sprite-loader.js';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
 import { choreographFloor, type FloorSceneRefs } from '../choreography/floor-choreographer.js';
 import { ENGINE_HEIGHT, ENGINE_WIDTH, LABEL_Y_OFFSET } from '../constants/dimensions.js';
 import {
@@ -48,7 +49,7 @@ export class FactoryFloorScene extends Scene {
 
   override onInitialize(): void {
     // The animation cache is populated before the returned promise settles, so buildScene may run immediately.
-    void this.loadSprites();
+    void loadSceneSprites(loadAllCatwalkSprites, 'Failed to load catwalk sprites:');
     this.buildScene();
     this.positionCamera();
   }
@@ -69,15 +70,6 @@ export class FactoryFloorScene extends Scene {
         this.applyDiff(diff, nextConfig, layout);
       }
       this.prevConfig = nextConfig;
-    }
-  }
-
-  /** Load the catwalk sprites, logging a failure rather than propagating it. */
-  private async loadSprites(): Promise<void> {
-    try {
-      await loadAllCatwalkSprites();
-    } catch (error: unknown) {
-      console.error('Failed to load catwalk sprites:', error);
     }
   }
 
