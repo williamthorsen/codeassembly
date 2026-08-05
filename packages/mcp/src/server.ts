@@ -8,38 +8,15 @@ import { getRunState } from './tools/get-run-state.ts';
 import { initRun } from './tools/init-run.ts';
 import { registerArtifact } from './tools/register-artifact.ts';
 
-let hasWarned = false;
-
 const STALE_BUILD_WARNING =
   '\u{26A0}\u{FE0F} MCP server build is stale \u{2014} source files are newer than compiled output. Run `pnpm run ws compile` in packages/mcp/ to rebuild.\n\n';
-
-/**
- * If the build is stale and the warning hasn't been shown yet, return a content
- * item with the staleness warning. Returns an empty array otherwise.
- *
- * The warning is a separate content item so that data content (typically JSON)
- * remains parseable by programmatic consumers.
- *
- * Sets `hasWarned` eagerly before the async staleness check to prevent concurrent
- * tool calls from both passing the guard and emitting duplicate warnings.
- */
-async function getStaleWarningContent(): Promise<Array<{ type: 'text'; text: string }>> {
-  if (hasWarned) return [];
-  hasWarned = true;
-  try {
-    if (!(await isBuildStale())) return [];
-    return [{ type: 'text', text: STALE_BUILD_WARNING }];
-  } catch {
-    // Belt-and-suspenders: never let staleness detection break tool execution.
-    return [];
-  }
-}
 
 /**
  * Create and configure an MCP server with run-data management tools.
  */
 export function createServer(): McpServer {
   const server = new McpServer({ name: 'codeassembly', version: '0.1.0' }, { capabilities: { tools: {} } });
+  const getStaleWarningContent = createStaleWarningGate();
 
   // -- init_run --
   server.registerTool(
@@ -172,4 +149,30 @@ export function createServer(): McpServer {
   );
 
   return server;
+}
+
+/**
+ * Creates a one-shot gate that returns a content item holding the staleness warning on
+ * its first call, provided the build is stale, and an empty array on every call after.
+ *
+ * The warning is a separate content item so that data content (typically JSON)
+ * remains parseable by programmatic consumers.
+ *
+ * Latches eagerly before the async staleness check to prevent concurrent tool calls
+ * from both passing the guard and emitting duplicate warnings.
+ */
+function createStaleWarningGate(): () => Promise<Array<{ type: 'text'; text: string }>> {
+  let hasWarned = false;
+
+  return async () => {
+    if (hasWarned) return [];
+    hasWarned = true;
+    try {
+      if (!(await isBuildStale())) return [];
+      return [{ type: 'text', text: STALE_BUILD_WARNING }];
+    } catch {
+      // Belt-and-suspenders: never let staleness detection break tool execution.
+      return [];
+    }
+  };
 }
