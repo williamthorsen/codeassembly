@@ -157,14 +157,50 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe('domains:\nprovisional:\n  engineering:\n  tools:\n');
   });
 
-  it('keeps a comment attached to an empty block', async () => {
-    const kbRoot = await makeKbRoot({ taxonomy: '# header\ndomains:\n# between the blocks\nprovisional:\n  t: T\n' });
+  it('keeps a comment on an empty block header on that header line', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains: # nothing yet\nprovisional:\n  t: T\n' });
 
     await writeTaxonomy({ kbRoot, declarations: [{ path: 'engineering', provisional: false }] });
 
-    const written = await readTaxonomy(kbRoot);
-    expect(written).toContain('# header');
-    expect(written).toContain('# between the blocks');
+    expect(await readTaxonomy(kbRoot)).toBe('domains: # nothing yet\n  engineering:\nprovisional:\n  t: T\n');
+  });
+
+  it('keeps a comment written above an empty block', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: '# header\ndomains:\nprovisional:\n  t: T\n' });
+
+    await writeTaxonomy({ kbRoot, declarations: [{ path: 'engineering', provisional: false }] });
+
+    expect(await readTaxonomy(kbRoot)).toBe('# header\ndomains:\n  engineering:\nprovisional:\n  t: T\n');
+  });
+
+  it('refuses a block holding a scalar, leaving the file untouched', async () => {
+    const seeded = 'domains: not-a-mapping\nprovisional:\n  t: T\n';
+    const kbRoot = await makeKbRoot({ taxonomy: seeded });
+
+    await expect(
+      writeTaxonomy({ kbRoot, declarations: [{ path: 'engineering', description: 'Practice', provisional: false }] }),
+    ).rejects.toBeInstanceOf(KbLoaderError);
+    expect(await readTaxonomy(kbRoot)).toBe(seeded);
+  });
+
+  it('refuses a block holding a sequence, leaving the file untouched', async () => {
+    const seeded = 'domains:\n  - engineering\n  - tools\n';
+    const kbRoot = await makeKbRoot({ taxonomy: seeded });
+
+    await expect(
+      writeTaxonomy({ kbRoot, declarations: [{ path: 'languages', description: 'Langs', provisional: false }] }),
+    ).rejects.toThrow(/"domains" must be a mapping/);
+    expect(await readTaxonomy(kbRoot)).toBe(seeded);
+  });
+
+  it('refuses a malformed block even when writing to the other one', async () => {
+    const seeded = 'domains: not-a-mapping\n';
+    const kbRoot = await makeKbRoot({ taxonomy: seeded });
+
+    await expect(
+      writeTaxonomy({ kbRoot, declarations: [{ path: 'tools', provisional: true }] }),
+    ).rejects.toBeInstanceOf(KbLoaderError);
+    expect(await readTaxonomy(kbRoot)).toBe(seeded);
   });
 
   it('writes what loadTaxonomy reads back', async () => {

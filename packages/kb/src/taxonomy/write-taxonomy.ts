@@ -10,6 +10,9 @@ import { isEnoent, isRecord } from '../type-guards.ts';
 import type { KbRoot } from '../types.ts';
 import { describeKeyDefect } from './taxonomy-schema.ts';
 
+/** The blocks a taxonomy declares domains under. */
+const BLOCKS: ReadonlySet<string> = new Set(['domains', 'provisional']);
+
 /** A domain to declare. */
 export interface TaxonomyDeclaration {
   /** The domain's assertions-root-relative slash-path. */
@@ -32,8 +35,9 @@ export interface TaxonomyDeclaration {
  * is left to add, the file is not opened for writing at all. The write is atomic (temp file plus rename, matching
  * `note-io`), so an interrupted call cannot truncate the taxonomy.
  *
- * Throws a {@link KbLoaderError} on a malformed key, or on an existing file that cannot be safely appended to. Other
- * I/O errors propagate.
+ * Throws a {@link KbLoaderError} on a malformed key, or on an existing file that cannot be safely appended to: one
+ * that fails to parse, one whose top level is not a mapping, and one whose `domains` or `provisional` block holds
+ * something other than a mapping. Other I/O errors propagate.
  */
 export async function writeTaxonomy(input: {
   kbRoot: KbRoot;
@@ -85,6 +89,27 @@ export async function writeTaxonomy(input: {
 // region | Helpers
 
 /**
+ * Refuses a block holding a value an append can neither extend nor safely replace. A block is either a mapping of
+ * declarations or a header with nothing under it; a scalar or a sequence is content of the wrong type, and rebuilding
+ * the block from the entries would discard whatever the author put there.
+ */
+function assertBlocksAppendable(document: Document, path: string): void {
+  const contents = document.contents;
+  if (!isMap(contents)) {
+    return;
+  }
+  for (const pair of contents.items) {
+    if (!isPair(pair) || !isScalar(pair.key) || typeof pair.key.value !== 'string') {
+      continue;
+    }
+    if (!BLOCKS.has(pair.key.value) || isMap(pair.value) || isEmptyBlockValue(pair.value)) {
+      continue;
+    }
+    throw new KbLoaderError(`${path}: "${pair.key.value}" must be a mapping of domain paths to descriptions`);
+  }
+}
+
+/**
  * Adds a block's entries to the document.
  *
  * A block header left with nothing under it parses to a null value that cannot be descended into, so its value is
@@ -106,32 +131,39 @@ function declareInBlock(input: {
     return;
   }
 
+  // The comment moves to the block's key so it stays on the header line; on the map it would render below the first
+  // entry, reading as an annotation of that entry rather than of the block.
   const comment = isScalar(emptied.value) ? emptied.value.comment : undefined;
-  const replacement = document.createNode(Object.fromEntries(entries));
-  if (typeof comment === 'string') {
-    replacement.comment = comment;
+  if (typeof comment === 'string' && isScalar(emptied.key)) {
+    emptied.key.comment = comment;
   }
-  emptied.value = replacement;
+  emptied.value = document.createNode(Object.fromEntries(entries));
 }
 
-/** Finds a block declared with no entries under it, whose null value an append cannot descend into. */
+/** Finds a block header declared with nothing under it, whose null value an append cannot descend into. */
 function findEmptyBlock(document: Document, block: string): Pair | undefined {
   const contents = document.contents;
   if (!isMap(contents)) {
     return undefined;
   }
   for (const pair of contents.items) {
-    if (isPair(pair) && isScalar(pair.key) && pair.key.value === block && !isMap(pair.value)) {
+    if (isPair(pair) && isScalar(pair.key) && pair.key.value === block && isEmptyBlockValue(pair.value)) {
       return pair;
     }
   }
   return undefined;
 }
 
+/** Reports whether a block's value is a header with nothing under it rather than a mapping of declarations. */
+function isEmptyBlockValue(value: unknown): boolean {
+  return value === null || (isScalar(value) && value.value === null);
+}
+
 /**
  * Reads the taxonomy into an editable document, treating an absent file as an empty one. Refuses a file this cannot
- * safely append to: rewriting a file with a parse error would discard whatever the parser could not read, and a
- * non-mapping top level has no block to append to.
+ * safely append to: rewriting a file with a parse error would discard whatever the parser could not read, a
+ * non-mapping top level has no block to append to, and a block holding a scalar or a sequence holds content that
+ * appending would destroy.
  */
 async function readDocument(path: string): Promise<Document> {
   let text = '';
@@ -151,6 +183,7 @@ async function readDocument(path: string): Promise<Document> {
   if (document.contents !== null && !isMap(document.contents)) {
     throw new KbLoaderError(`${path}: top-level must be a mapping`);
   }
+  assertBlocksAppendable(document, path);
   return document;
 }
 
@@ -162,7 +195,7 @@ function readDeclaredPaths(document: Document): Set<string> {
     return paths;
   }
 
-  for (const block of ['domains', 'provisional']) {
+  for (const block of BLOCKS) {
     const declarations = contents[block];
     if (isRecord(declarations)) {
       for (const path of Object.keys(declarations)) {
