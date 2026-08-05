@@ -16,7 +16,7 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
 
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
-- **Ticket targets** derive their delta from `## Specification compliance`'s in-conflict criteria rows and, for `Rewrite:` lines, from the divergent `D{n}` rows the ratification carries into the ticket's narrative sections. Unplanned work is never a source: implementation that goes beyond the criteria is not a deviation, so it yields no line.
+- **Ticket targets** derive their delta from the ticket subsection of `## Specification compliance`: its in-conflict criteria rows and, for `Rewrite:` lines, the divergent `D{n}` rows the ratification carries into the ticket's narrative sections. Unplanned work is never a source: implementation that goes beyond the criteria is not a deviation, so it yields no line.
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
   - `Rewrite: {## Section} — {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
@@ -33,7 +33,9 @@ Render no exclusions line. A criterion genuinely arguable as in conflict belongs
 
 ### Deviations sub-block
 
-Shown when at least one criterion in `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta carries at least one line. Compute the delta first: an empty delta renders no sub-block.
+Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta carries at least one line. Compute the delta first: an empty delta renders no sub-block.
+
+A criterion from another spec source never fires this sub-block, whose only edit rewrites the ticket. A PR description at odds with the implementation is the [source divergence sub-block](#source-divergence-sub-block)'s case 2.
 
 A criterion that is merely unbuilt contributes no line. The work is unfinished, not redirected, and a contract is not revised to match a moving target. Implementation that exceeds the criteria contributes none either.
 

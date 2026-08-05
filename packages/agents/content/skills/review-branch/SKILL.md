@@ -196,7 +196,7 @@ Assign the status against the criterion's substantive guarantee, not its wording
 ⚠️ Partial and ❌ Not addressed mean the guarantee is undelivered. Two situations produce them, and the Notes cell states which, because only one is a deviation:
 
 - **Unbuilt**: the work is incomplete. At review time this is ordinary, and the contract is not in question.
-- **In conflict**: the implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. This is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
+- **In conflict**: the implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
 
 Extract criteria from whatever structure the source uses (numbered lists, checkboxes, prose). If the source does not have clearly delimited acceptance criteria, derive them from its problem statement and solution description. PR descriptions typically expose criteria as the bullet items under `## What`, `## Summary`, or an explicit acceptance-criteria heading; fall back to the description body when no list is present.
 
