@@ -31,11 +31,11 @@ describe('harness', () => {
       expect(result).toEqual(['claude']);
     });
 
-    it('should detect only rovodev when .rovodev directory exists', async () => {
+    it('should detect only rovo when .rovodev directory exists', async () => {
       await mkdir(path.join(tempDir, '.rovodev'), { recursive: true });
 
       const result = detectHarnesses(tempDir);
-      expect(result).toEqual(['rovodev']);
+      expect(result).toEqual(['rovo']);
     });
 
     it('should detect both harnesses when both directories exist', async () => {
@@ -43,7 +43,7 @@ describe('harness', () => {
       await mkdir(path.join(tempDir, '.rovodev'), { recursive: true });
 
       const result = detectHarnesses(tempDir);
-      expect(result).toEqual(['claude', 'rovodev']);
+      expect(result).toEqual(['claude', 'rovo']);
     });
   });
 
@@ -52,14 +52,12 @@ describe('harness', () => {
       expect(resolveAmbientHostPath('claude', 'harness-home', tempDir)).toBe(
         path.join(tempDir, '.claude', 'CLAUDE.md'),
       );
-      expect(resolveAmbientHostPath('rovodev', 'harness-home', tempDir)).toBe(
-        path.join(tempDir, '.rovodev', 'AGENTS.md'),
-      );
+      expect(resolveAmbientHostPath('rovo', 'harness-home', tempDir)).toBe(path.join(tempDir, '.rovodev', 'AGENTS.md'));
     });
 
     it('should resolve the project-local host to the machine-local file at the base, not under the harness home', () => {
       expect(resolveAmbientHostPath('claude', 'project-local', tempDir)).toBe(path.join(tempDir, 'CLAUDE.local.md'));
-      expect(resolveAmbientHostPath('rovodev', 'project-local', tempDir)).toBe(path.join(tempDir, 'AGENTS.local.md'));
+      expect(resolveAmbientHostPath('rovo', 'project-local', tempDir)).toBe(path.join(tempDir, 'AGENTS.local.md'));
     });
 
     it('should give every harness a local guidance filename distinct from its harness-home one', () => {
@@ -80,15 +78,13 @@ describe('harness', () => {
       expect(result.scriptsDir).toBe(path.join(tempDir, HARNESSES.claude.homeDir, HARNESSES.claude.scriptsDirName));
     });
 
-    it('should resolve correct paths for rovodev harness', () => {
-      const result = resolveHarnessPaths('rovodev', tempDir);
+    it('should resolve correct paths for rovo harness', () => {
+      const result = resolveHarnessPaths('rovo', tempDir);
 
-      expect(result.harnessHome).toBe(path.join(tempDir, HARNESSES.rovodev.homeDir));
-      expect(result.skillsDir).toBe(path.join(tempDir, HARNESSES.rovodev.homeDir, HARNESSES.rovodev.skillsDirName));
-      expect(result.subagentsDir).toBe(
-        path.join(tempDir, HARNESSES.rovodev.homeDir, HARNESSES.rovodev.subagentsDirName),
-      );
-      expect(result.scriptsDir).toBe(path.join(tempDir, HARNESSES.rovodev.homeDir, HARNESSES.rovodev.scriptsDirName));
+      expect(result.harnessHome).toBe(path.join(tempDir, HARNESSES.rovo.homeDir));
+      expect(result.skillsDir).toBe(path.join(tempDir, HARNESSES.rovo.homeDir, HARNESSES.rovo.skillsDirName));
+      expect(result.subagentsDir).toBe(path.join(tempDir, HARNESSES.rovo.homeDir, HARNESSES.rovo.subagentsDirName));
+      expect(result.scriptsDir).toBe(path.join(tempDir, HARNESSES.rovo.homeDir, HARNESSES.rovo.scriptsDirName));
     });
 
     it('should produce absolute paths containing the harness home directory', () => {
@@ -103,12 +99,12 @@ describe('harness', () => {
   describe('HARNESSES invocation sigils', () => {
     it('should render the skill sigil per harness', () => {
       expect(HARNESSES.claude.skillSigil).toBe('/');
-      expect(HARNESSES.rovodev.skillSigil).toBe('!');
+      expect(HARNESSES.rovo.skillSigil).toBe('!');
     });
 
     it('should leave the subagent sigil empty on both current harnesses', () => {
       expect(HARNESSES.claude.subagentSigil).toBe('');
-      expect(HARNESSES.rovodev.subagentSigil).toBe('');
+      expect(HARNESSES.rovo.subagentSigil).toBe('');
     });
 
     it('should supply both sigils for every harness id', () => {

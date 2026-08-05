@@ -28,6 +28,6 @@ describe(loadHarnessOverlay, () => {
   });
 
   it('returns an empty string when the overlay file is absent', async () => {
-    expect(await loadHarnessOverlay(contentDir, HARNESSES.rovodev)).toBe('');
+    expect(await loadHarnessOverlay(contentDir, HARNESSES.rovo)).toBe('');
   });
 });

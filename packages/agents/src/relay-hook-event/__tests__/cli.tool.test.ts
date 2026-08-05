@@ -31,8 +31,8 @@ describe(parseArgs, () => {
   });
 
   it('parses the inline --flag=value form', () => {
-    expect(parseArgs(['--harness=rovodev', '--hook=on_complete'])).toEqual({
-      harness: 'rovodev',
+    expect(parseArgs(['--harness=rovo', '--hook=on_complete'])).toEqual({
+      harness: 'rovo',
       hook: 'on_complete',
       home: null,
     });
@@ -150,10 +150,10 @@ describe(runRelay, () => {
     { harness: 'claude', hook: 'SessionEnd', type: 'session.ended' },
     { harness: 'claude', hook: 'UserPromptSubmit', type: 'turn.started' },
     { harness: 'claude', hook: 'Stop', type: 'turn.completed' },
-    { harness: 'rovodev', hook: 'on_session_start', type: 'session.started' },
-    { harness: 'rovodev', hook: 'on_session_end', type: 'session.ended' },
-    { harness: 'rovodev', hook: 'on_user_prompt', type: 'turn.started' },
-    { harness: 'rovodev', hook: 'on_complete', type: 'turn.completed' },
+    { harness: 'rovo', hook: 'on_session_start', type: 'session.started' },
+    { harness: 'rovo', hook: 'on_session_end', type: 'session.ended' },
+    { harness: 'rovo', hook: 'on_user_prompt', type: 'turn.started' },
+    { harness: 'rovo', hook: 'on_complete', type: 'turn.completed' },
   ])('relays the $harness $hook hook as $type', async ({ harness, hook, type }) => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
@@ -219,7 +219,7 @@ describe(runRelay, () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
     const result = await runRelay({
-      argv: ['--harness', 'rovodev', '--hook', 'on_session_end', '--home', home],
+      argv: ['--harness', 'rovo', '--hook', 'on_session_end', '--home', home],
       stdin: JSON.stringify({ session_id: 's1', cwd, attributes: { reason: 'switch' } }),
       cwd: '/nowhere',
       env: {},
@@ -342,7 +342,7 @@ describe(runRelay, () => {
 
   it('relays nothing for a hook belonging to the other harness', async () => {
     const result = await runRelay({
-      argv: ['--harness', 'rovodev', '--hook', 'SessionStart', '--home', home],
+      argv: ['--harness', 'rovo', '--hook', 'SessionStart', '--home', home],
       stdin: JSON.stringify({ session_id: 's1', cwd: '/repos/thing' }),
       cwd: '/nowhere',
       env: {},

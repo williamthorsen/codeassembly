@@ -30,7 +30,7 @@ export interface ContentTreeOptions {
  * Writes a minimal but realistic CodeAssembly content tree into `contentDir` for use as the third argument to
  * `installCommand`, so install-command tests exercise the full pipeline against a small fixture. The default tree
  * carries every shape the integration tests rely on: a relative-link skill, an opt-out skill (`user-invocable: false`),
- * a `_data` support file, one claude-only and one rovodev-only harness skill, a subagent with overlay-merged
+ * a `_data` support file, one claude-only and one rovo-only harness skill, a subagent with overlay-merged
  * frontmatter and a `{harness_home_dir}` script token, a script, shared guidance, and per-harness guidance that
  * inlines the shared file via include directives. Provided options shallow-merge over the defaults by top-level key.
  */
@@ -49,7 +49,7 @@ export async function buildContentTree(contentDir: string, options: ContentTreeO
     await writeSkillTree(path.join(contentDir, 'skills', '_harnesses', harness), harnessSkills);
   }
 
-  // Overlays are written under their frontmatter-file name (`claude.yaml`, `rovodev.yaml`) so the loader resolves them.
+  // Overlays are written under their frontmatter-file name (`claude.yaml`, `rovo.yaml`) so the loader resolves them.
   const overlayFiles: Record<string, string> = {};
   for (const harness of HARNESS_IDS) {
     overlayFiles[`${harness}.yaml`] = options.overlays?.[harness] ?? DEFAULT_OVERLAYS[harness];
@@ -68,7 +68,7 @@ export async function buildContentTree(contentDir: string, options: ContentTreeO
   return contentDir;
 }
 
-const HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovodev'];
+const HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovo'];
 
 const DEFAULT_SKILLS: Record<string, Record<string, string>> = {
   // `alpha` is user-invocable (default) and carries a relative `../_data/` link, so the install exercises path
@@ -116,11 +116,11 @@ const DEFAULT_HARNESS_SKILLS: Record<HarnessId, Record<string, Record<string, st
       ].join('\n'),
     },
   },
-  rovodev: {
-    'rovodev-only': {
+  rovo: {
+    'rovo-only': {
       'SKILL.md': [
         '---',
-        'name: rovodev-only',
+        'name: rovo-only',
         'description: Rovodev-only fixture skill',
         '---',
         '',
@@ -165,9 +165,7 @@ const DEFAULT_OVERLAYS: Record<HarnessId, string> = {
     '  memory: user',
     '',
   ].join('\n'),
-  rovodev: ['_tools:', '  Bash: bash', '  Read: open_files', '  Write: create_file', '', '_defaults: {}', ''].join(
-    '\n',
-  ),
+  rovo: ['_tools:', '  Bash: bash', '  Read: open_files', '  Write: create_file', '', '_defaults: {}', ''].join('\n'),
 };
 
 const DEFAULT_SCRIPTS: Record<string, string> = {
@@ -190,7 +188,7 @@ const DEFAULT_HARNESS_GUIDANCE: Record<HarnessId, Record<string, string>> = {
       '',
     ].join('\n'),
   },
-  rovodev: {
+  rovo: {
     'AGENTS.md': [
       '<!-- include: ../../shared/AGENTS.md / -->',
       '<!-- include: ./codeassembly-guidance.md / -->',

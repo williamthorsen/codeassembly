@@ -80,8 +80,8 @@ describe(validateCommand, () => {
   it('checks only the named harness when one is given', async () => {
     await writeSkill(path.join(projectDir, 'content'), 'alpha');
 
-    expect(await validateCommand({ content: 'content', harness: 'rovodev' }, projectDir)).toBe(true);
-    expect(loggedText()).toContain('against rovodev');
+    expect(await validateCommand({ content: 'content', harness: 'rovo' }, projectDir)).toBe(true);
+    expect(loggedText()).toContain('against rovo');
   });
 });
 

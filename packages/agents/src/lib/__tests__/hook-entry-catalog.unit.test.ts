@@ -45,7 +45,7 @@ describe(buildRovoHookEntries, () => {
   it('builds one entry per relayed Rovo hook, named by the hook, in relay order', () => {
     const entries = buildRovoHookEntries('/home/user/.rovodev/scripts');
 
-    expect(entries.map((entry) => entry.name)).toEqual([...listRelayHooks('rovodev')]);
+    expect(entries.map((entry) => entry.name)).toEqual([...listRelayHooks('rovo')]);
   });
 
   it('bakes the hook identity, the absolute relay path, and the sentinel into each command', () => {
@@ -53,7 +53,7 @@ describe(buildRovoHookEntries, () => {
       expect(entry.commands).toHaveLength(1);
       const command = entry.commands[0] ?? '';
       expect(command).toContain('node /home/user/.rovodev/scripts/relay-hook-event.mjs');
-      expect(command).toContain('--harness rovodev');
+      expect(command).toContain('--harness rovo');
       expect(command).toContain(`--hook ${entry.name}`);
       expect(command).toContain(HOOK_SENTINEL);
     }

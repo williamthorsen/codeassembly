@@ -127,15 +127,13 @@ describe('configure-hooks', () => {
   describe(checkHarnessHookEntries, () => {
     it('reports absent before configuration and present after, for both harnesses', async () => {
       expect((await checkHarnessHookEntries('claude', tempDir)).every((entry) => entry.status === 'absent')).toBe(true);
-      expect((await checkHarnessHookEntries('rovodev', tempDir)).every((entry) => entry.status === 'absent')).toBe(
-        true,
-      );
+      expect((await checkHarnessHookEntries('rovo', tempDir)).every((entry) => entry.status === 'absent')).toBe(true);
 
       await ensureHarnessHookEntries('claude', tempDir);
-      await ensureHarnessHookEntries('rovodev', tempDir);
+      await ensureHarnessHookEntries('rovo', tempDir);
 
       const claudeChecks = await checkHarnessHookEntries('claude', tempDir);
-      const rovoChecks = await checkHarnessHookEntries('rovodev', tempDir);
+      const rovoChecks = await checkHarnessHookEntries('rovo', tempDir);
       expect(claudeChecks).toHaveLength(4);
       expect(rovoChecks).toHaveLength(4);
       expect(claudeChecks.every((entry) => entry.status === 'present')).toBe(true);
@@ -159,9 +157,9 @@ describe('configure-hooks', () => {
         ].join('\n'),
         'utf8',
       );
-      await ensureHarnessHookEntries('rovodev', tempDir);
+      await ensureHarnessHookEntries('rovo', tempDir);
 
-      await removeHarnessHookEntries('rovodev', tempDir);
+      await removeHarnessHookEntries('rovo', tempDir);
 
       const config = await readFile(configPath, 'utf8');
       expect(config).toContain('echo done');

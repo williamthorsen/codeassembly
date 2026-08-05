@@ -19,14 +19,15 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     skillSigil: '/',
     subagentSigil: '',
   },
-  rovodev: {
-    id: 'rovodev',
+  rovo: {
+    id: 'rovo',
+    // Atlassian's path, which renames on its own schedule; the id above is CodeAssembly's own vocabulary.
     homeDir: '.rovodev',
     skillsDirName: 'skills',
     subagentsDirName: 'subagents',
     scriptsDirName: 'scripts',
     configFileName: 'config.yml',
-    frontmatterFile: 'rovodev.yaml',
+    frontmatterFile: 'rovo.yaml',
     guidanceFileName: 'AGENTS.md',
     localGuidanceFileName: 'AGENTS.local.md',
     skillSigil: '!',
@@ -35,7 +36,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
 };
 
 /** Every known harness identifier. */
-export const ALL_HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovodev'];
+export const ALL_HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovo'];
 
 /** Membership set for `isHarnessId`, widened to `string` so an arbitrary value tests without a type assertion. */
 const HARNESS_ID_SET: ReadonlySet<string> = new Set(ALL_HARNESS_IDS);

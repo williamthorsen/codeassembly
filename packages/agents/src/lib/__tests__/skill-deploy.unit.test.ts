@@ -41,7 +41,7 @@ describe(deploySkill, () => {
 
   it('strips the build-only harnesses directive from the deployed SKILL.md', async () => {
     await writeLibrarySkill('rovo-only', {
-      'SKILL.md': '---\nname: rovo-only\nharnesses: [rovodev]\n---\n\n# Rovo only\n',
+      'SKILL.md': '---\nname: rovo-only\nharnesses: [rovo]\n---\n\n# Rovo only\n',
     });
     const destDir = path.join(destParent, 'rovo-only');
 
@@ -224,11 +224,11 @@ describe(resolveDeclaredSkill, () => {
   });
 
   it('reads a list-valued `harnesses:` field into the target set', async () => {
-    await writeLibrarySkill('brainstorming', 'harnesses: [rovodev]');
+    await writeLibrarySkill('brainstorming', 'harnesses: [rovo]');
 
     const resolved = await resolveDeclaredSkill('brainstorming', libraryResolver(contentDir));
 
-    expect(resolved.targetHarnesses).toEqual(['rovodev']);
+    expect(resolved.targetHarnesses).toEqual(['rovo']);
   });
 
   it('normalizes a scalar `harnesses:` field into a single-element target set', async () => {

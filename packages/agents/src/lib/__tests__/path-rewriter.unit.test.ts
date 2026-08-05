@@ -149,7 +149,7 @@ describe(rewriteTemplateVariables, () => {
 
   it('resolves to the correct path for different harnesses', () => {
     const content = '{harness_home_dir}/scripts/describe-change.sh';
-    expect(rewriteTemplateVariables(content, '.rovodev', 'rovodev')).toBe('~/.rovodev/scripts/describe-change.sh');
+    expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe('~/.rovodev/scripts/describe-change.sh');
   });
 
   it('replaces {harness_id} with the harness identifier, leaving no placeholder', () => {
@@ -157,8 +157,8 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
       'node ~/.claude/skills/capture-event/capture-event.mjs --harness claude',
     );
-    expect(rewriteTemplateVariables(content, '.rovodev', 'rovodev')).toBe(
-      'node ~/.rovodev/skills/capture-event/capture-event.mjs --harness rovodev',
+    expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe(
+      'node ~/.rovodev/skills/capture-event/capture-event.mjs --harness rovo',
     );
   });
 });

@@ -40,10 +40,10 @@ describe(expandIncludes, () => {
 
     it('resolves against the directive-bearing file directory, not the entry point directory', async () => {
       const host = await writeSource(
-        'harnesses/rovodev/AGENTS.md',
+        'harnesses/rovo/AGENTS.md',
         ['<!-- include: ./codeassembly-guidance.md / -->', ''].join('\n'),
       );
-      await writeSource('harnesses/rovodev/codeassembly-guidance.md', 'Rovodev-specific.\n');
+      await writeSource('harnesses/rovo/codeassembly-guidance.md', 'Rovodev-specific.\n');
 
       const result = await expandIncludes(host, contentDir);
 

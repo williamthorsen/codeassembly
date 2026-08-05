@@ -23,7 +23,7 @@ const CLAUDE_CONTEXT: RulebookRenderContext = {
 const ROVO_CONTEXT: RulebookRenderContext = {
   anchor: homeAnchor('.rovodev'),
   homeDir: '.rovodev',
-  harnessId: 'rovodev',
+  harnessId: 'rovo',
   skillSigil: '!',
   subagentSigil: '',
   rulebooks: RULEBOOKS,

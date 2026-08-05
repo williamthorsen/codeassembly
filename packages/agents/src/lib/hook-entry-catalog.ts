@@ -50,9 +50,9 @@ export function buildClaudeHookEntries(): ReadonlyArray<ClaudeHookEntry> {
  */
 export function buildRovoHookEntries(scriptsDir: string): ReadonlyArray<HookEntry> {
   const relayPath = path.join(scriptsDir, RELAY_FILENAME);
-  return listRelayHooks('rovodev').map((hook) => ({
+  return listRelayHooks('rovo').map((hook) => ({
     name: hook,
-    commands: [buildRelayCommand(relayPath, 'rovodev', hook)],
+    commands: [buildRelayCommand(relayPath, 'rovo', hook)],
   }));
 }
 

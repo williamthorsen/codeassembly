@@ -1331,7 +1331,7 @@ function resolveAmbientHosts(
  */
 async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): Promise<void> {
   for (const harnessId of harnessIds) {
-    if (harnessId !== 'rovodev') {
+    if (harnessId !== 'rovo') {
       continue;
     }
     const { harnessHome, skillsDir } = resolveHarnessPaths(harnessId, domain.baseDir);
@@ -1357,7 +1357,7 @@ async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: S
 /** Lists the Rovo Dev `prompts.yml` paths a sync of `domain` would reconcile — one per targeted Rovo Dev harness. */
 function resolvePromptsYmlPaths(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): ReadonlyArray<string> {
   return harnessIds
-    .filter((harnessId) => harnessId === 'rovodev')
+    .filter((harnessId) => harnessId === 'rovo')
     .map((harnessId) => path.join(resolveHarnessPaths(harnessId, domain.baseDir).harnessHome, 'prompts.yml'));
 }
 
