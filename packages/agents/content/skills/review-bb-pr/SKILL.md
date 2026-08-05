@@ -40,9 +40,9 @@ Fetch PR metadata through the Bitbucket Cloud REST API at `https://api.bitbucket
 
 Authentication resolves in priority order:
 
-1. **Bot credentials (Basic auth):** `BITBUCKET_BOT_USERNAME` + `BITBUCKET_BOT_TOKEN` env vars.
-2. **API token (Bearer auth):** `BITBUCKET_API_TOKEN` env var.
-3. **macOS keychain (Bearer auth):** `security find-generic-password -a "$USER" -s "bitbucket-api-token" -w`.
+1. **Bot credentials (Basic auth):** `BITBUCKET_BOT_USERNAME` + `BITBUCKET_BOT_TOKEN` env vars. Basic auth pairs an Atlassian API token with the account's email, so `BITBUCKET_BOT_USERNAME` holds that email.
+2. **Access token (Bearer auth):** `BITBUCKET_API_TOKEN` env var, holding a repository, project, or workspace access token.
+3. **macOS keychain (Bearer auth):** `security find-generic-password -a "$USER" -s "bitbucket-api-token" -w`, holding an access token of the same kind.
 
 If no credentials are available, exit non-zero with:
 
@@ -53,7 +53,7 @@ No authentication configured
   Add macOS keychain entry 'bitbucket-api-token'
 ```
 
-Tokens come from https://bitbucket.org/account/settings/app-passwords/ with scopes Repositories (Read) and Pull requests (Read + Write); the keychain entry is added with `security add-generic-password -a "$USER" -s "bitbucket-api-token" -w "<token>"`. The same credentials serve the posting path.
+An Atlassian API token is created at https://id.atlassian.com/manage-profile/security/api-tokens; an access token is created in the repository, project, or workspace settings. Either needs read scope on repositories and pull requests, plus write scope on pull requests where the same credential also serves the posting path. The keychain entry is added with `security add-generic-password -a "$USER" -s "bitbucket-api-token" -w "<token>"`.
 
 ## Process
 
