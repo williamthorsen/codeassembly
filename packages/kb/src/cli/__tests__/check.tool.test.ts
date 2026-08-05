@@ -140,6 +140,26 @@ describe(run, () => {
     });
   });
 
+  it('names a discovered store from its registry entry in the JSON report', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    const home = await makeHome('coding', store);
+
+    const result = await run({ argv: ['check', '--json'], cwd: store, home });
+
+    const payload: unknown = JSON.parse(result.stdout);
+    expect(payload).toMatchObject({ store: { name: 'coding', path: store } });
+  });
+
+  it('reports a discovered store with no registry entry as unnamed', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['check', '--json'], cwd: store, home });
+
+    const payload: unknown = JSON.parse(result.stdout);
+    expect(payload).toMatchObject({ store: { name: null, path: store } });
+  });
+
   it('resolves a store from a project-local registry entry', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
     const project = await makeTempDir('kb-cli-project-');
