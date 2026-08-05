@@ -8,21 +8,6 @@ import { readAppendedLines, type TailResult } from '../jsonl-tail.ts';
 
 const tempDirs: string[] = [];
 
-/** Writes `content` to a fresh temp file and returns its path. */
-function composeFile(content: string): string {
-  const dir = mkdtempSync(join(tmpdir(), 'jsonl-tail-'));
-  tempDirs.push(dir);
-  const filePath = join(dir, 'session.jsonl');
-  writeFileSync(filePath, content);
-  return filePath;
-}
-
-/** Narrows a result to the `appended` variant. */
-function expectAppended(result: TailResult): { lines: string[]; offset: number } {
-  assert(result.kind === 'appended', `Expected an appended result, got ${result.kind}`);
-  return result;
-}
-
 afterEach(() => {
   const pending = [...tempDirs];
   tempDirs.length = 0;
@@ -100,3 +85,22 @@ describe('readAppendedLines', () => {
     expect(readAppendedLines({ filePath: join(dir, 'gone.jsonl'), offset: 0 })).toEqual({ kind: 'missing' });
   });
 });
+
+// region | Helpers
+
+/** Writes `content` to a fresh temp file and returns its path. */
+function composeFile(content: string): string {
+  const dir = mkdtempSync(join(tmpdir(), 'jsonl-tail-'));
+  tempDirs.push(dir);
+  const filePath = join(dir, 'session.jsonl');
+  writeFileSync(filePath, content);
+  return filePath;
+}
+
+/** Narrows a result to the `appended` variant. */
+function expectAppended(result: TailResult): { lines: string[]; offset: number } {
+  assert(result.kind === 'appended', `Expected an appended result, got ${result.kind}`);
+  return result;
+}
+
+// endregion | Helpers
