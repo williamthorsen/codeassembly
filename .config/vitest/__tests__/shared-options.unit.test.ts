@@ -10,6 +10,7 @@ import type { ProjectConfig } from 'vitest/node';
 import { sharedVitestOptions } from '../shared-options.ts';
 
 const PACKAGES_DIR = fileURLToPath(new URL('../../../packages/', import.meta.url));
+const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SHARED_OPTIONS_PATH = '.config/vitest/shared-options.ts';
 const GIT_ISOLATION_SETUP_FILE = fileURLToPath(new URL('../vitest.setup.ts', import.meta.url));
 
@@ -17,13 +18,15 @@ const GIT_ISOLATION_SETUP_FILE = fileURLToPath(new URL('../vitest.setup.ts', imp
 // Pinned so that a tier it adds or drops fails here rather than passing with a project fewer checked.
 const PROJECT_NAMES = ['unit', 'tool', 'localhost', 'remote'];
 
-// A package whose config omits the shared layer loses git isolation silently: nothing fails, and a
-// suite that spawns git blocks on the developer's signing passphrase instead.
-describe('workspace Vitest configs', () => {
-  it.each(listWorkspacePackages())('%s layers in the shared options', (packageName) => {
-    const configPath = path.join(PACKAGES_DIR, packageName, 'vitest.config.ts');
+const ROOT_VITEST_CONFIG_PATHS = ['vitest.config.ts', 'vitest.root.config.ts'];
 
-    expect(existsSync(configPath), `${packageName} has no vitest.config.ts`).toBe(true);
+// A config that omits the shared layer loses git isolation silently: nothing fails, and a
+// suite that spawns git blocks on the developer's signing passphrase instead.
+describe('Vitest configs', () => {
+  it.each(listVitestConfigPaths())('%s layers in the shared options', (relativeConfigPath) => {
+    const configPath = path.join(REPO_ROOT, relativeConfigPath);
+
+    expect(existsSync(configPath), `${relativeConfigPath} does not exist`).toBe(true);
     expect(readFileSync(configPath, 'utf8')).toContain(SHARED_OPTIONS_PATH);
   });
 });
@@ -66,6 +69,12 @@ function getProjectSetupFiles(config: ViteUserConfig): Array<[string, string[]]>
 function getProjectName(name: ProjectConfig['name']): string {
   if (name === undefined) return '';
   return typeof name === 'string' ? name : name.label;
+}
+
+/** Names the repo-root and per-package Vitest config files that must layer in the shared options. */
+function listVitestConfigPaths(): string[] {
+  const packageConfigPaths = listWorkspacePackages().map((packageName) => `packages/${packageName}/vitest.config.ts`);
+  return [...ROOT_VITEST_CONFIG_PATHS, ...packageConfigPaths];
 }
 
 /** Names every directory under `packages/` that holds a workspace package. */
