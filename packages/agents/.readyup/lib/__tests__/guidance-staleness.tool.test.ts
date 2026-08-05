@@ -51,7 +51,7 @@ describe(readGuidanceStaleness, () => {
 
   it('reports when the guidance file was last modified', async () => {
     const { commitFiles, root } = await createGuidanceRepoFixture();
-    const beforeEpochSec = Math.floor(Date.now() / 1000);
+    const beforeEpochSec = Math.floor(Date.now() / 1_000);
     await commitFiles(GUIDANCE_PATH);
 
     const staleness = await readGuidanceStaleness(root, GUIDANCE_PATH);

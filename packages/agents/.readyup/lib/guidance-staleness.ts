@@ -71,5 +71,5 @@ export function countMeaningfulCommits(log: string): number {
 
 /** Renders a Unix epoch in seconds as a `YYYY-MM-DD` UTC date. */
 export function formatUtcDate(epochSec: number): string {
-  return new Date(epochSec * 1000).toISOString().slice(0, 10);
+  return new Date(epochSec * 1_000).toISOString().slice(0, 10);
 }
