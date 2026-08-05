@@ -4,13 +4,10 @@ import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canoni
 import type { AnimationHandle, TransitionContext } from '../transitions/transition-executor.js';
 import type { TransitionPlan } from '../types.js';
 
-// Track actors added/removed through the mock
-let actorCount = 0;
-
-// Capture transition plans passed to executeTransitions for assertion
-let capturedPlans: TransitionPlan[] = [];
+// Actors added/removed through the mock scene, and the transition plans handed to executeTransitions
+const recorded: { actorCount: number; plans: TransitionPlan[] } = { actorCount: 0, plans: [] };
 const mockExecuteTransitions = vi.fn((plan: TransitionPlan, _context: TransitionContext): AnimationHandle => {
-  capturedPlans.push(plan);
+  recorded.plans.push(plan);
   return { cancel: vi.fn() };
 });
 
@@ -57,10 +54,10 @@ vi.mock('excalibur', () => {
     backgroundColor = { r: 0, g: 0, b: 0 };
     camera = { pos: { x: 0, y: 0 }, zoom: 1 };
     add(_actor: MockActor) {
-      actorCount++;
+      recorded.actorCount++;
     }
     remove(_actor: MockActor) {
-      actorCount--;
+      recorded.actorCount--;
     }
   }
   class MockCanvas {
@@ -187,18 +184,18 @@ describe('OfficeScene', () => {
   });
 
   it('draws background and furniture on initialize', () => {
-    actorCount = 0;
+    recorded.actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
 
     // At minimum: 1 background + 26 furniture + 1 orchestrator
-    expect(actorCount).toBeGreaterThanOrEqual(MIN_ACTOR_COUNT_AFTER_INIT);
+    expect(recorded.actorCount).toBeGreaterThanOrEqual(MIN_ACTOR_COUNT_AFTER_INIT);
   });
 
   it('triggers transitions with fade_in when agents are added via updateStatus', () => {
     mockExecuteTransitions.mockClear();
-    capturedPlans = [];
-    actorCount = 0;
+    recorded.plans = [];
+    recorded.actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
 
@@ -243,27 +240,27 @@ describe('OfficeScene', () => {
     );
 
     expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
-    expect(capturedPlans).toHaveLength(1);
-    const fadeIns = capturedPlans[0]?.transitions.filter((t) => t.type === 'fade_in') ?? [];
+    expect(recorded.plans).toHaveLength(1);
+    const fadeIns = recorded.plans[0]?.transitions.filter((t) => t.type === 'fade_in') ?? [];
     expect(fadeIns.length).toBeGreaterThan(0);
   });
 
   it('handles empty state gracefully', () => {
-    actorCount = 0;
+    recorded.actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
-    const initialCount = actorCount;
+    const initialCount = recorded.actorCount;
 
     // Should not throw; re-applying same status should not change count
     scene.updateStatus(buildMinimalStatus());
 
-    expect(actorCount).toBe(initialCount);
+    expect(recorded.actorCount).toBe(initialCount);
   });
 
   it('uses transition executor for subsequent updateStatus calls with changes', () => {
     mockExecuteTransitions.mockClear();
-    capturedPlans = [];
-    actorCount = 0;
+    recorded.plans = [];
+    recorded.actorCount = 0;
 
     // Start with 3 reviewers
     const statusWith3Reviewers = buildMinimalStatus({
@@ -314,15 +311,15 @@ describe('OfficeScene', () => {
     expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
 
     // Verify the plan contains fade_out transitions for removed reviewers
-    expect(capturedPlans).toHaveLength(1);
-    const fadeOuts = capturedPlans[0]?.transitions.filter((t) => t.type === 'fade_out') ?? [];
+    expect(recorded.plans).toHaveLength(1);
+    const fadeOuts = recorded.plans[0]?.transitions.filter((t) => t.type === 'fade_out') ?? [];
     expect(fadeOuts.length).toBeGreaterThan(0);
   });
 
   it('cancels active animation when a new updateStatus arrives mid-animation', () => {
     mockExecuteTransitions.mockClear();
-    capturedPlans = [];
-    actorCount = 0;
+    recorded.plans = [];
+    recorded.actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
 
@@ -379,8 +376,8 @@ describe('OfficeScene', () => {
 
   it('triggers transitions with artifact_appear when artifacts are added', () => {
     mockExecuteTransitions.mockClear();
-    capturedPlans = [];
-    actorCount = 0;
+    recorded.plans = [];
+    recorded.actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
 
@@ -409,8 +406,8 @@ describe('OfficeScene', () => {
     );
 
     expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
-    expect(capturedPlans).toHaveLength(1);
-    const artifactAppears = capturedPlans[0]?.transitions.filter((t) => t.type === 'artifact_appear') ?? [];
+    expect(recorded.plans).toHaveLength(1);
+    const artifactAppears = recorded.plans[0]?.transitions.filter((t) => t.type === 'artifact_appear') ?? [];
     expect(artifactAppears.length).toBeGreaterThan(0);
   });
 });
