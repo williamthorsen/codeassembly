@@ -44,7 +44,7 @@ interface WorkTypesDocument {
 }
 
 /**
- * The test file lives at `packages/agents/src/lib/__tests__/work-types-schema.test.ts`.
+ * The test file lives at `packages/agents/src/lib/__tests__/work-types-schema.unit.test.ts`.
  * Three levels up reaches the package root (`packages/agents/`).
  */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
