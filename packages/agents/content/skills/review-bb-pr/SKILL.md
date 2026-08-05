@@ -61,7 +61,7 @@ An Atlassian API token is created at https://id.atlassian.com/manage-profile/sec
 
 If `pr_id` is a URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}`, extract `{workspace}`, `{repo}`, and `{number}`.
 
-Otherwise treat `pr_id` as the number directly. Auto-detect workspace and repo from `git remote get-url origin`, which is either `https://bitbucket.org/{workspace}/{repo}` or `git@bitbucket.org:{workspace}/{repo}.git`.
+Otherwise treat `pr_id` as the number directly. Auto-detect workspace and repo from `git remote get-url origin`: strip a trailing `.git`, then take the two path segments following `bitbucket.org`, which either `/` or `:` separates from the host. This accepts the HTTPS form (`https://{user}@bitbucket.org/{workspace}/{repo}.git`) and the SSH form (`git@bitbucket.org:{workspace}/{repo}.git`) alike.
 
 ### 2. Fetch PR metadata
 
