@@ -7,7 +7,9 @@ dependencies:
     - williamthorsen-code-layout-preferences
     - williamthorsen-typescript-preferences
   skills:
+    - commit
     - development-workflows
+    - review-criteria
     - testing-conventions
     - typescript-testing-conventions
 ---
