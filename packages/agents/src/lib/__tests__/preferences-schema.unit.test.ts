@@ -15,7 +15,7 @@ import { parse as parseYaml } from 'yaml';
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
 /**
- * The test file lives at `packages/agents/src/lib/__tests__/preferences-schema.test.ts`.
+ * The test file lives at `packages/agents/src/lib/__tests__/preferences-schema.unit.test.ts`.
  * Three levels up reaches the package root (`packages/agents/`); two more levels up reaches the repo root.
  */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
