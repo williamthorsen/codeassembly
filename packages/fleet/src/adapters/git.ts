@@ -13,6 +13,9 @@ import { retainKeys } from '../common/maps.ts';
 /** Ceiling on any single git invocation, so a wedged repository cannot stall a poll pass indefinitely. */
 const GIT_TIMEOUT_MS = 10_000;
 
+/** Every `rev-parse` answer that means no branch is checked out, including the `null` a failed command returns. */
+const NO_BRANCH_OUTPUTS = new Set([null, '', 'HEAD']);
+
 const execFileAsync = promisify(execFile);
 
 /** A running adapter; observations are keyed by lane key and refreshed each poll pass. */
@@ -71,7 +74,7 @@ export function createGitAdapter(input: {
       const targets = input.listTargets();
       retainKeys(observations, new Set(targets.map((target) => target.laneKey)));
       for (const target of targets) {
-        const observation = await probe(target.cwd).catch(() => createUnprobedObservation(true));
+        const observation = await probeOrDegrade(probe, target.cwd);
         if (stopped) {
           return;
         }
@@ -149,6 +152,15 @@ async function directoryExists(path: string): Promise<boolean> {
   }
 }
 
+/** Probes `cwd` with the supplied probe, degrading a rejection to an observation whose git fields are unanswered. */
+async function probeOrDegrade(probe: (cwd: string) => Promise<GitObservation>, cwd: string): Promise<GitObservation> {
+  try {
+    return await probe(cwd);
+  } catch {
+    return createUnprobedObservation(true);
+  }
+}
+
 /** Ahead/behind commit counts of `HEAD` against `baseBranch`, or `null` when unreadable. */
 async function readAheadBehind(cwd: string, baseBranch: string): Promise<{ ahead: number; behind: number } | null> {
   const output = await runGit(cwd, ['rev-list', '--left-right', '--count', `HEAD...${baseBranch}`]);
@@ -161,13 +173,13 @@ async function readAheadBehind(cwd: string, baseBranch: string): Promise<{ ahead
   }
   const ahead = Number(aheadText);
   const behind = Number(behindText);
-  return Number.isInteger(ahead) && Number.isInteger(behind) ? { ahead, behind } : null;
+  return Number.isSafeInteger(ahead) && Number.isSafeInteger(behind) ? { ahead, behind } : null;
 }
 
 /** The checked-out branch name, or `null` when the head is detached or unreadable. */
 async function readBranch(cwd: string): Promise<string | null> {
   const branch = await runGit(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']);
-  return branch === null || branch === '' || branch === 'HEAD' ? null : branch;
+  return NO_BRANCH_OUTPUTS.has(branch) ? null : branch;
 }
 
 /**
