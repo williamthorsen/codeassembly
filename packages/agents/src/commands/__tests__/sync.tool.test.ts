@@ -1492,14 +1492,14 @@ describe(syncCommand, () => {
   });
 
   describe('harness-targeted skills', () => {
-    /** Writes a fixture skill `<slug>/SKILL.md`, with an optional `harnesses:` line and body override. */
+    /** Writes a fixture skill `<slug>/SKILL.md`, with an optional `supported-harnesses:` line and body override. */
     async function writeLibrarySkill(
       slug: string,
-      { harnesses, body }: { harnesses?: string; body?: string } = {},
+      { supportedHarnesses, body }: { supportedHarnesses?: string; body?: string } = {},
     ): Promise<void> {
       const dir = path.join(contentDir, 'skills', slug);
       await mkdir(dir, { recursive: true });
-      const harnessLine = harnesses === undefined ? '' : `harnesses: ${harnesses}\n`;
+      const harnessLine = supportedHarnesses === undefined ? '' : `supported-harnesses: ${supportedHarnesses}\n`;
       const content = body ?? `# ${slug}\n\nBody.`;
       await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${harnessLine}---\n\n${content}\n`, 'utf8');
     }
@@ -1520,7 +1520,7 @@ describe(syncCommand, () => {
 
     it('deploys a harness-targeted skill only into its target harness, while all-harness skills reach both', async () => {
       await detectBothHarnesses();
-      await writeLibrarySkill('rovo-only', { harnesses: '[rovo]' });
+      await writeLibrarySkill('rovo-only', { supportedHarnesses: '[rovo]' });
       await writeLibrarySkill('everywhere');
       await declareSkills('rovo-only', 'everywhere');
 
@@ -1539,7 +1539,7 @@ describe(syncCommand, () => {
       await mkdir(overlays, { recursive: true });
       await writeFile(path.join(overlays, 'rovo.yaml'), '_tools:\n  Read: open_files\n', 'utf8');
       await writeFile(path.join(overlays, 'claude.yaml'), '_tools:\n  Edit: Edit\n', 'utf8');
-      await writeLibrarySkill('rovo-tool', { harnesses: '[rovo]', body: 'Use {tool:Read}.' });
+      await writeLibrarySkill('rovo-tool', { supportedHarnesses: '[rovo]', body: 'Use {tool:Read}.' });
       await declareSkills('rovo-tool');
 
       await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
@@ -1556,7 +1556,7 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('was-everywhere', '.claude'))).toBe(true);
       expect(existsSync(skillPath('was-everywhere', '.rovodev'))).toBe(true);
 
-      await writeLibrarySkill('was-everywhere', { harnesses: '[rovo]' });
+      await writeLibrarySkill('was-everywhere', { supportedHarnesses: '[rovo]' });
       await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
 
       expect(existsSync(path.dirname(skillPath('was-everywhere', '.claude')))).toBe(false);

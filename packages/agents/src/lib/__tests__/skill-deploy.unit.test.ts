@@ -48,7 +48,7 @@ describe(deploySkill, () => {
     await deploySkill(resolvedSkill('rovo-only'), destDir, context());
 
     const deployed = await readFile(path.join(destDir, 'SKILL.md'), 'utf8');
-    expect(deployed).not.toContain('harnesses:');
+    expect(deployed).not.toContain('supported-harnesses:');
     expect(deployed).toContain('name: rovo-only');
     expect(deployed).toContain('# Rovo only');
   });
@@ -215,7 +215,7 @@ describe(resolveDeclaredSkill, () => {
     expect(resolved.contentRoot).toBe(sourceDir);
   });
 
-  it('leaves the target harnesses undefined when no `harnesses:` field is present', async () => {
+  it('leaves the target harnesses undefined when no `supported-harnesses:` field is present', async () => {
     await writeLibrarySkill('people-report');
 
     const resolved = await resolveDeclaredSkill('people-report', libraryResolver(contentDir));
@@ -223,24 +223,24 @@ describe(resolveDeclaredSkill, () => {
     expect(resolved.targetHarnesses).toBeUndefined();
   });
 
-  it('reads a list-valued `harnesses:` field into the target set', async () => {
-    await writeLibrarySkill('brainstorming', 'harnesses: [rovo]');
+  it('reads a list-valued `supported-harnesses:` field into the target set', async () => {
+    await writeLibrarySkill('brainstorming', 'supported-harnesses: [rovo]');
 
     const resolved = await resolveDeclaredSkill('brainstorming', libraryResolver(contentDir));
 
     expect(resolved.targetHarnesses).toEqual(['rovo']);
   });
 
-  it('normalizes a scalar `harnesses:` field into a single-element target set', async () => {
-    await writeLibrarySkill('review-permissions', 'harnesses: claude');
+  it('normalizes a scalar `supported-harnesses:` field into a single-element target set', async () => {
+    await writeLibrarySkill('review-permissions', 'supported-harnesses: claude');
 
     const resolved = await resolveDeclaredSkill('review-permissions', libraryResolver(contentDir));
 
     expect(resolved.targetHarnesses).toEqual(['claude']);
   });
 
-  it('throws naming the slug and the bad id when `harnesses:` lists an unknown harness', async () => {
-    await writeLibrarySkill('exotic', 'harnesses: [codex]');
+  it('throws naming the slug and the bad id when `supported-harnesses:` lists an unknown harness', async () => {
+    await writeLibrarySkill('exotic', 'supported-harnesses: [codex]');
 
     await expect(resolveDeclaredSkill('exotic', libraryResolver(contentDir))).rejects.toThrow(/exotic.*codex/s);
   });

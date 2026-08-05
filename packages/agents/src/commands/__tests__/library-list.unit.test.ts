@@ -201,7 +201,7 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   await writeFile(path.join(skills, 'bravo', 'SKILL.md'), frontmatter({ name: 'bravo-skill', description: 'Bravo.' }));
   await writeFile(
     path.join(skills, 'charlie', 'SKILL.md'),
-    frontmatter({ name: 'charlie-skill', description: 'Charlie.', harnesses: '[rovo]' }),
+    frontmatter({ name: 'charlie-skill', description: 'Charlie.', 'supported-harnesses': '[rovo]' }),
   );
   await writeFile(path.join(skills, '_data', 'reserved.md'), frontmatter({ name: 'reserved' }));
 

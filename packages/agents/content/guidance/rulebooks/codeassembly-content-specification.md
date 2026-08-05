@@ -47,7 +47,7 @@ A token is also a dependency edge: `sync` extracts the tokens from a skill's or 
 
 Rulebooks, skills, and subagents all honor tokens; collections carry no body to render. `{rulebook:<slug>}` is the exception: only a rulebook body renders one, because `install` deploys skills without resolving a declaration and so has no rulebook to resolve against. A rulebook token elsewhere fails the run, as does one naming a rulebook that deploys no skill -- an `ambient`-only target is already in the reader's context, so there is nothing to route to. Express that relationship with `dependencies:` instead.
 
-Only `{rulebook:<slug>}` is checked for deployability. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness the body reaches, including one its target does not deploy to: a skill that narrows itself with `harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
+Only `{rulebook:<slug>}` is checked for deployability. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness the body reaches, including one its target does not deploy to: a skill that narrows itself with `supported-harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
 
 Reserve a `dependencies:` entry for a non-inline edge; use a token for any invocation that appears in the body. _(Convention; not enforced.)_
 
@@ -92,7 +92,7 @@ members:
 ## Frontmatter fields
 
 - **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `skill`, or both; defaults to `ambient`), optional `skill-name`, optional `version`.
-- **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
+- **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
 - **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context; `sync` pulls them into the deploy closure automatically).
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
 
