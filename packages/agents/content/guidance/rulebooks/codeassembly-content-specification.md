@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 7
+version: 8
 ---
 
 # CodeAssembly content specification
@@ -88,6 +88,37 @@ members:
 ```
 
 `members:` is collections-only; rulebooks, skills, and subagents use `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error. The resolver follows both keys identically -- the split is semantic: a collection contains members, an artifact depends on prerequisites.
+
+A collection enumerates every member, not just its dependency roots. Roots-only membership would leave an unexamined artifact free to enter through an edge and be treated as examined, which is the outcome the dispositions below exist to prevent.
+
+### Dispositions
+
+Declaring a collection is a claim about its members, so every artifact carries a disposition recording which claim it is under. An artifact under none is an oversight rather than a decision. _(Enforced by `collection-dispositions.test.ts`.)_
+
+Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
+
+1. **Read the prose** for personal doctrine -- a preference stated as a rule that another team would answer differently.
+2. **Ask what the artifact names that exists only here** -- a store, path, host, repository, tracker, or tool a consumer would not have. Such coupling hides in a default value or an example rather than in the prose, so the first pass passes it over.
+
+**A public collection** (`recommended` here) is one anyone may declare, so membership claims general fitness. Every criterion must hold:
+
+- Nothing it names is specific to the author's environment.
+- It states no personal doctrine.
+- Its prerequisites appear where a reader looks before invoking, rather than surfacing on failure.
+- Its closure holds only public members.
+- It deploys where it works: an artifact that functions on one harness alone declares that harness rather than shipping everywhere under a general claim.
+
+**A personal collection** (`williamthorsen` here) claims deliberate fit for one author rather than general fitness:
+
+- It deliberately encodes that author's preferences, environment, or domain -- whatever disqualifies it from the public collection is what qualifies it here.
+- Its closure reaches only personal and public members.
+- It is invoked often enough to repay a standing line in the skill index.
+
+**Standalone** is membership in no collection: deliberate, declared directly where wanted, and recorded so the coverage check reads it as a decision rather than an omission. An artifact lands here when it is deliberate but rarely invoked, or wanted only in specific projects. Every deployed skill costs a line in the skill index at every session, and a rarely-invoked artifact does not repay that.
+
+**Triage** (`triage` here) holds what has not been examined. It is where new content lands, and it shrinks by promotion rather than growing.
+
+A vetted collection is closed under its dependency edges, which is what makes the vetting real: without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure reaches. _(Enforced by `collection-dispositions.test.ts`.)_
 
 ## Frontmatter fields
 
