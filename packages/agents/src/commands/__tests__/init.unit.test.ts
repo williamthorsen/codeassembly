@@ -35,6 +35,20 @@ describe(initCommand, () => {
     expect(content).toContain('use: []');
   });
 
+  it('names the current ambient destination rather than the retired PROJECT.md', async () => {
+    await initCommand(makeOptions(), projectRoot);
+
+    const content = await readFile(declarationPath(), 'utf8');
+    expect(content).not.toContain('PROJECT.md');
+    expect(content).toContain('CLAUDE.local.md');
+  });
+
+  it('surfaces the harnesses key so the targeting fallback can be pinned', async () => {
+    await initCommand(makeOptions(), projectRoot);
+
+    expect(await readFile(declarationPath(), 'utf8')).toContain('# harnesses:');
+  });
+
   it('scaffolds a file that parses to zero declared artifacts', async () => {
     await initCommand(makeOptions(), projectRoot);
 
@@ -93,6 +107,12 @@ describe(initGlobalCommand, () => {
     expect(content).toContain('- triage');
     // A personal collection is fitted to one author by definition, so the scaffold names none.
     expect(content).not.toContain('williamthorsen');
+  });
+
+  it('surfaces the harnesses key, whose most natural host is this tier', async () => {
+    await initGlobalCommand(makeOptions(), homeDir);
+
+    expect(await readFile(declarationPath(), 'utf8')).toContain('# harnesses:');
   });
 
   it('scaffolds a file that declares the seeded collections', async () => {
