@@ -8,10 +8,11 @@ import type { InstallOptions } from '../lib/types.ts';
 
 const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
 #
-# harnesses.use pins the harnesses this project targets, by id (claude, rovo). Declare none and sync targets
-# whichever harnesses are installed on this machine; use drop to withdraw one for this project alone.
+# harnesses.use pins the harnesses this project targets, by id (claude, rovo). Omit this key and sync targets
+# whichever harnesses are installed on this machine; an empty list targets none. Use drop to withdraw a harness a
+# broader tier declared.
 # harnesses:
-#   use: []
+#   use: [claude]
 
 # rulebooks.use lists the rulebook slugs this project adopts. Per its delivery mode, each is injected into the
 # ambient region of every targeted harness's machine-local project guidance file (CLAUDE.local.md, AGENTS.local.md)
@@ -49,11 +50,11 @@ rulebooks:
 const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
 # \`codeassembly sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
 #
-# harnesses.use pins the harnesses every sync on this machine targets, by id (claude, rovo). Declare none and sync
-# targets whichever are installed here. A project may add to this set, but only its own gitignored
-# codeassembly.local.yaml can withdraw from it.
+# harnesses.use pins the harnesses every sync on this machine targets, by id (claude, rovo). Omit this key and sync
+# targets whichever are installed here; an empty list targets none. A project may add to this set, and either
+# project-tier file may withdraw from it with drop.
 # harnesses:
-#   use: []
+#   use: [claude]
 #
 # Each collection carries a claim about its members: \`recommended\` is vetted and generally applicable, and
 # \`triage\` holds what nobody has examined yet. Add any other collection the library or a source ships, or declare

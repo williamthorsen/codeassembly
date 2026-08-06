@@ -49,6 +49,16 @@ describe(initCommand, () => {
     expect(await readFile(declarationPath(), 'utf8')).toContain('# harnesses:');
   });
 
+  it('scaffolds a harnesses example that targets a harness rather than none', async () => {
+    await initCommand(makeOptions(), projectRoot);
+
+    const content = await readFile(declarationPath(), 'utf8');
+    // An empty list is honored as "target nothing", so scaffolding one under a comment promising the fallback
+    // would disable every deployment for a reader who uncommented it verbatim.
+    expect(content).toContain('#   use: [claude]');
+    expect(content).toContain('an empty list targets none');
+  });
+
   it('scaffolds a file that parses to zero declared artifacts', async () => {
     await initCommand(makeOptions(), projectRoot);
 
@@ -113,6 +123,21 @@ describe(initGlobalCommand, () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
     expect(await readFile(declarationPath(), 'utf8')).toContain('# harnesses:');
+  });
+
+  it('scaffolds a harnesses example that targets a harness rather than none', async () => {
+    await initGlobalCommand(makeOptions(), homeDir);
+
+    const content = await readFile(declarationPath(), 'utf8');
+    expect(content).toContain('#   use: [claude]');
+    expect(content).toContain('an empty list targets none');
+  });
+
+  it('does not claim that only a gitignored file can withdraw a declared harness', async () => {
+    await initGlobalCommand(makeOptions(), homeDir);
+
+    // `drop` deletes regardless of the declaring file's domain; only `root` is domain-scoped.
+    expect(await readFile(declarationPath(), 'utf8')).not.toContain('only its own gitignored');
   });
 
   it('scaffolds a file that declares the seeded collections', async () => {

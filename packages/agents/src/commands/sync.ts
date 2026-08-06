@@ -279,7 +279,7 @@ async function reconcileDomain(
   const harnessIds = targets.harnessIds;
   console.info(describeHarnessTargeting(targets));
   if (targets.origin === 'detection') {
-    console.info(HARNESS_PIN_ADVICE);
+    console.info(describeHarnessPinAdvice(domain));
   }
 
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
@@ -1083,9 +1083,6 @@ function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): strin
   }
 }
 
-/** The advice naming the key that pins a detected harness set, so a fallback need not be rediscovered each run. */
-const HARNESS_PIN_ADVICE = 'Declare `harnesses.use` in .agents/codeassembly.yaml to pin this.';
-
 /** Names what settled a run's harness set, in the phrasing the targeting line embeds. */
 function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
   switch (targets.origin) {
@@ -1096,6 +1093,15 @@ function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
     case 'flag':
       return `--harness ${targets.harnessIds.join(', ')}`;
   }
+}
+
+/**
+ * Renders the advice naming where a detected harness set can be pinned. The file differs by domain, because a run
+ * resolves the declaration only from the tiers it reads: a global run never reaches a project's declaration.
+ */
+function describeHarnessPinAdvice(domain: SyncDomain): string {
+  const declarationFile = domain.label === 'global' ? '~/.agents/codeassembly.yaml' : '.agents/codeassembly.yaml';
+  return `Declare \`harnesses.use\` in ${declarationFile} to pin this.`;
 }
 
 /**

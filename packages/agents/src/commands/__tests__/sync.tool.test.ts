@@ -2285,6 +2285,23 @@ describe(syncGlobalCommand, () => {
     }
   });
 
+  it('points the pin advice at the home declaration, the only tier a global run reads', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    let output: string;
+    try {
+      await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('Declare `harnesses.use` in ~/.agents/codeassembly.yaml to pin this.');
+  });
+
   it('narrows to the harnesses its own tier declares', async () => {
     const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
     const rovoMd = await seedGuidanceFile('.rovodev', 'AGENTS.md');

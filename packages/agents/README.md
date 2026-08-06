@@ -201,7 +201,7 @@ A run resolves its targets in this order, stopping at the first that answers:
 
 **`harnesses` resolves on a chain of its own.** Which harnesses a developer runs is a fact about the machine, so the key resolves across the user-global and project tiers together — the one key that crosses the domains defined under [Scopes](#scopes). Artifact keys deliberately do not: a user-global `collections: use: [all]` would otherwise deploy the whole catalog into every repository's harness directories.
 
-**`root: true` clears only its own domain's contributions.** For every artifact key this is indistinguishable from clearing the whole chain, since their chain lies within one domain. It matters for `harnesses` alone, where it keeps a committed project file from discarding what the developer declared for the machine. A `drop` still crosses the boundary, so a gitignored `.agents/codeassembly.local.yaml` can withdraw a harness for one checkout.
+**`root: true` clears only its own domain's contributions.** For every artifact key this is indistinguishable from clearing the whole chain, since their chain lies within one domain. It matters for `harnesses` alone, where it keeps a committed project file from discarding what the developer declared for the machine. A `drop` still crosses the boundary, from either project-tier file: the committed `.agents/codeassembly.yaml` withdraws a harness for everyone working on the project, and the gitignored `.agents/codeassembly.local.yaml` withdraws one for a single checkout.
 
 The three tiers therefore state three different things: the user-global tier states which harnesses are installed, the project tier states which the project requires, and `codeassembly.local.yaml` overrides either for one developer.
 
@@ -215,6 +215,8 @@ Every run names what it targeted and what decided it, and a run that fell back t
 Targeting claude, rovo (detected in ~).
 Declare `harnesses.use` in .agents/codeassembly.yaml to pin this.
 ```
+
+The advice names the declaration the run itself reads, so `sync --global` points at `~/.agents/codeassembly.yaml` instead: a global run never reaches a project's tiers, and pinning the set there would leave its own targeting unchanged.
 
 ### Collections
 
