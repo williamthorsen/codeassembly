@@ -11,17 +11,23 @@ import { syncCommand } from '../sync.ts';
 describe('syncCommand with a declared collection', () => {
   let projectRoot: string;
   let contentDir: string;
+  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is
+  // given a temp home rather than the developer's own.
+  let homeDir: string;
 
   beforeEach(async () => {
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    homeDir = path.join(tmpdir(), `agents-test-sync-coll-home-${stamp}`);
     projectRoot = path.join(tmpdir(), `agents-test-sync-coll-proj-${stamp}`);
     contentDir = path.join(tmpdir(), `agents-test-sync-coll-content-${stamp}`);
+    await mkdir(homeDir, { recursive: true });
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await mkdir(contentDir, { recursive: true });
   });
 
   afterEach(async () => {
     await rm(projectRoot, { recursive: true, force: true });
+    await rm(homeDir, { recursive: true, force: true });
     await rm(contentDir, { recursive: true, force: true });
   });
 
@@ -32,7 +38,7 @@ describe('syncCommand with a declared collection', () => {
     await writeCollection(contentDir, 'recommended', { skills: ['people-report'], subagents: ['canary'] });
     await declareCollections(projectRoot, 'recommended');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const skill = await readFile(path.join(projectRoot, '.claude', 'skills', 'people-report', 'SKILL.md'), 'utf8');
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
@@ -44,7 +50,7 @@ describe('syncCommand with a declared collection', () => {
     await writeCollection(contentDir, 'recommended', { skills: ['ghost'] });
     await declareCollections(projectRoot, 'recommended');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost.*not found/);
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/ghost.*not found/);
     expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
   });
 });

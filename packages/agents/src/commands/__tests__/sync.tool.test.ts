@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { homedir, tmpdir } from 'node:os';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -21,22 +21,34 @@ const canEnforceDirPermissions = process.getuid !== undefined && process.getuid(
 describe(syncCommand, () => {
   let projectRoot: string;
   let contentDir: string;
+  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is given
+  // a temp home. Without it a run would consult the developer's own, and its result would vary by machine.
+  let homeDir: string;
 
   beforeEach(async () => {
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     projectRoot = path.join(tmpdir(), `agents-test-sync-proj-${stamp}`);
     contentDir = path.join(tmpdir(), `agents-test-sync-content-${stamp}`);
+    homeDir = path.join(tmpdir(), `agents-test-sync-home-${stamp}`);
     await mkdir(projectRoot, { recursive: true });
     await mkdir(path.join(contentDir, 'guidance', 'rulebooks'), { recursive: true });
+    await mkdir(homeDir, { recursive: true });
   });
 
   afterEach(async () => {
     await rm(projectRoot, { recursive: true, force: true });
     await rm(contentDir, { recursive: true, force: true });
+    await rm(homeDir, { recursive: true, force: true });
   });
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
+  }
+
+  /** Installs both harnesses on the machine, which is what an unpinned `harness: 'all'` run detects. */
+  async function installBothHarnesses(): Promise<void> {
+    await mkdir(path.join(homeDir, '.claude'), { recursive: true });
+    await mkdir(path.join(homeDir, '.rovodev'), { recursive: true });
   }
 
   /** Writes a fixture rulebook into the temp content library. */
@@ -70,7 +82,7 @@ describe(syncCommand, () => {
     path.join(projectRoot, dotDir, 'skills', slug, 'SKILL.md');
 
   it('when no codeassembly.yaml exists, makes no changes', async () => {
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
     expect(existsSync(projectMdPath())).toBe(false);
@@ -80,7 +92,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('# Alpha\n\nAlpha rules.\n');
@@ -91,7 +103,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('<!-- codeassembly-ambient:start -->');
@@ -107,7 +119,7 @@ describe(syncCommand, () => {
     const handAuthored = '# Personal notes\n\nMy sandbox URL is http://localhost:9999.\n';
     await writeFile(localHostPath(), handAuthored, 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost.startsWith(handAuthored)).toBe(true);
@@ -117,10 +129,9 @@ describe(syncCommand, () => {
   it('delivers into each targeted harness own local host', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
-    await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
-    await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+    await installBothHarnesses();
 
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
     for (const name of ['CLAUDE.local.md', 'AGENTS.local.md']) {
       expect(await readFile(localHostPath(name), 'utf8')).toContain('<!-- rulebook:alpha -->');
@@ -131,10 +142,10 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     const firstLocalHost = await readFile(localHostPath(), 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(firstLocalHost);
   });
@@ -143,7 +154,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(localHostPath())).toBe(false);
   });
@@ -152,11 +163,11 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRulebooks();
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).not.toContain('<!-- rulebook:alpha -->');
@@ -170,7 +181,9 @@ describe(syncCommand, () => {
     const broken = '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nStranded text.\n';
     await writeFile(localHostPath(), broken, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/damaged ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+      /damaged ambient region/,
+    );
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(broken);
     expect(existsSync(skillPath('consult-alpha'))).toBe(false);
@@ -181,7 +194,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '<!-- codeassembly-ambient:start -->\nStranded text.\n', 'utf8');
 
-    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
       /damaged ambient region/,
     );
   });
@@ -190,14 +203,16 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     const stray = (await readFile(localHostPath(), 'utf8')).replace(
       '# Personal notes\n',
       '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nMy sandbox URL.\n',
     );
     await writeFile(localHostPath(), stray, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/damaged ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+      /damaged ambient region/,
+    );
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(stray);
   });
@@ -209,7 +224,9 @@ describe(syncCommand, () => {
     const doubled = `${region}\n\n# Personal notes\n\n${region}\n`;
     await writeFile(localHostPath(), doubled, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/damaged ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+      /damaged ambient region/,
+    );
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(doubled);
   });
@@ -218,12 +235,12 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeLibraryRulebook('beta', 'delivery: ambient', 'Beta rules.');
     await declareRulebooks('alpha', 'beta');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:beta -->');
 
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).not.toContain('<!-- rulebook:beta -->');
@@ -233,11 +250,11 @@ describe(syncCommand, () => {
   it('retracts the delivered block when a rulebook delivery changes away from ambient', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(skillPath('consult-alpha'))).toBe(true);
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -246,11 +263,11 @@ describe(syncCommand, () => {
   it('when the manifest is emptied, retracts every delivered block', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRulebooks();
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
   });
@@ -265,7 +282,7 @@ describe(syncCommand, () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const projectMd = await readFile(projectMdPath(), 'utf8');
     expect(projectMd).not.toContain('<!-- rulebook:alpha -->');
@@ -279,7 +296,7 @@ describe(syncCommand, () => {
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await writeFile(projectMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(projectMdPath())).toBe(true);
     expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -292,7 +309,7 @@ describe(syncCommand, () => {
     await mkdir(neutralDir, { recursive: true });
     await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(neutralDir)).toBe(false);
   });
@@ -301,8 +318,8 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(projectMdPath())).toBe(false);
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
@@ -317,7 +334,7 @@ describe(syncCommand, () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const agentsMd = await readFile(agentsMdPath(), 'utf8');
     expect(agentsMd).not.toContain('<!-- rulebook:alpha -->');
@@ -330,7 +347,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(agentsMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(agentsMdPath())).toBe(true);
     expect(await readFile(agentsMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -340,7 +357,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(agentsMdPath())).toBe(false);
   });
@@ -356,7 +373,7 @@ describe(syncCommand, () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     let output: string;
     try {
-      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
       output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
     } finally {
       infoSpy.mockRestore();
@@ -377,7 +394,7 @@ describe(syncCommand, () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     let warnings: ReadonlyArray<string>;
     try {
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       warnings = warnSpy.mock.calls.map((call) => String(call[0]));
     } finally {
       warnSpy.mockRestore();
@@ -397,7 +414,7 @@ describe(syncCommand, () => {
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
     } finally {
       warnSpy.mockRestore();
@@ -410,7 +427,7 @@ describe(syncCommand, () => {
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
     } finally {
       warnSpy.mockRestore();
@@ -424,7 +441,7 @@ describe(syncCommand, () => {
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
     } finally {
       warnSpy.mockRestore();
@@ -434,14 +451,14 @@ describe(syncCommand, () => {
   it('throws when a declared rulebook has no library file', async () => {
     await declareRulebooks('ghost');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/ghost/);
   });
 
   it('writes a skill file for a skill-only rulebook without delivering it as ambient', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\ndescription: Gamma desc.', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(localHostPath())).toBe(false);
     const skill = await readFile(skillPath('consult-gamma'), 'utf8');
@@ -459,7 +476,7 @@ describe(syncCommand, () => {
     );
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const skill = await readFile(skillPath('consult-gamma'), 'utf8');
     expect(skill).not.toContain('guidance-hook');
@@ -474,7 +491,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', '<!-- guidance-hooks: preferences -->');
     await declareRulebooks('gamma');
 
-    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
       /guidance\/rulebooks\/gamma\.md:1 .*reason=unrecognized-directive/,
     );
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
@@ -484,7 +501,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\nskill-name: gamma-rulebook', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
     const skill = await readFile(skillPath('gamma-rulebook'), 'utf8');
@@ -496,7 +513,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('delta', 'delivery: [ambient, skill]', 'Delta rules.');
     await declareRulebooks('delta');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:delta -->');
     expect(await readFile(skillPath('consult-delta'), 'utf8')).toContain('Delta rules.');
@@ -505,10 +522,10 @@ describe(syncCommand, () => {
   it('when re-run with unchanged content, does not rewrite the skill file', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     const firstMtime = statSync(skillPath('consult-gamma')).mtimeMs;
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(statSync(skillPath('consult-gamma')).mtimeMs).toBe(firstMtime);
   });
@@ -517,11 +534,11 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('alpha', 'gamma');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
 
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(path.dirname(skillPath('consult-gamma')))).toBe(false);
   });
@@ -529,11 +546,11 @@ describe(syncCommand, () => {
   it('retracts the skill directory when a rulebook delivery changes away from skill', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
 
     await writeLibraryRulebook('gamma', 'delivery: ambient', 'Gamma rules.');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(path.dirname(skillPath('consult-gamma')))).toBe(false);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:gamma -->');
@@ -542,11 +559,11 @@ describe(syncCommand, () => {
   it('retracts the prior skill directory when a rulebook resolved skill name changes', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
 
     await writeLibraryRulebook('gamma', 'delivery: skill\nskill-name: gamma-rulebook', 'Gamma rules.');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(path.dirname(skillPath('consult-gamma')))).toBe(false);
     expect(existsSync(skillPath('gamma-rulebook'))).toBe(true);
@@ -563,7 +580,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(path.dirname(skillPath('gamma')))).toBe(false);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
@@ -573,20 +590,116 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, contentDir);
+    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, contentDir, homeDir);
 
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(true);
     expect(existsSync(skillPath('consult-gamma', '.rovodev'))).toBe(false);
   });
 
-  it('with no detected harness, writes no skill file and no local host', async () => {
+  it('with no harness installed on the machine, writes no skill file and no local host', async () => {
     await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
     expect(existsSync(localHostPath())).toBe(false);
+  });
+
+  it('delivers to a machine-installed harness the repository holds no directory for', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await installBothHarnesses();
+
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+
+    expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(true);
+    expect(existsSync(skillPath('consult-gamma', '.rovodev'))).toBe(true);
+  });
+
+  it('targets the declared harnesses in preference to those installed on the machine', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await writeLocalDeclaration('harnesses:\n  use:\n    - rovo\n');
+    await installBothHarnesses();
+
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+
+    expect(existsSync(skillPath('consult-gamma', '.rovodev'))).toBe(true);
+    expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
+  });
+
+  it('names the detected harnesses and the key that pins them', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await installBothHarnesses();
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('Targeting claude, rovo (detected in ~).');
+    expect(output).toContain('Declare `harnesses.use` in .agents/codeassembly.yaml to pin this.');
+  });
+
+  it('names a declared harness set without advising how to pin it', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
+    await installBothHarnesses();
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('Targeting claude (declared).');
+    expect(output).not.toContain('to pin this');
+  });
+
+  it('says so when a declaration leaves no harness targeted', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await writeLocalDeclaration('harnesses:\n  drop:\n    - claude\n    - rovo\n');
+    await installBothHarnesses();
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('Targeting no harnesses (declared).');
+    expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
+  });
+
+  it('names its targeting under --dry-run as well', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await installBothHarnesses();
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, contentDir, homeDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('Targeting claude, rovo (detected in ~).');
   });
 
   it('never deletes a hand-authored skill that lacks the sync marker', async () => {
@@ -596,7 +709,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(manualSkill)).toBe(true);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
@@ -607,7 +720,7 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('alpha', 'gamma');
 
-    await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+    await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
 
     expect(existsSync(localHostPath())).toBe(false);
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
@@ -620,7 +733,7 @@ describe(syncCommand, () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     let output: string;
     try {
-      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
       output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
     } finally {
       infoSpy.mockRestore();
@@ -637,7 +750,7 @@ describe(syncCommand, () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     let output: string;
     try {
-      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
       output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
     } finally {
       infoSpy.mockRestore();
@@ -649,7 +762,7 @@ describe(syncCommand, () => {
 
   it('deploys and retracts the real shell-conventions canary end-to-end', async () => {
     await declareRulebooks('shell-conventions');
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
     const skill = await readFile(skillPath('consult-shell-conventions'), 'utf8');
     expect(skill).toContain('name: consult-shell-conventions');
@@ -657,7 +770,7 @@ describe(syncCommand, () => {
     expect(skill).not.toContain('slug:');
 
     await declareRulebooks();
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
     expect(existsSync(path.dirname(skillPath('consult-shell-conventions')))).toBe(false);
   });
@@ -667,14 +780,14 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('beta', 'delivery: ambient', 'Beta rules.');
     await declareRulebooks('alpha');
     await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const both = await readFile(localHostPath(), 'utf8');
     expect(both).toContain('<!-- rulebook:alpha -->');
     expect(both).toContain('<!-- rulebook:beta -->');
 
     await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n  drop:\n    - alpha\n');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const dropped = await readFile(localHostPath(), 'utf8');
     expect(dropped).not.toContain('<!-- rulebook:alpha -->');
@@ -688,7 +801,7 @@ describe(syncCommand, () => {
 
     let message = '';
     try {
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     } catch (error: unknown) {
       message = error instanceof Error ? error.message : String(error);
     }
@@ -702,13 +815,13 @@ describe(syncCommand, () => {
   it('reassigns a skill name from one rulebook to another within a single sync', async () => {
     await writeLibraryRulebook('foo', 'delivery: skill\nskill-name: shared', 'Foo rules.');
     await declareRulebooks('foo');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(existsSync(skillPath('shared'))).toBe(true);
 
     await writeLibraryRulebook('foo', 'delivery: skill', 'Foo rules.');
     await writeLibraryRulebook('bar', 'delivery: skill\nskill-name: shared', 'Bar rules.');
     await declareRulebooks('foo', 'bar');
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(skillPath('consult-foo'), 'utf8')).toContain('<!-- codeassembly-rulebook:foo -->');
     const shared = await readFile(skillPath('shared'), 'utf8');
@@ -721,10 +834,9 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('nmr-scripts', 'delivery: skill', 'Script rules.');
       await writeLibraryRulebook('nmr-cheatsheet', 'delivery: [ambient, skill]', 'See {rulebook:nmr-scripts}.');
       await declareRulebooks('nmr-cheatsheet', 'nmr-scripts');
-      await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
-      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+      await installBothHarnesses();
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
       expect(await readFile(localHostPath('CLAUDE.local.md'), 'utf8')).toContain('See /consult-nmr-scripts.');
       expect(await readFile(localHostPath('AGENTS.local.md'), 'utf8')).toContain('See !consult-nmr-scripts.');
@@ -739,7 +851,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('nmr-cheatsheet', 'delivery: ambient', 'See {rulebook:nmr-scripts}.');
       await declareRulebooks('nmr-cheatsheet');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('consult-nmr-scripts'), 'utf8')).toContain('Script rules.');
     });
@@ -749,7 +861,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('hub', 'delivery: ambient', 'See {rulebook:shell-conventions}.');
       await declareRulebooks('hub');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(localHostPath(), 'utf8')).toContain('See /shell-rules.');
     });
@@ -759,7 +871,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('hub', 'delivery: ambient', 'See {rulebook:nmr-cheatsheet}.');
       await declareRulebooks('hub');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /\{rulebook:nmr-cheatsheet\}[\s\S]*ambient-only/,
       );
       expect(existsSync(localHostPath())).toBe(false);
@@ -812,7 +924,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('source-only', 'delivery: skill\ndescription: From org.', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const skill = await readFile(skillPath('consult-source-only'), 'utf8');
       expect(skill).toContain('description: From org.');
@@ -822,14 +934,14 @@ describe(syncCommand, () => {
     it('delivers an ambient source rulebook to the local host and retracts it on removal', async () => {
       await writeSourceRulebook('ambient-src', 'delivery: ambient', 'Ambient org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - ambient-src\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const localHost = await readFile(localHostPath(), 'utf8');
       expect(localHost).toContain('<!-- rulebook:ambient-src -->');
       expect(localHost).toContain('Ambient org rules.');
 
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:ambient-src -->');
     });
@@ -839,7 +951,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
       await declareWithSource('rulebooks:\n  use:\n    - shadowed\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(localHostPath(), 'utf8')).toContain('Source body.');
     });
@@ -847,7 +959,9 @@ describe(syncCommand, () => {
     it('fails the run when a declared source directory does not exist, writing nothing', async () => {
       await declareWithSource('rulebooks:\n  use: []\n', path.join(sourceDir, 'missing'));
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/Invalid declared source/);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /Invalid declared source/,
+      );
       expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
     });
 
@@ -856,7 +970,7 @@ describe(syncCommand, () => {
       await writeFile(filePath, 'not a dir\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n', filePath);
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/not a directory/);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/not a directory/);
     });
 
     it.runIf(canEnforceDirPermissions)(
@@ -869,7 +983,7 @@ describe(syncCommand, () => {
         await declareWithSource('rulebooks:\n  use: []\n', inner);
 
         try {
-          await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+          await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
             /Invalid declared source.*"org".*unreadable/s,
           );
         } finally {
@@ -889,7 +1003,7 @@ describe(syncCommand, () => {
         await declareWithSource('rulebooks:\n  use: []\n', locked);
 
         try {
-          await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+          await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
             /Invalid declared source.*"org".*unreadable/s,
           );
         } finally {
@@ -902,7 +1016,7 @@ describe(syncCommand, () => {
       await writeSourceSkill('source-skill');
       await declareWithSource('skills:\n  use:\n    - source-skill\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('source-skill'), 'utf8')).toContain('<!-- codeassembly-skill:source-skill -->');
     });
@@ -915,7 +1029,7 @@ describe(syncCommand, () => {
         'utf8',
       );
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /Unusable declared source name.*\.\.\/escape.*relative path segment/s,
       );
     });
@@ -934,12 +1048,12 @@ describe(syncCommand, () => {
 
       try {
         await declare();
-        await syncCommand(makeOptions(), projectRoot, contentDir);
+        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
         const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
         expect(existsSync(path.join(sourcesRoot, '@acme', 'guidance', '_data', 'a.md'))).toBe(true);
 
         await rm(path.join(scopedDir, 'skills', '_data'), { recursive: true });
-        await syncCommand(makeOptions(), projectRoot, contentDir);
+        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
         expect(existsSync(sourcesRoot)).toBe(false);
       } finally {
@@ -951,7 +1065,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const delivered = path.join(projectRoot, '.claude', 'skills', '_sources', 'org', '_data', 'house-style.md');
       expect(await readFile(delivered, 'utf8')).toContain('# House style');
@@ -967,7 +1081,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('skills:\n  use:\n    - org-skill\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const target = path.join(
         path.resolve(projectRoot),
@@ -991,7 +1105,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use:\n    - org-rules\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const target = path.join(
         path.resolve(projectRoot),
@@ -1021,7 +1135,7 @@ describe(syncCommand, () => {
       );
 
       try {
-        await syncCommand(makeOptions(), projectRoot, contentDir);
+        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
         const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
         expect(await readFile(path.join(sourcesRoot, 'org', '_data', 'shared.md'), 'utf8')).toContain('From org.');
@@ -1034,12 +1148,12 @@ describe(syncCommand, () => {
     it('retracts the support entries a dropped source delivered', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(true);
 
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), 'rulebooks:\n  use: []\n', 'utf8');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(existsSync(sourcesRoot)).toBe(false);
     });
@@ -1051,7 +1165,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1068,7 +1182,7 @@ describe(syncCommand, () => {
     it('names only the outgoing namespace when a source is renamed', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await writeFile(
         path.join(projectRoot, '.agents', 'codeassembly.yaml'),
@@ -1079,7 +1193,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1092,35 +1206,35 @@ describe(syncCommand, () => {
     it('names the namespace a still-declared source empties', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await rm(path.join(sourceDir, 'skills', '_data'), { recursive: true });
 
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
       }
 
       expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source ships none)`);
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(false);
     });
 
     it('names the source-support retraction a real run would perform, writing nothing', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), 'rulebooks:\n  use: []\n', 'utf8');
 
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1139,7 +1253,7 @@ describe(syncCommand, () => {
       );
       await declareWithSource('subagents:\n  use:\n    - source-agent\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const deployed = await readFile(path.join(projectRoot, '.claude', 'agents', 'source-agent.md'), 'utf8');
       expect(deployed).toContain('<!-- codeassembly-subagent:source-agent -->');
@@ -1162,7 +1276,7 @@ describe(syncCommand, () => {
       );
       await declareWithSource('skills:\n  use:\n    - shared-skill\n');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('shared-skill'), 'utf8')).toContain('# Source shared skill');
     });
@@ -1170,7 +1284,7 @@ describe(syncCommand, () => {
     it('rejects an invalid source in dry-run, before previewing any write', async () => {
       await declareWithSource('rulebooks:\n  use: []\n', path.join(sourceDir, 'missing'));
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /Invalid declared source/,
       );
     });
@@ -1184,7 +1298,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1208,7 +1322,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1226,7 +1340,7 @@ describe(syncCommand, () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions(), projectRoot, contentDir);
+        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
         output = warnSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         warnSpy.mockRestore();
@@ -1243,7 +1357,7 @@ describe(syncCommand, () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions(), projectRoot, contentDir);
+        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
         output = warnSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         warnSpy.mockRestore();
@@ -1282,7 +1396,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('people-report', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSkills('people-report');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in skills\/people-report\/SKILL\.md[\s\S]*only in a rulebook body/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -1292,7 +1406,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('people-report', { body: 'See [the events](#lifecycle-events).' });
       await declareSkills('people-report');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /skills\/people-report\/SKILL\.md carries 1 unresolvable anchor link target/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -1302,7 +1416,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const skill = await readFile(skillPath('people-report'), 'utf8');
       expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
@@ -1315,7 +1429,7 @@ describe(syncCommand, () => {
       });
       await declareSkills('people-report');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const skill = await readFile(skillPath('people-report'), 'utf8');
       expect(skill).not.toContain('guidance-hook');
@@ -1328,7 +1442,7 @@ describe(syncCommand, () => {
       });
       await declareSkills('people-report');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /skills\/people-report\/SKILL\.md:\d+ name="preferences" .*reason=duplicate-hook/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -1337,10 +1451,10 @@ describe(syncCommand, () => {
     it('when re-run with unchanged content, does not rewrite the declared skill file', async () => {
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       const firstMtime = statSync(skillPath('people-report')).mtimeMs;
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(statSync(skillPath('people-report')).mtimeMs).toBe(firstMtime);
     });
@@ -1349,11 +1463,11 @@ describe(syncCommand, () => {
       await writeLibrarySkill('people-report');
       await writeLibrarySkill('other');
       await declareSkills('people-report', 'other');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(existsSync(skillPath('other'))).toBe(true);
 
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(existsSync(path.dirname(skillPath('other')))).toBe(false);
       expect(existsSync(skillPath('people-report'))).toBe(true);
@@ -1365,10 +1479,10 @@ describe(syncCommand, () => {
       await writeFile(manual, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       await declareSkills();
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(existsSync(manual)).toBe(true);
       expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
@@ -1377,7 +1491,7 @@ describe(syncCommand, () => {
     it('throws when a declared skill is missing from the library, writing nothing', async () => {
       await declareSkills('ghost');
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/ghost/);
       expect(existsSync(skillPath('ghost'))).toBe(false);
     });
 
@@ -1385,11 +1499,11 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
       await writeLibrarySkill('people-report');
       await declareRaw('rulebooks:\n  use:\n    - gamma\nskills:\n  use:\n    - people-report\n');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(await readFile(skillPath('consult-gamma'), 'utf8')).toContain('<!-- codeassembly-rulebook:gamma -->');
       expect(await readFile(skillPath('people-report'), 'utf8')).toContain('<!-- codeassembly-skill:people-report -->');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(existsSync(skillPath('consult-gamma'))).toBe(true);
       expect(existsSync(skillPath('people-report'))).toBe(true);
@@ -1400,7 +1514,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('shared');
       await declareRaw('rulebooks:\n  use:\n    - foo\nskills:\n  use:\n    - shared\n');
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/collision/i);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/collision/i);
       expect(existsSync(skillPath('shared'))).toBe(false);
     });
 
@@ -1411,7 +1525,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1423,14 +1537,14 @@ describe(syncCommand, () => {
 
     it('deploys and retracts the real people-report canary end-to-end', async () => {
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
       const skill = await readFile(skillPath('people-report'), 'utf8');
       expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
       expect(skill).toContain('# People report');
 
       await declareSkills();
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
       expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
     });
@@ -1453,7 +1567,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(skillDir, 'guide.md'), '# Guide\n', 'utf8');
       await declareSkills('demo');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const skill = await readFile(skillPath('demo'), 'utf8');
       expect(skill).toContain('Shared fragment.');
@@ -1470,7 +1584,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('undeclared-skill');
       await declareSkills('demo');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       // The target exists in the content root but is undeclared, so no project tree holds it. Re-pointing the link
       // there would make it unresolvable outright; the harness home is where an installed copy can still answer it.
@@ -1483,10 +1597,12 @@ describe(syncCommand, () => {
       await writeLibrarySkill('demo', { body: 'Use {tool:Read}.' });
       await declareSkills('demo');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /Unmapped tool name "Read" in skills\/demo\/SKILL\.md/,
       );
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/Unmapped tool name "Read"/);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /Unmapped tool name "Read"/,
+      );
       expect(existsSync(skillPath('demo'))).toBe(false);
     });
   });
@@ -1512,19 +1628,13 @@ describe(syncCommand, () => {
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `skills:\n${useBlock}`, 'utf8');
     }
 
-    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovo. */
-    async function detectBothHarnesses(): Promise<void> {
-      await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
-      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
-    }
-
     it('deploys a harness-targeted skill only into its target harness, while all-harness skills reach both', async () => {
-      await detectBothHarnesses();
+      await installBothHarnesses();
       await writeLibrarySkill('rovo-only', { supportedHarnesses: '[rovo]' });
       await writeLibrarySkill('everywhere');
       await declareSkills('rovo-only', 'everywhere');
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
       expect(existsSync(skillPath('rovo-only', '.rovodev'))).toBe(true);
       expect(existsSync(skillPath('rovo-only', '.claude'))).toBe(false);
@@ -1533,7 +1643,7 @@ describe(syncCommand, () => {
     });
 
     it('does not render a harness-targeted skill against a non-target harness whose tool map would reject it', async () => {
-      await detectBothHarnesses();
+      await installBothHarnesses();
       // rovo maps Read; claude does not, so rendering this skill against claude would throw on the unmapped tool.
       const overlays = path.join(contentDir, 'subagents', '_data');
       await mkdir(overlays, { recursive: true });
@@ -1542,22 +1652,22 @@ describe(syncCommand, () => {
       await writeLibrarySkill('rovo-tool', { supportedHarnesses: '[rovo]', body: 'Use {tool:Read}.' });
       await declareSkills('rovo-tool');
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('rovo-tool', '.rovodev'), 'utf8')).toContain('Use open_files.');
       expect(existsSync(skillPath('rovo-tool', '.claude'))).toBe(false);
     });
 
     it('retracts a skill from a harness it no longer targets while keeping it where it still does', async () => {
-      await detectBothHarnesses();
+      await installBothHarnesses();
       await writeLibrarySkill('was-everywhere');
       await declareSkills('was-everywhere');
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
       expect(existsSync(skillPath('was-everywhere', '.claude'))).toBe(true);
       expect(existsSync(skillPath('was-everywhere', '.rovodev'))).toBe(true);
 
       await writeLibrarySkill('was-everywhere', { supportedHarnesses: '[rovo]' });
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
       expect(existsSync(path.dirname(skillPath('was-everywhere', '.claude')))).toBe(false);
       expect(existsSync(skillPath('was-everywhere', '.rovodev'))).toBe(true);
@@ -1565,17 +1675,11 @@ describe(syncCommand, () => {
   });
 
   describe('rulebook body rendering', () => {
-    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovo. */
-    async function detectBothHarnesses(): Promise<void> {
-      await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
-      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
-    }
-
     it('rewrites a relative link into the target harness absolute path in skill delivery', async () => {
       await writeLibraryRulebook('alpha', 'delivery: skill', 'See [concision](../../skills/_data/concision.md).');
       await declareRulebooks('alpha');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
         'See [concision](~/.claude/skills/_data/concision.md).',
@@ -1586,7 +1690,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('alpha', 'delivery: skill', 'See [block](../../skills/_data/action-items.md#block).');
       await declareRulebooks('alpha');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
         '(~/.claude/skills/_data/action-items.md#block)',
@@ -1598,7 +1702,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('beta', 'delivery: skill', 'Beta body.');
       await declareRulebooks('alpha', 'beta');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
         `[beta](${path.resolve(projectRoot)}/.claude/skills/consult-beta/SKILL.md)`,
@@ -1609,13 +1713,13 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('alpha', 'delivery: skill', 'Run {harness_home_dir}/scripts/x.sh as {harness_id}.');
       await declareRulebooks('alpha');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain('Run ~/.claude/scripts/x.sh as claude.');
     });
 
     it('gives each harness its own absolute path, in both skill and ambient delivery', async () => {
-      await detectBothHarnesses();
+      await installBothHarnesses();
       await writeLibraryRulebook(
         'alpha',
         'delivery: [ambient, skill]',
@@ -1623,7 +1727,7 @@ describe(syncCommand, () => {
       );
       await declareRulebooks('alpha');
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
       expect(await readFile(skillPath('consult-alpha', '.claude'), 'utf8')).toContain(
         '~/.claude/skills/_data/concision.md',
@@ -1641,7 +1745,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('alpha', 'delivery: skill', 'See [canary](../../subagents/canary.md).');
       await declareRulebooks('alpha');
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /alpha[\s\S]*subagents\/canary\.md/,
       );
     });
@@ -1650,14 +1754,16 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('alpha', 'delivery: ambient', 'See [x](../../../elsewhere/a.md).');
       await declareRulebooks('alpha');
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/escapes the content root/);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /escapes the content root/,
+      );
     });
 
     it('fails a dry run on a bad link target, writing nothing', async () => {
       await writeLibraryRulebook('alpha', 'delivery: [ambient, skill]', 'See [canary](../../subagents/canary.md).');
       await declareRulebooks('alpha');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /unusable Markdown link target/,
       );
       expect(existsSync(skillPath('consult-alpha'))).toBe(false);
@@ -1668,7 +1774,7 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('alpha', 'delivery: [ambient, skill]', 'See [the events](#lifecycle-events).');
       await declareRulebooks('alpha');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /guidance\/rulebooks\/alpha\.md carries 1 unresolvable anchor link target/,
       );
       expect(existsSync(skillPath('consult-alpha'))).toBe(false);
@@ -1739,7 +1845,7 @@ describe(syncCommand, () => {
         'utf8',
       );
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const target = path.join(path.resolve(projectRoot), '.claude', 'skills', 'commit', 'SKILL.md');
       const deployed = await readFile(subagentPath('canary'), 'utf8');
@@ -1752,7 +1858,7 @@ describe(syncCommand, () => {
       await writeLibrarySubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSubagents('canary');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in subagents\/canary\.md[\s\S]*only in a rulebook body/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -1763,7 +1869,7 @@ describe(syncCommand, () => {
       await writeLibrarySubagent('canary', { body: 'See [the findings](#finding-scheme).' });
       await declareSubagents('canary');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /subagents\/canary\.md carries 1 unresolvable anchor link target/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -1781,7 +1887,7 @@ describe(syncCommand, () => {
         'utf8',
       );
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in subagents\/canary\.md/,
       );
       expect(existsSync(localHostPath())).toBe(false);
@@ -1793,7 +1899,7 @@ describe(syncCommand, () => {
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
@@ -1810,7 +1916,7 @@ describe(syncCommand, () => {
       });
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).not.toContain('guidance-hook');
@@ -1821,11 +1927,11 @@ describe(syncCommand, () => {
       await writeOverlays();
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       const firstBytes = await readFile(subagentPath('canary'), 'utf8');
       const firstMtime = statSync(subagentPath('canary')).mtimeMs;
 
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(await readFile(subagentPath('canary'), 'utf8')).toBe(firstBytes);
       expect(statSync(subagentPath('canary')).mtimeMs).toBe(firstMtime);
@@ -1836,11 +1942,11 @@ describe(syncCommand, () => {
       await writeLibrarySubagent('canary');
       await writeLibrarySubagent('other');
       await declareSubagents('canary', 'other');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
       expect(existsSync(subagentPath('other'))).toBe(true);
 
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(existsSync(subagentPath('other'))).toBe(false);
       expect(existsSync(subagentPath('canary'))).toBe(true);
@@ -1853,10 +1959,10 @@ describe(syncCommand, () => {
       await writeFile(manual, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       await declareSubagents();
-      await syncCommand(makeOptions(), projectRoot, contentDir);
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
       expect(existsSync(manual)).toBe(true);
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -1866,18 +1972,17 @@ describe(syncCommand, () => {
       await writeOverlays();
       await declareSubagents('ghost');
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/ghost/);
       expect(existsSync(subagentPath('ghost'))).toBe(false);
     });
 
     it('deploys the same subagent into each targeted harness with its own transform', async () => {
-      await mkdir(path.join(projectRoot, '.claude', 'agents'), { recursive: true });
-      await mkdir(path.join(projectRoot, '.rovodev', 'subagents'), { recursive: true });
+      await installBothHarnesses();
       await writeOverlays();
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
       const claude = await readFile(subagentPath('canary', '.claude', 'agents'), 'utf8');
       const rovo = await readFile(subagentPath('canary', '.rovodev', 'subagents'), 'utf8');
@@ -1895,7 +2000,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -1907,7 +2012,7 @@ describe(syncCommand, () => {
 
     it('deploys and retracts the real canary subagent end-to-end', async () => {
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
@@ -1917,7 +2022,7 @@ describe(syncCommand, () => {
       expect(deployed).toContain('~/.claude');
 
       await declareSubagents();
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
@@ -1957,7 +2062,7 @@ describe(syncCommand, () => {
       await writeLibrarySkill('internal-skill', 'user-invocable: false');
       await declareSkills('public-skill', 'internal-skill');
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain('# codeassembly:managed:start');
@@ -1970,10 +2075,10 @@ describe(syncCommand, () => {
     it('leaves prompts.yml byte-identical on re-sync with no skill changes', async () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
       const first = await readFile(promptsYmlPath(), 'utf8');
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(first);
     });
@@ -1983,7 +2088,7 @@ describe(syncCommand, () => {
       await declareSkills('public-skill');
       await seedHandAuthoredPromptsYml();
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain("name: 'hand-authored'");
@@ -1995,11 +2100,11 @@ describe(syncCommand, () => {
     it('removes the region and deletes the file when undeclaring leaves nothing foreign', async () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
       expect(existsSync(promptsYmlPath())).toBe(true);
 
       await declareSkills();
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
 
       expect(existsSync(promptsYmlPath())).toBe(false);
     });
@@ -2008,11 +2113,11 @@ describe(syncCommand, () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
       await seedHandAuthoredPromptsYml();
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
       expect(await readFile(promptsYmlPath(), 'utf8')).toContain('# codeassembly:managed:start');
 
       await declareSkills();
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain("name: 'hand-authored'");
@@ -2026,7 +2131,7 @@ describe(syncCommand, () => {
       const flowAuthored = "prompts: [{ name: 'foreign', content_file: custom.md }]\n";
       await writeFile(promptsYmlPath(), flowAuthored, 'utf8');
 
-      await expect(syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /block-style/,
       );
 
@@ -2038,7 +2143,7 @@ describe(syncCommand, () => {
       const handAuthored = await readFile(promptsYmlPath(), 'utf8');
       await declareSkills();
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(handAuthored);
     });
@@ -2050,7 +2155,7 @@ describe(syncCommand, () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;
       try {
-        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, contentDir);
+        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, contentDir, homeDir);
         output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
       } finally {
         infoSpy.mockRestore();
@@ -2339,7 +2444,7 @@ describe(syncGlobalCommand, () => {
   });
 
   it('refuses a bare sync run rooted at the home directory, directing to --global', async () => {
-    await expect(syncCommand(makeOptions(), homedir(), contentDir)).rejects.toThrow(/--global/);
+    await expect(syncCommand(makeOptions(), homeDir, contentDir, homeDir)).rejects.toThrow(/--global/);
   });
 
   it('empties the ambient region on undeclare and never writes ~/.agents/AGENTS.md', async () => {
