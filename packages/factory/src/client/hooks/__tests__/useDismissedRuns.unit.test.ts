@@ -165,6 +165,56 @@ describe('useDismissedRuns', () => {
     expect(mockedPatchSettings).not.toHaveBeenCalled();
   });
 
+  it('dismiss keeps the optimistic update and warns when patchSettings rejects', async () => {
+    using silent = silencedConsole(['warn']);
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+    mockedPatchSettings.mockRejectedValue(new Error('Network error'));
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismiss('alpha/T-1/run-a', 'completed');
+    });
+
+    await waitFor(() => {
+      expect(silent.warn).toHaveBeenCalledTimes(1);
+    });
+
+    expect(result.current.dismissed['alpha/T-1/run-a']).toEqual({ status: 'completed' });
+  });
+
+  it('dismissAll keeps the optimistic update and warns when patchSettings rejects', async () => {
+    using silent = silencedConsole(['warn']);
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+    mockedPatchSettings.mockRejectedValue(new Error('Network error'));
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismissAll([
+        { key: 'alpha/T-1/run-a', status: 'completed' },
+        { key: 'beta/T-2/run-b', status: 'failed' },
+      ]);
+    });
+
+    await waitFor(() => {
+      expect(silent.warn).toHaveBeenCalledTimes(1);
+    });
+
+    expect(result.current.dismissed).toEqual({
+      'alpha/T-1/run-a': { status: 'completed' },
+      'beta/T-2/run-b': { status: 'failed' },
+    });
+  });
+
   it('dismiss callback is stable across re-renders', async () => {
     mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
 

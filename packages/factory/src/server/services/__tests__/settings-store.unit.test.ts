@@ -1,4 +1,4 @@
-import { readFile, rm } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -112,6 +112,15 @@ describe('SettingsStore', () => {
       const settings = await store.load();
       expect(settings).toEqual({ dismissedRuns: { 'd/e/f': { status: 'failed' } } });
     });
+
+    it('propagates a rename failure and removes the temp file', async () => {
+      const store = new SettingsStore(tempDir);
+      await blockDestination(tempDir);
+
+      await expect(store.save({ dismissedRuns: {} })).rejects.toThrow();
+
+      expect(await readdir(tempDir)).toEqual(['settings.json']);
+    });
   });
 
   describe('patch', () => {
@@ -150,3 +159,14 @@ describe('SettingsStore', () => {
     });
   });
 });
+
+// region | Helpers
+
+/** Occupies the settings path with a non-empty directory, which `rename()` cannot replace. */
+async function blockDestination(dir: string): Promise<void> {
+  const destination = join(dir, 'settings.json');
+  await mkdir(destination, { recursive: true });
+  await writeFile(join(destination, 'blocker'), '', 'utf8');
+}
+
+// endregion | Helpers
