@@ -93,7 +93,7 @@ A collection enumerates every member, not just its dependency roots. Roots-only 
 
 ### Dispositions
 
-Declaring a collection is a claim about its members, so every artifact carries a disposition recording which claim it is under. An artifact under none is an oversight rather than a decision. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+Declaring a collection is a claim about its members, so every artifact carries at least one disposition recording the claims it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: it neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence tolerate no conflicting claim: standalone means membership in no collection, and triage excludes vetted membership. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 
 Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
 
