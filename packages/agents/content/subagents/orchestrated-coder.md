@@ -6,7 +6,7 @@ maxTurns: 150
 skills:
   - anti-patterns
   - commit
-  - common-mistakes
+  - development-workflows
   - software-engineering
   - testing-conventions
 ---
