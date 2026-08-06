@@ -14,7 +14,6 @@ members:
     - classify-complexity
     - collaborate
     - commit
-    - common-mistakes
     - condense-branch
     - create-bitbucket-pr
     - create-devlog
