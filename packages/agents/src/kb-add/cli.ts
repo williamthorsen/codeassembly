@@ -14,17 +14,15 @@ import { formatMissingDestinationMessage } from '../kb-shared/format-missing-des
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { readAll } from '../lib/stream-helpers.ts';
+import { declareDomain } from './declare-domain.ts';
 import { prepareNote } from './prepare-note.ts';
 import { surveyKb } from './survey.ts';
-import type { AddFailure, AddResult, ParsedArgs, SurveyResult } from './types.ts';
+import type { AddFailure, AddResult, ParsedArgs, SurveyResult, WriteArgs } from './types.ts';
 import { writeNote } from './write-note.ts';
 
 /** Flag names that take a value. */
-const VALUE_FLAGS = ['kb', 'folder', 'diataxis', 'title', 'tags'] as const;
+const VALUE_FLAGS = ['kb', 'folder', 'diataxis', 'title', 'tags', 'domain-description'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
-
-/** Value-bearing flags that describe a note, and so belong to a write invocation alone. */
-const WRITE_ONLY_FLAGS: readonly ValueFlag[] = ['folder', 'diataxis', 'title', 'tags'];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -64,6 +62,9 @@ if (isEntryPoint()) {
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
   const raw: Partial<Record<ValueFlag, string>> = {};
+  // Every flag a survey does not accept, collected as seen, so a stray one can be named back to the caller.
+  const writeOnly = new Set<string>();
+  let auto = false;
   let survey = false;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -73,6 +74,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
     if (arg === '--survey') {
       survey = true;
+      continue;
+    }
+    if (arg === '--auto') {
+      auto = true;
+      writeOnly.add('--auto');
       continue;
     }
     const matched = matchValueFlag(arg);
@@ -89,36 +95,26 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`--${key} requires a value`);
     }
     raw[key] = value;
+    if (key !== 'kb') {
+      writeOnly.add(`--${key}`);
+    }
   }
 
   if (survey) {
-    const stray = WRITE_ONLY_FLAGS.filter((flag) => raw[flag] !== undefined);
-    if (stray.length > 0) {
-      throw new Error(`--survey takes only --kb; drop ${stray.map((flag) => `--${flag}`).join(', ')}`);
+    if (writeOnly.size > 0) {
+      throw new Error(`--survey takes only --kb; drop ${writeOnly.values().toArray().toSorted().join(', ')}`);
     }
     return { mode: 'survey', kb: raw.kb ?? null };
   }
 
-  const title = raw.title;
-  if (title === undefined) {
-    throw new Error('--title is required');
-  }
-
-  return {
-    mode: 'write',
-    kb: raw.kb ?? null,
-    folder: raw.folder ?? null,
-    diataxis: raw.diataxis ?? null,
-    title,
-    tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
-  };
+  return buildWriteArgs({ raw, auto });
 }
 
 /**
  * Runs the helper end to end. `--survey` takes the read-only path, which reports the destination's shape and returns
  * without touching stdin — the write path reads stdin to EOF, so a survey falling through to it would hang on an
  * interactive invocation. Otherwise: resolve a single KB, load its tag aliases, read the note body from stdin, compose
- * a born-verified assertion record, and write the note.
+ * a born-verified assertion record, write the note, and record where it landed in the store's taxonomy.
  *
  * Recoverable failures (no resolvable KB, collision, invalid title or args, a malformed store config) become
  * structured `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the caller's
@@ -193,6 +189,16 @@ export async function runAdd(input: {
     }
   }
 
+  // Declare after the note lands, never before: a failure between the two leaves a real note in an undeclared folder,
+  // which `taxonomy.undeclared` reports. The reverse order leaves a declared shelf holding nothing, reported as
+  // `taxonomy.unused` and indistinguishable from a shelf someone put up on purpose.
+  const placement = await declareDomain({
+    kbPath: kb.path,
+    notePath: write.path,
+    description: args.domainDescription,
+    auto: args.auto,
+  });
+
   return {
     ok: true,
     mode: 'write',
@@ -201,10 +207,32 @@ export async function runAdd(input: {
     record: prepared.record,
     originalTags: prepared.originalTags,
     canonicalTags: prepared.canonicalTags,
+    ...(placement !== undefined && { placement }),
   };
 }
 
 // region | Helpers
+
+/** Assembles a write invocation from the raw flag values, applying each optional flag's default. */
+function buildWriteArgs(input: { raw: Partial<Record<ValueFlag, string>>; auto: boolean }): WriteArgs {
+  const { raw, auto } = input;
+
+  const title = raw.title;
+  if (title === undefined) {
+    throw new Error('--title is required');
+  }
+
+  return {
+    mode: 'write',
+    kb: raw.kb ?? null,
+    folder: raw.folder ?? null,
+    diataxis: raw.diataxis ?? null,
+    title,
+    tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
+    domainDescription: raw['domain-description'] ?? null,
+    auto,
+  };
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
@@ -241,7 +269,7 @@ async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasM
   }
 }
 
-/** Matches a `--kb`/`--folder`/`--title`/`--tags` flag (and the optional `--diataxis` Diátaxis label), returning its key and any inline `=value`. */
+/** Matches any value-bearing flag, returning its key and any inline `=value`. */
 function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | null } | null {
   for (const key of VALUE_FLAGS) {
     if (arg === `--${key}`) {

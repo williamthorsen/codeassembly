@@ -31,6 +31,8 @@ describe(parseArgs, () => {
       'My note',
       '--tags',
       'one, two,three',
+      '--domain-description',
+      'TypeScript language notes',
     ]);
 
     expect(parsed).toEqual({
@@ -40,6 +42,8 @@ describe(parseArgs, () => {
       diataxis: 'howto',
       title: 'My note',
       tags: ['one', 'two', 'three'],
+      domainDescription: 'TypeScript language notes',
+      auto: false,
     });
   });
 
@@ -77,6 +81,24 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--survey', '--title', 'X', '--folder', 'languages'])).toThrow(
       /--survey takes only --kb; drop --folder, --title/,
     );
+  });
+
+  it('rejects --auto alongside --survey', () => {
+    expect(() => parseArgs(['--survey', '--auto'])).toThrow(/--survey takes only --kb; drop --auto/);
+  });
+
+  it('parses --auto and --domain-description as write flags', () => {
+    const parsed = parseWriteArgs(['--title', 'Stub', '--auto', '--domain-description', 'Programming languages']);
+
+    expect(parsed.auto).toBe(true);
+    expect(parsed.domainDescription).toBe('Programming languages');
+  });
+
+  it('defaults --auto to false and --domain-description to null', () => {
+    const parsed = parseWriteArgs(['--title', 'Stub']);
+
+    expect(parsed.auto).toBe(false);
+    expect(parsed.domainDescription).toBeNull();
   });
 
   it('throws when --title is missing', () => {
@@ -429,6 +451,64 @@ describe(runAdd, () => {
     } finally {
       stderrSpy.mockRestore();
     }
+  });
+
+  it('declares the note folder from --domain-description and reports the placement', async () => {
+    const kbPath = await makeKb();
+    await writeFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'domains:\n', 'utf8');
+
+    const result = await runAdd({
+      argv: ['--title', 'Types', '--folder', 'languages/typescript', '--domain-description', 'The TypeScript language'],
+      stdin: bodyStream('Body.\n'),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.mode === 'write') {
+      expect(result.placement).toEqual({
+        domain: 'languages/typescript',
+        added: ['languages', 'languages/typescript'],
+      });
+    }
+    const taxonomy = await readFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'utf8');
+    expect(taxonomy).toContain('languages/typescript: The TypeScript language');
+  });
+
+  it('routes the declared domain to provisional under --auto', async () => {
+    const kbPath = await makeKb();
+    await writeFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'domains:\n', 'utf8');
+
+    const result = await runAdd({
+      argv: ['--title', 'Types', '--folder', 'languages', '--domain-description', 'Languages', '--auto'],
+      stdin: bodyStream('Body.\n'),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    const taxonomy = await readFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'utf8');
+    expect(taxonomy).toContain('provisional:\n  languages: Languages\n');
+  });
+
+  it('writes without a taxonomy and reports no placement when the store has not adopted one', async () => {
+    const kbPath = await makeKb();
+
+    const result = await runAdd({
+      argv: ['--title', 'Types', '--folder', 'languages'],
+      stdin: bodyStream('Body.\n'),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.mode === 'write') {
+      expect(result.placement).toBeUndefined();
+    }
+    expect(await readdir(join(kbPath, '.kb'))).toEqual([]);
   });
 
   it('surveys a store, reporting its KB, taxonomy path, declared domains, and undeclared folders', async () => {

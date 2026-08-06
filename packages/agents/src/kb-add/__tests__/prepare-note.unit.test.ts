@@ -16,6 +16,8 @@ const baseArgs: WriteArgs = {
   diataxis: 'howto',
   title: 'Working with Node streams',
   tags: ['streams'],
+  domainDescription: null,
+  auto: false,
 };
 
 const emptyAliases: AliasMap = new Map();

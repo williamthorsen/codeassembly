@@ -8,6 +8,7 @@
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+import type { DomainPlacement } from './declare-domain.ts';
 import type { KbSurvey } from './survey.ts';
 
 /** Parsed command-line invocation of the kb-add helper: a read-only survey, or a note write. */
@@ -34,6 +35,10 @@ export interface WriteArgs {
   title: string;
   /** The proposed tag list, in the order the agent supplied them. */
   tags: string[];
+  /** Description for a domain the write declares; `null` declares it bare. */
+  domainDescription: string | null;
+  /** Whether the capture ran unconfirmed, which routes a declared domain to `provisional:`. */
+  auto: boolean;
 }
 
 /** The prepared note ready to be written: the assertion record and the canonicalization audit trail. */
@@ -60,6 +65,8 @@ export interface AddSuccess {
   originalTags: string[];
   /** Tag list as written to disk, after alias canonicalization. */
   canonicalTags: string[];
+  /** Where the note landed in the store's taxonomy; absent for a store that has not adopted one. */
+  placement?: DomainPlacement;
 }
 
 /** The helper's stdout payload on a recoverable failure. */
