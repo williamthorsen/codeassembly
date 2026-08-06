@@ -1,3 +1,5 @@
+/* eslint unicorn/no-array-from-fill: "off", unicorn/no-top-level-assignment-in-function: "off" -- Frozen prototype; its module-level mutable layout state is inherent to the design. */
+
 // § CONSTANTS
 
 // Canvas dimensions

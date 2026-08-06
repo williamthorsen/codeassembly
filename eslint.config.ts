@@ -1,8 +1,6 @@
 import baseConfig from '@williamthorsen/eslint-config-typescript';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
-import { deferredLintRules } from './.config/eslint/deferred-lint-rules.ts';
-
 const config = defineConfig([
   ...baseConfig,
   globalIgnores([
@@ -20,10 +18,6 @@ const config = defineConfig([
     '**/__tests__/**/fixtures/**/*malformed*/**',
     '**/__tests__/**/fixtures/**/*malformed*',
   ]),
-  {
-    files: ['**/*.ts', '**/*.mts', '**/*.tsx', '**/*.md/*.ts', '**/*.js'],
-    rules: deferredLintRules,
-  },
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {
