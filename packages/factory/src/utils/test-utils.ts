@@ -25,6 +25,7 @@ export function silencedConsole<M extends ConsoleMethod>(methods: readonly M[]):
 
   const result = typedFromEntries(entries);
   return Object.assign(result, {
+    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties -- unicorn's Symbol allowlist predates Explicit Resource Management, and the rule accepts no options.
     [Symbol.dispose]() {
       for (const spy of spies) {
         spy.mockRestore();
