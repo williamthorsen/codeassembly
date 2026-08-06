@@ -35,12 +35,12 @@ describe(initCommand, () => {
     expect(content).toContain('use: []');
   });
 
-  it('names the current ambient destination rather than the retired PROJECT.md', async () => {
+  it('names the machine-local guidance file of each harness as the ambient destination', async () => {
     await initCommand(makeOptions(), projectRoot);
 
     const content = await readFile(declarationPath(), 'utf8');
-    expect(content).not.toContain('PROJECT.md');
     expect(content).toContain('CLAUDE.local.md');
+    expect(content).toContain('AGENTS.local.md');
   });
 
   it('surfaces the harnesses key so the targeting fallback can be pinned', async () => {
@@ -133,11 +133,12 @@ describe(initGlobalCommand, () => {
     expect(content).toContain('an empty list targets none');
   });
 
-  it('does not claim that only a gitignored file can withdraw a declared harness', async () => {
+  it('states that either project-tier file may withdraw a declared harness', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
-    // `drop` deletes regardless of the declaring file's domain; only `root` is domain-scoped.
-    expect(await readFile(declarationPath(), 'utf8')).not.toContain('only its own gitignored');
+    // Unwrapped so the assertion reads the claim rather than the column the comment happens to wrap at.
+    const prose = (await readFile(declarationPath(), 'utf8')).replaceAll(/\n#\s*/gu, ' ');
+    expect(prose).toContain('either project-tier file may withdraw from it with drop');
   });
 
   it('scaffolds a file that declares the seeded collections', async () => {
