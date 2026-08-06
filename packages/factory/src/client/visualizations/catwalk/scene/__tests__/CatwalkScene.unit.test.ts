@@ -955,4 +955,69 @@ describe('CatwalkScene', () => {
       expect(scene.entities.length).toBeGreaterThan(countAfterRebuild);
     });
   });
+
+  describe('buffered diff drain', () => {
+    /** Build an in-progress status whose completed phases advance the orchestrator's station. */
+    function buildStatusAtStation(completedPhases: 'none' | 'architecture' | 'planning') {
+      const phases = emptyPhases();
+      if (completedPhases !== 'none') {
+        phases.architecture = { status: 'completed', impactLevel: 'high', artifact: 'arch.md' };
+      }
+      if (completedPhases === 'planning') {
+        phases.planning = { status: 'completed', stepCount: 3, artifacts: ['plan.md'] };
+      }
+      return createMockRunStatus({ status: 'in_progress', phases });
+    }
+
+    /** Return the scene's single orchestrator actor. */
+    function findOrchestrator(scene: InstanceType<typeof CatwalkScene>) {
+      const orch = scene.entities.find(
+        (e): e is InstanceType<typeof OrchestratorActor> => e instanceof OrchestratorActor,
+      );
+      if (orch === undefined) throw new Error('orchestrator not found');
+      return orch;
+    }
+
+    it('applies a diff that arrived while a choreography was in flight', async () => {
+      const scene = new CatwalkScene(buildStatusAtStation('none'));
+      scene.onInitialize();
+      const orch = findOrchestrator(scene);
+
+      // The second call lands while the first choreography is still awaiting, so it buffers.
+      scene.updateStatus(buildStatusAtStation('architecture'));
+      scene.updateStatus(buildStatusAtStation('planning'));
+
+      await vi.waitFor(() => {
+        expect(orch.animateMoveTo).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    it('applies the buffered diff after a choreography rejects', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const scene = new CatwalkScene(buildStatusAtStation('none'));
+      scene.onInitialize();
+      const orch = findOrchestrator(scene);
+      // Gate opening runs outside the animation wrapper, so its throw rejects the choreography.
+      const gates = scene.entities.filter((e): e is InstanceType<typeof GateActor> => e instanceof GateActor);
+      for (const gate of gates) {
+        vi.spyOn(gate, 'animateOpen').mockImplementationOnce(() => {
+          throw new Error('choreography blew up');
+        });
+      }
+
+      scene.updateStatus(buildStatusAtStation('architecture'));
+      scene.updateStatus(buildStatusAtStation('planning'));
+
+      await vi.waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('Choreography error:', expect.any(Error));
+      });
+      // The buffered diff still reaches the orchestrator despite the failed choreography.
+      await vi.waitFor(() => {
+        expect(orch.animateMoveTo).toHaveBeenCalledTimes(2);
+      });
+
+      consoleSpy.mockRestore();
+    });
+  });
 });

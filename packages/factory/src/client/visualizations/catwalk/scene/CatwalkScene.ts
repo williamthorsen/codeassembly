@@ -2,6 +2,7 @@ import { Actor, Color, Rectangle, Scene, vec } from 'excalibur';
 
 import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
 import {
   ArtifactActor,
   CatwalkStationActor,
@@ -54,12 +55,8 @@ export class CatwalkScene extends Scene {
   }
 
   override onInitialize(): void {
-    // loadAllCatwalkSprites populates the animation cache synchronously,
-    // so buildScene can safely call getAnimation() immediately.
-    // The returned promise resolves once image data finishes loading.
-    loadAllCatwalkSprites().catch((error: unknown) => {
-      console.error('Failed to load catwalk sprites:', error);
-    });
+    // The animation cache is populated before the returned promise settles, so buildScene may run immediately.
+    void loadSceneSprites(loadAllCatwalkSprites, 'Failed to load catwalk sprites:');
     this.buildScene();
     this.positionCamera();
   }
@@ -140,40 +137,36 @@ export class CatwalkScene extends Scene {
     const refs = this.buildSceneRefs();
     this.choreographyInProgress = true;
 
-    choreograph(diff, layout, refs)
-      .then(() => {
-        this.choreographyInProgress = false;
+    void this.runChoreography(diff, layout, refs);
+  }
 
-        // Trigger celebration after orchestrator arrives at destination
-        if (
-          diff.orchestrator.celebratingChanged !== null &&
-          diff.orchestrator.celebratingChanged.to &&
-          this.orchestratorRef !== undefined
-        ) {
-          this.orchestratorRef.celebrate();
-        }
+  /** Run the choreographer to completion, then apply whatever diff arrived while it was animating. */
+  private async runChoreography(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): Promise<void> {
+    try {
+      await choreograph(diff, layout, refs);
+      this.choreographyInProgress = false;
 
-        this.positionCamera();
+      // Trigger celebration after orchestrator arrives at destination
+      if (
+        diff.orchestrator.celebratingChanged !== null &&
+        diff.orchestrator.celebratingChanged.to &&
+        this.orchestratorRef !== undefined
+      ) {
+        this.orchestratorRef.celebrate();
+      }
 
-        // If another diff arrived while we were animating, apply it now
-        if (this.pendingDiff !== undefined) {
-          const pending = this.pendingDiff;
-          this.pendingDiff = undefined;
-          this.applyDiff(pending.diff, pending.config, pending.layout);
-        }
-        return;
-      })
-      .catch((error: unknown) => {
-        console.error('Choreography error:', error);
-        this.choreographyInProgress = false;
+      this.positionCamera();
+    } catch (error: unknown) {
+      console.error('Choreography error:', error);
+      this.choreographyInProgress = false;
+    }
 
-        // Apply any buffered diff so the scene does not get stuck
-        if (this.pendingDiff !== undefined) {
-          const pending = this.pendingDiff;
-          this.pendingDiff = undefined;
-          this.applyDiff(pending.diff, pending.config, pending.layout);
-        }
-      });
+    // Apply any buffered diff so the scene does not get stuck
+    if (this.pendingDiff !== undefined) {
+      const pending = this.pendingDiff;
+      this.pendingDiff = undefined;
+      this.applyDiff(pending.diff, pending.config, pending.layout);
+    }
   }
 
   /** Build the SceneRefs object that the choreographer needs. */

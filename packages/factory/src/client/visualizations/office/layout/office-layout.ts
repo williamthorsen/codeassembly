@@ -24,10 +24,11 @@ function computeZoneCenter(zone: ZoneDefinition): Position {
  */
 function buildCorridorPath(from: ZoneDefinition, to: ZoneDefinition): Position[] {
   const fromDoor = from.doors[0];
-  const toDoor = to.doors[0];
   if (fromDoor === undefined) {
     throw new Error(`Zone "${from.id}" has no doors; cannot build corridor path`);
   }
+
+  const toDoor = to.doors[0];
   if (toDoor === undefined) {
     throw new Error(`Zone "${to.id}" has no doors; cannot build corridor path`);
   }

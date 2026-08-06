@@ -183,13 +183,15 @@ describe('catwalk-sprite-loader', () => {
       expect(() => getAnimation('subagent', 'idle')).toThrow('Catwalk sprites have not been loaded');
     });
 
-    it('works synchronously after calling loadAllCatwalkSprites (before await)', () => {
+    it('works synchronously after calling loadAllCatwalkSprites (before await)', async () => {
       // The cache is populated synchronously, so getAnimation is safe to call
       // immediately without awaiting the load promise
-      loadAllCatwalkSprites().catch(() => undefined);
+      const loading = loadAllCatwalkSprites();
 
       expect(() => getAnimation('subagent', 'idle')).not.toThrow();
       expect(getAnimation('subagent', 'idle')).toBeDefined();
+
+      await loading;
     });
 
     it('returns an animation for each sprite type and state', async () => {

@@ -61,11 +61,6 @@ export function assignAgentToZone(agent: LogicalAgentState, agentIndex: number):
 /** Zone IDs that the orchestrator can be assigned to. */
 type OrchestratorZoneId = 'governor' | 'prep' | 'workshop';
 
-/** Check whether a zone ID is one of the known orchestrator zones. */
-function isOrchestratorZoneId(zoneId: string): zoneId is OrchestratorZoneId {
-  return zoneId === 'governor' || zoneId === 'prep' || zoneId === 'workshop';
-}
-
 /** Orchestrator's home slot in the governor zone. */
 const ORCHESTRATOR_HOME_SLOT = 'governor-desk-0';
 
@@ -76,6 +71,11 @@ const ORCHESTRATOR_SLOT_BY_ZONE: Record<OrchestratorZoneId, string> = {
   workshop: 'workshop-standing-0',
 };
 
+/** Check whether a zone ID is one of the known orchestrator zones. */
+function isOrchestratorZoneId(zoneId: string): zoneId is OrchestratorZoneId {
+  return Object.hasOwn(ORCHESTRATOR_SLOT_BY_ZONE, zoneId);
+}
+
 /** Derive the orchestrator's zone and slot from its status and the current phase. */
 export function deriveOrchestratorAssignment(
   orchestrator: LogicalOrchestratorState,
@@ -83,15 +83,9 @@ export function deriveOrchestratorAssignment(
 ): { zoneId: string; slotId: string } {
   const homeZone = 'governor';
 
-  let zoneId: string;
-  if (isOrchestratorAtHome(orchestrator.status)) {
-    zoneId = homeZone;
-  } else if (currentPhase === undefined) {
-    zoneId = homeZone;
-  } else {
-    // When dispatching or monitoring, infer zone from current phase
-    zoneId = phaseToZoneId(currentPhase);
-  }
+  // When dispatching or monitoring, infer zone from current phase
+  const zoneId =
+    currentPhase === undefined || isOrchestratorAtHome(orchestrator.status) ? homeZone : phaseToZoneId(currentPhase);
 
   const slotId = isOrchestratorZoneId(zoneId) ? ORCHESTRATOR_SLOT_BY_ZONE[zoneId] : undefined;
 
@@ -103,9 +97,12 @@ export function deriveOrchestratorAssignment(
   return { zoneId, slotId };
 }
 
+/** Statuses in which the orchestrator belongs at its home zone. */
+const AT_HOME_STATUSES: ReadonlySet<OrchestratorStatus> = new Set(['delivering', 'done', 'idle']);
+
 /** Check whether the orchestrator status indicates it should be at its home zone. */
 function isOrchestratorAtHome(status: OrchestratorStatus): boolean {
-  return status === 'idle' || status === 'done' || status === 'delivering';
+  return AT_HOME_STATUSES.has(status);
 }
 
 // -- Artifact assignment --
@@ -160,11 +157,12 @@ export function deriveZoneStates(agents: OfficeAgentState[], zones: readonly Zon
 
 // -- Reviewer index computation --
 
+/** Phases whose agents share the reviewer slot pool. */
+const REVIEW_PHASES: ReadonlySet<PhaseName> = new Set(['holistic', 'review', 'simplifier']);
+
 /** Compute stable reviewer slot indices by sorting review-phase agents by ID. */
 export function computeReviewerIndices(agents: LogicalAgentState[]): Map<string, number> {
-  const reviewAgents = agents
-    .filter((a) => a.phase === 'review' || a.phase === 'simplifier' || a.phase === 'holistic')
-    .toSorted((a, b) => a.id.localeCompare(b.id));
+  const reviewAgents = agents.filter((a) => REVIEW_PHASES.has(a.phase)).toSorted((a, b) => a.id.localeCompare(b.id));
 
   const maxSlot = 5;
   const indices = new Map<string, number>();

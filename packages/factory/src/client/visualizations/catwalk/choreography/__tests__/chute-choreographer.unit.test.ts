@@ -487,14 +487,8 @@ describe('choreograph', () => {
       }
 
       // Create deferred promises so we can control resolution order
-      let resolveAscend: (() => void) | undefined;
-      const ascendPromise = new Promise<void>((resolve) => {
-        resolveAscend = resolve;
-      });
-      let resolveWalk: (() => void) | undefined;
-      const walkPromise = new Promise<void>((resolve) => {
-        resolveWalk = resolve;
-      });
+      const { promise: ascendPromise, resolve: resolveAscend }: PromiseWithResolvers<void> = Promise.withResolvers();
+      const { promise: walkPromise, resolve: resolveWalk }: PromiseWithResolvers<void> = Promise.withResolvers();
 
       const orchestrator = {
         animateMoveTo: vi.fn().mockImplementation(async () => {
@@ -548,7 +542,7 @@ describe('choreograph', () => {
       expect(callLog).not.toContain('walk-start');
 
       // Resolve ascend
-      if (resolveAscend !== undefined) resolveAscend();
+      resolveAscend();
       await flushMicrotasks();
 
       // Walk should now have started but descend should not yet
@@ -556,7 +550,7 @@ describe('choreograph', () => {
       expect(callLog).not.toContain('descend-start');
 
       // Resolve walk
-      if (resolveWalk !== undefined) resolveWalk();
+      resolveWalk();
       await choreographPromise;
 
       // All steps should have completed in order
@@ -579,7 +573,7 @@ describe('choreograph', () => {
     });
   });
 
-  describe('suppressKilledActorError', () => {
+  describe('animation error handling', () => {
     it('silently swallows known killed-actor rejections', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

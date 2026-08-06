@@ -211,7 +211,7 @@ describe('OrchestratorActor', () => {
     expect(actor.children.length).toBe(1);
 
     // Store ref to the added child
-    const addedChild = actor.children[0];
+    const addedChild = actor.children.at(0);
 
     actor.setCarriedArtifacts([]);
 
@@ -236,7 +236,7 @@ describe('OrchestratorActor', () => {
   it('setCarriedArtifacts kills previous children before adding new ones', () => {
     const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCarriedArtifacts([{ label: 'code', color: '#fff3bf' }]);
-    const firstChild = actor.children[0];
+    const firstChild = actor.children.at(0);
 
     actor.setCarriedArtifacts([
       { label: 'plan', color: '#b2f2bb' },
@@ -254,7 +254,7 @@ describe('OrchestratorActor', () => {
   it('setCodeBadge(null) kills the badge child', () => {
     const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
-    const badgeChild = actor.children[0];
+    const badgeChild = actor.children.at(0);
 
     actor.setCodeBadge(null);
 
@@ -276,7 +276,7 @@ describe('OrchestratorActor', () => {
   it('setCodeBadge kills previous badge before adding new one', () => {
     const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
-    const firstBadge = actor.children[0];
+    const firstBadge = actor.children.at(0);
 
     actor.setCodeBadge({ label: 'v3', color: '#ff6600' });
 

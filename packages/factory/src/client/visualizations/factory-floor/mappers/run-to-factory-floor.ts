@@ -114,7 +114,7 @@ function buildOrchestrator(status: CanonicalRunStatus, currentPhase: PhaseName |
 
   if (status.status === 'completed') {
     stationIndex = 6;
-  } else if (status.status === 'in_progress' && currentPhase !== undefined) {
+  } else if (currentPhase !== undefined && status.status === 'in_progress') {
     stationIndex = PHASE_NAMES.indexOf(currentPhase);
   } else {
     stationIndex = -1;

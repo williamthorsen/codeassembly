@@ -1,6 +1,7 @@
 import type { Actor } from 'excalibur';
 import { vec } from 'excalibur';
 
+import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.js';
 import { FlyingArtifactActor } from '../actors/FlyingArtifactActor.js';
 import type { GateActor } from '../actors/GateActor.js';
 import type { OrchestratorActor } from '../actors/OrchestratorActor.js';
@@ -16,18 +17,6 @@ export interface SceneRefs {
   agentCountByStation: Map<number, number>;
   addActor: (actor: Actor) => void;
   addArtifact: (artifact: StationArtifactConfig, layout: CatwalkLayoutResult) => void;
-}
-
-/**
- * Suppress the known killed-actor error that Excalibur raises when an actor
- * is killed mid-animation (e.g., scene cleared during playback). Log any
- * unexpected rejection so it surfaces for debugging.
- */
-function suppressKilledActorError(error: unknown): void {
-  const message = error instanceof Error ? error.message : String(error);
-  if (!message.includes('Actor has been killed')) {
-    console.error('Unexpected animation error:', error);
-  }
 }
 
 /**
@@ -96,7 +85,7 @@ async function choreographDelivery(
     const endpoints = layout.chuteEndpoints(originStation, 0, originAgentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'ascend');
     refs.addActor(flyer);
-    ascendPromises.push(flyer.ascend().catch(suppressKilledActorError));
+    ascendPromises.push(runAnimationSuppressingErrors(() => flyer.ascend()));
   }
   await Promise.all(ascendPromises);
 
@@ -107,7 +96,7 @@ async function choreographDelivery(
 
   // Step 3: Walk -- slide orchestrator to destination
   const destPos = layout.orchestratorPosition(destStation);
-  await orchestrator.animateMoveTo(vec(destPos.x, destPos.y)).catch(suppressKilledActorError);
+  await runAnimationSuppressingErrors(() => orchestrator.animateMoveTo(vec(destPos.x, destPos.y)));
 
   // Step 4: Descend -- flying artifacts drop down the destination station chute
   const descendPromises: Promise<void>[] = [];
@@ -116,7 +105,7 @@ async function choreographDelivery(
     const endpoints = layout.chuteEndpoints(destStation, 0, destAgentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
-    descendPromises.push(flyer.descend().catch(suppressKilledActorError));
+    descendPromises.push(runAnimationSuppressingErrors(() => flyer.descend()));
   }
   await Promise.all(descendPromises);
 
@@ -131,26 +120,24 @@ async function choreographDelivery(
 function applyImmediate(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): void {
   const orchestrator = refs.orchestrator;
 
-  // Orchestrator position
-  if (diff.orchestrator.moved !== null && orchestrator !== undefined) {
-    const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
-    // Fire-and-forget: no sequencing needed
-    orchestrator.animateMoveTo(vec(pos.x, pos.y)).catch(suppressKilledActorError);
-  }
+  if (orchestrator !== undefined) {
+    if (diff.orchestrator.moved !== null) {
+      const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
+      // Fire-and-forget: no sequencing needed
+      void runAnimationSuppressingErrors(() => orchestrator.animateMoveTo(vec(pos.x, pos.y)));
+    }
 
-  // Orchestrator working state
-  if (diff.orchestrator.workingChanged !== null && orchestrator !== undefined) {
-    orchestrator.setWorking(diff.orchestrator.workingChanged.to);
-  }
+    if (diff.orchestrator.workingChanged !== null) {
+      orchestrator.setWorking(diff.orchestrator.workingChanged.to);
+    }
 
-  // Carried artifacts
-  if (diff.orchestrator.carriedChanged !== null && orchestrator !== undefined) {
-    orchestrator.setCarriedArtifacts(diff.orchestrator.carriedChanged.to);
-  }
+    if (diff.orchestrator.carriedChanged !== null) {
+      orchestrator.setCarriedArtifacts(diff.orchestrator.carriedChanged.to);
+    }
 
-  // Code badge
-  if (diff.orchestrator.codeBadgeChanged !== null && orchestrator !== undefined) {
-    orchestrator.setCodeBadge(diff.orchestrator.codeBadgeChanged.to);
+    if (diff.orchestrator.codeBadgeChanged !== null) {
+      orchestrator.setCodeBadge(diff.orchestrator.codeBadgeChanged.to);
+    }
   }
 
   applyAgentChanges(diff, refs);
