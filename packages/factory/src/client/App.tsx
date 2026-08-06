@@ -226,22 +226,30 @@ export function App(): React.JSX.Element {
   }, [index]);
 
   useEffect(() => {
-    fetchProjects()
-      .then(setIndex)
-      .catch((error_: unknown) => {
+    async function loadProjects(): Promise<void> {
+      try {
+        setIndex(await fetchProjects());
+      } catch (error_: unknown) {
         console.error('Failed to fetch projects:', error_);
         setFetchError(error_ instanceof Error ? error_.message : 'Failed to load projects');
-      });
+      }
+    }
+
+    void loadProjects();
   }, []);
 
   // Poll for project updates
   useEffect(() => {
+    async function pollProjects(): Promise<void> {
+      try {
+        setIndex(await fetchProjects());
+      } catch {
+        // Silently ignore poll errors — display stale data rather than flash errors
+      }
+    }
+
     const intervalId = setInterval(() => {
-      fetchProjects()
-        .then(setIndex)
-        .catch(() => {
-          // Silently ignore poll errors — display stale data rather than flash errors
-        });
+      void pollProjects();
     }, PROJECT_POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);

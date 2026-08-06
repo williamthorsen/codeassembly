@@ -61,7 +61,11 @@ export class SettingsStore {
     try {
       await rename(tmpPath, this.filePath);
     } catch (renameError) {
-      await unlink(tmpPath).catch(() => {});
+      try {
+        await unlink(tmpPath);
+      } catch {
+        // Cleanup is best-effort: the rename failure is what the caller needs to see.
+      }
       throw renameError;
     }
   }

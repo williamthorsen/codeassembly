@@ -48,17 +48,23 @@ export class ProjectWatcher {
     }
   }
 
+  private async rescan(): Promise<void> {
+    this.debounceTimer = undefined;
+    console.info('File change detected, rescanning projects...');
+    try {
+      await this.scanner.scan();
+    } catch (error: unknown) {
+      console.error('Error during rescan:', error);
+    }
+  }
+
   private scheduleRescan(): void {
     if (this.debounceTimer !== undefined) {
       clearTimeout(this.debounceTimer);
     }
 
     this.debounceTimer = setTimeout(() => {
-      this.debounceTimer = undefined;
-      console.info('File change detected, rescanning projects...');
-      this.scanner.scan().catch((error: unknown) => {
-        console.error('Error during rescan:', error);
-      });
+      void this.rescan();
     }, DEBOUNCE_MS);
   }
 }

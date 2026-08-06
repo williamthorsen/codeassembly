@@ -38,20 +38,6 @@ const events: RunEvent[] = [
   { t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' },
 ];
 
-function createDeferredPromise<T>(): {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason: unknown) => void;
-} {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: unknown) => void;
-  const promise = new Promise<T>((_resolve, _reject) => {
-    resolve = _resolve;
-    reject = _reject;
-  });
-  return { promise, resolve, reject };
-}
-
 describe(useRunPlayback, () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -148,7 +134,7 @@ describe(useRunPlayback, () => {
   });
 
   it('discards stale fetch responses when stopReplay is called before fetch resolves', async () => {
-    const deferred = createDeferredPromise<{ header: RunHeader; events: RunEvent[] }>();
+    const deferred = Promise.withResolvers<{ header: RunHeader; events: RunEvent[] }>();
     mockedFetchRunEvents.mockReturnValueOnce(deferred.promise);
 
     const { result } = renderHook(() => useRunPlayback('proj', 'run-1'));
