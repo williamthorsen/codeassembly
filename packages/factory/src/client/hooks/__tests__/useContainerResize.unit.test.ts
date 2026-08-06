@@ -6,7 +6,8 @@ import { useContainerResize } from '../useContainerResize.js';
 
 type ResizeCallback = ResizeObserverCallback;
 
-let capturedCallback: ResizeCallback | undefined;
+// Holds the callback the hook hands to its observer, so that a test can drive a resize directly.
+const captured: { callback: ResizeCallback | undefined } = { callback: undefined };
 const mockObserve = vi.fn();
 const mockDisconnect = vi.fn();
 
@@ -16,23 +17,20 @@ class MockResizeObserver {
   disconnect = mockDisconnect;
 
   constructor(callback: ResizeCallback) {
-    capturedCallback = callback;
+    captured.callback = callback;
   }
 }
 
 describe('useContainerResize', () => {
-  let originalResizeObserver: typeof globalThis.ResizeObserver;
-
   beforeEach(() => {
-    originalResizeObserver = ResizeObserver;
-    globalThis.ResizeObserver = MockResizeObserver;
-    capturedCallback = undefined;
+    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+    captured.callback = undefined;
     mockObserve.mockClear();
     mockDisconnect.mockClear();
   });
 
   afterEach(() => {
-    globalThis.ResizeObserver = originalResizeObserver;
+    vi.unstubAllGlobals();
   });
 
   it('observes the canvas parent element on mount', () => {
@@ -89,12 +87,13 @@ describe('useContainerResize', () => {
 
     renderHook(() => useContainerResize(canvasRef, engineRef));
 
-    if (capturedCallback === undefined) {
+    const { callback } = captured;
+    if (callback === undefined) {
       throw new Error('Expected ResizeObserver callback to be captured');
     }
 
     // Simulate a container resize
-    capturedCallback([], new MockResizeObserver(() => {}));
+    callback([], new MockResizeObserver(() => {}));
 
     // Canvas inline styles should be reset to 100%
     expect(canvas.style.width).toBe('100%');
@@ -114,11 +113,10 @@ describe('useContainerResize', () => {
 
     renderHook(() => useContainerResize(canvasRef, engineRef));
 
-    if (capturedCallback === undefined) {
+    const { callback } = captured;
+    if (callback === undefined) {
       throw new Error('Expected ResizeObserver callback to be captured');
     }
-
-    const callback = capturedCallback;
 
     // Should not throw when engine is null
     expect(() => {
