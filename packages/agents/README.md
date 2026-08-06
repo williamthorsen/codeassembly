@@ -167,17 +167,56 @@ subagents:
     - canary
 ```
 
-A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is injected into the ambient region of each targeted harness's guidance file, and a `skill` rulebook is delivered as a `consult-<slug>` skill in each detected harness. A rulebook may declare both.
+A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is injected into the ambient region of each targeted harness's guidance file, and a `skill` rulebook is delivered as a `consult-<slug>` skill in each targeted harness. A rulebook may declare both.
 
-A declared skill is deployed into each detected harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
+A declared skill is deployed into each targeted harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
 
 A skill may restrict itself to specific harnesses with a `supported-harnesses:` frontmatter field (a single harness id or a list, e.g. `supported-harnesses: [rovo]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill with no `supported-harnesses:` field deploys to every harness. This is how a skill that one harness provides natively — but the library supplies for the others — is targeted at just the harnesses that need it, without duplicating it per harness.
 
-A declared subagent is deployed into each detected harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
+A declared subagent is deployed into each targeted harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
 
 `rulebooks`, `skills`, `subagents`, and `collections` are all deployed.
 
 Two further top-level keys name where artifacts come from rather than which to adopt: `sources` (see [Sources](#sources)) and `packages` (see [Packages](#packages)). `packages` takes the same `use`/`drop` shape as a type block, so the semantics above carry over to it unchanged.
+
+A third, `harnesses`, names where they go: see [Harness targeting](#harness-targeting).
+
+#### Harness targeting
+
+`harnesses` declares which harnesses a `sync` run deploys into, in the same `use`/`drop` shape as a type block, with harness ids for entries:
+
+```yaml
+harnesses:
+  use:
+    - claude
+  drop:
+    - rovo
+```
+
+A run resolves its targets in this order, stopping at the first that answers:
+
+1. The `--harness <id>` flag. (`--harness all` is the not-specified default and falls through.)
+2. The `harnesses` declaration, if any file in the chain carries one. A declaration that resolves to an empty set is honored: the run targets nothing and says so.
+3. The harnesses installed for this user, detected by the presence of their home directories (`~/.claude`, `~/.rovodev`). A harness home is created by that harness's own installer, so its presence is evidence the harness is installed; a repository's own `.claude/` directory is not, which is why the repository is never probed.
+
+**`harnesses` resolves on a chain of its own.** Which harnesses a developer runs is a fact about the developer, so the key resolves across the user-global and project tiers together — the one key that crosses the domains defined under [Scopes](#scopes). Artifact keys deliberately do not: a user-global `collections: use: [all]` would otherwise deploy the whole catalog into every repository's harness directories.
+
+**`root: true` clears only its own domain's contributions.** For every artifact key this is indistinguishable from clearing the whole chain, since their chain lies within one domain. It matters for `harnesses` alone, where it keeps a committed project file from discarding what the developer declared in the user-global tier. A `drop` still crosses the boundary, from either project-tier file: the committed `.agents/codeassembly.yaml` withdraws a harness for everyone working on the project, and the gitignored `.agents/codeassembly.local.yaml` withdraws one for a single checkout.
+
+The three tiers therefore state three different things: the user-global tier states which harnesses are installed, the project tier states which the project requires, and `codeassembly.local.yaml` overrides either for one developer.
+
+**Targeting selects the harness set; artifact narrowing filters within it.** A run targeting `[claude, rovo]` with a skill declaring `supported-harnesses: [rovo]` deploys that skill to Rovo alone. The two keys are distinct: `harnesses` lives in `codeassembly.yaml` and governs a whole run, while `supported-harnesses` lives in an artifact's frontmatter and governs that artifact.
+
+Both `sync` and `sync --global` honor the declaration. `install`, `uninstall`, `status`, and `configure-hooks` deploy into the harness homes and so are answered by detection alone; they read `--harness` and the installed set, never the declaration.
+
+Every run names what it targeted and what decided it, and a run that fell back to detection names the key that would pin the set:
+
+```
+Targeting claude, rovo (detected in ~).
+Declare `harnesses.use` in .agents/codeassembly.yaml to pin this.
+```
+
+The advice names the declaration the run itself reads, so `sync --global` points at `~/.agents/codeassembly.yaml` instead: a global run never reaches a project's tiers, and pinning the set there would leave its own targeting unchanged.
 
 ### Collections
 
@@ -357,7 +396,7 @@ The declaration resolves in two independent **domains**, each with its own base 
 1. **User-global** — `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
 2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
 
-A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. The domains never cross — a project tier cannot `drop` a user-global entry, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovodev/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovodev/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
+A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovodev/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovodev/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
 
 When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: The new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
 

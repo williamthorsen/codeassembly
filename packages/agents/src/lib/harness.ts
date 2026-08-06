@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import type { AmbientHostKind, HarnessConfig, HarnessId, InstallOptions } from './types.js';
+import type { AmbientHostKind, HarnessConfig, HarnessId, InstallOptions } from './types.ts';
 
 /** Harness configuration table. */
 export const HARNESSES: Record<HarnessId, HarnessConfig> = {
@@ -47,14 +47,14 @@ export function isHarnessId(value: string): value is HarnessId {
 }
 
 /**
- * Detects which harnesses have their home directories present.
- * @param baseDir Override for the home directory (defaults to `os.homedir()`).
+ * Detects which harnesses are installed for this user, by the presence of their home directories. The argument is a
+ * home directory and nothing else: a harness home is created by that harness's own installer, so passing any other
+ * base asks a question this cannot answer.
  */
-export function detectHarnesses(baseDir?: string): ReadonlyArray<HarnessId> {
-  const home = baseDir ?? homedir();
+export function detectHarnesses(homeDir: string = homedir()): ReadonlyArray<HarnessId> {
   return ALL_HARNESS_IDS.filter((id) => {
     const config = HARNESSES[id];
-    return existsSync(path.join(home, config.homeDir));
+    return existsSync(path.join(homeDir, config.homeDir));
   });
 }
 
@@ -113,13 +113,16 @@ export function resolveSkillsPathPrefix(config: HarnessConfig): string {
 }
 
 /**
- * Resolves which harness IDs to target based on the option value.
- * @param harness A specific harness ID or 'all' to detect available harnesses.
- * @param baseDir Override for the home directory (defaults to `os.homedir()`).
+ * Resolves which harnesses to target from the `--harness` value alone, falling back to what is installed under
+ * `homeDir` when the value is the `'all'` sentinel.
+ *
+ * This serves the home-domain commands — `install`, `uninstall`, `status`, and `configure-hooks` — which deploy into
+ * the harness homes and so are answered by detection alone. A sync run resolves its targets through
+ * `resolveTargetHarnesses`, which consults the `harnesses` declaration first.
  */
-export function resolveHarnessIds(harness: InstallOptions['harness'], baseDir?: string): ReadonlyArray<HarnessId> {
+export function resolveHarnessIds(harness: InstallOptions['harness'], homeDir?: string): ReadonlyArray<HarnessId> {
   if (harness === 'all') {
-    return detectHarnesses(baseDir);
+    return detectHarnesses(homeDir);
   }
   return [harness];
 }

@@ -17,12 +17,17 @@ describe('sync with a declared package', () => {
   let projectRoot: string;
   let contentDir: string;
   let packageDir: string;
+  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is
+  // given a temp home rather than the developer's own.
+  let homeDir: string;
 
   beforeEach(async () => {
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    homeDir = path.join(tmpdir(), `agents-test-sync-pkg-home-${stamp}`);
     projectRoot = path.join(tmpdir(), `agents-test-sync-pkg-proj-${stamp}`);
     contentDir = path.join(tmpdir(), `agents-test-sync-pkg-content-${stamp}`);
     packageDir = path.join(projectRoot, 'node_modules', PACKAGE_NAME);
+    await mkdir(homeDir, { recursive: true });
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await mkdir(path.join(contentDir, 'guidance', 'rulebooks'), { recursive: true });
     await writeOverlays();
@@ -32,6 +37,7 @@ describe('sync with a declared package', () => {
   afterEach(async () => {
     vi.restoreAllMocks();
     await rm(projectRoot, { recursive: true, force: true });
+    await rm(homeDir, { recursive: true, force: true });
     await rm(contentDir, { recursive: true, force: true });
   });
 
@@ -108,7 +114,7 @@ describe('sync with a declared package', () => {
       `sources:\n  - name: '${PACKAGE_NAME}'\n    path: ${localDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\n`,
     );
 
-    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
       /claimed more than once.*@ca-fixture\/guide/s,
     );
   });
@@ -119,7 +125,7 @@ describe('sync with a declared package', () => {
     await writeSubagent(packageContent(), 'pkg-agent');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(skillPath('consult-pkg-rules'), 'utf8')).toContain('Pkg rules.');
     expect(existsSync(skillPath('pkg-skill'))).toBe(true);
@@ -130,7 +136,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
   });
@@ -140,7 +146,7 @@ describe('sync with a declared package', () => {
     await writeCollection(packageContent(), 'pkg-bundle', ['member-skill']);
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\ncollections:\n  use:\n    - pkg-bundle\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(skillPath('member-skill'))).toBe(true);
   });
@@ -150,7 +156,7 @@ describe('sync with a declared package', () => {
     await writeSkill(packageContent(), 'pkg-skill', 'dependencies:\n  rulebooks:\n    - library-dep\n');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(skillPath('consult-library-dep'), 'utf8')).toContain('Library dependency.');
   });
@@ -163,7 +169,7 @@ describe('sync with a declared package', () => {
       `sources:\n  - name: org\n    path: ${sourceDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\nrulebooks:\n  use:\n    - contested\n`,
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Source body.');
@@ -176,7 +182,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'shadowed', 'delivery: ambient', 'Package body.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('Package body.');
     expect(warn.mock.calls.flat().join('\n')).toMatch(/shadow.*shadowed/s);
@@ -190,7 +196,7 @@ describe('sync with a declared package', () => {
       `sources:\n  - name: org\n    path: ${sourceDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\nrulebooks:\n  use:\n    - from-source\n`,
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Source rules.');
@@ -200,7 +206,7 @@ describe('sync with a declared package', () => {
   it('retracts a package artifact once a higher tier drops the package', async () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
 
     await writeFile(
@@ -208,7 +214,7 @@ describe('sync with a declared package', () => {
       `packages:\n  drop:\n    - '${PACKAGE_NAME}'\n`,
       'utf8',
     );
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('Ambient package rules.');
   });
@@ -227,7 +233,7 @@ describe('sync with a declared package', () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Local body.');
@@ -243,7 +249,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(secondContent, 'contested', 'delivery: ambient', 'Second body.');
     await declare("packages:\n  use:\n    - '@ca-fixture/first'\n    - '@ca-fixture/second'\n");
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Second body.');
@@ -265,7 +271,7 @@ describe('sync with a declared package', () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(info.mock.calls.flat().join('\n')).not.toContain(PACKAGE_NAME);
   });
@@ -279,7 +285,7 @@ describe('sync with a declared package', () => {
     );
     await declare('rulebooks:\n  use: []\n');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     const advice = info.mock.calls.flat().join('\n');
     expect(advice).toContain(PACKAGE_NAME);
@@ -296,7 +302,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(info.mock.calls.flat().join('\n')).not.toContain('has not declared');
   });
@@ -304,7 +310,7 @@ describe('sync with a declared package', () => {
   it('fails the run when a declared package is not installed, writing nothing', async () => {
     await declare("packages:\n  use:\n    - '@ca-fixture/absent'\n");
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
       /"@ca-fixture\/absent" is not installed/,
     );
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
@@ -314,7 +320,7 @@ describe('sync with a declared package', () => {
     await installPackage('@ca-fixture/empty', 'missing-dir');
     await declare("packages:\n  use:\n    - '@ca-fixture/empty'\n");
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
       /Invalid declared source.*@ca-fixture\/empty/s,
     );
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);

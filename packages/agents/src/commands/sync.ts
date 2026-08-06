@@ -14,7 +14,7 @@ import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
-import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
 import {
@@ -48,6 +48,7 @@ import {
   retractUndeclaredSourceSupport,
   type SourceSupportOutcome,
 } from '../lib/support-deploy.ts';
+import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
@@ -141,13 +142,16 @@ export interface SyncDomain {
  *
  * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
  * @param contentDirOverride Override for the library source (defaults to the package content dir).
+ * @param homeDir The home directory whose declaration tier and installed harnesses decide targeting; injected in tests
+ * so a run never reads the developer's own.
  */
 export async function syncCommand(
   options: InstallOptions,
   projectRoot: string = process.cwd(),
   contentDirOverride?: string,
+  homeDir: string = homedir(),
 ): Promise<void> {
-  if (path.resolve(projectRoot) === path.resolve(homedir())) {
+  if (path.resolve(projectRoot) === path.resolve(homeDir)) {
     throw new Error(
       'Refusing to run `sync` in the home directory: that would deploy the user-global tier through the project ' +
         'path. Run `sync --global` to sync the user-global tier into the home harness dirs.',
@@ -156,6 +160,7 @@ export async function syncCommand(
   await reconcileDomain(
     options,
     { baseDir: projectRoot, ambient: 'project-local', label: 'project', anchorBase: path.resolve(projectRoot) },
+    homeDir,
     contentDirOverride,
   );
 }
@@ -185,6 +190,7 @@ export async function syncGlobalCommand(
   await reconcileDomain(
     options,
     { baseDir: homeDir, ambient: 'harness-home', label: 'global', anchorBase: '~' },
+    homeDir,
     contentDirOverride,
   );
   await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
@@ -198,10 +204,14 @@ export async function syncGlobalCommand(
  * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent. An
  * absent `codeassembly.yaml` is a total no-op. Repo and home domains share this one reconciler, differing only in
  * the `SyncDomain` they pass.
+ *
+ * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: it
+ * carries the user-global half of the `harnesses` chain and the harnesses targeting falls back to.
  */
 async function reconcileDomain(
   options: InstallOptions,
   domain: SyncDomain,
+  homeDir: string,
   contentDirOverride?: string,
 ): Promise<void> {
   const declaration = await resolveDeclaration({ cwd: domain.baseDir });
@@ -263,8 +273,14 @@ async function reconcileDomain(
   assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
 
   // Every delivery pass below targets this one set of harnesses, and each renders its content for the harness it
-  // lands on, so the set is resolved once and threaded rather than re-derived per pass.
-  const harnessIds = resolveHarnessIds(options.harness, domain.baseDir);
+  // lands on, so the set is resolved once and threaded rather than re-derived per pass. Report it before any pass
+  // runs, so both the dry-run preview and the real run say where they deployed.
+  const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
+  const harnessIds = targets.harnessIds;
+  console.info(describeHarnessTargeting(targets));
+  if (targets.origin === 'detection') {
+    console.info(describeHarnessPinAdvice(domain));
+  }
 
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
   // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
@@ -1065,6 +1081,36 @@ function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): strin
     case 'inject':
       return `  inject the ambient region in ${hostPath}`;
   }
+}
+
+/** Names what settled a run's harness set, in the phrasing the targeting line embeds. */
+function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
+  switch (targets.origin) {
+    case 'declaration':
+      return 'declared';
+    case 'detection':
+      return 'detected in ~';
+    case 'flag':
+      return `--harness ${targets.harnessIds.join(', ')}`;
+  }
+}
+
+/**
+ * Renders the advice naming where a detected harness set can be pinned. The file differs by domain, because a run
+ * resolves the declaration only from the tiers it reads: a global run never reaches a project's declaration.
+ */
+function describeHarnessPinAdvice(domain: SyncDomain): string {
+  const declarationFile = domain.label === 'global' ? '~/.agents/codeassembly.yaml' : '.agents/codeassembly.yaml';
+  return `Declare \`harnesses.use\` in ${declarationFile} to pin this.`;
+}
+
+/**
+ * Renders what a run targets and what decided it. Printed on every run, because the closing summary counts harnesses
+ * without naming them: a run that deploys somewhere unexpected — or nowhere — otherwise reads as a success.
+ */
+function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
+  const subject = targets.harnessIds.length === 0 ? 'no harnesses' : targets.harnessIds.join(', ');
+  return `Targeting ${subject} (${describeHarnessOrigin(targets)}).`;
 }
 
 /**
