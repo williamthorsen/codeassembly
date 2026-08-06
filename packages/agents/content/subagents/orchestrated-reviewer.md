@@ -5,7 +5,6 @@ tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 30
 skills:
   - anti-patterns
-  - common-mistakes
   - review-criteria
   - software-engineering
 ---

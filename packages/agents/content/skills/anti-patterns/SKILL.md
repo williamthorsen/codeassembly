@@ -35,6 +35,7 @@ Common but problematic approaches that should be avoided in favor of proper solu
 
 - **A suppression directive — a comment that tells a linter or type checker to ignore a specific warning — is a design signal, not a workaround.** The rule flagged the code because it matched a pattern that is usually wrong.
 - **Try these in order before suppressing inline:** (1) change the code so the rule no longer triggers — usually the right answer; (2) reconfigure the rule if its default is wrong for the project; (3) define a scoped exception for a whole category that is legitimately exempt. Suppress inline only as a last resort — when the case is genuinely local and none of the above fits, such as an external boundary where the real type can't be known.
+- **An `any` or a type assertion suppresses in the language what a directive suppresses in a comment.** Both silence the checker without changing what the code does, so both take the same ladder: model the type the value actually has, or return `unknown` and let the caller narrow it.
 - **Every suppression you introduce carries a rationale** naming the rule, why it doesn't apply here, and what alternatives you rejected. Restating the rule is not a rationale.
 
 ```ts
@@ -54,3 +55,18 @@ function classify(order) {
 
 - **Don't place non-failing code inside try/catch blocks** - Only wrap operations that can actually throw errors
 - String concatenation, variable assignments, and other safe operations should be outside try/catch to clearly indicate what needs error handling
+
+## Editing generated files
+
+Files installed by the agents installer (under `~/.claude/`, `~/.agents/`, and other platform homes) are **generated artifacts**. The source of truth lives in `williamthorsen/codeassembly` under `packages/agents/content/`.
+
+Look for a provenance marker at the top of the file. Generated files carry one of two formats:
+
+- **YAML frontmatter:** three `# GENERATED FILE …` comment lines immediately after the opening `---`
+- **No frontmatter:** three `<!-- GENERATED FILE … -->` comment lines at the top
+
+If you see a marker, **do not edit the file in place** — the change will be silently overwritten on the next `codeassembly install`. Instead:
+
+1. Edit the source file in `williamthorsen/codeassembly` (the marker's `Source:` line links directly to it)
+2. Open a PR against that repo
+3. After merge, re-run `codeassembly install` to pick up the change

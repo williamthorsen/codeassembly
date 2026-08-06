@@ -5,8 +5,9 @@ tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 20
 skills:
   - anti-patterns
-  - common-mistakes
   - review-criteria
+  - testing-conventions
+  - typescript-testing-conventions
 ---
 
 # Test aspect reviewer
