@@ -9,6 +9,7 @@ skills:
   - development-workflows
   - software-engineering
   - testing-conventions
+  - typescript-testing-conventions
 ---
 
 # Implementation Coder
