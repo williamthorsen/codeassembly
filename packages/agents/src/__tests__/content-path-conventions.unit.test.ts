@@ -12,6 +12,7 @@ const ALLOWLIST: ReadonlyArray<string> = [
   '_partials/README.md',
   'skills/_data/artifact-conventions.md',
   'skills/_data/ticket-id-extraction.md',
+  'skills/anti-patterns/SKILL.md',
   'skills/common-mistakes/SKILL.md',
   'skills/orchestrate/_data/reviewer-context-packages.md',
 ];
