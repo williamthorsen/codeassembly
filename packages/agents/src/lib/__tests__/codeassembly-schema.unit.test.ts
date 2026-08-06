@@ -145,4 +145,39 @@ describe(parseCodeAssemblyFile, () => {
   it('throws when sources is not a list', () => {
     expect(() => parseCodeAssemblyFile('sources:\n  name: org\n  path: ../shared\n')).toThrow();
   });
+
+  it('parses a harnesses declaration with bare and structured entries', () => {
+    const declaration = parseCodeAssemblyFile('harnesses:\n  use:\n    - claude\n    - name: rovo\n');
+
+    expect(declaration.harnesses?.use).toEqual([{ name: 'claude' }, { name: 'rovo' }]);
+    expect(declaration.harnesses?.drop).toEqual([]);
+  });
+
+  it('parses a harnesses drop list alongside use', () => {
+    const declaration = parseCodeAssemblyFile('harnesses:\n  use:\n    - claude\n  drop:\n    - rovo\n');
+
+    expect(declaration.harnesses?.use).toEqual([{ name: 'claude' }]);
+    expect(declaration.harnesses?.drop).toEqual([{ name: 'rovo' }]);
+  });
+
+  it('tolerates a harnesses key whose value is null (all entries commented out)', () => {
+    const declaration = parseCodeAssemblyFile('harnesses:\n');
+
+    expect(declaration.harnesses).toBeUndefined();
+    expect(declaration.root).toBe(false);
+  });
+
+  it('throws on an unknown harness id, naming the source label and the offending entry', () => {
+    expect(() => parseCodeAssemblyFile('harnesses:\n  use:\n    - claud\n', 'codeassembly.yaml')).toThrow(
+      /codeassembly\.yaml.*harnesses\.use\.0/s,
+    );
+  });
+
+  it('throws on an unknown harness id in the drop list', () => {
+    expect(() => parseCodeAssemblyFile('harnesses:\n  drop:\n    - cursor\n')).toThrow(/harnesses\.drop\.0/);
+  });
+
+  it('throws on an unknown key inside the harnesses block', () => {
+    expect(() => parseCodeAssemblyFile('harnesses:\n  target:\n    - claude\n')).toThrow(/target/);
+  });
 });

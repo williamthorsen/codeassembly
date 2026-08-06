@@ -1,10 +1,19 @@
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
+import { ALL_HARNESS_IDS } from './harness.ts';
+
 /** A declaration entry: a bare slug string or a `{ name }` object with tolerated unknown keys, normalized to `{ name }`. */
 export const EntrySchema = z
   .union([z.string(), z.object({ name: z.string() }).loose()])
   .transform((entry) => (typeof entry === 'string' ? { name: entry } : entry));
+
+/**
+ * A `harnesses` entry: an ordinary declaration entry whose name must be a known harness. Validating here rather than
+ * where the block is resolved is what puts the file and the offending entry's path into the error, since only the
+ * parser knows both.
+ */
+const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose());
 
 /**
  * A declared content source: a named directory structured like the library's `content/`. Both `name` and `path` are
@@ -14,16 +23,21 @@ export const EntrySchema = z
 export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
 
 /**
- * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag, an optional `sources` list,
- * an optional `packages` block naming installed packages that ship content, plus one optional block per artifact type
- * (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized key triggers an
- * error); entries are open (unknown keys pass through). Each type's block resolves to `{ use, drop }` lists; an absent
- * or null block is omitted. `packages` reuses that same block shape, so `use`, `drop`, and `root` apply to a package
- * name exactly as they do to an artifact slug.
+ * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag, an optional `harnesses` block
+ * naming which harnesses a sync run targets, an optional `sources` list, an optional `packages` block naming installed
+ * packages that ship content, plus one optional block per artifact type (`rulebooks`, `skills`, `subagents`,
+ * `collections`). The top level is closed (an unrecognized key triggers an error); entries are open (unknown keys pass
+ * through). Each block resolves to `{ use, drop }` lists; an absent or null block is omitted. `packages` and
+ * `harnesses` reuse that same block shape, so `use`, `drop`, and `root` apply to a package name and a harness id
+ * exactly as they do to an artifact slug.
+ *
+ * `harnesses` sits above `sources` because it governs where a run deploys rather than which artifacts it deploys, and
+ * it is the one key that resolves across the home and project domains rather than within one of them.
  */
 const CodeAssemblySchema = z
   .object({
     root: z.boolean().default(false),
+    harnesses: optionalHarnessDeclaration(),
     sources: optionalSourceList(),
     packages: optionalTypeDeclaration(),
     rulebooks: optionalTypeDeclaration(),
@@ -38,6 +52,9 @@ export type CodeAssemblyDeclaration = z.infer<typeof CodeAssemblySchema>;
 
 /** One type's block: the artifacts this file adds (`use`) and those it subtracts from inherited tiers (`drop`). */
 export type TypeDeclaration = z.infer<ReturnType<typeof typeDeclarationSchema>>;
+
+/** The `harnesses` block: the harnesses this file targets (`use`) and those it subtracts from inherited tiers (`drop`). */
+export type HarnessDeclaration = z.infer<ReturnType<typeof harnessDeclarationSchema>>;
 
 /** A normalized declaration entry: always `{ name }`, with any unknown authoring keys preserved. */
 export type DeclarationEntry = z.infer<typeof EntrySchema>;
@@ -74,6 +91,21 @@ export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAs
 }
 
 // region | Helpers
+
+/** Builds the closed `{ use, drop }` schema for the `harnesses` block, each list defaulting to empty. */
+function harnessDeclarationSchema() {
+  return z
+    .object({
+      use: z.array(HarnessEntrySchema).default([]),
+      drop: z.array(HarnessEntrySchema).default([]),
+    })
+    .strict();
+}
+
+/** Resolves an absent `harnesses` key, or one whose value is `null`, to `undefined` rather than a validation error. */
+function optionalHarnessDeclaration(): z.ZodType<HarnessDeclaration | undefined> {
+  return z.preprocess((value) => value ?? undefined, harnessDeclarationSchema().optional());
+}
 
 /** Builds the closed `{ use, drop }` schema for one type's block, each list defaulting to empty. */
 function typeDeclarationSchema() {
