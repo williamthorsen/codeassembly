@@ -16,11 +16,16 @@ export function useDismissedRuns(): UseDismissedRunsResult {
   dismissedRef.current = dismissed;
 
   useEffect(() => {
-    fetchSettings()
-      .then((settings) => setDismissed(settings.dismissedRuns))
-      .catch((error: unknown) => {
+    async function loadDismissed(): Promise<void> {
+      try {
+        const settings = await fetchSettings();
+        setDismissed(settings.dismissedRuns);
+      } catch (error: unknown) {
         console.warn('Failed to load settings, continuing with empty state:', error);
-      });
+      }
+    }
+
+    void loadDismissed();
   }, []);
 
   const dismiss = useCallback((key: string, status: string): void => {
@@ -29,9 +34,7 @@ export function useDismissedRuns(): UseDismissedRunsResult {
 
     const next = { ...prev, [key]: { status } };
     setDismissed(next);
-    patchSettings({ dismissedRuns: next }).catch((error: unknown) => {
-      console.warn('Failed to persist dismissal:', error);
-    });
+    void persistDismissed(next);
   }, []);
 
   const dismissAll = useCallback((entries: { key: string; status: string }[]): void => {
@@ -51,10 +54,21 @@ export function useDismissedRuns(): UseDismissedRunsResult {
     if (!changed) return;
 
     setDismissed(next);
-    patchSettings({ dismissedRuns: next }).catch((error: unknown) => {
-      console.warn('Failed to persist dismissals:', error);
-    });
+    void persistDismissed(next);
   }, []);
 
   return { dismissed, dismiss, dismissAll };
 }
+
+// region | Helpers
+
+/** Persists the dismissed-run record, warning rather than throwing when the request fails. */
+async function persistDismissed(next: Record<string, DismissedRunEntry>): Promise<void> {
+  try {
+    await patchSettings({ dismissedRuns: next });
+  } catch (error: unknown) {
+    console.warn('Failed to persist dismissed runs:', error);
+  }
+}
+
+// endregion | Helpers
