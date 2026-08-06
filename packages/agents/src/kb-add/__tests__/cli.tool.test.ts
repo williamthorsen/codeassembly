@@ -8,50 +8,15 @@ import { Readable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runAdd } from '../cli.ts';
+import type { WriteArgs } from '../types.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
-
-/** Run a child process with a string body piped to stdin; resolve with its stdout and exit code. */
-async function runChild(input: {
-  command: string;
-  args: readonly string[];
-  stdinBody: string;
-  cwd: string;
-  env: NodeJS.ProcessEnv;
-}): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(input.command, input.args, { cwd: input.cwd, env: input.env });
-    const stdoutChunks: Buffer[] = [];
-    const stderrChunks: Buffer[] = [];
-    child.stdout.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
-    child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
-    child.on('error', reject);
-    child.on('close', (code) =>
-      resolve({
-        stdout: Buffer.concat(stdoutChunks).toString('utf8'),
-        stderr: Buffer.concat(stderrChunks).toString('utf8'),
-        exitCode: code ?? 0,
-      }),
-    );
-    child.stdin.write(input.stdinBody);
-    child.stdin.end();
-  });
-}
 
 const NOW = new Date('2026-05-24T14:35:00Z');
 const TODAY = '2026-05-24T14:35:00Z';
 
-/** Build a Readable stream that emits the given body and ends. */
-function bodyStream(body: string): Readable {
-  return Readable.from([Buffer.from(body, 'utf8')]);
-}
-
-/** Build a temp KB rooted at a fresh directory with a `.kb/` marker. */
-async function makeKb(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'kb-add-cli-'));
-  await mkdir(join(root, '.kb'), { recursive: true });
-  return root;
-}
+const NOTE =
+  '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
 describe(parseArgs, () => {
   it('parses every value-bearing flag in long form', () => {
@@ -69,6 +34,7 @@ describe(parseArgs, () => {
     ]);
 
     expect(parsed).toEqual({
+      mode: 'write',
       kb: 'coding',
       folder: 'languages/ts',
       diataxis: 'howto',
@@ -78,7 +44,7 @@ describe(parseArgs, () => {
   });
 
   it('parses flags with inline = values', () => {
-    const parsed = parseArgs(['--diataxis=howto', '--title=Inline', '--tags=a,b']);
+    const parsed = parseWriteArgs(['--diataxis=howto', '--title=Inline', '--tags=a,b']);
 
     expect(parsed.diataxis).toBe('howto');
     expect(parsed.title).toBe('Inline');
@@ -86,7 +52,7 @@ describe(parseArgs, () => {
   });
 
   it('defaults optional flags to null or an empty list', () => {
-    const parsed = parseArgs(['--diataxis', 'concept', '--title', 'Stub']);
+    const parsed = parseWriteArgs(['--diataxis', 'concept', '--title', 'Stub']);
 
     expect(parsed.kb).toBeNull();
     expect(parsed.folder).toBeNull();
@@ -94,9 +60,23 @@ describe(parseArgs, () => {
   });
 
   it('defaults --diataxis to null when omitted', () => {
-    const parsed = parseArgs(['--title', 'Stub']);
+    const parsed = parseWriteArgs(['--title', 'Stub']);
 
     expect(parsed.diataxis).toBeNull();
+  });
+
+  it('parses --survey as a survey invocation carrying only the KB', () => {
+    expect(parseArgs(['--survey', '--kb', 'coding'])).toEqual({ mode: 'survey', kb: 'coding' });
+  });
+
+  it('does not require --title under --survey', () => {
+    expect(parseArgs(['--survey'])).toEqual({ mode: 'survey', kb: null });
+  });
+
+  it('rejects a note-describing flag alongside --survey rather than dropping it', () => {
+    expect(() => parseArgs(['--survey', '--title', 'X', '--folder', 'languages'])).toThrow(
+      /--survey takes only --kb; drop --folder, --title/,
+    );
   });
 
   it('throws when --title is missing', () => {
@@ -133,7 +113,7 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
+    if (result.ok && result.mode === 'write') {
       expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'Working with streams.md'));
       expect(result.kb.source).toBe('discovered');
       expect(result.record.title).toBe('Working with streams');
@@ -158,7 +138,7 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
+    if (result.ok && result.mode === 'write') {
       expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'languages', 'typescript', 'IO.md'));
     }
   });
@@ -175,7 +155,7 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
+    if (result.ok && result.mode === 'write') {
       const content = await readFile(result.path, 'utf8');
       expect(content).toMatch(/^---\nrecordType: assertion\ntitle: Stub\n/);
     }
@@ -275,7 +255,7 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
+    if (result.ok && result.mode === 'write') {
       expect(result.record.recordType).toBe('assertion');
       expect(result.record.extra.diataxis).toBe('howto');
       const written = await readFile(result.path, 'utf8');
@@ -296,7 +276,7 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
+    if (result.ok && result.mode === 'write') {
       expect(result.record.recordType).toBe('assertion');
       expect(result.record.extra).not.toHaveProperty('diataxis');
     }
@@ -433,7 +413,7 @@ describe(runAdd, () => {
       });
 
       expect(result.ok).toBe(true);
-      if (result.ok) {
+      if (result.ok && result.mode === 'write') {
         // Empty-map fallback fired: canonicalTags equals originalTags (no rewriting happened).
         expect(result.originalTags).toEqual(['node.js', 'react']);
         expect(result.canonicalTags).toEqual(['node.js', 'react']);
@@ -448,6 +428,116 @@ describe(runAdd, () => {
       expect(warningLine).toMatch(/^kb-add: warning: could not load tag aliases: /);
     } finally {
       stderrSpy.mockRestore();
+    }
+  });
+
+  it('surveys a store, reporting its KB, taxonomy path, declared domains, and undeclared folders', async () => {
+    const kbPath = await makeKb();
+    await writeFile(
+      join(kbPath, '.kb', 'taxonomy.yaml'),
+      'domains:\n  engineering: Software engineering practice\n',
+      'utf8',
+    );
+    await mkdir(join(kbPath, 'content', 'assertions', 'languages'), { recursive: true });
+    await writeFile(join(kbPath, 'content', 'assertions', 'languages', 'Types.md'), NOTE, 'utf8');
+
+    const result = await runAdd({
+      argv: ['--survey'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.mode === 'survey') {
+      expect(result.kb.path).toBe(kbPath);
+      expect(result.taxonomyPath).toBe(join(kbPath, '.kb', 'taxonomy.yaml'));
+      expect(result.domains).toEqual([
+        { path: 'engineering', description: 'Software engineering practice', provisional: false, noteCount: 0 },
+      ]);
+      expect(result.undeclaredFolders).toEqual([{ path: 'languages', noteCount: 1 }]);
+    }
+  });
+
+  it('surveys a store that declares no taxonomy', async () => {
+    const kbPath = await makeKb();
+    await mkdir(join(kbPath, 'content', 'assertions', 'languages'), { recursive: true });
+    await writeFile(join(kbPath, 'content', 'assertions', 'languages', 'Types.md'), NOTE, 'utf8');
+
+    const result = await runAdd({
+      argv: ['--survey'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.mode === 'survey') {
+      expect(result.domains).toEqual([]);
+      expect(result.undeclaredFolders).toEqual([{ path: 'languages', noteCount: 1 }]);
+    }
+  });
+
+  it('surveys a KB the registry marks readonly, which refuses only writes', async () => {
+    const kbPath = await makeKb();
+    const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-survey-readonly-'));
+    await mkdir(join(homeDir, '.agents'), { recursive: true });
+    await writeFile(
+      join(homeDir, '.agents', 'kb.yaml'),
+      `kbs:\n  locked:\n    path: ${kbPath}\n    readonly: true\n`,
+      'utf8',
+    );
+
+    const result = await runAdd({
+      argv: ['--survey', '--kb', 'locked'],
+      stdin: bodyStream(''),
+      startDir: homeDir,
+      now: NOW,
+      home: homeDir,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.mode === 'survey') {
+      expect(result.kb.name).toBe('locked');
+      expect(result.kb.path).toBe(kbPath);
+    }
+  });
+
+  it('returns a survey without consuming stdin', async () => {
+    const kbPath = await makeKb();
+    // A stream that never emits and never ends: reading it to EOF would hang, so completing proves it went untouched.
+    const unendingStdin = new Readable({ read() {} });
+
+    const result = await runAdd({
+      argv: ['--survey'],
+      stdin: unendingStdin,
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(unendingStdin.readableDidRead).toBe(false);
+  });
+
+  it('returns invalid-config when the store taxonomy is malformed', async () => {
+    const kbPath = await makeKb();
+    await writeFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'domains:\n  - not-a-mapping\n', 'utf8');
+
+    const result = await runAdd({
+      argv: ['--survey'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('invalid-config');
+      expect(result.message).toContain('taxonomy.yaml');
     }
   });
 
@@ -480,3 +570,59 @@ describe(runAdd, () => {
     expect(content).toContain('Body from stdin.');
   });
 });
+
+// region | Helpers
+
+/** Builds a Readable stream that emits the given body and ends. */
+function bodyStream(body: string): Readable {
+  return Readable.from([Buffer.from(body, 'utf8')]);
+}
+
+/** Builds a temp KB rooted at a fresh directory with a `.kb/` marker. */
+async function makeKb(): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'kb-add-cli-'));
+  await mkdir(join(root, '.kb'), { recursive: true });
+  return root;
+}
+
+/** Parses argv expected to describe a write, failing the test rather than the type checker when it describes a survey. */
+function parseWriteArgs(argv: readonly string[]): WriteArgs {
+  const parsed = parseArgs(argv);
+  if (parsed.mode !== 'write') {
+    throw new Error(`expected a write invocation; got mode "${parsed.mode}"`);
+  }
+  return parsed;
+}
+
+/** Runs a child process with a string body piped to stdin; resolves with its stdout and exit code. */
+async function runChild(input: {
+  command: string;
+  args: readonly string[];
+  stdinBody: string;
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+}): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(input.command, input.args, { cwd: input.cwd, env: input.env });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdoutChunks.push(chunk);
+    });
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderrChunks.push(chunk);
+    });
+    child.on('error', reject);
+    child.on('close', (code) =>
+      resolve({
+        stdout: Buffer.concat(stdoutChunks).toString('utf8'),
+        stderr: Buffer.concat(stderrChunks).toString('utf8'),
+        exitCode: code ?? 0,
+      }),
+    );
+    child.stdin.write(input.stdinBody);
+    child.stdin.end();
+  });
+}
+
+// endregion | Helpers

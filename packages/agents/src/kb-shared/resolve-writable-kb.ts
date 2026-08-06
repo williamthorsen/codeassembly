@@ -25,8 +25,8 @@ export interface ResolvedKb {
  *   names the alternatives, plus the registry-load error when one occurred.
  * - `no-default`: `--kb @default` was given but the registry declares no usable `default_kb`. Carries the
  *   registry-load error when one occurred, so an unresolvable `default_kb` surfaces its cause.
- * - `readonly-kb`: the resolved KB is registered with `readonly: true`. Always carries the resolved name and path
- *   so the caller can surface them in its structured error.
+ * - `readonly-kb`: the resolved KB is registered with `readonly: true` and the caller required a writable one. Always
+ *   carries the resolved name and path so the caller can surface them in its structured error.
  */
 export type ResolveKbOutcome =
   | { ok: true; kb: ResolvedKb }
@@ -36,13 +36,17 @@ export type ResolveKbOutcome =
   | { ok: false; reason: 'readonly-kb'; kbName: string; kbPath: string };
 
 /**
- * Resolves the single knowledge base to write into and refuses read-only KBs.
+ * Resolves the single knowledge base a command operates on, refusing a read-only KB to a caller that intends to write.
  *
  * Precedence: an explicit `--kb @default` sentinel (the only path to the registry's `default_kb`) beats a concrete
- * `--kb <name>`, which beats `.kb/` discovery. When no `--kb` is given and no `.kb/` is discoverable, the write is
- * refused with `missing-destination` rather than falling through to `default_kb`. After a KB is selected, the
- * matching `kb.yaml` entry's `readonly` flag is consulted: a `true` value refuses the write with `'readonly-kb'`. A
- * discovered KB with no registry entry has no metadata to consult and is assumed writable.
+ * `--kb <name>`, which beats `.kb/` discovery. When no `--kb` is given and no `.kb/` is discoverable, resolution fails
+ * with `missing-destination` rather than falling through to `default_kb`. After a KB is selected, the matching
+ * `kb.yaml` entry's `readonly` flag is consulted: a `true` value fails with `'readonly-kb'` unless `requireWritable`
+ * is `false`. A discovered KB with no registry entry has no metadata to consult and is assumed writable.
+ *
+ * `requireWritable` defaults to `true`, so a caller that says nothing gets the write-safe answer. A read-only
+ * operation — a report, a survey — passes `false` and reaches a store the registry marks `readonly: true`, which it
+ * has every right to read.
  *
  * `home` overrides the directory the user-global `kb.yaml` is read from; it defaults to the real `$HOME`
  * and exists so tests can isolate registry resolution from the developer's environment.
@@ -50,8 +54,11 @@ export type ResolveKbOutcome =
 export async function resolveWritableKb(input: {
   startDir: string;
   explicitKb: string | null;
+  requireWritable?: boolean;
   home?: string;
 }): Promise<ResolveKbOutcome> {
+  const requireWritable = input.requireWritable ?? true;
+
   // Warn to stderr so a permission error or YAML defect is distinguishable from "no config file at all,"
   // which would otherwise make the resulting failure hard to diagnose.
   const { config, error: registryError } = await tryLoadKbRegistry({
@@ -69,7 +76,7 @@ export async function resolveWritableKb(input: {
     if (defaultKb === undefined) {
       return { ok: false, reason: 'no-default', ...(registryError !== undefined && { registryError }) };
     }
-    if (defaultKb.readonly === true) {
+    if (refusesAsReadonly(defaultKb.readonly, requireWritable)) {
       return { ok: false, reason: 'readonly-kb', kbName: defaultKb.name, kbPath: defaultKb.path };
     }
     return { ok: true, kb: { name: defaultKb.name, path: defaultKb.path, source: 'registry-default' } };
@@ -80,7 +87,7 @@ export async function resolveWritableKb(input: {
     if (match === undefined) {
       return { ok: false, reason: 'no-kb-resolvable', requestedKb: input.explicitKb };
     }
-    if (match.readonly === true) {
+    if (refusesAsReadonly(match.readonly, requireWritable)) {
       return { ok: false, reason: 'readonly-kb', kbName: match.name, kbPath: match.path };
     }
     return { ok: true, kb: { name: match.name, path: match.path, source: 'explicit' } };
@@ -89,7 +96,7 @@ export async function resolveWritableKb(input: {
   const discovered = await findKbRoot({ startDir: input.startDir });
   if (discovered !== null) {
     const registryMatch = config.entries.find((entry) => entry.path === discovered.path);
-    if (registryMatch?.readonly === true) {
+    if (registryMatch !== undefined && refusesAsReadonly(registryMatch.readonly, requireWritable)) {
       return { ok: false, reason: 'readonly-kb', kbName: registryMatch.name, kbPath: registryMatch.path };
     }
     return {
@@ -112,3 +119,12 @@ export async function resolveWritableKb(input: {
     ...(registryError !== undefined && { registryError }),
   };
 }
+
+// region | Helpers
+
+/** Reports whether a store's `readonly` flag refuses this caller. */
+function refusesAsReadonly(isReadonly: boolean | undefined, requireWritable: boolean): boolean {
+  return requireWritable && isReadonly === true;
+}
+
+// endregion | Helpers

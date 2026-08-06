@@ -1,15 +1,28 @@
 // Shapes for the kb-add helper: parsed CLI input, the resolved write target, and the JSON result emitted to stdout.
 //
-// The helper's stdout payload is a discriminated union on `ok`. Recoverable failures (collision, no resolvable KB,
-// invalid title) return `{ ok: false, error, details? }`; successes return `{ ok: true, ... }`. System errors
+// The helper's stdout payload is a discriminated union on `ok`, and its successes are further discriminated on `mode`,
+// since a survey reports a store's shape where a write reports a note. Recoverable failures (collision, no resolvable
+// KB, invalid title) return `{ ok: false, error, details? }`; successes return `{ ok: true, mode, ... }`. System errors
 // (out-of-disk, permission denied) are out of band: They print to stderr and exit non-zero.
 
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+import type { KbSurvey } from './survey.ts';
 
-/** Parsed command-line invocation of the kb-add helper. */
-export interface ParsedArgs {
+/** Parsed command-line invocation of the kb-add helper: a read-only survey, or a note write. */
+export type ParsedArgs = SurveyArgs | WriteArgs;
+
+/** A `--survey` invocation, which reads the destination's shape and writes nothing. */
+export interface SurveyArgs {
+  mode: 'survey';
+  /** Optional explicit KB name; when set, wins over discovery and registry-default. */
+  kb: string | null;
+}
+
+/** A note-writing invocation. */
+export interface WriteArgs {
+  mode: 'write';
   /** Optional explicit KB name; when set, wins over discovery and registry-default. */
   kb: string | null;
   /** Optional topic subpath beneath the assertions root (`content/assertions/`) under which the note is written; the
@@ -33,9 +46,10 @@ export interface PreparedNote {
   canonicalTags: string[];
 }
 
-/** The helper's stdout payload on success. */
+/** The helper's stdout payload on a successful write. */
 export interface AddSuccess {
   ok: true;
+  mode: 'write';
   /** Absolute path of the written note. */
   path: string;
   /** The KB the note was written to. */
@@ -65,6 +79,7 @@ export type AddErrorCode =
   | 'missing-destination'
   | 'no-default'
   | 'invalid-args'
+  | 'invalid-config'
   | 'invalid-title'
   | 'collision'
   | 'readonly-kb';
@@ -81,8 +96,19 @@ export interface AddErrorDetails {
   readonlyKbPath?: string;
 }
 
-/** The helper's full stdout payload: a discriminated union on `ok`. */
+/** The helper's full stdout payload for a write invocation: a discriminated union on `ok`. */
 export type AddResult = AddSuccess | AddFailure;
+
+/** The helper's stdout payload on a successful survey. */
+export interface SurveySuccess extends KbSurvey {
+  ok: true;
+  mode: 'survey';
+  /** The KB that was surveyed. */
+  kb: ResolvedKb;
+}
+
+/** The helper's full stdout payload for a `--survey` invocation; failures are shared with the write path. */
+export type SurveyResult = SurveySuccess | AddFailure;
 
 // Re-export so existing kb-add consumers don't need to learn the kb-shared path.
 export type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

@@ -4,12 +4,13 @@ import { parseAliases } from '@williamthorsen/kb/tags';
 import { describe, expect, it } from 'vitest';
 
 import { prepareNote } from '../prepare-note.ts';
-import type { ParsedArgs } from '../types.ts';
+import type { WriteArgs } from '../types.ts';
 
 const NOW = new Date('2026-05-24T14:35:00Z');
 const TODAY = '2026-05-24T14:35:00Z';
 
-const baseArgs: ParsedArgs = {
+const baseArgs: WriteArgs = {
+  mode: 'write',
   kb: null,
   folder: null,
   diataxis: 'howto',
@@ -38,7 +39,7 @@ describe(prepareNote, () => {
   });
 
   it('omits the extra diataxis field when --diataxis is not supplied', () => {
-    const args: ParsedArgs = { ...baseArgs, diataxis: null };
+    const args: WriteArgs = { ...baseArgs, diataxis: null };
     const { record } = prepareNote({ args, aliases: emptyAliases, now: NOW, body: '' });
 
     expect(record.extra).not.toHaveProperty('diataxis');
@@ -59,7 +60,7 @@ describe(prepareNote, () => {
   });
 
   it('canonicalizes known-alias tags while preserving the agent-supplied order in originalTags', () => {
-    const args: ParsedArgs = { ...baseArgs, tags: ['node.js', 'streams', 'node'] };
+    const args: WriteArgs = { ...baseArgs, tags: ['node.js', 'streams', 'node'] };
     const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
     // Original tag list is preserved verbatim for the audit trail, including aliases that collapse onto the same
@@ -72,7 +73,7 @@ describe(prepareNote, () => {
 
   it('deduplicates exact-repeat canonical tags in first-occurrence order', () => {
     // Same canonical input twice should resolve to one tag, not two.
-    const args: ParsedArgs = { ...baseArgs, tags: ['streams', 'streams', 'nodejs'] };
+    const args: WriteArgs = { ...baseArgs, tags: ['streams', 'streams', 'nodejs'] };
     const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
     expect(result.originalTags).toEqual(['streams', 'streams', 'nodejs']);
@@ -80,14 +81,14 @@ describe(prepareNote, () => {
   });
 
   it('passes unknown tags through unchanged', () => {
-    const args: ParsedArgs = { ...baseArgs, tags: ['newvocab'] };
+    const args: WriteArgs = { ...baseArgs, tags: ['newvocab'] };
     const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
     expect(result.canonicalTags).toEqual(['newvocab']);
   });
 
   it('round-trips: the rendered record re-parses back to the prepared record', () => {
-    const args: ParsedArgs = { ...baseArgs, tags: ['node.js', 'streams'] };
+    const args: WriteArgs = { ...baseArgs, tags: ['node.js', 'streams'] };
     const { record } = prepareNote({ args, aliases, now: NOW, body: '\nThe body.\n' });
 
     const { fields, body } = renderAssertion(record);
