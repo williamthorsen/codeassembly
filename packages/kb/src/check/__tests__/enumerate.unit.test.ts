@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
 import { makeTree } from '../../test-utils/scaffolding.ts';
-import { enumerateNotes } from '../enumerate.ts';
+import { enumerateNotePaths, enumerateNotes } from '../enumerate.ts';
+
+/** Every path `readFile` was called with, so a paths-only enumeration can be shown to open nothing. */
+const readFilePaths: string[] = [];
 
 /** Directories whose `readdir` should reject; cleared between tests. */
 const unreadableDirs = new Set<string>();
@@ -19,16 +22,48 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       }
       return actual.readdir(path, options);
     },
+    readFile: (path: Parameters<typeof actual.readFile>[0], options: Parameters<typeof actual.readFile>[1]) => {
+      if (typeof path === 'string') {
+        readFilePaths.push(path);
+      }
+      return actual.readFile(path, options);
+    },
   };
 });
 
 afterEach(() => {
+  readFilePaths.length = 0;
   unreadableDirs.clear();
   vi.restoreAllMocks();
 });
 
 const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
+
+describe(enumerateNotePaths, () => {
+  it('returns the same note set enumerateNotes selects, under the same targets and excludes', async () => {
+    const root = await makeTree({
+      'content/top.md': VALID,
+      'content/sub/nested.md': VALID,
+      'content/drafts/skip.md': VALID,
+      'outside.md': VALID,
+    });
+    const config = { targets: ['content/**/*.md'], exclude: ['**/drafts/**'] };
+
+    const paths = await enumerateNotePaths({ kbRoot: root, config });
+
+    expect(paths.toSorted()).toEqual(['content/sub/nested.md', 'content/top.md']);
+    expect(paths.toSorted()).toEqual(await enumerateIn(root, config));
+  });
+
+  it('opens no note file', async () => {
+    const root = await makeTree({ 'content/top.md': VALID, 'content/sub/nested.md': VALID });
+
+    await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
+
+    expect(readFilePaths).toEqual([]);
+  });
+});
 
 describe(enumerateNotes, () => {
   it('enumerates only notes under content/ for the default targets', async () => {

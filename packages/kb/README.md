@@ -23,7 +23,7 @@ The package exposes twelve subpath entries plus a root barrel:
 | `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
 | `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
 | `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
-| `./taxonomy`        | `.kb/taxonomy.yaml` loading and comment-preserving domain declaration          |
+| `./taxonomy`        | `.kb/taxonomy.yaml` loading, comment-preserving declaration, and path mapping  |
 | `./vault-integrity` | Type-blind `[[link]]` resolution and basename-uniqueness over a note set       |
 
 Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
@@ -134,6 +134,8 @@ const { notes, findings } = await check({ kbRoot });
 
 A structural defect in any loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
 
+`enumerateNotes({ kbRoot, config })` performs the enumeration on its own, and `enumerateNotePaths({ kbRoot, config })` returns the same note set as store-root-relative paths without opening a single note. Both are exported from `@williamthorsen/kb/check`; the paths-only variant serves a caller that needs the note set's shape rather than its content.
+
 ### Which notes are checked: `.kb/config.yaml`
 
 `.kb/config.yaml` configures which notes a check enumerates. Both keys are optional; an absent file or an omitted key falls back to the default.
@@ -181,7 +183,7 @@ An absent taxonomy, and one present but declaring nothing, are both valid and re
 
 A domain counts as used when any note lives at or beneath it, so a grouping domain that holds only subfolders is not reported unused. A domain inside a `config.exclude` subtree is exempt from `taxonomy.unused`, since its notes never enumerate.
 
-`loadTaxonomy({ kbRoot })` reads both blocks into one map of domain path to `{ description, provisional }`, and `writeTaxonomy({ kbRoot, declarations })` declares domains while preserving the file's existing comments, key order, and formatting. Both are exported from `@williamthorsen/kb/taxonomy`.
+`loadTaxonomy({ kbRoot })` reads both blocks into one map of domain path to `{ description, provisional }`, and `writeTaxonomy({ kbRoot, declarations })` declares domains while preserving the file's existing comments, key order, and formatting. `resolveDomain(relativePath)` maps a store-root-relative note path to the domain it sits in (`undefined` for a non-assertion or a note at the assertions root), and `resolveParent(path)` yields a domain's parent (`undefined` at the top level); the drift rules and the back-fill both derive their answers from this pair, so a consumer that classifies notes against the taxonomy stays in agreement with what `kb check` reports. All four are exported from `@williamthorsen/kb/taxonomy`.
 
 ## The `kb` command
 

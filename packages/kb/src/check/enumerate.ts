@@ -29,6 +29,18 @@ export interface EnumeratedNote {
 }
 
 /**
+ * Walks a KB root and returns the KB-root-relative path of every note {@link enumerateNotes} selects, opening none of
+ * them. Scope selection runs through the same matcher and the same pruning, so a caller that needs only the note set's
+ * shape — which folders hold notes, and how many — sees exactly what the check pipeline admits.
+ *
+ * A note whose content cannot be read still contributes its path here, where `enumerateNotes` drops it with a warning.
+ */
+export async function enumerateNotePaths(input: { kbRoot: string; config: KbConfig }): Promise<string[]> {
+  const locations = await collectNoteLocations(input);
+  return locations.map((location) => location.relativePath);
+}
+
+/**
  * Walks a KB root and parses every note whose KB-root-relative path matches a `config.targets` glob and no
  * `config.exclude` glob into an {@link EnumeratedNote}.
  *
@@ -43,16 +55,42 @@ export interface EnumeratedNote {
  * note's `path` is absolute; `relativePath` is the slash-separated path from the KB root.
  */
 export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }): Promise<EnumeratedNote[]> {
-  const { kbRoot, config } = input;
-  const matcher = createNoteScopeMatcher(config);
-  const topLevelDirs = leadingLiteralSegments(config.targets);
+  const locations = await collectNoteLocations(input);
 
   const notes: EnumeratedNote[] = [];
-  await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: notes });
+  for (const { path, relativePath } of locations) {
+    try {
+      const content = await readFile(path, 'utf8');
+      const { fields, body, bodyStartLine, error: parseError } = readNoteContent(content);
+      notes.push({
+        path,
+        relativePath,
+        fields,
+        body,
+        content,
+        bodyStartLine,
+        ...(parseError !== undefined && { error: parseError }),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`kb: warning: could not read note ${path}; skipping: ${message}\n`);
+    }
+  }
   return notes;
 }
 
 // region | Helpers
+
+/** Walks a KB root and collects every note the config's `targets`/`exclude` select, in walk order. */
+async function collectNoteLocations(input: { kbRoot: string; config: KbConfig }): Promise<NoteLocation[]> {
+  const { kbRoot, config } = input;
+  const matcher = createNoteScopeMatcher(config);
+  const topLevelDirs = leadingLiteralSegments(config.targets);
+
+  const locations: NoteLocation[] = [];
+  await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: locations });
+  return locations;
+}
 
 /**
  * Derives the top-level directory names to descend into from the targets' leading literal segments. A target whose
@@ -71,13 +109,21 @@ function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string>
   return dirs;
 }
 
+/** A note the walk selected, before its content is read. */
+interface NoteLocation {
+  /** Absolute path the note sits at. */
+  path: string;
+  /** The note's path relative to the KB root, slash-separated. */
+  relativePath: string;
+}
+
 async function walk(input: {
   root: string;
   dir: string;
   matcher: NoteScopeMatcher;
   /** Top-level directory names to descend into, or `null` to walk the entire tree. */
   topLevelDirs: ReadonlySet<string> | null;
-  out: EnumeratedNote[];
+  out: NoteLocation[];
 }): Promise<void> {
   const { root, dir, matcher, topLevelDirs, out } = input;
 
@@ -106,22 +152,7 @@ async function walk(input: {
     if (!entry.name.endsWith('.md')) continue;
     if (!matcher.isNote(relativePath)) continue;
 
-    try {
-      const content = await readFile(absolutePath, 'utf8');
-      const { fields, body, bodyStartLine, error: parseError } = readNoteContent(content);
-      out.push({
-        path: absolutePath,
-        relativePath,
-        fields,
-        body,
-        content,
-        bodyStartLine,
-        ...(parseError !== undefined && { error: parseError }),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      process.stderr.write(`kb: warning: could not read note ${absolutePath}; skipping: ${message}\n`);
-    }
+    out.push({ path: absolutePath, relativePath });
   }
 }
 
