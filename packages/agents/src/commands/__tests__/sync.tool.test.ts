@@ -2285,6 +2285,18 @@ describe(syncGlobalCommand, () => {
     }
   });
 
+  it('narrows to the harnesses its own tier declares', async () => {
+    const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
+    const rovoMd = await seedGuidanceFile('.rovodev', 'AGENTS.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('harnesses:\n  use:\n    - claude\nrulebooks:\n  use:\n    - alpha\n');
+
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
+
+    expect(await readFile(claudeMd, 'utf8')).toContain('<!-- rulebook:alpha -->');
+    expect(await readFile(rovoMd, 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+  });
+
   it('warns and skips ambient delivery when the guidance file is missing', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeLibraryRulebook('beta', 'delivery: skill', 'Beta rules.');
