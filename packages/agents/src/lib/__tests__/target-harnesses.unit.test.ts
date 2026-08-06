@@ -164,7 +164,7 @@ describe(resolveTargetHarnesses, () => {
 
   // region | Helpers
 
-  /** Creates a harness's home directory, which is what marks it installed on the machine. */
+  /** Creates a harness's home directory, which is what marks it installed for this user. */
   async function installHarness(harnessId: 'claude' | 'rovo'): Promise<void> {
     await mkdir(path.join(homeDir, harnessId === 'claude' ? '.claude' : '.rovodev'), { recursive: true });
   }

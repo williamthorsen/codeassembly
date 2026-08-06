@@ -46,7 +46,7 @@ export async function resolveTargetHarnesses(options: {
 /** Which tier pair a declaration file belongs to. A file's `root: true` reaches only its own. */
 type DeclarationDomain = 'home' | 'project';
 
-/** One declaration file in the machine-wide chain, tagged with the domain whose contributions its `root` may clear. */
+/** One declaration file in the user-wide chain, tagged with the domain whose contributions its `root` may clear. */
 interface ChainFile {
   readonly filePath: string;
   readonly domain: DeclarationDomain;
@@ -55,7 +55,7 @@ interface ChainFile {
 /**
  * Folds each file's `harnesses` block into the effective set, lowest precedence first. `use` adds and `drop` subtracts
  * across the domain boundary, so a project-local file can withdraw a home-declared harness. `root: true` clears only
- * what its own domain contributed, which is what keeps a committed project file from discarding the machine's
+ * what its own domain contributed, which is what keeps a committed project file from discarding the user-global
  * declaration.
  *
  * Returns `undefined` when no file in the chain carried the block, which is what separates a chain declaring nothing
@@ -102,7 +102,7 @@ async function accumulateDeclaredHarnesses(
 }
 
 /**
- * Lists the declaration files whose `harnesses` blocks compose the machine-wide chain, lowest precedence first: the
+ * Lists the declaration files whose `harnesses` blocks compose the user-wide chain, lowest precedence first: the
  * home tier pair, then the project tier pair. A global sync passes its home directory as `cwd`, so its pair is walked
  * once rather than twice.
  */

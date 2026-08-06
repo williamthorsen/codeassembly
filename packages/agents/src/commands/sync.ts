@@ -206,7 +206,7 @@ export async function syncGlobalCommand(
  * the `SyncDomain` they pass.
  *
  * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: it
- * carries the machine-wide half of the `harnesses` chain and the harnesses targeting falls back to.
+ * carries the user-global half of the `harnesses` chain and the harnesses targeting falls back to.
  */
 async function reconcileDomain(
   options: InstallOptions,

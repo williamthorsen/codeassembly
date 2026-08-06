@@ -47,7 +47,7 @@ export function isHarnessId(value: string): value is HarnessId {
 }
 
 /**
- * Detects which harnesses are installed on the machine, by the presence of their home directories. The argument is a
+ * Detects which harnesses are installed for this user, by the presence of their home directories. The argument is a
  * home directory and nothing else: a harness home is created by that harness's own installer, so passing any other
  * base asks a question this cannot answer.
  */

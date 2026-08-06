@@ -22,7 +22,7 @@ describe(syncCommand, () => {
   let projectRoot: string;
   let contentDir: string;
   // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is given
-  // a temp home. Without it a run would consult the developer's own, and its result would vary by machine.
+  // a temp home. Without it a run would consult the developer's own, and its result would vary by developer.
   let homeDir: string;
 
   beforeEach(async () => {
@@ -45,7 +45,7 @@ describe(syncCommand, () => {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  /** Installs both harnesses on the machine, which is what an unpinned `harness: 'all'` run detects. */
+  /** Installs both harnesses under the test home, which is what an unpinned `harness: 'all'` run detects. */
   async function installBothHarnesses(): Promise<void> {
     await mkdir(path.join(homeDir, '.claude'), { recursive: true });
     await mkdir(path.join(homeDir, '.rovodev'), { recursive: true });
@@ -596,7 +596,7 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', '.rovodev'))).toBe(false);
   });
 
-  it('with no harness installed on the machine, writes no skill file and no local host', async () => {
+  it('with no harness installed for this user, writes no skill file and no local host', async () => {
     await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
 
@@ -606,7 +606,7 @@ describe(syncCommand, () => {
     expect(existsSync(localHostPath())).toBe(false);
   });
 
-  it('delivers to a machine-installed harness the repository holds no directory for', async () => {
+  it('delivers to an installed harness the repository holds no directory for', async () => {
     await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
@@ -617,7 +617,7 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', '.rovodev'))).toBe(true);
   });
 
-  it('targets the declared harnesses in preference to those installed on the machine', async () => {
+  it('targets the declared harnesses in preference to those installed for this user', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - rovo\n');
