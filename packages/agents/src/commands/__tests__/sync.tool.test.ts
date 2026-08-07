@@ -330,7 +330,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(
       agentsMdPath(),
-      '# Project\n\n@.agents/nmr/AGENTS.md\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n\nTail prose.\n',
+      '# Project\n\n@.path/to/example-file.md\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n\nTail prose.\n',
       'utf8',
     );
 
@@ -338,7 +338,7 @@ describe(syncCommand, () => {
 
     const agentsMd = await readFile(agentsMdPath(), 'utf8');
     expect(agentsMd).not.toContain('<!-- rulebook:alpha -->');
-    expect(agentsMd).toContain('@.agents/nmr/AGENTS.md');
+    expect(agentsMd).toContain('@.path/to/example-file.md');
     expect(agentsMd).toContain('Tail prose.');
   });
 
