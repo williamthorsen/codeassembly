@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { InstallOptions } from '../../lib/types.ts';
+import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand } from '../sync.ts';
 
 describe('syncCommand with a declared collection', () => {

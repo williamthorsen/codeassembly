@@ -4,54 +4,54 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
-import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../lib/artifact-types.ts';
-import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
-import { resolveContentDir } from '../lib/content-resolver.ts';
-import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../lib/content-sources.ts';
-import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
-import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../lib/deploy-collisions.ts';
-import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
-import { checkGitIgnored } from '../lib/git-ignore.ts';
-import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../lib/harness.ts';
-import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
-import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
+import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
+import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
+import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
+import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
+import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../../lib/content-sources.ts';
+import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resolver.ts';
+import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
+import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
+import { checkGitIgnored } from '../../lib/git-ignore.ts';
+import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
+import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import {
   createContentRootLinkAnchor,
   createSkillLinkAnchor,
   type LinkAnchorContext,
   SOURCE_SUPPORT_DIR,
-} from '../lib/link-anchor.ts';
-import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
-import type { ResolveLinkAnchor } from '../lib/path-rewriter.ts';
-import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
-import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
-import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.ts';
-import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
-import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
-import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
-import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
-import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
-import { describeSourceNameProblem, describeSourceProblem } from '../lib/source-validation.ts';
+} from '../../lib/link-anchor.ts';
+import { findUndeclaredGuidancePackages, resolvePackageSources } from '../../lib/package-sources.ts';
+import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
+import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
+import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
+import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
+import { extractRulebookSkillSlug, renderSkillFile } from '../../lib/rulebook-skill.ts';
+import { renderRulebookBody, type RulebookRenderContext } from '../../lib/rulebook-transform.ts';
+import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../../lib/sentinel-inliner.ts';
+import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../../lib/skill-transform.ts';
+import { describeSourceNameProblem, describeSourceProblem } from '../../lib/source-validation.ts';
 import {
   deploySubagent,
   renderSubagent,
   resolveDeclaredSubagent,
   type ResolvedSubagent,
   type SubagentDeployContext,
-} from '../lib/subagent-deploy.ts';
+} from '../../lib/subagent-deploy.ts';
 import {
   deploySourceSupport,
   listUndeclaredSourceSupport,
   renderSourceSupport,
   retractUndeclaredSourceSupport,
   type SourceSupportOutcome,
-} from '../lib/support-deploy.ts';
-import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
-import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
-import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
-import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
+} from '../../lib/support-deploy.ts';
+import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../../lib/target-harnesses.ts';
+import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
+import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
+import type { AmbientHostKind, HarnessId, InstallOptions } from '../../lib/types.ts';
 
 const skillMarker = makeArtifactMarker('skill');
 const subagentMarker = makeArtifactMarker('subagent');

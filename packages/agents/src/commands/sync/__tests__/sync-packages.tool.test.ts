@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { InstallOptions } from '../../lib/types.ts';
+import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand } from '../sync.ts';
 
 // Exercises the `packages:` declaration: a package's content dir joins the source search order and its catalog seeds

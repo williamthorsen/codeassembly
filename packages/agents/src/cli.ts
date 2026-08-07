@@ -8,7 +8,7 @@ import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
-import { syncCommand, syncGlobalCommand } from './commands/sync.ts';
+import { syncCommand, syncGlobalCommand } from './commands/sync/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';

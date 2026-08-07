@@ -8,9 +8,9 @@ import { promisify } from 'node:util';
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { hasAmbientRegion } from '../../lib/ambient-region.ts';
-import { resolveContentDir } from '../../lib/content-resolver.ts';
-import type { InstallOptions } from '../../lib/types.ts';
+import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
+import { resolveContentDir } from '../../../lib/content-resolver.ts';
+import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
 
 const execFileAsync = promisify(execFile);
