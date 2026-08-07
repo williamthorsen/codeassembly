@@ -1,6 +1,10 @@
 collections:
   use:
     - recommended
+harnesses:
+  use:
+    - claude
+    - rovo
 packages:
   use:
     - '@williamthorsen/nmr'
