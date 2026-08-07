@@ -9,7 +9,6 @@ import type { EnumeratedNote } from '@williamthorsen/kb/check';
 import { check } from '@williamthorsen/kb/check';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
 
-import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
@@ -196,9 +195,9 @@ function summarize(findings: readonly { severity: 'error' | 'warning' }[]): Cura
 }
 
 /**
- * Resolves the KB to curate. Always uses {@link resolveWritableKb}, but tolerates a readonly KB for a read-only
- * report run: `requireWritable` is `false` for report mode, so a `readonly-kb` outcome resolves to the named KB
- * rather than failing. Under `--apply` (`requireWritable: true`), a readonly KB fails with `readonly-kb`.
+ * Resolves the KB to curate and maps a resolution failure to a structured `CurateResult`. A report run passes
+ * `requireWritable: false`, so a store the registry marks `readonly: true` is reported on; `--apply` requires a
+ * writable one and fails with `readonly-kb`.
  */
 async function resolveKb(input: {
   startDir: string;
@@ -209,26 +208,12 @@ async function resolveKb(input: {
   const resolved = await resolveWritableKb({
     startDir: input.startDir,
     explicitKb: input.explicitKb,
+    requireWritable: input.requireWritable,
     ...(input.home !== undefined && { home: input.home }),
   });
 
   if (resolved.ok) {
     return { ok: true, kb: resolved.kb };
-  }
-
-  if (resolved.reason === 'readonly-kb') {
-    if (!input.requireWritable) {
-      const source = readonlyReportSource(input.explicitKb);
-      return { ok: true, kb: { name: resolved.kbName, path: resolved.kbPath, source } };
-    }
-    return {
-      ok: false,
-      failure: {
-        ok: false,
-        error: 'readonly-kb',
-        message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; --apply is refused`,
-      },
-    };
   }
 
   switch (resolved.reason) {
@@ -258,23 +243,20 @@ async function resolveKb(input: {
               : '--kb @default was given but no default_kb is configured in kb.yaml',
         },
       };
+    case 'readonly-kb':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'readonly-kb',
+          message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; --apply is refused`,
+        },
+      };
     default: {
       const _exhaustive: never = resolved;
       throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
     }
   }
-}
-
-/**
- * Derives the `source` label for a readonly KB accepted in report mode, from the explicit-KB input that produced the
- * `readonly-kb` outcome: the `@default` sentinel resolves the registry default, a concrete name is explicit, and an
- * omitted `--kb` can only have reached a readonly KB through `.kb/` discovery.
- */
-function readonlyReportSource(explicitKb: string | null): ResolvedKb['source'] {
-  if (explicitKb === DEFAULT_KB_SENTINEL) {
-    return 'registry-default';
-  }
-  return explicitKb !== null ? 'explicit' : 'discovered';
 }
 
 /** Matches a value-bearing flag in either `--flag value` or `--flag=value` form. Returns `null` when `arg` is not it. */

@@ -112,6 +112,20 @@ describe(resolveWritableKb, () => {
     });
   });
 
+  it('resolves a readonly default_kb for a caller that does not require a writable one', async () => {
+    const result = await resolveWritableKb({
+      startDir: '/',
+      explicitKb: '@default',
+      requireWritable: false,
+      home: HOME_READONLY_DEFAULT,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'readonly-default', path: VAULT_READONLY, source: 'registry-default' },
+    });
+  });
+
   it('carries the registry error when @default names an unresolvable default_kb', async () => {
     // The unresolvable default_kb makes tryLoadKbRegistry surface an error, which resolveWritableKb also logs to
     // stderr; spy on it so the warning does not pollute test output.
@@ -245,6 +259,20 @@ describe(resolveWritableKb, () => {
     });
   });
 
+  it('resolves an explicit --kb naming a readonly entry for a caller that does not require a writable one', async () => {
+    const result = await resolveWritableKb({
+      startDir: FIXTURES,
+      explicitKb: 'readonly-named',
+      requireWritable: false,
+      home: HOME_READONLY_NAMED,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'readonly-named', path: VAULT_READONLY, source: 'explicit' },
+    });
+  });
+
   it('refuses a discovered KB whose path matches a readonly registry entry with readonly-kb', async () => {
     // VAULT_READONLY is registered as `readonly-named` (readonly: true) in HOME_READONLY_NAMED. Discovery from
     // VAULT_READONLY returns its own path, which then matches the readonly registry entry.
@@ -259,6 +287,20 @@ describe(resolveWritableKb, () => {
       reason: 'readonly-kb',
       kbName: 'readonly-named',
       kbPath: VAULT_READONLY,
+    });
+  });
+
+  it('resolves a discovered readonly KB for a caller that does not require a writable one', async () => {
+    const result = await resolveWritableKb({
+      startDir: VAULT_READONLY,
+      explicitKb: null,
+      requireWritable: false,
+      home: HOME_READONLY_NAMED,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'readonly-named', path: VAULT_READONLY, source: 'discovered' },
     });
   });
 

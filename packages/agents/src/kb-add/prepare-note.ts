@@ -3,7 +3,7 @@ import type { KbAssertion } from '@williamthorsen/kb/records';
 import { canonicalize } from '@williamthorsen/kb/tags';
 
 import { dedupeInOrder, formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
-import type { ParsedArgs, PreparedNote } from './types.ts';
+import type { PreparedNote, WriteArgs } from './types.ts';
 
 /**
  * Composes a born-verified assertion record from parsed CLI args: stamps `created`, `updated`, and `lastVerified` from
@@ -14,7 +14,7 @@ import type { ParsedArgs, PreparedNote } from './types.ts';
  * The record's fields are typed by construction, so there is no separate validation pass: a title that cannot serve as
  * a filename is rejected downstream by the writer, and every other field is stamped from trusted inputs.
  */
-export function prepareNote(input: { args: ParsedArgs; aliases: AliasMap; now: Date; body: string }): PreparedNote {
+export function prepareNote(input: { args: WriteArgs; aliases: AliasMap; now: Date; body: string }): PreparedNote {
   const { args, aliases, now, body } = input;
 
   const originalTags = [...args.tags];
