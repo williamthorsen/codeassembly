@@ -4,11 +4,14 @@ import { defineRdyKit } from 'readyup';
 import { fileExists, readFile } from 'readyup/check-utils';
 
 import { resolveGuidanceImports } from '../lib/guidance-import.ts';
+import { countGuidanceLines } from '../lib/guidance-size.ts';
 import { formatUtcDate, readGuidanceStaleness } from '../lib/guidance-staleness.ts';
 
 const GUIDANCE_PATH = 'AGENTS.md';
 const CLAUDE_MEMORY_PATH = '.claude/CLAUDE.md';
 const STALE_COMMIT_THRESHOLD = 20;
+/** Lines the guidance file may carry before it costs more launch context than it earns. */
+const AMBIENT_LINE_BUDGET = 200;
 
 const REFRESH_FIX = `Run \`/update-project-guidance\` to refresh ${GUIDANCE_PATH}`;
 
@@ -19,7 +22,7 @@ const REFRESH_FIX = `Run \`/update-project-guidance\` to refresh ${GUIDANCE_PATH
  * `AGENTS.md`, which Rovo Dev loads unaided and Claude Code reaches through one import.
  */
 export default defineRdyKit({
-  description: 'Project-guidance wiring and freshness',
+  description: 'Project-guidance wiring, freshness, and size',
   checklists: [
     {
       name: 'guidance',
@@ -68,6 +71,23 @@ export default defineRdyKit({
           },
           fix: REFRESH_FIX,
         },
+        {
+          name: `${GUIDANCE_PATH} is within the ambient budget`,
+          severity: 'recommend',
+          skip: () => (fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`),
+          check: () => {
+            const content = readFile(GUIDANCE_PATH);
+            if (content === undefined) {
+              return { ok: false, detail: `${GUIDANCE_PATH} is unreadable` };
+            }
+            const lineCount = countGuidanceLines(content);
+            return {
+              ok: lineCount <= AMBIENT_LINE_BUDGET,
+              detail: `${describeLineCount(lineCount)}, budget ${AMBIENT_LINE_BUDGET}`,
+            };
+          },
+          fix: REFRESH_FIX,
+        },
       ],
     },
   ],
@@ -86,6 +106,11 @@ function describeImportTargets(resolvedPaths: ReadonlyArray<string>): string {
     return 'no `@` import found';
   }
   return `imports resolve to ${resolvedPaths.map((path) => relative(process.cwd(), path)).join(', ')}`;
+}
+
+/** Renders a line count with the matching noun. */
+function describeLineCount(count: number): string {
+  return count === 1 ? '1 line' : `${count} lines`;
 }
 
 // endregion | Helpers

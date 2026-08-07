@@ -5,13 +5,13 @@
       "checklists": [
         "guidance"
       ],
-      "description": "Project-guidance wiring and freshness",
+      "description": "Project-guidance wiring, freshness, and size",
       "name": "default",
       "path": "kits/default.js",
       "readyupVersion": "0.24.0",
       "source": "kits/default.ts",
-      "sourceHash": "aa41357e",
-      "targetHash": "ac0293f5"
+      "sourceHash": "636e8335",
+      "targetHash": "f7339d31"
     }
   ]
 }
