@@ -393,10 +393,13 @@ async function reconcileDomain(
   // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
+  // Derived before the paths part, so a dry run cannot describe an ambient host differently from the run it previews.
+  const ambientHostPlans = await planAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext);
+
   if (options.dryRun) {
     await retireRetiredOutputs(options, domain);
     reportDryRun({
-      ambientHostPreviews: await previewAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext),
+      ambientHostPreviews: ambientHostPlans.map(({ hostPath, plan }) => describeAmbientHostPlan(hostPath, plan)),
       resolutionReport,
       resolved,
       harnessSkillTargets,
@@ -415,7 +418,13 @@ async function reconcileDomain(
 
   await retireRetiredOutputs(options, domain);
 
-  await deliverAmbient(ambientHosts, domain, resolved, resolveRulebookContext);
+  for (const { hostPath, plan } of ambientHostPlans) {
+    if (plan.kind === 'skip' && plan.reason.cause === 'stale-install') {
+      console.warn(`⚠️ Skipping ambient delivery: ${describeAmbientSkip(plan.reason, hostPath)}`);
+    }
+  }
+
+  await deliverAmbient(ambientHostPlans, domain);
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
@@ -1013,23 +1022,13 @@ function assertRulebooksRender(
 }
 
 /**
- * Delivers the resolved ambient rulebooks into the ambient region of each targeted harness's host, regenerating the
- * region's content wholesale (an empty ambient set empties an existing region). Both domains share this one path,
- * differing only in the host each targets and in who owns region creation there.
+ * Carries out each ambient host's plan, regenerating the region's content wholesale (an empty ambient set empties an
+ * existing region). Both domains share this one path, differing only in the host each targets and in who owns region
+ * creation there.
  */
-async function deliverAmbient(
-  hosts: ReadonlyArray<AmbientHostTarget>,
-  domain: SyncDomain,
-  resolved: ReadonlyArray<ResolvedRulebook>,
-  resolveRulebookContext: ResolveRulebookContext,
-): Promise<void> {
-  for (const { harnessId, hostPath } of hosts) {
-    const body = renderAmbientBody(resolved, harnessId, resolveRulebookContext);
-    const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
+async function deliverAmbient(plans: ReadonlyArray<PlannedAmbientHost>, domain: SyncDomain): Promise<void> {
+  for (const { hostPath, plan } of plans) {
     if (plan.kind === 'skip') {
-      if (plan.warn) {
-        console.warn(`⚠️ Skipping ambient delivery: ${plan.reason}`);
-      }
       continue;
     }
     if (domain.ambient === 'project-local') {
@@ -1043,17 +1042,37 @@ async function deliverAmbient(
 type AmbientHostState =
   { readonly status: 'missing' } | { readonly status: 'malformed' | 'no-region' | 'ready'; readonly content: string };
 
-/**
- * What a sync would do to one ambient host: write the given content, or skip for the given reason. `warn` marks a
- * skip the user should hear about — a stale install on the harness-home path — as opposed to the ordinary case of a
- * scope that simply declares no ambient rulebooks.
- */
+/** What a sync does to one ambient host: write the given content, or skip for the given reason. */
 type AmbientHostPlan =
-  | { readonly kind: 'skip'; readonly reason: string; readonly warn: boolean }
+  | { readonly kind: 'skip'; readonly reason: AmbientSkipReason }
   | { readonly kind: 'write'; readonly action: 'append' | 'create' | 'inject'; readonly content: string };
 
-/** The reason a harness-home guidance file is skipped for ambient delivery, naming the remedy. */
-function describeAmbientSkip(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
+/** Why one ambient host is skipped. A stale install carries the probe status that names its remedy. */
+type AmbientSkipReason =
+  | { readonly cause: 'damaged-region' }
+  | { readonly cause: 'not-needed' }
+  | { readonly cause: 'stale-install'; readonly status: 'malformed' | 'missing' | 'no-region' };
+
+/** One targeted ambient host paired with the plan a sync carries out there. */
+interface PlannedAmbientHost {
+  readonly hostPath: string;
+  readonly plan: AmbientHostPlan;
+}
+
+/** The reason one ambient host is skipped, naming the remedy where the user has one. */
+function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): string {
+  switch (reason.cause) {
+    case 'damaged-region':
+      return `${hostPath} carries a damaged ambient region.`;
+    case 'not-needed':
+      return `${hostPath} is not needed: no ambient rulebooks are declared.`;
+    case 'stale-install':
+      return describeStaleAmbientHost(reason.status, hostPath);
+  }
+}
+
+/** The reason a harness-home guidance file is too stale to receive ambient delivery, naming the remedy. */
+function describeStaleAmbientHost(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
   switch (status) {
     case 'missing':
       return `${guidanceFile} does not exist. Run \`codeassembly install\`, then re-run \`sync --global\`.`;
@@ -1067,7 +1086,7 @@ function describeAmbientSkip(status: 'malformed' | 'missing' | 'no-region', guid
 /** The dry-run line for one host's plan, naming the host and the action a real run would take on it. */
 function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): string {
   if (plan.kind === 'skip') {
-    return `  skip ambient delivery: ${plan.reason}`;
+    return `  skip ambient delivery: ${describeAmbientSkip(plan.reason, hostPath)}`;
   }
   switch (plan.action) {
     case 'append':
@@ -1106,24 +1125,19 @@ function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
  * when there is ambient content to carry: an absent host with nothing to deliver stays absent, matching how the
  * `prompts.yml` region and the legacy ambient host withdraw rather than persist empty.
  */
-function planAmbientHost(
-  hostKind: AmbientHostKind,
-  host: AmbientHostState,
-  hostPath: string,
-  body: string,
-): AmbientHostPlan {
+function planAmbientHost(hostKind: AmbientHostKind, host: AmbientHostState, body: string): AmbientHostPlan {
   if (host.status === 'ready') {
     return { kind: 'write', action: 'inject', content: injectAmbientRegion(host.content, body) };
   }
   if (hostKind === 'harness-home') {
-    return { kind: 'skip', reason: describeAmbientSkip(host.status, hostPath), warn: true };
+    return { kind: 'skip', reason: { cause: 'stale-install', status: host.status } };
   }
   if (body === '') {
-    return { kind: 'skip', reason: `${hostPath} is not needed: no ambient rulebooks are declared.`, warn: false };
+    return { kind: 'skip', reason: { cause: 'not-needed' } };
   }
   // A damaged region never reaches a write: `assertAmbientHostsWritable` has already failed the run.
   return host.status === 'malformed'
-    ? { kind: 'skip', reason: `${hostPath} carries a damaged ambient region.`, warn: false }
+    ? { kind: 'skip', reason: { cause: 'damaged-region' } }
     : {
         kind: 'write',
         action: host.status === 'missing' ? 'create' : 'append',
@@ -1131,25 +1145,22 @@ function planAmbientHost(
       };
 }
 
-/** Pairs each targeted host with the plan a real run would carry out, so the dry-run preview cannot drift from it. */
-async function previewAmbientHosts(
+/** Pairs each targeted host with the plan a sync carries out there, derived once so both paths read the same one. */
+async function planAmbientHosts(
   hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
   resolveRulebookContext: ResolveRulebookContext,
-): Promise<ReadonlyArray<string>> {
+): Promise<ReadonlyArray<PlannedAmbientHost>> {
   return Promise.all(
-    hosts.map(async ({ harnessId, hostPath }) =>
-      describeAmbientHostPlan(
-        hostPath,
-        planAmbientHost(
-          domain.ambient,
-          await probeAmbientHost(hostPath),
-          hostPath,
-          renderAmbientBody(resolved, harnessId, resolveRulebookContext),
-        ),
+    hosts.map(async ({ harnessId, hostPath }) => ({
+      hostPath,
+      plan: planAmbientHost(
+        domain.ambient,
+        await probeAmbientHost(hostPath),
+        renderAmbientBody(resolved, harnessId, resolveRulebookContext),
       ),
-    ),
+    })),
   );
 }
 
