@@ -182,12 +182,8 @@ export interface SyncDomain {
 /**
  * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
  * domain). A thin wrapper over `reconcileDomain` that supplies the repo `SyncDomain`. An absent `codeassembly.yaml`
- * is a total no-op.
- *
- * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
- * @param contentDirOverride Override for the library source (defaults to the package content dir).
- * @param homeDir The home directory whose declaration tier and installed harnesses decide targeting; injected in tests
- * so a run never reads the developer's own.
+ * is a total no-op. The home directory decides targeting, through its declaration tier and the harnesses installed
+ * under it.
  */
 export async function syncCommand(
   options: InstallOptions,
@@ -213,11 +209,8 @@ export async function syncCommand(
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
  * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in the
  * ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
- * mechanically; no agent-read host file is written. When the home declaration is absent, makes no changes and directs
- * the user to `init --global`.
- *
- * @param homeDir The home directory whose `.agents/` is synced (defaults to the OS home dir; injected in tests).
- * @param contentDirOverride Override for the library source (defaults to the package content dir).
+ * mechanically; no agent-read host file is written. When the home declaration is absent, changes nothing and returns
+ * the outcome naming `init --global` as the remedy.
  */
 export async function syncGlobalCommand(
   options: InstallOptions,
@@ -321,8 +314,7 @@ async function reconcileDomain(
   assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
 
   // Every delivery pass below targets this one set of harnesses, and each renders its content for the harness it
-  // lands on, so the set is resolved once and threaded rather than re-derived per pass. Report it before any pass
-  // runs, so both the dry-run preview and the real run say where they deployed.
+  // lands on, so the set is resolved once and threaded rather than re-derived per pass.
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
 
