@@ -383,6 +383,33 @@ describe(syncCommand, () => {
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
   });
 
+  it('reports the retirement a live run performs, not only the one a dry run predicts', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(projectMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
+
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+      level: 'info',
+    });
+
+    expect(output).toContain(`Retired the rulebook blocks in ${projectMdPath()}`);
+  });
+
+  it('warns about an unignored local host in dry-run as well as on a live run', async () => {
+    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
+    await writeFile(path.join(projectRoot, '.gitignore'), 'node_modules/\n', 'utf8');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    const warnings = renderReportLines(
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'warn' },
+    );
+
+    expect(warnings.filter((line) => line.includes('is not git-ignored'))).toHaveLength(1);
+    expect(existsSync(localHostPath())).toBe(false);
+  });
+
   it('warns once when the local host it writes is not git-ignored', async () => {
     await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
     await writeFile(path.join(projectRoot, '.gitignore'), 'node_modules/\n', 'utf8');
