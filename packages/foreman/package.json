@@ -13,7 +13,7 @@
     "@mantine/core": "9.5.0",
     "@mantine/hooks": "9.5.0",
     "codeassembly-fleet": "workspace:*",
-    "hono": "4.12.32",
+    "hono": "4.12.33",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

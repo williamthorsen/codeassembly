@@ -33,11 +33,11 @@
     "@vitejs/plugin-react": "6.0.5",
     "@vitest/coverage-v8": "4.1.10",
     "@vitest/eslint-plugin": "1.6.24",
-    "@williamthorsen/eslint-config-typescript": "8.5.0",
+    "@williamthorsen/eslint-config-typescript": "8.6.0",
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/nmr": "0.27.0",
     "@williamthorsen/release-kit": "10.2.2",
-    "@williamthorsen/strict-lint": "9.3.0",
+    "@williamthorsen/strict-lint": "9.4.0",
     "codeassembly": "workspace:*",
     "dotenv": "17.4.2",
     "eslint": "10.8.0",
@@ -56,7 +56,7 @@
     "vite": "8.2.0",
     "vitest": "4.1.10"
   },
-  "packageManager": "pnpm@11.18.0",
+  "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": ">=24"
   }
