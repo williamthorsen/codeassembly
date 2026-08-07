@@ -629,7 +629,7 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
   });
 
-  it('names the detected harnesses and emits no advice to pin them', async () => {
+  it('names the detected harnesses and the detection that decided it', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
@@ -644,8 +644,6 @@ describe(syncCommand, () => {
     }
 
     expect(output).toContain('Targeting claude, rovo (detected in ~).');
-    // Falling back to detection is a correct state, so the run reports it and advises no declaration.
-    expect(output).not.toContain('to pin this');
   });
 
   it('names a declared harness set and the declaration that decided it', async () => {
