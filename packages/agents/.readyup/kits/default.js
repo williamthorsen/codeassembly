@@ -55,6 +55,15 @@ function resolveImportPath(importPath, importingDirPath) {
   return resolve(importingDirPath, importPath);
 }
 
+// .readyup/lib/guidance-size.ts
+function countGuidanceLines(content) {
+  if (content === "") {
+    return 0;
+  }
+  const withoutFinalNewline = content.endsWith("\n") ? content.slice(0, -1) : content;
+  return withoutFinalNewline.split("\n").length;
+}
+
 // .readyup/lib/guidance-staleness.ts
 import { runGit } from "readyup/check-utils";
 var COMMIT_MARKER = "COMMIT";
@@ -103,9 +112,10 @@ function formatUtcDate(epochSec) {
 var GUIDANCE_PATH = "AGENTS.md";
 var CLAUDE_MEMORY_PATH = ".claude/CLAUDE.md";
 var STALE_COMMIT_THRESHOLD = 20;
+var AMBIENT_LINE_BUDGET = 200;
 var REFRESH_FIX = `Run \`/update-project-guidance\` to refresh ${GUIDANCE_PATH}`;
 var default_default = defineRdyKit({
-  description: "Project-guidance wiring and freshness",
+  description: "Project-guidance wiring, freshness, and size",
   checklists: [
     {
       name: "guidance",
@@ -153,6 +163,23 @@ var default_default = defineRdyKit({
             };
           },
           fix: REFRESH_FIX
+        },
+        {
+          name: `${GUIDANCE_PATH} is within the ambient budget`,
+          severity: "recommend",
+          skip: () => fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`,
+          check: () => {
+            const content = readFile(GUIDANCE_PATH);
+            if (content === void 0) {
+              return { ok: false, detail: `${GUIDANCE_PATH} is unreadable` };
+            }
+            const lineCount = countGuidanceLines(content);
+            return {
+              ok: lineCount <= AMBIENT_LINE_BUDGET,
+              detail: `${describeLineCount(lineCount)}, budget ${AMBIENT_LINE_BUDGET}`
+            };
+          },
+          fix: REFRESH_FIX
         }
       ]
     }
@@ -166,6 +193,9 @@ function describeImportTargets(resolvedPaths) {
     return "no `@` import found";
   }
   return `imports resolve to ${resolvedPaths.map((path) => relative(process.cwd(), path)).join(", ")}`;
+}
+function describeLineCount(count) {
+  return count === 1 ? "1 line" : `${count} lines`;
 }
 export {
   default_default as default

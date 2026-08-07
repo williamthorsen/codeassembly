@@ -12,7 +12,7 @@ Generate or refresh the repository-root `AGENTS.md` — the repo-specific guidan
 
 ## Overview
 
-Explore the codebase, classify findings by scope, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project — and nothing more.
+Explore the codebase, classify each finding by scope and tier, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project — and nothing more.
 
 **Core principle:** Every line must merit its inclusion. Omit anything an agent would figure out on its own or that is already covered by general guidance.
 
@@ -60,18 +60,20 @@ Collect findings as a flat list before moving to classification.
 
 ### Phase 2: Analyze and classify
 
-For each finding, assign one of these scopes:
+For each finding, assign one of these classes:
 
-| Scope                | Destination                         | Test                                                 |
-| -------------------- | ----------------------------------- | ---------------------------------------------------- |
-| **Project-specific** | `AGENTS.md`                         | Applies only to this repo                            |
-| **Already covered**  | Omit                                | Already stated in `~/.agents/AGENTS.md`              |
-| **General**          | Recommend for `~/.agents/AGENTS.md` | Applies across repos but not yet in general guidance |
-| **Ambiguous**        | Ask the user                        | Could go either way — ask one question at a time     |
+| Class               | Destination                             | Test                                                                    |
+| ------------------- | --------------------------------------- | ----------------------------------------------------------------------- |
+| **Ambient**         | `AGENTS.md`                             | Applies only to this repo, and the obvious action goes wrong without it |
+| **Reference**       | The owning package's README, or `docs/` | Applies only to this repo, but an agent needs it occasionally           |
+| **Already covered** | Omit                                    | Already stated in `~/.agents/AGENTS.md`, or printed by the tool itself  |
+| **General**         | Recommend for `~/.agents/AGENTS.md`     | Applies across repos but not yet in general guidance                    |
+| **Ambiguous**       | Ask the user                            | Could go either way — ask one question at a time                        |
 
 **Rules:**
 
-- The distinction is **scope** (general vs project-specific), not nature (prescriptive vs descriptive). Project-specific conventions, commands, and architectural decisions all belong in `AGENTS.md` regardless of whether they are rules or facts.
+- Two axes decide the destination. **Scope** (general vs project-specific) separates `~/.agents/AGENTS.md` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` carries from what a package README does. Neither axis is nature (prescriptive vs descriptive): conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
+- A finding earns the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch rots silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, ask the user — one question at a time, prefer multiple choice.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
@@ -103,15 +105,15 @@ Generate `AGENTS.md` using the standard structure below. Include only sections t
 
 ## Project structure
 
-{Monorepo layout, package descriptions with their purpose, key files worth knowing about. Use a compact format — not a full directory tree.}
+{One clause per package: what it owns, plus a pointer to its own README. Never a directory tree — `ls` prints that, and a transcribed one rots.}
 
 ## Commands
 
-{Development, testing, build, and quality commands. Group by scope (root-level, package-level, package-specific). Omit commands that are obvious from package.json.}
+{Only commands whose absence sends an agent wrong: a required bootstrap, a non-obvious entry point. Omit anything the tool lists from `--help` or a bare invocation.}
 
 ## Architecture
 
-{Build system, key patterns, data flow between components, dependency ordering. Focus on things that affect how an agent should approach changes.}
+{Only what changes how an agent approaches a change: dependency ordering, and couplings that nothing enforces. Not a recital of the TypeScript, test, or lint configuration.}
 
 ## Code style
 
@@ -158,6 +160,7 @@ If any findings were classified as **general** (cross-repo) in Phase 2:
 
 Before presenting the draft, verify:
 
+- [ ] The file is at most 200 lines, matching the ambient budget the published guidance checklist reports against; anything that pushed it over went to the package level behind a pointer
 - [ ] No line duplicates content from `~/.agents/AGENTS.md`
 - [ ] No section merely restates what's obvious from the code
 - [ ] Commands listed are ones an agent would actually need (not exhaustive npm script listings)
