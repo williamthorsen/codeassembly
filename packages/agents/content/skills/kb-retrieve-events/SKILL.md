@@ -28,7 +28,7 @@ A value-bearing flag accepts both `--tag fix` and `--tag=fix`. `--min-impact` ta
 
 By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's `default_kb`. `--all-kbs` widens the search to every knowledge base in the merged `kb.yaml` registry.
 
-`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone — no `.kb/` discovery walk runs. Use it to query a named event store directly, such as the `codeassembly` store. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
+`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone — no `.kb/` discovery walk runs. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
 
 Within each knowledge base, recall is limited to the notes the store declares — the files matching its configured `targets`/`exclude` (the same note set `kb check` enforces). Events live under `content/events/`.
 
@@ -50,13 +50,13 @@ node "$(dirname "$SKILL_PATH")/kb-retrieve-events.mjs" <query> [--all-kbs] [--st
 Or, when the skill directory is known:
 
 ```bash
-node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store codeassembly
+node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store <name>
 ```
 
 Triage the most consequential events by floor on impact:
 
 ```bash
-node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store codeassembly --min-impact high
+node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store <name> --min-impact high
 ```
 
 The helper prints a JSON object to stdout:

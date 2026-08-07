@@ -197,13 +197,13 @@ Otherwise the merge has already happened, so this step can only add a record. De
 
 Invoke `{skill:capture-lede-decision}` with:
 
-| Input               | Value                                                                                                                     |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `--artifact-dir`    | `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`                                                        |
-| `--pr`              | Resolved PR number                                                                                                        |
-| `--merge-commit`    | The merge commit SHA from the delegate's completion report                                                                |
-| `--type`, `--scope` | The values resolved in step 3, as settled at the approval gate                                                            |
-| `--store`           | `codeassembly` — the project's agent-guidance KB. Pass a different store only when the user directs the record elsewhere. |
+| Input               | Value                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `--artifact-dir`    | `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`                                            |
+| `--pr`              | Resolved PR number                                                                                            |
+| `--merge-commit`    | The merge commit SHA from the delegate's completion report                                                    |
+| `--type`, `--scope` | The values resolved in step 3, as settled at the approval gate                                                |
+| `--store`           | The event store holding this repository's lede-decision corpus, named per that skill's own `--store` argument |
 
 That skill owns the prompt and the record: it asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ — a lede that shipped unchanged under time pressure is not an accepted lede.
 
