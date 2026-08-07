@@ -5,8 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../../lib/content-resolver.ts';
-import type { InstallOptions } from '../../lib/types.ts';
+import { resolveContentDir } from '../../../lib/content-resolver.ts';
+import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand } from '../sync.ts';
 
 // Syncs a project that draws a rulebook from a declared source alongside one from the real content library, to catch

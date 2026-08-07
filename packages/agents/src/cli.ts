@@ -8,9 +8,11 @@ import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
-import { syncCommand, syncGlobalCommand } from './commands/sync.ts';
+import { renderDryRunReport, renderSyncReport } from './commands/sync/report.ts';
+import { syncCommand, syncGlobalCommand } from './commands/sync/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
+import { emitReport } from './lib/emit-report.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
@@ -281,7 +283,8 @@ async function runLibrary(subcommand: string): Promise<void> {
  */
 async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {
   try {
-    await (global ? syncGlobalCommand(options) : syncCommand(options));
+    const outcome = await (global ? syncGlobalCommand(options) : syncCommand(options));
+    emitReport(options.dryRun ? renderDryRunReport(outcome) : renderSyncReport(outcome));
   } catch (error: unknown) {
     if (!warnOnly) {
       throw error;

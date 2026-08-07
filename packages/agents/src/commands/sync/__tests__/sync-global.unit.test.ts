@@ -5,8 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { InstallOptions } from '../../lib/types.ts';
-import { initGlobalCommand } from '../init.ts';
+import type { InstallOptions } from '../../../lib/types.ts';
+import { initGlobalCommand } from '../../init.ts';
 import { syncGlobalCommand } from '../sync.ts';
 
 // Runs `init --global` then `sync --global` against the real content library to catch failures that

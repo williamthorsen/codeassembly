@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import { removeItem } from './installer.ts';
 import { detectDrift } from './manifest.ts';
+import type { ReportLine } from './report-line.ts';
 import type { ManifestEntry } from './types.ts';
 
 /** Fate of an owned manifest entry during removal: delete it, keep it (user-modified, no force), or note it is already gone from disk. */
@@ -13,10 +14,16 @@ interface PruneOptions {
   readonly dryRun: boolean;
 }
 
-/** Outcome of a prune pass: entries to keep tracking in the manifest, and the relative paths dropped from it. */
-interface PruneResult {
+/** One orphan a prune pass considered, and the verdict it drew. */
+export interface PrunedOrphan {
+  readonly entry: ManifestEntry;
+  readonly verdict: OwnedEntryVerdict;
+}
+
+/** Outcome of a prune pass: every orphan in the order considered, and the entries that stay tracked in the manifest. */
+export interface PruneResult {
+  readonly orphans: ReadonlyArray<PrunedOrphan>;
   readonly retained: ReadonlyArray<ManifestEntry>;
-  readonly removedPaths: ReadonlyArray<string>;
 }
 
 /**
@@ -44,11 +51,32 @@ export async function classifyOwnedEntry(
   return 'remove';
 }
 
+/** What a prune pass did with each orphan: the modified ones it kept, and the stale ones it removed. */
+export function describePruneResult(result: PruneResult, options: { dryRun: boolean }): ReadonlyArray<ReportLine> {
+  return result.orphans.flatMap((orphan): ReadonlyArray<ReportLine> => {
+    switch (orphan.verdict) {
+      case 'absent':
+        return [];
+      case 'retain':
+        return [{ level: 'warn', text: `  ⚠️ Keeping modified stale item: ${orphan.entry.relativePath}` }];
+      case 'remove':
+        return [
+          {
+            level: 'info',
+            text: options.dryRun
+              ? `  [dry-run] Would remove stale item: ${orphan.entry.relativePath}`
+              : `  🗑️ Removed stale item: ${orphan.entry.relativePath}`,
+          },
+        ];
+    }
+  });
+}
+
 /**
  * Removes installed files recorded in `previousEntries` whose source no longer exists — those whose
  * `relativePath` is absent from `currentEntries` — resolving paths against the install root `home`. Each
  * orphan's fate follows `classifyOwnedEntry`; a retained (user-modified, unforced) orphan stays tracked in
- * the manifest. In `dryRun`, removals are reported and recorded but not performed.
+ * the manifest. In `dryRun`, each orphan draws its verdict but no file is removed.
  */
 export async function pruneOrphanedEntries(
   previousEntries: ReadonlyArray<ManifestEntry>,
@@ -57,47 +85,19 @@ export async function pruneOrphanedEntries(
   options: PruneOptions,
 ): Promise<PruneResult> {
   const currentPaths = new Set(currentEntries.map((entry) => entry.relativePath));
-  const orphans = previousEntries.filter((entry) => !currentPaths.has(entry.relativePath));
+  const candidates = previousEntries.filter((entry) => !currentPaths.has(entry.relativePath));
 
-  const retained: Array<ManifestEntry> = [];
-  const removedPaths: Array<string> = [];
-
-  for (const orphan of orphans) {
-    const verdict = await classifyOwnedEntry(orphan, home, options.force);
-
-    if (verdict === 'retain') {
-      console.warn(`  ⚠️ Keeping modified stale item: ${orphan.relativePath}`);
-      retained.push(orphan);
-      continue;
+  const orphans: Array<PrunedOrphan> = [];
+  for (const entry of candidates) {
+    const verdict = await classifyOwnedEntry(entry, home, options.force);
+    if (verdict === 'remove' && !options.dryRun) {
+      await removeItem(path.join(home, entry.relativePath));
     }
-
-    if (verdict === 'absent') {
-      removedPaths.push(orphan.relativePath);
-      continue;
-    }
-
-    await removeOrphan(path.join(home, orphan.relativePath), orphan.relativePath, removedPaths, options.dryRun);
+    orphans.push({ entry, verdict });
   }
 
-  return { retained, removedPaths };
+  return {
+    orphans,
+    retained: orphans.filter((orphan) => orphan.verdict === 'retain').map((orphan) => orphan.entry),
+  };
 }
-
-// region | Helpers
-
-/** Removes one orphan (unless `dryRun`), records its relative path, and reports the action. */
-async function removeOrphan(
-  fullPath: string,
-  relativePath: string,
-  removedPaths: Array<string>,
-  dryRun: boolean,
-): Promise<void> {
-  removedPaths.push(relativePath);
-  if (dryRun) {
-    console.info(`  [dry-run] Would remove stale item: ${relativePath}`);
-    return;
-  }
-  await removeItem(fullPath);
-  console.info(`  🗑️ Removed stale item: ${relativePath}`);
-}
-
-// endregion | Helpers

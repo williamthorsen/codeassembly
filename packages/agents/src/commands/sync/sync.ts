@@ -4,54 +4,54 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
-import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../lib/artifact-types.ts';
-import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
-import { resolveContentDir } from '../lib/content-resolver.ts';
-import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../lib/content-sources.ts';
-import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
-import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../lib/deploy-collisions.ts';
-import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
-import { checkGitIgnored } from '../lib/git-ignore.ts';
-import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../lib/harness.ts';
-import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
-import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
+import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
+import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
+import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
+import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
+import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../../lib/content-sources.ts';
+import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resolver.ts';
+import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
+import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
+import { checkGitIgnored } from '../../lib/git-ignore.ts';
+import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
+import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import {
   createContentRootLinkAnchor,
   createSkillLinkAnchor,
   type LinkAnchorContext,
   SOURCE_SUPPORT_DIR,
-} from '../lib/link-anchor.ts';
-import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
-import type { ResolveLinkAnchor } from '../lib/path-rewriter.ts';
-import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
-import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
-import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.ts';
-import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
-import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
-import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
-import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
-import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
-import { describeSourceNameProblem, describeSourceProblem } from '../lib/source-validation.ts';
+} from '../../lib/link-anchor.ts';
+import { findUndeclaredGuidancePackages, resolvePackageSources } from '../../lib/package-sources.ts';
+import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
+import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
+import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
+import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
+import { extractRulebookSkillSlug, renderSkillFile } from '../../lib/rulebook-skill.ts';
+import { renderRulebookBody, type RulebookRenderContext } from '../../lib/rulebook-transform.ts';
+import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../../lib/sentinel-inliner.ts';
+import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../../lib/skill-transform.ts';
+import { describeSourceNameProblem, describeSourceProblem } from '../../lib/source-validation.ts';
 import {
   deploySubagent,
   renderSubagent,
   resolveDeclaredSubagent,
   type ResolvedSubagent,
   type SubagentDeployContext,
-} from '../lib/subagent-deploy.ts';
+} from '../../lib/subagent-deploy.ts';
 import {
   deploySourceSupport,
   listUndeclaredSourceSupport,
   renderSourceSupport,
   retractUndeclaredSourceSupport,
   type SourceSupportOutcome,
-} from '../lib/support-deploy.ts';
-import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
-import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
-import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
-import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
+} from '../../lib/support-deploy.ts';
+import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../../lib/target-harnesses.ts';
+import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
+import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
+import type { AmbientHostKind, HarnessId, InstallOptions } from '../../lib/types.ts';
 
 const skillMarker = makeArtifactMarker('skill');
 const subagentMarker = makeArtifactMarker('subagent');
@@ -61,7 +61,7 @@ const subagentMarker = makeArtifactMarker('subagent');
  * and whether it masks a same-slug library artifact. Drives both the dry-run resolution report and the real-run shadow
  * warning.
  */
-interface ResolutionEntry {
+export interface ResolutionEntry {
   readonly type: ArtifactType;
   readonly slug: string;
   readonly source: string | undefined;
@@ -69,7 +69,7 @@ interface ResolutionEntry {
 }
 
 /** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
-interface HarnessSubagentTarget {
+export interface HarnessSubagentTarget {
   readonly harnessId: HarnessId;
   readonly subagentsDir: string;
   /** Everything but the anchor, which the owning source decides and so is supplied per subagent. */
@@ -101,7 +101,7 @@ type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | un
  * Carrying the verdict is what lets the preview describe the removals without re-deriving them from the tree that
  * delivery is about to change.
  */
-interface SourceSupportPlan {
+export interface SourceSupportPlan {
   readonly sourcesRoot: string;
   readonly name: string;
   readonly destDir: string;
@@ -110,12 +110,57 @@ interface SourceSupportPlan {
 }
 
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
-interface HarnessSkillTarget {
+export interface HarnessSkillTarget {
   readonly harnessId: HarnessId;
   readonly skillsDir: string;
   /** Everything but the anchor, which the owning source decides and so is supplied per skill. */
   readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
 }
+
+/** A scope carrying no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
+export interface MissingDeclaration {
+  readonly kind: 'no-declaration';
+  readonly declarationPath: string;
+  readonly scope: 'global' | 'project';
+}
+
+/** What a sync resolved and what it did, or what it would have done under `--dry-run`. */
+export type SyncOutcome = MissingDeclaration | { readonly kind: 'reconciled'; readonly plan: SyncPlan };
+
+/**
+ * Everything a sync resolved, and every write, retraction, and warning it produced. Both reports render from this one
+ * plan, so a condition either can describe reaches the other in the same terms. The closing summary's counts are
+ * derived from these same fields rather than carried alongside them, which is what keeps a count and the enumeration
+ * it summarizes from disagreeing.
+ */
+export interface SyncPlan {
+  readonly targets: ResolvedHarnessTargets;
+  readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
+  readonly ambientHosts: ReadonlyArray<PlannedAmbientHost>;
+  /** Hosts the run writes that git does not ignore, so machine-local guidance does not become a commit candidate. */
+  readonly unignoredHosts: ReadonlyArray<string>;
+  readonly retirements: ReadonlyArray<Retirement>;
+  readonly resolved: ReadonlyArray<ResolvedRulebook>;
+  readonly harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>;
+  readonly skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
+  readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
+  readonly declaredSkillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
+  readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
+  readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
+  readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
+  /** One entry per source that would deliver support content, naming its namespace dir and how many files land there. */
+  readonly sourceSupportPlans: ReadonlyArray<SourceSupportPlan>;
+  /** Namespace paths under each target's support root that no declared source claims. */
+  readonly sourceSupportRetractions: ReadonlyArray<string>;
+  readonly promptsYmlPaths: ReadonlyArray<string>;
+  /** Dependencies shipping guidance the project has not declared. */
+  readonly undeclaredPackages: ReadonlyArray<string>;
+}
+
+/** A retired legacy output, and whether the host it names held nothing but retired blocks. */
+export type Retirement =
+  | { readonly kind: 'ambient-host'; readonly hostPath: string; readonly emptied: boolean }
+  | { readonly kind: 'neutral-rulebooks'; readonly dir: string };
 
 /** The one per-domain difference: the base dir to resolve and deploy under, and where ambient blocks land. */
 export interface SyncDomain {
@@ -137,26 +182,22 @@ export interface SyncDomain {
 /**
  * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
  * domain). A thin wrapper over `reconcileDomain` that supplies the repo `SyncDomain`. An absent `codeassembly.yaml`
- * is a total no-op.
- *
- * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
- * @param contentDirOverride Override for the library source (defaults to the package content dir).
- * @param homeDir The home directory whose declaration tier and installed harnesses decide targeting; injected in tests
- * so a run never reads the developer's own.
+ * is a total no-op. The home directory decides targeting, through its declaration tier and the harnesses installed
+ * under it.
  */
 export async function syncCommand(
   options: InstallOptions,
   projectRoot: string = process.cwd(),
   contentDirOverride?: string,
   homeDir: string = homedir(),
-): Promise<void> {
+): Promise<SyncOutcome> {
   if (path.resolve(projectRoot) === path.resolve(homeDir)) {
     throw new Error(
       'Refusing to run `sync` in the home directory: that would deploy the user-global tier through the project ' +
         'path. Run `sync --global` to sync the user-global tier into the home harness dirs.',
     );
   }
-  await reconcileDomain(
+  return reconcileDomain(
     options,
     { baseDir: projectRoot, ambient: 'project-local', anchorBase: path.resolve(projectRoot) },
     homeDir,
@@ -168,31 +209,29 @@ export async function syncCommand(
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
  * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in the
  * ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
- * mechanically; no agent-read host file is written. When the home declaration is absent, makes no changes and directs
- * the user to `init --global`.
- *
- * @param homeDir The home directory whose `.agents/` is synced (defaults to the OS home dir; injected in tests).
- * @param contentDirOverride Override for the library source (defaults to the package content dir).
+ * mechanically; no agent-read host file is written. When the home declaration is absent, changes nothing and returns
+ * the outcome naming `init --global` as the remedy.
  */
 export async function syncGlobalCommand(
   options: InstallOptions,
   homeDir: string = homedir(),
   contentDirOverride?: string,
-): Promise<void> {
+): Promise<SyncOutcome> {
   const declarationPath = path.join(homeDir, '.agents', 'codeassembly.yaml');
   if (!existsSync(declarationPath)) {
-    console.info(
-      `No ${declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`,
-    );
-    return;
+    return { kind: 'no-declaration', declarationPath, scope: 'global' };
   }
-  await reconcileDomain(
+  const outcome = await reconcileDomain(
     options,
     { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' },
     homeDir,
     contentDirOverride,
   );
-  await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
+  const retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
+  if (retirement === undefined || outcome.kind !== 'reconciled') {
+    return outcome;
+  }
+  return { ...outcome, plan: { ...outcome.plan, retirements: [...outcome.plan.retirements, retirement] } };
 }
 
 /**
@@ -212,11 +251,14 @@ async function reconcileDomain(
   domain: SyncDomain,
   homeDir: string,
   contentDirOverride?: string,
-): Promise<void> {
+): Promise<SyncOutcome> {
   const declaration = await resolveDeclaration({ cwd: domain.baseDir });
   if (declaration === undefined) {
-    console.info('No .agents/codeassembly.yaml found. Nothing to sync.');
-    return;
+    return {
+      kind: 'no-declaration',
+      declarationPath: path.join(domain.baseDir, '.agents', 'codeassembly.yaml'),
+      scope: domain.ambient === 'harness-home' ? 'global' : 'project',
+    };
   }
 
   const contentDir = contentDirOverride ?? resolveContentDir();
@@ -272,11 +314,9 @@ async function reconcileDomain(
   assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
 
   // Every delivery pass below targets this one set of harnesses, and each renders its content for the harness it
-  // lands on, so the set is resolved once and threaded rather than re-derived per pass. Report it before any pass
-  // runs, so both the dry-run preview and the real run say where they deployed.
+  // lands on, so the set is resolved once and threaded rather than re-derived per pass.
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
-  console.info(describeHarnessTargeting(targets));
 
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
   // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
@@ -393,29 +433,45 @@ async function reconcileDomain(
   // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
+  // Derived before the paths part, so a dry run cannot describe an ambient host differently from the run it previews.
+  const ambientHostPlans = await planAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext);
+
+  // Advisory only, and gathered for both paths: a dry run that would create the host warns about it too.
+  const unignoredHosts =
+    domain.ambient === 'project-local' ? await findUnignoredHosts(domain.baseDir, ambientHostPlans) : [];
+
+  const retirements = await retireRetiredOutputs(options, domain);
+
+  const plan: SyncPlan = {
+    targets,
+    resolutionReport,
+    ambientHosts: ambientHostPlans,
+    unignoredHosts,
+    retirements,
+    resolved,
+    harnessSkillTargets,
+    skillOrphansByDir,
+    resolvedSkills,
+    declaredSkillOrphansByDir,
+    resolvedSubagents,
+    harnessSubagentTargets,
+    subagentOrphansByDir,
+    sourceSupportPlans,
+    sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sourceSupportPlans),
+    promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
+    // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This
+    // is advice, not action: Nothing is deployed until the project declares the package.
+    undeclaredPackages: await findUndeclaredGuidancePackages(
+      [...declaration.packages, ...declaration.declinedPackages],
+      domain.baseDir,
+    ),
+  };
+
   if (options.dryRun) {
-    await retireRetiredOutputs(options, domain);
-    reportDryRun({
-      ambientHostPreviews: await previewAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext),
-      resolutionReport,
-      resolved,
-      harnessSkillTargets,
-      skillOrphansByDir,
-      resolvedSkills,
-      declaredSkillOrphansByDir,
-      resolvedSubagents,
-      harnessSubagentTargets,
-      subagentOrphansByDir,
-      sourceSupportPlans,
-      sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sourceSupportPlans),
-      promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
-    });
-    return;
+    return { kind: 'reconciled', plan };
   }
 
-  await retireRetiredOutputs(options, domain);
-
-  await deliverAmbient(ambientHosts, domain, resolved, resolveRulebookContext);
+  await deliverAmbient(ambientHostPlans);
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
@@ -462,43 +518,7 @@ async function reconcileDomain(
 
   await refreshPromptsYml(harnessIds, domain);
 
-  const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
-  const skillFilesWritten = desiredSkillDirs.size * harnessSkillTargets.length;
-  const declaredSkillRetractions = declaredSkillOrphansByDir.reduce(
-    (total, harness) => total + harness.orphans.length,
-    0,
-  );
-  const declaredSkillsDeployed = harnessSkillTargets.reduce(
-    (total, { harnessId }) => total + resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).length,
-    0,
-  );
-  const subagentRetractions = subagentOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
-  const subagentsDeployed = resolvedSubagents.length * harnessSubagentTargets.length;
-  console.info(
-    `Synced ${resolved.length} rulebook(s), ${resolvedSkills.length} declared skill(s), and ` +
-      `${resolvedSubagents.length} declared subagent(s); delivered ${skillFilesWritten} rulebook-skill file(s), ` +
-      `${declaredSkillsDeployed} declared-skill dir(s), and ${subagentsDeployed} declared-subagent file(s) across ` +
-      `${harnessSkillTargets.length} harness(s); retracted ` +
-      `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
-      `${subagentRetractions} declared-subagent file(s).`,
-  );
-
-  // A declared source that provides a slug also present in the library shadows it silently. On a real run the report
-  // is not printed, so surface any shadow as a warning — this is when the surprising deploy actually takes effect.
-  const shadows = resolutionReport.filter((entry) => entry.shadowsLibrary);
-  if (shadows.length > 0) {
-    console.warn(renderShadowWarning(shadows));
-  }
-
-  // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This is
-  // advice, not action: Nothing is deployed until the project declares the package.
-  const undeclared = await findUndeclaredGuidancePackages(
-    [...declaration.packages, ...declaration.declinedPackages],
-    domain.baseDir,
-  );
-  if (undeclared.length > 0) {
-    console.info(renderPackageAdvice(undeclared));
-  }
+  return { kind: 'reconciled', plan };
 }
 
 // region | Helpers
@@ -1013,27 +1033,14 @@ function assertRulebooksRender(
 }
 
 /**
- * Delivers the resolved ambient rulebooks into the ambient region of each targeted harness's host, regenerating the
- * region's content wholesale (an empty ambient set empties an existing region). Both domains share this one path,
- * differing only in the host each targets and in who owns region creation there.
+ * Carries out each ambient host's plan, regenerating the region's content wholesale (an empty ambient set empties an
+ * existing region). Both domains share this one path, differing only in the host each targets and in who owns region
+ * creation there.
  */
-async function deliverAmbient(
-  hosts: ReadonlyArray<AmbientHostTarget>,
-  domain: SyncDomain,
-  resolved: ReadonlyArray<ResolvedRulebook>,
-  resolveRulebookContext: ResolveRulebookContext,
-): Promise<void> {
-  for (const { harnessId, hostPath } of hosts) {
-    const body = renderAmbientBody(resolved, harnessId, resolveRulebookContext);
-    const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
+async function deliverAmbient(plans: ReadonlyArray<PlannedAmbientHost>): Promise<void> {
+  for (const { hostPath, plan } of plans) {
     if (plan.kind === 'skip') {
-      if (plan.warn) {
-        console.warn(`⚠️ Skipping ambient delivery: ${plan.reason}`);
-      }
       continue;
-    }
-    if (domain.ambient === 'project-local') {
-      await warnWhenHostNotIgnored(domain.baseDir, hostPath);
     }
     await writeIfChanged(hostPath, plan.content);
   }
@@ -1043,61 +1050,21 @@ async function deliverAmbient(
 type AmbientHostState =
   { readonly status: 'missing' } | { readonly status: 'malformed' | 'no-region' | 'ready'; readonly content: string };
 
-/**
- * What a sync would do to one ambient host: write the given content, or skip for the given reason. `warn` marks a
- * skip the user should hear about — a stale install on the harness-home path — as opposed to the ordinary case of a
- * scope that simply declares no ambient rulebooks.
- */
-type AmbientHostPlan =
-  | { readonly kind: 'skip'; readonly reason: string; readonly warn: boolean }
+/** What a sync does to one ambient host: write the given content, or skip for the given reason. */
+export type AmbientHostPlan =
+  | { readonly kind: 'skip'; readonly reason: AmbientSkipReason }
   | { readonly kind: 'write'; readonly action: 'append' | 'create' | 'inject'; readonly content: string };
 
-/** The reason a harness-home guidance file is skipped for ambient delivery, naming the remedy. */
-function describeAmbientSkip(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
-  switch (status) {
-    case 'missing':
-      return `${guidanceFile} does not exist. Run \`codeassembly install\`, then re-run \`sync --global\`.`;
-    case 'no-region':
-      return `${guidanceFile} carries no ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
-    case 'malformed':
-      return `${guidanceFile} carries a damaged ambient region — an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
-  }
-}
+/** Why one ambient host is skipped. A stale install carries the probe status that names its remedy. */
+export type AmbientSkipReason =
+  | { readonly cause: 'damaged-region' }
+  | { readonly cause: 'not-needed' }
+  | { readonly cause: 'stale-install'; readonly status: 'malformed' | 'missing' | 'no-region' };
 
-/** The dry-run line for one host's plan, naming the host and the action a real run would take on it. */
-function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): string {
-  if (plan.kind === 'skip') {
-    return `  skip ambient delivery: ${plan.reason}`;
-  }
-  switch (plan.action) {
-    case 'append':
-      return `  append the ambient region to ${hostPath}`;
-    case 'create':
-      return `  create ${hostPath}, carrying the ambient region`;
-    case 'inject':
-      return `  inject the ambient region in ${hostPath}`;
-  }
-}
-
-/** Names what settled a run's harness set, in the phrasing the targeting line embeds. */
-function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
-  switch (targets.origin) {
-    case 'declaration':
-      return 'declared';
-    case 'detection':
-      return 'detected in ~';
-    case 'flag':
-      return `--harness ${targets.harnessIds.join(', ')}`;
-  }
-}
-
-/**
- * Renders what a run targets and what decided it. Printed on every run, because the closing summary counts harnesses
- * without naming them: a run that deploys somewhere unexpected — or nowhere — otherwise reads as a success.
- */
-function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
-  const subject = targets.harnessIds.length === 0 ? 'no harnesses' : targets.harnessIds.join(', ');
-  return `Targeting ${subject} (${describeHarnessOrigin(targets)}).`;
+/** One targeted ambient host paired with the plan a sync carries out there. */
+export interface PlannedAmbientHost {
+  readonly hostPath: string;
+  readonly plan: AmbientHostPlan;
 }
 
 /**
@@ -1106,24 +1073,19 @@ function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
  * when there is ambient content to carry: an absent host with nothing to deliver stays absent, matching how the
  * `prompts.yml` region and the legacy ambient host withdraw rather than persist empty.
  */
-function planAmbientHost(
-  hostKind: AmbientHostKind,
-  host: AmbientHostState,
-  hostPath: string,
-  body: string,
-): AmbientHostPlan {
+function planAmbientHost(hostKind: AmbientHostKind, host: AmbientHostState, body: string): AmbientHostPlan {
   if (host.status === 'ready') {
     return { kind: 'write', action: 'inject', content: injectAmbientRegion(host.content, body) };
   }
   if (hostKind === 'harness-home') {
-    return { kind: 'skip', reason: describeAmbientSkip(host.status, hostPath), warn: true };
+    return { kind: 'skip', reason: { cause: 'stale-install', status: host.status } };
   }
   if (body === '') {
-    return { kind: 'skip', reason: `${hostPath} is not needed: no ambient rulebooks are declared.`, warn: false };
+    return { kind: 'skip', reason: { cause: 'not-needed' } };
   }
   // A damaged region never reaches a write: `assertAmbientHostsWritable` has already failed the run.
   return host.status === 'malformed'
-    ? { kind: 'skip', reason: `${hostPath} carries a damaged ambient region.`, warn: false }
+    ? { kind: 'skip', reason: { cause: 'damaged-region' } }
     : {
         kind: 'write',
         action: host.status === 'missing' ? 'create' : 'append',
@@ -1131,40 +1093,41 @@ function planAmbientHost(
       };
 }
 
-/** Pairs each targeted host with the plan a real run would carry out, so the dry-run preview cannot drift from it. */
-async function previewAmbientHosts(
+/** Pairs each targeted host with the plan a sync carries out there, derived once so both paths read the same one. */
+async function planAmbientHosts(
   hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
   resolveRulebookContext: ResolveRulebookContext,
-): Promise<ReadonlyArray<string>> {
+): Promise<ReadonlyArray<PlannedAmbientHost>> {
   return Promise.all(
-    hosts.map(async ({ harnessId, hostPath }) =>
-      describeAmbientHostPlan(
-        hostPath,
-        planAmbientHost(
-          domain.ambient,
-          await probeAmbientHost(hostPath),
-          hostPath,
-          renderAmbientBody(resolved, harnessId, resolveRulebookContext),
-        ),
+    hosts.map(async ({ harnessId, hostPath }) => ({
+      hostPath,
+      plan: planAmbientHost(
+        domain.ambient,
+        await probeAmbientHost(hostPath),
+        renderAmbientBody(resolved, harnessId, resolveRulebookContext),
       ),
-    ),
+    })),
   );
 }
 
 /**
- * Warns when a host `sync` is about to write is not git-ignored, so machine-local guidance does not quietly become a
- * commit candidate. Purely advisory: an ignored host says nothing, and so does a check that cannot answer — the
- * project may not be a repository at all, which is no reason to fail a sync.
+ * The hosts a sync writes that git does not ignore, so machine-local guidance does not quietly become a commit
+ * candidate. Purely advisory: an ignored host is omitted, and so is one the check cannot answer for — the project may
+ * not be a repository at all, which is no reason to fail a sync. A host the run skips is never asked about.
  */
-async function warnWhenHostNotIgnored(projectRoot: string, hostPath: string): Promise<void> {
-  if ((await checkGitIgnored(projectRoot, hostPath)) === false) {
-    console.warn(
-      `⚠️ ${hostPath} is not git-ignored. It carries machine-local guidance, so add it to .gitignore to keep it ` +
-        'out of version control.',
-    );
+async function findUnignoredHosts(
+  projectRoot: string,
+  plans: ReadonlyArray<PlannedAmbientHost>,
+): Promise<ReadonlyArray<string>> {
+  const unignored: Array<string> = [];
+  for (const { hostPath, plan } of plans) {
+    if (plan.kind === 'write' && (await checkGitIgnored(projectRoot, hostPath)) === false) {
+      unignored.push(hostPath);
+    }
   }
+  return unignored;
 }
 
 /** Probes an ambient host for its content and region state. */
@@ -1225,13 +1188,17 @@ async function assertAmbientHostsWritable(
  * one sync created itself, wrong for a hand-authored file like the project's own `AGENTS.md`, which is never
  * deleted. A missing host, and one carrying nothing to retire, are both no-ops.
  */
-async function retireAmbientHost(options: InstallOptions, hostPath: string, deleteWhenEmpty: boolean): Promise<void> {
+async function retireAmbientHost(
+  options: InstallOptions,
+  hostPath: string,
+  deleteWhenEmpty: boolean,
+): Promise<Retirement | undefined> {
   let content: string;
   try {
     content = await readFile(hostPath, 'utf8');
   } catch (error: unknown) {
     if (isMissingFile(error)) {
-      return;
+      return undefined;
     }
     throw error;
   }
@@ -1242,18 +1209,13 @@ async function retireAmbientHost(options: InstallOptions, hostPath: string, dele
   }
   const deletable = deleteWhenEmpty && stripped.trim() === '';
   if (stripped === content && !deletable) {
-    return;
+    return undefined;
   }
 
-  if (options.dryRun) {
-    console.info(
-      deletable
-        ? `[dry-run] sync would delete ${hostPath}, which holds only retired rulebook blocks`
-        : `[dry-run] sync would retire the rulebook blocks in ${hostPath}`,
-    );
-    return;
+  if (!options.dryRun) {
+    await (deletable ? rm(hostPath, { force: true }) : writeIfChanged(hostPath, stripped));
   }
-  await (deletable ? rm(hostPath, { force: true }) : writeIfChanged(hostPath, stripped));
+  return { kind: 'ambient-host', hostPath, emptied: deletable };
 }
 
 /**
@@ -1261,25 +1223,24 @@ async function retireAmbientHost(options: InstallOptions, hostPath: string, dele
  * maintained. Only the `.md` files sync materialized are deleted, and the directory itself only once nothing else
  * remains in it, so anything a user placed alongside them survives. A missing directory is a no-op.
  */
-async function retireNeutralRulebooks(options: InstallOptions, baseDir: string): Promise<void> {
+async function retireNeutralRulebooks(options: InstallOptions, baseDir: string): Promise<Retirement | undefined> {
   const neutralDir = path.join(baseDir, '.agents', 'rulebooks');
   if (!existsSync(neutralDir)) {
-    return;
+    return undefined;
   }
 
-  if (options.dryRun) {
-    console.info(`[dry-run] sync would retire the neutral rulebook tree ${neutralDir}`);
-    return;
-  }
-  const entries = await readDirEntries(neutralDir);
-  for (const entry of entries) {
-    if (entry.isFile() && entry.name.endsWith('.md')) {
-      await rm(path.join(neutralDir, entry.name), { force: true });
+  if (!options.dryRun) {
+    const entries = await readDirEntries(neutralDir);
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        await rm(path.join(neutralDir, entry.name), { force: true });
+      }
+    }
+    if ((await readDirEntries(neutralDir)).length === 0) {
+      await rmdir(neutralDir);
     }
   }
-  if ((await readDirEntries(neutralDir)).length === 0) {
-    await rmdir(neutralDir);
-  }
+  return { kind: 'neutral-rulebooks', dir: neutralDir };
 }
 
 /**
@@ -1290,12 +1251,16 @@ async function retireNeutralRulebooks(options: InstallOptions, baseDir: string):
  * Both guidance locations are swept. A project that renames `.agents/PROJECT.md` to the repository-root `AGENTS.md`
  * before its next sync would otherwise carry the stale blocks into the new location for good.
  */
-async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain): Promise<void> {
-  await retireNeutralRulebooks(options, domain.baseDir);
-  if (domain.ambient === 'project-local') {
-    await retireAmbientHost(options, path.join(domain.baseDir, '.agents', 'PROJECT.md'), false);
-    await retireAmbientHost(options, path.join(domain.baseDir, 'AGENTS.md'), false);
+async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain): Promise<ReadonlyArray<Retirement>> {
+  const legacyHosts =
+    domain.ambient === 'project-local'
+      ? [path.join(domain.baseDir, '.agents', 'PROJECT.md'), path.join(domain.baseDir, 'AGENTS.md')]
+      : [];
+  const retirements = [await retireNeutralRulebooks(options, domain.baseDir)];
+  for (const hostPath of legacyHosts) {
+    retirements.push(await retireAmbientHost(options, hostPath, false));
   }
+  return retirements.filter((retirement) => retirement !== undefined);
 }
 
 /**
@@ -1394,106 +1359,6 @@ function resolvePromptsYmlPaths(harnessIds: ReadonlyArray<HarnessId>, domain: Sy
     .map((harnessId) => path.join(resolveHarnessPaths(harnessId, domain.baseDir).harnessHome, 'prompts.yml'));
 }
 
-/** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
-interface DryRunPlan {
-  /** One rendered line per targeted ambient host, naming it and the action a real run would take. */
-  readonly ambientHostPreviews: ReadonlyArray<string>;
-  readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
-  readonly resolved: ReadonlyArray<ResolvedRulebook>;
-  readonly harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>;
-  readonly skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
-  readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
-  readonly declaredSkillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
-  readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
-  readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
-  readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
-  /** One entry per source that would deliver support content, naming its namespace dir and how many files land there. */
-  readonly sourceSupportPlans: ReadonlyArray<SourceSupportPlan>;
-  /** Namespace paths under each target's support root that no declared source claims. */
-  readonly sourceSupportRetractions: ReadonlyArray<string>;
-  readonly promptsYmlPaths: ReadonlyArray<string>;
-}
-
-/** Prints the writes and retractions a real run would perform. */
-function reportDryRun(plan: DryRunPlan): void {
-  if (plan.resolutionReport.length > 0) {
-    console.info(renderResolutionReport(plan.resolutionReport));
-  }
-  console.info('[dry-run] sync would:');
-  for (const preview of plan.ambientHostPreviews) {
-    console.info(preview);
-  }
-  for (const rulebook of plan.resolved) {
-    if (rulebook.skill) {
-      for (const { skillsDir } of plan.harnessSkillTargets) {
-        console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
-      }
-    }
-  }
-  for (const skill of plan.resolvedSkills) {
-    for (const { skillsDir, harnessId } of plan.harnessSkillTargets) {
-      if (!skillTargetsHarness(skill, harnessId)) {
-        continue;
-      }
-      console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
-    }
-  }
-  for (const line of describeSourceSupport(plan.sourceSupportPlans, plan.sourceSupportRetractions)) {
-    console.info(line);
-  }
-  for (const subagent of plan.resolvedSubagents) {
-    for (const target of plan.harnessSubagentTargets) {
-      console.info(`  deploy declared subagent ${path.join(target.subagentsDir, `${subagent.slug}.md`)}`);
-    }
-  }
-  for (const { skillsDir, orphans } of plan.skillOrphansByDir) {
-    for (const dir of orphans) {
-      console.info(`  retract skill ${path.join(skillsDir, dir)} (no longer the current skill dir)`);
-    }
-  }
-  for (const { skillsDir, orphans } of plan.declaredSkillOrphansByDir) {
-    for (const dir of orphans) {
-      console.info(`  retract declared skill ${path.join(skillsDir, dir)} (no longer declared)`);
-    }
-  }
-  for (const { subagentsDir, orphans } of plan.subagentOrphansByDir) {
-    for (const file of orphans) {
-      console.info(`  retract declared subagent ${path.join(subagentsDir, file)} (no longer declared)`);
-    }
-  }
-  for (const promptsPath of plan.promptsYmlPaths) {
-    console.info(
-      `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
-    );
-  }
-}
-
-/**
- * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
- * because their source ships nothing, and which ones retraction removes because no source claims them.
- */
-function describeSourceSupport(
-  plans: ReadonlyArray<SourceSupportPlan>,
-  retractions: ReadonlyArray<string>,
-): ReadonlyArray<string> {
-  const lines = plans
-    .filter((plan) => plan.kind !== 'none')
-    .map((plan) =>
-      plan.kind === 'deliver'
-        ? `  deliver ${plan.entries.length} source support file(s) to ${plan.destDir}`
-        : `  retract source support ${plan.destDir} (source ships none)`,
-    );
-  return [...lines, ...retractions.map((retraction) => `  retract source support ${retraction} (no longer declared)`)];
-}
-
-/** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
-const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
-  rulebook: 0,
-  skill: 1,
-  subagent: 2,
-  collection: 3,
-};
-
 /**
  * Attributes each deployed rulebook, skill, and subagent to the source it resolved from, flagging any source-resolved
  * artifact whose slug also exists in the library as shadowing it. The library probe runs only for source-resolved
@@ -1522,55 +1387,6 @@ async function buildResolutionReport(
         artifact.source !== undefined && (await hasLibraryArtifact(resolver, artifact.type, artifact.slug)),
     })),
   );
-}
-
-/** Orders resolution entries by artifact type, then by slug, so the report is deterministic. */
-function compareResolutionEntries(a: ResolutionEntry, b: ResolutionEntry): number {
-  if (a.type !== b.type) {
-    return ARTIFACT_TYPE_ORDER[a.type] - ARTIFACT_TYPE_ORDER[b.type];
-  }
-  return a.slug.localeCompare(b.slug);
-}
-
-/**
- * Renders the per-artifact resolution report — each deployed artifact and the source it resolved from (`← library` or
- * `← source "<name>"`), with `(shadows library)` appended on a shadow — sorted by type then slug. Type and slug columns
- * are padded for scannability. Pure and deterministic for a given entry set.
- */
-function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string {
-  const sorted = entries.toSorted(compareResolutionEntries);
-  const typeWidth = Math.max(...sorted.map((entry) => entry.type.length));
-  const slugWidth = Math.max(...sorted.map((entry) => entry.slug.length));
-  const lines = sorted.map((entry) => {
-    const origin = entry.source === undefined ? 'library' : `source "${entry.source}"`;
-    const shadow = entry.shadowsLibrary ? ' (shadows library)' : '';
-    return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← ${origin}${shadow}`;
-  });
-  return ['[dry-run] sync would resolve:', ...lines].join('\n');
-}
-
-/**
- * Renders the advice naming each dependency that ships content the project has not declared, as the `packages:` block
- * that adopts them. Emitted as the block rather than as prose so it can be pasted rather than transcribed.
- */
-function renderPackageAdvice(names: ReadonlyArray<string>): string {
-  const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
-  const entries = names.map((name) => `    - '${name}'`).join('\n');
-  return (
-    `💡 ${names.length} ${subject} CodeAssembly guidance this project has not declared. ` +
-    `To adopt, add to .agents/codeassembly.yaml:\n\npackages:\n  use:\n${entries}\n`
-  );
-}
-
-/** Renders the real-run warning naming each deployed artifact that shadows a same-slug library artifact. */
-function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
-  const details = shadows
-    .toSorted(compareResolutionEntries)
-    .map((entry) => `${entry.type} "${entry.slug}" (source "${entry.source}")`)
-    .join(', ');
-  const plural = shadows.length === 1 ? '' : 's';
-  const verb = shadows.length === 1 ? 's' : '';
-  return `⚠️ ${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
 }
 
 /**
