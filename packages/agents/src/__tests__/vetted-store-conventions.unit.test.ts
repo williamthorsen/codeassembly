@@ -51,15 +51,14 @@ describe('vetted store conventions', () => {
     expect(violations, formatViolations(violations)).toEqual([]);
   });
 
-  // A guard that resolves an empty closure reports no violation and reads as a pass, so the scanned set is asserted
-  // rather than assumed.
+  // An empty closure yields no violation and reads as a pass, so this pins the scanned set to the closure's members.
   it('scans a Markdown file for every artifact the closure holds', async () => {
     const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
     const members = [...closure.rulebooks, ...closure.skills, ...closure.subagents];
-    const scanned = await listClosureFiles(contentDir);
+    const scannedFiles = await listClosureFiles(contentDir);
 
     expect(members.length).toBeGreaterThan(0);
-    expect(members.filter((slug) => scanned.every((file) => !file.includes(slug)))).toEqual([]);
+    expect(members.filter((slug) => scannedFiles.every((file) => !file.includes(slug)))).toEqual([]);
   });
 
   describe('classifier', () => {
@@ -120,8 +119,8 @@ function findConcreteStores(line: string, isFenced: boolean): Array<string> {
 /** Reports every argument-position store name across the Markdown of the vetted collection's closure. */
 async function findViolations(contentDir: string): Promise<ReadonlyArray<Violation>> {
   const violations: Array<Violation> = [];
-  for (const relPath of await listClosureFiles(contentDir)) {
-    const lines = (await readFile(path.join(contentDir, relPath), 'utf8')).split('\n');
+  for (const relativePath of await listClosureFiles(contentDir)) {
+    const lines = (await readFile(path.join(contentDir, relativePath), 'utf8')).split('\n');
     let isFenced = false;
     for (const [index, line] of lines.entries()) {
       if (FENCE_PATTERN.test(line)) {
@@ -129,13 +128,14 @@ async function findViolations(contentDir: string): Promise<ReadonlyArray<Violati
         continue;
       }
       for (const store of findConcreteStores(line, isFenced)) {
-        violations.push({ file: relPath, line: index + 1, store, text: line.trim() });
+        violations.push({ file: relativePath, line: index + 1, store, text: line.trim() });
       }
     }
   }
   return violations;
 }
 
+/** Renders the violations as an assertion message naming each file, line, and store, along with the remedy. */
 function formatViolations(violations: ReadonlyArray<Violation>): string {
   if (violations.length === 0) return '';
   const header =
@@ -143,11 +143,13 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
     `${VETTED_COLLECTION}'s closure. A vetted artifact names no store that exists only in one environment: ` +
     `replace each with an angle-bracket placeholder, with \`${DEFAULT_KB_SENTINEL}\`, or with a rule for ` +
     `choosing the destination.`;
-  const lines = violations.map((v) => `  ${v.file}:${v.line} (${v.store}): ${v.text}`);
+  const lines = violations.map(
+    (violation) => `  ${violation.file}:${violation.line} (${violation.store}): ${violation.text}`,
+  );
   return [header, ...lines].join('\n');
 }
 
-/** True when a value in a flag position is a placeholder or the default-KB sentinel rather than a real store. */
+/** True when a value in a flag position names no real store: a placeholder, or the default-KB sentinel. */
 function isPermittedStoreValue(value: string): boolean {
   return value === DEFAULT_KB_SENTINEL || (value.startsWith('<') && value.endsWith('>'));
 }
@@ -159,14 +161,14 @@ function isPermittedStoreValue(value: string): boolean {
  */
 async function listClosureFiles(contentDir: string): Promise<ReadonlyArray<string>> {
   const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
-  const flat = [
+  const flatFiles = [
     ...closure.rulebooks.map((slug) => path.join(ARTIFACT_TYPES.rulebook.contentPath, `${slug}.md`)),
     ...closure.subagents.map((slug) => path.join(ARTIFACT_TYPES.subagent.contentPath, `${slug}.md`)),
   ];
-  const nested = await Promise.all(
+  const skillFiles = await Promise.all(
     closure.skills.map((slug) => listMarkdownFilesUnder(contentDir, path.join(ARTIFACT_TYPES.skill.contentPath, slug))),
   );
-  return [...flat, ...nested.flat()].toSorted();
+  return [...flatFiles, ...skillFiles.flat()].toSorted();
 }
 
 /** Extracts the content of each backtick-delimited code span on a line. */
@@ -174,18 +176,18 @@ function listCodeSpans(text: string): Array<string> {
   return [...text.matchAll(CODE_SPAN_PATTERN)].map((match) => match[1] ?? '');
 }
 
-/** Lists every Markdown file under `relDir`, recursively, as paths relative to `root`. */
-async function listMarkdownFilesUnder(root: string, relDir: string): Promise<Array<string>> {
-  const found: Array<string> = [];
-  for (const entry of await readDirEntries(path.join(root, relDir))) {
-    const relPath = path.join(relDir, entry.name);
+/** Lists every Markdown file under `relativeDir`, recursively, as paths relative to `root`. */
+async function listMarkdownFilesUnder(root: string, relativeDir: string): Promise<Array<string>> {
+  const foundFiles: Array<string> = [];
+  for (const entry of await readDirEntries(path.join(root, relativeDir))) {
+    const relativePath = path.join(relativeDir, entry.name);
     if (entry.isDirectory()) {
-      found.push(...(await listMarkdownFilesUnder(root, relPath)));
+      foundFiles.push(...(await listMarkdownFilesUnder(root, relativePath)));
     } else if (entry.isFile() && entry.name.endsWith('.md')) {
-      found.push(relPath);
+      foundFiles.push(relativePath);
     }
   }
-  return found;
+  return foundFiles;
 }
 
 /** Reads each value a store flag takes within one span of text, in either the spaced or the `=` form. */
@@ -198,17 +200,17 @@ function readFlagValues(text: string): Array<string> {
  * opens with a code span. A value cell opening with prose states no argument, so it yields nothing.
  */
 function readTableCellStore(line: string): string | undefined {
-  const trimmed = line.trim();
-  if (!trimmed.startsWith('|')) return undefined;
+  const trimmedLine = line.trim();
+  if (!trimmedLine.startsWith('|')) return undefined;
 
-  const cells = trimmed.split('|').map((cell) => cell.trim());
+  const cells = trimmedLine.split('|').map((cell) => cell.trim());
   if (cells[0] === '') cells.shift();
   if (cells.at(-1) === '') cells.pop();
 
   for (const [index, cell] of cells.entries()) {
     if (!FLAG_CELL_PATTERN.test(cell)) continue;
-    const leading = LEADING_CODE_SPAN_PATTERN.exec(cells[index + 1] ?? '');
-    if (leading?.[1] !== undefined) return leading[1];
+    const leadingSpanMatch = LEADING_CODE_SPAN_PATTERN.exec(cells[index + 1] ?? '');
+    if (leadingSpanMatch?.[1] !== undefined) return leadingSpanMatch[1];
   }
   return undefined;
 }
