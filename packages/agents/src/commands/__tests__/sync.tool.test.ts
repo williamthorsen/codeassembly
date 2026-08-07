@@ -629,7 +629,7 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
   });
 
-  it('names the detected harnesses and the key that pins them', async () => {
+  it('names the detected harnesses and emits no advice to pin them', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
@@ -644,10 +644,11 @@ describe(syncCommand, () => {
     }
 
     expect(output).toContain('Targeting claude, rovo (detected in ~).');
-    expect(output).toContain('Declare `harnesses.use` in .agents/codeassembly.yaml to pin this.');
+    // Falling back to detection is a correct state, so the run reports it and advises no declaration.
+    expect(output).not.toContain('to pin this');
   });
 
-  it('names a declared harness set without advising how to pin it', async () => {
+  it('names a declared harness set and the declaration that decided it', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
@@ -663,7 +664,6 @@ describe(syncCommand, () => {
     }
 
     expect(output).toContain('Targeting claude (declared).');
-    expect(output).not.toContain('to pin this');
   });
 
   it('says so when a declaration leaves no harness targeted', async () => {
@@ -2283,23 +2283,6 @@ describe(syncGlobalCommand, () => {
     for (const guidanceFile of [claudeMd, rovoMd]) {
       expect(await readFile(guidanceFile, 'utf8')).toContain('<!-- rulebook:alpha -->');
     }
-  });
-
-  it('points the pin advice at the home declaration, the only tier a global run reads', async () => {
-    await seedGuidanceFile('.claude', 'CLAUDE.md');
-    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
-    let output: string;
-    try {
-      await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
-
-    expect(output).toContain('Declare `harnesses.use` in ~/.agents/codeassembly.yaml to pin this.');
   });
 
   it('narrows to the harnesses its own tier declares', async () => {

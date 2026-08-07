@@ -126,7 +126,6 @@ export interface SyncDomain {
    * the project-local one because `install` does not manage user-local files.
    */
   readonly ambient: AmbientHostKind;
-  readonly label: 'project' | 'global';
   /**
    * Root that rendered links to this domain's own deployed trees are written under: `~` for the home domain, the
    * absolute project root for the project domain. Without it a project-deployed artifact addresses the home harness
@@ -159,7 +158,7 @@ export async function syncCommand(
   }
   await reconcileDomain(
     options,
-    { baseDir: projectRoot, ambient: 'project-local', label: 'project', anchorBase: path.resolve(projectRoot) },
+    { baseDir: projectRoot, ambient: 'project-local', anchorBase: path.resolve(projectRoot) },
     homeDir,
     contentDirOverride,
   );
@@ -189,7 +188,7 @@ export async function syncGlobalCommand(
   }
   await reconcileDomain(
     options,
-    { baseDir: homeDir, ambient: 'harness-home', label: 'global', anchorBase: '~' },
+    { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' },
     homeDir,
     contentDirOverride,
   );
@@ -278,9 +277,6 @@ async function reconcileDomain(
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
   console.info(describeHarnessTargeting(targets));
-  if (targets.origin === 'detection') {
-    console.info(describeHarnessPinAdvice(domain));
-  }
 
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
   // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
@@ -1093,15 +1089,6 @@ function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
     case 'flag':
       return `--harness ${targets.harnessIds.join(', ')}`;
   }
-}
-
-/**
- * Renders the advice naming where a detected harness set can be pinned. The file differs by domain, because a run
- * resolves the declaration only from the tiers it reads: a global run never reaches a project's declaration.
- */
-function describeHarnessPinAdvice(domain: SyncDomain): string {
-  const declarationFile = domain.label === 'global' ? '~/.agents/codeassembly.yaml' : '.agents/codeassembly.yaml';
-  return `Declare \`harnesses.use\` in ${declarationFile} to pin this.`;
 }
 
 /**
