@@ -3,12 +3,12 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
-import { ARTIFACT_TYPES } from '../lib/artifact-types.ts';
-import { resolveContentDir } from '../lib/content-resolver.ts';
-import { libraryResolver } from '../lib/content-sources.ts';
-import { resolveClosure } from '../lib/dependency-resolver.ts';
-import { readDirEntries } from '../lib/fs-helpers.ts';
+import { DEFAULT_KB_SENTINEL } from '../../src/kb-shared/default-kb-sentinel.ts';
+import { ARTIFACT_TYPES } from '../../src/lib/artifact-types.ts';
+import { resolveContentDir } from '../../src/lib/content-resolver.ts';
+import { libraryResolver } from '../../src/lib/content-sources.ts';
+import { resolveClosure } from '../../src/lib/dependency-resolver.ts';
+import { readDirEntries } from '../../src/lib/fs-helpers.ts';
 
 // The vetted collection claims its members name nothing specific to one author's environment, and a knowledge-store
 // name is the form that claim fails in most quietly: a reader copies the invocation, and the capture is refused

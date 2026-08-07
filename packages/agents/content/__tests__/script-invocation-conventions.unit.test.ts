@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
+
 // Helper scripts in `packages/agents/content/scripts/` are installed to `~/<harness_home>/scripts/`, a directory not
 // on `$PATH`. Agent-facing content must invoke them via the `{harness_home_dir}/scripts/` template,
 // which the install pipeline expands per harness. Bare invocations leave the agent guessing a path at runtime.
@@ -16,7 +18,7 @@ const KNOWN_SCRIPTS: ReadonlyArray<string> = [
 
 const REQUIRED_PREFIX = '{harness_home_dir}/scripts/';
 
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_DIR = path.join(CONTENT_ROOT, 'skills');
 const SUBAGENTS_DIR = path.join(CONTENT_ROOT, 'subagents');
 
@@ -68,7 +70,7 @@ describe('helper-script invocation conventions', () => {
 async function collectMarkdownFiles(dir: string, root: string, out: Array<string>): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
+    if (entry.name.startsWith('.') || isTestDirectory(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       await collectMarkdownFiles(full, root, out);

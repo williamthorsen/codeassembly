@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../lib/directive-expander.ts';
+import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
 // Output-shaping specs — the option-format contract and the next-steps menus — must reach the agent inlined, not
 // behind a runtime Markdown link. A link is an optional read at generation time, and the model will fill from its
@@ -13,7 +13,7 @@ import { expandIncludes } from '../lib/directive-expander.ts';
 //
 // The consumer lists are explicit rather than discovered from the include directives themselves: the failure this
 // guards against is a consumer being *dropped*, and a discovered list would move with the bug.
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
 interface Spec {

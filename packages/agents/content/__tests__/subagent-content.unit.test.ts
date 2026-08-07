@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 // Reference harness-neutral guidance instead — typically ~/.agents/AGENTS.md and the repo-root AGENTS.md.
 // See issue #471.
 
-const SUBAGENTS_DIR = new URL('../../content/subagents/', import.meta.url).pathname;
+const SUBAGENTS_DIR = new URL('../subagents/', import.meta.url).pathname;
 const FORBIDDEN_SUBSTRING = 'CLAUDE.md';
 
 interface Violation {

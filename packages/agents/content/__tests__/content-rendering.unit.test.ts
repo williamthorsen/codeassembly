@@ -3,7 +3,9 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
+
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 // Written as an escape because a literal NBSP is invisible in source. The ban is total rather than indent-only: the
 // sole reason to type one into guidance is to indent a subordinate line, and a blanket check needs no parsing to
@@ -32,5 +34,5 @@ describe('content rendering', () => {
 /** Returns every Markdown file under `content/`, as paths relative to it. */
 async function listContentMarkdown(): Promise<ReadonlyArray<string>> {
   const entries = await readdir(CONTENT_ROOT, { recursive: true });
-  return entries.filter((entry) => entry.endsWith('.md'));
+  return entries.filter((entry) => entry.endsWith('.md') && !isUnderTestDirectory(entry));
 }
