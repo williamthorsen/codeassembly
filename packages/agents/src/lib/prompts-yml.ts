@@ -18,7 +18,7 @@ export interface PromptEntry {
 /**
  * Scans the skills under `skillsDir` into the prompt entries that back the Rovo Dev index: one entry per skill
  * directory, sorted by name, excluding any whose `SKILL.md` declares `user-invocable: false`. Returns `undefined`
- * when the directory is absent. The shared projection both the whole-file and region renderers build on.
+ * when the directory is absent. The projection the region renderer builds on.
  */
 export async function collectPromptEntries(skillsDir: string): Promise<ReadonlyArray<PromptEntry> | undefined> {
   let skillDirEntries: ReadonlyArray<string>;
