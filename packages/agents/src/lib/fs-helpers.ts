@@ -11,9 +11,7 @@ export const TEST_DIRECTORY_NAME = '__tests__';
 
 /**
  * True when a directory entry holds test code rather than deliverable content. Test code is never published, never
- * installed into a harness home, and never read as content by a check that walks a content tree. The build filter,
- * the installer's support pass, and the content-convention suites all consult this, so no two of them can disagree
- * about what ships.
+ * installed into a harness home, and never read as content by a check that walks a content tree.
  */
 export function isTestDirectory(name: string): boolean {
   return name === TEST_DIRECTORY_NAME;
