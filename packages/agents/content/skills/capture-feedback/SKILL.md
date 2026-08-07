@@ -50,7 +50,7 @@ If the feedback is purely behavioral — a standing rule with nothing to fix rig
 
 Invoke the `{skill:capture-event}` skill to append the record, composing its arguments and body as follows:
 
-- `--store <name|@default>` — the KB housing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: a lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent carries into every project goes to `@default`. Where the two readings are equally available, prefer `@default`, which stays recallable from every project.
+- `--store <name|@default>` — the KB housing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: a lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent carries into every project goes to `@default`.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>` — when the refinement target is a skill.
 - `--impact <level>` — optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.
