@@ -209,14 +209,11 @@ The three tiers therefore state three different things: the user-global tier sta
 
 Both `sync` and `sync --global` honor the declaration. `install`, `uninstall`, `status`, and `configure-hooks` deploy into the harness homes and so are answered by detection alone; they read `--harness` and the installed set, never the declaration.
 
-Every run names what it targeted and what decided it, and a run that fell back to detection names the key that would pin the set:
+Every run names what it targeted and what decided it:
 
 ```
 Targeting claude, rovo (detected in ~).
-Declare `harnesses.use` in .agents/codeassembly.yaml to pin this.
 ```
-
-The advice names the declaration the run itself reads, so `sync --global` points at `~/.agents/codeassembly.yaml` instead: a global run never reaches a project's tiers, and pinning the set there would leave its own targeting unchanged.
 
 ### Collections
 
