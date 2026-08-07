@@ -3,14 +3,15 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { readInjectedSkills } from '../lib/dependency-frontmatter.ts';
-import { expandIncludes } from '../lib/directive-expander.ts';
+import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
+import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
 
 // Two mechanisms put the doctrine into an agent's context, and both are checked here: a skill inlines it at install
 // time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent needs no body
 // edit, only an injected carrier — and that injection list is a frontmatter array an edit can trim with no other test
 // failing.
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
 
@@ -101,5 +102,6 @@ async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
   return entries
     .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(entry.parentPath, entry.name));
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
 }

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 // callee falls back to its default behavior — the wider edit the directive exists to prevent — with every other test
 // still passing. The directive's own reach is checked in `spec-inlining.test.ts`; this file checks that what it names
 // is actually defined.
-const SKILLS_ROOT = new URL('../../content/skills/', import.meta.url).pathname;
+const SKILLS_ROOT = new URL('../skills/', import.meta.url).pathname;
 
 interface ModeContract {
   /** The mode's name, as the directive and the definition both spell it. */

@@ -3,10 +3,11 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { libraryResolver } from '../lib/content-sources.ts';
-import { enumerateCatalogSlugs, listSkillDirectories } from '../lib/library-catalog.ts';
-import { resolveRulebook } from '../lib/rulebook-deploy.ts';
-import { readTargetHarnesses } from '../lib/skill-deploy.ts';
+import { libraryResolver } from '../../src/lib/content-sources.ts';
+import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
+import { enumerateCatalogSlugs, listSkillDirectories } from '../../src/lib/library-catalog.ts';
+import { resolveRulebook } from '../../src/lib/rulebook-deploy.ts';
+import { readTargetHarnesses } from '../../src/lib/skill-deploy.ts';
 
 // Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
 // path rewrites invocation tokens: a harness-neutral destination carries no sigil to render, so `{skill:<slug>}` is
@@ -14,7 +15,7 @@ import { readTargetHarnesses } from '../lib/skill-deploy.ts';
 // trees enjoy, which is how the guidance went on naming `git-commit-conventions` for as long as it did after that
 // skill was renamed. A dead pointer is worse than none: an agent that follows one finds nothing, treats the lookup as
 // satisfied, and falls back to its own defaults.
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SHARED_GUIDANCE_ROOT = path.join(CONTENT_ROOT, 'guidance', 'shared');
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
@@ -103,7 +104,8 @@ async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
   const entries = await readdir(root, { recursive: true, withFileTypes: true });
   return entries
     .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(entry.parentPath, entry.name));
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
 }
 
 /**

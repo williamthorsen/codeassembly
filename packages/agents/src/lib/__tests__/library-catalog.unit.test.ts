@@ -162,6 +162,17 @@ describe(listSupportEntries, () => {
     expect(await listSupportEntries(skillsDir)).toEqual(['_data', 'notes.json']);
   });
 
+  // `_data` establishes that a `_` prefix marks support content rather than an exclusion, so `__tests__` needs one of
+  // its own or it installs into every harness home alongside the reference files skills actually read.
+  it('excludes a test directory, which shares the support-content prefix without shipping', async () => {
+    const skillsDir = path.join(contentDir, 'skills');
+    await writeSkill(contentDir, 'people-report');
+    await mkdir(path.join(skillsDir, '_data'), { recursive: true });
+    await mkdir(path.join(skillsDir, '__tests__'), { recursive: true });
+
+    expect(await listSupportEntries(skillsDir)).toEqual(['_data']);
+  });
+
   it('returns nothing for an absent skills directory', async () => {
     expect(await listSupportEntries(path.join(contentDir, 'skills'))).toEqual([]);
   });

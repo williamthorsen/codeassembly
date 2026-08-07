@@ -5,6 +5,8 @@ import { chmod, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isTestDirectory } from '../src/lib/fs-helpers.ts';
+
 const thisFile = fileURLToPath(import.meta.url);
 const packageRoot = path.resolve(path.dirname(thisFile), '..');
 
@@ -14,12 +16,12 @@ const cliEntry = path.join(packageRoot, 'dist', 'esm', 'cli.js');
 
 /**
  * Reports whether `source` belongs in the built content tree. The build output is what the package publishes, so a
- * `__tests__` directory anywhere under `content/` would otherwise ship to every consumer. `cp` skips a rejected
- * directory's whole subtree, so rejecting the directory is enough.
+ * test directory anywhere under `content/` would otherwise ship to every consumer. `cp` skips a rejected directory's
+ * whole subtree, so rejecting the directory is enough.
  */
 function shouldCopy(source: string): boolean {
   const name = path.basename(source);
-  return !name.startsWith('.') && name !== '__tests__';
+  return !name.startsWith('.') && !isTestDirectory(name);
 }
 
 // 1. Copy content/ to dist/content/

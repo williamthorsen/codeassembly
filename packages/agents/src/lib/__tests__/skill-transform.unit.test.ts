@@ -80,6 +80,19 @@ describe(renderSkillDirectory, () => {
     );
   });
 
+  it('collects nothing from a skill-nested test directory, at any depth', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n',
+      '__tests__/demo.unit.test.ts': 'export {};\n',
+      '__tests__/fixtures/sample.md': '# Sample\n',
+      'reference/__tests__/nested.md': '# Nested\n',
+    });
+
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+
+    expect(entries.map((entry) => entry.relPath)).toEqual(['SKILL.md']);
+  });
+
   it('returns non-.md files as assets pointing at the source path', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n', 'data/table.csv': 'a,b\n1,2\n' });
 

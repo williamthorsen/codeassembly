@@ -4,6 +4,7 @@ description: The vetted, generally applicable set — artifacts any project can 
 members:
   skills:
     - capture-event
+    - capture-feedback
 ---
 
 # Recommended
@@ -12,4 +13,4 @@ The public collection. Membership claims an artifact was examined and found gene
 
 Membership is per-artifact and enumerated in full rather than by dependency root, so the closure check reads a set nobody's edges can quietly extend.
 
-`capture-event` is here because the personal collection reaches it through the body tokens of its rulebooks, and no collection can be closed over an artifact of lesser standing. Its promotion was forced by that edge rather than chosen on its own merits, so it is the one member to re-examine first.
+The two members hold their standing on different grounds. A rulebook of the personal collection reaches `capture-feedback` through a body token, and `capture-feedback` reaches `capture-event` through another; no collection can be closed over an artifact of lesser standing, so the chain pulled both up. `capture-event`'s promotion was forced by that chain rather than chosen on its own merits, so it is the one member to re-examine first. `capture-feedback` holds membership on its own terms: it names no store, declares the registry a capture needs, and routes a record by a rule any registry can answer.

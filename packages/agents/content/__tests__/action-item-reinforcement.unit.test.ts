@@ -27,7 +27,7 @@ const REINFORCED_SKILLS: ReadonlyArray<string> = [
 
 const INCLUDE_DIRECTIVE = '<!-- include: ../_partials/action-items.md / -->';
 
-const SKILLS_ROOT = new URL('../../content/skills/', import.meta.url).pathname;
+const SKILLS_ROOT = new URL('../skills/', import.meta.url).pathname;
 
 interface IncludeSites {
   /** Directives that will expand into the skill's live instructions. */

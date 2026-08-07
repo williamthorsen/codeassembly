@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
+
 // Installable Markdown content is rewritten at install time. Runtime cross-references to other installable files must
 // use the `{harness_home_dir}/...` template (expanded by the install pipeline) or a relative Markdown link (rewritten
 // by `rewriteMarkdownPaths`). Raw `packages/agents/content/...` paths resolve only inside this monorepo and break in
@@ -18,7 +20,7 @@ const ALLOWLIST: ReadonlyArray<string> = [
 
 const FORBIDDEN_PATTERN = 'packages/agents/content/';
 
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 interface Violation {
   readonly file: string;
@@ -46,7 +48,7 @@ describe('installable-content path conventions', () => {
 async function collectMarkdownFiles(dir: string, root: string, out: Array<string>): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
+    if (entry.name.startsWith('.') || isTestDirectory(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       await collectMarkdownFiles(full, root, out);

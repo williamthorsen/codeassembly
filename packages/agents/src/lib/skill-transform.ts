@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { expandIncludes } from './directive-expander.ts';
+import { isTestDirectory } from './fs-helpers.ts';
 import { stripGuidanceHooks } from './guidance-hooks.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
@@ -49,8 +50,8 @@ export type RenderedSupportEntry =
  *
  * `slug` anchors link rewriting: a relative Markdown link resolves against `<slug>/<file>`, matching how the deployed
  * skill sits under the harness skills dir, and the context's anchor maps that result to its deployed path.
- * `_partials/` directories and dotfiles are skipped at every depth — partials are include targets, never deployed
- * artifacts.
+ * `_partials/` directories, test directories, and dotfiles are skipped at every depth — partials are include targets
+ * and tests are the skill's own coverage, neither of them deployed artifacts.
  *
  * `contentRoot` is the include-containment root — every `<!-- include: … -->` target must resolve within it, and it
  * roots the source label in unmapped-tool errors. It is the skill's own content root: the library for a library skill,
@@ -98,7 +99,11 @@ export async function renderSupportEntry(
 
 // region | Helpers
 
-/** Recursively walks `dir`, skipping `_partials/` and dotfiles, accumulating rendered entries keyed by relative path. */
+/**
+ * Recursively walks `dir`, skipping `_partials/`, test directories, and dotfiles, accumulating rendered entries keyed
+ * by relative path. This is the walk every install and sync path runs, so what it collects is what reaches a harness
+ * home; a skill's own tests are not part of what it ships.
+ */
 async function collectEntries(
   dir: string,
   relDir: string,
@@ -108,7 +113,7 @@ async function collectEntries(
   out: Array<RenderedSkillEntry>,
 ): Promise<void> {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.name === '_partials' || entry.name.startsWith('.')) {
+    if (entry.name === '_partials' || isTestDirectory(entry.name) || entry.name.startsWith('.')) {
       continue;
     }
     const srcPath = path.join(dir, entry.name);

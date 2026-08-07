@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { ARTIFACT_TYPES } from './artifact-types.ts';
 import type { ArtifactDependencies } from './dependency-frontmatter.ts';
-import { listVisibleMarkdownFiles, listVisibleSubdirectories, readDirEntries } from './fs-helpers.ts';
+import { isTestDirectory, listVisibleMarkdownFiles, listVisibleSubdirectories, readDirEntries } from './fs-helpers.ts';
 import { isMissingFile } from './type-guards.ts';
 
 /**
@@ -70,8 +70,11 @@ export async function listSkillDirectories(skillsDir: string): Promise<Array<str
 
 /**
  * Lists the entries directly under `skillsDir` that install unconditionally alongside skills, sorted. Support content
- * is everything left once the reserved entries, dotfiles, and skill directories are removed — `skills/_data/` being the
- * case that motivates it, since it carries no `SKILL.md` and so appears in no catalog walk.
+ * is everything left once the reserved entries, test directories, dotfiles, and skill directories are removed —
+ * `skills/_data/` being the case that motivates it, since it carries no `SKILL.md` and so appears in no catalog walk.
+ *
+ * A `_`-prefixed name is support content rather than hidden, which is why the visibility rule the catalog walk applies
+ * is absent here; `__tests__` shares that prefix without sharing that standing, so it is excluded by name.
  *
  * Shared by the installer, which deploys these, and by `validate`, which checks them. The rule decides what ships, so
  * the two must not each carry their own copy of it.
@@ -79,7 +82,7 @@ export async function listSkillDirectories(skillsDir: string): Promise<Array<str
 export async function listSupportEntries(skillsDir: string): Promise<Array<string>> {
   const candidates = (await readDirEntries(skillsDir))
     .map((entry) => entry.name)
-    .filter((name) => !NON_SUPPORT_ENTRIES.has(name) && !name.startsWith('.'))
+    .filter((name) => !NON_SUPPORT_ENTRIES.has(name) && !isTestDirectory(name) && !name.startsWith('.'))
     .toSorted();
 
   const support: Array<string> = [];

@@ -4,13 +4,14 @@ import path from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { collectHeadingSlugs, findUnterminatedFence, normalizeForAnchorScan } from '../lib/anchor-resolution.ts';
-import { expandIncludes } from '../lib/directive-expander.ts';
-import type { RulebookInvocationCatalog } from '../lib/invocation-tokens.ts';
-import { homeAnchor, isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
-import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { resolveSkillName } from '../lib/rulebook-skill.ts';
-import { renderRulebookBody } from '../lib/rulebook-transform.ts';
+import { collectHeadingSlugs, findUnterminatedFence, normalizeForAnchorScan } from '../../src/lib/anchor-resolution.ts';
+import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
+import type { RulebookInvocationCatalog } from '../../src/lib/invocation-tokens.ts';
+import { homeAnchor, isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../../src/lib/path-rewriter.ts';
+import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
+import { resolveSkillName } from '../../src/lib/rulebook-skill.ts';
+import { renderRulebookBody } from '../../src/lib/rulebook-transform.ts';
 
 // A Markdown link in installable content is rewritten at install time by `rewriteMarkdownPaths`, which resolves a
 // relative target against the *host* file's directory — the skill or subagent the link renders into, not the partial
@@ -50,7 +51,7 @@ const RULEBOOK_ROOT = 'guidance/rulebooks';
 
 const HOST_ROOTS: ReadonlyArray<string> = [RULEBOOK_ROOT, 'skills', 'subagents'];
 
-const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
+const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 type Reason = 'ambiguous-anchor' | 'dead-anchor' | 'missing-file' | 'unterminated-fence';
 
@@ -139,7 +140,7 @@ async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
 /** Recursively collects installable host `.md` files, skipping `_partials/` at any depth and dotfiles. */
 async function collectHostFiles(dir: string, out: Array<string>): Promise<void> {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.name === '_partials' || entry.name.startsWith('.')) {
+    if (entry.name === '_partials' || entry.name.startsWith('.') || isTestDirectory(entry.name)) {
       continue;
     }
     const full = path.join(dir, entry.name);

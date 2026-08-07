@@ -3,6 +3,29 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 
 import { isEnoent } from './type-guards.ts';
 
+/**
+ * The directory name holding test code. Fixture data nests inside it rather than sitting in a directory of its own,
+ * so this one name covers both.
+ */
+export const TEST_DIRECTORY_NAME = '__tests__';
+
+/**
+ * True when a directory entry holds test code rather than deliverable content. Test code is never published, never
+ * installed into a harness home, and never read as content by a check that walks a content tree.
+ */
+export function isTestDirectory(name: string): boolean {
+  return name === TEST_DIRECTORY_NAME;
+}
+
+/**
+ * True when `relativePath` passes through a test directory at any depth. A walk over a content tree drops what this
+ * matches: fixture data is authored for one suite to read, and every other check that walks the tree would otherwise
+ * scan it as real content and report a defect against a file deliberately shaped to hold one.
+ */
+export function isUnderTestDirectory(relativePath: string): boolean {
+  return relativePath.split(/[/\\]/).some((segment) => isTestDirectory(segment));
+}
+
 /** Lists visible (`.md`, non-`_`, non-dotfile) regular-file names directly in `dir`; empty when `dir` is absent. */
 export async function listVisibleMarkdownFiles(dir: string): Promise<Array<string>> {
   return (await readDirEntries(dir))

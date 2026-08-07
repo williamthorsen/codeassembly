@@ -3,13 +3,13 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES } from '../lib/artifact-types.ts';
-import { resolveContentDir } from '../lib/content-resolver.ts';
-import { libraryResolver } from '../lib/content-sources.ts';
-import { type ArtifactDependencies, readMembers } from '../lib/dependency-frontmatter.ts';
-import { resolveClosure, type ResolvedClosure } from '../lib/dependency-resolver.ts';
-import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
-import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
+import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES } from '../../src/lib/artifact-types.ts';
+import { resolveContentDir } from '../../src/lib/content-resolver.ts';
+import { libraryResolver } from '../../src/lib/content-sources.ts';
+import { type ArtifactDependencies, readMembers } from '../../src/lib/dependency-frontmatter.ts';
+import { resolveClosure, type ResolvedClosure } from '../../src/lib/dependency-resolver.ts';
+import { listVisibleMarkdownFiles } from '../../src/lib/fs-helpers.ts';
+import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
 
 // Declaring a collection is a claim about its members, so an artifact in none of them is deploying under a claim
 // nobody made. These two checks are what make the claim real rather than nominal: coverage catches the artifact that
