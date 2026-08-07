@@ -5,7 +5,39 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { readFileOrEmpty, writeIfChanged } from '../fs-helpers.ts';
+import { isTestDirectory, isUnderTestDirectory, readFileOrEmpty, writeIfChanged } from '../fs-helpers.ts';
+
+describe(isTestDirectory, () => {
+  it('matches the test directory name', () => {
+    expect(isTestDirectory('__tests__')).toBe(true);
+  });
+
+  it('does not match a support-content directory sharing the underscore prefix', () => {
+    expect(isTestDirectory('_data')).toBe(false);
+  });
+});
+
+describe(isUnderTestDirectory, () => {
+  it('matches a path passing through a test directory at any depth', () => {
+    expect(isUnderTestDirectory('__tests__/fixtures/collections/recommended.md')).toBe(true);
+  });
+
+  it('matches a test directory nested below the walk root', () => {
+    expect(isUnderTestDirectory('skills/capture-event/__tests__/helper.md')).toBe(true);
+  });
+
+  it('matches a Windows-separated path', () => {
+    expect(isUnderTestDirectory('skills\\capture-event\\__tests__\\helper.md')).toBe(true);
+  });
+
+  it('does not match a path whose segments merely resemble the test directory', () => {
+    expect(isUnderTestDirectory('skills/__tests__helper/SKILL.md')).toBe(false);
+  });
+
+  it('does not match deliverable content', () => {
+    expect(isUnderTestDirectory('skills/capture-event/SKILL.md')).toBe(false);
+  });
+});
 
 describe(readFileOrEmpty, () => {
   let dir: string;
