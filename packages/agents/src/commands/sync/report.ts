@@ -46,6 +46,12 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
     ...describePlannedWrites(plan),
     ...describePlannedRetractions(plan),
   );
+  for (const promptsPath of plan.promptsYmlPaths) {
+    lines.push({
+      level: 'info',
+      text: `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
+    });
+  }
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
@@ -243,12 +249,6 @@ function describePlannedWrites(plan: SyncPlan): ReadonlyArray<ReportLine> {
         text: `  deploy declared subagent ${path.join(target.subagentsDir, `${subagent.slug}.md`)}`,
       });
     }
-  }
-  for (const promptsPath of plan.promptsYmlPaths) {
-    lines.push({
-      level: 'info',
-      text: `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
-    });
   }
   return lines;
 }
