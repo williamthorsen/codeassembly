@@ -160,7 +160,7 @@ If any findings were classified as **general** (cross-repo) in Phase 2:
 
 Before presenting the draft, verify:
 
-- [ ] The file is under 200 lines, Claude Code's per-memory-file target; anything that pushed it over went to the package level behind a pointer
+- [ ] The file is at most 200 lines, matching the ambient budget the published guidance checklist reports against; anything that pushed it over went to the package level behind a pointer
 - [ ] No line duplicates content from `~/.agents/AGENTS.md`
 - [ ] No section merely restates what's obvious from the code
 - [ ] Commands listed are ones an agent would actually need (not exhaustive npm script listings)

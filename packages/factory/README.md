@@ -18,5 +18,7 @@ pnpm run dev:client
 
 ## Reference
 
+From the repository root:
+
 - `.agents/skills/office-game-feel/SKILL.md`, `.agents/skills/office-visual-design/SKILL.md`: animation and visual-design intent for the office visualization, including the adapter pipeline it consumes.
 - `docs/pixel-agents-analysis.md`: analysis of [pablodelucca/pixel-agents](https://github.com/pablodelucca/pixel-agents) on sprite systems and streaming patterns.

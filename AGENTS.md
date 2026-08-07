@@ -17,7 +17,7 @@ A pnpm monorepo centered on agentic code-orchestration flows. Each package's own
 - **mcp** (`packages/mcp/`): MCP server exposing run management over run-core. Its five tools carry their own descriptions in `packages/mcp/src/server.ts`.
 - **run-core** (`packages/run-core/`): canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
 
-The dependency chain: mcp and factory depend on run-core, fleet on lifecycle, foreman on fleet, and agents on kb.
+The dependency chain: mcp and factory depend on run-core, fleet on lifecycle, foreman on fleet, and agents on both kb and lifecycle.
 
 ## Content authoring
 
