@@ -5,7 +5,8 @@ import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } fr
 import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
-import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
+import { emitReport } from '../lib/emit-report.ts';
+import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.js';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
@@ -147,8 +148,9 @@ export async function installCommand(
 
     // Reconcile against the previous manifest: remove files whose source was deleted. Runs before the dry-run
     // gate so `--dry-run` previews removals. User-modified orphans are kept (unless `--force`) and stay tracked.
-    const { retained } = await pruneOrphanedEntries(existingEntries, entries, paths.harnessHome, options);
-    entries.push(...retained);
+    const pruned = await pruneOrphanedEntries(existingEntries, entries, paths.harnessHome, options);
+    entries.push(...pruned.retained);
+    emitReport(describePruneResult(pruned, options));
 
     if (options.dryRun) {
       console.info(`  [dry-run] Would install ${entries.length} items:`);
@@ -475,8 +477,9 @@ async function installSharedGuidance(
 
   // Reconcile shared guidance against the previous manifest before reporting or persisting, so deleted-source
   // files are removed from `~/.agents/` too. User-modified orphans are kept (unless `--force`) and stay tracked.
-  const { retained } = await pruneOrphanedEntries(existingEntries, entries, sharedHome, options);
-  entries.push(...retained);
+  const pruned = await pruneOrphanedEntries(existingEntries, entries, sharedHome, options);
+  entries.push(...pruned.retained);
+  emitReport(describePruneResult(pruned, options));
 
   if (options.dryRun) {
     console.info(`  [dry-run] Would install ${entries.length} shared guidance items`);

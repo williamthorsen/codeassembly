@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { classifyOwnedEntry, pruneOrphanedEntries } from '../entry-remover.ts';
+import { classifyOwnedEntry, describePruneResult, pruneOrphanedEntries, type PruneResult } from '../entry-remover.ts';
 import { computeContentHash } from '../manifest.ts';
 import type { ManifestEntry } from '../types.ts';
 
@@ -38,7 +38,7 @@ describe(pruneOrphanedEntries, () => {
     const result = await pruneOrphanedEntries([entry], [], home, options());
 
     expect(existsSync(path.join(home, entry.relativePath))).toBe(false);
-    expect(result.removedPaths).toEqual([entry.relativePath]);
+    expect(result.orphans).toEqual([{ entry, verdict: 'remove' }]);
     expect(result.retained).toEqual([]);
   });
 
@@ -48,7 +48,7 @@ describe(pruneOrphanedEntries, () => {
     const result = await pruneOrphanedEntries([entry], [entry], home, options());
 
     expect(existsSync(path.join(home, entry.relativePath))).toBe(true);
-    expect(result.removedPaths).toEqual([]);
+    expect(result.orphans).toEqual([]);
   });
 
   it('retains a user-modified orphan when force is unset', async () => {
@@ -59,7 +59,7 @@ describe(pruneOrphanedEntries, () => {
 
     expect(existsSync(path.join(home, entry.relativePath))).toBe(true);
     expect(result.retained).toEqual([entry]);
-    expect(result.removedPaths).toEqual([]);
+    expect(result.orphans).toEqual([{ entry, verdict: 'retain' }]);
   });
 
   it('removes a user-modified orphan when force is set', async () => {
@@ -69,7 +69,7 @@ describe(pruneOrphanedEntries, () => {
     const result = await pruneOrphanedEntries([entry], [], home, options({ force: true }));
 
     expect(existsSync(path.join(home, entry.relativePath))).toBe(false);
-    expect(result.removedPaths).toEqual([entry.relativePath]);
+    expect(result.orphans).toEqual([{ entry, verdict: 'remove' }]);
     expect(result.retained).toEqual([]);
   });
 
@@ -82,7 +82,7 @@ describe(pruneOrphanedEntries, () => {
 
     const result = await pruneOrphanedEntries([entry], [], home, options());
 
-    expect(result.removedPaths).toEqual([entry.relativePath]);
+    expect(result.orphans).toEqual([{ entry, verdict: 'absent' }]);
     expect(result.retained).toEqual([]);
   });
 
@@ -98,7 +98,7 @@ describe(pruneOrphanedEntries, () => {
     const result = await pruneOrphanedEntries([entry], [], home, options());
 
     expect(() => lstatSync(linkPath)).toThrow();
-    expect(result.removedPaths).toEqual([entry.relativePath]);
+    expect(result.orphans).toEqual([{ entry, verdict: 'remove' }]);
   });
 
   it('records a removal in dry-run without deleting the file', async () => {
@@ -107,7 +107,46 @@ describe(pruneOrphanedEntries, () => {
     const result = await pruneOrphanedEntries([entry], [], home, options({ dryRun: true }));
 
     expect(existsSync(path.join(home, entry.relativePath))).toBe(true);
-    expect(result.removedPaths).toEqual([entry.relativePath]);
+    expect(result.orphans).toEqual([{ entry, verdict: 'remove' }]);
+  });
+});
+
+describe(describePruneResult, () => {
+  const entry = (relativePath: string): ManifestEntry => ({ relativePath, contentHash: 'sha256:x', linked: false });
+
+  it('warns about a kept orphan and reports a removed one, in the order considered', () => {
+    const result: PruneResult = {
+      orphans: [
+        { entry: entry('scripts/edited.sh'), verdict: 'retain' },
+        { entry: entry('skills/gone/SKILL.md'), verdict: 'remove' },
+      ],
+      retained: [entry('scripts/edited.sh')],
+    };
+
+    expect(describePruneResult(result, { dryRun: false })).toEqual([
+      { level: 'warn', text: '  ⚠️ Keeping modified stale item: scripts/edited.sh' },
+      { level: 'info', text: '  🗑️ Removed stale item: skills/gone/SKILL.md' },
+    ]);
+  });
+
+  it('phrases a removal as pending under dry-run', () => {
+    const result: PruneResult = {
+      orphans: [{ entry: entry('skills/gone/SKILL.md'), verdict: 'remove' }],
+      retained: [],
+    };
+
+    expect(describePruneResult(result, { dryRun: true })).toEqual([
+      { level: 'info', text: '  [dry-run] Would remove stale item: skills/gone/SKILL.md' },
+    ]);
+  });
+
+  it('says nothing about an orphan already gone from disk', () => {
+    const result: PruneResult = {
+      orphans: [{ entry: entry('skills/never/SKILL.md'), verdict: 'absent' }],
+      retained: [],
+    };
+
+    expect(describePruneResult(result, { dryRun: false })).toEqual([]);
   });
 });
 

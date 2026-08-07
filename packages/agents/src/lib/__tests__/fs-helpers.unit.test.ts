@@ -27,7 +27,7 @@ describe(isUnderTestDirectory, () => {
   });
 
   it('matches a Windows-separated path', () => {
-    expect(isUnderTestDirectory('skills\\capture-event\\__tests__\\helper.md')).toBe(true);
+    expect(isUnderTestDirectory(String.raw`skills\capture-event\__tests__\helper.md`)).toBe(true);
   });
 
   it('does not match a path whose segments merely resemble the test directory', () => {
