@@ -48,7 +48,7 @@ The declared taxonomy is the primary placement signal; the folders the survey fo
 
 Treat the taxonomy as a strong prior, not a hard constraint. When a note's topic sits in the long tail, let the tags carry it and place the note in the nearest domain that genuinely fits — do not force it into an ill-fitting folder to avoid proposing a new one, and do not mint a domain per note.
 
-A new domain is warranted by intent, not by note count: propose one when the user means to keep that shelf, however few notes will sit on it. In auto mode, do not mint a top-level domain — a new top-level shelf reshapes the base and deserves confirmation.
+A new domain is warranted by intent, not by note count: propose one when the user means to keep that shelf, however few notes will sit on it. Name it to match the form of the domains the survey reported, since the name is durable structure that later captures inherit. In auto mode, do not mint a top-level domain — a new top-level shelf reshapes the base and deserves confirmation.
 
 Folders serve human browsing and tags serve machine retrieval, so a folder name that restates a tag is expected rather than redundant. Do not contort either list to keep them orthogonal.
 
@@ -136,7 +136,7 @@ On `ok: true`, report the written path and the canonicalization audit trail. Whe
 Then report the placement:
 
 - `placement.domain` names the domain the note sits in. A `null` value means the note landed at the assertions root, under no domain and outside anything the taxonomy rules can see — say so, and offer to move it under a domain.
-- `placement.added` lists the domains this capture declared. Name them, and say which block they landed in: everything but a confirmed capture carrying `--domain-description` is provisional and awaits review.
+- `placement.added` lists the domains this capture declared, each carrying the block it landed in. Name them, and flag every one with `provisional: true` as awaiting review.
 - `placement.warning` means the note was written but its folder could not be declared. Surface the message; the folder will surface as `taxonomy.undeclared` on the next `kb check`.
 - An absent `placement` means the store has no `.kb/taxonomy.yaml` and so has not adopted a taxonomy. Nothing was declared, and nothing is wrong.
 

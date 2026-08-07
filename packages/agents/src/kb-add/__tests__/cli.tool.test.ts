@@ -469,7 +469,10 @@ describe(runAdd, () => {
     if (result.ok && result.mode === 'write') {
       expect(result.placement).toEqual({
         domain: 'languages/typescript',
-        added: ['languages', 'languages/typescript'],
+        added: [
+          { path: 'languages', provisional: true },
+          { path: 'languages/typescript', provisional: false },
+        ],
       });
     }
     const taxonomy = await readFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'utf8');

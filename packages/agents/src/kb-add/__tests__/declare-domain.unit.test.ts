@@ -21,7 +21,13 @@ describe(declareDomain, () => {
       auto: false,
     });
 
-    expect(placement).toEqual({ domain: 'languages/typescript', added: ['languages', 'languages/typescript'] });
+    expect(placement).toEqual({
+      domain: 'languages/typescript',
+      added: [
+        { path: 'languages', provisional: true },
+        { path: 'languages/typescript', provisional: false },
+      ],
+    });
     expect(await readTaxonomy(kbPath)).toBe(
       'domains:\n  engineering: Practice\n  languages/typescript: The TypeScript language\nprovisional:\n  languages:\n',
     );
@@ -51,8 +57,9 @@ describe(declareDomain, () => {
     const kbPath = await makeStore({ '.kb/taxonomy.yaml': 'domains:\n' });
     const notePath = await writeNoteAt(kbPath, 'languages/Types.md');
 
-    await declareDomain({ kbPath, notePath, description: 'Programming languages', auto: true });
+    const placement = await declareDomain({ kbPath, notePath, description: 'Programming languages', auto: true });
 
+    expect(placement?.added).toEqual([{ path: 'languages', provisional: true }]);
     expect(await readTaxonomy(kbPath)).toContain('provisional:\n  languages: Programming languages\n');
   });
 
@@ -72,7 +79,7 @@ describe(declareDomain, () => {
 
     const placement = await declareDomain({ kbPath, notePath, description: 'Programming languages', auto: false });
 
-    expect(placement).toEqual({ domain: 'languages', added: ['languages'] });
+    expect(placement).toEqual({ domain: 'languages', added: [{ path: 'languages', provisional: false }] });
     expect(await readTaxonomy(kbPath)).toBe('domains:\n  languages: Programming languages\n');
   });
 

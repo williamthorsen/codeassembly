@@ -11,6 +11,14 @@ import {
   writeTaxonomy,
 } from '@williamthorsen/kb/taxonomy';
 
+/** A domain a write added to the taxonomy. */
+export interface AddedDomain {
+  /** The domain's assertions-root-relative slash-path. */
+  path: string;
+  /** Whether it landed under `provisional:` rather than `domains:`, and so awaits review. */
+  provisional: boolean;
+}
+
 /**
  * Records a written note's folder in `.kb/taxonomy.yaml`, declaring it and every undeclared ancestor when no domain
  * declares it. Returns where the note sits and what the declaration added, or `undefined` for a store that has not
@@ -69,7 +77,13 @@ export async function declareDomain(input: {
       auto: input.auto,
     });
     const { added } = await writeTaxonomy({ kbRoot, declarations });
-    return { domain, added };
+    const addedPaths = new Set(added);
+    return {
+      domain,
+      added: declarations
+        .filter((declaration) => addedPaths.has(declaration.path))
+        .map(({ path, provisional }) => ({ path, provisional })),
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const subject = domain === null ? 'the note placement' : `domain "${domain}"`;
@@ -81,8 +95,8 @@ export async function declareDomain(input: {
 export interface DomainPlacement {
   /** The domain the note sits in, or `null` when it sits at the assertions root and so under none. */
   domain: string | null;
-  /** Domain paths this write added to the taxonomy, in the order the writer appended them. */
-  added: string[];
+  /** The domains this write added to the taxonomy, in root-to-leaf order. */
+  added: AddedDomain[];
   /** What went undeclared, when the taxonomy could not be read or appended to. */
   warning?: string;
 }
@@ -90,8 +104,9 @@ export interface DomainPlacement {
 // region | Helpers
 
 /**
- * Builds the batch declaring `domain` and every undeclared ancestor. The leaf lands in `domains:` only when a
- * confirmed capture supplied a description; every other append is provisional, so it can be reviewed later.
+ * Builds the batch declaring `domain` and every undeclared ancestor, in root-to-leaf order. The leaf lands in
+ * `domains:` only when a confirmed capture supplied a description; every other append is provisional, so it can be
+ * reviewed later. Ancestors are always provisional and always bare: nothing names what a grouping folder is for.
  */
 function buildDeclarations(input: {
   domain: string;
@@ -101,23 +116,23 @@ function buildDeclarations(input: {
 }): TaxonomyDeclaration[] {
   const { domain, taxonomy, description, auto } = input;
 
-  const declarations: TaxonomyDeclaration[] = [
+  const ancestors: TaxonomyDeclaration[] = [];
+  let ancestor = resolveParent(domain);
+  while (ancestor !== undefined) {
+    if (!taxonomy.has(ancestor)) {
+      ancestors.push({ path: ancestor, provisional: true });
+    }
+    ancestor = resolveParent(ancestor);
+  }
+
+  return [
+    ...ancestors.toReversed(),
     {
       path: domain,
       ...(description !== null && { description }),
       provisional: auto || description === null,
     },
   ];
-
-  let ancestor = resolveParent(domain);
-  while (ancestor !== undefined) {
-    if (!taxonomy.has(ancestor)) {
-      declarations.push({ path: ancestor, provisional: true });
-    }
-    ancestor = resolveParent(ancestor);
-  }
-
-  return declarations;
 }
 
 // endregion | Helpers
