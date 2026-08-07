@@ -8,7 +8,7 @@ user-invocable: true
 
 Record feedback on the agent's behavior as evidence for a future guidance refinement, applying the immediate fix when there is something concrete to change. The user describes a correction or a desired behavior, the agent applies it when applicable, and the agent appends a generalized record that a later recall-driven pass mines to refine guidance.
 
-The actual guidance refinement is **deferred** — this skill captures the candidate, it does not edit the skill, subagent, rulebook, general guidance, or helper. Refinement happens later, in bulk, via `kb-retrieve-events`, so a single data point never over-fits a rule.
+The actual guidance refinement is **deferred** — this skill captures the candidate, it does not edit the skill, subagent, rulebook, general guidance, or helper. Refinement happens later, in bulk, by recalling the accumulated `feedback` records together, so a single data point never over-fits a rule.
 
 **Announce at start:** "Using capture-feedback to apply this and record it for guidance refinement."
 
@@ -20,6 +20,11 @@ Invoke `{skill:capture-feedback}` whenever the user gives feedback that should c
 - **Specifying a new desired behavior** — the user wants a behavior that no current guidance covers.
 
 Both are captured the same way; the difference is recorded in the tags.
+
+## Runtime dependencies
+
+- **`node` ≥ 24** — the capture runs through `{skill:capture-event}`'s bundled helper, which inherits the Node version floor of `@williamthorsen/kb`.
+- **A `kb.yaml` registry declaring the destination store** — `--store` resolves through `.agents/kb.yaml` in the project or `~/.agents/kb.yaml`, and `@default` resolves only where that registry configures a `default_kb`. Where no registry declares a usable destination, apply the immediate fix, then report that the record went uncaptured and name what a registry would need. Never retry against a guessed store name.
 
 ## Process
 
@@ -45,7 +50,7 @@ If the feedback is purely behavioral — a standing rule with nothing to fix rig
 
 Invoke the `{skill:capture-event}` skill to append the record, composing its arguments and body as follows:
 
-- `--store codeassembly` — the project's agent-guidance KB. Pass a different `--store` only when the user directs the record elsewhere.
+- `--store <name|@default>` — the KB housing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: a lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent carries into every project goes to `@default`. Where the two readings are equally available, prefer `@default`, which stays recallable from every project.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>` — when the refinement target is a skill.
 - `--impact <level>` — optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.
@@ -57,10 +62,10 @@ Invoke the `{skill:capture-event}` skill to append the record, composing its arg
 
 ### 4. Report
 
-State what was fixed — or that the feedback was behavioral-only — and the captured record's id and path.
+State what was fixed — or that the feedback was behavioral-only — and the captured record's id and path. Where no registry declared a destination, say so in place of the id and path.
 
 If the user then says the record is inaccurate, correct it in place with `capture-event --amend <id>` rather than capturing a second record — amend rewrites the record in place. Capture a fresh record only when the correction is a genuinely distinct lesson.
 
 ## Completion
 
-The immediate fix is applied (when applicable) and a `feedback`-tagged record is written, ready for a later refinement pass to mine via `kb-retrieve-events`.
+The immediate fix is applied (when applicable) and a `feedback`-tagged record is written, ready for a later refinement pass to recall by that tag.
