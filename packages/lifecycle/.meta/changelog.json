@@ -1,5 +1,23 @@
 [
   {
+    "version": "0.3.0",
+    "date": "2026-08-07",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Rename the harness id to rovo and qualify the frontmatter key (#1199)",
+            "body": "Renames the internal ID for the Rovo Dev harness from `rovodev` to `rovo`. `--harness rovo` replaces `--harness rovodev` in every command.\n\nSeparately, renames the `harnesses` frontmatter key (which narrows a skill to particular harnesses) to `supported-harnesses:` to avoid confusion.",
+            "breaking": true,
+            "hash": "cb47091488d0c2e308aeffa12b58050004bc5bf1"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.1",
     "date": "2026-08-05",
     "sections": [

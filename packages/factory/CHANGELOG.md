@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.4 — 2026-08-07
+
+### ♻️ Refactoring
+
+- Clear the visualizations lint violations and retire six rule deferrals (#1213)
+
+  Fixes a subset of deferred lint violations in the factory workspace package and restores the severity of the associated rules to "error" when a strict-lint check is run.
+
+- Clear factory's remaining lint violations and retire both deferral lists (#1216)
+
+  Fixes all lint violations in the factory project and restores the severity of all rules to "error" when a strict-lint check is run in that project.
+
 ## 0.2.3 — 2026-08-05
 
 ### 🧪 Tests

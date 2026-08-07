@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 — 2026-08-07
+
+### 🎉 Features
+
+- Add the .kb/taxonomy.yaml format with drift reporting and back-fill (#1210)
+
+  Introduces `.kb/taxonomy.yaml`, in which a knowledge base declares the structure of its assertions. `kb check` now reports three kinds of drift between that declaration and the folders on disk: a folder that holds notes nothing declares, a declared area that holds no notes, and a declared area whose parent is undeclared. A knowledge base that already holds notes can adopt a declaration in one pass with the new `kb taxonomy init`, and `--merge` adds only what an existing declaration omits.
+
+- Guide kb-add note placement with the store's declared taxonomy (#1223)
+
+  Improves classification of captured knowledge-base notes by aligning with the domains declared by the KB's taxonomy rather than looking to the directory structure. If a note is filed in a folder not covered by a domain, that folder is now added to the base's taxonomy. A domain added without confirmation is recorded as awaiting review.
+
 ## 0.3.1 — 2026-08-05
 
 ### 🧪 Tests

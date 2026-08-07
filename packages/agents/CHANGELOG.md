@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.0 — 2026-08-07
+
+### 🎉 Features
+
+- Gate the boolean prefix on a test and add the tail rule it rests on (#1195)
+
+  Refines guidance in the `naming-conventions` guide on how to name variables, with the aim of improving code clarity, readability, and consistency. Booleans are the main focus.
+
+- 🚨 **Breaking:** Rename the harness id to rovo and qualify the frontmatter key (#1199)
+
+  Renames the internal ID for the Rovo Dev harness from `rovodev` to `rovo`. `--harness rovo` replaces `--harness rovodev` in every command.
+
+  Separately, renames the `harnesses` frontmatter key (which narrows a skill to particular harnesses) to `supported-harnesses:` to avoid confusion.
+
+- Report the retired `harnesses:` frontmatter key from `validate` (#1204)
+
+  `codeassembly validate` now reports every skill whose frontmatter still declares the retired `harnesses:` key instead of `supported-harnesses:`, and exits non-zero.
+
+  This is a safeguard for the recent retirement of the old key. Use of the old key in a skill's declaration would have silently deployed to every harness.
+
+- Make a vetted subset of the library declarable (#1207)
+
+  Vetted guidance artifacts (skills, subagents, and rulebooks) are now organized into two nascent collections: `recommended` (generally applicable) and `williamthorsen` (the maintainer's personal rulebooks). The `triage` collection contains all unvetted guidance. The `all` set continues to deploy all guidance.
+
+- Add the .kb/taxonomy.yaml format with drift reporting and back-fill (#1210)
+
+  Introduces `.kb/taxonomy.yaml`, in which a knowledge base declares the structure of its assertions. `kb check` now reports three kinds of drift between that declaration and the folders on disk: a folder that holds notes nothing declares, a declared area that holds no notes, and a declared area whose parent is undeclared. A knowledge base that already holds notes can adopt a declaration in one pass with the new `kb taxonomy init`, and `--merge` adds only what an existing declaration omits.
+
+- Allow an artifact to belong to more than one collection (#1219)
+
+  A library artifact can now belong to more than one collection: The vetted collections may overlap, and a collection outside the disposition scheme is now a plain bundle whose membership makes no claim about its members. Exclusivity remains only for the two dispositions that assert an absence: A standalone artifact belongs to no collection, and a triage artifact holds no vetted membership.
+
+- Declare which harnesses sync targets (#1221)
+
+  Guidance artifacts declared by a project (skills, subagents, rulebooks, and their dependencies) are now automatically deployed into every installed harness, and no longer depend on detection of a previous deployment when identifying which harnesses to target. Target harnesses can be declared for the user, for the project, or for a single copy of it, with command-line options available as overrides. The deployment report names the harnesses it targeted and how they were decided.
+
+- Guide kb-add note placement with the store's declared taxonomy (#1223)
+
+  Improves classification of captured knowledge-base notes by aligning with the domains declared by the KB's taxonomy rather than looking to the directory structure. If a note is filed in a folder not covered by a domain, that folder is now added to the base's taxonomy. A domain added without confirmation is recorded as awaiting review.
+
+### 🪦 Removed
+
+- 🚨 **Breaking:** Retire the bundled Bitbucket inline-comment script (#1198)
+
+  Removes the `bb-pr-inline-comment` skill. Review guidance now directs agents to post inline pull-request comments through a Bitbucket MCP server or the Bitbucket REST API instead. Guidance for detecting the workspace and repository from a Bitbucket remote now covers the URL form that a Bitbucket clone sets.
+
+- 🚨 **Breaking:** Dissolve `common-mistakes` into its consumers' guidance (#1217)
+
+  Retires the `common-mistakes` skill; declarations that name it must drop the entry. Declaring a collection no longer pulls in the maintainer's personal rulebooks as a side effect. `anti-patterns` takes over rules the retired skill carried: agents are now instructed not to edit installer-generated files in place, and `any` and type assertions count as suppressions. `aspect-test-reviewer` and `orchestrated-coder` are now instructed on `testing-conventions` and `typescript-testing-conventions`, and `orchestrated-coder` also on `development-workflows`.
+
+### 🐛 Bug fixes
+
+- Bar acceptance-criteria revision prompts to genuine conflicts (#1212)
+
+  Revises the code-review guidance to limit the circumstances under which the agent should offer to revise the acceptance criteria (AC). In particular, an implementation that goes beyond the AC or achieves them via a different route is not cause for revision. Revisions are offered only when the implementation materially deviates from or deliberately drops AC; where the review has already raised a finding on that behavior, the guidance is to leave the AC as written rather than restate them around the code. Work that is merely unbuilt, and work beyond what the AC asked, stay in the review's compliance report rather than prompting a ticket edit.
+
 ## 0.5.0 — 2026-08-05
 
 ### 🎉 Features

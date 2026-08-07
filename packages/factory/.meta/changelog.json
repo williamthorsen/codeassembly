@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.2.4",
+    "date": "2026-08-07",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Clear the visualizations lint violations and retire six rule deferrals (#1213)",
+            "body": "Fixes a subset of deferred lint violations in the factory workspace package and restores the severity of the associated rules to \"error\" when a strict-lint check is run.",
+            "hash": "a29faba73fab90e08d88b015709c992024b18ae6"
+          },
+          {
+            "description": "Clear factory's remaining lint violations and retire both deferral lists (#1216)",
+            "body": "Fixes all lint violations in the factory project and restores the severity of all rules to \"error\" when a strict-lint check is run in that project.",
+            "hash": "eab5019446f2c845d271ce32ac9578859a9bd870"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.3",
     "date": "2026-08-05",
     "sections": [

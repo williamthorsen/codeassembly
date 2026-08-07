@@ -1,6 +1,6 @@
 {
   "name": "codeassembly",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "CLI that installs reusable AI agent guidance (rulebooks, skills, and subagents) into coding-harness directories",
   "keywords": [
     "agents",

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 — 2026-08-07
+
+### 🎉 Features
+
+- 🚨 **Breaking:** Rename the harness id to rovo and qualify the frontmatter key (#1199)
+
+  Renames the internal ID for the Rovo Dev harness from `rovodev` to `rovo`. `--harness rovo` replaces `--harness rovodev` in every command.
+
+  Separately, renames the `harnesses` frontmatter key (which narrows a skill to particular harnesses) to `supported-harnesses:` to avoid confusion.
+
 ## 0.2.1 — 2026-08-05
 
 ### 🧪 Tests

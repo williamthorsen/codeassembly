@@ -1,5 +1,33 @@
 [
   {
+    "version": "0.2.4",
+    "date": "2026-08-07",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Retire fleet's lint deferrals (#1211)",
+            "body": "Fixes deferred lint violations in the `fleet` package and restores the severity of the associated rules to \"error\" when a strict-lint check is run.",
+            "hash": "e635a22d41ceab47311b926500668f69ef53b26b"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Retire mcp's lint deferrals and prune the dead root entries (#1205)",
+            "body": "Fixes deferred lint violations in the MCP package and restores the severity of the associated rules to \"error\" when a strict-lint check is run.",
+            "hash": "192e201951c839169ccb3ff835c3e00b3c1c9905"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.3",
     "date": "2026-08-05",
     "sections": [
