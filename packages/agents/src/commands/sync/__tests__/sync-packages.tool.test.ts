@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand } from '../sync.ts';
+import { renderReportText } from '../test-utils/render-report-text.ts';
 
 // Exercises the `packages:` declaration: a package's content dir joins the source search order and its catalog seeds
 // the closure, so naming the package is the whole declaration. Fixture packages live under the temp project's own
@@ -177,15 +178,14 @@ describe('sync with a declared package', () => {
   });
 
   it('warns when a package source shadows a same-slug library artifact', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await writeRulebook(contentDir, 'shadowed', 'delivery: ambient', 'Library body.');
     await writeRulebook(packageContent(), 'shadowed', 'delivery: ambient', 'Package body.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('Package body.');
-    expect(warn.mock.calls.flat().join('\n')).toMatch(/shadow.*shadowed/s);
+    expect(renderReportText(outcome, { level: 'warn' })).toMatch(/shadow.*shadowed/s);
   });
 
   it('keeps a hand-declared source resolving alongside a declared package', async () => {
@@ -257,7 +257,6 @@ describe('sync with a declared package', () => {
   });
 
   it('stops advising a package the project declined with drop', async () => {
-    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await writeFile(
       path.join(projectRoot, 'package.json'),
@@ -271,13 +270,12 @@ describe('sync with a declared package', () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
-    expect(info.mock.calls.flat().join('\n')).not.toContain(PACKAGE_NAME);
+    expect(renderReportText(outcome)).not.toContain(PACKAGE_NAME);
   });
 
   it('advises adopting an installed dependency that ships guidance the project has not declared', async () => {
-    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     await writeFile(
       path.join(projectRoot, 'package.json'),
       JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
@@ -285,15 +283,14 @@ describe('sync with a declared package', () => {
     );
     await declare('rulebooks:\n  use: []\n');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
-    const advice = info.mock.calls.flat().join('\n');
+    const advice = renderReportText(outcome);
     expect(advice).toContain(PACKAGE_NAME);
     expect(advice).toMatch(/packages:\n {2}use:/);
   });
 
   it('stops advising once the dependency is declared', async () => {
-    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     await writeFile(
       path.join(projectRoot, 'package.json'),
       JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
@@ -302,9 +299,9 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
-    expect(info.mock.calls.flat().join('\n')).not.toContain('has not declared');
+    expect(renderReportText(outcome)).not.toContain('has not declared');
   });
 
   it('fails the run when a declared package is not installed, writing nothing', async () => {

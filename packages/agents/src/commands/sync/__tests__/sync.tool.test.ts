@@ -6,12 +6,14 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
+import { renderReportLines } from '../test-utils/render-report-lines.ts';
+import { renderReportText } from '../test-utils/render-report-text.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -370,14 +372,10 @@ describe(syncCommand, () => {
     await writeFile(projectMdPath(), projectMd, 'utf8');
     await writeFile(path.join(projectRoot, '.agents', 'rulebooks', 'alpha.md'), '# Alpha\n', 'utf8');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'info' },
+    );
 
     expect(output).toContain(`retire the rulebook blocks in ${projectMdPath()}`);
     expect(output).toContain('retire the neutral rulebook tree');
@@ -391,14 +389,9 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    let warnings: ReadonlyArray<string>;
-    try {
-      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
-      warnings = warnSpy.mock.calls.map((call) => String(call[0]));
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const warnings = renderReportLines(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+      level: 'warn',
+    });
 
     const notIgnored = warnings.filter((line) => line.includes('is not git-ignored'));
     expect(notIgnored).toHaveLength(1);
@@ -412,26 +405,20 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+      level: 'warn',
+    });
+    expect(output).not.toContain('is not git-ignored');
   });
 
   it('stays silent when the project is not a repository and the check cannot answer', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+      level: 'warn',
+    });
+    expect(output).not.toContain('is not git-ignored');
   });
 
   it('does not check the ignore status of a host it is not writing', async () => {
@@ -439,13 +426,10 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+      level: 'warn',
+    });
+    expect(output).not.toContain('is not git-ignored');
   });
 
   it('throws when a declared rulebook has no library file', async () => {
@@ -633,15 +617,10 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir),
+      { level: 'info' },
+    );
 
     expect(output).toContain('Targeting claude, rovo (detected in ~).');
   });
@@ -651,15 +630,10 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
     await installBothHarnesses();
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir),
+      { level: 'info' },
+    );
 
     expect(output).toContain('Targeting claude (declared).');
   });
@@ -669,15 +643,10 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  drop:\n    - claude\n    - rovo\n');
     await installBothHarnesses();
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir),
+      { level: 'info' },
+    );
 
     expect(output).toContain('Targeting no harnesses (declared).');
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
@@ -687,15 +656,10 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'info' },
+    );
 
     expect(output).toContain('Targeting claude, rovo (detected in ~).');
   });
@@ -728,14 +692,10 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'info' },
+    );
 
     expect(output).toContain(`create ${localHostPath()}, carrying the ambient region`);
   });
@@ -745,14 +705,10 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'info' },
+    );
 
     expect(output).toContain(`append the ambient region to ${localHostPath()}`);
     expect(await readFile(localHostPath(), 'utf8')).toBe('# Personal notes\n');
@@ -1160,14 +1116,10 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain(
         `deliver 1 source support file(s) to ${path.join(projectRoot, '.claude', 'skills', '_sources', 'org')}`,
@@ -1188,14 +1140,10 @@ describe(syncCommand, () => {
         'utf8',
       );
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (no longer declared)`);
       expect(output).not.toContain(`retract source support ${sourcesRoot} (`);
@@ -1208,14 +1156,10 @@ describe(syncCommand, () => {
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await rm(path.join(sourceDir, 'skills', '_data'), { recursive: true });
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source ships none)`);
       await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
@@ -1229,14 +1173,10 @@ describe(syncCommand, () => {
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), 'rulebooks:\n  use: []\n', 'utf8');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain(`retract source support ${sourcesRoot} (no longer declared)`);
       expect(existsSync(path.join(sourcesRoot, 'org', '_data', 'house-style.md'))).toBe(true);
@@ -1293,14 +1233,10 @@ describe(syncCommand, () => {
       await writeLibraryRulebook('lib-only', 'delivery: ambient', 'Lib only.');
       await declareWithSource('rulebooks:\n  use:\n    - shadowed\n    - lib-only\n');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain('[dry-run] sync would resolve:');
       expect(output).toMatch(/shadowed\s+← source "org" \(shadows library\)/);
@@ -1317,14 +1253,10 @@ describe(syncCommand, () => {
       );
       await declareWithSource('skills:\n  use:\n    - source-skill\nsubagents:\n  use:\n    - source-agent\n');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toMatch(/skill\s+source-skill\s+← source "org"/);
       expect(output).toMatch(/subagent\s+source-agent\s+← source "org"/);
@@ -1335,14 +1267,9 @@ describe(syncCommand, () => {
       await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
       await declareWithSource('rulebooks:\n  use:\n    - shadowed\n');
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
-        output = warnSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        warnSpy.mockRestore();
-      }
+      const output = renderReportText(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+        level: 'warn',
+      });
 
       expect(output).toContain('shadows a library slug');
       expect(output).toContain('rulebook "shadowed" (source "org")');
@@ -1352,14 +1279,9 @@ describe(syncCommand, () => {
       await writeSourceRulebook('source-only', 'delivery: ambient', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
-        output = warnSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        warnSpy.mockRestore();
-      }
+      const output = renderReportText(await syncCommand(makeOptions(), projectRoot, contentDir, homeDir), {
+        level: 'warn',
+      });
 
       expect(output).not.toContain('shadows a library slug');
     });
@@ -1520,14 +1442,10 @@ describe(syncCommand, () => {
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain('people-report');
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -1995,14 +1913,10 @@ describe(syncCommand, () => {
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain('canary');
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -2150,14 +2064,10 @@ describe(syncCommand, () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
 
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, contentDir, homeDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      const output = renderReportText(
+        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, contentDir, homeDir),
+        { dryRun: true, level: 'info' },
+      );
 
       expect(output).toContain('prompts.yml');
       expect(existsSync(promptsYmlPath())).toBe(false);
@@ -2219,14 +2129,7 @@ describe(syncGlobalCommand, () => {
   }
 
   it('when no ~/.agents/codeassembly.yaml exists, makes no changes and points at init --global', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let infoLines: ReadonlyArray<string>;
-    try {
-      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-      infoLines = infoSpy.mock.calls.map((call) => String(call[0]));
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const infoLines = renderReportLines(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'info' });
 
     expect(existsSync(path.join(homeDir, '.agents', 'rulebooks'))).toBe(false);
     expect(infoLines.join('\n')).toContain('init --global');
@@ -2300,13 +2203,8 @@ describe(syncGlobalCommand, () => {
     await writeLibraryRulebook('beta', 'delivery: skill', 'Beta rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n    - beta\n');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('codeassembly install');
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'warn' });
+    expect(output).toContain('codeassembly install');
 
     // The skip is confined to ambient delivery: skill delivery, which shares the run, still lands.
     expect(await readFile(path.join(homeDir, '.claude', 'skills', 'consult-beta', 'SKILL.md'), 'utf8')).toContain(
@@ -2323,13 +2221,8 @@ describe(syncGlobalCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('damaged ambient region');
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'warn' });
+    expect(output).toContain('damaged ambient region');
 
     expect(await readFile(damaged, 'utf8')).toBe(before);
   });
@@ -2342,13 +2235,8 @@ describe(syncGlobalCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('no ambient region');
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'warn' });
+    expect(output).toContain('no ambient region');
 
     expect(await readFile(regionless, 'utf8')).toBe('# Guidance without a region\n');
   });
@@ -2359,14 +2247,10 @@ describe(syncGlobalCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir), {
+      dryRun: true,
+      level: 'info',
+    });
 
     expect(output).toContain('inject the ambient region in');
     expect(await readFile(claudeMd, 'utf8')).toBe(before);
@@ -2376,14 +2260,10 @@ describe(syncGlobalCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir), {
+      dryRun: true,
+      level: 'info',
+    });
 
     expect(output).toContain('skip ambient delivery');
     expect(output).toContain('codeassembly install');
@@ -2397,14 +2277,10 @@ describe(syncGlobalCommand, () => {
     const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
     await writeFile(legacyPath, '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir), {
+      dryRun: true,
+      level: 'info',
+    });
 
     expect(output).toContain(`would delete ${legacyPath}`);
   });
@@ -2416,14 +2292,10 @@ describe(syncGlobalCommand, () => {
     const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
     await writeFile(legacyPath, 'Mine.\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let output: string;
-    try {
-      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
-      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-    } finally {
-      infoSpy.mockRestore();
-    }
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir), {
+      dryRun: true,
+      level: 'info',
+    });
 
     expect(output).toContain(`retire the rulebook blocks in ${legacyPath}`);
     expect(output).not.toContain('would delete');
