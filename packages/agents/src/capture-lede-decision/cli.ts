@@ -38,6 +38,13 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'verdict', takesValue: true },
 ];
 
+/**
+ * The event store this helper records into when `--store` names none. The corpus is cross-repo: one store holds every
+ * lede decision, whichever repository the pull request merged in, so the destination is a property of this helper
+ * rather than of the change under review.
+ */
+const LEDE_DECISION_STORE = 'codeassembly';
+
 /** Parsed command-line invocation of the capture-lede-decision helper. */
 export interface ParsedArgs {
   /** `inspect` resolves and reports the episode; `commit` records the author's verdict. */
@@ -49,7 +56,8 @@ export interface ParsedArgs {
   mergeCommit: string;
   /** Directory holding `lede-voice.md` and `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
   dataDir: string | null;
-  store: string | null;
+  /** The store to record into; falls back to the one this helper serves when `--store` names none. */
+  store: string;
   type: string | null;
   scope: string | null;
   ticket: string | null;
@@ -190,7 +198,8 @@ export async function runDecision(input: {
  * Parses the helper's argv. `--inspect` and `--verdict` select the mode and are mutually exclusive; exactly one must
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
  * change it describes is not worth recording. Every other flag is optional: the work type, scope, and ticket fall back
- * to the change-summary artifact, and the two lede overrides fall back to their artifacts.
+ * to the change-summary artifact, the two lede overrides fall back to their artifacts, and `--store` overrides the one
+ * store this helper serves.
  *
  * @internal - Exported to allow testing.
  */
@@ -215,7 +224,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     pr: requireFlag(raw, 'pr'),
     mergeCommit: requireFlag(raw, 'merge-commit'),
     dataDir: raw['data-dir'] ?? null,
-    store: raw.store ?? null,
+    store: raw.store ?? LEDE_DECISION_STORE,
     type: raw.type ?? null,
     scope: raw.scope ?? null,
     ticket: raw.ticket ?? null,

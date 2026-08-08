@@ -68,6 +68,12 @@ describe(parseArgs, () => {
     expect(parsed.verdict).toBeNull();
   });
 
+  it('resolves the store this helper serves when --store names none', () => {
+    const parsed = parseArgs(['--inspect', ...requiredFlags()]);
+
+    expect(parsed.store).toBe('codeassembly');
+  });
+
   it.each([['artifact-dir'], ['pr'], ['merge-commit']])('requires --%s', (name) => {
     const argv = withoutFlag(['--inspect', ...requiredFlags()], name);
 
@@ -145,14 +151,24 @@ describe(runDecision, () => {
     expect(expectFailure(result)).toBe('no-artifact-dir');
   });
 
-  it('refuses to record a decision with no named store', async () => {
+  it('records into the store it serves when --store names none', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
     const argv = ['--verdict', 'accepted', ...flagsFor(fixture)];
 
     const result = await runDecision(runInput({ argv, fixture, home: store.home }));
 
-    expect(expectFailure(result)).toBe('missing-store');
+    expect(expectCommit(result).store).toBe(STORE_NAME);
+  });
+
+  it('refuses a decision where the store it serves is registered under no name', async () => {
+    const fixture = await createLedeFixture();
+    const store = await makeStore('some-other-corpus');
+    const argv = ['--verdict', 'accepted', ...flagsFor(fixture)];
+
+    const result = await runDecision(runInput({ argv, fixture, home: store.home }));
+
+    expect(expectFailure(result)).toBe('store-not-registered');
   });
 
   it('reports an invalid invocation without touching the artifacts', async () => {
@@ -210,8 +226,12 @@ function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'manife
   ];
 }
 
-/** Stands up a temp event store plus an isolated home registering it, so registry resolution never reads the real one. */
-async function makeStore(): Promise<{ storePath: string; home: string }> {
+/**
+ * Stands up a temp event store plus an isolated home registering it, so registry resolution never reads the real one.
+ * `name` registers the store under something other than the one the helper serves, which is how a test tells a default
+ * that resolves to the helper's own constant from one that resolves to whatever the registry happens to hold.
+ */
+async function makeStore(name: string = STORE_NAME): Promise<{ storePath: string; home: string }> {
   const storePath = await mkdtemp(join(tmpdir(), 'lede-decision-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
 
@@ -219,7 +239,7 @@ async function makeStore(): Promise<{ storePath: string; home: string }> {
   await mkdir(join(home, '.agents'), { recursive: true });
   await writeFile(
     join(home, '.agents', 'kb.yaml'),
-    `default_kb: ${STORE_NAME}\nkbs:\n  ${STORE_NAME}:\n    path: ${storePath}\n`,
+    `default_kb: ${name}\nkbs:\n  ${name}:\n    path: ${storePath}\n`,
     'utf8',
   );
 
