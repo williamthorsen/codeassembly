@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import { create, type CreatedStore } from '../../create/create.ts';
+import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
 import type { SelectKbPrompt } from '../select-kb-prompt.ts';
 import type { CommandOutput } from './check.ts';
 import { runSetDefault } from './set-default.ts';
@@ -10,6 +11,8 @@ import { runSetDefault } from './set-default.ts';
 export const CREATE_HELP = `Usage: kb create [options]
 
 Scaffold a new knowledge base in the current directory and register it in the user-global kb.yaml registry.
+
+Registering leaves the registry's entries in alphabetical order, preserving its comments and formatting.
 
 When the registry has no default knowledge base, the new store becomes the default.
 If other knowledge bases are already registered, you are prompted to choose one (or set it later with "kb set-default").
@@ -20,9 +23,10 @@ Creates:
   content/, content/events/
 
 Options:
-  --name <name>   Registry name for the store. Defaults to the directory name.
-  --no-register   Scaffold without writing the kb.yaml registry entry.
-  -h, --help      Show this help.
+  --description <text>  Description for the registry entry; cannot be combined with --no-register.
+  --name <name>         Registry name for the store. Defaults to the directory name.
+  --no-register         Scaffold without writing the kb.yaml registry entry.
+  -h, --help            Show this help.
 
 Exit codes:
   0  store created
@@ -58,7 +62,12 @@ export async function runCreate(input: {
   const base = { targetDir: input.cwd, ...(options.name !== null && { name: options.name }) };
   const outcome = options.noRegister
     ? await create({ ...base, register: false })
-    : await create({ ...base, register: true, registryPath });
+    : await create({
+        ...base,
+        register: true,
+        registryPath,
+        ...(options.description !== null && { description: options.description }),
+      });
 
   if (!outcome.ok) {
     return { exitCode: 2, stdout: '', stderr: `kb create: ${outcome.message}\n` };
@@ -84,6 +93,8 @@ export async function runCreate(input: {
 
 /** Parsed `kb create` options. */
 interface CreateOptions {
+  /** Description from `--description`, or `null` to write the entry without one. */
+  description: string | null;
   /** Explicit registry name from `--name`, or `null` to default to the directory name. */
   name: string | null;
   /** Whether `--no-register` was supplied. */
@@ -93,10 +104,11 @@ interface CreateOptions {
 }
 
 /**
- * Parses `kb create` options. `--name` accepts both `--name x` and `--name=x`. Unknown flags or a missing `--name`
- * value throw with a usage-style message.
+ * Parses `kb create` options. Each value-taking flag accepts both the space form and the equals form. Unknown flags, a
+ * missing value, or a description supplied alongside `--no-register` throw with a usage-style message.
  */
 export function parseCreateArgs(argv: readonly string[]): CreateOptions {
+  let description: string | null = null;
   let name: string | null = null;
   let noRegister = false;
   let help = false;
@@ -109,32 +121,38 @@ export function parseCreateArgs(argv: readonly string[]): CreateOptions {
       help = true;
       continue;
     }
+    if (arg === '--description') {
+      description = takeValue(argv, index, '--description');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--description=')) {
+      description = takeInlineValue(arg, '--description=');
+      continue;
+    }
     if (arg === '--no-register') {
       noRegister = true;
       continue;
     }
     if (arg === '--name') {
-      const next = argv[index + 1] ?? null;
-      if (next === null || next.startsWith('--')) {
-        throw new Error('--name requires a value');
-      }
-      name = next;
+      name = takeValue(argv, index, '--name');
       index += 1;
       continue;
     }
     if (arg.startsWith('--name=')) {
-      const value = arg.slice('--name='.length);
-      if (value === '') {
-        throw new Error('--name requires a value');
-      }
-      name = value;
+      name = takeInlineValue(arg, '--name=');
       continue;
     }
 
     throw new Error(`unknown flag: ${arg}`);
   }
 
-  return { name, noRegister, help };
+  // A description has nowhere to go without a registry entry, so reject the combination rather than discarding it.
+  if (noRegister && description !== null) {
+    throw new Error('--description cannot be combined with --no-register');
+  }
+
+  return { description, name, noRegister, help };
 }
 
 // region | Helpers
@@ -156,6 +174,9 @@ function formatCreated(created: CreatedStore, registryPath: string): string {
     lines.push(`  ${path}`);
   }
   lines.push(created.registered ? `Registered in ${registryPath}` : 'Not registered (--no-register).');
+  if (created.description !== undefined) {
+    lines.push(`Description: ${created.description}`);
+  }
   if (created.defaultKb === 'set') {
     lines.push('Set as the default knowledge base.');
   }

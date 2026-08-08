@@ -47,6 +47,30 @@ describe(create, () => {
     expect(config.entries[0]?.name).toBe('custom');
   });
 
+  it('writes the supplied description into the registry entry and reports it', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+    const registryPath = await makeRegistryPath();
+
+    const outcome = await create({ targetDir, register: true, registryPath, description: 'My store' });
+
+    assert.ok(outcome.ok);
+    expect(outcome.created.description).toBe('My store');
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.entries[0]?.description).toBe('My store');
+  });
+
+  it('registers without a description when none is supplied', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+    const registryPath = await makeRegistryPath();
+
+    const outcome = await create({ targetDir, register: true, registryPath });
+
+    assert.ok(outcome.ok);
+    expect(outcome.created.description).toBeUndefined();
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.entries[0]?.description).toBeUndefined();
+  });
+
   it('skips registration when register is false', async () => {
     const targetDir = await makeTempDir('kb-create-store-');
 
