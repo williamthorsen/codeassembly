@@ -13,6 +13,27 @@
         "path": "packages__fleet>@hono/node-server>hono",
         "reason": "Added by v11y sync at 2026-08-03 22:02:58 UTC",
         "url": "https://github.com/advisories/GHSA-8j4g-w8fx-2239"
+      },
+      {
+        "addedAt": "2026-08-08T07:04:07.103Z",
+        "id": "1138771",
+        "path": "packages__fleet>@hono/node-server>hono",
+        "reason": "Added by v11y sync at 2026-08-08 07:04:07 UTC",
+        "url": "https://github.com/advisories/GHSA-f23p-vx2j-j53r"
+      },
+      {
+        "addedAt": "2026-08-08T07:04:07.103Z",
+        "id": "1138772",
+        "path": "packages__fleet>@hono/node-server>hono",
+        "reason": "Added by v11y sync at 2026-08-08 07:04:07 UTC",
+        "url": "https://github.com/advisories/GHSA-79qm-7rj5-m7r9"
+      },
+      {
+        "addedAt": "2026-08-08T07:04:07.103Z",
+        "id": "1138773",
+        "path": "packages__fleet>@hono/node-server>hono",
+        "reason": "Added by v11y sync at 2026-08-08 07:04:07 UTC",
+        "url": "https://github.com/advisories/GHSA-54fx-42gc-7vw4"
       }
     ]
   }
