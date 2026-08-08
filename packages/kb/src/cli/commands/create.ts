@@ -12,6 +12,8 @@ export const CREATE_HELP = `Usage: kb create [options]
 
 Scaffold a new knowledge base in the current directory and register it in the user-global kb.yaml registry.
 
+Registering leaves the registry's entries in alphabetical order, preserving its comments and formatting.
+
 When the registry has no default knowledge base, the new store becomes the default.
 If other knowledge bases are already registered, you are prompted to choose one (or set it later with "kb set-default").
 

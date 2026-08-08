@@ -135,10 +135,27 @@ describe('kb create', () => {
     expect(result.stderr).toContain('--description requires a value');
   });
 
+  it('exits 2 when --description is given an empty value', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--description', ''], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--description requires a value');
+    expect(await pathExists(join(cwd, '.kb', 'config.yaml'))).toBe(false);
+  });
+
   it('lists --description in the command help', async () => {
     const result = await run({ argv: ['create', '--help'], cwd: '/tmp', home: '/tmp' });
 
     expect(result.stdout).toContain('--description');
+  });
+
+  it('describes the sorted registry in the command help', async () => {
+    const result = await run({ argv: ['create', '--help'], cwd: '/tmp', home: '/tmp' });
+
+    expect(result.stdout).toContain('alphabetical order');
   });
 
   it('exits 2 when --name is given without a value', async () => {
@@ -149,6 +166,18 @@ describe('kb create', () => {
 
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('--name requires a value');
+  });
+
+  it('exits 2 when --name is given an empty value, leaving nothing scaffolded', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--name', ''], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--name requires a value');
+    expect(await pathExists(join(cwd, '.kb', 'config.yaml'))).toBe(false);
+    expect(await pathExists(getRegistryPathFor(home))).toBe(false);
   });
 
   it('exits 2 when --name= is given with an empty value', async () => {
