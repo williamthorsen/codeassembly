@@ -80,6 +80,67 @@ describe('kb create', () => {
     expect(result.exitCode).toBe(2);
   });
 
+  it('writes the description from --description into the registry entry', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--description', 'My personal vault'], cwd, home });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('My personal vault');
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.entries[0]?.description).toBe('My personal vault');
+  });
+
+  it('accepts the equals form of --description', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--description=Inline form'], cwd, home });
+
+    expect(result.exitCode).toBe(0);
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.entries[0]?.description).toBe('Inline form');
+  });
+
+  it('registers without a description when --description is omitted', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create'], cwd, home });
+
+    expect(result.exitCode).toBe(0);
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.entries[0]?.description).toBeUndefined();
+  });
+
+  it('exits 2 when --description is combined with --no-register', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--no-register', '--description', 'Nowhere to go'], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--description cannot be combined with --no-register');
+    expect(await pathExists(join(cwd, '.kb', 'config.yaml'))).toBe(false);
+  });
+
+  it('exits 2 when --description is given without a value', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--description'], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--description requires a value');
+  });
+
+  it('lists --description in the command help', async () => {
+    const result = await run({ argv: ['create', '--help'], cwd: '/tmp', home: '/tmp' });
+
+    expect(result.stdout).toContain('--description');
+  });
+
   it('exits 2 when --name is given without a value', async () => {
     const cwd = await makeTempDir('kb-cli-store-');
     const home = await makeTempDir('kb-cli-home-');

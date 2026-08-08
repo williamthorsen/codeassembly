@@ -194,9 +194,10 @@ The package ships a `kb` bin with four subcommands: `check`, `create`, `set-defa
 `kb create` scaffolds a new knowledge base in the current directory and registers it in the user-global `~/.agents/kb.yaml`.
 
 ```bash
-kb create                # scaffold the current directory, register under its name
-kb create --name coding  # register under an explicit name
-kb create --no-register  # scaffold without writing the registry
+kb create                                 # scaffold the current directory, register under its name
+kb create --name coding                   # register under an explicit name
+kb create --description "Coding notes"    # describe the registry entry
+kb create --no-register                   # scaffold without writing the registry
 ```
 
 It creates these files and directories:
@@ -209,7 +210,7 @@ It creates these files and directories:
 
 The config seed is serialized from the in-package `defaultKbConfig`, so a new store cannot drift from the bundled default.
 
-The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, so a registry that has drifted out of order is tidied as stores are added. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
+The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, so a registry that has drifted out of order is tidied as stores are added. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
 
 `kb create` also keeps a default knowledge base set. When the registry's top-level `default_kb` pointer is unset and the new store is the only registered KB, it becomes the default. When other KBs are already registered with no default, `kb create` prompts you to choose one on an interactive terminal — or, when stdin is not interactive, points you to `kb set-default`. An existing `default_kb` is never overwritten.
 

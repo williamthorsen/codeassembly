@@ -31,6 +31,8 @@ export interface CreatedStore {
   name: string;
   /** Absolute path to the store root. */
   storePath: string;
+  /** The description written into the registry entry; absent when none was supplied. */
+  description?: string;
   /** Whether the store was registered in the kb.yaml registry. */
   registered: boolean;
   /** Store-relative paths created by the scaffold. */
@@ -39,9 +41,13 @@ export interface CreatedStore {
   defaultKb?: DefaultKbOutcome;
 }
 
-/** Inputs for {@link create}. `registryPath` is required only when registering. */
+/**
+ * Inputs for {@link create}. `registryPath` and `description` belong to the registering form alone: a description is
+ * only ever written into a registry entry, so supplying one without registering is a type error rather than a value
+ * that would be silently discarded.
+ */
 export type CreateInput = { targetDir: string; name?: string } & (
-  { register: false } | { register: true; registryPath: string }
+  { register: false } | { register: true; registryPath: string; description?: string }
 );
 
 /** The outcome of a {@link create} call: a created store, or a categorical precondition failure. */
@@ -76,13 +82,14 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
 
   const created = await scaffold(storePath);
 
-  const result = await registerStore({ registryPath, name, storePath });
+  const described = input.description !== undefined && { description: input.description };
+  const result = await registerStore({ registryPath, name, storePath, ...described });
   if (result.status === 'already-present') {
     return { ok: false, reason: 'name-registered', message: nameRegisteredMessage(name, registryPath) };
   }
 
   const defaultKb = await ensureDefaultKb({ registryPath, name, before });
-  return { ok: true, created: { name, storePath, registered: true, created, defaultKb } };
+  return { ok: true, created: { name, storePath, ...described, registered: true, created, defaultKb } };
 }
 
 // region | Helpers
