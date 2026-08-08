@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import { create, type CreatedStore } from '../../create/create.ts';
+import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
 import type { SelectKbPrompt } from '../select-kb-prompt.ts';
 import type { CommandOutput } from './check.ts';
 import { runSetDefault } from './set-default.ts';
@@ -114,20 +115,12 @@ export function parseCreateArgs(argv: readonly string[]): CreateOptions {
       continue;
     }
     if (arg === '--name') {
-      const next = argv[index + 1] ?? null;
-      if (next === null || next.startsWith('--')) {
-        throw new Error('--name requires a value');
-      }
-      name = next;
+      name = takeValue(argv, index, '--name');
       index += 1;
       continue;
     }
     if (arg.startsWith('--name=')) {
-      const value = arg.slice('--name='.length);
-      if (value === '') {
-        throw new Error('--name requires a value');
-      }
-      name = value;
+      name = takeInlineValue(arg, '--name=');
       continue;
     }
 

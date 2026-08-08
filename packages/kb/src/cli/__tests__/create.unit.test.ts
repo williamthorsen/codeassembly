@@ -80,6 +80,26 @@ describe('kb create', () => {
     expect(result.exitCode).toBe(2);
   });
 
+  it('exits 2 when --name is given without a value', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--name'], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--name requires a value');
+  });
+
+  it('exits 2 when --name= is given with an empty value', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create', '--name='], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--name requires a value');
+  });
+
   it('prints command help with --help', async () => {
     const result = await run({ argv: ['create', '--help'], cwd: '/tmp', home: '/tmp' });
 
