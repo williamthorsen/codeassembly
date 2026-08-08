@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { ulid } from 'ulid';
 
 import { writeEvent } from '../capture-event/write-event.ts';
+import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
@@ -214,8 +215,9 @@ export async function runDecision(input: {
  * Parses the helper's argv. `--inspect` and `--verdict` select the mode and are mutually exclusive; exactly one must
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
  * change it describes is not worth recording. Every other flag is optional: the work type, scope, and ticket fall back
- * to the change-summary artifact, the two lede overrides fall back to their artifacts, and `--store` overrides the one
- * store this helper serves.
+ * to the change-summary artifact, the two lede overrides fall back to their artifacts, and `--store` names a corpus
+ * registered under some other name. The `@default` sentinel is refused: it names a machine's default store rather than
+ * a corpus, which is the route by which decisions have been filed outside the one that holds them.
  *
  * @internal - Exported to allow testing.
  */
@@ -229,6 +231,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     if (value === '') {
       throw new Error(`--${name} requires a value`);
     }
+  }
+  if (raw.store === DEFAULT_KB_SENTINEL) {
+    throw new Error(
+      `--store ${DEFAULT_KB_SENTINEL} is not accepted: a lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
+        'not to whichever store kb.yaml names as its default. Omit --store, or name the corpus.',
+    );
   }
 
   const { mode, verdict } = resolveMode({ inspect: flags.some((flag) => flag.name === 'inspect'), raw });

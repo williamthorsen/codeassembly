@@ -32,7 +32,7 @@ For the same reason, the corpus is outcome-selected: it holds only changes someo
 | `--merge-commit`     | The merge commit's SHA.                                                                | Yes      |
 | `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--verdict`.   | Mode     |
 | `--verdict`          | The author's decision: `accepted` or `revised`. Mutually exclusive with `--inspect`.   | Mode     |
-| `--store`            | Overrides the destination, for a corpus registered under some other name.              | No       |
+| `--store`            | Names a corpus registered under some other name; `@default` is refused.                | No       |
 | `--type`             | Work type. Falls back to the change summary's frontmatter.                             | No       |
 | `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.              | No       |
 | `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                             | No       |
@@ -137,7 +137,8 @@ Route by the `error` code:
 - `no-doctrine` — the installed doctrine file is unreadable. Report it as an install problem.
 - `unresolved-identity` — the work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
 - `invalid-args` — surface the message and propose a corrected invocation.
-- `store-not-registered`, `readonly-store`, `no-default-store` — the destination could not be resolved. Where the corpus is registered under some other name, re-run with `--store <name>`.
+- `store-not-registered` — the corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.
+- `readonly-store` — the corpus is registered readonly. Report and stop; no destination is substituted for one the registry protects.
 - `schema-validation` — surface the `errors`.
 
 ## Completion
