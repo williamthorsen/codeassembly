@@ -8,6 +8,8 @@ user-invocable: true
 
 Record what the author decided about a lede: that the agent's `## What` shipped as written, or that it was rewritten before merge. A bundled helper does the mechanical work — it reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that governed the first, and writes one event record. You present the pair and relay the author's decision.
 
+Every lede decision belongs to one corpus, the `codeassembly` event store, whichever repository the pull request merged in. The helper targets it without being told, so a caller never chooses a destination.
+
 **Announce at start:** "Using capture-lede-decision to record the lede decision for #{pr}."
 
 ## The corpus stores positive signals only
@@ -23,26 +25,27 @@ For the same reason, the corpus is outcome-selected: it holds only changes someo
 
 ## Arguments
 
-| Argument             | Description                                                                             | Required |
-| -------------------- | --------------------------------------------------------------------------------------- | -------- |
-| `--artifact-dir`     | The ticket's artifact directory, holding the pull-request and merge artifacts.          | Yes      |
-| `--pr`               | The pull-request number.                                                                | Yes      |
-| `--merge-commit`     | The merge commit's SHA.                                                                 | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--verdict`.    | Mode     |
-| `--verdict`          | The author's decision: `accepted` or `revised`. Mutually exclusive with `--inspect`.    | Mode     |
-| `--store`            | Registry name of the event store, or `@default` for the `default_kb`. Needed to record. | Yes      |
-| `--type`             | Work type. Falls back to the change summary's frontmatter.                              | No       |
-| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.               | No       |
-| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                              | No       |
-| `--merged-lede-file` | File holding the merged lede, for a pull request that wrote no merge artifact.          | No       |
-| `--agent-lede-file`  | File holding the agent's lede, for a pull request that wrote no pull-request artifact.  | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                   | Injected |
+| Argument             | Description                                                                            | Required |
+| -------------------- | -------------------------------------------------------------------------------------- | -------- |
+| `--artifact-dir`     | The ticket's artifact directory, holding the pull-request and merge artifacts.         | Yes      |
+| `--pr`               | The pull-request number.                                                               | Yes      |
+| `--merge-commit`     | The merge commit's SHA.                                                                | Yes      |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--verdict`.   | Mode     |
+| `--verdict`          | The author's decision: `accepted` or `revised`. Mutually exclusive with `--inspect`.   | Mode     |
+| `--store`            | Overrides the destination, for a corpus registered under some other name.              | No       |
+| `--type`             | Work type. Falls back to the change summary's frontmatter.                             | No       |
+| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.              | No       |
+| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                             | No       |
+| `--merged-lede-file` | File holding the merged lede, for a pull request that wrote no merge artifact.         | No       |
+| `--agent-lede-file`  | File holding the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                  | Injected |
 
 Exactly one of `--inspect` and `--verdict` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
 ## Runtime dependencies
 
 - **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
+- **A `kb.yaml` registering the `codeassembly` store** — the corpus every lede decision is written to. Where no registry declares it, the skill says so and records nothing, rather than filing the decision somewhere else.
 
 ## Process
 
@@ -57,9 +60,11 @@ node {harness_home_dir}/skills/capture-lede-decision/capture-lede-decision.mjs \
   [--type <key>] [--scope <name>] [--ticket <id>]
 ```
 
-The helper prints a JSON object to stdout: `ok: true` with `episode` on success, or `ok: false` with `error` and `message`. Inspecting writes nothing and needs no store, so it can never block or alter a merge that already happened.
+The helper prints a JSON object to stdout: `ok: true` with `episode` and `store` on success, or `ok: false` with `error` and `message`. Inspecting writes nothing, so it can never block or alter a merge that already happened.
 
 On `ok: false`, report the `message` on one line and stop. The merge has already succeeded — do not present this as a merge failure, and do not retry.
+
+On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The corpus is out of reach, so no decision can be kept; asking for one would spend the author's attention on an answer this skill would then discard.
 
 ### 2. Present the pair and ask
 
@@ -86,7 +91,6 @@ On a decision, pipe the author's comment (empty when they gave none) to the help
 ```bash
 cat <<'EOF' | node {harness_home_dir}/skills/capture-lede-decision/capture-lede-decision.mjs \
   --verdict <accepted|revised> \
-  --store <name|@default> \
   --harness {harness_id} \
   --artifact-dir <ticket artifact directory> \
   --pr <number> \
@@ -117,7 +121,7 @@ Pass that file to `--merged-lede-file` and continue from step 2. Everything else
 
 ## The record
 
-One event per decision, in the named store:
+One event per decision, in the corpus:
 
 - **Tags** — `lede-decision`, `type:{work type}`, and the verdict. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, and by work type with `--tag type:feat`.
 - **Frontmatter** — the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the install manifest supplies one.
@@ -133,7 +137,7 @@ Route by the `error` code:
 - `no-doctrine` — the installed doctrine file is unreadable. Report it as an install problem.
 - `unresolved-identity` — the work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
 - `invalid-args` — surface the message and propose a corrected invocation.
-- `missing-store`, `store-not-registered`, `readonly-store`, `no-default-store` — the destination could not be resolved; the message lists the registered stores.
+- `store-not-registered`, `readonly-store`, `no-default-store` — the destination could not be resolved. Where the corpus is registered under some other name, re-run with `--store <name>`.
 - `schema-validation` — surface the `errors`.
 
 ## Completion
