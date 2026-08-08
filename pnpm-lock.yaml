@@ -54,8 +54,8 @@ importers:
         specifier: 2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       eslint-plugin-jest-dom:
-        specifier: 5.9.0
-        version: 5.9.0(@testing-library/dom@10.4.1)(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))
+        specifier: 5.10.0
+        version: 5.10.0(@testing-library/dom@10.4.1)(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))
       eslint-plugin-react-hooks:
         specifier: 7.1.1
         version: 7.1.1(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
@@ -1825,8 +1825,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-jest-dom@5.9.0:
-    resolution: {integrity: sha512-pK7rmqrf2ptbouuG2QMrH+BnVfzyTR+/BSSpP6LPj851s1+4HbQqeDE7RCISR69T1iOJBDGnCJ4VxNou2RvtfQ==}
+  eslint-plugin-jest-dom@5.10.0:
+    resolution: {integrity: sha512-RhCzl36C3bqK4dtWVYx8HYF32gzpyFG0wdshc6jp3n8uHDt/02TdtWsbUuIzockflXuTR3X+5y7+Osbt/JZP2Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0, npm: '>=6', yarn: '>=1'}
     peerDependencies:
       '@testing-library/dom': ^8.0.0 || ^9.0.0 || ^10.0.0
@@ -4324,8 +4324,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.65.0(supports-color@7.2.0)(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.65.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.65.0
+      '@typescript-eslint/tsconfig-utils': 8.66.0(typescript@6.0.3)
+      '@typescript-eslint/types': 8.66.0
       debug: 4.4.3(supports-color@7.2.0)
       typescript: 6.0.3
     transitivePeerDependencies:
@@ -5269,7 +5269,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-jest-dom@5.9.0(@testing-library/dom@10.4.1)(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0)):
+  eslint-plugin-jest-dom@5.10.0(@testing-library/dom@10.4.1)(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0)):
     dependencies:
       eslint: 10.8.0(jiti@2.7.0)(supports-color@7.2.0)
       requireindex: 1.2.0
