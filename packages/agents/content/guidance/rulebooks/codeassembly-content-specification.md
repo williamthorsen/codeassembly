@@ -135,7 +135,7 @@ A `delivery: skill` rulebook ships as `consult-<slug>`.
 
 Skill names are verb-led. Order list members and frontmatter lists alphabetically unless there is a reason to group otherwise. _(Conventions; not enforced.)_
 
-A `codeassembly-` prefix marks an artifact governing this repository's own mechanics, as this specification does. Its absence marks content that would still apply in another project. Prefix a new artifact only when it would be meaningless outside this repository. _(Convention; not enforced.)_
+A `codeassembly-` prefix marks guidance for working in the CodeAssembly repository itself, as this specification does. Its absence marks content that applies in any project, CodeAssembly's own behavior included where a consumer meets it. Prefix a new artifact only when a project that merely consumes the library would have no use for it. _(Convention; not enforced.)_
 
 ## Skill-local reinforcement
 
