@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.5.0",
+    "date": "2026-08-08",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Register a new store with a description and keep the registry sorted (#1237)",
+            "body": "Adds a `--description` flag to `kb create`, so that a new knowledge base can be given a description as it is created. Alphabetical ordering of keys in `kb.yaml` is now enforced on every write.\n\nAlso fixes an issue where creating a knowledge base under an empty name could leave a stray registry entry. Across the CLI, a flag given an empty value is now refused.",
+            "hash": "9531b6a4bd392e22e9b82349d405d16e58ab5ad4"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.0",
     "date": "2026-08-07",
     "sections": [

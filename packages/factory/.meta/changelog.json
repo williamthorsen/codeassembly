@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.2.5",
+    "date": "2026-08-08",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Hold project guidance to a cheatsheet (#1233)",
+            "body": "Removes most content from AGENTS.md into its relevant project-level README files, avoiding the injection of unnecessary detail into an agent's context on launch. The `update-project-guidance` skill now instructs agents to perform a similar streamlining and separation when updating guidance in other repos. A mechanical test checks whether the file fits within a 200-line budget.",
+            "hash": "f6e6c62793d9ef09fee81d9c446b0ff27e54039f"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.4",
     "date": "2026-08-07",
     "sections": [

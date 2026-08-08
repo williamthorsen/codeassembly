@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 — 2026-08-08
+
+### 🎉 Features
+
+- Add capture-feedback to the recommended collection (#1228)
+
+  Adds the `capture-feedback` skill to the `recommended` collection and refines the guidance instructing agents how and where to save feedback as knowledge-base events.
+
+  Separately, tests for that skill and its dependencies are no longer deployed alongside them or shipped in the published package.
+
+- Label the regions sync writes as generated (#1235)
+
+  Guidance files installed by codeassembly, along with the Rovo Dev prompt index, now carry a note that marks the managed block as generated, names where its content comes from, and warns that anything written inside the block is replaced on the next sync.
+
+### 🐛 Bug fixes
+
+- Remove sync's advice to pin a detected harness set (#1229)
+
+  Fixes an issue where `sync` recommended declaring a harness set in projects that have none, even though a harness-neutral project has no harness requirement to declare.
+
+- Bind lede-decision capture to the corpus it serves (#1240)
+
+  Fixes an issue where lede decisions could be saved into the wrong store. Decisions are now saved by default into the `codeassembly` store, and a call to save them to `--store @default` (which could point to any arbitrary store) is refused. If the targeted store is unreachable, the author is told before being asked to decide.
+
+### ♻️ Refactoring
+
+- Source nmr's guidance from the installed package alone (#1230)
+
+  `nmr`'s usage guidance now reaches agent sessions from a single source bundled with the currently installed package. A second copy (installed through the previous distribution mechanism) has been removed. In a fresh clone, the guidance is available once `pnpm run bootstrap` runs.
+
+- Hold project guidance to a cheatsheet (#1233)
+
+  Removes most content from AGENTS.md into its relevant project-level README files, avoiding the injection of unnecessary detail into an agent's context on launch. The `update-project-guidance` skill now instructs agents to perform a similar streamlining and separation when updating guidance in other repos. A mechanical test checks whether the file fits within a 200-line budget.
+
+- Report the same conditions from sync's preview and its real run (#1234)
+
+  `sync` and a `sync --dry-run` now report the same conditions in the same words. A dry run no longer reports a skipped ambient delivery that names no problem. A real `sync` now reports the legacy guidance blocks retired by the run. Both modes warn when a guidance file to be written by the run is not git-ignored.
+
 ## 0.6.0 — 2026-08-07
 
 ### 🎉 Features

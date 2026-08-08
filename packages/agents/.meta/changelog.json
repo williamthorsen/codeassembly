@@ -1,5 +1,64 @@
 [
   {
+    "version": "0.7.0",
+    "date": "2026-08-08",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Add capture-feedback to the recommended collection (#1228)",
+            "body": "Adds the `capture-feedback` skill to the `recommended` collection and refines the guidance instructing agents how and where to save feedback as knowledge-base events.\n\nSeparately, tests for that skill and its dependencies are no longer deployed alongside them or shipped in the published package.",
+            "hash": "4299aacd70c236bbae62d169140399667bbb5d07"
+          },
+          {
+            "description": "Label the regions sync writes as generated (#1235)",
+            "body": "Guidance files installed by codeassembly, along with the Rovo Dev prompt index, now carry a note that marks the managed block as generated, names where its content comes from, and warns that anything written inside the block is replaced on the next sync.",
+            "hash": "ff5d80246b2bac55f824a930c6aff9b17cb1acbc"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Remove sync's advice to pin a detected harness set (#1229)",
+            "body": "Fixes an issue where `sync` recommended declaring a harness set in projects that have none, even though a harness-neutral project has no harness requirement to declare.",
+            "hash": "8784c268f63e5b5cc0a42436e41aac29e03330a2"
+          },
+          {
+            "description": "Bind lede-decision capture to the corpus it serves (#1240)",
+            "body": "Fixes an issue where lede decisions could be saved into the wrong store. Decisions are now saved by default into the `codeassembly` store, and a call to save them to `--store @default` (which could point to any arbitrary store) is refused. If the targeted store is unreachable, the author is told before being asked to decide.",
+            "hash": "5cf4110f04428324fc3dcb89e2809af7f32f8b64"
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Source nmr's guidance from the installed package alone (#1230)",
+            "body": "`nmr`'s usage guidance now reaches agent sessions from a single source bundled with the currently installed package. A second copy (installed through the previous distribution mechanism) has been removed. In a fresh clone, the guidance is available once `pnpm run bootstrap` runs.",
+            "hash": "7ec55e2d0305f10141aeddb0c2b0b0d21c62bbf8"
+          },
+          {
+            "description": "Hold project guidance to a cheatsheet (#1233)",
+            "body": "Removes most content from AGENTS.md into its relevant project-level README files, avoiding the injection of unnecessary detail into an agent's context on launch. The `update-project-guidance` skill now instructs agents to perform a similar streamlining and separation when updating guidance in other repos. A mechanical test checks whether the file fits within a 200-line budget.",
+            "hash": "f6e6c62793d9ef09fee81d9c446b0ff27e54039f"
+          },
+          {
+            "description": "Report the same conditions from sync's preview and its real run (#1234)",
+            "body": "`sync` and a `sync --dry-run` now report the same conditions in the same words. A dry run no longer reports a skipped ambient delivery that names no problem. A real `sync` now reports the legacy guidance blocks retired by the run. Both modes warn when a guidance file to be written by the run is not git-ignored.",
+            "hash": "a25696c66efe0488777d74d4b0ff0b8ef946d499"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.6.0",
     "date": "2026-08-07",
     "sections": [

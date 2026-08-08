@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 — 2026-08-08
+
+### 🎉 Features
+
+- Register a new store with a description and keep the registry sorted (#1237)
+
+  Adds a `--description` flag to `kb create`, so that a new knowledge base can be given a description as it is created. Alphabetical ordering of keys in `kb.yaml` is now enforced on every write.
+
+  Also fixes an issue where creating a knowledge base under an empty name could leave a stray registry entry. Across the CLI, a flag given an empty value is now refused.
+
 ## 0.4.0 — 2026-08-07
 
 ### 🎉 Features
