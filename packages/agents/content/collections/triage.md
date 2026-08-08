@@ -3,6 +3,7 @@ name: triage
 description: The not-yet-examined set — the default home for library content awaiting a disposition.
 members:
   rulebooks:
+    - codeassembly-deployment-mechanism
     - shell-conventions
   skills:
     - add-test-ids
