@@ -122,7 +122,7 @@ describe('kb create', () => {
     const home = await makeTempDir('kb-cli-home-');
     await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
 
-    // The new store is appended after the seeded one, so index 1 selects it.
+    // The entries sort as "existing" then the temp directory's name, so index 1 selects the new store.
     const result = await run({ argv: ['create'], cwd, home, selectKb: stubPrompt({ kind: 'kb', index: 1 }) });
 
     expect(result.exitCode).toBe(0);
