@@ -100,15 +100,33 @@ describe(runDecision, () => {
     const result = await runDecision(runInput({ argv: ['--inspect', ...flagsFor(fixture)], fixture }));
 
     expect(result).toMatchObject({ ok: true, mode: 'inspect' });
-    expect(expectInspect(result).differ).toBe(true);
+    expect(expectInspect(result).episode.differ).toBe(true);
   });
 
-  it('needs no store in inspect mode, so resolving one cannot block a report', async () => {
+  it('reports the store a decision would record into', async () => {
     const fixture = await createLedeFixture();
+    const store = await makeStore();
 
-    const result = await runDecision(runInput({ argv: ['--inspect', ...flagsFor(fixture)], fixture, home: undefined }));
+    const result = await runDecision(
+      runInput({ argv: ['--inspect', ...flagsFor(fixture)], fixture, home: store.home }),
+    );
 
-    expect(result.ok).toBe(true);
+    expect(expectInspect(result).store).toStrictEqual({ name: STORE_NAME, reachable: true });
+  });
+
+  it('reports an unreachable store without failing the inspection', async () => {
+    const fixture = await createLedeFixture();
+    const store = await makeStore('some-other-corpus');
+
+    const result = await runDecision(
+      runInput({ argv: ['--inspect', ...flagsFor(fixture)], fixture, home: store.home }),
+    );
+
+    expect(expectInspect(result).store).toMatchObject({
+      name: STORE_NAME,
+      reachable: false,
+      error: 'store-not-registered',
+    });
   });
 
   it('writes one event record when a verdict is recorded', async () => {
@@ -199,9 +217,9 @@ function expectFailure(result: DecisionResult): string {
 }
 
 /** Narrows a result to an inspect report, failing the test when it is not one. */
-function expectInspect(result: DecisionResult): Extract<DecisionResult, { mode: 'inspect' }>['episode'] {
+function expectInspect(result: DecisionResult): Extract<DecisionResult, { mode: 'inspect' }> {
   if (result.ok && result.mode === 'inspect') {
-    return result.episode;
+    return result;
   }
   throw new Error(`expected an inspect report, got ${JSON.stringify(result)}`);
 }

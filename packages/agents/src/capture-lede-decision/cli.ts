@@ -18,7 +18,13 @@ import { resolveRepo } from '../shared/resolve-repo.ts';
 import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareDecision } from './prepare-decision.ts';
 import { resolveEpisode } from './resolve-episode.ts';
-import { type DecisionResult, isLedeVerdict, LEDE_VERDICTS, type LedeVerdict } from './types.ts';
+import {
+  type DecisionErrorCode,
+  type DecisionResult,
+  isLedeVerdict,
+  LEDE_VERDICTS,
+  type LedeVerdict,
+} from './types.ts';
 
 /** The flags this helper accepts; the comment comes from stdin, so it has no flag of its own. */
 const FLAGS: readonly FlagSpec[] = [
@@ -91,13 +97,15 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end. In inspect mode it resolves the decision episode and reports it, writing nothing and
- * reading no stdin, so a caller can present both ledes before asking the author to decide. In commit mode it resolves
- * the same episode, reads the comment from stdin, and writes one event record to the named store.
+ * Runs the helper end to end. In inspect mode it resolves the decision episode and the store a decision would record
+ * into, reporting both and writing nothing, so a caller can present the ledes — or stop short of asking — before the
+ * author is put to a decision. In commit mode it resolves the same episode, reads the comment from stdin, and writes
+ * one event record.
  *
- * Every resolution failure and every store-resolution failure becomes a structured `{ ok: false, ... }` result, so a
- * caller invoking this after an irreversible merge can report one line and continue. System failures (out-of-disk,
- * permission denied) propagate to the caller's try/catch.
+ * Every episode-resolution failure, and every store failure on the recording path, becomes a structured
+ * `{ ok: false, ... }` result, so a caller invoking this after an irreversible merge can report one line and continue.
+ * An unreachable store leaves inspect at `ok: true`: the episode resolved, and only recording is blocked. System
+ * failures (out-of-disk, permission denied) propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -134,8 +142,20 @@ export async function runDecision(input: {
     return { ok: false, error: resolved.error, message: resolved.message };
   }
 
+  const target = await resolveCaptureTarget({
+    explicitName: args.store,
+    ...(input.home !== undefined && { home: input.home }),
+  });
+
   if (args.mode === 'inspect') {
-    return { ok: true, mode: 'inspect', episode: resolved.episode };
+    return {
+      ok: true,
+      mode: 'inspect',
+      episode: resolved.episode,
+      store: target.ok
+        ? { name: target.store.name, reachable: true }
+        : { name: args.store, reachable: false, ...describeStoreFailure(target) },
+    };
   }
 
   const verdict = args.verdict;
@@ -143,12 +163,8 @@ export async function runDecision(input: {
     return { ok: false, error: 'invalid-args', message: '--verdict is required to record a decision' };
   }
 
-  const target = await resolveCaptureTarget({
-    explicitName: args.store,
-    ...(input.home !== undefined && { home: input.home }),
-  });
   if (!target.ok) {
-    return describeStoreFailure(target);
+    return { ok: false, ...describeStoreFailure(target) };
   }
 
   const comment = await readAll(input.stdin);
@@ -237,16 +253,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 // region | Helpers
 
-/** Maps a store-resolution failure onto the helper's structured result, preserving the resolver's categorical reason. */
-function describeStoreFailure(
-  resolved: Extract<Awaited<ReturnType<typeof resolveCaptureTarget>>, { ok: false }>,
-): DecisionResult {
+/**
+ * Maps a store-resolution failure onto the helper's error code and message, preserving the resolver's categorical
+ * reason. Both modes read it, so inspect and the recording path cannot describe one condition in different words.
+ */
+function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolveCaptureTarget>>, { ok: false }>): {
+  error: DecisionErrorCode;
+  message: string;
+} {
   switch (resolved.reason) {
     case 'missing-store':
-      return { ok: false, error: 'missing-store', message: formatMissingStoreMessage(resolved) };
+      return { error: 'missing-store', message: formatMissingStoreMessage(resolved) };
     case 'not-registered':
       return {
-        ok: false,
         error: 'store-not-registered',
         message:
           resolved.registryError !== undefined
@@ -255,13 +274,11 @@ function describeStoreFailure(
       };
     case 'readonly-store':
       return {
-        ok: false,
         error: 'readonly-store',
         message: `event store "${resolved.name}" is marked readonly in kb.yaml; decisions are refused`,
       };
     case 'no-default':
       return {
-        ok: false,
         error: 'no-default-store',
         message:
           resolved.registryError !== undefined

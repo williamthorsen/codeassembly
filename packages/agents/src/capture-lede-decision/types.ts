@@ -2,8 +2,8 @@
 // JSON payloads emitted to stdout.
 //
 // The stdout payload is a discriminated union on `ok`, mirroring `capture-event`. Recoverable failures (an unresolvable
-// artifact, no reachable store, schema validation, invalid args) return `{ ok: false, error, message }`; system errors
-// (out-of-disk, permission denied) print to stderr and exit non-zero.
+// artifact, an unreachable store on the recording path, schema validation, invalid args) return
+// `{ ok: false, error, message }`; system errors (out-of-disk, permission denied) print to stderr and exit non-zero.
 
 /** The verdicts an author may record, in the order the skill presents them. */
 export const LEDE_VERDICTS = ['accepted', 'revised'] as const;
@@ -58,11 +58,20 @@ export type ResolveEpisodeOutcome =
 export type EpisodeErrorCode =
   'no-artifact-dir' | 'no-agent-lede' | 'no-merged-lede' | 'no-doctrine' | 'unresolved-identity';
 
-/** The stdout payload for `--inspect`: the resolved episode, with nothing written. */
+/**
+ * The store a decision would record into, as seen from inspect mode: reachable, or the categorical reason a record
+ * could not be written to it. Reported rather than raised, so a caller learns the decision cannot be kept before it
+ * asks the author to make one.
+ */
+export type InspectedStore =
+  { name: string; reachable: true } | { name: string; reachable: false; error: DecisionErrorCode; message: string };
+
+/** The stdout payload for `--inspect`: the resolved episode and its destination store, with nothing written. */
 export interface InspectSuccess {
   ok: true;
   mode: 'inspect';
   episode: LedeEpisode;
+  store: InspectedStore;
 }
 
 /** The stdout payload for a recorded decision. */
