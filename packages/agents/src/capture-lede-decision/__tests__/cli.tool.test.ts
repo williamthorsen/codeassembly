@@ -11,6 +11,8 @@ import type { DecisionResult } from '../types.ts';
 
 const NOW = new Date('2026-07-30T20:41:17.000Z');
 const STORE_NAME = 'codeassembly';
+// A registry name the helper does not serve, so an assertion on it cannot be satisfied by the bound default.
+const OTHER_STORE_NAME = 'some-other-corpus';
 
 describe(parseArgs, () => {
   it('parses every value-bearing flag in long form', () => {
@@ -26,7 +28,7 @@ describe(parseArgs, () => {
       '--data-dir',
       '/skills/_data',
       '--store',
-      STORE_NAME,
+      OTHER_STORE_NAME,
       '--type',
       'feat',
       '--scope',
@@ -50,7 +52,7 @@ describe(parseArgs, () => {
       pr: '1124',
       mergeCommit: '35aa58d7',
       dataDir: '/skills/_data',
-      store: STORE_NAME,
+      store: OTHER_STORE_NAME,
       type: 'feat',
       scope: 'agents',
       ticket: '1107',
@@ -91,6 +93,12 @@ describe(parseArgs, () => {
   it('refuses a verdict outside the declared set', () => {
     expect(() => parseArgs(['--verdict', 'maybe', ...requiredFlags()])).toThrow('--verdict must be one of');
   });
+
+  it('refuses the @default sentinel, which names a machine setting rather than a corpus', () => {
+    expect(() => parseArgs(['--inspect', '--store', '@default', ...requiredFlags()])).toThrow(
+      '--store @default is not accepted',
+    );
+  });
 });
 
 describe(runDecision, () => {
@@ -116,7 +124,7 @@ describe(runDecision, () => {
 
   it('reports an unreachable store without failing the inspection', async () => {
     const fixture = await createLedeFixture();
-    const store = await makeStore('some-other-corpus');
+    const store = await makeStore(OTHER_STORE_NAME);
 
     const result = await runDecision(
       runInput({ argv: ['--inspect', ...flagsFor(fixture)], fixture, home: store.home }),
@@ -135,7 +143,7 @@ describe(runDecision, () => {
 
     const result = await runDecision(
       runInput({
-        argv: ['--verdict', 'revised', '--store', STORE_NAME, ...flagsFor(fixture)],
+        argv: ['--verdict', 'revised', ...flagsFor(fixture)],
         fixture,
         home: store.home,
         comment: 'Cut the setup clause.',
@@ -153,9 +161,7 @@ describe(runDecision, () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
 
-    await runDecision(
-      runInput({ argv: ['--inspect', '--store', STORE_NAME, ...flagsFor(fixture)], fixture, home: store.home }),
-    );
+    await runDecision(runInput({ argv: ['--inspect', ...flagsFor(fixture)], fixture, home: store.home }));
 
     await expect(readdir(join(store.storePath, 'content', 'events'))).rejects.toThrow();
   });
@@ -179,9 +185,19 @@ describe(runDecision, () => {
     expect(expectCommit(result).store).toBe(STORE_NAME);
   });
 
+  it('records into a corpus named by --store', async () => {
+    const fixture = await createLedeFixture();
+    const store = await makeStore(OTHER_STORE_NAME);
+    const argv = ['--verdict', 'accepted', '--store', OTHER_STORE_NAME, ...flagsFor(fixture)];
+
+    const result = await runDecision(runInput({ argv, fixture, home: store.home }));
+
+    expect(expectCommit(result).store).toBe(OTHER_STORE_NAME);
+  });
+
   it('refuses a decision where the store it serves is registered under no name', async () => {
     const fixture = await createLedeFixture();
-    const store = await makeStore('some-other-corpus');
+    const store = await makeStore(OTHER_STORE_NAME);
     const argv = ['--verdict', 'accepted', ...flagsFor(fixture)];
 
     const result = await runDecision(runInput({ argv, fixture, home: store.home }));
@@ -269,7 +285,10 @@ function requiredFlags(): string[] {
   return ['--artifact-dir', '/tickets/1107', '--pr', '1124', '--merge-commit', '35aa58d7'];
 }
 
-/** Builds runner input over a fixture, defaulting the environment so no test reads the developer's own. */
+/**
+ * Builds runner input over a fixture, defaulting the environment so no test reads the developer's own. `home` falls back
+ * to the fixture root, which carries no `.agents/kb.yaml`, so a store resolves to `not-registered` deterministically.
+ */
 function runInput(input: {
   argv: string[];
   fixture: LedeFixture;
@@ -283,7 +302,7 @@ function runInput(input: {
     env: {},
     now: NOW,
     defaultDataDir: input.fixture.dataDir,
-    ...(input.home !== undefined && { home: input.home }),
+    home: input.home ?? input.fixture.root,
   };
 }
 
