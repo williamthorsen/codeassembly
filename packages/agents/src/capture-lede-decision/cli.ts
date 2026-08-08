@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { ulid } from 'ulid';
 
 import { writeEvent } from '../capture-event/write-event.ts';
+import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
@@ -18,7 +19,13 @@ import { resolveRepo } from '../shared/resolve-repo.ts';
 import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareDecision } from './prepare-decision.ts';
 import { resolveEpisode } from './resolve-episode.ts';
-import { type DecisionResult, isLedeVerdict, LEDE_VERDICTS, type LedeVerdict } from './types.ts';
+import {
+  type DecisionErrorCode,
+  type DecisionResult,
+  isLedeVerdict,
+  LEDE_VERDICTS,
+  type LedeVerdict,
+} from './types.ts';
 
 /** The flags this helper accepts; the comment comes from stdin, so it has no flag of its own. */
 const FLAGS: readonly FlagSpec[] = [
@@ -38,6 +45,13 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'verdict', takesValue: true },
 ];
 
+/**
+ * The event store this helper records into when `--store` names none. The corpus is cross-repo: one store holds every
+ * lede decision, whichever repository the pull request merged in, so the destination is a property of this helper
+ * rather than of the change under review.
+ */
+const LEDE_DECISION_STORE = 'codeassembly';
+
 /** Parsed command-line invocation of the capture-lede-decision helper. */
 export interface ParsedArgs {
   /** `inspect` resolves and reports the episode; `commit` records the author's verdict. */
@@ -49,7 +63,8 @@ export interface ParsedArgs {
   mergeCommit: string;
   /** Directory holding `lede-voice.md` and `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
   dataDir: string | null;
-  store: string | null;
+  /** The store to record into; falls back to the one this helper serves when `--store` names none. */
+  store: string;
   type: string | null;
   scope: string | null;
   ticket: string | null;
@@ -83,13 +98,15 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end. In inspect mode it resolves the decision episode and reports it, writing nothing and
- * reading no stdin, so a caller can present both ledes before asking the author to decide. In commit mode it resolves
- * the same episode, reads the comment from stdin, and writes one event record to the named store.
+ * Runs the helper end to end. In inspect mode it resolves the decision episode and the store a decision would record
+ * into, reporting both and writing nothing, so a caller can present the ledes — or stop short of asking — before the
+ * author is put to a decision. In commit mode it resolves the same episode, reads the comment from stdin, and writes
+ * one event record.
  *
- * Every resolution failure and every store-resolution failure becomes a structured `{ ok: false, ... }` result, so a
- * caller invoking this after an irreversible merge can report one line and continue. System failures (out-of-disk,
- * permission denied) propagate to the caller's try/catch.
+ * Every episode-resolution failure, and every store failure on the recording path, becomes a structured
+ * `{ ok: false, ... }` result, so a caller invoking this after an irreversible merge can report one line and continue.
+ * An unreachable store leaves inspect at `ok: true`: the episode resolved, and only recording is blocked. System
+ * failures (out-of-disk, permission denied) propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -126,8 +143,20 @@ export async function runDecision(input: {
     return { ok: false, error: resolved.error, message: resolved.message };
   }
 
+  const target = await resolveCaptureTarget({
+    explicitName: args.store,
+    ...(input.home !== undefined && { home: input.home }),
+  });
+
   if (args.mode === 'inspect') {
-    return { ok: true, mode: 'inspect', episode: resolved.episode };
+    return {
+      ok: true,
+      mode: 'inspect',
+      episode: resolved.episode,
+      store: target.ok
+        ? { name: target.store.name, reachable: true }
+        : { name: args.store, reachable: false, ...describeStoreFailure(target) },
+    };
   }
 
   const verdict = args.verdict;
@@ -135,12 +164,8 @@ export async function runDecision(input: {
     return { ok: false, error: 'invalid-args', message: '--verdict is required to record a decision' };
   }
 
-  const target = await resolveCaptureTarget({
-    explicitName: args.store,
-    ...(input.home !== undefined && { home: input.home }),
-  });
   if (!target.ok) {
-    return describeStoreFailure(target);
+    return { ok: false, ...describeStoreFailure(target) };
   }
 
   const comment = await readAll(input.stdin);
@@ -190,7 +215,9 @@ export async function runDecision(input: {
  * Parses the helper's argv. `--inspect` and `--verdict` select the mode and are mutually exclusive; exactly one must
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
  * change it describes is not worth recording. Every other flag is optional: the work type, scope, and ticket fall back
- * to the change-summary artifact, and the two lede overrides fall back to their artifacts.
+ * to the change-summary artifact, the two lede overrides fall back to their artifacts, and `--store` names a corpus
+ * registered under some other name. The `@default` sentinel is refused: it names a machine's default store rather than
+ * a corpus, which is the route by which decisions have been filed outside the one that holds them.
  *
  * @internal - Exported to allow testing.
  */
@@ -205,6 +232,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`--${name} requires a value`);
     }
   }
+  if (raw.store === DEFAULT_KB_SENTINEL) {
+    throw new Error(
+      `--store ${DEFAULT_KB_SENTINEL} is not accepted: a lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
+        'not to whichever store kb.yaml names as its default. Omit --store, or name the corpus.',
+    );
+  }
 
   const { mode, verdict } = resolveMode({ inspect: flags.some((flag) => flag.name === 'inspect'), raw });
 
@@ -215,7 +248,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     pr: requireFlag(raw, 'pr'),
     mergeCommit: requireFlag(raw, 'merge-commit'),
     dataDir: raw['data-dir'] ?? null,
-    store: raw.store ?? null,
+    store: raw.store ?? LEDE_DECISION_STORE,
     type: raw.type ?? null,
     scope: raw.scope ?? null,
     ticket: raw.ticket ?? null,
@@ -228,16 +261,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 // region | Helpers
 
-/** Maps a store-resolution failure onto the helper's structured result, preserving the resolver's categorical reason. */
-function describeStoreFailure(
-  resolved: Extract<Awaited<ReturnType<typeof resolveCaptureTarget>>, { ok: false }>,
-): DecisionResult {
+/**
+ * Maps a store-resolution failure onto the helper's error code and message, preserving the resolver's categorical
+ * reason. Both modes read it, so inspect and the recording path cannot describe one condition in different words.
+ */
+function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolveCaptureTarget>>, { ok: false }>): {
+  error: DecisionErrorCode;
+  message: string;
+} {
   switch (resolved.reason) {
     case 'missing-store':
-      return { ok: false, error: 'missing-store', message: formatMissingStoreMessage(resolved) };
+      return { error: 'missing-store', message: formatMissingStoreMessage(resolved) };
     case 'not-registered':
       return {
-        ok: false,
         error: 'store-not-registered',
         message:
           resolved.registryError !== undefined
@@ -246,13 +282,11 @@ function describeStoreFailure(
       };
     case 'readonly-store':
       return {
-        ok: false,
         error: 'readonly-store',
         message: `event store "${resolved.name}" is marked readonly in kb.yaml; decisions are refused`,
       };
     case 'no-default':
       return {
-        ok: false,
         error: 'no-default-store',
         message:
           resolved.registryError !== undefined
