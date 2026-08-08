@@ -7,4 +7,4 @@ version: 1
 
 # Understanding CodeAssembly
 
-A `<!-- codeassembly-` marker signifies generated content, as does any file inside a skill directory whose `SKILL.md` carries one. Consult [deployed-file provenance](../../skills/_data/deployed-file-provenance.md) before editing either.
+A `<!-- codeassembly-` marker signifies generated content, as does any file in your harness's `skills/` or `scripts/` directory. Consult [deployed-file provenance](../../skills/_data/deployed-file-provenance.md) before editing either.

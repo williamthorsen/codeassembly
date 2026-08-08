@@ -21,16 +21,22 @@ A file is deployed when any of the following holds.
 
 **It sits under a `_sources/` directory beside deployed skills.** That tree holds each declared source's support files, which `sync` writes and leaves unmarked.
 
+**It sits in a harness's `scripts/` directory.** `install` copies those files verbatim and marks none of them, whatever the extension.
+
+A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region sits in an otherwise hand-authored guidance file. Inside it, each rulebook's block is wrapped in `<!-- rulebook:{slug} -->`.
+
 One deployed file carries neither a marker nor a marked artifact around it: `install --link` writes a symlink rather than a copy. Its target is a build output under `dist/`, so an edit there survives until the next build and no longer.
 
 ## Finding the source
 
-An `install`-deployed file's marker carries a `Source:` line linking to the file it was built from.
+An `install`-deployed file's marker carries a `Source:` line linking to the file it was built from. A script carries no marker; its source is the matching file under `scripts/` in the library or the declaring source.
 
-A `sync`-deployed artifact has no such line. Run `codeassembly sync --dry-run` and read its resolution report, which names each deployed artifact's origin:
+A `sync`-deployed artifact has no such line either. Read the resolution report from the dry run for the domain the file sits in: `codeassembly sync --dry-run` for a file under a project's harness directory, and `codeassembly sync --global --dry-run` for one under the home directory. A dry run of the wrong domain lists other artifacts, or none at all where that domain declares nothing. The report names each deployed artifact's origin:
 
 - `← library` is the built-in library, shipped in `packages/agents/content/` of `williamthorsen/codeassembly`
 - `← source "<name>"` is the `sources:` or `packages:` entry of that name in the `codeassembly.yaml` scope chain
+
+An ambient region's source is the rulebooks its `<!-- rulebook:{slug} -->` blocks name, each resolved through the same report.
 
 ## Getting a change in
 
