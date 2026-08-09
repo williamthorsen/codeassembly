@@ -8,10 +8,10 @@
       "description": "Project-guidance wiring, freshness, and size",
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.25.0",
+      "readyupVersion": "0.26.0",
       "source": "kits/default.ts",
       "sourceHash": "636e8335",
-      "targetHash": "b7f2e0e9"
+      "targetHash": "ab6e93bc"
     }
   ]
 }
