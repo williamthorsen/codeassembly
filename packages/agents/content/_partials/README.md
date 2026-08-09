@@ -145,7 +145,17 @@ The grammar reserves additional tokens for future use. Partial authors must not 
 
 - `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->` — reserved for future named-slot support.
 - `<!-- children -->` — the canonical default-slot placeholder. Use exactly this token; do not invent variants.
-- `<!-- guidance-hook: name -->` — the guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. Every render seam removes the line — skills, subagents, rulebooks, and harness guidance alike — and where includes expand it runs after them, so a hook a partial declares is declared by each body that inlines it. A line reaching for the directive but missing its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: a slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+- `<!-- guidance-hook: name -->` — the guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line reaching for the directive but missing its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: a slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+
+### Partial or guidance hook
+
+Both put shared prose into a body, and they differ in who chooses the prose.
+
+A **partial** resolves by path. The author writes `<!-- include: _partials/x.md / -->` and every consumer of the library gets that file, inlined at install time to byte-identical output. Use one for doctrine the library asserts for everyone: comment discipline, the artifact conventions, anything whose content is not a matter of local taste.
+
+A **guidance hook** resolves by binding. The author writes `<!-- guidance-hook: name -->` and leaves the slot empty; a `codeassembly.yaml` names which rulebooks fill it, per project or per machine. Use one where the right content differs by who is running — personal code-style preferences, a project's own glossary — which is exactly what a path fixed at authoring time cannot express.
+
+A hook only fills in a declared skill or subagent, the artifacts a declaration reaches. A directive in a rulebook body, a `skills/_data/` support entry, or a harness guidance file is always stripped, and so is every hook under `install`, which resolves no declaration. Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it. `packages/agents/README.md` carries the binding syntax and the naming rules.
 
 The expander rejects unrecognized parameters following `include:` with an `unrecognized-parameter` error. This protects the grammar from typos quietly slipping past.
 
