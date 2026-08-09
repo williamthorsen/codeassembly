@@ -180,8 +180,6 @@ Omit any flag whose relationship step 4 did not decide. Each takes issue numbers
 
 These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number — reaching for that endpoint is the detour this note exists to prevent.
 
-On GitHub Enterprise Server, `--parent` requires 3.17 or later and the two blocking relationships require 3.19, so on 3.17 and 3.18 a parent lands while a blocker fails from a CLI new enough to satisfy the floor above.
-
 #### Other platforms
 
 Use whatever the platform's own tooling offers for parent and blocking relationships.
