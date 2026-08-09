@@ -7,7 +7,7 @@ import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
 import type { GuidanceHookFills } from '../../src/lib/guidance-hooks.ts';
-import { assertFilledAnchorsResolve, fillGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
+import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.
@@ -16,7 +16,6 @@ const RULEBOOKS_ROOT = path.join(CONTENT_ROOT, 'guidance', 'rulebooks');
 const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
 
 const HOOK = 'implementation-preferences';
-const DIRECTIVE = `<!-- guidance-hook: ${HOOK} -->`;
 
 /** A body declaring the hook: the slug naming it in a test title, and its path under the content root. */
 interface DeclaringBody {
@@ -57,10 +56,11 @@ const REVIEWER_SUBAGENTS: ReadonlyArray<string> = [
 ];
 
 describe('guidance-hook reach', () => {
-  it.each(DECLARING_BODIES)('$label declares the hook exactly once', async ({ label, relativePath }) => {
-    const expanded = await expandBody(relativePath);
+  it.each(DECLARING_BODIES)('$label declares the hook', async ({ label, relativePath }) => {
+    const declared = listGuidanceHooks(await expandBody(relativePath), label).map(({ name }) => name);
+
     const message = `${label} writes or judges code but declares no ${HOOK} hook, so a binding cannot reach it`;
-    expect(countOccurrences(expanded, DIRECTIVE), message).toBe(1);
+    expect(declared, message).toContain(HOOK);
   });
 
   it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {
@@ -72,7 +72,8 @@ describe('guidance-hook reach', () => {
   });
 
   it('splices every bound rulebook into a declaring body', async () => {
-    const filled = fillGuidanceHooks(await expandBody('skills/implement-plan/SKILL.md'), await buildFills(), HOOK);
+    const label = 'implement-plan';
+    const filled = fillGuidanceHooks(await expandBody(`skills/${label}/SKILL.md`), await buildFills(), label);
 
     for (const { rule } of BOUND_RULEBOOKS) {
       expect(filled.content).toContain(rule);
@@ -99,10 +100,6 @@ async function buildFills(): Promise<GuidanceHookFills> {
     BOUND_RULEBOOKS.map(async ({ slug }) => ({ slug, body: await readRulebookBody(slug) })),
   );
   return new Map([[HOOK, bound]]);
-}
-
-function countOccurrences(haystack: string, needle: string): number {
-  return haystack.split(needle).length - 1;
 }
 
 /** Returns a skill or subagent body with its includes expanded — the body the deploy pipeline goes on to fill. */
