@@ -282,7 +282,7 @@ async function writeLibraryRulebook(
   contentDir: string,
   slug: string,
   body: string,
-  delivery: string = 'ambient',
+  delivery = 'ambient',
 ): Promise<void> {
   const dir = path.join(contentDir, 'guidance', 'rulebooks');
   await mkdir(dir, { recursive: true });

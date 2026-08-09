@@ -6,9 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
-import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 import type { GuidanceHookFills } from '../../src/lib/guidance-hooks.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
+import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.

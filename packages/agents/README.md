@@ -217,7 +217,9 @@ Targeting claude, rovo (detected in ~).
 
 #### Guidance hooks
 
-A **guidance hook** is a named slot a skill or subagent declares in its body with `<!-- guidance-hook: <name> -->`, filled at sync time with the bodies of the rulebooks a declaration binds to it. It is the third route guidance takes into an agent's context, beside the two a rulebook declares for itself: `delivery: ambient`, which charges every session, and `delivery: skill`, which depends on the agent choosing to consult it. A hook is scoped to the act — the guidance is present when the skill runs, and nowhere else.
+A **guidance hook** is a named slot a skill or subagent declares in its body with `<!-- guidance-hook: <name> -->`, filled at sync time with the bodies of the rulebooks a declaration binds to it. It is the third route guidance takes into an agent's context, beside `delivery: ambient`, which charges every session, and `delivery: skill`, which depends on the agent choosing to consult it. A hook is scoped to the act — the guidance is present when the skill runs, and nowhere else.
+
+A rulebook records the route with `delivery: hook`, alone or alongside the other two. That mode instructs nothing, unlike its siblings: the binding lives in a `codeassembly.yaml`, so a rulebook cannot splice itself into a host body and a hook fills from the deploy closure whether or not the rulebook names the route. What declaring it buys is the three checks below.
 
 `guidance-hooks` is the one map-valued key. Each hook name owns a `use`/`drop` block of its own, resolved on the scope chain exactly as an artifact type is, so a tier binds to one hook without disturbing another:
 
@@ -236,6 +238,16 @@ A hook nothing binds contributes nothing to deployed output, marker included. `i
 Name a hook for the concern rather than the consumer — `implementation-preferences`, not `implement-plan-preferences` — since concern-scoping is what lets one binding fill every consumer, and carry no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar the directive enforces. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
 
 Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
+
+Three further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
+
+| Reported          | Condition                                                                                | Level   |
+| ----------------- | ---------------------------------------------------------------------------------------- | ------- |
+| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                                 | warning |
+| Bound and ambient | a bound rulebook's `delivery` also names `ambient`, so a session receives its text twice | warning |
+| Declared, unbound | a rulebook names `hook` and no binding uses it                                           | advice  |
+
+The last is not a defect. A collection can carry a hook-declaring rulebook into a project that never binds it, so the line names an affordance going unused rather than something broken.
 
 A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance every consumer of the library should get is a partial; guidance one user or one project wants is a hook. See `content/_partials/README.md`.
 

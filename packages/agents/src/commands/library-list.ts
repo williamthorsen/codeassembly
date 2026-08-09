@@ -44,7 +44,7 @@ const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
 /** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
 
-/** Delivery cell for an artifact with no delivery mode — collections, skills, and subagents. Only rulebooks carry delivery modes (`ambient`/`skill`). */
+/** Delivery cell for an artifact with no delivery mode — collections, skills, and subagents. Only rulebooks carry delivery modes (`ambient`/`hook`/`skill`). */
 const NO_DELIVERY_MODE = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
