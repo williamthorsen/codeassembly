@@ -1,4 +1,5 @@
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
+import { readHomeProvenance } from '../lib/home-provenance.ts';
 import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
 import type { HarnessId, InstallOptions } from '../lib/types.js';
 import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
@@ -10,6 +11,8 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
+
+  await reportHomeProvenance(baseDir);
 
   // Report shared guidance status unconditionally
   await reportSharedGuidanceStatus(manifest, baseDir);
@@ -58,6 +61,23 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
     console.info(`  Summary: ${currentCount} current, ${modifiedCount} modified, ${missingCount} missing`);
     await reportHookEntryStatus(harnessId, false, baseDir);
   }
+}
+
+/**
+ * Reports which installation last wrote the home domain, as one line. Stays silent where no stamp exists, since a
+ * home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
+ */
+async function reportHomeProvenance(baseDir?: string): Promise<void> {
+  const provenance = await readHomeProvenance(baseDir);
+  if (provenance === undefined) {
+    return;
+  }
+
+  const commit = provenance.sourceCommit === undefined ? '' : ` @ ${provenance.sourceCommit.slice(0, 7)}`;
+  console.info(
+    `Home domain last written by ${provenance.version} at ${provenance.sourcePath}${commit} ` +
+      `via \`${provenance.command}\` on ${provenance.writtenAt}`,
+  );
 }
 
 /**

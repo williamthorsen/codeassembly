@@ -10,6 +10,8 @@ import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.js';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
+import { recordHomeProvenance } from '../lib/home-provenance.ts';
+import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { listSupportEntries } from '../lib/library-catalog.ts';
 import {
@@ -22,6 +24,7 @@ import {
 } from '../lib/manifest.js';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.js';
 import { homeAnchor, rewritePathsInFile } from '../lib/path-rewriter.js';
+import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.js';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -50,6 +53,14 @@ export async function installCommand(
   baseDir?: string,
   contentDirOverride?: string,
 ): Promise<void> {
+  // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would.
+  await assertDesignatedWriter({
+    command: 'install',
+    homeDir: baseDir,
+    packageRoot: resolveRunningPackageRoot(),
+    shouldOverrideWriter: options.shouldOverrideWriter,
+  });
+
   const contentDir = contentDirOverride ?? resolveContentDir();
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
@@ -69,6 +80,9 @@ export async function installCommand(
       console.info('\nManifest updated.');
     } else {
       console.info('No target harnesses detected. Nothing else to install.');
+    }
+    if (!options.dryRun) {
+      await recordHomeProvenance('install', baseDir);
     }
     return;
   }
@@ -162,7 +176,7 @@ export async function installCommand(
 
     updatedHarnesses[harnessId] = {
       harness: harnessId,
-      version: '0.1.0',
+      version: readRunningPackageVersion(),
       installedAt: new Date().toISOString(),
       entries,
     };
@@ -177,6 +191,7 @@ export async function installCommand(
     };
     await writeManifest(manifestPath, updatedManifest);
     console.info('\nManifest updated.');
+    await recordHomeProvenance('install', baseDir);
   }
 }
 
@@ -489,7 +504,7 @@ async function installSharedGuidance(
   console.info(`  ✅ Installed ${entries.length} shared guidance items`);
 
   return {
-    version: '0.1.0',
+    version: readRunningPackageVersion(),
     installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
     entries,
   };

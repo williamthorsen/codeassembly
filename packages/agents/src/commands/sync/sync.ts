@@ -23,6 +23,8 @@ import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hoo
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { recordHomeProvenance } from '../../lib/home-provenance.ts';
+import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import {
   createContentRootLinkAnchor,
@@ -37,6 +39,7 @@ import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../.
 import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug, renderSkillFile } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../../lib/rulebook-transform.ts';
+import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../../lib/skill-transform.ts';
@@ -228,6 +231,14 @@ export async function syncGlobalCommand(
   homeDir: string = homedir(),
   contentDirOverride?: string,
 ): Promise<SyncOutcome> {
+  // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would.
+  await assertDesignatedWriter({
+    command: 'sync --global',
+    homeDir,
+    packageRoot: resolveRunningPackageRoot(),
+    shouldOverrideWriter: options.shouldOverrideWriter,
+  });
+
   const declarationPath = path.join(homeDir, '.agents', 'codeassembly.yaml');
   if (!existsSync(declarationPath)) {
     return { kind: 'no-declaration', declarationPath, scope: 'global' };
@@ -239,6 +250,11 @@ export async function syncGlobalCommand(
     contentDirOverride,
   );
   const retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
+
+  if (!options.dryRun) {
+    await recordHomeProvenance('sync --global', homeDir);
+  }
+
   if (retirement === undefined || outcome.kind !== 'reconciled') {
     return outcome;
   }
@@ -263,7 +279,10 @@ async function reconcileDomain(
   homeDir: string,
   contentDirOverride?: string,
 ): Promise<SyncOutcome> {
-  const declaration = await resolveDeclaration({ cwd: domain.baseDir });
+  const declaration = await resolveDeclaration({
+    cwd: domain.baseDir,
+    domain: domain.ambient === 'harness-home' ? 'home' : 'project',
+  });
   if (declaration === undefined) {
     return {
       kind: 'no-declaration',

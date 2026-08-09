@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
+import { type DeclarationDomain, parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { ALL_HARNESS_IDS, detectHarnesses } from './harness.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import type { HarnessId, InstallOptions } from './types.ts';
@@ -43,9 +43,6 @@ export async function resolveTargetHarnesses(options: {
 
 // region | Helpers
 
-/** Which tier pair a declaration file belongs to. A file's `root: true` reaches only its own. */
-type DeclarationDomain = 'home' | 'project';
-
 /** One declaration file in the user-wide chain, tagged with the domain whose contributions its `root` may clear. */
 interface ChainFile {
   readonly filePath: string;
@@ -70,7 +67,7 @@ async function accumulateDeclaredHarnesses(
   let anyDeclared = false;
 
   for (const { filePath, domain } of chain) {
-    const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath);
+    const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath, domain);
 
     if (declaration.root) {
       // Materialized before deleting, so the walk never mutates the map it is reading.

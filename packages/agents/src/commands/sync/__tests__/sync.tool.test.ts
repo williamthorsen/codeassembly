@@ -10,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../../lib/content-resolver.ts';
+import { getHomeProvenancePath, readHomeProvenance } from '../../../lib/home-provenance.ts';
+import { resolveRunningPackageRoot } from '../../../lib/running-package.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
@@ -191,6 +193,16 @@ describe(syncCommand, () => {
     expect(localHost).not.toContain(ambientRegionNote);
     expect(localHost).toContain('# Personal notes');
     expect(localHost).toContain('<!-- codeassembly-ambient:start -->');
+  });
+
+  it('refuses a project declaration that sets the home-domain writer key', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeLocalDeclaration(`home-writer: ${homeDir}\n`);
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/home-writer/);
+
+    expect(existsSync(localHostPath())).toBe(false);
   });
 
   it('refuses to write a local host carrying an unmatched ambient marker, changing nothing', async () => {
@@ -2497,5 +2509,60 @@ describe(syncGlobalCommand, () => {
 
     expect(existsSync(path.join(neutralDir, 'alpha.md'))).toBe(false);
     expect(await readFile(path.join(neutralDir, 'notes.txt'), 'utf8')).toBe('mine\n');
+  });
+
+  describe('home provenance', () => {
+    it('stamps the run it completed', async () => {
+      await declareRaw('rulebooks:\n  use: []\n');
+
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+      expect(await readHomeProvenance(homeDir)).toMatchObject({ command: 'sync --global' });
+    });
+
+    it('leaves the stamp untouched on a dry run', async () => {
+      await declareRaw('rulebooks:\n  use: []\n');
+
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+
+      expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
+    });
+
+    it('leaves the stamp untouched when no home declaration exists to act on', async () => {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+      expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
+    });
+  });
+
+  describe('designated-writer guard', () => {
+    it('refuses a mismatched installation before deploying anything', async () => {
+      const guidanceFile = await seedGuidanceFile('.claude', 'CLAUDE.md');
+      await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+      await declareRaw(`home-writer: ${path.join(homeDir, 'designated')}\nrulebooks:\n  use:\n    - alpha\n`);
+
+      await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(
+        /not the designated home-domain writer/,
+      );
+      expect(await readFile(guidanceFile, 'utf8')).not.toContain('Alpha rules.');
+    });
+
+    it('refuses a dry run exactly as it refuses the real one', async () => {
+      await declareRaw(`home-writer: ${path.join(homeDir, 'designated')}\n`);
+
+      await expect(syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir)).rejects.toThrow(
+        /not the designated home-domain writer/,
+      );
+    });
+
+    it('deploys when the setting designates the running installation', async () => {
+      const guidanceFile = await seedGuidanceFile('.claude', 'CLAUDE.md');
+      await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+      await declareRaw(`home-writer: ${resolveRunningPackageRoot()}\nrulebooks:\n  use:\n    - alpha\n`);
+
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+      expect(await readFile(guidanceFile, 'utf8')).toContain('Alpha rules.');
+    });
   });
 });

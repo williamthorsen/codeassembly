@@ -38,7 +38,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
-Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone. Run `codeassembly --help` for the authoritative list.
+Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
 
 ## Session-lifecycle hooks
 
@@ -420,6 +420,35 @@ The declaration resolves in two independent **domains**, each with its own base 
 A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain, so guidance the developer bound globally goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovodev/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovodev/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
 
 When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: The new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
+
+#### Designated home-domain writer
+
+Every repository and worktree carries a `codeassembly` binary of its own, and each ships the library its own checkout holds. `install` and `sync --global` write the shared home domain, so whichever binary ran last decides what the home state contains. An older one silently overwrites a newer one's artifacts, and its orphan retraction deletes what its smaller catalog does not name.
+
+`home-writer` names the one installation allowed to write:
+
+```yaml
+# ~/.agents/codeassembly.local.yaml
+home-writer: ~/repos/projects/codeassembly.live
+```
+
+The setting reads from the home domain's chain alone, the local tier overriding the base one, and it takes an absolute path (a leading `~` expands to the home directory). A project declaration that sets it is rejected by name, since a machine's designated writer is not a fact a repository can state. It may name either a worktree root or the package directory within it: the guard passes when the running package's root is that path or lies under it, comparing both through symlinks.
+
+With the setting present, `install` and `sync --global` invoked from any other installation refuse before writing anything, naming the designated path, the invoking one, and the file that configured it. `--dry-run` refuses identically, so a preview never reports a write the real run would reject. `--override-writer` proceeds from a non-designated installation and says so in the output.
+
+With the setting absent the commands behave as they always have, so a fresh machine bootstraps with `npx codeassembly install` and an external consumer needs no configuration. Removing the key is how to stop designating a writer; an empty or relative value fails the run rather than quietly disabling the guard.
+
+#### Home-domain provenance
+
+Every non-dry-run `install` and `sync --global` records what it wrote to `~/.codeassembly/home-provenance.json`: the version of the package whose binary ran, its source path, the commit that source sat on where one is resolvable, the command, and a timestamp. A dry run leaves the file untouched, so the stamp reports what wrote rather than what was previewed.
+
+`codeassembly status` renders it as its first line:
+
+```
+Home domain last written by 0.8.0 at /Users/me/repos/codeassembly.live/packages/agents @ a1b2c3d via `sync --global` on 2026-08-09T20:05:09.412Z
+```
+
+A home domain last written by a build predating the stamp has no line to show, and `status` prints none.
 
 ## Keeping deployed guidance current
 
