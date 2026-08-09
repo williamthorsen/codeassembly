@@ -23,6 +23,7 @@ import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hoo
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import {
@@ -249,6 +250,11 @@ export async function syncGlobalCommand(
     contentDirOverride,
   );
   const retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
+
+  if (!options.dryRun) {
+    await recordHomeProvenance('sync --global', homeDir);
+  }
+
   if (retirement === undefined || outcome.kind !== 'reconciled') {
     return outcome;
   }

@@ -438,6 +438,18 @@ With the setting present, `install` and `sync --global` invoked from any other i
 
 With the setting absent the commands behave as they always have, so a fresh machine bootstraps with `npx codeassembly install` and an external consumer needs no configuration. Removing the key is how to stop designating a writer; an empty or relative value fails the run rather than quietly disabling the guard.
 
+#### Home-domain provenance
+
+Every non-dry-run `install` and `sync --global` records what it wrote to `~/.codeassembly/home-provenance.json`: the version of the package whose binary ran, its source path, the commit that source sat on where one is resolvable, the command, and a timestamp. A dry run leaves the file untouched, so the stamp reports what wrote rather than what was previewed.
+
+`codeassembly status` renders it as its first line:
+
+```
+Home domain last written by 0.8.0 at /Users/me/repos/codeassembly.live/packages/agents @ a1b2c3d via `sync --global` on 2026-08-09T20:05:09.412Z
+```
+
+A home domain last written by a build predating the stamp has no line to show, and `status` prints none.
+
 ## Keeping deployed guidance current
 
 `sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content it renders last changed, and that moment falls in a different place depending on where the content comes from:

@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
@@ -27,6 +28,33 @@ describe('statusCommand', () => {
   function makeInstallOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
+
+  it('reports which installation last wrote the home domain', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
+
+    const infoSpy = vi.spyOn(console, 'info');
+    await statusCommand({ harness: 'claude' }, tempDir);
+
+    const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(output).toContain(`Home domain last written by ${readRunningPackageVersion()}`);
+    expect(output).toContain('via `install`');
+
+    infoSpy.mockRestore();
+  });
+
+  it('stays silent about provenance when nothing has written the home domain', async () => {
+    const infoSpy = vi.spyOn(console, 'info');
+    await statusCommand({ harness: 'claude' }, tempDir);
+
+    const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(output).not.toContain('Home domain last written');
+
+    infoSpy.mockRestore();
+  });
 
   it('should report all entries as current after install', async () => {
     const claudeHome = path.join(tempDir, '.claude');

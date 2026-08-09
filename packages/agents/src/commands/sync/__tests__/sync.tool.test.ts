@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../../lib/content-resolver.ts';
+import { getHomeProvenancePath, readHomeProvenance } from '../../../lib/home-provenance.ts';
 import { resolveRunningPackageRoot } from '../../../lib/running-package.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
@@ -2498,6 +2499,30 @@ describe(syncGlobalCommand, () => {
 
     expect(existsSync(path.join(neutralDir, 'alpha.md'))).toBe(false);
     expect(await readFile(path.join(neutralDir, 'notes.txt'), 'utf8')).toBe('mine\n');
+  });
+
+  describe('home provenance', () => {
+    it('stamps the run it completed', async () => {
+      await declareRaw('rulebooks:\n  use: []\n');
+
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+      expect(await readHomeProvenance(homeDir)).toMatchObject({ command: 'sync --global' });
+    });
+
+    it('leaves the stamp untouched on a dry run', async () => {
+      await declareRaw('rulebooks:\n  use: []\n');
+
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+
+      expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
+    });
+
+    it('leaves the stamp untouched when no home declaration exists to act on', async () => {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+      expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
+    });
   });
 
   describe('designated-writer guard', () => {
