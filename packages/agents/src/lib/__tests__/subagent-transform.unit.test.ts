@@ -152,6 +152,48 @@ describe(renderSubagentForHarness, () => {
     expect(output).toContain('Tail prose.');
   });
 
+  it('fills a declared guidance hook with the guidance bound to it', () => {
+    const source = `${SOURCE}<!-- guidance-hook: impl -->\n\nTail prose.\n`;
+
+    const output = renderSubagentForHarness(source, {
+      overlayYaml: CLAUDE_OVERLAY,
+      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+      fileRelPath: 'demo-agent.md',
+      sourceLabel: 'subagents/demo-agent.md',
+      anchor: homeAnchor('.claude'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+      guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: '# Layout\n\nGroup source by role.\n' }]]]),
+    });
+
+    expect(output).toContain('<!-- codeassembly-guidance-hook:impl:start -->');
+    expect(output).toContain('<!-- rulebook:layout -->');
+    expect(output).toContain('## Layout');
+    expect(output).toContain('Tail prose.');
+    expect(output).toContain('permissionMode: bypassPermissions');
+  });
+
+  it('rejects a hook declared inside the frontmatter block when a binding would fill it', () => {
+    const source = '---\nname: demo-agent\n<!-- guidance-hook: impl -->\n---\n\nBody.\n';
+
+    expect(() =>
+      renderSubagentForHarness(source, {
+        overlayYaml: CLAUDE_OVERLAY,
+        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+        fileRelPath: 'demo-agent.md',
+        sourceLabel: 'subagents/demo-agent.md',
+        anchor: homeAnchor('.claude'),
+        homeDir: '.claude',
+        harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
+        guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
+      }),
+    ).toThrow(/subagents\/demo-agent\.md:3 .* reason=fill-in-frontmatter/);
+  });
+
   it('throws a source-labelled error for a hook declared twice in one body', () => {
     const source = `${SOURCE}<!-- guidance-hook: preferences -->\n<!-- guidance-hook: preferences -->\n`;
 

@@ -4,7 +4,12 @@ import path from 'node:path';
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { isTestDirectory } from './fs-helpers.ts';
-import { stripGuidanceHooks } from './guidance-hooks.ts';
+import {
+  assertFilledAnchorsResolve,
+  fillGuidanceHooks,
+  type GuidanceHookFills,
+  stripGuidanceHooks,
+} from './guidance-hooks.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
@@ -23,6 +28,11 @@ export interface SkillDeployContext {
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
+  /**
+   * Guidance bound to each hook a declared skill's body may declare. Absent for every caller that resolves no
+   * declaration — `install`, `validate`, and the support-entry route — which is what keeps them stripping.
+   */
+  readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }
 
 /**
@@ -73,6 +83,10 @@ export async function renderSkillDirectory(
  * transform, a Markdown file through include expansion, the guidance-hook strip, the anchor gate, and the tool-name
  * rewrite, and anything else not at all, since it is copied byte-for-byte and has nothing to check.
  *
+ * A support entry never fills a hook, whichever route it takes, so any fills the caller carries are dropped here. A
+ * support entry is reached by a link rather than inlined, and guidance behind a link is the thing the hook mechanism
+ * exists to route around.
+ *
  * Shared by the installer, which writes what comes back, and by `validate`, which discards it. Rendering is where a
  * defect surfaces, so the pass that checks a support entry and the pass that ships it have to run the same one — when
  * they did not, `validate` rejected a shape the installer copies without complaint.
@@ -85,8 +99,9 @@ export async function renderSupportEntry(
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<RenderedSupportEntry> {
+  const unbound: SkillDeployContext = { ...context, guidanceHookFills: undefined };
   if ((await stat(srcPath)).isDirectory()) {
-    return { kind: 'directory', entries: await renderSkillDirectory(srcPath, destName, contentRoot, context) };
+    return { kind: 'directory', entries: await renderSkillDirectory(srcPath, destName, contentRoot, unbound) };
   }
   if (!srcPath.endsWith('.md')) {
     return { kind: 'verbatim' };
@@ -94,7 +109,7 @@ export async function renderSupportEntry(
   const sourceLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const expanded = stripGuidanceHooks(await expandIncludes(srcPath, contentRoot), sourceLabel);
   assertAnchorsResolve(expanded, sourceLabel);
-  return { kind: 'markdown', content: rewriteToolNames(expanded, context.toolMapping, sourceLabel) };
+  return { kind: 'markdown', content: rewriteToolNames(expanded, unbound.toolMapping, sourceLabel) };
 }
 
 // region | Helpers
@@ -133,16 +148,18 @@ async function collectEntries(
 }
 
 /**
- * Applies the skill `.md` transform chain: include expansion, guidance-hook strip, tool-name rewrite, invocation-token
+ * Applies the skill `.md` transform chain: include expansion, guidance-hook fill, tool-name rewrite, invocation-token
  * rewrite, link rewrite, template expansion. Invocation tokens are rewritten after tool names (the two grammars are
  * disjoint, so their relative order is immaterial) and before link rewriting (a rendered `/slug` is not a Markdown
  * link, so path rewriting leaves it untouched).
  *
- * Hooks strip after includes expand, which is what makes a hook declared in a partial a declaration by every body that
- * inlines it.
+ * Hooks resolve after includes expand, which is what makes a hook declared in a partial a declaration by every body
+ * that inlines it. A bound body arrives already rendered, and the rewrites below leave it alone: its link targets are
+ * absolute by then, and its tokens are spent.
  *
- * In-body anchors are validated on the expanded text, ahead of every rewrite: an anchor-only target is never rewritten,
+ * In-body anchors are validated on the filled text, ahead of every rewrite: an anchor-only target is never rewritten,
  * so the verdict holds for every harness and a heading carrying a `{tool:NAME}` token is correctly unaddressable.
+ * Validating after the fill is what lets a collision between host and bound guidance be caught at all.
  */
 async function renderMarkdown(
   srcPath: string,
@@ -153,9 +170,9 @@ async function renderMarkdown(
 ): Promise<string> {
   const { anchor, toolMapping, homeDir, harnessId, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
-  const expanded = stripGuidanceHooks(await expandIncludes(srcPath, contentRoot), contextLabel);
-  assertAnchorsResolve(expanded, contextLabel);
-  const toolRewritten = rewriteToolNames(expanded, toolMapping, contextLabel);
+  const filled = fillGuidanceHooks(await expandIncludes(srcPath, contentRoot), context.guidanceHookFills, contextLabel);
+  assertFilledAnchorsResolve(filled, contextLabel);
+  const toolRewritten = rewriteToolNames(filled.content, toolMapping, contextLabel);
   const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil }, contextLabel);
   const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, anchor);
   return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);

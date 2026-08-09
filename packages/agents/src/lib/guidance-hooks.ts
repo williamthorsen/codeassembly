@@ -38,9 +38,6 @@ const HOOK_LIKE_REGEX = /^[ \t]*<!--[ \t]*guidance[ \t-]?hooks?[ \t]*(?::[^>]*)?
 /** The kebab-case, letter-led slug grammar a hook name must satisfy, matching every other slug in the system. */
 const HOOK_NAME_REGEX = /^[a-z][a-z0-9-]*$/;
 
-/** The fills a seam resolving no declaration passes, so every hook it meets strips. */
-const NO_FILLS: GuidanceHookFills = new Map();
-
 /** Reason a body's guidance-hook declarations were rejected, surfaced in error messages. */
 type FailureReason = 'duplicate-hook' | 'fill-in-frontmatter' | 'malformed-name' | 'unrecognized-directive';
 
@@ -91,7 +88,7 @@ export interface GuidanceHookFill {
 
 /**
  * The rulebooks bound to each guidance hook, keyed by hook name and ordered as they fill. An absent key is an unbound
- * hook, which is why a seam that resolves no declaration passes an empty map and strips every hook it meets.
+ * hook, and so is the whole map: a seam that resolves no declaration passes `undefined` and strips every hook it meets.
  */
 export type GuidanceHookFills = ReadonlyMap<string, ReadonlyArray<GuidanceHookFill>>;
 
@@ -129,7 +126,7 @@ export function assertFilledAnchorsResolve(result: FilledBody, sourceLabel: stri
  * keeps a rulebook's h1 title from competing with the host's own structure and moves no anchor, since a fragment
  * derives from heading text alone.
  */
-export function fillGuidanceHooks(body: string, fills: GuidanceHookFills, sourceLabel: string): FilledBody {
+export function fillGuidanceHooks(body: string, fills: GuidanceHookFills | undefined, sourceLabel: string): FilledBody {
   // Listing validates: a malformed name, a near-miss directive, or a duplicate declaration fails before anything splices.
   listGuidanceHooks(body, sourceLabel);
 
@@ -147,7 +144,7 @@ export function fillGuidanceHooks(body: string, fills: GuidanceHookFills, source
       continue;
     }
 
-    const bound = fills.get(name);
+    const bound = fills?.get(name);
     if (bound === undefined || bound.length === 0) {
       continue;
     }
@@ -234,7 +231,7 @@ export function listGuidanceHooks(body: string, sourceLabel: string): ReadonlyAr
  * the fill with nothing bound so the two removals cannot drift apart.
  */
 export function stripGuidanceHooks(body: string, sourceLabel: string): string {
-  return fillGuidanceHooks(body, NO_FILLS, sourceLabel).stripped;
+  return fillGuidanceHooks(body, undefined, sourceLabel).stripped;
 }
 
 // region | Helpers
