@@ -16,6 +16,9 @@ const PROVENANCE_FILENAME = 'home-provenance.json';
 /** How long a commit lookup may take before the stamp is written without one. */
 const COMMIT_LOOKUP_TIMEOUT_MS = 5_000;
 
+/** Membership set for `isHomeProvenance`, widened to `string` so an arbitrary value tests without a type assertion. */
+const HOME_WRITE_COMMANDS: ReadonlySet<string> = new Set<HomeWriteCommand>(['install', 'sync --global']);
+
 /** What last wrote the home domain: which build, from where, by which command, and when. */
 export interface HomeProvenance {
   readonly schemaVersion: number;
@@ -35,8 +38,9 @@ export function getHomeProvenancePath(homeDir?: string): string {
 }
 
 /**
- * Reads the provenance stamp, or `undefined` where none has been written — a home domain last written by a build
- * predating the stamp, or never written at all.
+ * Reads the provenance stamp, or `undefined` where none can be read — no stamp has been written, or the one on disk
+ * is truncated or malformed. A stamp that cannot be read reports nothing, so a damaged file costs `status` one line
+ * rather than the whole report.
  */
 export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenance | undefined> {
   let raw: string;
@@ -49,7 +53,12 @@ export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenan
     throw error;
   }
 
-  const parsed: unknown = JSON.parse(raw);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
   return isHomeProvenance(parsed) ? parsed : undefined;
 }
 
@@ -87,6 +96,7 @@ function isHomeProvenance(value: unknown): value is HomeProvenance {
     typeof value.version === 'string' &&
     typeof value.sourcePath === 'string' &&
     typeof value.command === 'string' &&
+    HOME_WRITE_COMMANDS.has(value.command) &&
     typeof value.writtenAt === 'string'
   );
 }

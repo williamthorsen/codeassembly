@@ -70,11 +70,40 @@ describe('home provenance', () => {
     });
 
     it('reports nothing for a stamp missing required fields', async () => {
-      const provenancePath = getHomeProvenancePath(homeDir);
-      await mkdir(path.dirname(provenancePath), { recursive: true });
-      await writeFile(provenancePath, JSON.stringify({ schemaVersion: 1 }), 'utf8');
+      await writeStamp(JSON.stringify({ schemaVersion: 1 }));
+
+      await expect(readHomeProvenance(homeDir)).resolves.toBeUndefined();
+    });
+
+    it('reports nothing for a truncated stamp instead of failing the read', async () => {
+      await writeStamp('{"schemaVersion": 1, "version": "0.8.0"');
+
+      await expect(readHomeProvenance(homeDir)).resolves.toBeUndefined();
+    });
+
+    it('reports nothing for a stamp naming a command no home write can issue', async () => {
+      await writeStamp(
+        JSON.stringify({
+          schemaVersion: 1,
+          version: '0.8.0',
+          sourcePath: '/repos/live/packages/agents',
+          command: 'uninstall',
+          writtenAt: '2026-08-09T00:00:00.000Z',
+        }),
+      );
 
       await expect(readHomeProvenance(homeDir)).resolves.toBeUndefined();
     });
   });
+
+  // region | Helpers
+
+  /** Writes `content` to the stamp path verbatim, so a test can plant a shape `recordHomeProvenance` never produces. */
+  async function writeStamp(content: string): Promise<void> {
+    const provenancePath = getHomeProvenancePath(homeDir);
+    await mkdir(path.dirname(provenancePath), { recursive: true });
+    await writeFile(provenancePath, content, 'utf8');
+  }
+
+  // endregion | Helpers
 });
