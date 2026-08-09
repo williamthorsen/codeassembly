@@ -17,19 +17,17 @@ A file is deployed when any of the following holds.
 - `<!-- codeassembly-subagent:{slug} -->` in a subagent's file
 - `<!-- codeassembly-rulebook:{slug} -->` in a rulebook delivered as a skill
 
-**It sits inside a skill directory whose `SKILL.md` carries a marker.** `sync` marks the root file alone, so a skill's nested Markdown and its bundled scripts carry nothing of their own. Read the directory's `SKILL.md` before concluding that an unmarked file beside it is hand-authored.
-
-**It sits under a `_sources/` directory beside deployed skills.** That tree holds each declared source's support files, which `sync` writes and leaves unmarked.
+**It sits under a harness's `skills/` tree.** Both commands populate that tree and mark only part of what they leave there: a skill's root `SKILL.md` carries an ownership marker while its nested Markdown and bundled scripts carry none, the shared `_data/` tree and the helper directories holding no `SKILL.md` are `install`'s, and a declared source's support entries land under `_sources/`. The one thing there that is not deployed is a skill added by hand, whose `SKILL.md` carries no ownership marker.
 
 **It sits in a harness's `scripts/` directory.** `install` copies those files verbatim and marks none of them, whatever the extension.
 
-A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region sits in an otherwise hand-authored guidance file. Inside it, each rulebook's block is wrapped in `<!-- rulebook:{slug} -->`.
+A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region sits in an otherwise hand-authored guidance file. Inside it, each rulebook's block runs from `<!-- rulebook:{slug} -->` to `<!-- /rulebook:{slug} -->`.
 
 One deployed file carries neither a marker nor a marked artifact around it: `install --link` writes a symlink rather than a copy. Its target is a build output under `dist/`, so an edit there survives until the next build and no longer.
 
 ## Finding the source
 
-An `install`-deployed file's marker carries a `Source:` line linking to the file it was built from. A script carries no marker; its source is the matching file under `scripts/` in the library or the declaring source.
+An `install`-deployed file's marker carries a `Source:` line linking to the file it was built from. A script carries no marker: a shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `src/<name>/cli.ts` entry that `packages/agents/scripts/bundle-skill-helpers.ts` maps to it.
 
 A `sync`-deployed artifact has no such line either. Read the resolution report from the dry run for the domain the file sits in: `codeassembly sync --dry-run` for a file under a project's harness directory, and `codeassembly sync --global --dry-run` for one under the home directory. A dry run of the wrong domain lists other artifacts, or none at all where that domain declares nothing. The report names each deployed artifact's origin:
 
@@ -40,7 +38,7 @@ An ambient region's source is the rulebooks its `<!-- rulebook:{slug} -->` block
 
 ## Getting a change in
 
-1. Edit the source file, and open a pull request against the repository that owns it.
+1. Edit the source file, and open a pull request against the repository that owns it. For a deployed `.mjs` that is the bundler entry named above; the `.mjs` beside it in the source tree is generated and gitignored.
 2. After merge, redeploy with the command that deployed it:
    - `codeassembly install` for an `install`-deployed file
    - `codeassembly sync` for a file under a project's harness directory
