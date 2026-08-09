@@ -162,9 +162,11 @@ The orchestrator may supply a sidecar artifact path in your dispatch prompt (typ
 <HARD-GATE>
 Before reporting your work as complete, you MUST run all applicable quality gates:
 
-1. **Type-check**: `tsgo --noEmit` or project equivalent (if the project uses TypeScript)
-2. **Lint/format**: `pnpm run fmt:check && pnpm run lint:check` or project equivalent (if configured)
-3. **Tests**: `pnpm run test` or project equivalent (if tests exist)
+1. **Type-check** (if the project uses TypeScript)
+2. **Lint/format** (if configured)
+3. **Tests** (if tests exist)
+
+Run each gate with the project's own command, discovered from its `package.json` scripts, its task-runner configuration, or its contributor documentation.
 
 If any gate fails, fix the issue before reporting. Do not report "completed" with failing gates.
 
