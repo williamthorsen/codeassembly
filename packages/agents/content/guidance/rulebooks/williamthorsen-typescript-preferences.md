@@ -1,8 +1,8 @@
 ---
 slug: williamthorsen-typescript-preferences
 description: 'TypeScript language mechanics, module shape, and documentation form: type safety, exports and barrels, import specifiers, type placement, and doc tags. Consult before writing or modifying TypeScript.'
-delivery: skill
-version: 1
+delivery: [hook, skill]
+version: 2
 ---
 
 # William Thorsen's TypeScript preferences
