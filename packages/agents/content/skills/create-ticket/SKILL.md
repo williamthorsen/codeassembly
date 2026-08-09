@@ -8,6 +8,16 @@ user-invocable: true
 
 Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) is the source of truth for the ticket number. Local artifacts are saved after the remote ticket exists, using the platform-assigned ID.
 
+## Arguments
+
+| Argument              | Effect                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| `--parent <ref>`      | Make the new ticket a child of the referenced ticket. One reference — a ticket has one parent. |
+| `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                      |
+| `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                        |
+
+Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comma-separated where more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
+
 ## Process
 
 ### 1. Resolve project metadata
@@ -56,7 +66,23 @@ Determine where to create the remote ticket:
 
 3. **Ask** — if platform cannot be determined
 
-### 4. Resolve labels (GitHub only)
+### 4. Decide relationships
+
+Three relationships are available, each stated from the new ticket's side:
+
+- **parent** — the new ticket is a child of an existing ticket.
+- **blocked-by** — the new ticket cannot proceed until an existing ticket lands.
+- **blocking** — an existing ticket cannot proceed until the new ticket lands.
+
+Decide which apply from the reason this ticket is being created, sharpened by `branch_ticket_id` (step 1): work split out of the current branch's ticket stands in a relationship to it, and a backlog idea raised in passing stands in none. An argument supplied by the caller replaces the inference for its own relationship.
+
+**Most tickets carry none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
+
+Where one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so a wrong target is visible while it is still free to correct. Where the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to surface as a skip in step 7.
+
+<!-- include: ../_partials/action-items.md / -->
+
+### 5. Resolve labels (GitHub only)
 
 If the platform resolved in step 3 is GitHub, attempt to read `.meta/label-map.json` using the Read tool. If the file does not exist, skip label resolution — no labels will be applied.
 
