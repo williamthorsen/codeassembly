@@ -51,7 +51,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Check the shape as you read: a plan carrying `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Emit `skill.completed` (payload `{"outcome":"stopped: spike plan"}`) per [Lifecycle events](#lifecycle-events), then stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
-5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience.
+5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Comments you write along the way take the [Comment discipline](#comment-discipline) audit.
 
    Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: a named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation — carry on and note it in the closing summary.
 
@@ -62,6 +62,8 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 7. **Report completion.** Summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
 
 8. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
+
+<!-- include: ../../_partials/comment-discipline.md / -->
 
 <!-- guidance-hook: implementation-preferences -->
 
