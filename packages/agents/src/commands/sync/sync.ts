@@ -279,7 +279,10 @@ async function reconcileDomain(
   homeDir: string,
   contentDirOverride?: string,
 ): Promise<SyncOutcome> {
-  const declaration = await resolveDeclaration({ cwd: domain.baseDir });
+  const declaration = await resolveDeclaration({
+    cwd: domain.baseDir,
+    domain: domain.ambient === 'harness-home' ? 'home' : 'project',
+  });
   if (declaration === undefined) {
     return {
       kind: 'no-declaration',

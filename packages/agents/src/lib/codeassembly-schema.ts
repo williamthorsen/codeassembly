@@ -33,7 +33,8 @@ export const SourceSchema = z.object({ name: z.string().min(1), path: z.string()
  * to a package name and a harness id exactly as they do to an artifact slug.
  *
  * `home-writer` sits beside `root` because it is a scalar setting about the run rather than a block naming artifacts.
- * It answers only in the home domain, where the guard on `install` and `sync --global` reads it.
+ * It answers only in the home domain, where the guard on `install` and `sync --global` reads it, and a project-domain
+ * file carrying it is rejected by name.
  *
  * `harnesses` sits above `sources` because it governs where a run deploys rather than which artifacts it deploys, and
  * it is the one key that resolves across the home and project domains rather than within one of them.
@@ -60,6 +61,9 @@ const CodeAssemblySchema = z
 /** A parsed, validated `codeassembly.yaml` declaration from one file in the scope chain. */
 export type CodeAssemblyDeclaration = z.infer<typeof CodeAssemblySchema>;
 
+/** Which tier pair a declaration file belongs to. Only the home pair may carry a home-domain key. */
+export type DeclarationDomain = 'home' | 'project';
+
 /** One type's block: the artifacts this file adds (`use`) and those it subtracts from inherited tiers (`drop`). */
 export type TypeDeclaration = z.infer<ReturnType<typeof typeDeclarationSchema>>;
 
@@ -78,9 +82,17 @@ export type DeclarationSource = z.infer<typeof SourceSchema>;
 /**
  * Parses and validates one `codeassembly.yaml` file's contents into a typed declaration. An empty or comment-only
  * file yields a declaration with `root: false` and no type blocks. Throws a readable error, naming `sourceLabel`
- * when provided, for malformed YAML, an unknown top-level key, a non-mapping top level, or an invalid entry.
+ * when provided, for malformed YAML, an unknown top-level key, a non-mapping top level, an invalid entry, or a
+ * home-domain key in a project-domain file.
+ *
+ * `domain` defaults to `project`, the reading under which every key is checked against the narrower legal set, so a
+ * caller that omits it cannot silently admit a key that would then go unread.
  */
-export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAssemblyDeclaration {
+export function parseCodeAssemblyFile(
+  raw: string,
+  sourceLabel?: string,
+  domain: DeclarationDomain = 'project',
+): CodeAssemblyDeclaration {
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
 
   let parsed: unknown;
@@ -98,6 +110,13 @@ export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAs
       .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
       .join('; ');
     throw new Error(`Invalid codeassembly.yaml${where}: ${detail}`);
+  }
+
+  if (domain === 'project' && result.data['home-writer'] !== undefined) {
+    throw new Error(
+      `Invalid codeassembly.yaml${where}: \`home-writer\` names the machine's home-domain writer and is read only ` +
+        'from ~/.agents/codeassembly.yaml (or its .local override), so it has no effect here.',
+    );
   }
 
   return result.data;

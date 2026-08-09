@@ -1,7 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { DeclarationSource, GuidanceHookBindings, TypeDeclaration } from './codeassembly-schema.ts';
+import type {
+  DeclarationDomain,
+  DeclarationSource,
+  GuidanceHookBindings,
+  TypeDeclaration,
+} from './codeassembly-schema.ts';
 import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import { resolveSourcePath } from './source-path.ts';
@@ -39,8 +44,12 @@ export interface ResolvedDeclaration {
  * declaration, which returns empty lists.
  *
  * @param options.cwd The project whose `.agents/` tiers are resolved.
+ * @param options.domain Which tier pair the chain belongs to, deciding which keys the files may carry.
  */
-export async function resolveDeclaration(options: { cwd: string }): Promise<ResolvedDeclaration | undefined> {
+export async function resolveDeclaration(options: {
+  cwd: string;
+  domain?: DeclarationDomain;
+}): Promise<ResolvedDeclaration | undefined> {
   const chain = await resolveScopeChain('codeassembly.yaml', { cwd: options.cwd });
   if (chain.length === 0) {
     return undefined;
@@ -58,7 +67,7 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
   // Each hook name accumulates its own binding set, so a tier binding to one hook leaves the others untouched.
   const guidanceHooks = new Map<string, Set<string>>();
   for (const filePath of chain) {
-    const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath);
+    const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath, options.domain);
 
     if (declaration.root) {
       rulebooks.clear();

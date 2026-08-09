@@ -195,6 +195,16 @@ describe(syncCommand, () => {
     expect(localHost).toContain('<!-- codeassembly-ambient:start -->');
   });
 
+  it('refuses a project declaration that sets the home-domain writer key', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeLocalDeclaration(`home-writer: ${homeDir}\n`);
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/home-writer/);
+
+    expect(existsSync(localHostPath())).toBe(false);
+  });
+
   it('refuses to write a local host carrying an unmatched ambient marker, changing nothing', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');

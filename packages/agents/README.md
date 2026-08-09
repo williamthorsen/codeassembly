@@ -432,7 +432,7 @@ Every repository and worktree carries a `codeassembly` binary of its own, and ea
 home-writer: ~/repos/projects/codeassembly.live
 ```
 
-The setting reads from the home domain's chain alone, the local tier overriding the base one, and it takes an absolute path (a leading `~` expands to the home directory). It may name either a worktree root or the package directory within it: the guard passes when the running package's root is that path or lies under it, comparing both through symlinks.
+The setting reads from the home domain's chain alone, the local tier overriding the base one, and it takes an absolute path (a leading `~` expands to the home directory). A project declaration that sets it is rejected by name, since a machine's designated writer is not a fact a repository can state. It may name either a worktree root or the package directory within it: the guard passes when the running package's root is that path or lies under it, comparing both through symlinks.
 
 With the setting present, `install` and `sync --global` invoked from any other installation refuse before writing anything, naming the designated path, the invoking one, and the file that configured it. `--dry-run` refuses identically, so a preview never reports a write the real run would reject. `--override-writer` proceeds from a non-designated installation and says so in the output.
 

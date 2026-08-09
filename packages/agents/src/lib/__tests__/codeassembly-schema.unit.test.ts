@@ -71,6 +71,24 @@ describe(parseCodeAssemblyFile, () => {
     expect(() => parseCodeAssemblyFile('rulebookz:\n  use:\n    - alpha\n')).toThrow(/rulebookz/);
   });
 
+  it('reads home-writer from a home-domain file', () => {
+    const declaration = parseCodeAssemblyFile('home-writer: /repos/live\n', 'codeassembly.yaml', 'home');
+
+    expect(declaration['home-writer']).toBe('/repos/live');
+  });
+
+  it('throws on home-writer in a project-domain file, naming the file and where the key belongs', () => {
+    const parse = () => parseCodeAssemblyFile('home-writer: /repos/live\n', '.agents/codeassembly.yaml', 'project');
+
+    expect(parse).toThrow(/home-writer/);
+    expect(parse).toThrow(/~\/\.agents\/codeassembly\.yaml/);
+    expect(parse).toThrow(/in \.agents\/codeassembly\.yaml/);
+  });
+
+  it('throws on home-writer when the domain is unstated, so an unread key cannot pass unnoticed', () => {
+    expect(() => parseCodeAssemblyFile('home-writer: /repos/live\n')).toThrow(/home-writer/);
+  });
+
   it('throws when the top level is a bare list instead of a mapping', () => {
     expect(() => parseCodeAssemblyFile('- alpha\n- beta\n')).toThrow();
   });

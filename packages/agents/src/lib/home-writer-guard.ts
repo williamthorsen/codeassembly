@@ -90,7 +90,7 @@ async function readDesignatedWriter(homeDir: string): Promise<DesignatedWriter |
 
   let designated: DesignatedWriter | undefined;
   for (const configPath of chain) {
-    const declaration = parseCodeAssemblyFile(await readFile(configPath, 'utf8'), configPath);
+    const declaration = parseCodeAssemblyFile(await readFile(configPath, 'utf8'), configPath, 'home');
     const declared = declaration['home-writer'];
     if (declared === undefined) {
       continue;
