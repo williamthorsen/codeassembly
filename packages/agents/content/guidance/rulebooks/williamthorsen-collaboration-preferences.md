@@ -34,6 +34,6 @@ Examples:
 
 ## Reporting
 
-Say nothing about routine local housekeeping I have a standing arrangement for, and never offer to do it. Reporting it and prompting about it are the same noise, so suppressing only the prompt leaves the problem in place.
+Say nothing about routine local housekeeping the developer has a standing arrangement for, and never offer to do it. Reporting it and prompting about it are the same noise, so suppressing only the prompt leaves the problem in place.
 
 Post-merge worktree and branch cleanup is the standing case: every branch keeps a worktree of its own for as long as the branch exists, so there is nothing to clean up and nothing to ask about.
