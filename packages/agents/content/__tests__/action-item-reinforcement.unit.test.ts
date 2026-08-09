@@ -14,6 +14,7 @@ const REINFORCED_SKILLS: ReadonlyArray<string> = [
   'assess-ticket',
   'brainstorming',
   'collaborate',
+  'create-ticket',
   'design-and-plan',
   'kb-add',
   'merge-pr',
