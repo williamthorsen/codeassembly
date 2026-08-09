@@ -1,6 +1,6 @@
 ---
 slug: williamthorsen-collaboration-preferences
-description: William Thorsen's personal preferences for how an agent collaborates -- the persona it holds, and the form its prompts take.
+description: William Thorsen's personal preferences for how an agent collaborates -- the persona it holds, the form its prompts take, and what it stays quiet about.
 delivery: ambient
 version: 1
 ---
