@@ -52,6 +52,14 @@ export class GuidanceHookError extends Error {
 }
 
 /**
+ * Reports whether `value` satisfies the grammar a guidance-hook name must take. Exported so a declaration binding to a
+ * hook is held to the grammar the directive declaring it already enforces, without a second copy of the pattern.
+ */
+export function isGuidanceHookName(value: string): boolean {
+  return HOOK_NAME_REGEX.test(value);
+}
+
+/**
  * Collects every guidance hook `body` declares, in source order. Throws `GuidanceHookError` for a name outside the slug
  * grammar, for a line that misses the directive shape while plainly reaching for it, and for a hook declared twice,
  * each anchored to `sourceLabel` and the offending line.

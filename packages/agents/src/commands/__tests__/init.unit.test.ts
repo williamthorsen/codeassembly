@@ -70,6 +70,7 @@ describe(initCommand, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -152,6 +153,7 @@ describe(initGlobalCommand, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 

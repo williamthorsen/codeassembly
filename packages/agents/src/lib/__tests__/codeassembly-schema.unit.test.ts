@@ -180,4 +180,50 @@ describe(parseCodeAssemblyFile, () => {
   it('throws on an unknown key inside the harnesses block', () => {
     expect(() => parseCodeAssemblyFile('harnesses:\n  target:\n    - claude\n')).toThrow(/target/);
   });
+
+  it('parses a guidance-hooks block, giving each hook its own use and drop lists', () => {
+    const declaration = parseCodeAssemblyFile(
+      [
+        'guidance-hooks:',
+        '  implementation-preferences:',
+        '    use:',
+        '      - layout-preferences',
+        '      - typescript-preferences',
+        '    drop:',
+        '      - legacy-preferences',
+        '  project-glossary:',
+        '    use:',
+        '      - acme-terms',
+        '',
+      ].join('\n'),
+    );
+
+    expect(declaration['guidance-hooks']).toEqual({
+      'implementation-preferences': {
+        use: [{ name: 'layout-preferences' }, { name: 'typescript-preferences' }],
+        drop: [{ name: 'legacy-preferences' }],
+      },
+      'project-glossary': { use: [{ name: 'acme-terms' }], drop: [] },
+    });
+  });
+
+  it('tolerates a guidance-hooks key whose value is null (all bindings commented out)', () => {
+    const declaration = parseCodeAssemblyFile('guidance-hooks:\n');
+
+    expect(declaration['guidance-hooks']).toBeUndefined();
+    expect(declaration.root).toBe(false);
+  });
+
+  it('throws on a malformed guidance-hook name, naming the source label and the offending key', () => {
+    expect(() =>
+      parseCodeAssemblyFile(
+        'guidance-hooks:\n  Implementation_Preferences:\n    use:\n      - alpha\n',
+        'codeassembly.yaml',
+      ),
+    ).toThrow(/codeassembly\.yaml.*Implementation_Preferences/s);
+  });
+
+  it('throws on an unknown key inside a guidance hook block', () => {
+    expect(() => parseCodeAssemblyFile('guidance-hooks:\n  impl:\n    bind:\n      - alpha\n')).toThrow(/bind/);
+  });
 });

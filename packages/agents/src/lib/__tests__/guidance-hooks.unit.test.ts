@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GuidanceHookError, listGuidanceHooks, stripGuidanceHooks } from '../guidance-hooks.ts';
+import { GuidanceHookError, isGuidanceHookName, listGuidanceHooks, stripGuidanceHooks } from '../guidance-hooks.ts';
 
 const SOURCE_LABEL = 'skills/demo/SKILL.md';
 
@@ -121,5 +121,19 @@ describe(stripGuidanceHooks, () => {
     expect(() => stripGuidanceHooks('<!-- guidance-hook: dup -->\n<!-- guidance-hook: dup -->', SOURCE_LABEL)).toThrow(
       GuidanceHookError,
     );
+  });
+});
+
+describe(isGuidanceHookName, () => {
+  it('accepts a kebab-case, letter-led name', () => {
+    expect(isGuidanceHookName('implementation-preferences')).toBe(true);
+    expect(isGuidanceHookName('impl2')).toBe(true);
+  });
+
+  it('rejects a name the directive would also reject', () => {
+    expect(isGuidanceHookName('Implementation-Preferences')).toBe(false);
+    expect(isGuidanceHookName('2fast')).toBe(false);
+    expect(isGuidanceHookName('impl_prefs')).toBe(false);
+    expect(isGuidanceHookName('')).toBe(false);
   });
 });

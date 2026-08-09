@@ -50,6 +50,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -63,6 +64,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -76,6 +78,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -89,6 +92,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -102,6 +106,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -117,6 +122,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -133,6 +139,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -147,6 +154,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -161,6 +169,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -174,6 +183,7 @@ describe(resolveDeclaration, () => {
       packages: ['@williamthorsen/nmr', 'readyup'],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -188,6 +198,7 @@ describe(resolveDeclaration, () => {
       packages: ['readyup'],
       declinedPackages: ['@williamthorsen/nmr'],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -236,6 +247,7 @@ describe(resolveDeclaration, () => {
       packages: ['@acme/new'],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -249,6 +261,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      guidanceHooks: new Map(),
     });
   });
 
@@ -310,6 +323,71 @@ describe(resolveDeclaration, () => {
       await writeLocal('root: true\nsources:\n  - name: local\n    path: /local\n');
       const declaration = await resolveDeclaration({ cwd });
       expect(declaration?.sources).toEqual([{ name: 'local', dir: '/local' }]);
+    });
+  });
+  describe('guidance-hooks', () => {
+    it('accumulates each hook independently, deduplicating within a hook', async () => {
+      await writeProject(
+        [
+          'guidance-hooks:',
+          '  implementation-preferences:',
+          '    use:',
+          '      - layout',
+          '      - typescript',
+          '      - layout',
+          '  project-glossary:',
+          '    use:',
+          '      - acme-terms',
+          '',
+        ].join('\n'),
+      );
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.guidanceHooks).toEqual(
+        new Map([
+          ['implementation-preferences', ['layout', 'typescript']],
+          ['project-glossary', ['acme-terms']],
+        ]),
+      );
+    });
+
+    it('combines bindings for one hook additively across tiers', async () => {
+      await writeProject('guidance-hooks:\n  impl:\n    use:\n      - layout\n');
+      await writeLocal('guidance-hooks:\n  impl:\n    use:\n      - typescript\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.guidanceHooks).toEqual(new Map([['impl', ['layout', 'typescript']]]));
+    });
+
+    it('lets a higher tier drop one binding without disturbing the rest of the hook', async () => {
+      await writeProject('guidance-hooks:\n  impl:\n    use:\n      - layout\n      - typescript\n');
+      await writeLocal('guidance-hooks:\n  impl:\n    drop:\n      - layout\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.guidanceHooks).toEqual(new Map([['impl', ['typescript']]]));
+    });
+
+    it('omits a hook whose every binding a higher tier dropped', async () => {
+      await writeProject('guidance-hooks:\n  impl:\n    use:\n      - layout\n');
+      await writeLocal('guidance-hooks:\n  impl:\n    drop:\n      - layout\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.guidanceHooks).toEqual(new Map());
+    });
+
+    it('leaves a hook a higher tier does not mention untouched', async () => {
+      await writeProject('guidance-hooks:\n  impl:\n    use:\n      - layout\n');
+      await writeLocal('guidance-hooks:\n  glossary:\n    use:\n      - acme-terms\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.guidanceHooks).toEqual(
+        new Map([
+          ['impl', ['layout']],
+          ['glossary', ['acme-terms']],
+        ]),
+      );
+    });
+
+    it('discards lower-tier bindings when a higher tier declares root: true', async () => {
+      await writeProject('guidance-hooks:\n  impl:\n    use:\n      - layout\n');
+      await writeLocal('root: true\nguidance-hooks:\n  impl:\n    use:\n      - typescript\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.guidanceHooks).toEqual(new Map([['impl', ['typescript']]]));
     });
   });
 });

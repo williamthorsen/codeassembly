@@ -1,6 +1,7 @@
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
+import { isGuidanceHookName } from './guidance-hooks.ts';
 import { ALL_HARNESS_IDS } from './harness.ts';
 
 /** A declaration entry: a bare slug string or a `{ name }` object with tolerated unknown keys, normalized to `{ name }`. */
@@ -33,6 +34,10 @@ export const SourceSchema = z.object({ name: z.string().min(1), path: z.string()
  *
  * `harnesses` sits above `sources` because it governs where a run deploys rather than which artifacts it deploys, and
  * it is the one key that resolves across the home and project domains rather than within one of them.
+ *
+ * `guidance-hooks` sits last because it configures the artifacts the keys above adopt rather than naming any. It is
+ * the one map-valued key: each hook name owns a `{ use, drop }` block of its own, so a tier binds to one hook without
+ * disturbing another.
  */
 const CodeAssemblySchema = z
   .object({
@@ -44,6 +49,7 @@ const CodeAssemblySchema = z
     skills: optionalTypeDeclaration(),
     subagents: optionalTypeDeclaration(),
     collections: optionalTypeDeclaration(),
+    'guidance-hooks': optionalGuidanceHookBindings(),
   })
   .strict();
 
@@ -52,6 +58,9 @@ export type CodeAssemblyDeclaration = z.infer<typeof CodeAssemblySchema>;
 
 /** One type's block: the artifacts this file adds (`use`) and those it subtracts from inherited tiers (`drop`). */
 export type TypeDeclaration = z.infer<ReturnType<typeof typeDeclarationSchema>>;
+
+/** The `guidance-hooks` block: each hook name this file binds, mapped to that hook's own `{ use, drop }` lists. */
+export type GuidanceHookBindings = z.infer<ReturnType<typeof guidanceHookBindingsSchema>>;
 
 /** The `harnesses` block: the harnesses this file targets (`use`) and those it subtracts from inherited tiers (`drop`). */
 export type HarnessDeclaration = z.infer<ReturnType<typeof harnessDeclarationSchema>>;
@@ -91,6 +100,22 @@ export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAs
 }
 
 // region | Helpers
+
+/**
+ * Builds the `guidance-hooks` schema: hook name to that hook's `{ use, drop }` block. Keys are held to the grammar the
+ * directive enforces, so a name no body could declare is rejected where it is written rather than going quietly unfilled.
+ */
+function guidanceHookBindingsSchema() {
+  return z.record(
+    z.string().refine(isGuidanceHookName, 'guidance-hook name must be lowercase kebab-case and letter-led'),
+    typeDeclarationSchema(),
+  );
+}
+
+/** Resolves an absent `guidance-hooks` key, or one whose value is `null`, to `undefined` rather than a validation error. */
+function optionalGuidanceHookBindings(): z.ZodType<GuidanceHookBindings | undefined> {
+  return z.preprocess((value) => value ?? undefined, guidanceHookBindingsSchema().optional());
+}
 
 /** Builds the closed `{ use, drop }` schema for the `harnesses` block, each list defaulting to empty. */
 function harnessDeclarationSchema() {
