@@ -267,7 +267,7 @@ Options:
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
-  --override-writer  Write the home domain from an installation \`home-writer\` does not designate
+  --override-writer  Write the home domain from an installation \`home-writer\` does not designate (install and sync --global only)
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
 }
