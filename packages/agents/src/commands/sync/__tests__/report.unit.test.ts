@@ -7,6 +7,17 @@ import { buildSyncPlan } from '../test-utils/build-sync-plan.ts';
 const HOME_HOST = '/home/.claude/CLAUDE.md';
 const LOCAL_HOST = '/project/CLAUDE.local.md';
 
+/**
+ * A phrase unique to each guidance-hook advisory's rendered line. Shared so the per-kind tests and the
+ * nothing-rendered test anchor on one set: a phrase only some kinds carry would let the latter pass while a
+ * regression emits one of the others.
+ */
+const ADVISORY_ANCHORS = {
+  'bound-ambient': 'receives its text twice',
+  'bound-undeclared': 'whose delivery does not name',
+  'declared-unbound': 'guidance-hook delivery that nothing binds',
+} as const;
+
 /** Wraps a plan as the outcome a completed reconciliation returns. */
 function reconciled(overrides: Partial<SyncPlan> = {}): SyncOutcome {
   return { kind: 'reconciled', plan: buildSyncPlan(overrides) };
@@ -89,7 +100,7 @@ describe('guidance-hook advisories', () => {
     });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
-      const advisory = lines.find((line) => line.text.includes('whose delivery does not name'));
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['bound-undeclared']));
 
       expect(advisory?.level).toBe('warn');
       expect(advisory?.text).toContain('layout-preferences');
@@ -103,7 +114,7 @@ describe('guidance-hook advisories', () => {
     });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
-      const advisory = lines.find((line) => line.text.includes('receives its text twice'));
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['bound-ambient']));
 
       expect(advisory?.level).toBe('warn');
       expect(advisory?.text).toContain('layout-preferences');
@@ -116,7 +127,7 @@ describe('guidance-hook advisories', () => {
     });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
-      const advisory = lines.find((line) => line.text.includes('guidance-hook delivery that nothing binds'));
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['declared-unbound']));
 
       expect(advisory?.level).toBe('info');
       expect(advisory?.text).toContain('layout-preferences');
@@ -127,7 +138,9 @@ describe('guidance-hook advisories', () => {
     const outcome = reconciled();
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
-      expect(lines.filter((line) => line.text.includes('guidance hook'))).toEqual([]);
+      const anchors = Object.values(ADVISORY_ANCHORS);
+
+      expect(lines.filter((line) => anchors.some((anchor) => line.text.includes(anchor)))).toEqual([]);
     }
   });
 });

@@ -159,80 +159,59 @@ describe('syncCommand with guidance-hook bindings', () => {
 
     expect(await readFile(deployedPath, 'utf8')).toBe(first);
   });
-});
 
-describe('guidance-hook advisories', () => {
-  let projectRoot: string;
-  let contentDir: string;
-  let homeDir: string;
+  describe('advisories', () => {
+    it('reports a bound rulebook whose delivery never claims the hook route', async () => {
+      await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'skill');
+      await declareBinding(projectRoot, 'layout-preferences');
 
-  beforeEach(async () => {
-    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    homeDir = path.join(tmpdir(), `agents-test-hook-advice-home-${stamp}`);
-    projectRoot = path.join(tmpdir(), `agents-test-hook-advice-proj-${stamp}`);
-    contentDir = path.join(tmpdir(), `agents-test-hook-advice-content-${stamp}`);
-    await mkdir(homeDir, { recursive: true });
-    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
-    await mkdir(contentDir, { recursive: true });
-    await writeOverlays(contentDir);
-  });
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
 
-  afterEach(async () => {
-    await rm(projectRoot, { recursive: true, force: true });
-    await rm(homeDir, { recursive: true, force: true });
-    await rm(contentDir, { recursive: true, force: true });
-  });
+      expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
+    });
 
-  it('reports a bound rulebook whose delivery never claims the hook route', async () => {
-    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
-    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'skill');
-    await declareBinding(projectRoot, 'layout-preferences');
+    it('reports a bound rulebook that also charges every session', async () => {
+      await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[ambient, hook]');
+      await declareBinding(projectRoot, 'layout-preferences');
 
-    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
 
-    expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
-  });
+      expect(advisories).toEqual([{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }]);
+    });
 
-  it('reports a bound rulebook that also charges every session', async () => {
-    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
-    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[ambient, hook]');
-    await declareBinding(projectRoot, 'layout-preferences');
+    it('reports both findings for a bound rulebook that is ambient and claims no hook route', async () => {
+      await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'ambient');
+      await declareBinding(projectRoot, 'layout-preferences');
 
-    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
 
-    expect(advisories).toEqual([{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }]);
-  });
+      expect(advisories).toEqual([
+        { kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' },
+        { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' },
+      ]);
+    });
 
-  it('reports both findings for a bound rulebook that is ambient and claims no hook route', async () => {
-    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
-    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'ambient');
-    await declareBinding(projectRoot, 'layout-preferences');
+    it('reports a rulebook that claims the hook route while no binding names it', async () => {
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
+      await declare(projectRoot, ['rulebooks:', '  use:', '    - layout-preferences']);
 
-    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
 
-    expect(advisories).toEqual([
-      { kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' },
-      { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' },
-    ]);
-  });
+      expect(advisories).toEqual([{ kind: 'declared-unbound', slug: 'layout-preferences' }]);
+    });
 
-  it('reports a rulebook that claims the hook route while no binding names it', async () => {
-    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
-    await declare(projectRoot, ['rulebooks:', '  use:', '    - layout-preferences']);
+    it('reports nothing when a binding and the rulebook it names agree', async () => {
+      await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
+      await declareBinding(projectRoot, 'layout-preferences');
 
-    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
 
-    expect(advisories).toEqual([{ kind: 'declared-unbound', slug: 'layout-preferences' }]);
-  });
-
-  it('reports nothing when a binding and the rulebook it names agree', async () => {
-    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
-    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
-    await declareBinding(projectRoot, 'layout-preferences');
-
-    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
-
-    expect(advisories).toEqual([]);
+      expect(advisories).toEqual([]);
+    });
   });
 });
 
