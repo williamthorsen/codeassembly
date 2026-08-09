@@ -160,6 +160,32 @@ Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` 
 
 If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Skip to step 7 (save locally with an auto-generated ticket ID). Full Jira API support deferred. The Jira stub holds no URL yet, so it persists nothing new — consistent with today.
 
+### 7. Apply relationships
+
+Skip this step when step 4 decided none.
+
+Apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
+
+#### GitHub path
+
+One call carries every relationship decided:
+
+```bash
+gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
+```
+
+Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
+
+These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number — reaching for that endpoint is the detour this note exists to prevent.
+
+#### Other platforms
+
+Use whatever the platform's own tooling offers for parent and blocking relationships.
+
+#### When a relationship does not land
+
+A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: the ticket already exists by this point, and losing the link costs less than losing the ticket. Carry every skipped relationship and its reason into the completion output — that report is how a platform's missing relationship surface becomes visible.
+
 ### 6. Save local artifacts
 
 Compute `ticket_ref` for the heading from `ticket_id` and `ticket_ref_prefix` (both already in scope from step 1) using the same logic the bundled deriver applies:
@@ -232,6 +258,8 @@ If remote ticket creation fails or no platform is available, fall back to an aut
 Issue created: {URL}                       <- only if remote creation succeeded
 Ticket saved: {ticket artifact path}
 Plan saved: {plan artifact path}           <- only if plan existed
+Relationships: {list}                      <- only if any were created
+Relationships skipped: {list with reasons} <- only if any were skipped
 Branch association skipped: {reason}       <- only when the step-5 guard skipped the persist
 ```
 
