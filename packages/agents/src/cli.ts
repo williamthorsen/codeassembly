@@ -113,6 +113,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   let help = false;
   let global = false;
   let warnOnly = false;
+  let shouldOverrideWriter = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -140,6 +141,9 @@ function parseArgs(argv: ReadonlyArray<string>): {
         break;
       case 'global':
         global = true;
+        break;
+      case 'override-writer':
+        shouldOverrideWriter = true;
         break;
       case 'warn-only':
         warnOnly = true;
@@ -171,7 +175,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   return {
     command,
     subcommand,
-    options: { harness, link, force, dryRun, hooks, print },
+    options: { harness, link, force, dryRun, hooks, print, shouldOverrideWriter },
     content,
     help,
     global,
@@ -180,7 +184,17 @@ function parseArgs(argv: ReadonlyArray<string>): {
 }
 
 type FlagName =
-  'content' | 'dry-run' | 'force' | 'global' | 'harness' | 'help' | 'link' | 'print' | 'skip-hooks' | 'warn-only';
+  | 'content'
+  | 'dry-run'
+  | 'force'
+  | 'global'
+  | 'harness'
+  | 'help'
+  | 'link'
+  | 'override-writer'
+  | 'print'
+  | 'skip-hooks'
+  | 'warn-only';
 
 function parseFlag(arg: string): FlagName | null {
   const flags: Record<string, FlagName> = {
@@ -192,6 +206,7 @@ function parseFlag(arg: string): FlagName | null {
     '--skip-hooks': 'skip-hooks',
     '--print': 'print',
     '--global': 'global',
+    '--override-writer': 'override-writer',
     '--warn-only': 'warn-only',
     '--content': 'content',
     '--harness': 'harness',
@@ -252,6 +267,7 @@ Options:
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
+  --override-writer  Write the home domain from an installation \`home-writer\` does not designate
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
 }

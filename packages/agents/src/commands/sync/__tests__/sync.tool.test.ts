@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../../lib/content-resolver.ts';
+import { resolveRunningPackageRoot } from '../../../lib/running-package.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
@@ -2497,5 +2498,36 @@ describe(syncGlobalCommand, () => {
 
     expect(existsSync(path.join(neutralDir, 'alpha.md'))).toBe(false);
     expect(await readFile(path.join(neutralDir, 'notes.txt'), 'utf8')).toBe('mine\n');
+  });
+
+  describe('designated-writer guard', () => {
+    it('refuses a mismatched installation before deploying anything', async () => {
+      const guidanceFile = await seedGuidanceFile('.claude', 'CLAUDE.md');
+      await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+      await declareRaw(`home-writer: ${path.join(homeDir, 'designated')}\nrulebooks:\n  use:\n    - alpha\n`);
+
+      await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(
+        /not the designated home-domain writer/,
+      );
+      expect(await readFile(guidanceFile, 'utf8')).not.toContain('Alpha rules.');
+    });
+
+    it('refuses a dry run exactly as it refuses the real one', async () => {
+      await declareRaw(`home-writer: ${path.join(homeDir, 'designated')}\n`);
+
+      await expect(syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir)).rejects.toThrow(
+        /not the designated home-domain writer/,
+      );
+    });
+
+    it('deploys when the setting designates the running installation', async () => {
+      const guidanceFile = await seedGuidanceFile('.claude', 'CLAUDE.md');
+      await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+      await declareRaw(`home-writer: ${resolveRunningPackageRoot()}\nrulebooks:\n  use:\n    - alpha\n`);
+
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+      expect(await readFile(guidanceFile, 'utf8')).toContain('Alpha rules.');
+    });
   });
 });

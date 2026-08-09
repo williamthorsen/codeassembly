@@ -51,6 +51,12 @@ export interface HarnessManifest {
   readonly entries: ReadonlyArray<ManifestEntry>;
 }
 
+/**
+ * A command that writes the home domain (`~/.agents/`, `~/.claude/`, `~/.rovodev/`), spelled as the user invokes it.
+ * These two are the whole set: bare `sync` writes project trees and refuses to run from the home directory.
+ */
+export type HomeWriteCommand = 'install' | 'sync --global';
+
 /** Options controlling install behavior. */
 export interface InstallOptions {
   readonly harness: HarnessId | 'all';
@@ -61,6 +67,8 @@ export interface InstallOptions {
   readonly hooks?: boolean;
   /** Whether `configure-hooks` prints the hook entries instead of writing them (`--print`). */
   readonly print?: boolean;
+  /** Whether a home-domain write proceeds from an installation the `home-writer` setting does not designate. */
+  readonly shouldOverrideWriter?: boolean;
 }
 
 /** A single entry in the manifest tracking an installed file or directory. */
