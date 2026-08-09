@@ -9,11 +9,18 @@ import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
 import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
 import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../../lib/content-sources.ts';
+import {
+  createSourceResolver,
+  describeSearchedLocations,
+  hasLibraryArtifact,
+  type SourceResolver,
+} from '../../lib/content-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
+import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hooks.ts';
+import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
@@ -285,6 +292,10 @@ async function reconcileDomain(
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
+  // Checked before the closure resolves so a typo names the hook that wrote it; seeding alone would report only that
+  // some rulebook went missing.
+  await assertBindingsResolve(declaration.guidanceHooks, resolver);
+
   const closure = await resolveClosure(
     mergeSeeds([
       {
@@ -293,6 +304,8 @@ async function reconcileDomain(
         subagent: declaration.subagents,
         collection: declaration.collections,
       },
+      // A binding is a dependency edge: a bound rulebook deploys per its own `delivery:` without being declared twice.
+      { rulebook: [...new Set(declaration.guidanceHooks.values().toArray().flat())] },
       ...packageCatalogs,
     ]),
     resolver,
@@ -303,6 +316,7 @@ async function reconcileDomain(
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
   const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, resolver)));
   assertNoSkillNameCollisions(resolved);
+  assertBoundRulebooksDeclareNoHook(declaration.guidanceHooks, resolved);
   const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, resolver)));
   const resolvedSubagents = await Promise.all(closure.subagents.map((slug) => resolveDeclaredSubagent(slug, resolver)));
 
@@ -352,8 +366,19 @@ async function reconcileDomain(
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
   // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
   // tool-name/link rewriting, and the harness id each rulebook body renders for.
+  // Rendered per harness, because a bound body carries that harness's link targets, sigils, and home dir. Built once
+  // here so the skill pass and the subagent pass splice the same guidance.
+  const fillsByHarness = new Map(
+    harnessIds.map((harnessId) => [
+      harnessId,
+      buildGuidanceHookFills(declaration.guidanceHooks, resolved, harnessId, resolveRulebookContext),
+    ]),
+  );
+
   const harnessSkillTargets = await Promise.all(
-    harnessIds.map((harnessId) => resolveSkillTarget(harnessId, domain.baseDir, contentDir)),
+    harnessIds.map((harnessId) =>
+      resolveSkillTarget(harnessId, domain.baseDir, contentDir, fillsByHarness.get(harnessId)),
+    ),
   );
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
@@ -361,7 +386,9 @@ async function reconcileDomain(
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    harnessIds.map((harnessId) => resolveSubagentTarget(harnessId, domain.baseDir, contentDir)),
+    harnessIds.map((harnessId) =>
+      resolveSubagentTarget(harnessId, domain.baseDir, contentDir, fillsByHarness.get(harnessId)),
+    ),
   );
 
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
@@ -612,6 +639,99 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
 interface OwnedTarget {
   readonly filePath: string;
   readonly isOwned: (content: string) => boolean;
+}
+
+/**
+ * Throws when a guidance-hook binding names a rulebook that resolves from no declared source or the library, naming
+ * both the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an anonymous
+ * missing reference: the hook name is the half that says where to go and fix it.
+ */
+async function assertBindingsResolve(
+  bindings: ReadonlyMap<string, ReadonlyArray<string>>,
+  resolver: SourceResolver,
+): Promise<void> {
+  for (const [hook, slugs] of bindings) {
+    for (const slug of slugs) {
+      if ((await resolver.resolve('rulebook', slug)) === undefined) {
+        throw new Error(
+          `Guidance hook "${hook}" binds rulebook "${slug}", which was not found in any of: ` +
+            describeSearchedLocations(resolver, 'rulebook', slug),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Throws when a bound rulebook's own body declares a guidance hook. Bound guidance is spliced as rendered, so a hook
+ * inside it has no pass left that could fill it. Checked here, against the unrendered body, because the rulebook
+ * renderer strips the directive and the evidence is gone by the time a fill is built.
+ */
+function assertBoundRulebooksDeclareNoHook(
+  bindings: ReadonlyMap<string, ReadonlyArray<string>>,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+): void {
+  const bySlug = indexRulebooksBySlug(resolved);
+  for (const [hook, slugs] of bindings) {
+    for (const slug of slugs) {
+      const declared = listGuidanceHooks(readBoundRulebook(bySlug, slug, hook).body, `guidance/rulebooks/${slug}.md`);
+      if (declared.length > 0) {
+        const names = declared.map((declaration) => declaration.name).join(', ');
+        throw new Error(
+          `Rulebook "${slug}", bound to guidance hook "${hook}", declares a guidance hook of its own (${names}). ` +
+            'Bound guidance is spliced as rendered, so nothing can fill a hook inside it: remove the directive, or ' +
+            'bind a rulebook that carries none.',
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Renders one harness's guidance-hook fills: each bound rulebook's body through the rulebook renderer, keyed by the
+ * hook it fills and ordered as the declaration bound it. Rendering here rather than at the splice is what makes the
+ * spliced body position-independent, since link targets and invocation tokens are resolved before it moves.
+ */
+function buildGuidanceHookFills(
+  bindings: ReadonlyMap<string, ReadonlyArray<string>>,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  harnessId: HarnessId,
+  resolveRulebookContext: ResolveRulebookContext,
+): GuidanceHookFills {
+  const bySlug = indexRulebooksBySlug(resolved);
+  const fills = new Map<string, ReadonlyArray<GuidanceHookFill>>();
+  for (const [hook, slugs] of bindings) {
+    fills.set(
+      hook,
+      slugs.map((slug) => {
+        const rulebook = readBoundRulebook(bySlug, slug, hook);
+        const context = resolveRulebookContext(harnessId, rulebook.source);
+        return { slug, body: renderRulebookBody(rulebook.body, slug, context) };
+      }),
+    );
+  }
+  return fills;
+}
+
+/** Indexes resolved rulebooks by slug, so a binding reaches its body without rescanning the list per lookup. */
+function indexRulebooksBySlug(resolved: ReadonlyArray<ResolvedRulebook>): ReadonlyMap<string, ResolvedRulebook> {
+  return new Map(resolved.map((rulebook) => [rulebook.slug, rulebook]));
+}
+
+/**
+ * Returns the resolved rulebook a binding names. A binding seeds the closure, so its absence here is a defect in this
+ * command rather than in what the user declared, and it is reported as one.
+ */
+function readBoundRulebook(
+  bySlug: ReadonlyMap<string, ResolvedRulebook>,
+  slug: string,
+  hook: string,
+): ResolvedRulebook {
+  const rulebook = bySlug.get(slug);
+  if (rulebook === undefined) {
+    throw new Error(`Rulebook "${slug}", bound to guidance hook "${hook}", did not reach the deploy closure.`);
+  }
+  return rulebook;
 }
 
 /**
@@ -1406,6 +1526,7 @@ async function resolveSubagentTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
+  guidanceHookFills: GuidanceHookFills | undefined,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
@@ -1419,6 +1540,7 @@ async function resolveSubagentTarget(
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
       subagentSigil: harnessConfig.subagentSigil,
+      guidanceHookFills,
     },
   };
 }
@@ -1432,6 +1554,7 @@ async function resolveSkillTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
+  guidanceHookFills: GuidanceHookFills | undefined,
 ): Promise<HarnessSkillTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
@@ -1444,6 +1567,7 @@ async function resolveSkillTarget(
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
       subagentSigil: harnessConfig.subagentSigil,
+      guidanceHookFills,
     },
   };
 }
