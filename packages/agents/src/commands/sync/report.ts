@@ -7,6 +7,7 @@ import type { ResolvedHarnessTargets } from '../../lib/target-harnesses.ts';
 import type {
   AmbientHostPlan,
   AmbientSkipReason,
+  GuidanceHookAdvisory,
   MissingDeclaration,
   ResolutionEntry,
   Retirement,
@@ -55,6 +56,9 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
+  // Reported here as well as on a live run: each names a property of the declaration rather than of the writes, and a
+  // dry run is where a declaration gets checked before it is committed to.
+  lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory));
   return lines;
 }
 
@@ -91,6 +95,7 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   if (plan.undeclaredPackages.length > 0) {
     lines.push({ level: 'info', text: renderPackageAdvice(plan.undeclaredPackages) });
   }
+  lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory));
   return lines;
 }
 
@@ -159,6 +164,37 @@ function describeDeliveries(plan: SyncPlan): string {
     `${countOrphans(plan.declaredSkillOrphansByDir)} declared-skill dir(s), and ` +
     `${countOrphans(plan.subagentOrphansByDir)} declared-subagent file(s).`
   );
+}
+
+/**
+ * Renders one guidance-hook advisory. `bound-undeclared` names both remedies because the reader may control only
+ * one: a rulebook resolved from the library carries frontmatter they cannot edit, leaving the binding as the half
+ * that is theirs.
+ */
+function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLine {
+  switch (advisory.kind) {
+    case 'bound-undeclared':
+      return {
+        level: 'warn',
+        text:
+          `⚠️ Guidance hook "${advisory.hook}" binds rulebook "${advisory.slug}", whose delivery does not name ` +
+          "`hook`. Add `hook` to the rulebook's delivery, or drop the binding.",
+      };
+    case 'bound-ambient':
+      return {
+        level: 'warn',
+        text:
+          `⚠️ Rulebook "${advisory.slug}" is bound to guidance hook "${advisory.hook}" and also delivers ` +
+          '`ambient`, so a session carrying both receives its text twice. Drop one of the two routes.',
+      };
+    case 'declared-unbound':
+      return {
+        level: 'info',
+        text:
+          `💡 Rulebook "${advisory.slug}" offers guidance-hook delivery that nothing binds. To use it, name the ` +
+          'rulebook under a hook in the `guidance-hooks:` block of .agents/codeassembly.yaml.',
+      };
+  }
 }
 
 /** Names what settled a run's harness set, in the phrasing the targeting line embeds. */

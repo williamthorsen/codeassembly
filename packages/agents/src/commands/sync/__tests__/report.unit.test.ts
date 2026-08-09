@@ -82,6 +82,56 @@ describe('unignored hosts', () => {
   });
 });
 
+describe('guidance-hook advisories', () => {
+  it('warns on both paths that a bound rulebook does not claim the hook route', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes('whose delivery does not name'));
+
+      expect(advisory?.level).toBe('warn');
+      expect(advisory?.text).toContain('layout-preferences');
+      expect(advisory?.text).toContain('impl');
+    }
+  });
+
+  it('warns on both paths that a bound rulebook also charges every session', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes('receives its text twice'));
+
+      expect(advisory?.level).toBe('warn');
+      expect(advisory?.text).toContain('layout-preferences');
+    }
+  });
+
+  it('advises on both paths that a declared hook route is going unused', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [{ kind: 'declared-unbound', slug: 'layout-preferences' }],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes('guidance-hook delivery that nothing binds'));
+
+      expect(advisory?.level).toBe('info');
+      expect(advisory?.text).toContain('layout-preferences');
+    }
+  });
+
+  it('adds no line to either path when the declaration and the deliveries agree', () => {
+    const outcome = reconciled();
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      expect(lines.filter((line) => line.text.includes('guidance hook'))).toEqual([]);
+    }
+  });
+});
+
 describe('targeting', () => {
   it('names the harness set and what settled it on both paths', () => {
     const outcome = reconciled({ targets: { harnessIds: ['claude', 'rovo'], origin: 'detection' } });
