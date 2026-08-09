@@ -191,6 +191,63 @@ describe(renderSkillDirectory, () => {
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(GuidanceHookError);
   });
 
+  it('fills a declared guidance hook with the guidance bound to it', async () => {
+    await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- guidance-hook: impl -->\n\nProse.\n' });
+
+    const fills = new Map([['impl', [{ slug: 'layout', body: '# Layout\n\nGroup source by role.\n' }]]]);
+    const content = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      'SKILL.md',
+    );
+
+    expect(content).toContain('<!-- codeassembly-guidance-hook:impl:start -->');
+    expect(content).toContain('<!-- rulebook:layout -->');
+    expect(content).toContain('## Layout');
+    expect(content).toContain('Group source by role.');
+  });
+
+  it("leaves a bound body's rendered links and tokens untouched by the host rewrites", async () => {
+    await writeSkill({ 'SKILL.md': '<!-- guidance-hook: impl -->\n' });
+
+    const fills = new Map([
+      ['impl', [{ slug: 'layout', body: 'See [naming](~/.claude/skills/_data/naming.md) under `~/.claude`.\n' }]],
+    ]);
+    const content = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      'SKILL.md',
+    );
+
+    expect(content).toContain('[naming](~/.claude/skills/_data/naming.md)');
+  });
+
+  it('fills a hook an included partial declares', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n\n<!-- include: _partials/hook.md / -->\n',
+      '_partials/hook.md': '<!-- guidance-hook: impl -->\n',
+    });
+
+    const fills = new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]);
+    const content = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      'SKILL.md',
+    );
+
+    expect(content).toContain('Bound guidance.');
+  });
+
+  it('strips a hook no binding names, even when other hooks are bound', async () => {
+    await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- guidance-hook: glossary -->\n' });
+
+    const fills = new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]);
+    const content = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      'SKILL.md',
+    );
+
+    expect(content).not.toContain('guidance-hook');
+    expect(content).not.toContain('Bound guidance.');
+  });
+
   // region | Helpers
 
   function context(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
@@ -256,5 +313,44 @@ describe(renderSupportEntry, () => {
     });
 
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
+  });
+
+  it("strips a support entry's hook even when the caller carries a binding for it", async () => {
+    const srcPath = path.join(skillsDir, '_data', 'table.md');
+    await mkdir(path.dirname(srcPath), { recursive: true });
+    await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
+
+    const rendered = await renderSupportEntry(srcPath, '_data', contentDir, {
+      toolMapping: TOOL_MAPPING,
+      anchor: homeAnchor('.claude/skills'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+      guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
+    });
+
+    expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
+  });
+
+  it("strips a hook in a support directory's entries, the route that renders through the skill transform", async () => {
+    const srcDir = path.join(skillsDir, '_data');
+    await mkdir(srcDir, { recursive: true });
+    await writeFile(path.join(srcDir, 'table.md'), '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
+
+    const rendered = await renderSupportEntry(srcDir, '_data', contentDir, {
+      toolMapping: TOOL_MAPPING,
+      anchor: homeAnchor('.claude/skills'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+      guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
+    });
+
+    expect(rendered).toEqual({
+      kind: 'directory',
+      entries: [{ kind: 'markdown', relPath: 'table.md', content: '# Table\n\n\nRows.\n' }],
+    });
   });
 });

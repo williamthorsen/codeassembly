@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { DeclarationSource, TypeDeclaration } from './codeassembly-schema.ts';
+import type { DeclarationSource, GuidanceHookBindings, TypeDeclaration } from './codeassembly-schema.ts';
 import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import { resolveSourcePath } from './source-path.ts';
@@ -13,6 +13,8 @@ import { resolveSourcePath } from './source-path.ts';
  * first). `packages` are the declared package names in that same precedence order, left unresolved: locating one probes
  * `node_modules`, which is filesystem work this parser deliberately leaves to its caller. `declinedPackages` are the
  * names a tier dropped and no higher tier re-adopted, which distinguishes "declined" from "never mentioned".
+ * `guidanceHooks` maps each bound hook name to the rulebooks bound to it, in declaration order; a hook every binding
+ * dropped is absent rather than empty, so its presence means something is bound.
  */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
@@ -22,6 +24,7 @@ export interface ResolvedDeclaration {
   readonly sources: ReadonlyArray<{ name: string; dir: string }>;
   readonly packages: ReadonlyArray<string>;
   readonly declinedPackages: ReadonlyArray<string>;
+  readonly guidanceHooks: ReadonlyMap<string, ReadonlyArray<string>>;
 }
 
 /**
@@ -52,6 +55,8 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
   const declinedPackages = new Set<string>();
   // Sources key on `name` so a repeated name remaps its path; the value is the resolved absolute dir.
   const sources = new Map<string, string>();
+  // Each hook name accumulates its own binding set, so a tier binding to one hook leaves the others untouched.
+  const guidanceHooks = new Map<string, Set<string>>();
   for (const filePath of chain) {
     const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath);
 
@@ -63,6 +68,7 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
       packages.clear();
       declinedPackages.clear();
       sources.clear();
+      guidanceHooks.clear();
     }
     accumulateType(rulebooks, declaration.rulebooks);
     accumulateType(skills, declaration.skills);
@@ -70,6 +76,7 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
     accumulateType(collections, declaration.collections);
     accumulatePackages(packages, declinedPackages, declaration.packages);
     accumulateSources(sources, declaration.sources, path.dirname(filePath));
+    accumulateGuidanceHooks(guidanceHooks, declaration['guidance-hooks']);
   }
 
   return {
@@ -82,10 +89,25 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
     packages: [...packages].toReversed(),
     declinedPackages: [...declinedPackages],
     sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
+    guidanceHooks: buildGuidanceHookMap(guidanceHooks),
   };
 }
 
 // region | Helpers
+
+/**
+ * Applies one `guidance-hooks` block to the accumulator, one hook at a time. Each hook's block carries the same
+ * `use`/`drop` shape an artifact type does and is accumulated by the same rule, so a binding behaves the way a
+ * declaration elsewhere in the file does.
+ */
+function accumulateGuidanceHooks(effective: Map<string, Set<string>>, block: GuidanceHookBindings | undefined): void {
+  const declared = Object.entries(block ?? {});
+  for (const [hook, bindings] of declared) {
+    const bound = effective.get(hook) ?? new Set<string>();
+    accumulateType(bound, bindings);
+    effective.set(hook, bound);
+  }
+}
 
 /**
  * Applies one `packages` block's `use` and `drop` entries to the adopted and declined accumulators, keeping them
@@ -133,6 +155,17 @@ function accumulateType(effective: Set<string>, block: TypeDeclaration | undefin
   for (const entry of subtractions) {
     effective.delete(entry.name);
   }
+}
+
+/**
+ * Freezes the guidance-hook accumulator into its resolved form, omitting a hook a later tier emptied. An empty entry
+ * would be indistinguishable from a live binding at every call site downstream, where presence is what says something
+ * is bound.
+ */
+function buildGuidanceHookMap(accumulated: Map<string, Set<string>>): ReadonlyMap<string, ReadonlyArray<string>> {
+  return new Map(
+    [...accumulated].filter(([, bound]) => bound.size > 0).map(([hook, bound]) => [hook, [...bound]] as const),
+  );
 }
 
 // endregion | Helpers

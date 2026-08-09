@@ -1,6 +1,5 @@
-import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { mergeFrontmatter } from './frontmatter-merger.ts';
-import { stripGuidanceHooks } from './guidance-hooks.ts';
+import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
@@ -25,17 +24,23 @@ export interface SubagentRenderContext {
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
+  /**
+   * Guidance bound to each hook the subagent's body may declare. Absent for every caller that resolves no declaration
+   * — `install` and `validate` — which is what keeps them stripping.
+   */
+  readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }
 
 /**
- * Renders a subagent's harness-specific deployed body from its include-expanded source: strips guidance-hook
+ * Renders a subagent's harness-specific deployed body from its include-expanded source: resolves guidance-hook
  * declarations, merges the harness overlay frontmatter, rewrites `{tool:NAME}` placeholders, rewrites relative Markdown
  * links, then expands template variables. Pure string in, marker-free string out — both `install` and `sync` compose
- * ownership/provenance marking around it. In-body anchors are validated on the stripped text, ahead of every rewrite,
- * so the verdict holds for every harness.
+ * ownership/provenance marking around it. In-body anchors are validated on the resolved text, ahead of every rewrite,
+ * so the verdict holds for every harness and a collision between host and bound guidance is caught.
  *
- * The strip lives here rather than beside the caller's include expansion, so every path that renders a subagent body
- * passes through it.
+ * Hooks resolve here rather than beside the caller's include expansion, so every path that renders a subagent body
+ * passes through them. The fill precedes the frontmatter merge, and a directive written inside the frontmatter block
+ * fails rather than splicing prose into YAML.
  *
  * `anchor` and `homeDir` are distinct arguments because they answer different questions: the anchor places a link
  * target in whichever tree deploys it, while `homeDir` expands `{harness_home_dir}` tokens, which name the harness
@@ -53,11 +58,12 @@ export function renderSubagentForHarness(
     harnessId,
     skillSigil,
     subagentSigil,
+    guidanceHookFills,
   }: SubagentRenderContext,
 ): string {
-  const stripped = stripGuidanceHooks(expandedSource, sourceLabel);
-  assertAnchorsResolve(stripped, sourceLabel);
-  const merged = mergeFrontmatter(stripped, overlayYaml);
+  const filled = fillGuidanceHooks(expandedSource, guidanceHookFills, sourceLabel);
+  assertFilledAnchorsResolve(filled, sourceLabel);
+  const merged = mergeFrontmatter(filled.content, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
   const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil }, sourceLabel);
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);
