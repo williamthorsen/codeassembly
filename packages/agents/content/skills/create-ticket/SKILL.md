@@ -25,7 +25,7 @@ Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comm
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
-- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). It is used only by the step-6 guard; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
+- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). It feeds the step-4 inference and the step-6 guard; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
@@ -158,13 +158,15 @@ Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` 
 
 #### Jira path (stub)
 
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Skip to step 8 (save locally with an auto-generated ticket ID). Full Jira API support deferred. The Jira stub holds no URL yet, so it persists nothing new — consistent with today.
+If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub holds no URL yet, so it persists nothing new — consistent with today.
 
 ### 7. Apply relationships
 
 Skip this step when step 4 decided none.
 
-Apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
+Where no remote ticket exists — the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform) — there is nothing to link. Skip every relationship step 4 decided, each carrying that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+
+Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
 
 #### GitHub path
 
@@ -177,6 +179,8 @@ gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --
 Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
 
 These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number — reaching for that endpoint is the detour this note exists to prevent.
+
+On GitHub Enterprise Server, `--parent` requires 3.17 or later and the two blocking relationships require 3.19, so on 3.17 and 3.18 a parent lands while a blocker fails from a CLI new enough to satisfy the floor above.
 
 #### Other platforms
 
@@ -250,7 +254,7 @@ Plan artifact: `{saved plan path}`
 
 ### Fallback: No remote platform
 
-If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD}-{4 random hex}` (e.g., `20260226-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created.
+If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD}-{4 random hex}` (e.g., `20260226-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created, and report every relationship step 4 decided as skipped per step 7.
 
 ## Completion
 
