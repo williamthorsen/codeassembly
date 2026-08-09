@@ -167,7 +167,7 @@ subagents:
     - canary
 ```
 
-A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is injected into the ambient region of each targeted harness's guidance file, and a `skill` rulebook is delivered as a `consult-<slug>` skill in each targeted harness. A rulebook may declare both.
+A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is injected into the ambient region of each targeted harness's guidance file, and a `skill` rulebook is delivered as a `consult-<slug>` skill in each targeted harness. A third mode, `hook`, produces no delivery of its own: it records that the rulebook is reached by a guidance-hook binding, which a `codeassembly.yaml` writes rather than the rulebook (see [Guidance hooks](#guidance-hooks)). A rulebook may declare any combination of the three, and a list naming none of them is rejected.
 
 A declared skill is deployed into each targeted harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
 
