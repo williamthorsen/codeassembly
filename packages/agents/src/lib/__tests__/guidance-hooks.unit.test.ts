@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { GuidanceHookError, isGuidanceHookName, listGuidanceHooks, stripGuidanceHooks } from '../guidance-hooks.ts';
+import {
+  assertFilledAnchorsResolve,
+  fillGuidanceHooks,
+  GuidanceHookError,
+  type GuidanceHookFills,
+  isGuidanceHookName,
+  listGuidanceHooks,
+  stripGuidanceHooks,
+} from '../guidance-hooks.ts';
 
 const SOURCE_LABEL = 'skills/demo/SKILL.md';
 
@@ -137,3 +145,146 @@ describe(isGuidanceHookName, () => {
     expect(isGuidanceHookName('')).toBe(false);
   });
 });
+
+describe(fillGuidanceHooks, () => {
+  it('splices a bound rulebook in place of the directive, attributed and wrapped', () => {
+    const result = fillGuidanceHooks(
+      'Before.\n\n<!-- guidance-hook: impl -->\n\nAfter.\n',
+      bind({ impl: [layout] }),
+      'skills/a/SKILL.md',
+    );
+
+    expect(result.content).toBe(
+      [
+        'Before.',
+        '',
+        '<!-- codeassembly-guidance-hook:impl:start -->',
+        '<!-- rulebook:layout -->',
+        '## Layout',
+        '',
+        'Group source by role.',
+        '<!-- /rulebook:layout -->',
+        '<!-- codeassembly-guidance-hook:impl:end -->',
+        '',
+        'After.',
+        '',
+      ].join('\n'),
+    );
+    expect(result.filled).toEqual([{ hook: 'impl', slugs: ['layout'] }]);
+  });
+
+  it('removes an unbound directive, contributing nothing at all', () => {
+    const result = fillGuidanceHooks(
+      'Before.\n<!-- guidance-hook: impl -->\nAfter.\n',
+      bind({ other: [layout] }),
+      'a.md',
+    );
+
+    expect(result.content).toBe('Before.\nAfter.\n');
+    expect(result.content).not.toContain('guidance-hook');
+    expect(result.filled).toEqual([]);
+  });
+
+  it('splices multiple bindings in declaration order', () => {
+    const result = fillGuidanceHooks('<!-- guidance-hook: impl -->\n', bind({ impl: [layout, types] }), 'a.md');
+
+    expect(result.content.indexOf('rulebook:layout')).toBeLessThan(result.content.indexOf('rulebook:types'));
+    expect(result.filled).toEqual([{ hook: 'impl', slugs: ['layout', 'types'] }]);
+  });
+
+  it('carries the stripped body alongside the filled one', () => {
+    const result = fillGuidanceHooks(
+      'Before.\n<!-- guidance-hook: impl -->\nAfter.\n',
+      bind({ impl: [layout] }),
+      'a.md',
+    );
+
+    expect(result.stripped).toBe('Before.\nAfter.\n');
+  });
+
+  it('re-renders byte-identically', () => {
+    const source = 'Before.\n\n<!-- guidance-hook: impl -->\n\nAfter.\n';
+    const fills = bind({ impl: [layout, types] });
+
+    expect(fillGuidanceHooks(source, fills, 'a.md').content).toBe(fillGuidanceHooks(source, fills, 'a.md').content);
+  });
+
+  describe('heading demotion', () => {
+    it('adds one level to each heading in a bound body', () => {
+      const fills = bind({ impl: [{ slug: 'deep', body: '# One\n\n## Two\n\n### Three\n' }] });
+      const result = fillGuidanceHooks('<!-- guidance-hook: impl -->\n', fills, 'a.md');
+
+      expect(result.content).toContain('## One');
+      expect(result.content).toContain('### Two');
+      expect(result.content).toContain('#### Three');
+    });
+
+    it('leaves a hash inside a fenced code block untouched', () => {
+      const fills = bind({ impl: [{ slug: 'fenced', body: '# Title\n\n```bash\n# not a heading\n```\n' }] });
+      const result = fillGuidanceHooks('<!-- guidance-hook: impl -->\n', fills, 'a.md');
+
+      expect(result.content).toContain('## Title');
+      expect(result.content).toContain('\n# not a heading\n');
+    });
+
+    it('leaves an h6 at h6, since a seventh hash is no longer a heading', () => {
+      const fills = bind({ impl: [{ slug: 'deepest', body: '###### Six\n' }] });
+
+      expect(fillGuidanceHooks('<!-- guidance-hook: impl -->\n', fills, 'a.md').content).toContain('###### Six');
+    });
+  });
+
+  it('rejects a directive inside the frontmatter block when a binding would fill it', () => {
+    const source = '---\ntitle: a\n<!-- guidance-hook: impl -->\n---\n\nBody.\n';
+
+    expect(() => fillGuidanceHooks(source, bind({ impl: [layout] }), 'subagents/a.md')).toThrow(
+      /subagents\/a\.md:3.*fill-in-frontmatter/s,
+    );
+  });
+
+  it('strips a directive inside the frontmatter block when nothing is bound', () => {
+    const source = '---\ntitle: a\n<!-- guidance-hook: impl -->\n---\n\nBody.\n';
+
+    expect(fillGuidanceHooks(source, bind({}), 'subagents/a.md').content).toBe('---\ntitle: a\n---\n\nBody.\n');
+  });
+
+  it('throws whatever listGuidanceHooks rejects before splicing anything', () => {
+    expect(() => fillGuidanceHooks('<!-- guidance-hook: Bad_Name -->\n', bind({}), 'a.md')).toThrow(GuidanceHookError);
+  });
+});
+
+describe(assertFilledAnchorsResolve, () => {
+  it('passes when the combined body resolves every anchor', () => {
+    const source = '[see](#layout)\n\n<!-- guidance-hook: impl -->\n';
+    const result = fillGuidanceHooks(source, bind({ impl: [layout] }), 'a.md');
+
+    expect(() => assertFilledAnchorsResolve(result, 'a.md')).not.toThrow();
+  });
+
+  it('attributes a collision the fill introduces to the binding that caused it', () => {
+    const source = '## Layout\n\n[see](#layout)\n\n<!-- guidance-hook: impl -->\n';
+    const result = fillGuidanceHooks(source, bind({ impl: [layout] }), 'a.md');
+
+    expect(() => assertFilledAnchorsResolve(result, 'a.md')).toThrow(/binding introduced the failure: impl <- layout/);
+  });
+
+  it('reports a collision the host carried on its own without blaming a binding', () => {
+    const source = '## Dup\n\n## Dup\n\n[see](#dup)\n\n<!-- guidance-hook: impl -->\n';
+    const result = fillGuidanceHooks(source, bind({ impl: [types] }), 'a.md');
+
+    expect(() => assertFilledAnchorsResolve(result, 'a.md')).toThrow(/names 2 headings/);
+    expect(() => assertFilledAnchorsResolve(result, 'a.md')).not.toThrow(/binding introduced/);
+  });
+});
+
+// region | Helpers
+
+const layout = { slug: 'layout', body: '# Layout\n\nGroup source by role.\n' };
+const types = { slug: 'types', body: '# Types\n\nExport by name.\n' };
+
+/** Builds the fills map from a plain object, so a test names bindings without constructing a Map inline. */
+function bind(bindings: Record<string, ReadonlyArray<{ slug: string; body: string }>>): GuidanceHookFills {
+  return new Map(Object.entries(bindings));
+}
+
+// endregion | Helpers

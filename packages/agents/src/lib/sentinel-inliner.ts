@@ -23,7 +23,7 @@ export function extractInstalledSlugs(content: string): ReadonlyArray<string> {
  * and body yields a byte-identical document, which is what keeps `sync` diff-free on re-run.
  */
 export function injectRulebook(content: string, slug: string, body: string): string {
-  const block = renderBlock(slug, body);
+  const block = renderRulebookBlock(slug, body);
   const existing = blockPattern(slug);
 
   if (existing.test(content)) {
@@ -62,8 +62,12 @@ export function removeRulebook(content: string, slug: string): string {
   return content.replace(new RegExp(block), '');
 }
 
-/** Renders the canonical block for a slug: open marker, trimmed body, close marker. */
-function renderBlock(slug: string, body: string): string {
+/**
+ * Renders the canonical block for a slug: open marker, trimmed body, close marker. Exported so every surface that
+ * attributes inlined content to the rulebook it came from writes the one grammar, whether it manages a host document
+ * or splices a guidance-hook fill.
+ */
+export function renderRulebookBlock(slug: string, body: string): string {
   return `${openMarker(slug)}\n${body.trim()}\n${closeMarker(slug)}`;
 }
 
