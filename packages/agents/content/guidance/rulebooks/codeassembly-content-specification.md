@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 8
+version: 9
 ---
 
 # CodeAssembly content specification
@@ -142,3 +142,5 @@ A `codeassembly-` prefix marks guidance for working in the CodeAssembly reposito
 Behavioural rules that govern an agent's output -- the recommendation gradient, the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs, then restated at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when it sits beside the action it governs than when it was read once at session start, and it imitates a nearby concrete example more reliably still than it follows a directive.
 
 Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
+
+Where a step's guidance is a matter of local taste rather than library doctrine -- a user's code-style preferences, a project's own glossary -- neither restatement above fits: a pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/README.md`. _(Convention; not enforced.)_

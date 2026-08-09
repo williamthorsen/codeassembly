@@ -233,7 +233,7 @@ A binding is also a dependency edge: a bound rulebook joins the deploy closure a
 
 A hook nothing binds contributes nothing to deployed output, marker included. `install` resolves no declaration, so every hook it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
 
-Name a hook for the concern rather than the consumer — `implementation-preferences`, not `implement-plan-preferences` — since concern-scoping is what lets one binding fill every consumer, and carry no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar the directive enforces. `validate` reports a hook name matching a rulebook slug in the same content root as a defect, which is the checkable form of the no-prefix rule.
+Name a hook for the concern rather than the consumer — `implementation-preferences`, not `implement-plan-preferences` — since concern-scoping is what lets one binding fill every consumer, and carry no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar the directive enforces. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
 
 Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
 
