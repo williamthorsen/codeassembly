@@ -169,7 +169,19 @@ export interface SyncPlan {
   readonly promptsYmlPaths: ReadonlyArray<string>;
   /** Dependencies shipping guidance the project has not declared. */
   readonly undeclaredPackages: ReadonlyArray<string>;
+  /** Rulebooks whose declared delivery and whose guidance-hook bindings disagree. */
+  readonly guidanceHookAdvisories: ReadonlyArray<GuidanceHookAdvisory>;
 }
+
+/**
+ * A disagreement between what a rulebook's `delivery` declares and what a declaration's guidance-hook bindings do
+ * with it. Every kind is advisory: a rulebook's delivery is written by its author and a binding by its consumer, so
+ * a mismatch is not always the consumer's to fix and never fails their run.
+ */
+export type GuidanceHookAdvisory =
+  | { readonly kind: 'bound-undeclared'; readonly slug: string; readonly hook: string }
+  | { readonly kind: 'bound-ambient'; readonly slug: string; readonly hook: string }
+  | { readonly kind: 'declared-unbound'; readonly slug: string };
 
 /** A retired legacy output, and whether the host it names held nothing but retired blocks. */
 export type Retirement =
@@ -515,6 +527,7 @@ async function reconcileDomain(
       [...declaration.packages, ...declaration.declinedPackages],
       domain.baseDir,
     ),
+    guidanceHookAdvisories: findGuidanceHookAdvisories(declaration.guidanceHooks, resolved),
   };
 
   if (options.dryRun) {
@@ -730,6 +743,50 @@ function buildGuidanceHookFills(
     );
   }
   return fills;
+}
+
+/**
+ * Collects every disagreement between the rulebooks a declaration binds and the delivery those rulebooks declare.
+ * Nothing here throws: each finding reaches the reader as a report line, because a binding and a `delivery` are
+ * written by different people and a run whose output is correct must not fail over their disagreement.
+ *
+ * Order is fixed so both reports render alike: the bound findings follow the bindings in declaration order, and the
+ * unbound ones follow `resolved`, whose order the closure walk fixes.
+ */
+function findGuidanceHookAdvisories(
+  bindings: ReadonlyMap<string, ReadonlyArray<string>>,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+): ReadonlyArray<GuidanceHookAdvisory> {
+  const bySlug = indexRulebooksBySlug(resolved);
+  const advisories: Array<GuidanceHookAdvisory> = [];
+  const boundSlugs = new Set<string>();
+
+  for (const [hook, slugs] of bindings) {
+    for (const slug of slugs) {
+      boundSlugs.add(slug);
+      const rulebook = bySlug.get(slug);
+      if (rulebook === undefined) {
+        continue;
+      }
+      // Both can hold at once, and both are reported: one says the rulebook was never authored for the splice, the
+      // other that its text now reaches a session twice. Neither remedy resolves the other.
+      if (!rulebook.hook) {
+        advisories.push({ kind: 'bound-undeclared', slug, hook });
+      }
+      if (rulebook.ambient) {
+        advisories.push({ kind: 'bound-ambient', slug, hook });
+      }
+    }
+  }
+
+  for (const rulebook of resolved) {
+    // Measured against every hook's bindings at once: a rulebook bound anywhere has taken the route it declares.
+    if (rulebook.hook && !boundSlugs.has(rulebook.slug)) {
+      advisories.push({ kind: 'declared-unbound', slug: rulebook.slug });
+    }
+  }
+
+  return advisories;
 }
 
 /** Indexes resolved rulebooks by slug, so a binding reaches its body without rescanning the list per lookup. */

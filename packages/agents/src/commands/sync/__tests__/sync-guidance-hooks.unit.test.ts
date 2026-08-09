@@ -6,6 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../../lib/types.ts';
+import type { GuidanceHookAdvisory } from '../sync.ts';
 import { syncCommand } from '../sync.ts';
 
 describe('syncCommand with guidance-hook bindings', () => {
@@ -160,24 +161,128 @@ describe('syncCommand with guidance-hook bindings', () => {
   });
 });
 
-// region | Helpers
+describe('guidance-hook advisories', () => {
+  let projectRoot: string;
+  let contentDir: string;
+  let homeDir: string;
 
-/** Build sync options targeting only the Claude harness. */
-function makeOptions(): InstallOptions {
-  return { harness: 'claude', link: false, force: false, dryRun: false };
-}
+  beforeEach(async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    homeDir = path.join(tmpdir(), `agents-test-hook-advice-home-${stamp}`);
+    projectRoot = path.join(tmpdir(), `agents-test-hook-advice-proj-${stamp}`);
+    contentDir = path.join(tmpdir(), `agents-test-hook-advice-content-${stamp}`);
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await mkdir(contentDir, { recursive: true });
+    await writeOverlays(contentDir);
+  });
+
+  afterEach(async () => {
+    await rm(projectRoot, { recursive: true, force: true });
+    await rm(homeDir, { recursive: true, force: true });
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  it('reports a bound rulebook whose delivery never claims the hook route', async () => {
+    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'skill');
+    await declareBinding(projectRoot, 'layout-preferences');
+
+    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+    expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
+  });
+
+  it('reports a bound rulebook that also charges every session', async () => {
+    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[ambient, hook]');
+    await declareBinding(projectRoot, 'layout-preferences');
+
+    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+    expect(advisories).toEqual([{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }]);
+  });
+
+  it('reports both findings for a bound rulebook that is ambient and claims no hook route', async () => {
+    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'ambient');
+    await declareBinding(projectRoot, 'layout-preferences');
+
+    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+    expect(advisories).toEqual([
+      { kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' },
+      { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' },
+    ]);
+  });
+
+  it('reports a rulebook that claims the hook route while no binding names it', async () => {
+    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
+    await declare(projectRoot, ['rulebooks:', '  use:', '    - layout-preferences']);
+
+    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+    expect(advisories).toEqual([{ kind: 'declared-unbound', slug: 'layout-preferences' }]);
+  });
+
+  it('reports nothing when a binding and the rulebook it names agree', async () => {
+    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
+    await declareBinding(projectRoot, 'layout-preferences');
+
+    const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+    expect(advisories).toEqual([]);
+  });
+});
+
+// region | Helpers
 
 /** Writes the project-scope codeassembly.yaml from the given lines. */
 async function declare(projectRoot: string, lines: ReadonlyArray<string>): Promise<void> {
   await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `${lines.join('\n')}\n`, 'utf8');
 }
 
-/** Writes a fixture rulebook into the temp content library, defaulting to ambient delivery. */
+/** Declares the `implement-plan` skill with `slug` bound to the `impl` hook, the shape the advisory cases share. */
+async function declareBinding(projectRoot: string, slug: string): Promise<void> {
+  await declare(projectRoot, [
+    'skills:',
+    '  use:',
+    '    - implement-plan',
+    'guidance-hooks:',
+    '  impl:',
+    '    use:',
+    `      - ${slug}`,
+  ]);
+}
+
+/** Build sync options targeting only the Claude harness. */
+function makeOptions(): InstallOptions {
+  return { harness: 'claude', link: false, force: false, dryRun: false };
+}
+
+/** Runs a sync and returns the guidance-hook advisories its plan carries. */
+async function syncAdvisories(
+  projectRoot: string,
+  contentDir: string,
+  homeDir: string,
+): Promise<ReadonlyArray<GuidanceHookAdvisory>> {
+  const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+  if (outcome.kind !== 'reconciled') {
+    throw new Error(`Expected a reconciled sync, but no declaration was found at ${outcome.declarationPath}.`);
+  }
+  return outcome.plan.guidanceHookAdvisories;
+}
+
+/**
+ * Writes a fixture rulebook into the temp content library, defaulting to ambient delivery. `delivery` is written
+ * into the frontmatter verbatim, so a test states a list as it would author one: `'[hook, skill]'`.
+ */
 async function writeLibraryRulebook(
   contentDir: string,
   slug: string,
   body: string,
-  delivery: 'ambient' | 'skill' = 'ambient',
+  delivery: string = 'ambient',
 ): Promise<void> {
   const dir = path.join(contentDir, 'guidance', 'rulebooks');
   await mkdir(dir, { recursive: true });
