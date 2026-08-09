@@ -85,3 +85,5 @@ When posting findings as PR comments (e.g., inline comments on a pull request), 
 | `-L` suffix    | `legacy {severity}:` (e.g., `legacy fixme:`, `legacy warning:`) |
 
 <!-- include: ../../_partials/comment-discipline.md / -->
+
+<!-- guidance-hook: implementation-preferences -->

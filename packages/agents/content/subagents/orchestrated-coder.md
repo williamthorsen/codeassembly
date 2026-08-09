@@ -183,6 +183,8 @@ Every commit message MUST satisfy all five rules. Violations are treated as qual
 5. **Use backtick formatting for code identifiers.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks; e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
    </HARD-GATE>
 
+<!-- guidance-hook: implementation-preferences -->
+
 ## Constraints
 
 - **Follow the plan**: Implement what the plan specifies. If you discover the plan is wrong or incomplete, document the deviation in your response under "Notes"; don't silently diverge.

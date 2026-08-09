@@ -84,6 +84,8 @@ Read and apply the `review-criteria` skill (`../review-criteria/SKILL.md`). Addi
 - Look at commit messages for context
 - Suggest refactoring if new code adds tech debt
 
+<!-- guidance-hook: implementation-preferences -->
+
 ## Issue numbering
 
 Uniquely number all issues for easy reference. See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for full category criteria and criticality mapping.
