@@ -747,8 +747,8 @@ function buildGuidanceHookFills(
 
 /**
  * Collects every disagreement between the rulebooks a declaration binds and the delivery those rulebooks declare.
- * Nothing here throws: each finding reaches the reader as a report line, because a binding and a `delivery` are
- * written by different people and a run whose output is correct must not fail over their disagreement.
+ * No disagreement throws: each reaches the reader as a report line, because a binding and a `delivery` are written by
+ * different people and a run whose output is correct must not fail over their disagreement.
  *
  * Order is fixed so both reports render alike: the bound findings follow the bindings in declaration order, and the
  * unbound ones follow `resolved`, whose order the closure walk fixes.
@@ -764,10 +764,7 @@ function findGuidanceHookAdvisories(
   for (const [hook, slugs] of bindings) {
     for (const slug of slugs) {
       boundSlugs.add(slug);
-      const rulebook = bySlug.get(slug);
-      if (rulebook === undefined) {
-        continue;
-      }
+      const rulebook = readBoundRulebook(bySlug, slug, hook);
       // Both can hold at once, and both are reported: one says the rulebook was never authored for the splice, the
       // other that its text now reaches a session twice. Neither remedy resolves the other.
       if (!rulebook.hook) {
