@@ -1,5 +1,38 @@
 [
   {
+    "version": "0.8.0",
+    "date": "2026-08-09",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fill guidance hooks from codeassembly.yaml bindings at sync time (#1243)",
+            "body": "Guidance hooks are now enabled. A user or project maps rulebooks to a hook in `codeassembly.yaml`, and that guidance is placed inside the skill or subagent definition where the hook sits.",
+            "hash": "80bb58dee0aa8d9099a8f6168c36f9c1e5898452"
+          },
+          {
+            "description": "Carry implementation preferences into code-writing and reviewing agents (#1245)",
+            "body": "Coding and reviewing skills, along with the instructions of subagents who perform coding and reviewing, now include any custom implementation guidance defined by the user or project. Custom guidance is provided by assigning a rulebook to the `implementation-preferences` hook in a `codeassembly.yaml` file.",
+            "hash": "192c862695d2957f6a97cf413744716588ecaf29"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Recognize every deployed file, in every session (#1241)",
+            "body": "Fixes the issue that files deployed by CodeAssembly could be mistaken as editable. Agents are now instructed how to recognize CodeAssembly-deployed files, how to locate the source files, and how to redeploy after source files are updated.",
+            "hash": "662b6f347e71d9711f132ebcfcfab22b4924b016"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.7.0",
     "date": "2026-08-08",
     "sections": [
