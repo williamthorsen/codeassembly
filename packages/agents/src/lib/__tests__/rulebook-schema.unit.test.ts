@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseRulebookFile } from '../rulebook-schema.ts';
 
 /** The rejection an unrecognized delivery mode must carry: naming the permitted set, not a bare "Invalid input". */
-const DELIVERY_MESSAGE = "delivery must be 'ambient', 'skill', or a list of the two";
+const DELIVERY_MESSAGE = "delivery must be 'ambient', 'hook', or 'skill', or a non-empty list of them";
 
 /** Wraps frontmatter and a body into a rulebook source file. */
 function rulebookFile(frontmatter: string, body = '# Shell conventions\n\nUse strict mode.'): string {
@@ -39,6 +39,22 @@ describe(parseRulebookFile, () => {
     const { rulebook } = parseRulebookFile(rulebookFile('slug: x'));
 
     expect(rulebook.delivery).toEqual(['ambient']);
+  });
+
+  it('accepts hook as the only delivery mode', () => {
+    const { rulebook } = parseRulebookFile(rulebookFile('slug: x\ndelivery: hook'));
+
+    expect(rulebook.delivery).toEqual(['hook']);
+  });
+
+  it('accepts hook alongside the modes the resolver acts on', () => {
+    const { rulebook } = parseRulebookFile(rulebookFile('slug: x\ndelivery: [ambient, hook, skill]'));
+
+    expect(rulebook.delivery).toEqual(['ambient', 'hook', 'skill']);
+  });
+
+  it('throws when a delivery list is empty, which would name no route', () => {
+    expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: []'))).toThrow(DELIVERY_MESSAGE);
   });
 
   it('throws when delivery names a mode the resolver does not act on', () => {

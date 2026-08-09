@@ -7,10 +7,19 @@ import { parseFrontmatter } from './frontmatter-merger.ts';
 const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
- * The delivery modes the resolver acts on: an inlined ambient block, a `consult-<slug>` skill, or both. A value
- * outside the pair would satisfy neither membership test, delivering the rulebook nowhere, so the set is closed.
+ * The routes guidance takes into a session. `ambient` and `skill` instruct the resolver, which inlines an ambient
+ * block or renders a `consult-<slug>` skill. `hook` instructs nothing: a rulebook cannot cause its own transclusion,
+ * because the binding that splices it into a host body lives in a `codeassembly.yaml` rather than in the rulebook.
+ * Declaring it records the route the rulebook is reached by, which is what lets a mismatch between the two be named.
  */
-const DeliveryModeSchema = z.enum(['ambient', 'skill']);
+const DeliveryModeSchema = z.enum(['ambient', 'hook', 'skill']);
+
+/**
+ * The rejection every malformed `delivery` carries, whichever branch failed. Named once and attached to both, because
+ * a union reports its own failure for a value neither member accepts but surfaces a member's issue verbatim when only
+ * that member applies, which an empty list does.
+ */
+const DELIVERY_ERROR = "delivery must be 'ambient', 'hook', or 'skill', or a non-empty list of them";
 
 /**
  * Frontmatter schema for a rulebook source file. The operational fields drive the resolver; unknown keys
@@ -27,11 +36,9 @@ export const RulebookFrontmatterSchema = z.object({
     .regex(KEBAB_CASE, 'skill-name must be lowercase kebab-case (e.g. shell-conventions-rulebook)')
     .optional(),
   delivery: z
-    // The message rides the union, not `DeliveryModeSchema`: a union reports its own failure and discards the
-    // messages of the members it tried.
-    .union([DeliveryModeSchema, z.array(DeliveryModeSchema)], {
-      error: "delivery must be 'ambient', 'skill', or a list of the two",
-    })
+    // The message rides the union rather than `DeliveryModeSchema`, whose own message a union discards. `.min(1)`
+    // rejects an empty list, which would otherwise parse and name no route at all.
+    .union([DeliveryModeSchema, z.array(DeliveryModeSchema).min(1, DELIVERY_ERROR)], { error: DELIVERY_ERROR })
     .default('ambient')
     .transform((value) => (typeof value === 'string' ? [value] : value)),
   version: z
