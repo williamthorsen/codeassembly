@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
@@ -131,11 +132,6 @@ function declaresRetiredHarnessesKey(content: string): boolean {
   const { lines } = parseFrontmatter(content);
   const parsed: unknown = parseYaml(lines.join('\n'));
   return isRecord(parsed) && parsed[RETIRED_HARNESSES_KEY] !== undefined;
-}
-
-/** Renders an unknown thrown value as the message a report line carries. */
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /**

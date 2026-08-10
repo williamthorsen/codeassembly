@@ -28,6 +28,7 @@ import process from 'node:process';
 import { text } from 'node:stream/consumers';
 import { fileURLToPath } from 'node:url';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { ulid } from 'ulid';
 
 import { composeEnvelope } from '../emit-event/compose-envelope.ts';
@@ -69,7 +70,7 @@ async function main(): Promise<void> {
   } catch (error) {
     // The never-block backstop. `runRelay` converts every failure it anticipates into a structured result, so reaching
     // here means something unforeseen threw — which still must not disturb the session being observed.
-    result = failure('internal-error', error instanceof Error ? error.message : String(error));
+    result = failure('internal-error', describeError(error));
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
@@ -99,7 +100,7 @@ export async function runRelay(input: {
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return failure('invalid-args', error instanceof Error ? error.message : String(error));
+    return failure('invalid-args', describeError(error));
   }
 
   const mapping = resolveHookMapping({ harness: args.harness, hook: args.hook });
@@ -141,7 +142,7 @@ export async function runRelay(input: {
   try {
     await appendEvent({ filePath, envelope });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     return failure('write-failed', `could not append the event to ${filePath}: ${message}`);
   }
 
@@ -203,7 +204,7 @@ export function parseHookPayload(input: {
   try {
     parsed = JSON.parse(input.stdin);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     return { ok: false, message: `the hook payload is not valid JSON: ${message}` };
   }
 
@@ -251,7 +252,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    warn(`could not determine entry point: ${error instanceof Error ? error.message : String(error)}`);
+    warn(`could not determine entry point: ${describeError(error)}`);
     return false;
   }
 }
@@ -286,7 +287,7 @@ async function resolveBranch(cwd: string): Promise<string | undefined> {
   try {
     branch = await resolveCurrentBranch(cwd);
   } catch (error) {
-    warn(`${error instanceof Error ? error.message : String(error)}; omitting the branch`);
+    warn(`${describeError(error)}; omitting the branch`);
     return undefined;
   }
   if (branch === '') {

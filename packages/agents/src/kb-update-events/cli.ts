@@ -9,6 +9,7 @@ import { resolveEventPath, resolveKbDir } from '@williamthorsen/kb/layout';
 import { type ReadNote, readNote, writeNote } from '@williamthorsen/kb/note-io';
 import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/records';
 import { loadAliases } from '@williamthorsen/kb/tags';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
     const result = await runUpdate({ argv: process.argv.slice(2) });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-update-events: ${message}\n`);
     process.exit(1);
   }
@@ -63,7 +64,7 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
+    return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
   const resolved = await resolveCaptureTarget({
@@ -222,7 +223,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-update-events: warning: could not determine entry point: ${message}\n`);
     return false;
   }
@@ -234,7 +235,7 @@ async function loadAliasesForStore(storePath: string): Promise<AliasMap> {
   try {
     return await loadAliases({ kbRoot });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-update-events: warning: could not load tag aliases: ${message}\n`);
     return new Map();
   }

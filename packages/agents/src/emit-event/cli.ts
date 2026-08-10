@@ -20,6 +20,7 @@ import { homedir } from 'node:os';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { EVENT_TYPES, isEventType } from 'codeassembly-lifecycle';
 import { ulid } from 'ulid';
 
@@ -55,7 +56,7 @@ async function main(): Promise<void> {
   } catch (error) {
     // The never-block backstop. `runEmit` converts every failure it anticipates into a structured result, so reaching
     // here means something unforeseen threw — which still must not take down the skill being observed.
-    result = failure('internal-error', error instanceof Error ? error.message : String(error));
+    result = failure('internal-error', describeError(error));
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
@@ -84,7 +85,7 @@ export async function runEmit(input: {
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return failure('invalid-args', error instanceof Error ? error.message : String(error));
+    return failure('invalid-args', describeError(error));
   }
 
   const payload = parsePayload(args.payload);
@@ -114,7 +115,7 @@ export async function runEmit(input: {
   try {
     await appendEvent({ filePath, envelope });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     return failure('write-failed', `could not append the event to ${filePath}: ${message}`);
   }
 
@@ -188,7 +189,7 @@ async function resolveBranch(cwd: string): Promise<string | undefined> {
   try {
     branch = await resolveCurrentBranch(cwd);
   } catch (error) {
-    warn(`${error instanceof Error ? error.message : String(error)}; omitting the branch`);
+    warn(`${describeError(error)}; omitting the branch`);
     return undefined;
   }
   if (branch === '') {
@@ -216,7 +217,7 @@ function parsePayload(
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     return { ok: false, message: `--payload is not valid JSON: ${message}` };
   }
 
@@ -250,7 +251,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    warn(`could not determine entry point: ${error instanceof Error ? error.message : String(error)}`);
+    warn(`could not determine entry point: ${describeError(error)}`);
     return false;
   }
 }

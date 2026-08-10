@@ -5,6 +5,8 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { readAll } from '../lib/stream-helpers.ts';
 import { deleteMemories } from './delete-memory.ts';
 import { enumerateFeedbackMemories } from './enumerate.ts';
@@ -31,7 +33,7 @@ async function main(): Promise<void> {
     // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures. Unexpected
     // throws (permission denied, out-of-disk) take the catch arm below.
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`feedback-memories: ${message}\n`);
     process.exit(1);
   }
@@ -279,7 +281,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`feedback-memories: warning: could not determine entry point: ${message}\n`);
     return false;
   }

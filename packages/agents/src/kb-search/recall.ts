@@ -224,7 +224,7 @@ async function runRipgrep(input: { pattern: string; searchDir: string; runner: P
       return '';
     }
     if (isMissingBinary(error)) {
-      throw new Error('kb-retrieve requires ripgrep (`rg`) on PATH. Install it and retry.');
+      throw new Error('kb-retrieve requires ripgrep (`rg`) on PATH. Install it and retry.', { cause: error });
     }
     throw error;
   }

@@ -15,26 +15,27 @@ const ENTRY: ClaudeHookEntry = { event: 'PreToolUse', group: GROUP };
 /** Invalid JSON — a trailing comma — as a hand-edited settings file might well hold. */
 const UNPARSEABLE = '{\n  "model": "opus",\n}\n';
 
-let dir: string;
+/** Per-test scratch directory, refreshed by `beforeEach` so each test writes into its own. */
+const scratch = { dir: '' };
 
 beforeEach(async () => {
-  dir = path.join(tmpdir(), `agents-test-hook-settings-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  await mkdir(dir, { recursive: true });
+  scratch.dir = path.join(tmpdir(), `agents-test-hook-settings-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  await mkdir(scratch.dir, { recursive: true });
 });
 
 afterEach(async () => {
-  await rm(dir, { recursive: true, force: true });
+  await rm(scratch.dir, { recursive: true, force: true });
 });
 
 describe(checkClaudeHookEntries, () => {
   it('reports every entry absent when the file does not exist', async () => {
-    const checks = await checkClaudeHookEntries(path.join(dir, 'absent.json'), [ENTRY], SENTINEL);
+    const checks = await checkClaudeHookEntries(path.join(scratch.dir, 'absent.json'), [ENTRY], SENTINEL);
 
     expect(checks).toEqual([{ entry: ENTRY, status: 'absent' }]);
   });
 
   it('reports the entry present once ensure has installed it', async () => {
-    const file = path.join(dir, 'settings.json');
+    const file = path.join(scratch.dir, 'settings.json');
     await ensureClaudeHookEntries(file, [ENTRY], SENTINEL);
 
     expect(await checkClaudeHookEntries(file, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status: 'present' }]);
@@ -50,7 +51,7 @@ describe(checkClaudeHookEntries, () => {
 
 describe(ensureClaudeHookEntries, () => {
   it('creates the file and its parent directory when absent', async () => {
-    const file = path.join(dir, 'nested', 'settings.json');
+    const file = path.join(scratch.dir, 'nested', 'settings.json');
 
     const result = await ensureClaudeHookEntries(file, [ENTRY], SENTINEL);
 
@@ -59,7 +60,7 @@ describe(ensureClaudeHookEntries, () => {
   });
 
   it('does not rewrite the file when the entry is already installed', async () => {
-    const file = path.join(dir, 'settings.json');
+    const file = path.join(scratch.dir, 'settings.json');
     await ensureClaudeHookEntries(file, [ENTRY], SENTINEL);
     const firstMtime = statSync(file).mtimeMs;
 
@@ -139,10 +140,10 @@ describe(ensureClaudeHookEntries, () => {
   });
 
   it('updates the target of a symlinked settings file without replacing the link', async () => {
-    const target = path.join(dir, 'dotfiles', 'settings.json');
+    const target = path.join(scratch.dir, 'dotfiles', 'settings.json');
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, '{}\n', 'utf8');
-    const link = path.join(dir, 'settings.json');
+    const link = path.join(scratch.dir, 'settings.json');
     await symlink(target, link);
 
     await ensureClaudeHookEntries(link, [ENTRY], SENTINEL);
@@ -152,7 +153,7 @@ describe(ensureClaudeHookEntries, () => {
   });
 
   it('creates no file when a supplied entry does not carry the sentinel', async () => {
-    const file = path.join(dir, 'settings.json');
+    const file = path.join(scratch.dir, 'settings.json');
     const unmarked: ClaudeHookEntry = { event: 'PreToolUse', group: { hooks: [{ command: 'echo hi' }] } };
 
     await expect(ensureClaudeHookEntries(file, [unmarked], SENTINEL)).rejects.toThrow(/sentinel/);
@@ -173,7 +174,7 @@ describe(removeClaudeHookEntries, () => {
   });
 
   it('creates no file when the settings file does not exist', async () => {
-    const file = path.join(dir, 'absent.json');
+    const file = path.join(scratch.dir, 'absent.json');
 
     expect(await removeClaudeHookEntries(file, SENTINEL)).toEqual({ changed: false, removedCount: 0 });
     expect(existsSync(file)).toBe(false);
@@ -207,7 +208,7 @@ describe('an unparseable settings file', () => {
 
 /** Writes fixture text to the temp directory's settings file and returns its path. */
 async function writeSettings(text: string): Promise<string> {
-  const file = path.join(dir, 'settings.json');
+  const file = path.join(scratch.dir, 'settings.json');
   await writeFile(file, text, 'utf8');
   return file;
 }

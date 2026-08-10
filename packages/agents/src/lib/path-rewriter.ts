@@ -1,6 +1,8 @@
 import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+
 /**
  * The Markdown link grammar this module rewrites: `[text](target)`, capturing text then target. Exported because the
  * grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must match
@@ -97,7 +99,9 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
  * harness.
  */
 export function rewriteTemplateVariables(content: string, homeDir: string, harnessId: string): string {
-  return content.replaceAll('{harness_home_dir}', `~/${homeDir}`).replaceAll('{harness_id}', harnessId);
+  // Replacer functions, not strings: a string replacement expands `$$`, `$&`, `` $` ``, and `$'`, so a
+  // substitution value carrying one of them would be rewritten into the match it was meant to replace.
+  return content.replaceAll('{harness_home_dir}', () => `~/${homeDir}`).replaceAll('{harness_id}', () => harnessId);
 }
 
 /**
@@ -121,8 +125,7 @@ export async function rewritePathsInFile(
       await writeFile(filePath, rewritten, 'utf8');
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to rewrite paths in ${filePath}: ${message}`);
+    throw chainError(`Failed to rewrite paths in ${filePath}`, error);
   }
 }
 

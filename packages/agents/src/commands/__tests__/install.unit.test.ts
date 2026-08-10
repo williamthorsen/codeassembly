@@ -187,11 +187,9 @@ describe(installCommand, () => {
 
     const manifest = await readManifest(getManifestPath(tempDir));
     const entries = manifest.harnesses.claude?.entries ?? [];
-    for (const entry of entries.filter((e) => e.relativePath.startsWith('skills/'))) {
-      expect(entry.linked).toBe(false);
-    }
-    for (const entry of entries.filter((e) => e.relativePath.startsWith('scripts/'))) {
-      expect(entry.linked).toBe(true);
+    for (const entry of entries) {
+      if (entry.relativePath.startsWith('skills/')) expect(entry.linked).toBe(false);
+      if (entry.relativePath.startsWith('scripts/')) expect(entry.linked).toBe(true);
     }
   });
 

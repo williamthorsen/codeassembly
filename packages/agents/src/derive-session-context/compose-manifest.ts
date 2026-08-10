@@ -47,8 +47,9 @@ export function composeManifest(input: {
   const { preferences, branchName, cwd, home, now, remoteUrl = null } = input;
 
   const ticketRefPrefix = preferences.project?.ticket_ref_prefix;
-  const ticketResult =
-    ticketRefPrefix === undefined ? extractTicketId({ branchName }) : extractTicketId({ branchName, ticketRefPrefix });
+  const ticketResult = extractTicketId(
+    ticketRefPrefix === undefined ? { branchName } : { branchName, ticketRefPrefix },
+  );
 
   const projectSlug = preferences.project?.slug ?? preferences.repository?.slug ?? path.basename(cwd);
 

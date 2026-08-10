@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -812,7 +813,7 @@ describe(syncCommand, () => {
     try {
       await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     } catch (error: unknown) {
-      message = error instanceof Error ? error.message : String(error);
+      message = describeError(error);
     }
 
     expect(message).toContain('shared');
@@ -1782,10 +1783,13 @@ describe(syncCommand, () => {
       await writeFile(path.join(dataDir, 'rovo.yaml'), ROVO_OVERLAY, 'utf8');
     }
 
+    /** Default fixture body, carrying one tool token and one home-dir token for the transform to rewrite. */
+    const SUBAGENT_BODY = 'Use {tool:Read}; run `{harness_home_dir}/scripts/x.sh`.';
+
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
     async function writeLibrarySubagent(
       slug: string,
-      { body = `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.` }: { body?: string } = {},
+      { body = `# ${slug}\n\n${SUBAGENT_BODY}` }: { body?: string } = {},
     ): Promise<void> {
       const dir = path.join(contentDir, 'subagents');
       await mkdir(dir, { recursive: true });

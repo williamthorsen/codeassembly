@@ -9,8 +9,9 @@ import {
   isRewritableLinkTarget,
   rewriteMarkdownPaths,
   rewritePathsInDirectory,
+  rewritePathsInFile,
   rewriteTemplateVariables,
-} from '../path-rewriter.js';
+} from '../path-rewriter.ts';
 
 describe(isRewritableLinkTarget, () => {
   it.each(['../_data/concision.md', './modules/review-cycle.md', 'SKILL.md', 'scripts/run.sh'])(
@@ -152,6 +153,12 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe('~/.rovodev/scripts/describe-change.sh');
   });
 
+  it('inserts a substitution value carrying a replacement pattern verbatim', () => {
+    const content = '{harness_home_dir}/x --harness {harness_id}';
+
+    expect(rewriteTemplateVariables(content, '.cl$&$$aude', "cl$'aude")).toBe("~/.cl$&$$aude/x --harness cl$'aude");
+  });
+
   it('replaces {harness_id} with the harness identifier, leaving no placeholder', () => {
     const content = 'node {harness_home_dir}/skills/capture-event/capture-event.mjs --harness {harness_id}';
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
@@ -160,6 +167,22 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe(
       'node ~/.rovodev/skills/capture-event/capture-event.mjs --harness rovo',
     );
+  });
+});
+
+describe(rewritePathsInFile, () => {
+  const absentPath = path.join(tmpdir(), 'path-rewriter-absent.md');
+
+  it('names the file it could not rewrite', async () => {
+    await expect(rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', '.claude', 'claude')).rejects.toThrow(
+      /Failed to rewrite paths in/,
+    );
+  });
+
+  it('attaches the read failure as the cause', async () => {
+    await expect(
+      rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', '.claude', 'claude'),
+    ).rejects.toHaveProperty('cause', expect.any(Error));
   });
 });
 

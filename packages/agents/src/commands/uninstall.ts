@@ -1,8 +1,10 @@
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
-import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
-import { removeItem } from '../lib/installer.js';
-import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
-import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.js';
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { removeItem } from '../lib/installer.ts';
+import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.ts';
+import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.ts';
 import { removeHarnessHookEntries } from './configure-hooks.ts';
 
 /**
@@ -19,14 +21,14 @@ export async function uninstallCommand(
   // Uninstall shared guidance unconditionally (not gated by harness detection)
   const updatedShared = await uninstallSharedGuidance(manifest, options, baseDir);
 
-  let remainingHarnesses = { ...manifest.harnesses };
-
   // uninstallSharedGuidance above is a no-op when manifest.shared is undefined,
   // so this guard safely covers the "nothing installed at all" case.
   if (harnesses.length === 0 && !manifest.shared) {
     console.info('No target harnesses detected. Nothing to uninstall.');
     return;
   }
+
+  let remainingHarnesses = { ...manifest.harnesses };
 
   for (const harnessId of harnesses) {
     console.info(`\nUninstalling for harness: ${harnessId}`);
@@ -37,7 +39,7 @@ export async function uninstallCommand(
     try {
       await removeHarnessHookEntries(harnessId, baseDir);
     } catch (error) {
-      console.warn(`  ⚠️ Skipping hook-entry removal: ${error instanceof Error ? error.message : String(error)}`);
+      console.warn(`  ⚠️ Skipping hook-entry removal: ${describeError(error)}`);
     }
 
     const harnessManifest = manifest.harnesses[harnessId];

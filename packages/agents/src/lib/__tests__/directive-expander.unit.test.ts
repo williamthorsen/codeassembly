@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DirectiveExpansionError, expandIncludes } from '../directive-expander.js';
+import { DirectiveExpansionError, expandIncludes } from '../directive-expander.ts';
 
 describe(expandIncludes, () => {
   let contentDir: string;

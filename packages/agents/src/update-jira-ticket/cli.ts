@@ -10,6 +10,8 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { readAll } from '../lib/stream-helpers.ts';
 import { check } from './check.ts';
 
@@ -20,7 +22,7 @@ async function main(): Promise<void> {
     const result = check(html);
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`update-jira-ticket: ${message}\n`);
     process.exit(1);
   }
@@ -45,7 +47,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`update-jira-ticket: warning: could not determine entry point: ${message}\n`);
     return false;
   }

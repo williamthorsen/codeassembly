@@ -2,6 +2,8 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand, initGlobalCommand } from './commands/init.ts';
@@ -305,7 +307,7 @@ async function runSync(options: InstallOptions, global: boolean, warnOnly: boole
     if (!warnOnly) {
       throw error;
     }
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     console.warn(`⚠️ sync failed: ${message}\n   Deployed guidance may be stale.`);
   }
 }

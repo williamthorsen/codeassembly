@@ -2,6 +2,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+
 const execFileAsync = promisify(execFile);
 
 /**
@@ -14,8 +16,7 @@ export async function resolveCurrentBranch(cwd: string): Promise<string> {
     const { stdout } = await execFileAsync('git', ['-C', cwd, 'branch', '--show-current']);
     return stdout.trim();
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Could not resolve current branch (is this a git repository?): ${message}`);
+    throw chainError('Could not resolve current branch (is this a git repository?)', error);
   }
 }
 

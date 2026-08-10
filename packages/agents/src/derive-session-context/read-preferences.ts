@@ -11,6 +11,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
@@ -69,8 +70,7 @@ async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | 
   try {
     parsed = parseYaml(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${filePath}: malformed YAML — ${message}`);
+    throw chainError(`${filePath}: malformed YAML`, error);
   }
   // An empty document parses to `null`; treat it as "file present but empty".
   return { value: parsed ?? {} };

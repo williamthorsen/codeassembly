@@ -1,7 +1,9 @@
-import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { readHomeProvenance } from '../lib/home-provenance.ts';
-import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
-import type { HarnessId, InstallOptions } from '../lib/types.js';
+import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.ts';
+import type { HarnessId, InstallOptions } from '../lib/types.ts';
 import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
 
 /**
@@ -94,7 +96,7 @@ async function reportHookEntryStatus(
     statuses = await checkHarnessHookEntries(harnessId, baseDir);
   } catch (error) {
     // An unparseable config is itself a status worth reporting; it must not abort the rest of the report.
-    console.warn(`  ⚠️ Hooks: could not read the config: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(`  ⚠️ Hooks: could not read the config: ${describeError(error)}`);
     return;
   }
   const presentCount = statuses.filter((entry) => entry.status === 'present').length;

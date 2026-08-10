@@ -21,7 +21,11 @@ export async function writeEvent(input: { storePath: string; id: string; content
   try {
     await link(tempPath, targetPath);
   } finally {
-    await unlink(tempPath).catch(() => {});
+    try {
+      await unlink(tempPath);
+    } catch {
+      // A temp file left behind is not worth masking the link outcome the caller is waiting on.
+    }
   }
 
   return targetPath;

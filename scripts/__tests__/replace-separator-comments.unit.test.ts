@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isFoldable, transformFile } from '../replace-separator-comments.js';
+import { isFoldable, transformFile } from '../replace-separator-comments.ts';
 
 describe(isFoldable, () => {
   const foldable = [

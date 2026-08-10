@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSourceUrl, injectProvenanceMarker, SOURCE_REF } from '../marker-injector.js';
+import { buildSourceUrl, injectProvenanceMarker, SOURCE_REF } from '../marker-injector.ts';
 
 describe(injectProvenanceMarker, () => {
   const sourceUrl =

@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { computeContentHash, createEmptyManifest, detectDrift, readManifest, writeManifest } from '../manifest.js';
-import type { AgentsManifest, ManifestEntry } from '../types.js';
+import { computeContentHash, createEmptyManifest, detectDrift, readManifest, writeManifest } from '../manifest.ts';
+import type { AgentsManifest, ManifestEntry } from '../types.ts';
 
 describe('manifest', () => {
   let tempDir: string;

@@ -8,6 +8,7 @@ import type { Finding } from '@williamthorsen/kb';
 import type { EnumeratedNote } from '@williamthorsen/kb/check';
 import { check } from '@williamthorsen/kb/check';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
@@ -31,7 +32,7 @@ async function main(): Promise<void> {
     // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
     // System failures (unexpected throws) take the catch arm below.
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-curate: ${message}\n`);
     process.exit(1);
   }
@@ -100,7 +101,7 @@ export async function runCurate(input: {
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
+    return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
   const mode = args.apply ? 'apply' : 'report';
@@ -308,7 +309,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-curate: warning: could not determine entry point: ${message}\n`);
     return false;
   }

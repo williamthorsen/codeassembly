@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeFrontmatter, parseFrontmatter, parseOverlayOverrides } from '../frontmatter-merger.js';
+import { mergeFrontmatter, parseFrontmatter, parseOverlayOverrides } from '../frontmatter-merger.ts';
 
 describe('parseFrontmatter', () => {
   it('should extract agent name from frontmatter', () => {

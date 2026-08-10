@@ -1,6 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { rename, unlink, writeFile } from 'node:fs/promises';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 /**
  * The subset of `node:fs/promises` operations `commitSupersede` performs. Tests inject mocks via this interface
  * so the rollback paths (which depend on specific renames failing) can be exercised without filesystem trickery.
@@ -66,15 +68,15 @@ export async function commitSupersede(input: {
   try {
     await io.writeFile(newTmp, input.newNewContent, 'utf8');
   } catch (error) {
-    await io.unlink(oldTmp).catch(() => {});
+    await unlinkQuietly(io, oldTmp);
     throw error;
   }
 
   try {
     await io.rename(oldTmp, input.oldPath);
   } catch (error) {
-    await io.unlink(oldTmp).catch(() => {});
-    await io.unlink(newTmp).catch(() => {});
+    await unlinkQuietly(io, oldTmp);
+    await unlinkQuietly(io, newTmp);
     throw error;
   }
 
@@ -82,8 +84,8 @@ export async function commitSupersede(input: {
     await io.rename(newTmp, input.newPath);
     return { ok: true };
   } catch (renameError) {
-    await io.unlink(newTmp).catch(() => {});
-    const originalMessage = renameError instanceof Error ? renameError.message : String(renameError);
+    await unlinkQuietly(io, newTmp);
+    const originalMessage = describeError(renameError);
     const rollback = await tryRollbackOld({
       oldPath: input.oldPath,
       originalContent: input.oldOriginalContent,
@@ -97,6 +99,8 @@ export async function commitSupersede(input: {
   }
 }
 
+// region | Helpers
+
 /** Restores the captured original bytes to `oldPath` via temp + rename. Returns ok on success. */
 async function tryRollbackOld(input: {
   oldPath: string;
@@ -109,7 +113,18 @@ async function tryRollbackOld(input: {
     await input.io.rename(rollbackTmp, input.oldPath);
     return { ok: true };
   } catch {
-    await input.io.unlink(rollbackTmp).catch(() => {});
+    await unlinkQuietly(input.io, rollbackTmp);
     return { ok: false };
   }
 }
+
+/** Deletes a temp file, ignoring a failure so the caller's own error is the one that surfaces. */
+async function unlinkQuietly(io: CommitSupersedeIo, filePath: string): Promise<void> {
+  try {
+    await io.unlink(filePath);
+  } catch {
+    // A temp file left behind is the lesser of the two failures being handled here.
+  }
+}
+
+// endregion | Helpers

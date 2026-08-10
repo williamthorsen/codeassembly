@@ -40,7 +40,7 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
   } catch (error: unknown) {
     if (isEnoent(error)) {
       const origin = resolved.source === undefined ? 'the library' : `source "${resolved.source}"`;
-      throw new Error(`Declared rulebook "${slug}" was not found in ${origin} at ${srcPath}`);
+      throw new Error(`Declared rulebook "${slug}" was not found in ${origin} at ${srcPath}`, { cause: error });
     }
     throw error;
   }

@@ -84,12 +84,12 @@ describe('collection dispositions', () => {
   // it is constrained by no vetted-closure rule.
   it('keeps every standalone artifact out of the collections’ combined closure', async () => {
     const collections = await readExplicitCollections(contentDir);
-    const closure = await resolveClosure({ collection: [...collections.keys()] }, libraryResolver(contentDir));
+    const closure = await resolveClosure({ collection: collections.keys().toArray() }, libraryResolver(contentDir));
 
     const defects = findClosureDefects(
       'every collection',
       listClosureIds(closure),
-      [...collections.keys()],
+      collections.keys().toArray(),
       buildClaimMap(collections, Object.keys(STANDALONE)),
     );
 

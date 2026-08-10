@@ -6,6 +6,7 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { ulid } from 'ulid';
 
 import { writeEvent } from '../capture-event/write-event.ts';
@@ -87,7 +88,7 @@ async function main(): Promise<void> {
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`capture-lede-decision: ${message}\n`);
     process.exit(1);
   }
@@ -123,7 +124,7 @@ export async function runDecision(input: {
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
+    return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
   const resolved = await resolveEpisode({
@@ -313,7 +314,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`capture-lede-decision: warning: could not determine entry point: ${message}\n`);
     return false;
   }

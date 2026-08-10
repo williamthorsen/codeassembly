@@ -86,7 +86,7 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   const header =
     `Found ${violations.length} raw \`${FORBIDDEN_PATTERN}\` reference(s) in installable Markdown. ` +
     `Replace each with one of: ` +
-    `(a) \`{harness_home_dir}/...\` for runtime references the agent reads or executes; ` +
+    '(a) `{harness_home_dir}/...` for runtime references the agent reads or executes; ' +
     `(b) a relative Markdown link \`[text](relative/path.md)\` (the install pipeline rewrites it); ` +
     `(c) add the file to the ALLOWLIST in this test if the reference is an intentional source-tree citation. ` +
     `See \`packages/agents/content/_partials/README.md\` § "Path references in installed content" for the convention.`;

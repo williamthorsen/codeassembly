@@ -101,6 +101,15 @@ describe(recallNotes, () => {
     );
   });
 
+  it('attaches the spawn failure as the cause of the remediation hint', async () => {
+    const runner = vi.fn<ProcessRunner>().mockRejectedValue(buildProcessError('ENOENT'));
+
+    await expect(recallNotes({ query: 'backpressure', scopedKbs: notesVaultScope, runner })).rejects.toHaveProperty(
+      'cause',
+      expect.any(Error),
+    );
+  });
+
   it('rethrows a ripgrep failure that is neither a no-match exit nor an absent binary', async () => {
     const runner = vi.fn<ProcessRunner>().mockRejectedValue(buildProcessError(2));
 

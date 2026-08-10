@@ -174,7 +174,10 @@ async function listClosureFiles(contentDir: string): Promise<ReadonlyArray<strin
 
 /** Extracts the content of each backtick-delimited code span on a line. */
 function listCodeSpans(text: string): Array<string> {
-  return [...text.matchAll(CODE_SPAN_PATTERN)].map((match) => match[1] ?? '');
+  return text
+    .matchAll(CODE_SPAN_PATTERN)
+    .map((match) => match[1] ?? '')
+    .toArray();
 }
 
 /** Lists every Markdown file under `relativeDir`, recursively, as paths relative to `root`. */
@@ -194,7 +197,10 @@ async function listMarkdownFilesUnder(root: string, relativeDir: string): Promis
 
 /** Reads each value a store flag takes within one span of text, in either the spaced or the `=` form. */
 function readFlagValues(text: string): Array<string> {
-  return [...text.matchAll(STORE_FLAG_PATTERN)].flatMap((match) => (match[1] === undefined ? [] : [match[1]]));
+  return text
+    .matchAll(STORE_FLAG_PATTERN)
+    .flatMap((match) => (match[1] === undefined ? [] : [match[1]]))
+    .toArray();
 }
 
 /**

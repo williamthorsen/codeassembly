@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// Imports only node builtins: a top-level import resolves before the gate below runs, so an
+// unresolvable dependency would replace this file's build-first message with ERR_MODULE_NOT_FOUND.
 import { existsSync } from 'node:fs';
 
 // Thin wrapper so pnpm can symlink the bin at install time, before `dist/`
