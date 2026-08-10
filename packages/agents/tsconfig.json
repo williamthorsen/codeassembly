@@ -3,7 +3,6 @@
   "extends": "../../tsconfig.json",
   // prettier-ignore
   "include": [
-    ".config/**/*.ts",
     ".readyup/**/*.ts",
     // Content-convention suites sit beside the content tree they cover. `nmr compile` builds from `src/` alone, so
     // this reaches typechecking and linting without adding anything to the emitted package.
