@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-const PACKAGES_DIR = fileURLToPath(new URL('../../../packages/', import.meta.url));
+const PACKAGES_DIR = fileURLToPath(new URL('../../packages/', import.meta.url));
 const DEFERRED_RULES_PATH = '.config/eslint/deferred-lint-rules.ts';
 const PACKAGE_STRICT_LINT_PATH = '.config/strict-lint.config.ts';
 
