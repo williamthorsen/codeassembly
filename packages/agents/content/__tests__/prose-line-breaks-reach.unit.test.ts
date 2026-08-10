@@ -27,6 +27,11 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
+//
+// Delivery is narrower than governance. The partial governs any generated Markdown, saved artifacts included, but a
+// place here is earned by composing prose and writing it somewhere outside the repository: a commit body, or a GitHub
+// issue, pull request, or comment. A skill that composes only into a local artifact is absent by decision, not by
+// oversight, and a skill that passes along prose someone else composed belongs with that composer instead.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/commit/SKILL.md',
   'skills/create-ticket/SKILL.md',
