@@ -32,7 +32,7 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
-### File-level carve-outs
+## File-level carve-outs
 
 The carve-outs above apply to comments. Two file-level rules govern which lines this skill may touch at all:
 

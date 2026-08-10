@@ -37,6 +37,14 @@ Self-close is matched before open so that a path with a trailing slash is read c
 
 The `<!-- children -->` placeholder is a partial-side directive. It appears at most once per partial. If a partial has no `<!-- children -->` and the caller provides slot content, the expander throws `slot-without-children`. If a partial has `<!-- children -->` and the caller provides no slot content (bare self-close, or empty open/close pair), the placeholder line is removed and surrounding lines join verbatim.
 
+## Directive placement
+
+A host heading following a directive, deeper than the shallowest heading the injection contributes, renders as a subsection of the injected content rather than of the host body. Place every directive where the next host heading sits at or above that level. The `codeassembly-content-specification` rulebook carries the rule an author follows, under "Injection-point placement"; this section carries the level computation behind it.
+
+The deciding level is what the splice contributes, not a fixed `##`. A partial contributes its headings as authored -- `subagents/_partials/review-writes-scaffold.md` opens at `###`, so the `###` sections following it are its correct siblings -- and `##` for any guidance hook it declares, since hooks resolve after includes expand and so fill inside the host. A hook the host declares contributes `##` on its own, a bound rulebook's title being demoted one level to land there.
+
+Slot content is the caller's own text and contributes nothing here: a heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it, so its nesting is already visible where it is written. `content/__tests__/injection-point-placement.unit.test.ts` enforces the rule.
+
 ## Path resolution
 
 Include paths are resolved relative to the directive-bearing file's directory in the source tree. The resolved target must remain inside `packages/agents/content/` (lexical containment is checked, not symlink resolution). Out-of-tree references throw `out-of-tree`.

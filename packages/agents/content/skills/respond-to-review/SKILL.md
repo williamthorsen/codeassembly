@@ -148,11 +148,11 @@ The disposition conflates two decisions: whether the change belongs (substance),
 
 > T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard ships in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not held as a maybe.
 
-<!-- guidance-hook: implementation-preferences -->
-
 <!-- include: ../../_partials/comment-discipline.md / -->
 
-### Writing code after a review
+<!-- guidance-hook: implementation-preferences -->
+
+## Writing code after a review
 
 Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, and that is when the voice leaks. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
 
