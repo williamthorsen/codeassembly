@@ -123,7 +123,7 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
         tags = stringList(item.value);
         break;
       default:
-        extra[key] = key in plainRecord ? plainRecord[key] : null;
+        extra[key] = Object.hasOwn(plainRecord, key) ? plainRecord[key] : null;
     }
   }
 

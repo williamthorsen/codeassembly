@@ -16,6 +16,9 @@ Commands:
 Run "kb <command> --help" for command options.
 `;
 
+/** The argv heads that print top-level usage: the two help flags, and `undefined` for a bare invocation. */
+const HELP_COMMANDS: readonly (string | undefined)[] = [undefined, '--help', '-h'];
+
 /**
  * Dispatches a `kb` subcommand and returns its {@link CommandOutput} without touching `process`, so tests drive the
  * command directly. `check`, `create`, `set-default`, and `taxonomy` are the subcommands; a bare invocation or
@@ -31,7 +34,7 @@ export async function run(input: {
 }): Promise<CommandOutput> {
   const [command, ...rest] = input.argv;
 
-  if (command === undefined || command === '--help' || command === '-h') {
+  if (HELP_COMMANDS.includes(command)) {
     return { exitCode: 0, stdout: HELP, stderr: '' };
   }
 

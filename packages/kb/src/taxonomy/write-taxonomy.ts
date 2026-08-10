@@ -222,7 +222,11 @@ async function writeAtomic(path: string, content: string): Promise<void> {
   try {
     await rename(tempPath, path);
   } catch (error) {
-    await unlink(tempPath).catch(() => {});
+    try {
+      await unlink(tempPath);
+    } catch {
+      // The rename failure is what the caller needs; a failed cleanup must not mask it.
+    }
     throw error;
   }
 }

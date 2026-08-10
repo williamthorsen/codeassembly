@@ -27,7 +27,11 @@ export async function writeNote(path: string, fields: Record<string, unknown>, b
   try {
     await rename(tempPath, path);
   } catch (error) {
-    await unlink(tempPath).catch(() => {});
+    try {
+      await unlink(tempPath);
+    } catch {
+      // The rename failure is what the caller needs; a failed cleanup must not mask it.
+    }
     throw error;
   }
 }

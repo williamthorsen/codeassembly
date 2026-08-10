@@ -37,7 +37,7 @@ export function formatKbSelection(entries: readonly KbRegistryEntry[], currentDe
 export function parseSelection(answer: string, kbCount: number): SelectKbChoice | null {
   if (answer === '') return { kind: 'cancel' };
   const choice = Number(answer);
-  if (!Number.isInteger(choice)) return null;
+  if (!Number.isSafeInteger(choice)) return null;
   if (choice >= 1 && choice <= kbCount) return { kind: 'kb', index: choice - 1 };
   if (choice === kbCount + 1) return { kind: 'none' };
   return null;

@@ -58,12 +58,12 @@ export async function runSetDefault(input: {
   if (error !== undefined) {
     return { exitCode: 2, stdout: '', stderr: `kb set-default: ${error}\n` };
   }
-  const entries = config.entries;
-
   if (options.none) {
     await clearDefaultKb({ registryPath });
     return { exitCode: 0, stdout: 'The default knowledge base has been cleared.\n', stderr: '' };
   }
+
+  const entries = config.entries;
 
   if (options.name !== null) {
     if (entries.length === 0) {

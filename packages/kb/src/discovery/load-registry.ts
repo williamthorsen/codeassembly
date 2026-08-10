@@ -134,7 +134,8 @@ async function loadRegistryFile(
   const configDir = dirname(path);
   const entries: KbRegistryEntry[] = [];
 
-  for (const [name, fileEntry] of Object.entries(result.data.kbs ?? {})) {
+  const fileEntries = Object.entries(result.data.kbs ?? {});
+  for (const [name, fileEntry] of fileEntries) {
     entries.push({
       name,
       path: resolvePath(fileEntry.path, configDir, home),
@@ -156,7 +157,7 @@ function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistry
   for (const entry of projectEntries) {
     byName.set(entry.name, entry);
   }
-  return [...byName.values()];
+  return byName.values().toArray();
 }
 
 /**

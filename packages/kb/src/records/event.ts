@@ -14,6 +14,9 @@ export type EventImpact = (typeof EVENT_IMPACT_LEVELS)[number];
 // to `.includes`, and type assertions are banned, so the set's `.has(string)` is the assertion-free lookup.
 const IMPACT_LEVEL_SET: ReadonlySet<string> = new Set(EVENT_IMPACT_LEVELS);
 
+/** The values an optional field treats as not supplied, the empty string included. */
+const NOT_SUPPLIED_VALUES: readonly unknown[] = [undefined, null, ''];
+
 /** Reports whether a value is one of the declared {@link EVENT_IMPACT_LEVELS}. */
 export function isEventImpact(value: unknown): value is EventImpact {
   return typeof value === 'string' && IMPACT_LEVEL_SET.has(value);
@@ -177,7 +180,7 @@ function readListField(value: unknown, field: string, errors: string[]): string[
  * yields `undefined`.
  */
 function readOptionalNonEmptyString(value: unknown, field: string, errors: string[]): string | undefined {
-  if (value === undefined || value === null || value === '') {
+  if (NOT_SUPPLIED_VALUES.includes(value)) {
     return undefined;
   }
   if (typeof value === 'string') {
