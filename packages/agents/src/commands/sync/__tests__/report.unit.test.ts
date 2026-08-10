@@ -7,6 +7,17 @@ import { buildSyncPlan } from '../test-utils/build-sync-plan.ts';
 const HOME_HOST = '/home/.claude/CLAUDE.md';
 const LOCAL_HOST = '/project/CLAUDE.local.md';
 
+/**
+ * A phrase unique to each guidance-hook advisory's rendered line. Shared so the per-kind tests and the
+ * nothing-rendered test anchor on one set: a phrase only some kinds carry would let the latter pass while a
+ * regression emits one of the others.
+ */
+const ADVISORY_ANCHORS = {
+  'bound-ambient': 'receives its text twice',
+  'bound-undeclared': 'whose delivery does not name',
+  'declared-unbound': 'guidance-hook delivery that nothing binds',
+} as const;
+
 /** Wraps a plan as the outcome a completed reconciliation returns. */
 function reconciled(overrides: Partial<SyncPlan> = {}): SyncOutcome {
   return { kind: 'reconciled', plan: buildSyncPlan(overrides) };
@@ -78,6 +89,58 @@ describe('unignored hosts', () => {
 
       expect(warning?.level).toBe('warn');
       expect(warning?.text).toContain(LOCAL_HOST);
+    }
+  });
+});
+
+describe('guidance-hook advisories', () => {
+  it('warns on both paths that a bound rulebook does not claim the hook route', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['bound-undeclared']));
+
+      expect(advisory?.level).toBe('warn');
+      expect(advisory?.text).toContain('layout-preferences');
+      expect(advisory?.text).toContain('impl');
+    }
+  });
+
+  it('warns on both paths that a bound rulebook also charges every session', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['bound-ambient']));
+
+      expect(advisory?.level).toBe('warn');
+      expect(advisory?.text).toContain('layout-preferences');
+    }
+  });
+
+  it('advises on both paths that a declared hook route is going unused', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [{ kind: 'declared-unbound', slug: 'layout-preferences' }],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['declared-unbound']));
+
+      expect(advisory?.level).toBe('info');
+      expect(advisory?.text).toContain('layout-preferences');
+    }
+  });
+
+  it('adds no line to either path when the declaration and the deliveries agree', () => {
+    const outcome = reconciled();
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const anchors = Object.values(ADVISORY_ANCHORS);
+
+      expect(lines.filter((line) => anchors.some((anchor) => line.text.includes(anchor)))).toEqual([]);
     }
   });
 });

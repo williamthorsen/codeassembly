@@ -13,6 +13,8 @@ export interface ResolvedRulebook {
   readonly skillName: string;
   readonly body: string;
   readonly ambient: boolean;
+  /** Whether the rulebook declares that a guidance-hook binding is how it is reached. No delivery pass reads it. */
+  readonly hook: boolean;
   readonly skill: boolean;
   readonly description: string | undefined;
   /** The name of the declared source it resolved from, or `undefined` for the built-in library. */
@@ -49,6 +51,7 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
     skillName: resolveSkillName(slug, rulebook['skill-name']),
     body: `${body.trim()}\n`,
     ambient: rulebook.delivery.includes('ambient'),
+    hook: rulebook.delivery.includes('hook'),
     skill: rulebook.delivery.includes('skill'),
     description: rulebook.description,
     source: resolved.source,

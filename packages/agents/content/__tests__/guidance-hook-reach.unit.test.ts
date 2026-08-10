@@ -8,6 +8,7 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
 import type { GuidanceHookFills } from '../../src/lib/guidance-hooks.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
+import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.
@@ -61,6 +62,13 @@ describe('guidance-hook reach', () => {
 
     const message = `${label} writes or judges code but declares no ${HOOK} hook, so a binding cannot reach it`;
     expect(declared, message).toContain(HOOK);
+  });
+
+  it.each(BOUND_RULEBOOKS)('$slug declares hook delivery', async ({ slug }) => {
+    const { rulebook } = parseRulebookFile(await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8'), slug);
+
+    const message = `${slug} is bound to ${HOOK} but its delivery does not name the route, so sync warns about it`;
+    expect(rulebook.delivery, message).toContain('hook');
   });
 
   it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {

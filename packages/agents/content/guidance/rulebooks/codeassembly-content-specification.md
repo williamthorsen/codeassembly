@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 9
+version: 10
 ---
 
 # CodeAssembly content specification
@@ -13,7 +13,7 @@ The declaration contract for CodeAssembly artifacts -- skills, subagents, rulebo
 
 Every rule below belongs to one of three classes, marked where it appears.
 
-**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`skill`, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Six more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, a rulebook token naming a target that deploys no skill to invoke fails the same pre-write pass, an anchor-only link target that names no heading in its own body fails wherever that body is rendered or shipped, so does a code fence nothing closes, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
+**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`hook`/`skill`, an empty `delivery` list, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Six more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, a rulebook token naming a target that deploys no skill to invoke fails the same pre-write pass, an anchor-only link target that names no heading in its own body fails wherever that body is rendered or shipped, so does a code fence nothing closes, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
 
 **Enforced by test.** The suites in `packages/agents/src/__tests__/` read the shipped library and assert its conventions hold. A rule one of them guards names its test.
 
@@ -122,7 +122,7 @@ A vetted collection is closed under its dependency edges, which is what makes th
 
 ## Frontmatter fields
 
-- **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `skill`, or both; defaults to `ambient`), optional `skill-name`, optional `version`.
+- **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; defaults to `ambient`), optional `skill-name`, optional `version`.
 - **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
 - **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context; `sync` pulls them into the deploy closure automatically).
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
@@ -143,4 +143,4 @@ Behavioural rules that govern an agent's output -- the recommendation gradient, 
 
 Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
 
-Where a step's guidance is a matter of local taste rather than library doctrine -- a user's code-style preferences, a project's own glossary -- neither restatement above fits: a pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/README.md`. _(Convention; not enforced.)_
+Where a step's guidance is a matter of local taste rather than library doctrine -- a user's code-style preferences, a project's own glossary -- neither restatement above fits: a pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. A rulebook written for that slot declares `delivery: hook`, which records the route and lets `sync` report a binding and a delivery that disagree. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/README.md`. _(Convention; not enforced.)_

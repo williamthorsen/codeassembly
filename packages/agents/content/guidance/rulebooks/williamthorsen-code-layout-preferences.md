@@ -1,8 +1,8 @@
 ---
 slug: williamthorsen-code-layout-preferences
 description: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order. Consult before creating a file or directory, before placing a test, helper, or fixture, and before ordering declarations in a module.'
-delivery: skill
-version: 1
+delivery: [hook, skill]
+version: 2
 ---
 
 # William Thorsen's code layout preferences
