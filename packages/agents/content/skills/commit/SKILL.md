@@ -33,7 +33,8 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 ### Body mechanics
 
-- **No hard line breaks.** Write each paragraph or list item as a single long line. Do not insert newlines to wrap at a column width. Every tool that renders commit messages handles wrapping; manual breaks produce ragged text.
+<!-- include: ../../_partials/prose-line-breaks.md / -->
+
 - **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
 - **Use backticks for code identifiers.** Variable names, function names, class names, and file paths must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `src/lib/manifest.ts`.
 - **Break up large paragraphs.** Use a blank line between paragraphs. Prefer short, focused paragraphs over walls of text.
