@@ -105,7 +105,9 @@ async function listContentMarkdown(): Promise<ReadonlyArray<string>> {
 
 /**
  * Yields the lines of a body that carry structure, skipping every line inside a fenced block. A `#` inside a fence is
- * content, so the fence is tracked rather than each line matched in isolation.
+ * content, so the fence is tracked rather than each line matched in isolation. A fenced directive is skipped for a
+ * different reason: the expander tracks no fences and still expands it, but the fence turns the headings it injects
+ * into literal text, which adopts nothing.
  */
 function* readLiveLines(body: string): Generator<LiveLine> {
   let openFence: string | undefined;
@@ -126,15 +128,17 @@ function* readLiveLines(body: string): Generator<LiveLine> {
 }
 
 /**
- * Returns the shallowest heading level a partial contributes, or `undefined` when it carries none — a headingless
- * partial has nothing for a following section to nest under. Memoized, since one partial reaches many consumers.
+ * Returns the shallowest level a partial contributes, or `undefined` when it contributes nothing a following section
+ * could nest under. A hook the partial declares counts at the fill level: hooks resolve after includes expand, so such
+ * a hook fills inside the host and can splice shallower than the partial's own headings. Memoized, since one partial
+ * reaches many consumers.
  */
 async function readPartialLevel(partialPath: string): Promise<number | undefined> {
   if (!levelByPartial.has(partialPath)) {
     const expanded = await expandIncludes(partialPath, CONTENT_ROOT);
     let shallowest: number | undefined;
     for (const { text } of readLiveLines(expanded)) {
-      const level = HEADING_REGEX.exec(text)?.[1]?.length;
+      const level = HOOK_DIRECTIVE_REGEX.test(text) ? HOOK_FILL_LEVEL : HEADING_REGEX.exec(text)?.[1]?.length;
       if (level !== undefined && (shallowest === undefined || level < shallowest)) {
         shallowest = level;
       }

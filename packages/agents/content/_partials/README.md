@@ -39,9 +39,11 @@ The `<!-- children -->` placeholder is a partial-side directive. It appears at m
 
 ## Directive placement
 
-Injected content brings its own headings: a partial's as authored, and a guidance-hook fill's demoted one level, so a bound rulebook's title lands at `##`. A host heading following a directive that is deeper than the injected content's shallowest heading renders as a subsection of the injection rather than of the host body -- and for a hook, under whichever rulebook the local binding supplied.
+A host heading following a directive, deeper than the shallowest heading the injection contributes, renders as a subsection of the injected content rather than of the host body. Place every directive where the next host heading sits at or above that level. The `codeassembly-content-specification` rulebook carries the rule an author follows, under "Injection-point placement"; this section carries the level computation behind it.
 
-Place every directive where the next host heading sits at or above that level. Where a section would otherwise nest, promote it or move the directive below it. The level that decides is the injected content's own shallowest, not `##`: `subagents/_partials/review-writes-scaffold.md` opens at `###`, so the `###` sections following it are its correct siblings. The `injection-point-placement` regression test scans every body for the shape.
+The deciding level is what the splice contributes, not a fixed `##`. A partial contributes its headings as authored -- `subagents/_partials/review-writes-scaffold.md` opens at `###`, so the `###` sections following it are its correct siblings -- and `##` for any guidance hook it declares, since hooks resolve after includes expand and so fill inside the host. A hook the host declares contributes `##` on its own, a bound rulebook's title being demoted one level to land there.
+
+Slot content is the caller's own text and contributes nothing here: a heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it, so its nesting is already visible where it is written. `content/__tests__/injection-point-placement.unit.test.ts` enforces the rule.
 
 ## Path resolution
 
