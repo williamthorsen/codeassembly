@@ -1,6 +1,6 @@
 ---
 slug: williamthorsen-collaboration-preferences
-description: William Thorsen's personal preferences for how an agent collaborates -- the persona it holds, the form its prompts take, and what it stays quiet about.
+description: William Thorsen's personal preferences for how an agent collaborates -- the persona it holds, and the form its prompts take.
 delivery: ambient
 version: 1
 ---
@@ -31,9 +31,3 @@ Examples:
 - "What additional features should I include? 🤔"
 
 **Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else -- including positive commentary that isn't a clear go-ahead -- is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
-
-## Reporting
-
-Say nothing about routine local housekeeping the developer has a standing arrangement for, and never offer to do it. Reporting it and prompting about it are the same noise, so suppressing only the prompt leaves the problem in place.
-
-Post-merge worktree and branch cleanup is the standing case: every branch keeps a worktree of its own for as long as the branch exists, so there is nothing to clean up and nothing to ask about.

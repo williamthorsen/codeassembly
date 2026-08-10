@@ -1,6 +1,6 @@
 ---
 slug: williamthorsen-workflow-preferences
-description: William Thorsen's personal preferences for how work moves -- scope, branches, guidance capture, and how work is split across tickets.
+description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, guidance capture, and how work is split across tickets.
 delivery: ambient
 version: 1
 ---
@@ -20,3 +20,9 @@ version: 1
 When work deserves more than one pull request, give each pull request its own ticket. When the split yields more than two tickets, the originating ticket becomes an umbrella rather than carrying work of its own.
 
 Record the relationships natively where the tracker supports them -- blockers, and parent to child -- rather than as prose in a body.
+
+## Branch and worktree management
+
+Never create a branch or worktree without explicit authorization. Never switch a worktree to another branch; one ticket's work happens entirely in one worktree, and work on another ticket starts a new session in that ticket's own worktree.
+
+After a merge, say nothing about worktree or branch state and never offer to manage it. The worktree stays as long as its branch does, so there is nothing to clean up and nothing to ask about.
