@@ -254,6 +254,9 @@ importers:
 
   packages/kb:
     dependencies:
+      '@williamthorsen/toolbelt.errors':
+        specifier: 0.2.0
+        version: 0.2.0
       picomatch:
         specifier: 4.0.5
         version: 4.0.5
@@ -1250,6 +1253,10 @@ packages:
 
   '@williamthorsen/toolbelt.arrays@3.4.0':
     resolution: {integrity: sha512-i7Scr7yefuYGL6gbuS1/bT53Ix86lUNglKQ514COMDEED9Xnzf0t3PlJJ8+g2gvwy3dgis/roroUNd2FZVUDww==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.errors@0.2.0':
+    resolution: {integrity: sha512-DV4mjO8/KH5EylwQ8erGMzqX/DgWw9LXc9LSFJy/GRgM7J2gR99hgx6TOEHdmsvAlMaCe048JTU8cTpxzlx+vg==}
     engines: {node: '>=24.0.0'}
 
   '@williamthorsen/toolbelt.filesystem@0.2.1':
@@ -4606,6 +4613,8 @@ snapshots:
     dependencies:
       '@williamthorsen/toolbelt.guards': 3.1.9
       '@williamthorsen/toolbelt.numbers': 5.0.0
+
+  '@williamthorsen/toolbelt.errors@0.2.0': {}
 
   '@williamthorsen/toolbelt.filesystem@0.2.1': {}
 

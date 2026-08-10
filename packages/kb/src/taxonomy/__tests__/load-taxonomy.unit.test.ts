@@ -79,6 +79,12 @@ describe(loadTaxonomy, () => {
     await expect(loadTaxonomy({ kbRoot })).rejects.toThrow(/taxonomy\.yaml/);
   });
 
+  it('attaches the YAML parse failure as the cause', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains: [unterminated\n' });
+
+    await expect(loadTaxonomy({ kbRoot })).rejects.toHaveProperty('cause', expect.any(Error));
+  });
+
   it('throws a KbLoaderError when a description is not a string', async () => {
     const kbRoot = await makeKbRoot({ taxonomy: 'domains:\n  engineering: 42\n' });
 

@@ -68,8 +68,21 @@ describe(parseAliases, () => {
     const text = await readFixture('syntactically-malformed.yaml');
 
     expect(() => parseAliases(text, 'syntactically-malformed.yaml')).toThrow(
-      /syntactically-malformed\.yaml: malformed YAML —/,
+      /syntactically-malformed\.yaml: malformed YAML:/,
     );
+  });
+
+  it('attaches the YAML parse failure as the cause', async () => {
+    const text = await readFixture('syntactically-malformed.yaml');
+
+    let thrown: unknown;
+    try {
+      parseAliases(text, 'syntactically-malformed.yaml');
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toHaveProperty('cause', expect.any(Error));
   });
 });
 
@@ -100,5 +113,11 @@ describe(loadAliases, () => {
     const kbRoot = await makeKbRoot({ aliases: 'aliases: [unterminated\n' });
 
     await expect(loadAliases({ kbRoot })).rejects.toThrow(KbLoaderError);
+  });
+
+  it('attaches the parse failure as the cause of the KbLoaderError', async () => {
+    const kbRoot = await makeKbRoot({ aliases: 'aliases: [unterminated\n' });
+
+    await expect(loadAliases({ kbRoot })).rejects.toHaveProperty('cause', expect.any(Error));
   });
 });

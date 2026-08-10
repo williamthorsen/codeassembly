@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 
 import { isEnoent } from '../type-guards.ts';
@@ -120,8 +121,7 @@ async function loadRegistryFile(
   try {
     parsed = parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${path}: malformed YAML — ${message}`);
+    throw chainError(`${path}: malformed YAML`, error);
   }
   if (parsed === null || parsed === undefined) {
     return { entries: [] };

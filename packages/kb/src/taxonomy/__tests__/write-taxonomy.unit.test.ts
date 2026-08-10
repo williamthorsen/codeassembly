@@ -173,6 +173,16 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe('# header\ndomains:\n  engineering:\nprovisional:\n  t: T\n');
   });
 
+  it('refuses a malformed file, attaching the parse failure as the cause', async () => {
+    const seeded = 'domains: [unterminated\n';
+    const kbRoot = await makeKbRoot({ taxonomy: seeded });
+
+    await expect(
+      writeTaxonomy({ kbRoot, declarations: [{ path: 'engineering', provisional: false }] }),
+    ).rejects.toHaveProperty('cause', expect.any(Error));
+    expect(await readTaxonomy(kbRoot)).toBe(seeded);
+  });
+
   it('refuses a block holding a scalar, leaving the file untouched', async () => {
     const seeded = 'domains: not-a-mapping\nprovisional:\n  t: T\n';
     const kbRoot = await makeKbRoot({ taxonomy: seeded });
