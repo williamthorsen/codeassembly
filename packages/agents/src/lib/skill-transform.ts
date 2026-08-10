@@ -1,15 +1,9 @@
 import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { isTestDirectory } from './fs-helpers.ts';
-import {
-  assertFilledAnchorsResolve,
-  fillGuidanceHooks,
-  type GuidanceHookFills,
-  stripGuidanceHooks,
-} from './guidance-hooks.ts';
+import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
@@ -79,19 +73,20 @@ export async function renderSkillDirectory(
 }
 
 /**
- * Renders one `skills/` support entry the way an install materializes it: a directory through the whole skill
- * transform, a Markdown file through include expansion, the guidance-hook strip, the anchor gate, and the tool-name
- * rewrite, and anything else not at all, since it is copied byte-for-byte and has nothing to check.
+ * Renders one `skills/` support entry the way an install materializes it: every Markdown file through the whole skill
+ * transform, whether it sits in a support directory or directly under `skills/`, and anything else not at all, since
+ * it is copied byte-for-byte and has nothing to check. Shape decides how an entry is walked, never which rewrites
+ * apply to the Markdown it holds.
  *
  * A support entry never fills a hook, whichever route it takes, so any fills the caller carries are dropped here. A
  * support entry is reached by a link rather than inlined, and guidance behind a link is the thing the hook mechanism
  * exists to route around.
  *
  * Shared by the installer, which writes what comes back, and by `validate`, which discards it. Rendering is where a
- * defect surfaces, so the pass that checks a support entry and the pass that ships it have to run the same one — when
- * they did not, `validate` rejected a shape the installer copies without complaint.
+ * defect surfaces, so the pass that checks a support entry and the pass that ships it run the same one.
  *
- * `destName` is the entry's deployed directory name, which anchors link rewriting for a directory entry.
+ * `destName` is the entry's deployed name, which anchors link rewriting: the directory a directory entry's files sit
+ * in, and the file's own name for a Markdown file entry.
  */
 export async function renderSupportEntry(
   srcPath: string,
@@ -106,10 +101,7 @@ export async function renderSupportEntry(
   if (!srcPath.endsWith('.md')) {
     return { kind: 'verbatim' };
   }
-  const sourceLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
-  const expanded = stripGuidanceHooks(await expandIncludes(srcPath, contentRoot), sourceLabel);
-  assertAnchorsResolve(expanded, sourceLabel);
-  return { kind: 'markdown', content: rewriteToolNames(expanded, unbound.toolMapping, sourceLabel) };
+  return { kind: 'markdown', content: await renderMarkdown(srcPath, destName, contentRoot, unbound) };
 }
 
 // region | Helpers

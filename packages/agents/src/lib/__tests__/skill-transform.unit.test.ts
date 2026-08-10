@@ -298,39 +298,42 @@ describe(renderSupportEntry, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('strips a declared guidance hook from a flat Markdown support entry', async () => {
-    const srcPath = path.join(skillsDir, '_data', 'table.md');
-    await mkdir(path.dirname(srcPath), { recursive: true });
+  it('strips a declared guidance hook from a Markdown file support entry', async () => {
+    const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: implementation-preferences -->\n\nRows.\n', 'utf8');
 
-    const rendered = await renderSupportEntry(srcPath, '_data', contentDir, {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
-    });
+    const rendered = await renderSupportEntry(srcPath, 'table.md', contentDir, buildContext());
 
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
   });
 
   it("strips a support entry's hook even when the caller carries a binding for it", async () => {
-    const srcPath = path.join(skillsDir, '_data', 'table.md');
-    await mkdir(path.dirname(srcPath), { recursive: true });
+    const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
 
-    const rendered = await renderSupportEntry(srcPath, '_data', contentDir, {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
+    const rendered = await renderSupportEntry(srcPath, 'table.md', contentDir, {
+      ...buildContext(),
       guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
     });
 
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
+  });
+
+  it('rewrites links, invocation tokens, and template variables in a Markdown file support entry', async () => {
+    const srcPath = path.join(skillsDir, 'glossary.md');
+    await writeFile(
+      srcPath,
+      'See [the table](_data/table.md), run {skill:commit} on {harness_id}, then `{harness_home_dir}/scripts/x.sh`.\n',
+      'utf8',
+    );
+
+    const rendered = await renderSupportEntry(srcPath, 'glossary.md', contentDir, buildContext());
+
+    expect(rendered).toEqual({
+      kind: 'markdown',
+      content:
+        'See [the table](~/.claude/skills/_data/table.md), run /commit on claude, then `~/.claude/scripts/x.sh`.\n',
+    });
   });
 
   it("strips a hook in a support directory's entries, the route that renders through the skill transform", async () => {
@@ -339,12 +342,7 @@ describe(renderSupportEntry, () => {
     await writeFile(path.join(srcDir, 'table.md'), '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
 
     const rendered = await renderSupportEntry(srcDir, '_data', contentDir, {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
+      ...buildContext(),
       guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
     });
 
@@ -353,4 +351,20 @@ describe(renderSupportEntry, () => {
       entries: [{ kind: 'markdown', relPath: 'table.md', content: '# Table\n\n\nRows.\n' }],
     });
   });
+
+  // region | Helpers
+
+  /** Builds the deploy context these cases share: the Claude harness's sigils, home directory, and link anchor. */
+  function buildContext(): SkillDeployContext {
+    return {
+      toolMapping: TOOL_MAPPING,
+      anchor: homeAnchor('.claude/skills'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+    };
+  }
+
+  // endregion | Helpers
 });
