@@ -8,8 +8,8 @@ export class KbLoaderError extends Error {
   /** Discriminant for narrow catch boundaries; survives serialization and bundling unlike `instanceof`. */
   readonly kind = 'KbLoaderError' as const;
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'KbLoaderError';
   }
 }
