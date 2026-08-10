@@ -31,7 +31,9 @@ const CARRIERS: ReadonlyArray<string> = [
   'skills/commit/SKILL.md',
   'skills/create-ticket/SKILL.md',
   'skills/design-and-plan/SKILL.md',
+  'skills/refine-plan/SKILL.md',
   'skills/summarize-change/SKILL.md',
+  'skills/wrap-up/SKILL.md',
   'subagents/orchestrated-coder.md',
 ];
 
