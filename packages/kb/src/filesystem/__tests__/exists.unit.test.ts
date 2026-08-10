@@ -6,19 +6,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { directoryExists, pathExists } from '../exists.ts';
 
-let dir: string;
-let filePath: string;
-let subdirPath: string;
-let missingPath: string;
+const dir = await mkdtemp(join(tmpdir(), 'kb-exists-'));
+const filePath = join(dir, 'file.txt');
+const subdirPath = join(dir, 'subdir');
+const missingPath = join(dir, 'absent');
 // A path whose parent segment is a regular file — statting it yields ENOTDIR.
-let throughFilePath: string;
+const throughFilePath = join(filePath, 'child');
 
 beforeAll(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'kb-exists-'));
-  filePath = join(dir, 'file.txt');
-  subdirPath = join(dir, 'subdir');
-  missingPath = join(dir, 'absent');
-  throughFilePath = join(filePath, 'child');
   await writeFile(filePath, 'contents', 'utf8');
   await mkdir(subdirPath);
 });

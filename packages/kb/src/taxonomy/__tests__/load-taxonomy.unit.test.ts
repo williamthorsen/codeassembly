@@ -116,10 +116,15 @@ describe(loadTaxonomy, () => {
   ])('rejects the malformed key %s', async (key, reason) => {
     const kbRoot = await makeKbRoot({ taxonomy: `domains:\n  ${key}: Practice\n` });
 
-    const error = await loadTaxonomy({ kbRoot }).catch((error_: unknown) => error_);
+    let thrown: unknown;
+    try {
+      await loadTaxonomy({ kbRoot });
+    } catch (error) {
+      thrown = error;
+    }
 
-    expect(isKbLoaderError(error)).toBe(true);
-    expect(String(error)).toContain(reason);
+    expect(isKbLoaderError(thrown)).toBe(true);
+    expect(String(thrown)).toContain(reason);
   });
 
   it('rejects a malformed key in the provisional block too', async () => {

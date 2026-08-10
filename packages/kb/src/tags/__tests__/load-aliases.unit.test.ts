@@ -19,7 +19,8 @@ const readFixture = makeReadFixture(FIXTURES_DIR);
 
 describe(parseAliases, () => {
   it('loads a valid registry into an alias-to-canonical map', async () => {
-    const map = await readFixture('valid-aliases.yaml').then((text) => parseAliases(text, 'valid'));
+    const text = await readFixture('valid-aliases.yaml');
+    const map = parseAliases(text, 'valid');
 
     expect(map.get('git-sparse-checkout')).toBe('git');
     expect(map.get('vcs')).toBe('git');
