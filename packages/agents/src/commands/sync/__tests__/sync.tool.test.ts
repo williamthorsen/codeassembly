@@ -1783,10 +1783,13 @@ describe(syncCommand, () => {
       await writeFile(path.join(dataDir, 'rovo.yaml'), ROVO_OVERLAY, 'utf8');
     }
 
+    /** Default fixture body, carrying one tool token and one home-dir token for the transform to rewrite. */
+    const SUBAGENT_BODY = 'Use {tool:Read}; run `{harness_home_dir}/scripts/x.sh`.';
+
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
     async function writeLibrarySubagent(
       slug: string,
-      { body = `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.` }: { body?: string } = {},
+      { body = `# ${slug}\n\n${SUBAGENT_BODY}` }: { body?: string } = {},
     ): Promise<void> {
       const dir = path.join(contentDir, 'subagents');
       await mkdir(dir, { recursive: true });

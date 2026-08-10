@@ -105,13 +105,13 @@ export function removeHookEntries(settings: unknown, sentinel: string): HookEntr
   const nextHooks: Record<string, unknown> = {};
   let removedCount = 0;
 
-  for (const event of Object.keys(hooks)) {
+  for (const [event, groups] of Object.entries(hooks)) {
     const current = readEventGroups(hooks, event);
     const retained = current.filter((group) => !isOwnedGroup(group, sentinel));
     removedCount += current.length - retained.length;
 
     if (retained.length === current.length) {
-      nextHooks[event] = hooks[event];
+      nextHooks[event] = groups;
     } else if (retained.length > 0) {
       nextHooks[event] = retained;
     }

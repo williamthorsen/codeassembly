@@ -320,7 +320,7 @@ function assertCaptureEventSmokeResult(result: unknown): void {
     throw new Error(`expected an ISO-8601 capturedAt, got ${JSON.stringify(result.capturedAt)}`);
   }
   if (typeof result.path !== 'string' || !result.path.endsWith(`${result.id}.md`)) {
-    throw new Error(`expected a written record path ending in {id}.md, got ${JSON.stringify(result.path)}`);
+    throw new Error(`expected a written record path ending in ${result.id}.md, got ${JSON.stringify(result.path)}`);
   }
   const written = readFileSync(result.path, 'utf8');
   if (!/^recordType: event$/m.test(written)) {

@@ -21,14 +21,14 @@ export async function uninstallCommand(
   // Uninstall shared guidance unconditionally (not gated by harness detection)
   const updatedShared = await uninstallSharedGuidance(manifest, options, baseDir);
 
-  let remainingHarnesses = { ...manifest.harnesses };
-
   // uninstallSharedGuidance above is a no-op when manifest.shared is undefined,
   // so this guard safely covers the "nothing installed at all" case.
   if (harnesses.length === 0 && !manifest.shared) {
     console.info('No target harnesses detected. Nothing to uninstall.');
     return;
   }
+
+  let remainingHarnesses = { ...manifest.harnesses };
 
   for (const harnessId of harnesses) {
     console.info(`\nUninstalling for harness: ${harnessId}`);

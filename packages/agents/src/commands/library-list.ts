@@ -288,7 +288,8 @@ function warnSkipped(type: ArtifactType, file: string, error: unknown): void {
 function wrapText(text: string, width: number): Array<string> {
   const lines: Array<string> = [];
   let current = '';
-  for (const word of text.split(/\s+/).filter(Boolean)) {
+  for (const word of text.split(/\s+/)) {
+    if (word === '') continue;
     if (current === '') {
       current = word;
     } else if (current.length + 1 + word.length <= width) {
