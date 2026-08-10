@@ -128,6 +128,16 @@ const v2Fixture = {
   ],
 };
 
+/** Resolves with the value the operation rejects with. */
+async function captureRejection(operation: () => Promise<unknown>): Promise<unknown> {
+  try {
+    await operation();
+  } catch (error) {
+    return error;
+  }
+  throw new Error('Expected the operation to reject, but it resolved.');
+}
+
 function mockJson(data: Record<string, unknown>): void {
   mockedReadFile.mockResolvedValue(JSON.stringify(data));
 }
@@ -593,7 +603,7 @@ describe('parseStatusFile', () => {
     it('throws RunDataParseError with corrupt_json category for invalid JSON', async () => {
       mockedReadFile.mockResolvedValue('not json');
 
-      const error = await parseStatusFile('/path/to/status.json').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseStatusFile('/path/to/status.json'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       expect(error).toBeInstanceOf(Error);
@@ -606,7 +616,7 @@ describe('parseStatusFile', () => {
     it('throws RunDataParseError with invalid_schema category and zodIssues for schema failures', async () => {
       mockedReadFile.mockResolvedValue('{}');
 
-      const error = await parseStatusFile('/path/to/status.json').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseStatusFile('/path/to/status.json'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       if (!(error instanceof RunDataParseError)) return;
@@ -1142,7 +1152,7 @@ describe('parseRunData', () => {
         '/runs/test-run/run-index.json': '{ not valid json !!!',
       });
 
-      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseRunData('/runs/test-run'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       if (!(error instanceof RunDataParseError)) return;
@@ -1156,7 +1166,7 @@ describe('parseRunData', () => {
         '/runs/test-run/run-index.json': JSON.stringify(invalid),
       });
 
-      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseRunData('/runs/test-run'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       if (!(error instanceof RunDataParseError)) return;
@@ -1186,7 +1196,7 @@ describe('parseRunData', () => {
         '/runs/test-run/run-index.json': JSON.stringify(v3Header),
       });
 
-      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseRunData('/runs/test-run'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       if (!(error instanceof RunDataParseError)) return;
@@ -1199,7 +1209,7 @@ describe('parseRunData', () => {
         '/runs/test-run/status.json': 'not json at all',
       });
 
-      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseRunData('/runs/test-run'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       if (!(error instanceof RunDataParseError)) return;
@@ -1212,7 +1222,7 @@ describe('parseRunData', () => {
         '/runs/test-run/status.json': JSON.stringify({ runId: 'only-one-field' }),
       });
 
-      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+      const error = await captureRejection(() => parseRunData('/runs/test-run'));
 
       expect(error).toBeInstanceOf(RunDataParseError);
       if (!(error instanceof RunDataParseError)) return;
@@ -1272,7 +1282,7 @@ describe(parseRunRawData, () => {
       '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
     });
 
-    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+    const error = await captureRejection(() => parseRunRawData('/runs/test-run'));
 
     expect(error).toBeInstanceOf(RunDataParseError);
     if (!(error instanceof RunDataParseError)) return;
@@ -1284,7 +1294,7 @@ describe(parseRunRawData, () => {
       '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
     });
 
-    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+    const error = await captureRejection(() => parseRunRawData('/runs/test-run'));
 
     expect(error).toBeInstanceOf(RunDataParseError);
     if (!(error instanceof RunDataParseError)) return;
@@ -1296,7 +1306,7 @@ describe(parseRunRawData, () => {
       '/runs/test-run/run-index.json': '{ not valid json !!!',
     });
 
-    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+    const error = await captureRejection(() => parseRunRawData('/runs/test-run'));
 
     expect(error).toBeInstanceOf(RunDataParseError);
     if (!(error instanceof RunDataParseError)) return;
@@ -1308,7 +1318,7 @@ describe(parseRunRawData, () => {
       '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
     });
 
-    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+    const error = await captureRejection(() => parseRunRawData('/runs/test-run'));
 
     expect(error).toBeInstanceOf(RunDataParseError);
     if (!(error instanceof RunDataParseError)) return;
