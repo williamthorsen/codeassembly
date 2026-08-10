@@ -1,38 +1,12 @@
 ---
 name: development-workflows
-description: Development workflow conventions including pnpm commands, quality gates, and type-checking
+description: Development workflow conventions covering quality gates and agent efficiency
 user-invocable: false
 ---
 
 # Development workflows
 
-Rules for development processes, tool usage, and quality gates.
-
-## Command execution
-
-### Package management commands
-
-**Never use ambiguous `pnpm {binary}` or `pnpm {script}` shorthand syntax.** It's unclear what runs: a subcommand, a binary, or a script?
-
-- **Always use `pnpm run {script}`** for package.json scripts
-- **Always use `pnpm exec {binary}`** for binary executables
-- This applies to all contexts: commands, documentation, examples, CLAUDE.md files
-
-Examples:
-
-```bash
-# ✅ Correct - running a script
-pnpm run build
-pnpm run test
-
-# ✅ Correct - executing a binary
-pnpm exec prettier --write src/
-pnpm exec eslint src/
-
-# ❌ Incorrect - ambiguous
-pnpm build
-pnpm prettier --write src/
-```
+Rules for development processes and quality gates.
 
 ## Quality gates
 
@@ -41,14 +15,6 @@ pnpm prettier --write src/
 - **Always run linting and type-checking before considering code complete** - Mandatory
 - Auto-format code before staging or considering it complete
 - All quality checks must pass before work is finished
-
-### Type-checking
-
-**Do not use `tsc`** - it's very slow. Always use exactly:
-
-```shell
-tsgo --noEmit
-```
 
 ## Performance optimization
 
