@@ -1,3 +1,5 @@
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { renderRulebookBlock } from './sentinel-inliner.ts';
 
@@ -264,11 +266,6 @@ function demoteHeadings(body: string): string {
     );
   });
   return demoted.join('\n');
-}
-
-/** Renders an unknown thrown value as the message it carries, or as itself when it carries none. */
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /** Index of the line closing a leading frontmatter block, or `-1` when the body opens with none. */

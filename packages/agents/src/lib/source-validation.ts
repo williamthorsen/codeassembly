@@ -1,6 +1,8 @@
 import { constants } from 'node:fs';
 import { access, stat } from 'node:fs/promises';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { isMissingFile } from './type-guards.ts';
 
 /**
@@ -54,6 +56,6 @@ export async function describeSourceProblem(dir: string): Promise<string | undef
     if (isMissingFile(error)) {
       return 'does not exist';
     }
-    return `unreadable — ${error instanceof Error ? error.message : String(error)}`;
+    return `unreadable — ${describeError(error)}`;
   }
 }

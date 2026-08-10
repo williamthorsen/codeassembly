@@ -1,6 +1,8 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
@@ -148,10 +150,7 @@ export async function installCommand(
         try {
           await ensureHarnessHookEntries(harnessId, baseDir);
         } catch (error) {
-          console.warn(
-            `  ⚠️ Skipping hook wiring: ${error instanceof Error ? error.message : String(error)} ` +
-              '(fix the config, then run configure-hooks)',
-          );
+          console.warn(`  ⚠️ Skipping hook wiring: ${describeError(error)} (fix the config, then run configure-hooks)`);
         }
       }
     }

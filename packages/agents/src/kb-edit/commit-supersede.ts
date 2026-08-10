@@ -1,6 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { rename, unlink, writeFile } from 'node:fs/promises';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 /**
  * The subset of `node:fs/promises` operations `commitSupersede` performs. Tests inject mocks via this interface
  * so the rollback paths (which depend on specific renames failing) can be exercised without filesystem trickery.
@@ -83,7 +85,7 @@ export async function commitSupersede(input: {
     return { ok: true };
   } catch (renameError) {
     await io.unlink(newTmp).catch(() => {});
-    const originalMessage = renameError instanceof Error ? renameError.message : String(renameError);
+    const originalMessage = describeError(renameError);
     const rollback = await tryRollbackOld({
       oldPath: input.oldPath,
       originalContent: input.oldOriginalContent,

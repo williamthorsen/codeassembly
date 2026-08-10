@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
@@ -279,7 +280,7 @@ function readNameAndDescription(content: string): { name?: string; description?:
 
 /** Warns to stderr that an artifact was skipped because its frontmatter could not be parsed. */
 function warnSkipped(type: ArtifactType, file: string, error: unknown): void {
-  const reason = error instanceof Error ? error.message : String(error);
+  const reason = describeError(error);
   console.warn(`  ⚠️ Skipping ${type} ${file}: ${reason}`);
 }
 

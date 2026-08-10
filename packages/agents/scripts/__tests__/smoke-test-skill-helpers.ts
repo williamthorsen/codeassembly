@@ -13,6 +13,8 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { bundleSkillHelpers, type BundleTarget, packageRoot, targets } from '../bundle-skill-helpers.ts';
 import {
   makeCaptureEventSmokeTest,
@@ -64,7 +66,7 @@ for (const target of targets) {
     console.info(`Smoke test passed: ${target.outFile} exits 0 with valid JSON.`);
   } catch (error) {
     failed = true;
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     console.error(`Smoke test failed: ${target.outFile} — ${message}`);
   }
 }

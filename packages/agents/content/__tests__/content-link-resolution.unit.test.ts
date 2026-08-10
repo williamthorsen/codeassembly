@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { collectHeadingSlugs, findUnterminatedFence, normalizeForAnchorScan } from '../../src/lib/anchor-resolution.ts';
@@ -129,7 +130,7 @@ async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
         rulebooks,
       });
     } catch (error) {
-      rejections.push(error instanceof Error ? error.message : String(error));
+      rejections.push(describeError(error));
     }
   }
   return rejections;

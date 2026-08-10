@@ -9,6 +9,7 @@ import type { AliasMap, KbRoot } from '@williamthorsen/kb';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
 import { loadAliases } from '@williamthorsen/kb/tags';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
@@ -37,7 +38,7 @@ async function main(): Promise<void> {
     // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
     // System failures (unexpected throws) take the catch arm below.
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-add: ${message}\n`);
     process.exit(1);
   }
@@ -133,7 +134,7 @@ export async function runAdd(input: {
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
+    return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
   if (args.mode === 'survey') {
@@ -248,7 +249,7 @@ function isEntryPoint(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-add: warning: could not determine entry point: ${message}\n`);
     return false;
   }
@@ -263,7 +264,7 @@ async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasM
   try {
     return await loadAliases({ kbRoot: input.kbRoot });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-add: warning: could not load tag aliases: ${message}\n`);
     return new Map();
   }

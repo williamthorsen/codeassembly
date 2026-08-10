@@ -1,5 +1,6 @@
 import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 import { parseNote } from '@williamthorsen/kb/frontmatter';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 /** Whole-day divisor for converting a date delta in milliseconds to an age in days. */
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
@@ -86,6 +87,6 @@ export async function parseNoteSafely(path: string): Promise<SafeParseOutcome> {
   try {
     return { note: await parseNote({ path }) };
   } catch (error) {
-    return { note: null, error: error instanceof Error ? error.message : String(error) };
+    return { note: null, error: describeError(error) };
   }
 }

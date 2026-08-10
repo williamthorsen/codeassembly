@@ -1,3 +1,5 @@
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { removeItem } from '../lib/installer.js';
@@ -37,7 +39,7 @@ export async function uninstallCommand(
     try {
       await removeHarnessHookEntries(harnessId, baseDir);
     } catch (error) {
-      console.warn(`  ⚠️ Skipping hook-entry removal: ${error instanceof Error ? error.message : String(error)}`);
+      console.warn(`  ⚠️ Skipping hook-entry removal: ${describeError(error)}`);
     }
 
     const harnessManifest = manifest.harnesses[harnessId];

@@ -36,6 +36,8 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
@@ -91,7 +93,7 @@ async function main(): Promise<void> {
     });
     process.stdout.write(`${JSON.stringify(manifest, null, 2)}\n`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`derive-session-context: ${message}\n`);
     process.exit(1);
   }
@@ -438,7 +440,7 @@ function isMain(): boolean {
     // most plausibly means we *are* the entry point (the CLI is being invoked through a stale link).
     // Returning `false` here would silently no-op the CLI; running `main()` defensively at worst
     // runs the script on an unexpected import, which surfaces an error rather than a silent skip.
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`derive-session-context: warning: could not determine entry point: ${message}\n`);
     return true;
   }

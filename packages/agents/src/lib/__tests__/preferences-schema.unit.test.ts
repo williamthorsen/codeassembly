@@ -8,6 +8,7 @@ import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-202
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
@@ -185,7 +186,7 @@ function registerSchemaIdempotent(schemaToRegister: JsonSchemaDraft202012Object,
   try {
     registerSchema(schemaToRegister, id);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     const isDuplicateRegistration = message.includes('already been registered') && message.includes(id);
     if (!isDuplicateRegistration) {
       throw error;

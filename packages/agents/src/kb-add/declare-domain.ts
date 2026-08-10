@@ -10,6 +10,7 @@ import {
   type TaxonomyDeclaration,
   writeTaxonomy,
 } from '@williamthorsen/kb/taxonomy';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 /** A domain a write added to the taxonomy. */
 export interface AddedDomain {
@@ -85,7 +86,7 @@ export async function declareDomain(input: {
         .map(({ path, provisional }) => ({ path, provisional })),
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     const subject = domain === null ? 'the note placement' : `domain "${domain}"`;
     return { domain, added: [], warning: `could not declare ${subject} in ${TAXONOMY_FILE}: ${message}` };
   }

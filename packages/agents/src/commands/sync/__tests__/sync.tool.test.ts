@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -812,7 +813,7 @@ describe(syncCommand, () => {
     try {
       await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
     } catch (error: unknown) {
-      message = error instanceof Error ? error.message : String(error);
+      message = describeError(error);
     }
 
     expect(message).toContain('shared');

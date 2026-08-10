@@ -5,6 +5,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@williamthorsen/kb/records';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
@@ -44,7 +45,7 @@ async function main(): Promise<void> {
     const result = await runRetrieveEvents({ argv: process.argv.slice(2), startDir: process.cwd() });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     process.stderr.write(`kb-retrieve-events: ${message}\n`);
     process.exit(1);
   }
