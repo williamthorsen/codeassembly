@@ -9,8 +9,9 @@ import {
   isRewritableLinkTarget,
   rewriteMarkdownPaths,
   rewritePathsInDirectory,
+  rewritePathsInFile,
   rewriteTemplateVariables,
-} from '../path-rewriter.js';
+} from '../path-rewriter.ts';
 
 describe(isRewritableLinkTarget, () => {
   it.each(['../_data/concision.md', './modules/review-cycle.md', 'SKILL.md', 'scripts/run.sh'])(
@@ -160,6 +161,22 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe(
       'node ~/.rovodev/skills/capture-event/capture-event.mjs --harness rovo',
     );
+  });
+});
+
+describe(rewritePathsInFile, () => {
+  const absentPath = path.join(tmpdir(), 'path-rewriter-absent.md');
+
+  it('names the file it could not rewrite', async () => {
+    await expect(rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', '.claude', 'claude')).rejects.toThrow(
+      /Failed to rewrite paths in/,
+    );
+  });
+
+  it('attaches the read failure as the cause', async () => {
+    await expect(
+      rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', '.claude', 'claude'),
+    ).rejects.toHaveProperty('cause', expect.any(Error));
   });
 });
 

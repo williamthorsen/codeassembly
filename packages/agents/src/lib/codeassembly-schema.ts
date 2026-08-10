@@ -1,3 +1,4 @@
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
@@ -99,8 +100,7 @@ export function parseCodeAssemblyFile(
   try {
     parsed = parseYaml(raw);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid codeassembly.yaml${where}: malformed YAML — ${message}`, { cause: error });
+    throw chainError(`Invalid codeassembly.yaml${where}: malformed YAML`, error);
   }
 
   // An empty or comment-only document parses to nullish; treat it as "nothing declared".

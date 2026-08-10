@@ -1,6 +1,8 @@
 import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+
 /**
  * The Markdown link grammar this module rewrites: `[text](target)`, capturing text then target. Exported because the
  * grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must match
@@ -121,8 +123,7 @@ export async function rewritePathsInFile(
       await writeFile(filePath, rewritten, 'utf8');
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to rewrite paths in ${filePath}: ${message}`);
+    throw chainError(`Failed to rewrite paths in ${filePath}`, error);
   }
 }
 

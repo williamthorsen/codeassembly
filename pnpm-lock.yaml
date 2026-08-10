@@ -98,6 +98,9 @@ importers:
       '@williamthorsen/kb':
         specifier: workspace:*
         version: link:../kb
+      '@williamthorsen/toolbelt.errors':
+        specifier: 0.2.0
+        version: 0.2.0
       codeassembly-lifecycle:
         specifier: workspace:*
         version: link:../lifecycle

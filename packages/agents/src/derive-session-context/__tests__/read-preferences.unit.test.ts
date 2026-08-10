@@ -65,6 +65,14 @@ describe(readPreferences, () => {
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/malformed YAML/);
   });
 
+  it('attaches the YAML parse failure as the cause', async () => {
+    await writeProjectYaml(projectDir, 'project:\n  slug: [unclosed list\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toHaveProperty(
+      'cause',
+      expect.any(Error),
+    );
+  });
+
   it('tolerates unknown top-level keys', async () => {
     await writeProjectYaml(projectDir, 'mystery_key: "mystery value"\n');
     const result = await readPreferences({ cwd: projectDir, home: homeDir });

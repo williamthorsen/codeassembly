@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { z } from 'zod';
 
 import { isMissingFile } from './type-guards.ts';
@@ -160,8 +161,7 @@ function parsePackageManifest(name: string, raw: string): unknown {
   try {
     return JSON.parse(raw);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Package "${name}" has an unreadable package.json: ${message}`, { cause: error });
+    throw chainError(`Package "${name}" has an unreadable package.json`, error);
   }
 }
 

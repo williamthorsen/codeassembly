@@ -8,6 +8,7 @@ import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-202
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
@@ -167,8 +168,7 @@ function parseSchemaFile(filePath: string): JsonSchemaDraft202012Object {
     // `JSON.parse` returns `any`; the typed local variable narrows without a type assertion.
     parsed = JSON.parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse schema at ${filePath}: ${message}`);
+    throw chainError(`Failed to parse schema at ${filePath}`, error);
   }
   return parsed;
 }

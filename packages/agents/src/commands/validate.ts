@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { type ContentDefect, validateContentRoot } from '../lib/content-validation.ts';
 import { ALL_HARNESS_IDS } from '../lib/harness.ts';
 import { findContentPath } from '../lib/package-sources.ts';
@@ -99,8 +101,7 @@ function parseManifest(manifestPath: string, raw: string): unknown {
   try {
     return JSON.parse(raw);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Cannot read ${manifestPath}: ${message}`, { cause: error });
+    throw chainError(`Cannot read ${manifestPath}`, error);
   }
 }
 

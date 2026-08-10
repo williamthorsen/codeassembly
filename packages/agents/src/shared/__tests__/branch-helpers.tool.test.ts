@@ -76,4 +76,8 @@ describe(resolveCurrentBranch, () => {
   it('throws outside a git repository', async () => {
     await expect(resolveCurrentBranch(scratch)).rejects.toThrow(/Could not resolve current branch/);
   });
+
+  it('attaches the git failure as the cause', async () => {
+    await expect(resolveCurrentBranch(scratch)).rejects.toHaveProperty('cause', expect.any(Error));
+  });
 });

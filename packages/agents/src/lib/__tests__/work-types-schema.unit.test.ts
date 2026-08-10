@@ -8,6 +8,7 @@ import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-202
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { describe, expect, it } from 'vitest';
 
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
@@ -314,8 +315,7 @@ function parseJsonFile<T>(filePath: string, label: string): T {
     // `JSON.parse` returns `any`; the typed local variable narrows without a type assertion.
     parsed = JSON.parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to read or parse ${label} at ${filePath}: ${message}`);
+    throw chainError(`Failed to read or parse ${label} at ${filePath}`, error);
   }
   return parsed;
 }

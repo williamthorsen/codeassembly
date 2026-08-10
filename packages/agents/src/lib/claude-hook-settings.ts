@@ -7,6 +7,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { checkHookEntries, type ClaudeHookEntry, ensureHookEntries, removeHookEntries } from './claude-hook-entries.ts';
 import type { EnsureResult, EntryCheck, RemoveResult } from './managed-entry-contract.ts';
 import { isEnoent } from './type-guards.ts';
@@ -88,8 +90,7 @@ function parseSettings(text: string, filePath: string): unknown {
   try {
     return JSON.parse(text);
   } catch (error: unknown) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Cannot parse ${filePath} as JSON: ${detail}`, { cause: error });
+    throw chainError(`Cannot parse ${filePath} as JSON`, error);
   }
 }
 
