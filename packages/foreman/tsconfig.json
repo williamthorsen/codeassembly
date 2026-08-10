@@ -9,7 +9,6 @@
   },
   // prettier-ignore
   "include": [
-    "./.config/**/*.ts",
     "src/",
     "*.ts",
   ],
