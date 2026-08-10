@@ -145,6 +145,7 @@ describe(tryLoadKbRegistry, () => {
   });
 
   it('describes a thrown error carrying no message by its class rather than as an empty string', async () => {
+    // eslint-disable-next-line unicorn/error-message -- the empty message is the condition under test.
     vi.mocked(readFile).mockRejectedValueOnce(new Error(''));
 
     const result = await tryLoadKbRegistry({ home: HOME, projectDir: PROJECT });

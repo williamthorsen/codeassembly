@@ -17,7 +17,7 @@ Run "kb <command> --help" for command options.
 `;
 
 /** The argv heads that print top-level usage: the two help flags, and `undefined` for a bare invocation. */
-const HELP_COMMANDS: readonly (string | undefined)[] = [undefined, '--help', '-h'];
+const HELP_COMMANDS: ReadonlySet<string | undefined> = new Set([undefined, '--help', '-h']);
 
 /**
  * Dispatches a `kb` subcommand and returns its {@link CommandOutput} without touching `process`, so tests drive the
@@ -34,7 +34,7 @@ export async function run(input: {
 }): Promise<CommandOutput> {
   const [command, ...rest] = input.argv;
 
-  if (HELP_COMMANDS.includes(command)) {
+  if (HELP_COMMANDS.has(command)) {
     return { exitCode: 0, stdout: HELP, stderr: '' };
   }
 

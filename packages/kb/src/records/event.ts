@@ -15,7 +15,7 @@ export type EventImpact = (typeof EVENT_IMPACT_LEVELS)[number];
 const IMPACT_LEVEL_SET: ReadonlySet<string> = new Set(EVENT_IMPACT_LEVELS);
 
 /** The values an optional field treats as not supplied, the empty string included. */
-const NOT_SUPPLIED_VALUES: readonly unknown[] = [undefined, null, ''];
+const NOT_SUPPLIED_VALUES: ReadonlySet<unknown> = new Set([undefined, null, '']);
 
 /** Reports whether a value is one of the declared {@link EVENT_IMPACT_LEVELS}. */
 export function isEventImpact(value: unknown): value is EventImpact {
@@ -180,7 +180,7 @@ function readListField(value: unknown, field: string, errors: string[]): string[
  * yields `undefined`.
  */
 function readOptionalNonEmptyString(value: unknown, field: string, errors: string[]): string | undefined {
-  if (NOT_SUPPLIED_VALUES.includes(value)) {
+  if (NOT_SUPPLIED_VALUES.has(value)) {
     return undefined;
   }
   if (typeof value === 'string') {
