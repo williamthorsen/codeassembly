@@ -153,7 +153,8 @@ function compareRows(a: LibraryRow, b: LibraryRow): number {
 async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.collection.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const file of await listVisibleMarkdownFiles(dir)) {
+  const files = await listVisibleMarkdownFiles(dir);
+  for (const file of files) {
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('collection', file, () => {
       const meta = readNameAndDescription(content);
@@ -174,7 +175,8 @@ async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>
 async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.rulebook.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const file of await listVisibleMarkdownFiles(dir)) {
+  const files = await listVisibleMarkdownFiles(dir);
+  for (const file of files) {
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('rulebook', file, () => {
       const { rulebook } = parseRulebookFile(content, file);
@@ -195,7 +197,8 @@ async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> 
 async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.skill.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const name of await listSkillDirectories(dir)) {
+  const names = await listSkillDirectories(dir);
+  for (const name of names) {
     const content = await readFile(path.join(dir, name, 'SKILL.md'), 'utf8');
     const entry = buildEntryOrSkip('skill', name, () => {
       const meta = readNameAndDescription(content);
@@ -216,7 +219,8 @@ async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
 async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.subagent.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const file of await listVisibleMarkdownFiles(dir)) {
+  const files = await listVisibleMarkdownFiles(dir);
+  for (const file of files) {
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('subagent', file, () => {
       const meta = readNameAndDescription(content);

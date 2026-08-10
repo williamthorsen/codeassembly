@@ -119,7 +119,8 @@ async function collectEntries(
   context: SkillDeployContext,
   out: Array<RenderedSkillEntry>,
 ): Promise<void> {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
     if (entry.name === '_partials' || isTestDirectory(entry.name) || entry.name.startsWith('.')) {
       continue;
     }

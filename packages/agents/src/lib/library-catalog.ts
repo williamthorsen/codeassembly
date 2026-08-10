@@ -60,7 +60,8 @@ export async function isSkillDirectory(entryDir: string): Promise<boolean> {
  */
 export async function listSkillDirectories(skillsDir: string): Promise<Array<string>> {
   const names: Array<string> = [];
-  for (const name of await listVisibleSubdirectories(skillsDir)) {
+  const subdirectoryNames = await listVisibleSubdirectories(skillsDir);
+  for (const name of subdirectoryNames) {
     if (await isSkillDirectory(path.join(skillsDir, name))) {
       names.push(name);
     }

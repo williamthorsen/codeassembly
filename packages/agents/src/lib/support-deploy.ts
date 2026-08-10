@@ -24,7 +24,8 @@ export async function renderSourceSupport(
   const skillsDir = path.join(sourceDir, ARTIFACT_TYPES.skill.contentPath);
   const rendered: Array<RenderedSkillEntry> = [];
 
-  for (const name of await listSupportEntries(skillsDir)) {
+  const supportEntries = await listSupportEntries(skillsDir);
+  for (const name of supportEntries) {
     const srcPath = path.join(skillsDir, name);
     const entry = await renderSupportEntry(srcPath, name, sourceDir, context);
     switch (entry.kind) {
@@ -68,7 +69,8 @@ export async function retractUndeclaredSourceSupport(
   sourcesRoot: string,
   outcome: SourceSupportOutcome,
 ): Promise<void> {
-  for (const target of await listUndeclaredSourceSupport(sourcesRoot, outcome)) {
+  const targets = await listUndeclaredSourceSupport(sourcesRoot, outcome);
+  for (const target of targets) {
     await rm(target, { recursive: true, force: true });
   }
 }
