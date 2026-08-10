@@ -2,7 +2,6 @@ import { defineConfig } from 'eslint/config';
 import reactPlugin from 'eslint-plugin-react';
 
 import baseConfig from '../../eslint.config.ts';
-import { deferredLintRules } from './.config/eslint/deferred-lint-rules.ts';
 
 const config = defineConfig([
   ...baseConfig,
@@ -45,10 +44,6 @@ const config = defineConfig([
         version: '19.2.8',
       },
     },
-  },
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.md/*.ts'],
-    rules: deferredLintRules,
   },
 ]);
 
