@@ -162,7 +162,8 @@ async function collectBareRelativeLinks(baseDir: string): Promise<Array<{ file: 
 
 /** Walks `dir`, invoking `visit` for each non-symlinked `.md` file. Symlinks are skipped because readFile follows them. */
 async function walkMarkdownFiles(dir: string, visit: (filePath: string) => Promise<void>): Promise<void> {
-  for (const entry of await readdir(dir)) {
+  const entries = await readdir(dir);
+  for (const entry of entries) {
     const full = path.join(dir, entry);
     const info = await lstat(full);
     if (info.isSymbolicLink()) {

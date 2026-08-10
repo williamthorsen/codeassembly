@@ -127,7 +127,8 @@ describe('output-shaping spec inlining', () => {
 
     it('inlines each spec exactly once', async () => {
       const expanded = await expandSkill(slug);
-      for (const heading of new Set(specs.map((spec) => spec.heading))) {
+      const headings = new Set(specs.map((spec) => spec.heading));
+      for (const heading of headings) {
         expect(countOccurrences(expanded, heading), `${slug} repeats "${heading}"`).toBe(1);
       }
     });
@@ -135,7 +136,8 @@ describe('output-shaping spec inlining', () => {
 
   it('no skill still links to a relocated spec', async () => {
     const violations: Array<string> = [];
-    for (const entry of await readdir(SKILLS_ROOT, { withFileTypes: true })) {
+    const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
+    for (const entry of entries) {
       // `_`-prefixed entries are support directories; a directory with no `SKILL.md` (e.g. a bundled helper) is not
       // a skill either. Neither can carry a spec link.
       if (!entry.isDirectory() || entry.name.startsWith('_')) {

@@ -119,7 +119,8 @@ function findConcreteStores(line: string, isFenced: boolean): Array<string> {
 /** Reports every argument-position store name across the Markdown of the vetted collection's closure. */
 async function findViolations(contentDir: string): Promise<ReadonlyArray<Violation>> {
   const violations: Array<Violation> = [];
-  for (const relativePath of await listClosureFiles(contentDir)) {
+  const relativePaths = await listClosureFiles(contentDir);
+  for (const relativePath of relativePaths) {
     const lines = (await readFile(path.join(contentDir, relativePath), 'utf8')).split('\n');
     let isFenced = false;
     for (const [index, line] of lines.entries()) {
@@ -179,7 +180,8 @@ function listCodeSpans(text: string): Array<string> {
 /** Lists every Markdown file under `relativeDir`, recursively, as paths relative to `root`. */
 async function listMarkdownFilesUnder(root: string, relativeDir: string): Promise<Array<string>> {
   const foundFiles: Array<string> = [];
-  for (const entry of await readDirEntries(path.join(root, relativeDir))) {
+  const entries = await readDirEntries(path.join(root, relativeDir));
+  for (const entry of entries) {
     const relativePath = path.join(relativeDir, entry.name);
     if (entry.isDirectory()) {
       foundFiles.push(...(await listMarkdownFilesUnder(root, relativePath)));

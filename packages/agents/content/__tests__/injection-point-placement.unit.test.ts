@@ -55,7 +55,8 @@ const levelByPartial = new Map<string, number | undefined>();
 describe('injection-point placement', () => {
   it('no directive reparents the section following it', async () => {
     const violations: Array<string> = [];
-    for (const relativePath of await listContentMarkdown()) {
+    const relativePaths = await listContentMarkdown();
+    for (const relativePath of relativePaths) {
       violations.push(...(await findViolations(relativePath)));
     }
 
@@ -78,7 +79,8 @@ async function findViolations(relativePath: string): Promise<ReadonlyArray<strin
   const violations: Array<string> = [];
   const open: Array<Injection> = [];
 
-  for (const token of await readStructure(relativePath)) {
+  const tokens = await readStructure(relativePath);
+  for (const token of tokens) {
     if (token.kind === 'injection') {
       open.push(token);
       continue;

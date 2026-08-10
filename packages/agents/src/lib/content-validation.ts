@@ -349,7 +349,8 @@ async function renderSupportEntries(
   const skillsDir = path.join(root, ARTIFACT_TYPES.skill.contentPath);
   const raised: Array<HarnessDefect> = [];
 
-  for (const name of await listSupportEntries(skillsDir)) {
+  const supportEntries = await listSupportEntries(skillsDir);
+  for (const name of supportEntries) {
     const relPath = `${ARTIFACT_TYPES.skill.contentPath}/${name}`;
     try {
       await renderSupportEntry(path.join(skillsDir, name), name, root, skillContext);
@@ -420,7 +421,8 @@ async function resolveSeedClosures(
   const reached = { rulebook: new Set<string>(), skill: new Set<string>(), subagent: new Set<string>() };
 
   for (const type of ARTIFACT_TYPE_VALUES) {
-    for (const slug of seeds[type] ?? []) {
+    const slugs = seeds[type] ?? [];
+    for (const slug of slugs) {
       const seed: DirectArtifacts = { [type]: [slug] };
       try {
         const closure = await resolveClosure(seed, resolver);

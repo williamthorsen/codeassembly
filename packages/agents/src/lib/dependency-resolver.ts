@@ -56,7 +56,8 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
     onPath.add(id);
     const edges = await readArtifactEdges(type, slug, resolver);
     for (const edgeType of ARTIFACT_TYPE_VALUES) {
-      for (const edgeSlug of edges[edgeType] ?? []) {
+      const edgeSlugs = edges[edgeType] ?? [];
+      for (const edgeSlug of edgeSlugs) {
         await visit(edgeType, edgeSlug, [...trail, id]);
       }
     }
@@ -64,7 +65,8 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
   }
 
   for (const type of ARTIFACT_TYPE_VALUES) {
-    for (const slug of direct[type] ?? []) {
+    const slugs = direct[type] ?? [];
+    for (const slug of slugs) {
       await visit(type, slug, []);
     }
   }

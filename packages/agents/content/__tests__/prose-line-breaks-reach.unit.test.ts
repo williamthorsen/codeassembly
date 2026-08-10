@@ -59,7 +59,8 @@ describe('prose-line-breaks reach', () => {
 
   it('is stated in no content file but the partial', async () => {
     const violations: Array<string> = [];
-    for (const file of await listMarkdownFiles(CONTENT_ROOT)) {
+    const files = await listMarkdownFiles(CONTENT_ROOT);
+    for (const file of files) {
       const relativePath = path.relative(CONTENT_ROOT, file);
       if (relativePath === PARTIAL) continue;
 

@@ -44,7 +44,8 @@ async function copyFileIfChanged(srcPath: string, destPath: string): Promise<voi
  * dropped files — and the directories that held them — do not linger across re-deploys.
  */
 async function pruneOrphans(destDir: string, relDir: string, expectedFiles: ReadonlySet<string>): Promise<void> {
-  for (const entry of await readdir(path.join(destDir, relDir), { withFileTypes: true })) {
+  const entries = await readdir(path.join(destDir, relDir), { withFileTypes: true });
+  for (const entry of entries) {
     const rel = relDir === '' ? entry.name : `${relDir}/${entry.name}`;
     const absPath = path.join(destDir, rel);
     if (entry.isDirectory()) {

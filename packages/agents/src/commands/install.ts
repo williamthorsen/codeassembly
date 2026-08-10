@@ -234,7 +234,8 @@ async function installSupportDirectories(
   // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). What
   // counts as one is `listSupportEntries`, shared with `validate` so the pass that checks these and the pass that
   // deploys them cannot come to disagree about which entries they are.
-  for (const entry of await listSupportEntries(skillsSrcDir)) {
+  const supportEntries = await listSupportEntries(skillsSrcDir);
+  for (const entry of supportEntries) {
     const result = await installSkillEntry(
       path.join(skillsSrcDir, entry),
       path.join(skillsDestDir, entry),
