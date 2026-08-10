@@ -3,7 +3,6 @@ export const deferredLintRules = {
   'unicorn/no-duplicate-loops': 'warn',
   'unicorn/no-incorrect-template-string-interpolation': 'warn',
   'unicorn/no-top-level-assignment-in-function': 'warn',
-  'unicorn/no-unreadable-for-of-expression': 'warn',
   'unicorn/no-unsafe-string-replacement': 'warn',
   'unicorn/prefer-await': 'warn',
   'unicorn/prefer-iterator-to-array': 'warn',
