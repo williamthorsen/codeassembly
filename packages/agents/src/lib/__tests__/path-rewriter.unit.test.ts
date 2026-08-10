@@ -153,6 +153,12 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe('~/.rovodev/scripts/describe-change.sh');
   });
 
+  it('inserts a substitution value carrying a replacement pattern verbatim', () => {
+    const content = '{harness_home_dir}/x --harness {harness_id}';
+
+    expect(rewriteTemplateVariables(content, '.cl$&aude', "cl$'aude")).toBe("~/.cl$&aude/x --harness cl$'aude");
+  });
+
   it('replaces {harness_id} with the harness identifier, leaving no placeholder', () => {
     const content = 'node {harness_home_dir}/skills/capture-event/capture-event.mjs --harness {harness_id}';
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(

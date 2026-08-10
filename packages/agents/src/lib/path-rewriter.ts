@@ -99,7 +99,9 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
  * harness.
  */
 export function rewriteTemplateVariables(content: string, homeDir: string, harnessId: string): string {
-  return content.replaceAll('{harness_home_dir}', `~/${homeDir}`).replaceAll('{harness_id}', harnessId);
+  // Replacer functions, not strings: a string replacement expands `$&`, `` $` ``, `$'`, and `$n`, so a
+  // substitution value carrying one of them would be rewritten into the match it was meant to replace.
+  return content.replaceAll('{harness_home_dir}', () => `~/${homeDir}`).replaceAll('{harness_id}', () => harnessId);
 }
 
 /**
