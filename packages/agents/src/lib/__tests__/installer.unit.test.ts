@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { checkSymlinkSafety, copyItem, linkItem, removeItem } from '../installer.js';
+import { checkSymlinkSafety, copyItem, linkItem, removeItem } from '../installer.ts';
 
 describe('installer', () => {
   let tempDir: string;

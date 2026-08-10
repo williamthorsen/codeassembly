@@ -10,7 +10,7 @@ import { expandIncludes } from '../lib/directive-expander.ts';
 import { emitReport } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
-import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.js';
+import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
@@ -23,12 +23,12 @@ import {
   readManifest,
   resolveSharedHome,
   writeManifest,
-} from '../lib/manifest.js';
-import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.js';
-import { homeAnchor, rewritePathsInFile } from '../lib/path-rewriter.js';
+} from '../lib/manifest.ts';
+import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
+import { homeAnchor, rewritePathsInFile } from '../lib/path-rewriter.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
-import { loadToolMapping } from '../lib/tool-name-rewriter.js';
+import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
@@ -38,7 +38,7 @@ import type {
   InstallOptions,
   ManifestEntry,
   SharedManifest,
-} from '../lib/types.js';
+} from '../lib/types.ts';
 import { ensureHarnessHookEntries } from './configure-hooks.ts';
 
 /**

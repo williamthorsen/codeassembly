@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.js';
+import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.ts';
 
 interface LabelMap {
   readonly $schema: string;

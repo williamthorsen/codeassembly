@@ -1,9 +1,9 @@
 import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
-import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { readHomeProvenance } from '../lib/home-provenance.ts';
-import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
-import type { HarnessId, InstallOptions } from '../lib/types.js';
+import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.ts';
+import type { HarnessId, InstallOptions } from '../lib/types.ts';
 import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
 
 /**

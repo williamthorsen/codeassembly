@@ -6,7 +6,7 @@ import path from 'node:path';
 
 import { hasAmbientRegion, stripAmbientRegionContent } from './ambient-region.ts';
 import { isRecord } from './type-guards.ts';
-import type { AgentsManifest, ManifestEntry } from './types.js';
+import type { AgentsManifest, ManifestEntry } from './types.ts';
 
 /** Shared guidance home directory relative to the user's home. */
 const SHARED_HOME_DIR = '.agents';

@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../content-resolver.js';
+import { resolveContentDir } from '../content-resolver.ts';
 
 describe('resolveContentDir', () => {
   it('should resolve to a directory that exists', () => {

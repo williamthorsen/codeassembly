@@ -1,10 +1,10 @@
 import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
-import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
-import { removeItem } from '../lib/installer.js';
-import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
-import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.js';
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { removeItem } from '../lib/installer.ts';
+import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.ts';
+import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.ts';
 import { removeHarnessHookEntries } from './configure-hooks.ts';
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.js';
+import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 const IDENTITY_MAP = new Map<string, string>([
   ['Bash', 'Bash'],
