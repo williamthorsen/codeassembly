@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 import type { ZodError } from 'zod';
 
@@ -35,8 +36,7 @@ export async function loadTaxonomy(input: { kbRoot: KbRoot }): Promise<Taxonomy>
   try {
     parsed = parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new KbLoaderError(`${path}: malformed YAML — ${message}`);
+    throw new KbLoaderError(`${path}: malformed YAML: ${describeError(error)}`, { cause: error });
   }
 
   // A comment-only file parses to null, which is a taxonomy declaring nothing rather than a defect.

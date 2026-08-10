@@ -34,6 +34,12 @@ describe(loadKbConfig, () => {
     await expect(loadKbConfig({ kbRoot })).rejects.toThrow(/config\.yaml/);
   });
 
+  it('attaches the YAML parse failure as the cause', async () => {
+    const kbRoot = await makeKbRoot({ config: 'targets: [unterminated\n' });
+
+    await expect(loadKbConfig({ kbRoot })).rejects.toHaveProperty('cause', expect.any(Error));
+  });
+
   it('throws a KbLoaderError naming the file when targets is the wrong type', async () => {
     const kbRoot = await makeKbRoot({ config: 'targets: not-a-list\n' });
 
@@ -43,9 +49,14 @@ describe(loadKbConfig, () => {
   it('thrown KbLoaderError is distinguishable from a plain Error via the kind discriminant', async () => {
     const kbRoot = await makeKbRoot({ config: 'targets: 42\n' });
 
-    const error = await loadKbConfig({ kbRoot }).catch((error_: unknown) => error_);
+    let thrown: unknown;
+    try {
+      await loadKbConfig({ kbRoot });
+    } catch (error) {
+      thrown = error;
+    }
 
-    expect(isKbLoaderError(error)).toBe(true);
+    expect(isKbLoaderError(thrown)).toBe(true);
     expect(isKbLoaderError(new Error('plain'))).toBe(false);
   });
 });

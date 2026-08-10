@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 
 import { CONFIG_FILE } from '../layout/index.ts';
@@ -33,8 +34,7 @@ export async function loadKbConfig(input: { kbRoot: KbRoot }): Promise<KbConfig>
   try {
     parsed = parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new KbLoaderError(`${path}: malformed YAML — ${message}`);
+    throw new KbLoaderError(`${path}: malformed YAML: ${describeError(error)}`, { cause: error });
   }
 
   const result = configFileShape.safeParse(parsed ?? {});

@@ -39,7 +39,7 @@ export function checkVaultIntegrity(notes: readonly VaultIntegrityNote[]): Findi
 /** Emits one warning per basename shared by two or more notes, listing the colliding paths in sorted order. */
 function basenameFindings(vaultIndex: VaultIndex): Finding[] {
   const findings: Finding[] = [];
-  for (const key of [...vaultIndex.keys()].toSorted()) {
+  for (const key of vaultIndex.keys().toArray().toSorted()) {
     const paths = vaultIndex.get(key);
     if (paths === undefined || paths.size < 2) continue;
     const sortedPaths = [...paths].toSorted();

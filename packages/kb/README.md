@@ -274,7 +274,7 @@ Without `--merge`, a store that already declares a taxonomy is left untouched an
 
 ## Error and exception model
 
-The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`, `loadTaxonomy`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
+The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`, `loadTaxonomy`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. An underlying failure, such as a YAML parse error, is attached as the thrown error's `cause`. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability
 

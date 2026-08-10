@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { type Document, isMap, isPair, isScalar, type Pair, parseDocument } from 'yaml';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';
@@ -178,7 +179,7 @@ async function readDocument(path: string): Promise<Document> {
   const document = parseDocument(text);
   const firstError = document.errors[0];
   if (firstError !== undefined) {
-    throw new KbLoaderError(`${path}: malformed YAML — ${firstError.message}`);
+    throw new KbLoaderError(`${path}: malformed YAML: ${describeError(firstError)}`, { cause: firstError });
   }
   if (document.contents !== null && !isMap(document.contents)) {
     throw new KbLoaderError(`${path}: top-level must be a mapping`);
@@ -221,7 +222,11 @@ async function writeAtomic(path: string, content: string): Promise<void> {
   try {
     await rename(tempPath, path);
   } catch (error) {
-    await unlink(tempPath).catch(() => {});
+    try {
+      await unlink(tempPath);
+    } catch {
+      // The rename failure is what the caller needs; a failed cleanup must not mask it.
+    }
     throw error;
   }
 }

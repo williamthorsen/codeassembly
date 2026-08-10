@@ -79,6 +79,12 @@ describe(loadTaxonomy, () => {
     await expect(loadTaxonomy({ kbRoot })).rejects.toThrow(/taxonomy\.yaml/);
   });
 
+  it('attaches the YAML parse failure as the cause', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains: [unterminated\n' });
+
+    await expect(loadTaxonomy({ kbRoot })).rejects.toHaveProperty('cause', expect.any(Error));
+  });
+
   it('throws a KbLoaderError when a description is not a string', async () => {
     const kbRoot = await makeKbRoot({ taxonomy: 'domains:\n  engineering: 42\n' });
 
@@ -110,10 +116,15 @@ describe(loadTaxonomy, () => {
   ])('rejects the malformed key %s', async (key, reason) => {
     const kbRoot = await makeKbRoot({ taxonomy: `domains:\n  ${key}: Practice\n` });
 
-    const error = await loadTaxonomy({ kbRoot }).catch((error_: unknown) => error_);
+    let thrown: unknown;
+    try {
+      await loadTaxonomy({ kbRoot });
+    } catch (error) {
+      thrown = error;
+    }
 
-    expect(isKbLoaderError(error)).toBe(true);
-    expect(String(error)).toContain(reason);
+    expect(isKbLoaderError(thrown)).toBe(true);
+    expect(String(thrown)).toContain(reason);
   });
 
   it('rejects a malformed key in the provisional block too', async () => {

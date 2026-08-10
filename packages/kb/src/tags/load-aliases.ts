@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { chainError, describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';
@@ -28,8 +29,7 @@ export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> 
   try {
     return parseAliases(text, path);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new KbLoaderError(message);
+    throw new KbLoaderError(describeError(error), { cause: error });
   }
 }
 
@@ -44,8 +44,7 @@ export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasM
   try {
     parsed = parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${contextLabel}: malformed YAML — ${message}`);
+    throw chainError(`${contextLabel}: malformed YAML`, error);
   }
   if (!isRecord(parsed)) {
     throw new Error(`${contextLabel}: top-level must be a mapping`);

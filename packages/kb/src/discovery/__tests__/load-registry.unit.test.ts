@@ -1,8 +1,16 @@
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { loadKbRegistry, tryLoadKbRegistry } from '../load-registry.ts';
+
+// Mock `readFile` with a passthrough to the real implementation so most tests
+// hit disk normally; the empty-message test overrides it per-call.
+vi.mock('node:fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+  return { ...actual, readFile: vi.fn(actual.readFile) };
+});
 
 const MERGE_DIR = join(import.meta.dirname, 'fixtures', 'config-merge');
 const HOME = join(MERGE_DIR, 'home');
@@ -93,7 +101,13 @@ describe(loadKbRegistry, () => {
   it('throws naming the source file when a registry contains malformed YAML', async () => {
     await expect(
       loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') }),
-    ).rejects.toThrow(/malformed-yaml.*kb\.yaml: malformed YAML —/s);
+    ).rejects.toThrow(/malformed-yaml.*kb\.yaml: malformed YAML:/s);
+  });
+
+  it('attaches the YAML parse failure as the cause', async () => {
+    await expect(
+      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') }),
+    ).rejects.toHaveProperty('cause', expect.any(Error));
   });
 
   it('throws naming the source file when a registry entry omits its required path', async () => {
@@ -126,8 +140,17 @@ describe(tryLoadKbRegistry, () => {
   it('captures the error and degrades to an empty config for a malformed file', async () => {
     const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') });
 
-    expect(result.error).toMatch(/malformed YAML —/);
+    expect(result.error).toMatch(/malformed YAML:/);
     expect(result.config).toEqual({ entries: [], sources: {} });
+  });
+
+  it('describes a thrown error carrying no message by its class rather than as an empty string', async () => {
+    // eslint-disable-next-line unicorn/error-message -- the empty message is the condition under test.
+    vi.mocked(readFile).mockRejectedValueOnce(new Error(''));
+
+    const result = await tryLoadKbRegistry({ home: HOME, projectDir: PROJECT });
+
+    expect(result.error).toBe('Error');
   });
 
   it('captures the error for a schema violation', async () => {

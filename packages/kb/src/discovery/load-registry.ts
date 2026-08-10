@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 
+import { chainError, describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 
 import { isEnoent } from '../type-guards.ts';
@@ -79,8 +80,7 @@ export async function tryLoadKbRegistry(
   try {
     return { config: await loadKbRegistry(input) };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { config: { entries: [], sources: {} }, error: message };
+    return { config: { entries: [], sources: {} }, error: describeError(error) };
   }
 }
 
@@ -120,8 +120,7 @@ async function loadRegistryFile(
   try {
     parsed = parse(text);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${path}: malformed YAML — ${message}`);
+    throw chainError(`${path}: malformed YAML`, error);
   }
   if (parsed === null || parsed === undefined) {
     return { entries: [] };
@@ -135,7 +134,8 @@ async function loadRegistryFile(
   const configDir = dirname(path);
   const entries: KbRegistryEntry[] = [];
 
-  for (const [name, fileEntry] of Object.entries(result.data.kbs ?? {})) {
+  const fileEntries = Object.entries(result.data.kbs ?? {});
+  for (const [name, fileEntry] of fileEntries) {
     entries.push({
       name,
       path: resolvePath(fileEntry.path, configDir, home),
@@ -157,7 +157,7 @@ function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistry
   for (const entry of projectEntries) {
     byName.set(entry.name, entry);
   }
-  return [...byName.values()];
+  return byName.values().toArray();
 }
 
 /**

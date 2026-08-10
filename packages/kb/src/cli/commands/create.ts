@@ -1,6 +1,8 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { create, type CreatedStore } from '../../create/create.ts';
 import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
 import type { SelectKbPrompt } from '../select-kb-prompt.ts';
@@ -163,8 +165,7 @@ const UNSET_DEFAULT_HINT =
 
 /** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
 function buildUsageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb create: ${message}\n${CREATE_HELP}` };
+  return { exitCode: 2, stdout: '', stderr: `kb create: ${describeError(error)}\n${CREATE_HELP}` };
 }
 
 /** Builds a human summary of a created store. If the new store became the default, reports that in the message. */
