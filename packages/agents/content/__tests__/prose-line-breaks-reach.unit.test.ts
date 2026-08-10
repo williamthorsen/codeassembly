@@ -1,10 +1,11 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
-import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
+import { countOccurrences } from '../test-utils/count-occurrences.ts';
+import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // The rule binds only when it is already in context at the moment prose is composed, so each carrier inlines it rather
 // than linking to it. Two of the carriers held hand-written variants that drifted apart, which is what the
@@ -29,6 +30,7 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 const CARRIERS: ReadonlyArray<string> = [
   'skills/commit/SKILL.md',
   'skills/create-ticket/SKILL.md',
+  'skills/design-and-plan/SKILL.md',
   'skills/summarize-change/SKILL.md',
   'subagents/orchestrated-coder.md',
 ];
@@ -68,23 +70,9 @@ describe('prose-line-breaks reach', () => {
 
 // region | Helpers
 
-/** Counts non-overlapping occurrences of a substring. */
-function countOccurrences(haystack: string, needle: string): number {
-  return haystack.split(needle).length - 1;
-}
-
 /** Returns a carrier's include-expanded body — what the install pipeline goes on to rewrite and write out. */
 async function expandCarrier(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
-}
-
-/** Lists every authored Markdown file under a root, skipping the test tree. */
-async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
-  const entries = await readdir(root, { recursive: true, withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(entry.parentPath, entry.name))
-    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
 }
 
 // endregion | Helpers
