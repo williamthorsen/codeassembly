@@ -28,6 +28,8 @@ Turn a task into a well-defined ticket and actionable implementation plan throug
 Do NOT generate the implementation plan until the design has been agreed upon and the ticket has been approved. This applies regardless of perceived simplicity.
 </HARD-GATE>
 
+<!-- guidance-hook: ticketing-preferences -->
+
 ## Process
 
 **Narrate every ask.** Throughout the phases below, before presenting any ask to the user — a clarifying question, a design or ticket or plan approval, a drift-verdict decision, the closing next-steps menu — emit `input.requested` with a short label of the ask (e.g. payload `{"prompt":"tier selection"}`) per [Lifecycle events](#lifecycle-events), so a watching surface shows which question this session is waiting on. Compose the label fresh for each ask and keep it to a few words. Emit before presenting, in the same turn — never at the end of the turn.

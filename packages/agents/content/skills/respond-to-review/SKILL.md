@@ -72,6 +72,8 @@ If no path is provided, find the most recent `reviewer_review` in the active run
 
 If no review artifact is found, stop and report the error.
 
+<!-- guidance-hook: ticketing-preferences -->
+
 ## Evaluation protocol
 
 For each finding, apply technical rigor:
