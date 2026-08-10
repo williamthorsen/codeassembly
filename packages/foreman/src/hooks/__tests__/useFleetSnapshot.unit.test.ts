@@ -36,7 +36,8 @@ class FakeEventSource {
   }
 
   private dispatch(type: string, event: MessageEvent<string>): void {
-    for (const listener of this.listeners.get(type) ?? []) {
+    const listeners = this.listeners.get(type) ?? [];
+    for (const listener of listeners) {
       listener(event);
     }
   }
@@ -105,15 +106,8 @@ describe('useFleetSnapshot', () => {
   });
 
   it('discards a fetch result that resolves after a stream frame', async () => {
-    let resolveFetch: (response: Response) => void = () => {};
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockReturnValue(
-        new Promise<Response>((resolve) => {
-          resolveFetch = resolve;
-        }),
-      ),
-    );
+    const { promise: fetchResponse, resolve: resolveFetch } = Promise.withResolvers<Response>();
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(fetchResponse));
     const { result } = renderHook(() => useFleetSnapshot());
 
     act(() => {

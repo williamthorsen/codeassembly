@@ -11,24 +11,28 @@ afterEach(() => {
   cleanup();
 });
 
-// jsdom provides neither matchMedia nor ResizeObserver; Mantine components consult both when rendering.
-globalThis.matchMedia = function matchMedia(query: string): MediaQueryList {
-  return {
-    matches: false,
-    media: query,
-    onchange: null,
-    addEventListener(): void {},
-    removeEventListener(): void {},
-    addListener(): void {},
-    removeListener(): void {},
-    dispatchEvent(): boolean {
-      return false;
-    },
-  };
-};
+const matchMediaStub: typeof globalThis.matchMedia = (query) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addEventListener(): void {},
+  removeEventListener(): void {},
+  addListener(): void {},
+  removeListener(): void {},
+  dispatchEvent(): boolean {
+    return false;
+  },
+});
 
-globalThis.ResizeObserver = class ResizeObserver {
+const resizeObserverStub: typeof globalThis.ResizeObserver = class {
   observe(): void {}
   unobserve(): void {}
   disconnect(): void {}
 };
+
+// jsdom provides neither matchMedia nor ResizeObserver; Mantine components consult both when rendering.
+// `defineProperties` survives the `vi.unstubAllGlobals()` that two suites run in `afterEach`; a `vi.stubGlobal` stub would not.
+Object.defineProperties(globalThis, {
+  matchMedia: { configurable: true, value: matchMediaStub, writable: true },
+  ResizeObserver: { configurable: true, value: resizeObserverStub, writable: true },
+});

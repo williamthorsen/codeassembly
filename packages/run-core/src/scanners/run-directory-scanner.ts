@@ -31,15 +31,12 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
     if (!(await isDirectory(projectPath))) continue;
 
     const projectEntries = await readdirSafe(projectPath);
-    const ticketsDir = projectEntries.includes('tickets');
+    const hasTicketsDir = projectEntries.includes('tickets');
 
-    if (ticketsDir) {
-      const ticketEntries = await scanTicketsDir(join(projectPath, 'tickets'), slug);
-      entries.push(...ticketEntries);
-    } else {
-      const ticketEntries = await scanDirectEntries(projectEntries, projectPath, slug);
-      entries.push(...ticketEntries);
-    }
+    const ticketEntries = hasTicketsDir
+      ? await scanTicketsDir(join(projectPath, 'tickets'), slug)
+      : await scanDirectEntries(projectEntries, projectPath, slug);
+    entries.push(...ticketEntries);
   }
 
   return entries;
