@@ -139,7 +139,7 @@ async function collectEntries(
       out.push({
         kind: 'markdown',
         relPath,
-        content: await renderMarkdown(srcPath, relPath, slug, contentRoot, context),
+        content: await renderMarkdown(srcPath, `${slug}/${relPath}`, contentRoot, context),
       });
     } else {
       out.push({ kind: 'asset', relPath, srcPath });
@@ -160,11 +160,13 @@ async function collectEntries(
  * In-body anchors are validated on the filled text, ahead of every rewrite: an anchor-only target is never rewritten,
  * so the verdict holds for every harness and a heading carrying a `{tool:NAME}` token is correctly unaddressable.
  * Validating after the fill is what lets a collision between host and bound guidance be caught at all.
+ *
+ * `fileRelPath` is the file's own path relative to the deployed skills directory, which is what a relative Markdown
+ * link resolves against before the context's anchor maps the result to its deployed path.
  */
 async function renderMarkdown(
   srcPath: string,
-  relPath: string,
-  slug: string,
+  fileRelPath: string,
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<string> {
@@ -174,7 +176,7 @@ async function renderMarkdown(
   assertFilledAnchorsResolve(filled, contextLabel);
   const toolRewritten = rewriteToolNames(filled.content, toolMapping, contextLabel);
   const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil }, contextLabel);
-  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, anchor);
+  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor);
   return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
 }
 
