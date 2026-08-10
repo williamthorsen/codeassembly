@@ -106,6 +106,8 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 
+<!-- include: ../../_partials/prose-line-breaks.md / -->
+
 ## Frontmatter inference
 
 The single YAML frontmatter block carries both canonical identity fields from the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) and change-summary-specific consumer fields read by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`). `commit:` and `ticket_id:` appear exactly once and serve a dual role: canonical identity fields that downstream consumers may also read.
