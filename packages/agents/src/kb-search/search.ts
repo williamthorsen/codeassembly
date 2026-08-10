@@ -4,6 +4,7 @@ import type { NoteScopeMatcher } from '@williamthorsen/kb/config';
 import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@williamthorsen/kb/config';
 import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
 import type { RecallFn } from './recall.ts';
@@ -143,7 +144,7 @@ async function loadMatchersForHits(input: {
  */
 function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; error: unknown }): string {
   const name = input.scopedKbs.find((kb) => kb.path === input.kbPath)?.name ?? null;
-  const message = input.error instanceof Error ? input.error.message : String(input.error);
+  const message = describeError(input.error);
   return name === null
     ? `discovered KB config invalid at ${input.kbPath}: ${message}`
     : `registry KB "${name}" config invalid: ${message}`;
