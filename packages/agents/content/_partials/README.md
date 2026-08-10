@@ -37,6 +37,12 @@ Self-close is matched before open so that a path with a trailing slash is read c
 
 The `<!-- children -->` placeholder is a partial-side directive. It appears at most once per partial. If a partial has no `<!-- children -->` and the caller provides slot content, the expander throws `slot-without-children`. If a partial has `<!-- children -->` and the caller provides no slot content (bare self-close, or empty open/close pair), the placeholder line is removed and surrounding lines join verbatim.
 
+## Directive placement
+
+Injected content brings its own headings: a partial's as authored, and a guidance-hook fill's demoted one level, so a bound rulebook's title lands at `##`. A host heading following a directive that is deeper than the injected content's shallowest heading renders as a subsection of the injection rather than of the host body -- and for a hook, under whichever rulebook the local binding supplied.
+
+Place every directive where the next host heading sits at or above that level. Where a section would otherwise nest, promote it or move the directive below it. The level that decides is the injected content's own shallowest, not `##`: `subagents/_partials/review-writes-scaffold.md` opens at `###`, so the `###` sections following it are its correct siblings. The `injection-point-placement` regression test scans every body for the shape.
+
 ## Path resolution
 
 Include paths are resolved relative to the directive-bearing file's directory in the source tree. The resolved target must remain inside `packages/agents/content/` (lexical containment is checked, not symlink resolution). Out-of-tree references throw `out-of-tree`.

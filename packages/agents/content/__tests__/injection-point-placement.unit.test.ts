@@ -134,7 +134,7 @@ async function readPartialLevel(partialPath: string): Promise<number | undefined
     const expanded = await expandIncludes(partialPath, CONTENT_ROOT);
     let shallowest: number | undefined;
     for (const { text } of readLiveLines(expanded)) {
-      const level = HEADING_REGEX.exec(text)?.[1].length;
+      const level = HEADING_REGEX.exec(text)?.[1]?.length;
       if (level !== undefined && (shallowest === undefined || level < shallowest)) {
         shallowest = level;
       }
@@ -176,7 +176,7 @@ async function readStructure(relativePath: string): Promise<ReadonlyArray<Token>
       continue;
     }
 
-    const level = HEADING_REGEX.exec(text)?.[1].length;
+    const level = HEADING_REGEX.exec(text)?.[1]?.length;
     if (level !== undefined) {
       tokens.push({ kind: 'heading', lineNumber, level, text: text.trim() });
     }
