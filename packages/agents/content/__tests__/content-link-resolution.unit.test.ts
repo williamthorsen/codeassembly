@@ -139,7 +139,8 @@ async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
 
 /** Recursively collects installable host `.md` files, skipping `_partials/` at any depth and dotfiles. */
 async function collectHostFiles(dir: string, out: Array<string>): Promise<void> {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
     if (entry.name === '_partials' || entry.name.startsWith('.') || isTestDirectory(entry.name)) {
       continue;
     }

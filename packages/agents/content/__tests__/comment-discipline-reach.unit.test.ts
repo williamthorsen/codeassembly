@@ -78,7 +78,8 @@ describe('comment-discipline reach', () => {
 
   it('no content file reaches the doctrine by reference', async () => {
     const violations: Array<string> = [];
-    for (const file of await listMarkdownFiles(CONTENT_ROOT)) {
+    const files = await listMarkdownFiles(CONTENT_ROOT);
+    for (const file of files) {
       const content = await readFile(file, 'utf8');
       for (const reference of RETIRED_REFERENCES) {
         if (content.includes(reference)) {

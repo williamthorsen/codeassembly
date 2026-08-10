@@ -159,10 +159,12 @@ describe('install stale-file pruning', () => {
     for (const [name, body] of Object.entries(shared)) {
       await writeFile(path.join(contentDir, 'guidance', 'shared', name), body, 'utf8');
     }
-    for (const [name, body] of Object.entries(options.scripts ?? {})) {
+    const scripts = options.scripts ?? {};
+    for (const [name, body] of Object.entries(scripts)) {
       await writeFile(path.join(contentDir, 'scripts', name), body, 'utf8');
     }
-    for (const [dirName, files] of Object.entries(options.supportDirs ?? {})) {
+    const supportDirs = options.supportDirs ?? {};
+    for (const [dirName, files] of Object.entries(supportDirs)) {
       const supportDir = path.join(contentDir, 'skills', dirName);
       await mkdir(supportDir, { recursive: true });
       for (const [fileName, body] of Object.entries(files)) {

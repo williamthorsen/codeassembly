@@ -16,7 +16,8 @@ const NBSP = '\u{A0}';
 describe('content rendering', () => {
   it('no Markdown under content/ carries a non-breaking space', async () => {
     const offenders: Array<string> = [];
-    for (const relativePath of await listContentMarkdown()) {
+    const relativePaths = await listContentMarkdown();
+    for (const relativePath of relativePaths) {
       const body = await readFile(path.join(CONTENT_ROOT, relativePath), 'utf8');
       if (body.includes(NBSP)) {
         offenders.push(relativePath);

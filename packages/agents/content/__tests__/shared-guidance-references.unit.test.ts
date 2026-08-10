@@ -31,7 +31,8 @@ describe('shared guidance references', () => {
     const deployed = new Set(await listDeployedSkillNames());
     const violations: Array<string> = [];
 
-    for (const file of await listMarkdownFiles(SHARED_GUIDANCE_ROOT)) {
+    const files = await listMarkdownFiles(SHARED_GUIDANCE_ROOT);
+    for (const file of files) {
       const content = await readFile(file, 'utf8');
       for (const slug of collectSkillReferences(content)) {
         if (!deployed.has(slug)) {

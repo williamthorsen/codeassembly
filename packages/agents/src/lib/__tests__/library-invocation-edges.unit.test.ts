@@ -79,7 +79,8 @@ describe('library invocation edges', () => {
     const literalRefRe = /(?<![\w./])\/([a-z][a-z0-9-]*)(?![\w/.-])/g;
     const offenders: Array<string> = [];
 
-    for (const file of await listMarkdownFilesRecursively(contentDir)) {
+    const files = await listMarkdownFilesRecursively(contentDir);
+    for (const file of files) {
       const body = (await readFile(file, 'utf8')).replace(tokenRe, '');
       for (const [, ref] of body.matchAll(literalRefRe)) {
         if (ref !== undefined && known.has(ref)) {
@@ -95,7 +96,8 @@ describe('library invocation edges', () => {
 /** Lists every markdown file under `dir` recursively — the full set of deployed content the completeness guard scans. */
 async function listMarkdownFilesRecursively(dir: string): Promise<Array<string>> {
   const found: Array<string> = [];
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       found.push(...(await listMarkdownFilesRecursively(full)));

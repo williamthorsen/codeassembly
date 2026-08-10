@@ -340,7 +340,8 @@ function listClosureIds(closure: ResolvedClosure): Array<ArtifactId> {
 async function readExplicitCollections(contentDir: string): Promise<ReadonlyMap<string, ArtifactDependencies>> {
   const collectionsDir = path.join(contentDir, ARTIFACT_TYPES.collection.contentPath);
   const found = new Map<string, ArtifactDependencies>();
-  for (const file of (await listVisibleMarkdownFiles(collectionsDir)).toSorted()) {
+  const files = (await listVisibleMarkdownFiles(collectionsDir)).toSorted();
+  for (const file of files) {
     const slug = path.basename(file, '.md');
     const members = readMembers(await readFile(path.join(collectionsDir, file), 'utf8'), `collection ${slug}`);
     if (members.kind === 'explicit') {
