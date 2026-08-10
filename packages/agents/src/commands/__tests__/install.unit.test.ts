@@ -383,6 +383,20 @@ describe(installCommand, () => {
       expect(existsSync(path.join(claudeHome, 'skills', 'flat-note.md'))).toBe(true);
     });
 
+    it('rewrites its links, invocation tokens, and template variables on the way to the harness home', async () => {
+      const claudeHome = await setupClaudeHome();
+      await writeFlatSkill(
+        '# Flat note\n\nSee [the table](_data/table.md), run {skill:commit}, then `{harness_home_dir}/scripts/x.sh`.\n',
+      );
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      const installed = await readFile(path.join(claudeHome, 'skills', 'flat-note.md'), 'utf8');
+      expect(installed).toContain('[the table](~/.claude/skills/_data/table.md)');
+      expect(installed).toContain('run /commit,');
+      expect(installed).toContain('`~/.claude/scripts/x.sh`');
+    });
+
     it('fails the run when its anchor names no heading', async () => {
       await setupClaudeHome();
       await writeFlatSkill('# Flat note\n\nSee [the events](#lifecycle-events).\n');

@@ -39,7 +39,7 @@ describe(renderSkillDirectory, () => {
       '_partials/frag.md': 'Shared fragment.\n',
     });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext());
 
     const content = markdownContent(entries, 'SKILL.md');
     expect(content).toContain('Shared fragment.');
@@ -57,14 +57,17 @@ describe(renderSkillDirectory, () => {
       '_partials/frag.md': 'Then invoke {skill:capture-event}.\n',
     });
 
-    const claude = markdownContent(await renderSkillDirectory(skillDir, 'demo', contentDir, context()), 'SKILL.md');
+    const claude = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext()),
+      'SKILL.md',
+    );
     expect(claude).toContain('Dispatch code-reviewer.');
     expect(claude).toContain('Then invoke /capture-event.');
     expect(claude).not.toContain('{skill:');
     expect(claude).not.toContain('{subagent:');
 
     const rovo = markdownContent(
-      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ skillSigil: '!' })),
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ skillSigil: '!' })),
       'SKILL.md',
     );
     expect(rovo).toContain('Then invoke !capture-event.');
@@ -73,7 +76,7 @@ describe(renderSkillDirectory, () => {
   it('rewrites a bare-relative link in a nested .md against the skill slug and prefix', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n', 'reference/guide.md': 'See [the data](../data/table.csv).\n' });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext());
 
     expect(markdownContent(entries, 'reference/guide.md')).toContain(
       '[the data](~/.claude/skills/demo/data/table.csv)',
@@ -88,7 +91,7 @@ describe(renderSkillDirectory, () => {
       'reference/__tests__/nested.md': '# Nested\n',
     });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext());
 
     expect(entries.map((entry) => entry.relPath)).toEqual(['SKILL.md']);
   });
@@ -96,7 +99,7 @@ describe(renderSkillDirectory, () => {
   it('returns non-.md files as assets pointing at the source path', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n', 'data/table.csv': 'a,b\n1,2\n' });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext());
 
     expect(entries.find((entry) => entry.relPath === 'data/table.csv')).toEqual({
       kind: 'asset',
@@ -108,8 +111,10 @@ describe(renderSkillDirectory, () => {
   it('throws a file/line-anchored error for an unmapped tool placeholder', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nUse {tool:Bash}.\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(ToolNameRewriteError);
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
+      ToolNameRewriteError,
+    );
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
       /skills\/demo\/SKILL\.md:3/,
     );
   });
@@ -117,7 +122,7 @@ describe(renderSkillDirectory, () => {
   it('throws a source-labelled error for an anchor naming no heading in the same file', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
       /skills\/demo\/SKILL\.md carries 1 unresolvable anchor link target/,
     );
   });
@@ -128,7 +133,7 @@ describe(renderSkillDirectory, () => {
       '_partials/events.md': '## Lifecycle events\n',
     });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).resolves.toBeDefined();
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).resolves.toBeDefined();
   });
 
   it('rejects an anchor to the rendered slug of a heading carrying a tool placeholder', async () => {
@@ -136,7 +141,7 @@ describe(renderSkillDirectory, () => {
     // rewrite is what makes that unauthorable rather than live on one harness and dead on the other.
     await writeSkill({ 'SKILL.md': '# Demo\n\n## {tool:Read} return parsing\n\n[x](#read-return-parsing)\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
       /#read-return-parsing -- names no heading/,
     );
   });
@@ -144,7 +149,7 @@ describe(renderSkillDirectory, () => {
   it('throws on a broken include directive', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- include: _partials/missing.md / -->\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
       DirectiveExpansionError,
     );
   });
@@ -155,7 +160,7 @@ describe(renderSkillDirectory, () => {
       'reference/guide.md': '<!-- guidance-hook: glossary -->\nGuide.\n',
     });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext());
 
     expect(markdownContent(entries, 'SKILL.md')).toBe('# Demo\n\n\nProse.\n');
     expect(markdownContent(entries, 'reference/guide.md')).toBe('Guide.\n');
@@ -167,7 +172,10 @@ describe(renderSkillDirectory, () => {
       '_partials/hook.md': '<!-- guidance-hook: implementation-preferences -->\n',
     });
 
-    const content = markdownContent(await renderSkillDirectory(skillDir, 'demo', contentDir, context()), 'SKILL.md');
+    const content = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext()),
+      'SKILL.md',
+    );
 
     expect(content).not.toContain('guidance-hook');
     expect(content).toBe('# Demo\n\n\nProse.\n');
@@ -180,7 +188,7 @@ describe(renderSkillDirectory, () => {
       '_partials/hook.md': '<!-- guidance-hook: preferences -->\n',
     });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
       /skills\/demo\/SKILL\.md:5 name="preferences" firstDeclaredAt=3 reason=duplicate-hook/,
     );
   });
@@ -188,7 +196,7 @@ describe(renderSkillDirectory, () => {
   it('rejects a malformed hook name', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- guidance-hook: Mixed-Case -->\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(GuidanceHookError);
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(GuidanceHookError);
   });
 
   it('fills a declared guidance hook with the guidance bound to it', async () => {
@@ -196,7 +204,7 @@ describe(renderSkillDirectory, () => {
 
     const fills = new Map([['impl', [{ slug: 'layout', body: '# Layout\n\nGroup source by role.\n' }]]]);
     const content = markdownContent(
-      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ guidanceHookFills: fills })),
       'SKILL.md',
     );
 
@@ -213,7 +221,7 @@ describe(renderSkillDirectory, () => {
       ['impl', [{ slug: 'layout', body: 'See [naming](~/.claude/skills/_data/naming.md) under `~/.claude`.\n' }]],
     ]);
     const content = markdownContent(
-      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ guidanceHookFills: fills })),
       'SKILL.md',
     );
 
@@ -228,7 +236,7 @@ describe(renderSkillDirectory, () => {
 
     const fills = new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]);
     const content = markdownContent(
-      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ guidanceHookFills: fills })),
       'SKILL.md',
     );
 
@@ -240,7 +248,7 @@ describe(renderSkillDirectory, () => {
 
     const fills = new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]);
     const content = markdownContent(
-      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ guidanceHookFills: fills })),
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ guidanceHookFills: fills })),
       'SKILL.md',
     );
 
@@ -249,18 +257,6 @@ describe(renderSkillDirectory, () => {
   });
 
   // region | Helpers
-
-  function context(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
-    return {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
-      ...overrides,
-    };
-  }
 
   /** Returns the transformed content of the markdown entry at relPath, failing if it is absent or an asset. */
   function markdownContent(entries: ReadonlyArray<RenderedSkillEntry>, relPath: string): string {
@@ -298,39 +294,44 @@ describe(renderSupportEntry, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('strips a declared guidance hook from a flat Markdown support entry', async () => {
-    const srcPath = path.join(skillsDir, '_data', 'table.md');
-    await mkdir(path.dirname(srcPath), { recursive: true });
+  it('strips a declared guidance hook from a Markdown file support entry', async () => {
+    const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: implementation-preferences -->\n\nRows.\n', 'utf8');
 
-    const rendered = await renderSupportEntry(srcPath, '_data', contentDir, {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
-    });
+    const rendered = await renderSupportEntry(srcPath, 'table.md', contentDir, buildContext());
 
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
   });
 
   it("strips a support entry's hook even when the caller carries a binding for it", async () => {
-    const srcPath = path.join(skillsDir, '_data', 'table.md');
-    await mkdir(path.dirname(srcPath), { recursive: true });
+    const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
 
-    const rendered = await renderSupportEntry(srcPath, '_data', contentDir, {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
-      guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
-    });
+    const rendered = await renderSupportEntry(
+      srcPath,
+      'table.md',
+      contentDir,
+      buildContext({ guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]) }),
+    );
 
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
+  });
+
+  it('rewrites links, invocation tokens, and template variables in a Markdown file support entry', async () => {
+    const srcPath = path.join(skillsDir, 'glossary.md');
+    await writeFile(
+      srcPath,
+      'See [the table](_data/table.md), run {skill:commit} on {harness_id}, then `{harness_home_dir}/scripts/x.sh`.\n',
+      'utf8',
+    );
+
+    const rendered = await renderSupportEntry(srcPath, 'glossary.md', contentDir, buildContext());
+
+    expect(rendered).toEqual({
+      kind: 'markdown',
+      content:
+        'See [the table](~/.claude/skills/_data/table.md), run /commit on claude, then `~/.claude/scripts/x.sh`.\n',
+    });
   });
 
   it("strips a hook in a support directory's entries, the route that renders through the skill transform", async () => {
@@ -338,15 +339,12 @@ describe(renderSupportEntry, () => {
     await mkdir(srcDir, { recursive: true });
     await writeFile(path.join(srcDir, 'table.md'), '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
 
-    const rendered = await renderSupportEntry(srcDir, '_data', contentDir, {
-      toolMapping: TOOL_MAPPING,
-      anchor: homeAnchor('.claude/skills'),
-      homeDir: '.claude',
-      harnessId: 'claude',
-      skillSigil: '/',
-      subagentSigil: '',
-      guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
-    });
+    const rendered = await renderSupportEntry(
+      srcDir,
+      '_data',
+      contentDir,
+      buildContext({ guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]) }),
+    );
 
     expect(rendered).toEqual({
       kind: 'directory',
@@ -354,3 +352,20 @@ describe(renderSupportEntry, () => {
     });
   });
 });
+
+// region | Helpers
+
+/** Builds a deploy context targeting the Claude harness, with `overrides` applied over its defaults. */
+function buildContext(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
+  return {
+    toolMapping: TOOL_MAPPING,
+    anchor: homeAnchor('.claude/skills'),
+    homeDir: '.claude',
+    harnessId: 'claude',
+    skillSigil: '/',
+    subagentSigil: '',
+    ...overrides,
+  };
+}
+
+// endregion | Helpers

@@ -44,6 +44,18 @@ describe('source support delivery', () => {
       );
     });
 
+    it('renders a Markdown file support entry, anchoring its links in the source namespace', async () => {
+      await writeSupportFile('glossary.md', 'See [the house style](_data/house-style.md), then run {skill:commit}.\n');
+      await writeSupportFile('_data/house-style.md', '# House style\n');
+
+      const entries = await renderSourceSupport(sourceDir, context());
+
+      const glossary = entries.find((entry) => entry.relPath === 'glossary.md');
+      expect(glossary?.kind === 'markdown' && glossary.content).toBe(
+        'See [the house style](~/.claude/skills/_sources/org/_data/house-style.md), then run /commit.\n',
+      );
+    });
+
     it('rewrites tool placeholders and template variables in support content', async () => {
       await writeSupportFile('_data/tools.md', 'Use {tool:Read}; run `{harness_home_dir}/scripts/x.sh`.\n');
 
