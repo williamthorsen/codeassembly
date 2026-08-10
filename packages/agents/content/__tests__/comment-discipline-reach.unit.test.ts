@@ -1,11 +1,12 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
-import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
+import { countOccurrences } from '../test-utils/count-occurrences.ts';
+import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Two mechanisms put the doctrine into an agent's context, and both are checked here: a skill inlines it at install
 // time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent needs no body
@@ -90,19 +91,7 @@ describe('comment-discipline reach', () => {
   });
 });
 
-function countOccurrences(haystack: string, needle: string): number {
-  return haystack.split(needle).length - 1;
-}
-
 /** Returns a skill's include-expanded `SKILL.md` — the body the install pipeline goes on to rewrite and write out. */
 async function expandSkill(slug: string): Promise<string> {
   return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
-}
-
-async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
-  const entries = await readdir(root, { recursive: true, withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(entry.parentPath, entry.name))
-    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
 }

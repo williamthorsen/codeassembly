@@ -12,6 +12,10 @@ describe(isTestDirectory, () => {
     expect(isTestDirectory('__tests__')).toBe(true);
   });
 
+  it('matches the test-helper directory name', () => {
+    expect(isTestDirectory('test-utils')).toBe(true);
+  });
+
   it('does not match a support-content directory sharing the underscore prefix', () => {
     expect(isTestDirectory('_data')).toBe(false);
   });
@@ -24,6 +28,10 @@ describe(isUnderTestDirectory, () => {
 
   it('matches a test directory nested below the walk root', () => {
     expect(isUnderTestDirectory('skills/capture-event/__tests__/helper.md')).toBe(true);
+  });
+
+  it('matches a path passing through a test-helper directory', () => {
+    expect(isUnderTestDirectory('test-utils/list-markdown-files.ts')).toBe(true);
   });
 
   it('matches a Windows-separated path', () => {

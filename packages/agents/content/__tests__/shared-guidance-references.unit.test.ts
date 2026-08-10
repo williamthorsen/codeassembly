@@ -1,13 +1,13 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { libraryResolver } from '../../src/lib/content-sources.ts';
-import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
 import { enumerateCatalogSlugs, listSkillDirectories } from '../../src/lib/library-catalog.ts';
 import { resolveRulebook } from '../../src/lib/rulebook-deploy.ts';
 import { readTargetHarnesses } from '../../src/lib/skill-deploy.ts';
+import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
 // path rewrites invocation tokens: a harness-neutral destination carries no sigil to render, so `{skill:<slug>}` is
@@ -98,14 +98,6 @@ function collectSkillReferences(content: string): ReadonlySet<string> {
 async function listDeployedSkillNames(): Promise<ReadonlyArray<string>> {
   const [catalog, fromRulebooks] = await Promise.all([listUniversalSkillSlugs(), listRulebookSkillNames()]);
   return [...catalog, ...fromRulebooks];
-}
-
-async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
-  const entries = await readdir(root, { recursive: true, withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(entry.parentPath, entry.name))
-    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
 }
 
 /**

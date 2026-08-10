@@ -5,6 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { countOccurrences } from '../test-utils/count-occurrences.ts';
 
 // Output-shaping specs — the option-format contract and the next-steps menus — must reach the agent inlined, not
 // behind a runtime Markdown link. A link is an optional read at generation time, and the model will fill from its
@@ -157,10 +158,6 @@ describe('output-shaping spec inlining', () => {
 });
 
 // region | Helpers
-
-function countOccurrences(haystack: string, needle: string): number {
-  return haystack.split(needle).length - 1;
-}
 
 /** Returns a skill's include-expanded `SKILL.md` — the body the install pipeline goes on to rewrite and write out. */
 async function expandSkill(slug: string): Promise<string> {
