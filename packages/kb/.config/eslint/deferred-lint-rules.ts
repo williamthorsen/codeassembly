@@ -7,6 +7,5 @@ export const deferredLintRules = {
   'unicorn/prefer-includes-over-repeated-comparisons': 'warn',
   'unicorn/prefer-iterator-to-array': 'warn',
   'unicorn/prefer-number-is-safe-integer': 'warn',
-  'unicorn/prefer-simple-condition-first': 'warn',
   'preserve-caught-error': 'warn',
 } as const;
