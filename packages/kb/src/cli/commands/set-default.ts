@@ -1,6 +1,8 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { tryLoadKbRegistry } from '../../discovery/load-registry.ts';
 import { clearDefaultKb, setDefaultKb } from '../../discovery/set-default-kb.ts';
 import type { KbRegistryEntry } from '../../types.ts';
@@ -168,8 +170,7 @@ function buildSetConfirmation(name: string): string {
 
 /** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
 function buildUsageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb set-default: ${message}\n${SET_DEFAULT_HELP}` };
+  return { exitCode: 2, stdout: '', stderr: `kb set-default: ${describeError(error)}\n${SET_DEFAULT_HELP}` };
 }
 
 // endregion | Helpers

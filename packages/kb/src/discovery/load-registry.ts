@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 
-import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+import { chainError, describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 
 import { isEnoent } from '../type-guards.ts';
@@ -80,8 +80,7 @@ export async function tryLoadKbRegistry(
   try {
     return { config: await loadKbRegistry(input) };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { config: { entries: [], sources: {} }, error: message };
+    return { config: { entries: [], sources: {} }, error: describeError(error) };
   }
 }
 

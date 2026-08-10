@@ -2,6 +2,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';
 import { readNoteContent } from '../note-io/read-note.ts';
@@ -72,8 +74,7 @@ export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }
         ...(parseError !== undefined && { error: parseError }),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      process.stderr.write(`kb: warning: could not read note ${path}; skipping: ${message}\n`);
+      process.stderr.write(`kb: warning: could not read note ${path}; skipping: ${describeError(error)}\n`);
     }
   }
   return notes;
@@ -131,8 +132,7 @@ async function walk(input: {
   try {
     entries = await readdir(dir, { withFileTypes: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`kb: warning: could not read directory ${dir}; skipping: ${message}\n`);
+    process.stderr.write(`kb: warning: could not read directory ${dir}; skipping: ${describeError(error)}\n`);
     return;
   }
 

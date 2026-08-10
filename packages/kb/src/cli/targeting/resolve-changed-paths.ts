@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { isRecord } from '../../type-guards.ts';
 
 /** The outcome of resolving a `--vs` ref to its changed-note paths: the store-relative paths, or a failure message. */
@@ -63,7 +65,7 @@ function extractGitErrorMessage(error: unknown): string {
   if (isRecord(error) && typeof error.stderr === 'string' && error.stderr.trim() !== '') {
     return error.stderr.trim();
   }
-  return error instanceof Error ? error.message : String(error);
+  return describeError(error);
 }
 
 /** Runs `git -C storeRoot <args>`, returning its stdout or a failure carrying git's stderr. */

@@ -1,3 +1,5 @@
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { enumerateNotes } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
 import { loadKbConfig } from '../../config/load-config.ts';
@@ -50,8 +52,7 @@ export async function runTaxonomy(input: {
   try {
     options = parseTaxonomyArgs(input.argv);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { exitCode: 2, stdout: '', stderr: `kb taxonomy: ${message}\n${TAXONOMY_HELP}` };
+    return { exitCode: 2, stdout: '', stderr: `kb taxonomy: ${describeError(error)}\n${TAXONOMY_HELP}` };
   }
 
   if (options.help) {

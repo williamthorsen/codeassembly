@@ -1,8 +1,16 @@
+import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { loadKbRegistry, tryLoadKbRegistry } from '../load-registry.ts';
+
+// Mock `readFile` with a passthrough to the real implementation so most tests
+// hit disk normally; the empty-message test overrides it per-call.
+vi.mock('node:fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+  return { ...actual, readFile: vi.fn(actual.readFile) };
+});
 
 const MERGE_DIR = join(import.meta.dirname, 'fixtures', 'config-merge');
 const HOME = join(MERGE_DIR, 'home');
@@ -134,6 +142,14 @@ describe(tryLoadKbRegistry, () => {
 
     expect(result.error).toMatch(/malformed YAML:/);
     expect(result.config).toEqual({ entries: [], sources: {} });
+  });
+
+  it('describes a thrown error carrying no message by its class rather than as an empty string', async () => {
+    vi.mocked(readFile).mockRejectedValueOnce(new Error(''));
+
+    const result = await tryLoadKbRegistry({ home: HOME, projectDir: PROJECT });
+
+    expect(result.error).toBe('Error');
   });
 
   it('captures the error for a schema violation', async () => {

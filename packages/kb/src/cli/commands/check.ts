@@ -1,3 +1,5 @@
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { check, type CheckResult } from '../../check/check.ts';
 import type { EnumeratedNote } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
@@ -173,8 +175,7 @@ export function parseCheckArgs(argv: readonly string[]): CheckOptions {
 
 /** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
 function buildUsageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb check: ${message}\n${CHECK_HELP}` };
+  return { exitCode: 2, stdout: '', stderr: `kb check: ${describeError(error)}\n${CHECK_HELP}` };
 }
 
 /** The selected notes and findings for the run, or a usage-error message (exit 2). */

@@ -2,6 +2,8 @@
 /* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import type { CommandOutput } from './commands/check.ts';
 import { run } from './run.ts';
 import { readlineSelectKbPrompt } from './select-kb-prompt.ts';
@@ -26,8 +28,7 @@ async function main(): Promise<void> {
       ...(selectKb !== undefined && { selectKb }),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`kb: unexpected error: ${message}\n`);
+    process.stderr.write(`kb: unexpected error: ${describeError(error)}\n`);
     process.exit(2);
   }
   if (output.stdout !== '') process.stdout.write(output.stdout);
