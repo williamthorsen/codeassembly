@@ -18,6 +18,8 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 
 Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comma-separated where more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
 
+<!-- guidance-hook: ticketing-preferences -->
+
 ## Process
 
 ### 1. Resolve project metadata
