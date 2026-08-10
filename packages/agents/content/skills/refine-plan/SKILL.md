@@ -243,6 +243,8 @@ Compare the revised plan's approach/solution with the source ticket's solution s
 
 This is a shared-state action; do not update without explicit consent. If the user declines, continue to step 7.
 
+<!-- include: ../../_partials/prose-line-breaks.md / -->
+
 ### 7. Report completion and present next steps
 
 ```

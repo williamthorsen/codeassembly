@@ -299,6 +299,8 @@ After all actions complete, identify which findings were _not_ selected by any a
 
 **Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.
 
+<!-- include: ../../_partials/prose-line-breaks.md / -->
+
 #### Idempotent safety
 
 Before creating a ticket, check if an issue with a similar title already exists: `gh issue list --search "{keywords}"`. If a match is found, report it and skip creation.

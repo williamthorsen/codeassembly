@@ -4,17 +4,17 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { isEnoent } from './type-guards.ts';
 
 /**
- * The directory name holding test code. Fixture data nests inside it rather than sitting in a directory of its own,
- * so this one name covers both.
+ * The directory names holding test code. Fixture data nests inside `__tests__` rather than sitting in a directory of
+ * its own, so that name covers both; `test-utils` holds the helpers those suites import, which are test code too.
  */
-export const TEST_DIRECTORY_NAME = '__tests__';
+export const TEST_DIRECTORY_NAMES: ReadonlySet<string> = new Set(['__tests__', 'test-utils']);
 
 /**
  * True when a directory entry holds test code rather than deliverable content. Test code is never published, never
  * installed into a harness home, and never read as content by a check that walks a content tree.
  */
 export function isTestDirectory(name: string): boolean {
-  return name === TEST_DIRECTORY_NAME;
+  return TEST_DIRECTORY_NAMES.has(name);
 }
 
 /**
