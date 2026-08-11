@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../../../src/lib/harness.ts';
 import { describeViolations, findHarnessScopedPaths, findRulebookMarkers } from '../guidance-constraints.ts';
 
 describe(findHarnessScopedPaths, () => {
@@ -34,6 +35,19 @@ describe(findHarnessScopedPaths, () => {
 
   it('finds nothing in content that names no path', () => {
     expect(findHarnessScopedPaths('Run the bootstrap before anything else.')).toEqual([]);
+  });
+
+  // The detection pattern restates the home directories the canonical harness table holds, so that a compiled kit
+  // carries two string literals instead of the table's filesystem imports. This pin is what makes the duplication
+  // safe: a harness added to the table fails here until the pattern covers it.
+  it('fires for every home directory the canonical harness table names', () => {
+    const homeDirs = Object.values(HARNESSES).map((harness) => harness.homeDir);
+    const undetected = homeDirs.filter(
+      (homeDir) =>
+        findHarnessScopedPaths(`See ~/${homeDir}/skills/foo.md.`).length === 0 ||
+        findHarnessScopedPaths(`See ${homeDir}/skills/foo.md.`).length === 0,
+    );
+    expect(undetected).toEqual([]);
   });
 });
 
