@@ -267,6 +267,14 @@ If any findings were classified as **general** (cross-repo) in Phase 2:
 2. Ask the user whether to integrate them into `~/.agents/AGENTS.md`.
 3. If approved, read `~/.agents/AGENTS.md`, identify the appropriate existing section for each recommendation, and integrate the new content in the right place — do not blindly append. If no suitable section exists, propose a new section name before adding it.
 
+#### 3g. Run the guidance checklist
+
+Close by running the published `guidance` checklist against the result: `rdy run --packages`, from the repository root.
+
+Skip the step where `rdy` is unavailable, or where no configured package publishes the checklist. It ships as a development dependency of the package that publishes it, not something a consuming repository inherits. Report the step as skipped; never report a pass it did not produce.
+
+The freshness check reads committed history, so the write just made does not move it. On the stale file that motivated a refresh it still reports stale, and its remediation text advises running this very skill. That is expected, and it clears when the change is committed: do not act on that advice, and do not commit in order to clear it.
+
 ## Quality checklist
 
 Before presenting the draft or the change list, verify:
