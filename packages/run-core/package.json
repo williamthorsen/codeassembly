@@ -34,7 +34,11 @@
     "build": "nmr compile"
   },
   "dependencies": {
+    "@williamthorsen/toolbelt.errors": "catalog:",
     "yaml": "2.9.0",
     "zod": "4.4.3"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

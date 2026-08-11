@@ -6,6 +6,7 @@
 // and its last-known facts keep being served until a poll succeeds. Rounds never overlap — a tick fired while one is in
 // flight is skipped rather than queued — and with no adapter (`FLEET_FORGE=none`) the loop is inert.
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import type { LaneState } from 'codeassembly-lifecycle';
 
 import { buildLaneKey } from '../common/lane-key.ts';
@@ -145,13 +146,8 @@ async function pollRepo(
           : { ...existing, stale: true },
       );
     }
-    log(`forge poll failed for ${group.repo} (${readMessage(error)}); serving last-known facts as stale`);
+    log(`forge poll failed for ${group.repo} (${describeError(error)}); serving last-known facts as stale`);
   }
-}
-
-/** The human-readable message carried by a thrown value. */
-function readMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 // endregion | Helpers

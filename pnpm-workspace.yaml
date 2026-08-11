@@ -1,6 +1,9 @@
 packages:
   - packages/*
 
+catalog:
+  '@williamthorsen/toolbelt.errors': '0.2.0'
+
 allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true

@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@williamthorsen/toolbelt.errors':
+      specifier: 0.2.0
+      version: 0.2.0
+
 importers:
 
   .:
@@ -99,7 +105,7 @@ importers:
         specifier: workspace:*
         version: link:../kb
       '@williamthorsen/toolbelt.errors':
-        specifier: 0.2.0
+        specifier: 'catalog:'
         version: 0.2.0
       codeassembly-lifecycle:
         specifier: workspace:*
@@ -132,6 +138,9 @@ importers:
 
   packages/factory:
     dependencies:
+      '@williamthorsen/toolbelt.errors':
+        specifier: 'catalog:'
+        version: 0.2.0
       '@xyflow/react':
         specifier: 12.11.2
         version: 12.11.2(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -196,6 +205,9 @@ importers:
       '@hono/node-server':
         specifier: 2.0.12
         version: 2.0.12(hono@4.12.34)
+      '@williamthorsen/toolbelt.errors':
+        specifier: 'catalog:'
+        version: 0.2.0
       codeassembly-lifecycle:
         specifier: workspace:*
         version: link:../lifecycle
@@ -258,7 +270,7 @@ importers:
   packages/kb:
     dependencies:
       '@williamthorsen/toolbelt.errors':
-        specifier: 0.2.0
+        specifier: 'catalog:'
         version: 0.2.0
       picomatch:
         specifier: 4.0.5
@@ -285,6 +297,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(supports-color@7.2.0)(zod@4.4.3)
+      '@williamthorsen/toolbelt.errors':
+        specifier: 'catalog:'
+        version: 0.2.0
       codeassembly-run-core:
         specifier: workspace:*
         version: link:../run-core
@@ -294,6 +309,9 @@ importers:
 
   packages/run-core:
     dependencies:
+      '@williamthorsen/toolbelt.errors':
+        specifier: 'catalog:'
+        version: 0.2.0
       yaml:
         specifier: 2.9.0
         version: 2.9.0

@@ -1,6 +1,8 @@
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { isEnoent } from '../type-guards.ts';
 
 export interface RunDirectoryEntry {
@@ -20,7 +22,7 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
   try {
     projectDirs = await readdir(basePath);
   } catch (error) {
-    console.warn(`${TAG} Could not read base path "${basePath}":`, errorMessage(error));
+    console.warn(`${TAG} Could not read base path "${basePath}":`, describeError(error));
     return [];
   }
 
@@ -93,7 +95,7 @@ async function readdirSafe(dirPath: string): Promise<string[]> {
   try {
     return await readdir(dirPath);
   } catch (error) {
-    console.warn(`${TAG} Could not read directory "${dirPath}":`, errorMessage(error));
+    console.warn(`${TAG} Could not read directory "${dirPath}":`, describeError(error));
     return [];
   }
 }
@@ -105,12 +107,8 @@ async function isDirectory(path: string): Promise<boolean> {
     return s.isDirectory();
   } catch (error) {
     if (!isEnoent(error)) {
-      console.warn(`${TAG} Could not stat "${path}":`, errorMessage(error));
+      console.warn(`${TAG} Could not stat "${path}":`, describeError(error));
     }
     return false;
   }
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

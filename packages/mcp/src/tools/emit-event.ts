@@ -1,6 +1,7 @@
 import { appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { runEventSchema } from 'codeassembly-run-core';
 
 export interface EmitEventInput {
@@ -40,7 +41,7 @@ export async function emitEvent(input: EmitEventInput): Promise<EmitEventResult>
   try {
     await appendFile(logPath, JSON.stringify(result.data) + '\n');
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = describeError(error);
     return { success: false, error: `Failed to write event to ${logPath}: ${message}` };
   }
   return { success: true };
