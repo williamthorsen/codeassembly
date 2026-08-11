@@ -19,44 +19,99 @@ const lifecycleScriptNames: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Matches a command that reaches `nmr` in command position, directly or behind `pnpm exec`. The lookahead spares the
- * leaf bins (`nmr-compile`, `nmr-fmt`), which start no nested run.
+ * Script names the root manifest may reach nmr from. nmr resolves that manifest as a tier-3 override the way it
+ * resolves a package's, so the rest of it is guarded too. `bootstrap` builds and deploys from a fresh checkout,
+ * where the bare `nmr` binary is not yet on the path, and so reaches nmr through pnpm by design.
  */
-const shelledNmrPattern = /(?:^|&&|\|\||\||;)\s*(?:pnpm\s+exec\s+)?nmr(?![\w-])/;
+const rootExemptScriptNames: ReadonlySet<string> = new Set([...lifecycleScriptNames, 'bootstrap']);
 
-/** One workspace package, reduced to the manifest scripts this suite inspects. */
-interface WorkspaceManifest {
-  readonly dirName: string;
+/**
+ * Matches a command reaching `nmr` as a whole token, which covers any runner that fronts it — `npx nmr`,
+ * `pnpm exec nmr`, `pnpm --filter x exec nmr`. nmr's own warning inspects only a command's first token, so it
+ * backstops none of those forms. The lookahead spares the leaf bins (`nmr-compile`, `nmr-fmt`) and a path segment
+ * such as `nmr/bin`, none of which start a nested run.
+ */
+const shelledNmrPattern = /(?:^|[\s;&|])nmr(?![\w\-/])/;
+
+/** One manifest the guard reads, with the script names it may reach nmr from. */
+interface GuardedManifest {
+  readonly exemptNames: ReadonlySet<string>;
+  readonly manifestPath: string;
   readonly scripts: Readonly<Record<string, string>>;
 }
 
-describe.each(findWorkspaceManifests())('$dirName scripts', ({ dirName, scripts }) => {
+describe.each(findGuardedManifests())('$manifestPath scripts', ({ exemptNames, manifestPath, scripts }) => {
   it('reach nmr through no shell', () => {
     // A shelled step puts the nested run's output on the channels a tool's takes, so a quiet failure surrenders the
     // whole subtree instead of the failing step.
     expect(
-      findShelledNmrScripts(scripts),
-      `${dirName} invokes nmr through a shell. Delete the override where it restates nmr's own default, or move the steps into a hook such as \`build:post\`.`,
+      findShelledNmrScripts(scripts, exemptNames),
+      `${manifestPath} invokes nmr through a shell. Delete the override where it restates nmr's own default, or move the steps into a hook such as \`build:post\`.`,
     ).toEqual([]);
+  });
+});
+
+describe('findShelledNmrScripts', () => {
+  it.each([
+    ['a bare invocation', 'nmr compile'],
+    ['a chained invocation', 'tsx scripts/build.ts && nmr compile'],
+    ['an unspaced operator', 'tsx scripts/build.ts&&nmr compile'],
+    ['a pnpm exec runner', 'pnpm exec nmr build'],
+    ['a filtered pnpm runner', 'pnpm --filter codeassembly exec nmr build'],
+    ['a recursive pnpm runner', 'pnpm --recursive exec nmr build'],
+    ['an npx runner', 'npx nmr build'],
+  ])('reports %s', (_label, command) => {
+    expect(findShelledNmrScripts({ build: command }, lifecycleScriptNames)).toEqual(['build']);
+  });
+
+  it.each([
+    ['a leaf bin', 'nmr-compile'],
+    ['a flagged leaf bin', 'nmr-fmt --check'],
+    ['a path segment', 'node node_modules/@williamthorsen/nmr/bin/cli.js'],
+    ['an unrelated command', 'tsx scripts/build.ts && rdy compile'],
+  ])('passes over %s', (_label, command) => {
+    expect(findShelledNmrScripts({ build: command }, lifecycleScriptNames)).toEqual([]);
+  });
+
+  it('passes over an exempt script name', () => {
+    expect(findShelledNmrScripts({ prepublishOnly: 'nmr build' }, lifecycleScriptNames)).toEqual([]);
+  });
+
+  it('reports every offending name in sorted order', () => {
+    const scripts = { build: 'nmr compile', check: 'npx nmr lint', fmt: 'nmr-fmt --write' };
+    expect(findShelledNmrScripts(scripts, lifecycleScriptNames)).toEqual(['build', 'check']);
   });
 });
 
 // region | Helpers
 
-/** Lists the script names whose values reach nmr through a shell, passing over the npm lifecycle hooks. */
-function findShelledNmrScripts(scripts: Readonly<Record<string, string>>): ReadonlyArray<string> {
-  return Object.entries(scripts)
-    .filter(([name, value]) => !lifecycleScriptNames.has(name) && shelledNmrPattern.test(value))
-    .map(([name]) => name)
-    .toSorted();
-}
-
-/** Lists every workspace package's manifest, taking the package set from `pnpm-workspace.yaml`. */
-function findWorkspaceManifests(): ReadonlyArray<WorkspaceManifest> {
-  return getWorkspacePackageDirs(findMonorepoRoot(import.meta.dirname)).map((dir) => ({
-    dirName: path.basename(dir),
+/** Lists the manifests the guard reads: the monorepo root's, then every workspace package's. */
+function findGuardedManifests(): ReadonlyArray<GuardedManifest> {
+  const monorepoRoot = findMonorepoRoot(import.meta.dirname);
+  const packageManifests = getWorkspacePackageDirs(monorepoRoot).map((dir) => ({
+    exemptNames: lifecycleScriptNames,
+    manifestPath: path.relative(monorepoRoot, path.join(dir, 'package.json')),
     scripts: readScripts(path.join(dir, 'package.json')),
   }));
+  return [
+    {
+      exemptNames: rootExemptScriptNames,
+      manifestPath: 'package.json',
+      scripts: readScripts(path.join(monorepoRoot, 'package.json')),
+    },
+    ...packageManifests,
+  ];
+}
+
+/** Lists the script names whose values reach nmr through a shell, passing over the exempt names. */
+function findShelledNmrScripts(
+  scripts: Readonly<Record<string, string>>,
+  exemptNames: ReadonlySet<string>,
+): ReadonlyArray<string> {
+  return Object.entries(scripts)
+    .filter(([name, value]) => !exemptNames.has(name) && shelledNmrPattern.test(value))
+    .map(([name]) => name)
+    .toSorted();
 }
 
 /** Reads a manifest's `scripts` field, keeping the string values nmr can resolve as a command. */
