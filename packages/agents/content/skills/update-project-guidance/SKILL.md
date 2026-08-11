@@ -98,6 +98,11 @@ For each finding, assign one of these classes:
 
 ### Phase 3: Generate
 
+Two constraints govern the repo-root `AGENTS.md`, whichever path produced it:
+
+- **No harness-scoped path.** One body of text serves every harness — Rovo Dev reads the file directly, Claude Code through an include — so a path under any one harness's home is wrong for every other reader. Write repo-relative paths.
+- **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file, so a region introduced by hand disappears on the next run with no warning. The sweep matches complete open/close pairs, which leaves an unpaired marker to linger instead, so the rule covers the marker rather than the region.
+
 #### 3a. Ensure prerequisites
 
 Before generating the main file, check these prerequisites:
@@ -148,6 +153,10 @@ Do NOT write any files until the user has reviewed and approved the draft. Prese
 #### 3c. Refresh path: produce the change list
 
 On the refresh path only. The baseline is the working document: audit what it claims, find what it is missing, and emit edits against it.
+
+##### Check the constraints
+
+Scan the baseline for a harness-scoped path and for any `<!-- rulebook:` marker. Every hit is a repair, whatever the audit says about it. A harness-scoped path is true for the harness it names and reads as ambient, so neither audit verdict flags it, and anything the change list does not name is carried through untouched.
 
 ##### Audit the claims
 
@@ -260,8 +269,10 @@ If any findings were classified as **general** (cross-repo) in Phase 2:
 
 ## Quality checklist
 
-Before presenting the draft, verify:
+Before presenting the draft or the change list, verify:
 
+- [ ] Every path is repo-relative; none is scoped to a single harness's home
+- [ ] No `<!-- rulebook:` marker appears anywhere in the file
 - [ ] The file is at most 200 lines, matching the ambient budget the published guidance checklist reports against; anything that pushed it over went to the package level behind a pointer
 - [ ] No line duplicates content from `~/.agents/AGENTS.md`
 - [ ] No section merely restates what's obvious from the code
