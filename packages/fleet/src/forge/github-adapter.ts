@@ -11,6 +11,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { getOrCreate, retainKeys } from '../common/maps.ts';
 import type {
   CheckState,
@@ -317,7 +319,7 @@ function readErrorText(error: unknown): string {
   if (error instanceof Error) {
     parts.push(error.message);
   }
-  return parts.length > 0 ? parts.join('\n') : String(error);
+  return parts.length > 0 ? parts.join('\n') : describeError(error);
 }
 
 /** Drops every set member absent from `keep`, bounding the set to the currently resident set. */

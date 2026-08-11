@@ -4,6 +4,8 @@
 
 import { statSync, watch } from 'node:fs';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 /** A running watcher; `stop` releases the watch handle and every timer. */
 export interface Watcher {
   stop(): void;
@@ -59,7 +61,7 @@ export function startWatcher(input: {
     });
     input.log(`recursive watch active on ${input.dir}; rescan backstop every ${input.rescanMs}ms`);
   } catch (error) {
-    input.log(`cannot watch ${input.dir} (${readMessage(error)}); rescan-only every ${input.rescanMs}ms`);
+    input.log(`cannot watch ${input.dir} (${describeError(error)}); rescan-only every ${input.rescanMs}ms`);
   }
 
   const rescanTimer = setInterval(() => input.onDirty(), input.rescanMs);
@@ -76,11 +78,6 @@ export function startWatcher(input: {
 }
 
 // region | Helpers
-
-/** The human-readable message carried by a thrown value. */
-function readMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 /** Starts Node's recursive watch on `dir`. */
 function startRecursiveWatch(dir: string, onEvent: () => void): WatchHandle {
