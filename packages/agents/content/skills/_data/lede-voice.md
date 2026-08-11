@@ -1,245 +1,73 @@
-# Lede voice
+# The lede
 
-This file defines the voice for changelog and release-notes entries — and any other artifact whose first paragraph is the entry point for a glancing reader. The metaphor is journalism: The entry is the lede; the PR is the article. Currently used by:
+This file defines how to write a lede: the `## What` section of a change summary and pull request, the changelog or release-notes entry rendered from it, and the opening of a commit or merge-commit body.
 
-- `summarize-change/SKILL.md` for the `## What` section
-- `commit/SKILL.md` for the commit title and body
-- `merge-pr/SKILL.md` for the merge commit body
+The reader is glancing through entries asking "what did this change do?" and deciding in a few seconds whether to keep reading. A release-notes reader is a user of the package; every other reader (changelog, commit log, pull-request list) is a developer. When one text serves both, write at the register of the most external realistic reader.
 
-## The reader
+## The stance
 
-The reader is glancing through a list of entries asking "what changed?" and deciding in 2–5 seconds whether to keep reading or move on. They have no project-internal context.
+**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. Open with a change verb whose implied subject is the PR ("Adds", "Fixes", "Upgrades", "Reorganizes", "Removes"), or with the changed artifact and a temporal marker ("`nmr prepush` now runs the audit first").
 
-Audience routes by the work type's tier (per [work-types.json](./work-types.json)):
+**Every sentence reports an effect of the diff.** The symptom a fix ends, the purpose a change serves, and the invariant a risky change preserves are effects, even when no hunk spells them out. The deliberation that produced the diff -- options weighed, review history, what the ticket asked for -- is not. The PR is written on its own merits, not the ticket's.
 
-- **Public tier** (release-notes-eligible) — end-users glancing through release notes after `npm update`. They want to know whether this version affects them.
-- **Other tiers** (internal/process work) — developers glancing through the changelog after a version bump. They want to know what shipped.
+**Mechanism is substance.** For a developer reader, the operation performed -- the rename, the upgrade, the extraction, the new check -- is exactly what they want to know. Naming it is not implementation detail; it is the news. At the release-notes register, mechanism earns its place when it explains the visible change.
 
-The tier shifts the register; it does not lower the bar. The glancing-reader frame holds either way.
+**Name things.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule, backticked. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). For a release-notes reader, define any term the audience may not share.
 
-## The principle
+**Punch the highlights.** Decide what matters most, lead with it, and stop after the two or three facts a glancing reader needs. Everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog -- and craft is welcome: a vivid concrete detail ("earns a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure.
 
-This is the [concision principle](./concision.md) applied to changelog and release-notes entries; the routing and rules below are its lede-specific form.
+**Claims match the diff.** A mitigation is not a fix. Agency lands on the true actor: violations fail the build; rules only classify. A promise that holds only on some version or configuration carries that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
-**Detail is routed, not omitted.** The PR is one click away and carries the full story (ticket, diff, `## Details`). Putting implementation detail in the entry isn't thoroughness — it's information in the wrong channel, and it makes the entry less likely to be read at all. Cutting a sentence from the entry doesn't lose the information; it puts the information where it belongs:
+## Form
 
-- Mechanism, internal naming, and refactor mechanics → `## Details` (the PR carries this).
-- Diff-level breakdown (file lists, per-component changes) → the PR's diff itself.
-- Anything the engaged reader could find by clicking through → the linked PR.
+- Most ledes are one to three sentences. Length is earned fact by fact, never by enumeration.
+- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. Never address the reader as "you"; migration steps are third person ("Consumers import `defineConfig` from the `/config` subpath instead"), not imperatives.
+- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that earns a paragraph gets a labeled one ("Migration: ..."). Three or more parallel items may be bulleted.
+- A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
 
-The entry is the lede; the PR is the article.
+## What each kind of change reports
 
-## Voice: Narrate the change, don't describe the state
+A change matching two kinds opens with the higher-stakes pattern: sec, then fix, then feat, then drop, then deps, then the rest. A fix delivered by refactoring is a fix; the operation is its mechanism.
 
-The lede announces a delta, not a snapshot. The reader's question is "what changed?", not "how does the system work now?". Phrasing that answers the second question implicitly leaves the reader to do work the entry should have done.
+- **feat, perf** -- the capability, named, and the surface that reaches it. A performance change names the effect and its size where it was measured ("cuts cold-start time roughly in half"); "improves performance" names nothing.
+  > Adds two status labels (`status:blocked` and `status:on-hold`) to the common preset and removes descriptions from other scoped labels (`priority:` and `value:`) to keep scoped groups compact in the GitHub UI.
+- **fix** -- the symptom that no longer occurs, then the fix; mechanism welcome.
+  > Fixes an issue where lede decisions could be saved into the wrong store. Decisions are now saved by default into the `codeassembly` store, and a call to save them to `--store @default` (which could point to any arbitrary store) is refused. [...]
+- **sec** -- the class of vulnerability closed and the surface that exposed it, then the fix; the fix pattern governs, or the deps pattern when an upgrade delivers it. State enough that a reader can tell whether they were exposed, and no more -- a lede is not a reproduction.
+- **refactor** -- the operation performed on the code: what was reorganized, extracted, renamed, consolidated, or deleted. The restructuring is the outcome; external behavior needs no mention unless it changed. A routine restructuring earns one line ("Aligns property names with in-house naming conventions.").
+  > Reorganizes the files in the `readyup` package for better usability and maintainability. Functions are now grouped by domain.
+- **internal** -- a capability or restructuring of unpublished surface; the feat or refactor pattern applies, at developer register.
+- **docs** -- the edit made to the document: what was added, removed, moved, or corrected.
+  > Tightens comments by removing narration of development history and focusing them on the code itself. Function descriptions are now aligned with house style.
+- **ai** (agent guidance) -- the edit made to the guidance: the artifact named, plus the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it. Skills instruct; agents are instructed.
+  > Revises the code-review guidance to limit the circumstances under which the agent should offer to revise the acceptance criteria (AC). [...]
+- **deps** -- the version delta, and the consequence that matters; a routine bump with none is one sentence.
+  > Upgrades several dependencies, most notably `nmr` to v0.24. That upgrade changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. [...] The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
+- **tests / tooling / ci** -- the operation performed on the pipeline or configuration, tools named.
+  > Fixes deferred violations of Vitest lint rules in the `readyup` package and restores the severity of the associated rules to `error` when a strict-lint check is run.
+- **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration sentence; unpublished or never-released surface goes quietly -- no headline, no breaking-change framing. When unsure, include the migration sentence. A removal whose surface moved is stated as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."). A deprecation reports the same facts in advance: the surface still works, the replacement is named, and the removal horizon is stated when it is known.
+  > Removes `@williamthorsen/eslint-config-basic`; no further versions will be published. No remaining package lints Markdown, while `@williamthorsen/eslint-config-typescript` continues to cover JavaScript, JSON, YAML, and `package.json`.
+- **revert** -- the change undone and what is restored. The PR number may accompany the name, never substitute for it.
 
-Verb choice and temporal framing make the delta explicit:
+## Don't
 
-- **Prefer change verbs** that name the modification: `introduces`, `adds`, `fixes`, `improves`, `refines`, `modifies`, `replaces`, `removes`.
-- **Use "now"/"no longer" markers** when describing a behavioral change to an existing surface, not just a new addition.
-- **Avoid neutral state verbs** that describe the post-change system as if it had always behaved that way: `canonicalizes`, `handles`, `provides`, `supports` — when used as flat descriptions rather than as part of a "now does X" or "supports a new Y" frame.
+- **State description that hides the change.** The "X now does Y" form is legitimate when the sentence is itself the behavioral delta -- the reader recovers the before-state by negating it ("`nmr prepush` now runs the audit first"). It hides the change when the state is the aggregate of operations the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals the change, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
+- **An invented beneficiary.** "Finding a module in the `readyup` package now means asking what role it plays" dramatizes a hypothetical reader; the shipped lede reports the operation (see the refactor exemplar).
+- **The catalog.** Enumerating every delta at equal weight buries the one that matters. Status tallies ("Twelve rules remain deferred"), edge-case inventories, and doc-update mentions are body content at best; never mention that documentation was updated unless documentation is the subject of the PR.
+- **Teaching instead of reporting.** A lede that explains the team's conventions, tutors the reader in a new language feature, or walks through the rule content the diff touches has stopped reporting. Name what changed; the document itself does the teaching.
+- **Empty contrast.** In "a single run reports every defect it finds rather than stopping at the first", the second clause is the negation of the first. Use "rather than" / "instead of" only when the contrast informs ("inspectable rather than flattened into text"). The same test cuts self-evident corollaries ("...so temporary files are no longer left behind").
+- **Unearned assurance.** A guarantee against a harm nobody suspected plants the doubt it means to soothe. State an invariant only when the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump. A "previously" sentence passes the same test when it does motivation or migration work, and fails it when it merely restates the change's negation.
+- **Talking around the name.** "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. If the reader would have to open the diff to learn what you mean, name it.
+- **Process narration.** Review mechanics, ticket numbers, finding IDs, test and CI runs, and roads not taken are not part of the change.
 
-**Exception for agent-guidance diffs.** When the change edits agent instructions, guidance, or rules, narrate the change to the _instruction_ ("agents are now instructed to X"), not the agent's behavior ("the agent now does X"). Agent compliance is nondeterministic and not assertable from the diff; see the agent-guidance carve-out under Rule 1.
+## Cut detail, not meaning
 
-The rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass every rule and still read like documentation rather than an announcement.
+A lede can be cut past comprehension, and a too-abstract lede is worse than a longer concrete one. "Drops `jiti` from `release-kit`'s dependencies" passes every rule above -- change verb, named packages, an effect of the diff -- and still fails the reader, who cannot tell whether config loading survived. The shipped lede was longer: "`release-kit` now uses native Node with type-stripping to read its configs. `jiti` is no longer needed as a dependency." When a cut makes the entry harder to understand, the cut is wrong.
 
-**Bad → Good — change-narrating voice**
+## Titles
 
-**Bad** (compliant but state-describing):
+A title is a one-sentence lede; everything above applies, distilled, plus:
 
-> A tag-alias map at `.kb/tag-aliases.yaml` canonicalizes secondary frontmatter tags. The migration script writes canonical forms only, and `pnpm run check:notes` warns when committed frontmatter contains a known alias, naming the suggested canonical form.
-
-**Good:**
-
-> Introduces a tag alias map that sets the canonical form of secondary frontmatter tags. The migration script now writes only these forms, and the `check:notes` script now warns when committed frontmatter uses a known alias instead of the canonical form.
-
-Both drafts pass every rule. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
-
-## The rules
-
-Apply all of them. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
-
-### Rule 1: Per-sentence outcome test
-
-For each sentence, ask: **Does this describe what the change means for the reader?** Two permissible categories:
-
-- **Outcome**: Something the reader will experience, see, or be able to do.
-  Example: "Uploads no longer fail when the filename contains a colon."
-- **Migration info**: Names of user-facing surface that has been added, removed, or renamed; steps the reader must take.
-  Example: "The `--fix-low` flag is replaced by `--approval-threshold`."
-
-If a sentence describes how the change was implemented (mechanism, internal data structures, code paths, refactor mechanics, output-format details, internal counts), cut it. Mechanism belongs in `## Details` and the PR.
-
-**Indirect outcomes** (reliability, maintainability, performance) are permitted **only if specific**. "More reliable progress visibility during long runs" describes a real outcome a reader would notice; "improves reliability" or "modernizes the architecture" is generic puffery and is forbidden. The test: If the same sentence could be written about almost any change, it is too generic.
-
-A few kinds of change specialize what counts as an outcome. The carve-outs below refine the test for those cases; a change that none of them covers follows the general test above.
-
-**For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed"; specifically, user-facing behavior change or migration info. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
-
-**For documentation changes specifically.** The outcome is not the change to the documentation; the outcome is what readers of the doc will now know, be able to do, or be guided away from. (When the doc's readers are agents, such as skills, subagent prompts, or AGENTS.md-style guidance, "what readers will now do" is itself an unverifiable compliance claim; see the agent-guidance carve-out below.)
-
-**Bad** (mechanism: names the edit site and the refactor move):
-
-> The stale one-line mention of table-driven tests in the `code-patterns` skill is replaced by a pointer to the new canonical source.
-
-**Good:**
-
-> Guidance on table-driven tests is now consolidated in one place, so readers no longer follow a stale stub to outdated advice.
-
-The Bad version describes a refactor move ("X is replaced by a pointer") and names the internal edit site — both mechanism. The Good version names what readers now get (current guidance, no stale stub) and survives the counterfactual: A different restructuring that still routed readers to current guidance would yield the same sentence.
-
-**For agent-guidance changes specifically.** When the diff's subject is agent instructions, guidance, or rules, the change targets the _instruction surface_, not the agent's resulting behavior. Frame the delta as what the guidance now instructs ("agents are now instructed to X," "the guidance now directs X"), never as accomplished behavior ("the agent now does X"). Agent compliance is downstream and nondeterministic, so a behavior claim over-states what the diff can guarantee. This redirects the change-narrating voice; it does not abandon it, since "are now instructed to" is itself a change verb. When the point is the _benefit_ the guidance reaches for, state it as intent ("with the aim of X"), not a guaranteed result ("now comes out X").
-
-**Bad** (asserts nondeterministic behavior as fact):
-
-> In interactive sessions, the agent now defaults to a concise reply.
-
-**Good:**
-
-> Agents in interactive sessions are now instructed to keep replies concise, while still surfacing any flaw or risk worth raising.
-
-The Bad version claims a downstream behavior the diff cannot verify (guidance often fails to take); the Good version claims only the instruction, which is present in the diff.
-
-### Rule 2: Identifier ban
-
-The only identifiers that may appear are **top-level user-configurable surface**:
-
-- Package names
-- CLI commands and flags
-- Top-level config-file paths (the path the user creates, names, or edits)
-- Public-API endpoints and methods
-
-Banned:
-
-- Schema field names (e.g., `description`, `body`, `audience`)
-- Default values for configurable names (use the description, not the default)
-- Internal file paths within the package (`run-index.json`, `.meta/changelog.json`, `dist/esm/`)
-- Function, type, class, or module names
-- Internal subsystem names (`run-core`, `review-cycle`)
-- Internal versioning ("v1 supports…", "v3 event-sourced format")
-- Output-format details (JSON keys, marker glyphs, header strings)
-
-When in doubt, leave the name out and describe the behavior. **Allowed is not the same as worth it** — even an identifier on the permitted list earns its place only if the reader needs to act on it. Name a top-level config-file path when the reader has to create, edit, or move it; don't name it just to acknowledge that one exists. The headline question is whether the word does work for the reader, not whether the rule lets you include it.
-
-The one exception to the ban: User-configurable surface needed for migration may be named — both _removed_ identifiers (so the user recognizes what's gone) and _new_ defaults (so the user knows where to find or move them). Examples: "The `--fix-low` flag is replaced by `--approval-threshold`."; "The default config file is now `.config/v11y-check.config.json`."
-
-### Rule 3: Redundancy ban
-
-For each sentence, ask: **does it add anything the reader doesn't already have** — from the change itself, or from a sentence already written? If not, cut it. This is the axis Rules 1 and 2 miss: a sentence can be a genuine outcome (Rule 1) naming only permitted surface (Rule 2) and still tell the reader nothing new.
-
-Three forms to cut:
-
-- **Self-evident corollary** — a clause restating the obvious consequence of the change just stated. In "a cleanup step now runs at the end of the script, so temporary files are no longer left behind," the reader already draws the second clause from the first. Keep only the first. Spend any extra words on precision (an exact version range, a specific condition), never on restatement.
-- **Harm-avoided guarantee** — a promise against a harm the reader never suspected. Stating it doesn't reassure; it plants the doubt. The test: **"No one would think it did otherwise until you mentioned it."** A positive rephrasing ("each operation touches only its own entries") is the same defensive claim in new words. Silence on what a change doesn't do is the default, not an omission.
-- **Cross-sentence paraphrase** — a sentence restating a prior one's outcome in other words. Each may pass Rule 1 alone; together they say one thing twice. Apply the deletion test — "would cutting this change what the reader knows?" — across sentences, not only within one.
-
-### Rule 4: No second person
-
-Do not use the second person.
-
-## Jargon at the lede
-
-Compression to a term of art saves words for a reader who already knows the term. For a reader who doesn't, it forces them to either skip the entry or do dictionary work the writer should have done. The lede is often the one place a reader meets the concept — spend the few extra words so the prose teaches as it announces.
-
-**Define while naming.** Compress only when the audience definitely shares the term. Otherwise, prefer the explained form even if it's longer:
-
-- `canonicalizes secondary tags` → `sets the canonical form of secondary tags`
-- `idempotent rebuilds` → `rebuilds can be rerun safely`
-- `serializes state to a side-channel` → `writes state to a separate file so the main flow stays clean`
-
-This is the softer companion to Rule 2. Rule 2 bans internal _identifiers_ (function names, internal subsystem names); the jargon rule covers internal _vocabulary_ — terminology that demands prior knowledge is friction at the lede even when no name is involved.
-
-## Title application
-
-A title is a single-sentence lede. All the rules apply, distilled:
-
-- **Outcome, not mechanism.** The title goes to changelogs and release notes — readers often see only the title. Ask "what does this change deliver?", not "what did I edit?". Bad: "Upgrade hono from v1 to v2." Good: "Upgrade hono to patch authentication vulnerability."
-- **No redundant corollary.** State the change, not the consequence that self-evidently follows from it. Bad: "Add a cleanup step so temp files are no longer left behind." Good: "Add a cleanup step that removes temp files."
-- **The code change, not what prompted it.** Ask "what does the diff do?", not "why did I open the editor?". Bad: "Address review findings"; "Apply feedback"; "Incorporate suggestions". Good: "Add error logging to `handleStateUpdate`"; "Remove dead rejection handler".
-- **No ephemeral references.** If it would not make sense to a reader who has only `git log`, leave it out.
-- **Only what's in the diff.** External actions (updating a ticket, posting a comment, sending a notification) are not part of the change and do not belong in its title.
-
-## Body content discipline
-
-Body text — that is, the text used in commit bodies, merge-commit bodies, and the `## What` section of a change summary — is subject to these proscriptions in addition to the rules above:
-
-- **Never reference automated tests or CI.** Formatting, linting, typechecking, and unit tests run automatically. Mentioning them in the body is process noise, not user content.
-- **Never use review finding IDs.** Identifiers like `F1`, `W2`, `T3` belong only in review documents — they are meaningless in `git log` and to any future reader.
-
-## Length
-
-The entry is as long as needed to convey outcomes and migration info — and not one word longer. There is no fixed ceiling: a rename with several migration facts may earn four sentences, a simple change one, so long as each passes the rules above.
-
-## Examples
-
-Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes every rule; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
-
-### Cross-type one-liners
-
-The voice is the same across every work type; only the subject changes:
-
-- `fix:` "Fixes an issue where uploading a file with a colon in its name caused the importer to crash."
-- `feat:` "Adds support for exporting reports as CSV."
-- `internal:` "Resumes background jobs from their last checkpoint after a crash, so transient failures no longer drop work."
-- `refactor:` "Consolidates API handlers on a shared HTTP client, reducing per-request connection overhead."
-- `deps:` "Upgrades to Node 22 and drops support for Node 18, which reached end of life."
-
-### Good: Public tier, multi-fact rename
-
-> The package previously published as `@williamthorsen/audit-deps` has been renamed to `v11y-check`. The CLI command is now `v11y-check`, and the default config file is `.config/v11y-check.config.json`. Existing users should install `v11y-check` in place of `@williamthorsen/audit-deps`, rename their config file, and update any scripts that invoke `audit-deps`.
-
-Why it works: Every sentence is migration info. All identifiers named are user-facing surface. The reader knows exactly what to do.
-
-### Good: Internal tier
-
-> Code changes flowing through the orchestrated pipeline now require accompanying tests, and reviewers flag missing tests as blockers.
-
-Why it works: Outcome (new requirement) plus consequence (review behavior). No internal skill names, no per-file enumeration.
-
-### Bad → Good: Mechanism cut
-
-**Bad** (schema-naming and mechanism, ~120 words):
-
-> Adds an opt-in override file (default `.changelog-overrides.json`, configurable via `overridesPath`) that lets release-kit consumers correct historical changelog entries without rewriting git history. Override keys are commit hashes (full or any unambiguous prefix); per-entry fields can replace `description` and `body`, toggle the `breaking` marker, or set `audience: 'skip'` to drop the entry entirely. Both `.meta/changelog.json` and the rendered `CHANGELOG.md` reflect the post-override view.
-
-**Good:**
-
-> Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
-
-Cut: Every schema field name, every default value, every internal file path, every "how it works" sentence. Survives: The feature exists, who it's for, what it does.
-
-### Bad → Good: Over-elaborated fix
-
-**Bad:**
-
-> Fixes an issue where running `audit-deps`, `nmr`, or `release-kit` from the locally built `dist/esm/` after a `git pull` could report a stale version. Each CLI now reads its version directly from its `package.json` at startup, so version reads stay in sync with the installed source without requiring a fresh `pnpm install` or rebuild.
-
-**Good:**
-
-> Fixes an issue where running `audit-deps`, `nmr`, or `release-kit` from the locally built `dist/esm/` after a `git pull` could report a stale version. A fresh `pnpm install` or rebuild is no longer required.
-
-Cut: The mechanism clause ("Each CLI now reads its version directly from its `package.json` at startup"). Survives: The migration info — the user no longer needs to rebuild — which the fix-specific guidance under Rule 1 marks as the warranted second-sentence case.
-
-### Bad → Good: TMI feature
-
-**Bad** (output-format details):
-
-> Surfaces below-threshold vulnerabilities in the check command's output instead of silently hiding them. When the severity threshold is above `low`, vulnerabilities that fall below it now appear with an `ℹ️` marker and "ignored" annotation in bare output, full advisory detail in verbose output, and a distinct `belowThreshold` array in JSON output. Scope headers display the active threshold (e.g., `📦 prod (threshold: 🟠 moderate):`) so users can see what filtering is in effect. The "No known vulnerabilities found" message now only appears when there are truly zero vulnerabilities across all categories. Exit code behavior is unchanged — only above-threshold, non-allowlisted vulnerabilities cause failure.
-
-**Good:**
-
-> Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. The check fails only on above-threshold, non-allowlisted vulnerabilities.
-
-Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message; the closing "Exit code behavior is unchanged" falls to Rule 3 as a harm-avoided guarantee (no one doubted the exit code) and is recast as a positive statement of the failure criterion. Survives: Outcome (visibility) plus the explicit failure criterion.
-
-### Bad → Good: Allowed identifier, no payoff
-
-**Bad** (every rule passes; identifier is allowed; but the file path buries the outcome):
-
-> Adds a `.changelog-overrides.json` file to the repo root that lets `release-kit` consumers skip or correct historical changelog entries.
-
-**Good:**
-
-> Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
-
-Both drafts use only allowed identifiers (`.changelog-overrides.json` is a top-level config-file path; `release-kit` is a package name). The Bad version leads with the file, treating the path as a fact worth announcing. The Good version names "an overrides file" without specifying the default filename — the reader who goes to use the feature will find the filename in the docs they consult. The judgment isn't allowed-vs-banned; it's earning-its-words-vs-not.
+- The code change, not what prompted it. Never "Address review findings" or "Apply feedback".
+- No ephemeral references: the title must make sense to a reader with only `git log`.
+- Only what is in the diff: external actions (ticket updates, notifications) are not part of the change.
