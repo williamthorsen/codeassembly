@@ -48,7 +48,7 @@ Each consuming skill defines which complexity levels qualify for its "simple eno
 | `wrap-up` drive-by pass            | 1–2    | Apply immediately on the current branch; skip ticket creation                                                                                                                                           |
 | `next-steps-after-plan`            | 1–2    | Recommend "Implement". When a review pass would catch nothing meaningful (e.g., a typo or unused-import removal), note on the option that the review can be skipped at `implement-plan`'s closing menu. |
 | `implement-plan` closing menu      | 1–2    | Recommend "Create PR without review" — the realized diff is trivial enough that a review pass would catch nothing meaningful                                                                            |
-| `next-steps-after-review`          | 1–2    | Recommend "Implement directly" — the findings are trivial enough for the reviewer to fix in place rather than hand off to the author.                                                                   |
+| `next-steps-after-review`          | 1–2    | Trivial findings are usually determinate, which is what selects "Implement directly"; the recommendation turns on determinacy rather than on the level.                                                 |
 | `orchestrated-architect` (planned) | 1–2    | Classify as `none`/`low` impact (minimal architectural guidance)                                                                                                                                        |
 
 When characteristics span two levels, prefer the higher level. This is consistent with the "when uncertain, recommend the more thorough option" pattern used by consuming skills.

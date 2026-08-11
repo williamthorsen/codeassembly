@@ -148,30 +148,66 @@ For cases 2 and 3, the recommended option carries the ■■□ marker and the o
 
 ### Findings sub-block
 
-Shown when the review contains actionable findings (F, W, or T categories).
+Shown when the review holds at least one finding.
+
+There is no tier condition, and none should be reintroduced. Every finding a review emits has already cleared the [Actionability gate](../_data/artifact-conventions.md#actionability-gate), which requires it to hand the author a concrete decision they can act on; anything producing no decision was dropped before it reached the artifact. Severity orders how findings rank and what blocks merge. It never decides whether they are shown, or whether the user is offered a way to act on them.
+
+Stating the trigger as a list of tiers is the failure this rule replaces: an enumeration goes stale the next time the finding scheme moves, and silently withdraws the menu from whichever tier it forgot.
+
+Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: that would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since no ticket criterion constrains a legacy fix and no design discussion stands behind it. The recommendation rules route legacy without a carve-out, because a legacy fix rarely satisfies rule 2's determinacy test.
 
 The option set depends on whether the review covers a pull request. Select the variant by the review the agent just produced: a `review-pr` run carries a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
 
-#### Options — PR variant (review-pr)
+#### Options: local-branch variant (review-branch)
 
-| #   | Emoji | Option                  | Description                                                                                                                                                                                     |
-| --- | ----- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📋    | Post findings on the PR | Post the findings as comments anchored to file and line. On Bitbucket, use whatever Bitbucket tooling is available (MCP server, REST API, CLI); GitHub has no posting mechanism yet (see #1018) |
-| 2   | 🚀    | Implement directly      | Fix the findings in this session                                                                                                                                                                |
+| #   | Emoji | Option                                                      | Description                                                          |
+| --- | ----- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | 🚀    | Implement directly                                          | Fix the findings in this session                                     |
+| 2   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition                      |
+| 3   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch               |
+| 4   | 🎫    | Create a follow-up ticket                                   | Spin the findings into their own ticket, per `scope-and-deferral.md` |
 
-#### Options — local-branch variant (review-branch)
+#### Options: PR variant (review-pr)
 
-| #   | Emoji | Option                                                      | Description                                            |
-| --- | ----- | ----------------------------------------------------------- | ------------------------------------------------------ |
-| 1   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition        |
-| 2   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch |
-| 3   | 🚀    | Implement directly                                          | Fix the findings in this session                       |
+| #   | Emoji | Option                    | Description                                                                                                                                                                                     |
+| --- | ----- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR   | Post the findings as comments anchored to file and line. On Bitbucket, use whatever Bitbucket tooling is available (MCP server, REST API, CLI); GitHub has no posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly        | Fix the findings in this session                                                                                                                                                                |
+| 3   | 🎫    | Create a follow-up ticket | Spin the findings into their own ticket, per `scope-and-deferral.md`                                                                                                                            |
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default: add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
 
-PR variant (rendered for the default case):
+Local-branch variant, rendered for a review whose findings are all discretionary and all determinate:
+
+```
+Next steps:
+
+Actionable findings:
+1. 🚀 ■■□ Implement directly
+2. 📋 ■□□ Ask the author to address the findings
+3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+4. 🎫 ■□□ Create a follow-up ticket
+
+If the author is an agent, run `respond-to-review` in that session.
+```
+
+Local-branch variant, rendered where the findings pose a design question the author owns:
+
+```
+Next steps:
+
+Actionable findings:
+1. 🚀 ■□□ Implement directly
+2. 📋 ■■□ Ask the author to address the findings
+3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+4. 🎫 ■□□ Create a follow-up ticket
+
+If the author is an agent, run `respond-to-review` in that session.
+```
+
+PR variant, rendered for the default case:
 
 ```
 Next steps:
@@ -179,46 +215,34 @@ Next steps:
 Actionable findings:
 1. 📋 ■■□ Post findings on the PR
 2. 🚀 ■□□ Implement directly
-```
-
-Local-branch variant (rendered for the default case):
-
-```
-Next steps:
-
-Actionable findings:
-1. 📋 ■■□ Ask the author to address the findings
-2. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
-3. 🚀 ■□□ Implement directly
-
-If the author is an agent, run `respond-to-review` in that session.
+3. 🎫 ■□□ Create a follow-up ticket
 ```
 
 Per the session-boundary rule, two options name a skill in the render:
 
-- **Ask the author to address the findings** — the author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
-- **Wait for the author to address the findings, then re-review** — names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix: the reviewer's memory of what it found is what lets it check the fixes.
+- **Ask the author to address the findings**: the author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
+- **Wait for the author to address the findings, then re-review**: names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix, since the reviewer's memory of what it found is what lets it check the fixes.
 
 #### Recommendation rules
 
-**PR variant:**
+Both variants share one cascade. Check the rules in order and stop at the first match. Every rule carries a firing condition, and no option is a default that fires for want of one: a conditionless option outranks a conditioned one in practice, however the conditions are worded.
 
-1. **Post findings on the PR** — the default. The author is typically someone else; comments on the PR are how the findings reach them.
-2. **Implement directly** — the fixes are simple and ours to make.
+1. **Create a follow-up ticket**: a finding is worth doing but clears one of [`scope-and-deferral.md`](../_data/scope-and-deferral.md)'s affirmative reasons for spinning off, namely a genuinely separable concern, a materially different risk surface, size that would swamp the current change, or independent prioritization. "The ticket didn't mention it" is never such a reason. Absent an affirmative reason the fold-in default holds and the cascade continues.
+2. **Implement directly**: every open finding is determinate, meaning its Recommendation states the exact change and applying it needs no judgment its author would have to supply. Implementing forfeits the second look, and determinacy is what makes that acceptable: the fix's diff is the finding restated, so a reviewer would be re-reading text the review already contains. A finding posing a question rather than naming an edit is not determinate, however small it looks.
+3. **Wait for the author to address the findings, then re-review**: the findings need judgment the author owns, and the fixes are substantial enough that the result needs another review pass. PR variant: skip this rule.
+4. **Ask the author to address the findings**: residual. The reviewer surfaces; the author disposes. PR variant: **Post findings on the PR**, since the author is typically someone else and comments on the PR are how the findings reach them.
 
-**Local-branch variant:**
+Discretionary and determinate are independent axes. Whether a change is optional is a different question from who decides it: an `S` reading "rename `x` to `descriptiveName`" is discretionary but fully determinate, since the only decision left is yes or no and the person reading the menu is the one making it. Routing that to the author round-trips a settled edit through a second session.
 
-1. **Ask the author to address the findings** — the default. The reviewer surfaces; the author disposes.
-2. **Wait for the author to address the findings, then re-review** — the fixes are substantial enough that the result needs another review pass.
-3. **Implement directly** — the findings are trivial enough for the reviewer to fix in place.
+Do not attempt to detect whether the author is the person reading the review. Agents commit under the user's git identity, so the review's resolved `$author` cannot distinguish them. Rule 2 turns on the review's own content, which is decidable.
 
 #### Marker strengths
 
 The selected option carries the ■■□ marker in the rendered output; the others carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
 
-Complexity levels classify individual findings, but the recommendation applies to the collection. When uncertain between two options, recommend the one that keeps a human in the loop.
+Complexity levels classify individual findings, but the recommendation applies to the collection.
 
-See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the cost-aware disposition that governs whether a deferred finding becomes a separate ticket, joins a batch, or ships as a drive-by. It applies to any finding that the user defers rather than addressing immediately.
+Where the cascade's conditions leave two options genuinely in balance, prefer the one that keeps a human in the loop. That resolves a tie and nothing more: it never overrides a rule that fired, and a fix that satisfies rule 2's determinacy test is not a tie.
 
 ### Combined output format
 
@@ -247,4 +271,5 @@ Proposed edit to the ticket:
 **A3 — Actionable findings:**
 1. 📋 ■■□ Post findings on the PR
 2. 🚀 ■□□ Implement directly
+3. 🎫 ■□□ Create a follow-up ticket
 ```
