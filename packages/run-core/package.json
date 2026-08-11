@@ -30,9 +30,6 @@
   "files": [
     "dist"
   ],
-  "scripts": {
-    "build": "nmr compile"
-  },
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
     "yaml": "2.9.0",

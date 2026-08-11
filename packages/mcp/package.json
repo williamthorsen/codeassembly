@@ -11,9 +11,6 @@
     "bin",
     "dist"
   ],
-  "scripts": {
-    "build": "nmr compile"
-  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
     "@williamthorsen/toolbelt.errors": "catalog:",
