@@ -157,8 +157,8 @@ importers:
         specifier: 5.2.1
         version: 5.2.1(supports-color@7.2.0)
       marked:
-        specifier: 18.0.8
-        version: 18.0.8
+        specifier: 18.0.9
+        version: 18.0.9
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -2682,8 +2682,8 @@ packages:
   map-stream@0.0.7:
     resolution: {integrity: sha512-C0X0KQmGm3N2ftbTGBhSyuydQ+vV1LC3f3zPvT3RXHXNZrvfPZcoXp/N5DOa8vedX/rTMm2CjTtivFg2STJMRQ==}
 
-  marked@18.0.8:
-    resolution: {integrity: sha512-wsTzDkXm7dJwwTZ5nM2ZJFUsAZwUDPxFAl4MEb35pS14Gn/8KFlV8N5xE/sVIsTcZoYmwbTw/6pSba70mvfDRA==}
+  marked@18.0.9:
+    resolution: {integrity: sha512-/Sa4qiiHZxf0/FQdBBowr9q4r10krCwMvpK48FUBdXdUXScDxiQGR9zCPrFgRVR5LU3iySOiIjy09ZQvADir1w==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -6248,7 +6248,7 @@ snapshots:
 
   map-stream@0.0.7: {}
 
-  marked@18.0.8: {}
+  marked@18.0.9: {}
 
   math-intrinsics@1.1.0: {}
 
