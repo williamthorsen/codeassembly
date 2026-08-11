@@ -2,11 +2,9 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { v2RunIndexSchema } from '../server/adapters/schemas/run-index-schema.js';
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
+import { v2RunIndexSchema } from '../server/adapters/schemas/run-index-schema.js';
 
 // -- core validation logic (exported for testing) --
 
@@ -43,7 +41,7 @@ export async function findRunIndexFiles(dirPath: string): Promise<string[]> {
     try {
       entries = await readdir(dir, { withFileTypes: true });
     } catch (error) {
-      console.error(`Warning: cannot read directory ${dir}: ${getErrorMessage(error)}`);
+      console.error(`Warning: cannot read directory ${dir}: ${describeError(error)}`);
       return;
     }
     for (const entry of entries) {
@@ -99,7 +97,7 @@ export async function main(): Promise<void> {
   try {
     fileStats = await stat(targetPath);
   } catch (error) {
-    console.error(`Cannot access path ${targetPath}: ${getErrorMessage(error)}`);
+    console.error(`Cannot access path ${targetPath}: ${describeError(error)}`);
     process.exitCode = 1;
     return;
   }
@@ -117,7 +115,7 @@ export async function main(): Promise<void> {
       results.push(await validateFile(filePath));
     } catch (error) {
       const prefix = error instanceof SyntaxError ? 'Invalid JSON' : 'Read error';
-      results.push({ filePath, valid: false, errors: [`  ${prefix}: ${getErrorMessage(error)}`] });
+      results.push({ filePath, valid: false, errors: [`  ${prefix}: ${describeError(error)}`] });
     }
   }
 
