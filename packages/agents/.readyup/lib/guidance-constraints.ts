@@ -1,11 +1,12 @@
 /**
  * Detection of the two constraints the repository-root guidance file carries by virtue of being harness-neutral:
- * it holds no path scoped to one harness's home, and no rulebook marker.
+ * it reaches into no harness-owned directory, and it hosts no rulebook marker.
  *
- * One body of text serves every harness, so a path under one harness's home is wrong for every reader but the one
- * it names. A rulebook marker is `sync`'s to write: it strips a complete open/close pair from this file, so a
- * hand-written region disappears on the next run, and an unpaired marker escapes the sweep and lingers instead.
- * Both spellings are matched here, which is why the rule covers the marker rather than the region.
+ * One body of text serves every harness, so wiring owned by one of them is a wrong turn for every other reader.
+ * Home-anchored and repository-local spellings are both matched, because `~/.claude/skills/` and `.claude/` name
+ * the same harness's territory. A rulebook marker is `sync`'s to write: it strips a complete open/close pair from
+ * this file, so a hand-written region disappears on the next run, and an unpaired marker escapes the sweep and
+ * lingers instead. Both marker spellings are matched, which is why the rule covers the marker, not the region.
  *
  * Every function is a pure string transform with no filesystem access.
  */
@@ -27,7 +28,7 @@ export function describeViolations(violations: ReadonlyArray<GuidanceViolation>)
   return violations.map((violation) => `line ${violation.lineNumber}: ${violation.text.trim()}`).join('; ');
 }
 
-/** Finds every line carrying a path scoped to one harness's home. */
+/** Finds every line reaching into a harness-owned directory, home-anchored or repository-local. */
 export function findHarnessScopedPaths(content: string): ReadonlyArray<GuidanceViolation> {
   return findMatchingLines(content, HARNESS_PATH_REGEX);
 }

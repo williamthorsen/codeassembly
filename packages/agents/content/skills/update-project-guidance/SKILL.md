@@ -62,14 +62,13 @@ Collect findings as a flat list before moving to classification.
 
 #### Resolve the baseline and select the path
 
-The **baseline** is the guidance content that already exists: the repo-root `AGENTS.md` if it has one, else a legacy `.agents/PROJECT.md` or `.agents/AGENTS.md`, else nothing.
+The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: take the repo-root `AGENTS.md` when it carries substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root — a title and a pointer — does not shadow a mature legacy file, because a pointer is not a claim.
 
-Resolve it in memory. A legacy file is not moved here — its content becomes the baseline and reaches the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
+Where both legacy files carry content, `.agents/PROJECT.md` is the baseline as the later convention, and the other joins the gap-scan sources so its content reaches the change list rather than being archived unread.
 
-Select the path from what the baseline carries:
+Resolve the baseline in memory. A legacy file is not moved here — its content becomes the baseline and reaches the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
 
-- **No baseline, or a stub** — a title and a sentence or two, with no substantive claims — takes the **authoring path**. There is nothing to preserve, and a refresh's bounded gap scan would produce almost nothing.
-- **A baseline carrying substantive claims** takes the **refresh path**.
+The path follows from what was found. A baseline takes the **refresh path**. No baseline — no guidance file, or nothing but stubs — takes the **authoring path**, where there is nothing to preserve and a bounded gap scan would produce almost nothing.
 
 State which path was selected, and why, before proceeding.
 
@@ -100,7 +99,7 @@ For each finding, assign one of these classes:
 
 Two constraints govern the repo-root `AGENTS.md`, whichever path produced it:
 
-- **No harness-scoped path.** One body of text serves every harness — Rovo Dev reads the file directly, Claude Code through an include — so a path under any one harness's home is wrong for every other reader. Write repo-relative paths.
+- **No path into a harness-owned directory**, home-anchored or repository-local. One body of text serves every harness — Rovo Dev reads the file directly, Claude Code through an include — so wiring belonging to one of them is a wrong turn for every other reader. State the fact without the harness path, or record it in that harness's own guidance file.
 - **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file, so a region introduced by hand disappears on the next run with no warning. The sweep matches complete open/close pairs, which leaves an unpaired marker to linger instead, so the rule covers the marker rather than the region.
 
 #### 3a. Ensure prerequisites
@@ -183,7 +182,7 @@ Re-run the Phase 2 classification only on the sections the window touched, plus 
 
 Bounded, because an unbounded "what else should this file say?" is a redraft in disguise.
 
-**The window is the later of** the last commit touching `AGENTS.md` and a twenty-commit lookback. Last-touch alone collapses after any drive-by edit: a single commit appending a clause to a bullet resets it to nothing. Add `git status --porcelain`, since the common case is an author invoking this mid-session with uncommitted work.
+**The window reaches back to whichever is earlier**: the last commit touching `AGENTS.md`, or twenty commits. Twenty is a floor, never a ceiling — a drive-by edit that touched the file two commits ago leaves the window at twenty, not at two. Add `git status --porcelain`, since the common case is an author invoking this mid-session with uncommitted work.
 
 Every `git log` here names its own `--format`. A global or repository `format.pretty` rewrites the output, and a naive parse then reads mangled text with no sign that anything went wrong.
 
@@ -279,7 +278,7 @@ The freshness check reads committed history, so the write just made does not mov
 
 Before presenting the draft or the change list, verify:
 
-- [ ] Every path is repo-relative; none is scoped to a single harness's home
+- [ ] No path reaches into a harness-owned directory, home-anchored or repository-local
 - [ ] No `<!-- rulebook:` marker appears anywhere in the file
 - [ ] The file is at most 200 lines, matching the ambient budget the published guidance checklist reports against; anything that pushed it over went to the package level behind a pointer
 - [ ] No line duplicates content from `~/.agents/AGENTS.md`
