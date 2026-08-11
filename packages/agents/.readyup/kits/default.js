@@ -8,6 +8,29 @@ import { dirname, join, relative } from "node:path";
 import { defineRdyKit } from "readyup";
 import { fileExists, readFile } from "readyup/check-utils";
 
+// .readyup/lib/guidance-constraints.ts
+var HARNESS_PATH_REGEX = /(?:~\/)?\.(?:claude|rovodev)\//;
+var RULEBOOK_MARKER_REGEX = /<!--\s*\/?\s*rulebook:/;
+function describeViolations(violations) {
+  return violations.map((violation) => `line ${violation.lineNumber}: ${violation.text.trim()}`).join("; ");
+}
+function findHarnessScopedPaths(content) {
+  return findMatchingLines(content, HARNESS_PATH_REGEX);
+}
+function findRulebookMarkers(content) {
+  return findMatchingLines(content, RULEBOOK_MARKER_REGEX);
+}
+function findMatchingLines(content, pattern) {
+  const violations = [];
+  const numberedLines = content.split("\n").entries();
+  for (const [index, text] of numberedLines) {
+    if (pattern.test(text)) {
+      violations.push({ lineNumber: index + 1, text });
+    }
+  }
+  return violations;
+}
+
 // .readyup/lib/guidance-import.ts
 import { homedir } from "node:os";
 import { isAbsolute, resolve } from "node:path";
@@ -163,6 +186,40 @@ var default_default = defineRdyKit({
             };
           },
           fix: REFRESH_FIX
+        },
+        {
+          name: `${GUIDANCE_PATH} is harness-neutral`,
+          severity: "recommend",
+          skip: () => fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`,
+          check: () => {
+            const content = readFile(GUIDANCE_PATH);
+            if (content === void 0) {
+              return { ok: false, detail: `${GUIDANCE_PATH} is unreadable` };
+            }
+            const violations = findHarnessScopedPaths(content);
+            if (violations.length === 0) {
+              return true;
+            }
+            return { ok: false, detail: describeViolations(violations) };
+          },
+          fix: `State the fact without the harness path, or record it in that harness's own guidance file; one body of text serves every harness, so wiring owned by one of them is a wrong turn for the rest`
+        },
+        {
+          name: `${GUIDANCE_PATH} hosts no rulebook region`,
+          severity: "recommend",
+          skip: () => fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`,
+          check: () => {
+            const content = readFile(GUIDANCE_PATH);
+            if (content === void 0) {
+              return { ok: false, detail: `${GUIDANCE_PATH} is unreadable` };
+            }
+            const violations = findRulebookMarkers(content);
+            if (violations.length === 0) {
+              return true;
+            }
+            return { ok: false, detail: describeViolations(violations) };
+          },
+          fix: `Delete the marked region and its markers; \`sync\` strips a complete pair from ${GUIDANCE_PATH} on its next run, and an unpaired marker escapes that sweep and lingers`
         },
         {
           name: `${GUIDANCE_PATH} is within the ambient budget`,
