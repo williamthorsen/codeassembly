@@ -18,7 +18,7 @@ Render via `describe-change.sh` — see `../_data/title-templates.md` for the fu
 
 - **72 characters max** (hard limit).
 - **Imperative, task-oriented voice.** "Add…", "Fix…", "Prevent…", "Enable…" — describing what the coder did. The title appears next to the PR number in release notes; it reads as the task. Distinct from the lede voice, which is declarative ("Adds…", "Fixes…").
-- For content discipline (outcome-not-mechanism, code-change-not-prompt, no ephemeral references, only what's in the diff), see the "Title application" section in [`lede-voice.md`](../_data/lede-voice.md).
+- For content discipline (the code change rather than what prompted it, no ephemeral references, only what's in the diff), see [Titles](../_data/lede-voice.md#titles).
 - Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
 
 ## Ticket ID
