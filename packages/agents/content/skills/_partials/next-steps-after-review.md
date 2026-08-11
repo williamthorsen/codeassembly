@@ -179,6 +179,8 @@ The option set depends on whether the review covers a pull request. Select the v
 
 Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default: add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
 
+**Naming the ticket's subset.** When only some open findings clear rule 1's spin-off bar, the follow-up-ticket line names the ones it would carry, as `Create a follow-up ticket for R2, S1`. Choosing it then disposes of those findings alone, and the fold-in default keeps governing the rest. A ticket option carrying every open finding renders bare.
+
 Local-branch variant, rendered for a review whose findings are all discretionary and all determinate:
 
 ```
@@ -203,6 +205,20 @@ Actionable findings:
 2. 📋 ■■□ Ask the author to address the findings
 3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
 4. 🎫 ■□□ Create a follow-up ticket
+
+If the author is an agent, run `respond-to-review` in that session.
+```
+
+Local-branch variant, rendered where three determinate suggestions sit alongside one separable recommendation:
+
+```
+Next steps:
+
+Actionable findings:
+1. 🚀 ■■□ Implement directly
+2. 📋 ■□□ Ask the author to address the findings
+3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+4. 🎫 ■□□ Create a follow-up ticket for R2
 
 If the author is an agent, run `respond-to-review` in that session.
 ```
@@ -232,7 +248,7 @@ Both variants share one cascade. Check the rules in order and stop at the first 
 3. **Wait for the author to address the findings, then re-review**: the findings need judgment the author owns, and the fixes are substantial enough that the result needs another review pass. PR variant: skip this rule.
 4. **Ask the author to address the findings**: residual. The reviewer surfaces; the author disposes. PR variant: **Post findings on the PR**, since the author is typically someone else and comments on the PR are how the findings reach them.
 
-Every rule tests the open findings as a collection, which is what lets one recommendation stand for the set. When only some findings clear rule 1's spin-off bar, the cascade evaluates the remainder: the recommendation comes from the findings that stay, and the follow-up-ticket line names the separable findings it would carry, so choosing it never sweeps in work the fold-in default governs.
+Every rule tests the open findings as a collection, which is what lets one recommendation stand for the set. When only some findings clear rule 1's spin-off bar, the cascade evaluates the remainder: the recommendation comes from the findings that stay, while the separable ones ride the follow-up-ticket option, whose rendered line names them.
 
 Discretionary and determinate are independent axes. Whether a change is optional is a different question from who decides it: an `S` reading "rename `x` to `descriptiveName`" is discretionary but fully determinate, since the only decision left is yes or no and the person reading the menu is the one making it. Routing that to the author round-trips a settled edit through a second session.
 

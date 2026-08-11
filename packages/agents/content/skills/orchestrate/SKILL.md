@@ -57,7 +57,7 @@ The wrapper skill (e.g., `orchestrate-dev`) resolves effort presets and applies 
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
 2. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-3. Default: `medium` for approval, `low` for budget. Approval floors at `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so nothing below a Warning gates approval; budget stays at `low` so those tiers still draw opportunistic fix cycles.
+3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so those tiers still draw opportunistic fix cycles. `low` stays selectable for a project that wants the deferrable tiers to gate, through the argument or the preference file, and an explicit value always wins over the default.
 
 ### Resolving models
 
@@ -109,7 +109,7 @@ Invalid model names (e.g., `gpt4`) are rejected by the {tool:Task} tool at dispa
 ```yaml
 orchestration:
   mcp_policy: prompt # required | optional | prompt (default: prompt)
-  approval_threshold: low # or medium, high
+  approval_threshold: medium # or low, high
   budget_threshold: low # or medium, high
   models:
     default: sonnet
