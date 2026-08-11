@@ -2,7 +2,7 @@
 
 This file defines how to write a lede: the `## What` section of a change summary and pull request, the changelog or release-notes entry rendered from it, and the opening of a commit or merge-commit body.
 
-The reader is glancing through entries asking "what did this change do?" and deciding in a few seconds whether to keep reading. A release-notes reader is a user of the package; every other reader (changelog, commit log, pull-request list) is a developer. When one text serves both, write at the register of the most external realistic reader.
+The reader is glancing through entries asking "what did this change do?" and deciding in a few seconds whether to keep reading. A release-notes reader is a user of the package; every other reader (changelog, commit log, pull-request list) is a developer. A change reaches release notes when its work type sits in the public tier of [work-types.json](./work-types.json); the other tiers stop at the changelog. When one text serves both, write at the register of the most external realistic reader.
 
 ## The stance
 
@@ -47,7 +47,7 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
   > Fixes deferred violations of Vitest lint rules in the `readyup` package and restores the severity of the associated rules to `error` when a strict-lint check is run.
 - **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration sentence; unpublished or never-released surface goes quietly -- no headline, no breaking-change framing. When unsure, include the migration sentence. A removal whose surface moved is stated as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."). A deprecation reports the same facts in advance: the surface still works, the replacement is named, and the removal horizon is stated when it is known.
   > Removes `@williamthorsen/eslint-config-basic`; no further versions will be published. No remaining package lints Markdown, while `@williamthorsen/eslint-config-typescript` continues to cover JavaScript, JSON, YAML, and `package.json`.
-- **revert** -- the change undone and what is restored. The PR number may accompany the name, never substitute for it.
+- **revert** -- the change undone and what is restored. The PR number may accompany the name, never substitute for it. A revert carries the work type of the change it undoes; `revert` is not itself a key in `work-types.json`.
 
 ## Don't
 

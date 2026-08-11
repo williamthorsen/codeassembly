@@ -122,7 +122,7 @@ git log {default_branch}..HEAD --format=%B
 git diff {default_branch}...HEAD --stat
 ```
 
-Describe the accomplishment from the reader's standpoint. One short paragraph is usually enough; add a follow-up paragraph only when the change is substantial.
+Report what the change did. One short paragraph is usually enough; add a follow-up paragraph only when the change is substantial.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
