@@ -6,7 +6,7 @@ The reader is glancing through entries asking "what did this change do?" and dec
 
 ## The stance
 
-**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. Open with a change verb whose implied subject is the PR ("Adds", "Fixes", "Upgrades", "Reorganizes", "Removes"), or with the changed artifact and a temporal marker ("`nmr prepush` now runs the audit first").
+**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. Open with a change verb whose implied subject is the PR ("Adds", "Fixes", "Upgrades", "Reorganizes", "Removes"), or with the changed artifact and a temporal marker ("`nmr prepush` now runs the audit first"). Either way, the opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" places the reader in four words; a scenario clause that reaches the name later makes them travel to find out what is under discussion.
 
 **Every sentence reports an effect of the diff.** The symptom a fix ends, the purpose a change serves, and the invariant a risky change preserves are effects, even when no hunk spells them out. The deliberation that produced the diff -- options weighed, review history, what the ticket asked for -- is not. The PR is written on its own merits, not the ticket's.
 
