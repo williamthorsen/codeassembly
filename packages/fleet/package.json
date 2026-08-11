@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@hono/node-server": "2.0.12",
+    "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
     "hono": "4.12.34"
   },

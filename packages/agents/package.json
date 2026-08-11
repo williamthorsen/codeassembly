@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@williamthorsen/kb": "workspace:*",
-    "@williamthorsen/toolbelt.errors": "0.2.0",
+    "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
     "ulid": "3.0.2",
     "yaml": "2.9.0",
