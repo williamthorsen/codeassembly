@@ -154,7 +154,7 @@ There is no tier condition, and none should be reintroduced. Every finding a rev
 
 Stating the trigger as a list of tiers is the failure this rule replaces: an enumeration goes stale the next time the finding scheme moves, and silently withdraws the menu from whichever tier it forgot.
 
-Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: that would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since no ticket criterion constrains a legacy fix and no design discussion stands behind it. The recommendation rules route legacy without a carve-out, because a legacy fix rarely satisfies rule 2's determinacy test.
+Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: that would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since no ticket criterion constrains a legacy fix and no design discussion stands behind it. The recommendation rules route legacy without a carve-out: a legacy fix naming its exact edit satisfies rule 2 like any other, and one that does not falls through to a ticket or a hand-off.
 
 The option set depends on whether the review covers a pull request. Select the variant by the review the agent just produced: a `review-pr` run carries a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
 
