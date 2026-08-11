@@ -32,7 +32,6 @@
     "dist"
   ],
   "scripts": {
-    "build": "nmr compile",
     "prepublishOnly": "nmr build"
   },
   "devDependencies": {

@@ -1,11 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { findMonorepoRoot, getWorkspacePackageDirs } from '@williamthorsen/nmr/workspace';
 import { describe, expect, it } from 'vitest';
-
-/** Absolute path to the workspace directory holding every package. */
-const packagesDir = path.resolve(import.meta.dirname, '..', '..', 'packages');
 
 /**
  * Paths a named package must ship beyond the invariants every publishable package satisfies. A value matches by
@@ -58,21 +56,18 @@ interface PublishablePackage {
  * covered without editing this suite.
  */
 function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
-  const packages = readdirSync(packagesDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((entry) => {
-      const dir = path.join(packagesDir, entry.name);
-      const manifest: unknown = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8'));
-      if (typeof manifest !== 'object' || manifest === null) {
-        return [];
-      }
-      const isPrivate = 'private' in manifest && manifest.private === true;
-      const name = 'name' in manifest && typeof manifest.name === 'string' ? manifest.name : undefined;
-      if (isPrivate || name === undefined) {
-        return [];
-      }
-      return [{ bins: readBinPaths(manifest), dir, name }];
-    });
+  const packages = getWorkspacePackageDirs(findMonorepoRoot(import.meta.dirname)).flatMap((dir) => {
+    const manifest: unknown = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8'));
+    if (typeof manifest !== 'object' || manifest === null) {
+      return [];
+    }
+    const isPrivate = 'private' in manifest && manifest.private === true;
+    const name = 'name' in manifest && typeof manifest.name === 'string' ? manifest.name : undefined;
+    if (isPrivate || name === undefined) {
+      return [];
+    }
+    return [{ bins: readBinPaths(manifest), dir, name }];
+  });
   return packages.toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
