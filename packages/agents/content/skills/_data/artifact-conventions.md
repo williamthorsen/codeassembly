@@ -826,12 +826,14 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 
 ### Overall criticality mapping
 
-| Highest finding present    | Criticality | Meaning                    |
-| -------------------------- | ----------- | -------------------------- |
-| None, only S, or only `-L` | `none`      | No actionable findings     |
-| T and/or R (no W/F)        | `low`       | Deferrable items available |
-| W (no F)                   | `medium`    | Real issues to address     |
-| F                          | `high`      | Must fix before merge      |
+| Highest finding present | Criticality | Meaning                    |
+| ----------------------- | ----------- | -------------------------- |
+| None, or only `-L`      | `none`      | No authored findings       |
+| S, R, and/or T (no W/F) | `low`       | Deferrable items available |
+| W (no F)                | `medium`    | Real issues to address     |
+| F                       | `high`      | Must fix before merge      |
+
+Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` so that an unattended fix cycle stays out of pre-existing code, while a legacy-only review still renders the post-review findings menu with its full option pool, where a human can weigh a drive-by. The two axes differ on purpose.
 
 ### Re-review severity escalation
 

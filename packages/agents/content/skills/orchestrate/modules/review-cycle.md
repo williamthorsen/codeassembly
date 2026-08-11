@@ -299,7 +299,7 @@ Before applying these rules, check the iteration budget. If N iterations have be
 - **criticality >= approval_threshold** AND no review rounds remain: Exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then run selective re-review. These findings are opportunistic — worth fixing if budget allows.
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
-- **criticality < budget_threshold**: Proceed to Phase 4a (report only, no fix attempt). This includes `none` (no actionable findings from any reviewer).
+- **criticality < budget_threshold**: Proceed to Phase 4a (report only, no fix attempt). This includes `none`, where no reviewer authored a finding.
 
 ### Consolidated coder fixes
 
@@ -477,7 +477,7 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 - **criticality >= approval_threshold** AND no review rounds remain: Delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then re-review using remaining budget (opportunistic).
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Set `{review-status}` to `converged` (findings do not block approval).
-- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
+- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none`, where no reviewer authored a finding.
 
 When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
 
