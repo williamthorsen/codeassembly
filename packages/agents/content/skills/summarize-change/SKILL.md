@@ -24,30 +24,15 @@ Check commit messages for additional context.
 3. **Compose title**: `{ticket_ref} {title}` (or just `{title}` when `ticket_ref` is null)
    - The ticket reference appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
 
-4. **Compose `## Why` and `## Details`** per the output format below. These sections you compose directly. The lede (`## What`) comes from a separate dispatch in step 6, so the factual substance must exist first.
+4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) is composed last, in step 5, so the factual substance must exist first.
 
-5. **Resolve tier**: From [work-types.json](../_data/work-types.json), look up the `tier` (`public`, `internal`, or `process`) corresponding to the resolved `type`. If `type` could not be inferred, default the tier to `internal`.
+5. **Compose `## What`**: Read `{harness_home_dir}/skills/_data/lede-voice.md` in full before drafting; the doctrine evolves, so the only safe assumption is what the file says now. Write the lede from the branch diff and the sections composed in step 4, applying the per-type section for the change's work type (inferred per [Consumer-field inference](#consumer-field-inference)). The lede is composed last and placed first.
 
-6. **Compose `## What` via `changelog-writer`**: Dispatch the `{subagent:changelog-writer}` subagent via the {tool:Task} tool in `write` mode. Pass a prompt of this shape:
+6. **Save** per the [Saving](#saving) section.
 
-   ```
-   mode: write
-   type: {resolved type}
-   tier: {tier from step 5}
-   scope: {resolved scope, if available}
-   outcome: |
-     {What the reader will experience, do, or know differently — the mechanism-free reader-facing delta, not a diff enumeration and not a draft lede. Derived from the substance composed in step 4.}
-   context: |
-     {Optional supporting facts the subagent may need for accuracy.}
-   ```
+**Audit before saving.** The `## What` composed in step 5 takes this audit before step 6 writes the artifact.
 
-   Lead with the outcome before naming files: `outcome` is the reader-facing delta the lede must carry, and it must be mechanism-free — state what changes for the reader, not how it was built. Do not pre-draft the lede here; implementation detail packed into `outcome` is laundering, and the subagent is required to cut it regardless. For a change to agent guidance, frame `outcome` as the instruction ("agents are now instructed to X"), not the resulting behavior ("the agent now does X"); see the agent-guidance carve-out in `lede-voice.md`. `context` is supplementary material the subagent may draw on for accuracy.
-
-   Use the subagent's returned text as the content of the `## What` section. The subagent owns voice; you own the outcome. If the subagent returns an error message (missing-field or similar), correct the dispatch inputs and retry.
-
-   Verbatim governs voice ownership, not quality acceptance — and not a prohibition on pruning. You are the last reader before the lede ships, so you are permitted, and expected, to cut cruft you can see: a mechanism-shaped sentence, a banned identifier, generic puffery. This is a backstop, not your main role — the subagent is the party obligated to return a clean draft (see its mandate), so you should rarely have much to remove. Pruning is delete-only: strike the offending clause or sentence and leave the rest untouched. What you may not do is rewrite for voice or register; if the draft needs rephrasing rather than trimming, re-articulate `outcome` and redispatch rather than editing the prose yourself.
-
-7. **Save** per the [Saving](#saving) section.
+<!-- include: ../../_partials/voice-checklist.md / -->
 
 If expected information is missing, stop and ask the developer.
 
@@ -62,7 +47,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{Content returned by the `changelog-writer` dispatch in Process step 6. Prune any cruft you can see (delete-only); for voice or register problems, re-articulate `outcome` and redispatch rather than rewriting the prose (see step 6).}
+{The lede, composed in Process step 5 under the doctrine.}
 
 ## Why
 
@@ -97,7 +82,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 ## Guidance
 
 - When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so they read naturally without it.
-- The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the headline (outcome in plain language), `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
+- The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
 - Subsection headings use `{emoji} {label}` from the matching [work-types.json](../_data/work-types.json) `types[]` entry. For any subsection not enumerated in the example template above, look up the entry by work-type key and use its `emoji` and `label`.
