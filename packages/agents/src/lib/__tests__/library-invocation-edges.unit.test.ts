@@ -27,11 +27,10 @@ describe('library invocation edges', () => {
     expect(closure.skills).toContain('capture-event');
   });
 
-  it('pulls create-pr delegates and the changelog-writer they reach', async () => {
+  it('pulls create-pr delegates', async () => {
     const closure = await resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toEqual(expect.arrayContaining(['create-gh-pr', 'create-bitbucket-pr', 'summarize-change']));
-    expect(closure.subagents).toContain('changelog-writer');
   });
 
   it('pulls orchestrate dispatched subagents declared in frontmatter', async () => {

@@ -65,7 +65,6 @@ members:
     - aspect-code-reviewer
     - aspect-silent-failure-reviewer
     - aspect-test-reviewer
-    - changelog-writer
     - code-simplification-reviewer
     - orchestrated-architect
     - orchestrated-coder
