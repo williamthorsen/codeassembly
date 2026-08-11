@@ -25,7 +25,7 @@ Several skill bodies — `collaborate`, `design-and-plan`, and `refine-plan` amo
 
 ## Directive grammar
 
-Three include shapes are recognized. Each must occupy a full line, with optional leading and trailing whitespace. Inline directives inside prose or code spans are not expanded.
+Three include shapes are recognized. Each must occupy a full line, with optional leading and trailing whitespace. That whitespace governs recognition alone; injected lines keep the partial's own indentation rather than the directive's, so a directive cannot sit inside a list item. Inline directives inside prose or code spans are not expanded.
 
 | Shape         | Syntax                                           | Use                                                                               |
 | ------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- |
