@@ -3,6 +3,7 @@ import { dirname, join, relative } from 'node:path';
 import { defineRdyKit } from 'readyup';
 import { fileExists, readFile } from 'readyup/check-utils';
 
+import { describeViolations, findHarnessScopedPaths, findRulebookMarkers } from '../lib/guidance-constraints.ts';
 import { resolveGuidanceImports } from '../lib/guidance-import.ts';
 import { countGuidanceLines } from '../lib/guidance-size.ts';
 import { formatUtcDate, readGuidanceStaleness } from '../lib/guidance-staleness.ts';
@@ -70,6 +71,40 @@ export default defineRdyKit({
             };
           },
           fix: REFRESH_FIX,
+        },
+        {
+          name: `${GUIDANCE_PATH} is harness-neutral`,
+          severity: 'recommend',
+          skip: () => (fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`),
+          check: () => {
+            const content = readFile(GUIDANCE_PATH);
+            if (content === undefined) {
+              return { ok: false, detail: `${GUIDANCE_PATH} is unreadable` };
+            }
+            const violations = findHarnessScopedPaths(content);
+            if (violations.length === 0) {
+              return true;
+            }
+            return { ok: false, detail: describeViolations(violations) };
+          },
+          fix: `Rewrite the offending paths as repository-relative; one body of text serves every harness, so a path under one harness's home is wrong for the rest`,
+        },
+        {
+          name: `${GUIDANCE_PATH} hosts no rulebook region`,
+          severity: 'recommend',
+          skip: () => (fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`),
+          check: () => {
+            const content = readFile(GUIDANCE_PATH);
+            if (content === undefined) {
+              return { ok: false, detail: `${GUIDANCE_PATH} is unreadable` };
+            }
+            const violations = findRulebookMarkers(content);
+            if (violations.length === 0) {
+              return true;
+            }
+            return { ok: false, detail: describeViolations(violations) };
+          },
+          fix: `Delete the marked region and its markers; \`sync\` strips a complete pair from ${GUIDANCE_PATH} on its next run, and an unpaired marker escapes that sweep and lingers`,
         },
         {
           name: `${GUIDANCE_PATH} is within the ambient budget`,
