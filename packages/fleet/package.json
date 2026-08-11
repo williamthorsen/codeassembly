@@ -15,10 +15,10 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@hono/node-server": "2.0.12",
+    "@hono/node-server": "2.1.0",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
-    "hono": "4.12.34"
+    "hono": "4.13.0"
   },
   "engines": {
     "node": ">=24"

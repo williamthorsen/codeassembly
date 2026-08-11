@@ -35,7 +35,7 @@
     "@vitest/eslint-plugin": "1.6.26",
     "@williamthorsen/eslint-config-typescript": "8.7.0",
     "@williamthorsen/kb": "workspace:*",
-    "@williamthorsen/nmr": "0.29.0",
+    "@williamthorsen/nmr": "0.30.0",
     "@williamthorsen/release-kit": "10.3.1",
     "@williamthorsen/strict-lint": "9.4.0",
     "codeassembly": "workspace:*",
@@ -48,15 +48,15 @@
     "glob": "13.0.6",
     "lefthook": "2.1.10",
     "prettier": "3.9.6",
-    "readyup": "0.26.0",
+    "readyup": "0.27.0",
     "tsx": "4.23.5",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.65.0",
+    "typescript-eslint": "8.66.0",
     "v11y-check": "0.15.1",
     "vite": "8.2.0",
     "vitest": "4.1.10"
   },
-  "packageManager": "pnpm@11.19.0",
+  "packageManager": "pnpm@11.20.0",
   "engines": {
     "node": ">=24"
   }

@@ -53,7 +53,7 @@
     "@types/node": "24.13.3",
     "@williamthorsen/toolbelt.strings": "3.2.0",
     "esbuild": "0.28.1",
-    "readyup": "0.26.0"
+    "readyup": "0.27.0"
   },
   "engines": {
     "node": ">=24"
