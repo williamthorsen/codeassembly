@@ -750,7 +750,7 @@ Used by review-producing skills and agents for structured code review findings. 
 | `W{n}`             | Warning        | ⚠️   | `medium`    | Unless justified           |
 | `T{n}`             | TODO           | 📋   | `low`       | Never (ticket if deferred) |
 | `R{n}`             | Recommendation | 🧠   | `low`       | Never (note if deferred)   |
-| `S{n}`             | Suggestion     | ☝️   | `none`      | Never (piggyback only)     |
+| `S{n}`             | Suggestion     | ☝️   | `low`       | Never (piggyback only)     |
 | `{F,W,T,R,S}{n}-L` | Legacy         | 🔍   | excluded    | Never                      |
 
 Consumers that present or report findings (review skills, wrap-up, response artifacts) should render the icon alongside the prefix or category to give an at-a-glance severity cue. The Legacy row uses 🔍 regardless of underlying severity letter.
