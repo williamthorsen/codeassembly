@@ -2,6 +2,8 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+
 import { resolveProjectsDir } from '~/src/config.ts';
 import { foldEvents } from '~/src/event-folder.ts';
 import { parseRunRawData } from '~/src/parsers/run-data-parser.ts';
@@ -96,7 +98,7 @@ async function safeParse(
     const status = foldEvents(header, events);
     return { status, events };
   } catch (error) {
-    const reason = error instanceof RunDataParseError ? error.category : errorMessage(error);
+    const reason = error instanceof RunDataParseError ? error.category : describeError(error);
     process.stderr.write(
       `[pick-demo-runs] skipping ${entry.projectSlug}/${entry.ticketId}/${entry.runId}: ${reason}\n`,
     );
@@ -215,10 +217,6 @@ Options:
   --json             Emit JSON instead of markdown
   --help, -h         Show this help message
 `);
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 await main();

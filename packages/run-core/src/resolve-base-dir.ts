@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { isRecord } from './type-guards.ts';
@@ -46,9 +47,7 @@ async function readBaseDirFromYaml(filePath: string): Promise<string | undefined
     if (isRecord(error) && error.code === 'ENOENT') {
       return undefined;
     }
-    process.stderr.write(
-      `Warning: failed to read preferences file ${filePath}: ${error instanceof Error ? error.message : String(error)}\n`,
-    );
+    process.stderr.write(`Warning: failed to read preferences file ${filePath}: ${describeError(error)}\n`);
     return undefined;
   }
 }
