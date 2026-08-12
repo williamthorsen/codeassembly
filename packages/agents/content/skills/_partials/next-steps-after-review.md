@@ -160,12 +160,12 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Options: local-branch variant (review-branch)
 
-| #   | Emoji | Option                                                      | Description                                                          |
-| --- | ----- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
-| 1   | 🚀    | Implement directly                                          | Fix the findings in this session                                     |
-| 2   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition                      |
-| 3   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch               |
-| 4   | 🎫    | Create a follow-up ticket                                   | Spin the findings into their own ticket, per `scope-and-deferral.md` |
+| #   | Emoji | Option                                                      | Description                                                                                                              |
+| --- | ----- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🚀    | Implement directly                                          | Fix the findings in this session                                                                                         |
+| 2   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition                                                                          |
+| 3   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch                                                                   |
+| 4   | 🎫    | Create a follow-up ticket                                   | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule |
 
 #### Options: PR variant (review-pr)
 
@@ -173,13 +173,13 @@ The option set depends on whether the review covers a pull request. Select the v
 | --- | ----- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | 📋    | Post findings on the PR   | Post the findings as comments anchored to file and line. On Bitbucket, use whatever Bitbucket tooling is available (MCP server, REST API, CLI); GitHub has no posting mechanism yet (see #1018) |
 | 2   | 🚀    | Implement directly        | Fix the findings in this session                                                                                                                                                                |
-| 3   | 🎫    | Create a follow-up ticket | Spin the findings into their own ticket, per `scope-and-deferral.md`                                                                                                                            |
+| 3   | 🎫    | Create a follow-up ticket | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule                                                                        |
 
 #### Output format
 
 Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default: add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
 
-**Naming the ticket's subset.** When only some open findings clear rule 1's spin-off bar, the follow-up-ticket line names the ones it would carry, as `Create a follow-up ticket for R2, S1`. Choosing it then disposes of those findings alone, and the fold-in default keeps governing the rest. A ticket option carrying every open finding renders bare.
+**Naming the ticket's subset.** When only some open findings clear rule 1's spin-off bar, the follow-up-ticket line names the ones it would carry, as `Create a follow-up ticket for R2, S1`. Choosing it disposes of those findings alone. In this case the ticket option composes with the recommendation rather than replacing it: the cascade's remaining rules run on the findings the ticket does not carry, the option they select is the one marked, and answering with both numbers disposes of every open finding. A ticket option carrying every open finding renders bare.
 
 Local-branch variant, rendered for a review whose findings are all discretionary and all determinate:
 
