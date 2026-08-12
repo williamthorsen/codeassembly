@@ -52,7 +52,9 @@ Run artifacts are saved by the skills that produce them (`review-branch`, `respo
 ### Ticket-level
 
 - `change-summary` — Branch change summary for PRs
+- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to any tickets created (ticket-scoped when a ticket is in session; falls back to project-scoped `deferred-findings/` otherwise)
 - `devlog` — Development log entry (ticket-scoped when a ticket is in session; falls back to project-scoped `devlogs/` otherwise)
+- `merge` — Record of a merged pull request
 - `orchestration-plan` — Orchestration plan for the orchestrate engine
 - `plan` — Implementation plan document
 - `plan-review` — Plan review findings (completeness and correctness analysis)
@@ -60,7 +62,6 @@ Run artifacts are saved by the skills that produce them (`review-branch`, `respo
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
-- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to any tickets created (ticket-scoped when a ticket is in session; falls back to project-scoped `deferred-findings/` otherwise)
 
 ### Run artifacts
 

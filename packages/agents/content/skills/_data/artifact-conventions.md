@@ -686,7 +686,9 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 ### Ticket-level artifacts
 
 - `change-summary` — Branch change summary for PRs
+- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 - `devlog` — Development log entry (falls back to non-ticket path when no ticket is in session)
+- `merge` — Record of a merged pull request
 - `orchestration-plan` — Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
 - `plan` — Implementation plan document
 - `plan-review` — Plan review findings (completeness and correctness analysis)
@@ -694,7 +696,6 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
-- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 
 ### Non-ticket artifacts
 
