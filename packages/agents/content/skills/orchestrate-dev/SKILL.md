@@ -30,14 +30,14 @@ Effort defines a ceiling on permitted investment. The orchestrator right-sizes t
 
 | Setting            | `low`    | `medium` (default) | `high`   |
 | ------------------ | -------- | ------------------ | -------- |
-| approval-threshold | `high`   | `medium`           | `low`    |
+| approval-threshold | `high`   | `medium`           | `medium` |
 | budget-threshold   | `high`   | `medium`           | `low`    |
 | max-review-rounds  | 2        | 3                  | 4        |
 | aspect-reviewers   | disabled | auto               | always   |
 | architecture       | optional | optional           | optional |
 | planning           | optional | optional           | optional |
 
-The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
+The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, which is how high effort buys opportunistic work on those tiers. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
 
 ### Effort x findings
 
@@ -62,7 +62,7 @@ For all effort-affected settings, values resolve in this order (highest priority
 
 ### Piggybacking rule
 
-Universal coder behavior, not effort-specific: During any fix cycle, also address none-severity suggestions in files already being modified. Do not seek out suggestions in untouched files. Thresholds control whether to initiate fix cycles; piggybacking controls what happens within one.
+Universal coder behavior, not effort-specific: During any fix cycle, also address `S`-tier suggestions in files already being modified. Do not seek out suggestions in untouched files. Thresholds control whether to initiate fix cycles; piggybacking controls what happens within one.
 
 ### Deferred-item handling
 

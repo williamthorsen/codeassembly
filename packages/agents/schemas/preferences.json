@@ -102,12 +102,12 @@
         "approval_threshold": {
           "type": "string",
           "description": "Minimum finding severity required for code approval. Overridden by `--approval-threshold`.",
-          "enum": ["none", "low", "medium", "high"]
+          "enum": ["low", "medium", "high"]
         },
         "budget_threshold": {
           "type": "string",
           "description": "Minimum finding severity for spending remaining review-round budget. Overridden by `--budget-threshold`.",
-          "enum": ["none", "low", "medium", "high"]
+          "enum": ["low", "medium", "high"]
         },
         "models": {
           "type": "object",

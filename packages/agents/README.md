@@ -652,7 +652,7 @@ Append `!` after the type: `agents|feat!: Remove deprecated API`
 | Key                                | Type                                 | Default  | Description                                                                                                             |
 | ---------------------------------- | ------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `orchestration.max_review_rounds`  | integer                              | `3`      | Maximum iterative review rounds before marking `needs_manual_review`. Overridden by `--max-review-rounds` CLI argument. |
-| `orchestration.approval_threshold` | `low` \| `medium` \| `high`          | `low`    | Minimum finding severity required for code approval. Overridden by `--approval-threshold`.                              |
+| `orchestration.approval_threshold` | `low` \| `medium` \| `high`          | `medium` | Minimum finding severity required for code approval. Overridden by `--approval-threshold`.                              |
 | `orchestration.budget_threshold`   | `low` \| `medium` \| `high`          | `low`    | Minimum finding severity for spending remaining review-round budget. Overridden by `--budget-threshold`.                |
 | `orchestration.mcp_policy`         | `required` \| `optional` \| `prompt` | `prompt` | How to handle MCP unavailability. `required` aborts, `optional` continues with a warning, `prompt` asks the developer.  |
 
@@ -727,7 +727,7 @@ integrations:
 
 orchestration:
   max_review_rounds: 3
-  approval_threshold: low
+  approval_threshold: medium
   budget_threshold: low
   mcp_policy: prompt
   models:

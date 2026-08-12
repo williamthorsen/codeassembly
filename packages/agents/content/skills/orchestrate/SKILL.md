@@ -41,7 +41,7 @@ Wrapper skills (`orchestrate-dev` with optional `--effort=low|medium|high`, `orc
 2. **Task description** (required): What to implement
 3. `--max-review-rounds=N`: Maximum iterative review rounds before marking needs_manual_review (default: 3)
 4. `--diff-base=<ref>`: Reference to diff against for reviews (default: project's default branch from the session-context manifest)
-5. `--approval-threshold=<low|medium|high>`: Findings at this level or above must be fixed for code approval (default: `low`)
+5. `--approval-threshold=<low|medium|high>`: Findings at this level or above must be fixed for code approval (default: `medium`)
 6. `--budget-threshold=<low|medium|high>`: Remaining review-round budget is spent only on findings at this level or above (default: `low`)
 7. `--models=<key:model,...>`: Model assignment overrides, comma-separated (e.g., `--models=coder:opus,default:sonnet`)
 
@@ -57,7 +57,7 @@ The wrapper skill (e.g., `orchestrate-dev`) resolves effort presets and applies 
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
 2. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-3. Default: Both `low`
+3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so those tiers still draw opportunistic fix cycles. `low` stays selectable for a project that wants the deferrable tiers to gate, through the argument or the preference file, and an explicit value always wins over the default.
 
 ### Resolving models
 
@@ -109,7 +109,7 @@ Invalid model names (e.g., `gpt4`) are rejected by the {tool:Task} tool at dispa
 ```yaml
 orchestration:
   mcp_policy: prompt # required | optional | prompt (default: prompt)
-  approval_threshold: low # or medium, high
+  approval_threshold: medium # or low, high
   budget_threshold: low # or medium, high
   models:
     default: sonnet
