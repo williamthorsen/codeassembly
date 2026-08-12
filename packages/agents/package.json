@@ -20,8 +20,11 @@
   },
   "license": "ISC",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
+  "sideEffects": false,
   "type": "module",
-  "exports": {},
+  "exports": {
+    "./package.json": "./package.json"
+  },
   "bin": {
     "codeassembly": "bin/codeassembly.js"
   },

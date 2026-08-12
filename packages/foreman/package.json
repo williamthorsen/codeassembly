@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Fleet-visibility client: Renders the lane view over Fleet's snapshot and SSE stream",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "scripts": {
     "build": "pnpm vite build",

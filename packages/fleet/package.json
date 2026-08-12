@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Fleet-visibility server: Watches the events root, folds lane state, and streams snapshots over SSE",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "exports": {
     ".": {

@@ -3,7 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "description": "CodeAssembly monorepo",
-  "keywords": [],
+  "keywords": [
+    "agents",
+    "ai",
+    "code-orchestration",
+    "monorepo"
+  ],
   "homepage": "https://github.com/williamthorsen/codeassembly#readme",
   "bugs": {
     "url": "https://github.com/williamthorsen/codeassembly/issues"
