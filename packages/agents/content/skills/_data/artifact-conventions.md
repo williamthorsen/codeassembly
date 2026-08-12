@@ -686,7 +686,9 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 ### Ticket-level artifacts
 
 - `change-summary` — Branch change summary for PRs
+- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 - `devlog` — Development log entry (falls back to non-ticket path when no ticket is in session)
+- `merge` — Record of a merged pull request
 - `orchestration-plan` — Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
 - `plan` — Implementation plan document
 - `plan-review` — Plan review findings (completeness and correctness analysis)
@@ -694,7 +696,6 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
-- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 
 ### Non-ticket artifacts
 
@@ -863,6 +864,20 @@ Insights never carry criticality, never block a merge, and never count toward a 
 
 - **Active**: Artifact is current and relevant
 - **Stale**: Branch has been merged or deleted, and artifact is 30+ days old
+
+### Mutability
+
+A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
+
+These mutations are sanctioned, and no others:
+
+- **Frontmatter a skill's own step directs**: `create-pr` backfills a `pr:` line into the change summary, and `plan-orchestrable-steps` prepends resolved frontmatter to the planner's markdown snapshot. A pointer added after the fact is provenance the artifact could not carry at write time, which is what separates it from a content rewrite.
+- **Artifacts declared mutable**: `orchestration-plan.json` is overwritten each planning iteration, while its `.md` counterparts are versioned snapshots.
+- **Working input forwarded to another agent**: the receiving agent acts on the contents, so staleness would misdirect real work.
+
+Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
+
+Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text.
 
 ## Portability
 
