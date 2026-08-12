@@ -877,7 +877,7 @@ These mutations are sanctioned, and no others:
 
 Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
 
-Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text.
+Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text.
 
 ## Portability
 
