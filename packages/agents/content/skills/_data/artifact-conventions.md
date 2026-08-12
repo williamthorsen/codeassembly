@@ -867,7 +867,7 @@ Insights never carry criticality, never block a merge, and never count toward a 
 
 ### Mutability
 
-A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a decision for the user.
+A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
 These mutations are sanctioned, and no others:
 
