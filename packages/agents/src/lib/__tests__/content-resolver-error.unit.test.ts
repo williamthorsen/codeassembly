@@ -21,7 +21,7 @@ describe('resolveContentDir error path', () => {
   it('should throw when no candidate content directory exists', async () => {
     mockedExistsSync.mockReturnValue(false);
 
-    const { resolveContentDir } = await import('../content-resolver.js');
+    const { resolveContentDir } = await import('../content-resolver.ts');
     expect(() => resolveContentDir()).toThrow('Could not locate content directory');
   });
 });

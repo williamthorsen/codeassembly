@@ -41,7 +41,7 @@ describe('generateLabelMap error paths', () => {
 
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    const { generateLabelMap } = await import('../generate-label-map.js');
+    const { generateLabelMap } = await import('../generate-label-map.ts');
 
     await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('permission denied');
 
@@ -55,7 +55,7 @@ describe('generateLabelMap error paths', () => {
 
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    const { generateLabelMap } = await import('../generate-label-map.js');
+    const { generateLabelMap } = await import('../generate-label-map.ts');
 
     await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('permission denied');
 

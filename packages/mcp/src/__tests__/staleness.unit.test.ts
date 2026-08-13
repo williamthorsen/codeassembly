@@ -179,7 +179,7 @@ describe('stale build warning delivery', () => {
     cleanup: () => Promise<void>;
   }> {
     // Mock the staleness module before importing server
-    vi.doMock('../staleness.js', () => ({
+    vi.doMock('../staleness.ts', () => ({
       isBuildStale: mockIsBuildStale,
     }));
 
