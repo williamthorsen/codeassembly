@@ -40,6 +40,16 @@ describe(writeAtomic, () => {
     expect(dirname(readStagedTempPath())).toBe(dirname(path));
   });
 
+  it('removes the temp file and rethrows when the write fails', async () => {
+    const path = join(await makeTempDir('kb-write-atomic-'), 'target.txt');
+    const writeError = new Error('ENOSPC: no space left on device');
+    vi.mocked(writeFile).mockRejectedValueOnce(writeError);
+
+    await expect(writeAtomic(path, 'the content\n')).rejects.toBe(writeError);
+
+    expect(unlink).toHaveBeenCalledWith(readStagedTempPath());
+  });
+
   it('removes the temp file and rethrows when the rename fails', async () => {
     const path = join(await makeTempDir('kb-write-atomic-'), 'target.txt');
     const renameError = new Error('EXDEV: cross-device link not permitted');
