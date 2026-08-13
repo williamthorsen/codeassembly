@@ -10,8 +10,8 @@ import { computeContentHash, getManifestPath, readManifest } from '../../lib/man
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
+import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { uninstallCommand } from '../uninstall.ts';
-import { buildContentTree } from './build-content-tree.ts';
 
 describe('guidance installation', () => {
   let tempDir: string;

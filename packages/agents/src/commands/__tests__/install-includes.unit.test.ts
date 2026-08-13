@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
-import { buildContentTree } from './build-content-tree.ts';
+import { buildContentTree } from '../test-utils/build-content-tree.ts';
 
 describe('install support-directory _partials exclusion', () => {
   let tempDir: string;
