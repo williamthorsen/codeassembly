@@ -2,9 +2,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { buildRecallStub } from '../../test-utils/build-recall-stub.ts';
 import type { RecallFn } from '../recall.ts';
 import { searchNotes } from '../search.ts';
-import { buildRecallStub } from '../test-utils/build-recall-stub.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');

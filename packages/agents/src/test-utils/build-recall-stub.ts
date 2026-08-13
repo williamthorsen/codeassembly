@@ -1,7 +1,7 @@
 import { sep } from 'node:path';
 
-import type { RecallFn, RecallResult } from '../recall.ts';
-import type { RawHit, ScopedKb } from '../types.ts';
+import type { RecallFn, RecallResult } from '../kb-search/recall.ts';
+import type { RawHit, ScopedKb } from '../kb-search/types.ts';
 
 /**
  * Builds a recall stub reporting `hits` as the notes found, attributing each to whichever in-scope KB contains it, and

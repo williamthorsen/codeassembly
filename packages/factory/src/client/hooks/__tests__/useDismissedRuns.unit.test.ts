@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '../../../shared/types/settings.js';
-import { silencedConsole } from '../../../utils/test-utils.ts';
+import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { useDismissedRuns } from '../useDismissedRuns.js';
 
 vi.mock('../../api/client.js', () => ({

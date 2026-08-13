@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
-import { silencedConsole } from '../../../utils/test-utils.js';
+import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { useRunPlayback } from '../useRunPlayback.js';
 
 const { mockedFetchRunEvents } = vi.hoisted(() => ({
