@@ -664,6 +664,8 @@ V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ## Artifact types
 
+Every type below is governed by [Mutability](#mutability): a saved artifact is a point-in-time record, never revised to match anything downstream of it, and revision writes a new artifact rather than editing one.
+
 ### Run artifacts (in run directories)
 
 | Artifact                     | Purpose                                                   | Dispositions?                          |
