@@ -46,6 +46,7 @@
     "codeassembly": "workspace:*",
     "dotenv": "17.4.2",
     "eslint": "10.8.0",
+    "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest-dom": "5.10.1",
     "eslint-plugin-react-hooks": "7.1.1",

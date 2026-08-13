@@ -10,6 +10,7 @@ allowBuilds:
   lefthook: true
   sharp: true
   svelte-preprocess: true
+  unrs-resolver: false
 
 savePrefix: ''
 
