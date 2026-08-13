@@ -690,12 +690,12 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 - `change-summary` — Branch change summary for PRs
 - `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 - `devlog` — Development log entry (falls back to non-ticket path when no ticket is in session)
-- `merge` — Record of a merged pull request
+- `merge` — Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
 - `orchestration-plan` — Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
 - `plan` — Implementation plan document
 - `plan-review` — Plan review findings (completeness and correctness analysis)
 - `plan-v2` — Refined implementation plan after review and revision
-- `pull-request` — PR description file
+- `pull-request` — PR description file; `capture-lede-decision` reads its `## What` as the agent's side of a lede episode
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
 
