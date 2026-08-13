@@ -4,9 +4,9 @@ import { dirname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { commitAll, initGitRepo, runGit } from '../../../test-utils/git-repo.ts';
 import { makeStore } from '../../../test-utils/make-store.ts';
 import { makeTempDir } from '../../../test-utils/make-temp-dir.ts';
+import { commitAll, initGitRepo, runGit } from '../../test-utils/git-repo.ts';
 import { resolveChangedPaths } from '../resolve-changed-paths.ts';
 
 const NOTE =
