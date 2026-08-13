@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { check } from '../../check/check.ts';
 import { TAXONOMY_FILE } from '../../layout/index.ts';
-import { getRegistryPathFor, makeStore, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
+import { makeStore } from '../../test-utils/make-store.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
+import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
 import { run } from '../run.ts';
 
 const VALID =

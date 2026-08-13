@@ -2,7 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { makeReadFixture } from '../../test-utils/scaffolding.ts';
+import { makeReadFixture } from '../../test-utils/make-read-fixture.ts';
 import { parseNote, parseNoteContent } from '../parse-note.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');

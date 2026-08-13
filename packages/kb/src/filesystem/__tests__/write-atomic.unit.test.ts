@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { makeTempDir } from '../../test-utils/scaffolding.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
 import { pathExists } from '../exists.ts';
 import { writeAtomic } from '../write-atomic.ts';
 

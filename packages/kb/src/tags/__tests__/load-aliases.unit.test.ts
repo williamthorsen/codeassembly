@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KbLoaderError } from '../../config/kb-loader-error.ts';
-import { kbRootAt, makeKbRoot, makeReadFixture } from '../../test-utils/scaffolding.ts';
+import { kbRootAt, makeKbRoot } from '../../test-utils/kb-root.ts';
+import { makeReadFixture } from '../../test-utils/make-read-fixture.ts';
 import { loadAliases, parseAliases } from '../load-aliases.ts';
 
 // Mock `readFile` with a passthrough to the real implementation so most tests

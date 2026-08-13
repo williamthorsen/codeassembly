@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { makeKbRoot } from '../../test-utils/scaffolding.ts';
+import { makeKbRoot } from '../../test-utils/kb-root.ts';
 import { defaultKbConfig } from '../config-schema.ts';
 import { isKbLoaderError, KbLoaderError } from '../kb-loader-error.ts';
 import { loadKbConfig } from '../load-config.ts';

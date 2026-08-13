@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 import { pathExists } from '../../filesystem/exists.ts';
-import { makeRegistryPath, seedRegistry } from '../../test-utils/scaffolding.ts';
+import { makeRegistryPath, seedRegistry } from '../../test-utils/registry.ts';
 import { loadKbRegistry } from '../load-registry.ts';
 import { clearDefaultKb, setDefaultKb } from '../set-default-kb.ts';
 

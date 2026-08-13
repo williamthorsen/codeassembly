@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { KbLoaderError } from '../../config/kb-loader-error.ts';
 import { TAXONOMY_FILE } from '../../layout/index.ts';
-import { makeKbRoot } from '../../test-utils/scaffolding.ts';
+import { makeKbRoot } from '../../test-utils/kb-root.ts';
 import type { KbRoot } from '../../types.ts';
 import { loadTaxonomy } from '../load-taxonomy.ts';
 import { writeTaxonomy } from '../write-taxonomy.ts';

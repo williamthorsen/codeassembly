@@ -6,14 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { check } from '../../check/check.ts';
 import { TAXONOMY_FILE } from '../../layout/index.ts';
-import {
-  commitAll,
-  getRegistryPathFor,
-  initGitRepo,
-  makeStore,
-  makeTempDir,
-  seedRegistry,
-} from '../../test-utils/scaffolding.ts';
+import { commitAll, initGitRepo } from '../../test-utils/git-repo.ts';
+import { makeStore } from '../../test-utils/make-store.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
+import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
 import { run } from '../run.ts';
 
 const { check: realCheck } = await vi.importActual<typeof import('../../check/check.ts')>('../../check/check.ts');

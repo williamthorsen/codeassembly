@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadKbRegistry } from '../../discovery/load-registry.ts';
-import { getRegistryPathFor, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
+import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
 import { run } from '../run.ts';
 import type { SelectKbChoice, SelectKbPrompt } from '../select-kb-prompt.ts';
 

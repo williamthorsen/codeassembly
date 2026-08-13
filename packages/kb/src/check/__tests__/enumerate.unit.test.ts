@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
-import { makeTree } from '../../test-utils/scaffolding.ts';
+import { makeTree } from '../../test-utils/make-tree.ts';
 import { enumerateNotePaths, enumerateNotes } from '../enumerate.ts';
 
 /** Every path `readFile` was called with, so a paths-only enumeration can be shown to open nothing. */
