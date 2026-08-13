@@ -23,7 +23,8 @@ Use this branch when a `contentFormat`-based tool (e.g. `editJiraIssue`) is avai
 
 1. **Author Markdown.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. Pass it via `contentFormat: "markdown"`.
 2. **Prefer Markdown over ADF.** Reserve `contentFormat: "adf"` for content whose fidelity Markdown cannot express (panels, status lozenges, expand blocks, layout columns). ADF is full-fidelity JSON but verbose and harder to author, so reach for it only when Markdown genuinely falls short.
-3. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`. Those rules exist solely to survive Jira's HTML→ADF conversion, and that converter is never invoked when you submit Markdown or ADF — so there is nothing for them to guard against. Rendering content to allowlist HTML and running the checker on this path is wasted work.
+3. **Write checklists as plain bullets.** Jira's Markdown converter does not map `- [ ]` / `- [x]` to ADF task items. It escapes the brackets, so the line persists as a bullet reading `\[ \] ...`. Convert task-list syntax to plain `-` bullets before submitting, including when the source is a local artefact that uses checkboxes, as ticket artefacts from `design-and-plan` and `create-ticket` do. Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, and `contentFormat` governs the whole field rather than a section of it, so a checklist never justifies authoring the entire description as ADF.
+4. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`. Those rules exist solely to survive Jira's HTML→ADF conversion, and that converter is never invoked when you submit Markdown or ADF — so there is nothing for them to guard against. Rendering content to allowlist HTML and running the checker on this path is wasted work.
 
 That is the entire path. Everything under [HTML path](#html-path) is irrelevant when a `contentFormat` tool is available.
 
@@ -34,7 +35,7 @@ Use this branch only when the available tool is the HTML-surface `update_jira_is
 ### The correct path for the HTML tool
 
 1. **Source content as Markdown.** Prefer a local Markdown artefact when one exists. Otherwise, compose in Markdown first — never author HTML directly.
-2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten.
+2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten. Task-list syntax (`- [ ]` / `- [x]`) becomes a plain `<li>`; never carry the brackets through as literal text.
 3. **Run the pre-flight checker against the rendered HTML.** Fix everything it flags, then re-run until it returns `ok: true`. See [Pre-flight checker](#pre-flight-checker) for the contract.
 4. **Pass the HTML inline** to `description_html` or `comment_html`.
 5. **Never pass a file path** to `description_html` / `comment_html`. File-path mode is forbidden — it has been observed to fail with `INVALID_INPUT`.
@@ -221,6 +222,7 @@ If recorded failures distribute across truly **unknown classes** (no clear patte
 - Skipping the pre-flight check before invoking `update_jira_issue` / `create_jira_issue`.
 - Creating a probe ticket without the `mcp-probe` label, the deterministic title, and the description prefix.
 - Hand-authoring HTML containing constructs outside the allowlist.
+- Carrying `- [ ]` / `- [x]` brackets into `<li>` text instead of rendering a plain bullet.
 - Combining `<code>` with other inline marks on the same text run.
 - Using named HTML entities other than `&amp;`, `&lt;`, `&gt;` in text content.
 - Passing a file path to `description_html` / `comment_html`.
