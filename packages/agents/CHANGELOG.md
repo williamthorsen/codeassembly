@@ -2,6 +2,112 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.0 — 2026-08-13
+
+### 🎉 Features
+
+- Link new tickets to their blockers and parents (#1249)
+
+  The `create-ticket` skill now instructs agents to propose a blocked-by, blocking, or parent relationship when the reason for creating the ticket implies one, confirm it with the user, and to record it on the tracker itself rather than as prose in the ticket body. The `--blocked-by`, `--blocking`, and `--parent` flags set the relationship directly.
+
+- Guard home-domain writes and record their provenance (#1254)
+
+  Developers who run `codeassembly` from more than one checkout can now designate one installation as canonical to avoid having different installations write different, possibly incompatible, versions of CodeAssembly content. Secondary installations are prevented from performing `install` and `sync --global` operations unless an explicit override is passed. `codeassembly status` now reports which installation last updated the guidance.
+
+- Let a rulebook declare that a guidance hook is how it is reached (#1259)
+
+  Rulebooks can now name `hook` in their `delivery`, declaring that a guidance-hook binding is the route they take into an agent's context. `sync` now warns when a binding and a rulebook disagree: a bound rulebook that never claims the route, and one that is also delivered ambiently, so its text reaches the session twice. Neither fails the run.
+
+  An empty `delivery` list is now rejected. It previously parsed and named no route at all, so the rulebook deployed nowhere with nothing to say so; a rulebook carrying one must name at least one of `ambient`, `hook`, and `skill` before it will sync.
+
+- Add a personal tooling-preferences rulebook (#1257)
+
+  Adds a personal tooling-preferences rulebook that instructs agents to prefer `rg` and `fd` (over `grep` and `find`) when searching from the shell. Also records a personal preference instruction not to report post-merge worktree state or offer to perform branch cleanup. Guidance about `pnpm` and `tsc` commands has been removed.
+
+- Add a ticketing-preferences hook to the skills that split and create tickets (#1268)
+
+  Creates a hook for ticketing preferences that is included into the guidance for planning, creating tickets, and updating tickets after review. Also adds a personal ticketing-preferences rulebook.
+
+- Replace the lede doctrine with corpus-derived guidance and retire the changelog-writer (#1286)
+
+  Replaces the lede doctrine in `lede-voice.md` with corpus-derived guidance: The change is the subject of a lede, mechanism is substance rather than detail to route away, and 11 per-type sections, most anchored by an author-approved exemplar, take the place of four general rules.
+
+  The `changelog-writer` subagent is removed. `summarize-change` now composes the `## What` section inline from the diff, and `voice-checklist`, `commit`, and `merge-pr` reach the doctrine by reference.
+
+- Add a refresh path that edits an existing AGENTS.md instead of redrafting it (#1287)
+
+  Refines the `update-project-guidance` skill so that modification of an existing `AGENTS.md` is performed differently from generation of a new one. If an existing file already contains substantive guidance, the skill instructs an agent to edit it in place, making only the revisions needed to align its content with the codebase.
+
+  Separately, the published `guidance` checklist now also checks that the repository-root `AGENTS.md` file is harness-neutral and contains no CodeAssembly-managed rulebook regions.
+
+- Specify artifact mutability and its sanctioned exceptions (#1297)
+
+  Adds a mutability rule for saved artifacts to the shared `AGENTS.md` and to `artifact-conventions.md`. A saved artifact is specified as a point-in-time record, not a document to be rewritten to match a later human edit or a rebase.
+
+  Separately, `merge` gains a definition in the ticket-level artifact-type lists, a type `merge-gh-pr` writes and `capture-lede-decision` reads.
+
+- State mutability and name the lede reader at the artifact type lists (#1303)
+
+  Revises `artifact-conventions.md` to make it clear that a saved artifact is a point-in-time record, not a living document. The change is intended to prevent agents from updating artifacts whenever downstream facts change.
+
+  Separately, `save-artifact` drops its own three artifact-type lists, leaving `artifact-conventions.md` as the single list, correcting drift between the two and preventing its recurrence.
+
+### 🐛 Bug fixes
+
+- Keep a skill's own sections out of injected guidance (#1266)
+
+  Fixes an issue where three deployed skills presented their own sections as subsections of the shared guidance inlined into them rather than at the skill's own level. Skill and rulebook authors are now instructed where shared guidance may be inserted relative to the section that follows it, and content that breaks the rule is now flagged.
+
+- Rewrite links, tokens, and template variables in a Markdown file support entry (#1273)
+
+  Fixes an issue where a Markdown file placed directly in a package's skills directory, rather than in a subdirectory, was installed with its relative links pointing nowhere and its placeholder tokens left as literal text. Such a file now fails when it carries an unsupported rulebook reference.
+
+- Extend the no-hard-wrapping instruction to every GitHub composer (#1275)
+
+  Fixes a gap in the guidance against breaking a paragraph across lines: Agents are now instructed to follow it wherever they compose a GitHub issue or pull-request body, not only in a commit message. For a file kept in a repository, the guidance now defers to that project's own formatter.
+
+- Present and classify discretionary findings as actionable (#1295)
+
+  Fixes the post-review next-steps menu, which `review-branch` and `review-pr` withheld if the only findings were recommendations or suggestions. The menu is now triggered by every actionable finding.
+
+  Separately, orchestration stops reading discretionary findings as an absence of findings. A suggestion-only review now has a criticality of `low` rather than `none`. The approval threshold now defaults to `medium`, and no effort preset sets it lower.
+
+- Require plain bullets for checklists on both update-jira-ticket paths (#1302)
+
+  Refines the guidance in `update-jira-ticket` to work around Jira's poor handling of checklist items. Agents are instructed to replace checklist items with plain bullets when submitting Markdown and with plain `<li>` elements when submitting HTML.
+
+### ♻️ Refactoring
+
+- Fix lint and retire rule deferrals (#1265)
+
+  Fixes deferred lint violations in the `lifecycle`, `run-core`, and `foreman` packages and removes the cap on the severity of associated rules when a strict-lint check is run.
+
+- Hoist unreadable for-of expressions and promote the lint rule to an error (#1276)
+
+  Fixes lint in the `agents` package: Every `for…of` header now names what it iterates rather than burying the expression inline.
+
+- Retire the deferred-lint mechanism and adopt toolbelt.errors in agents (#1279)
+
+  Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs. Error reporting in the `agents` package is improved to include the underlying cause. Directory and file names with special dollar-sign sequences are now handled safely during deployment.
+
+- Consolidate error-message extraction on toolbelt.errors' describeError (#1284)
+
+  Consolidates error-message extraction across the workspace on `@williamthorsen/toolbelt.errors`, replacing the local copies each package had defined under its own name. The repository's exact-version dependency rule now accepts shared pins (via `catalog:`) as an alternative and enforces sharing over duplication. The packages that stated no Node requirement now declare the workspace's Node 24 minimum.
+
+### ⚙️ Tooling
+
+- Remove shelled nmr calls from package manifests (#1291)
+
+  `nmr build` no longer reaches nmr through a shell, so a failing package build reports the step that failed instead of the whole nested subtree, and interrupting a run stops what would have followed. Five packages had a `build` override doing that: `kb`, `lifecycle`, `mcp`, and `run-core` restated a default nmr already supplies and now resolve `build` to its built-in `['compile']`, and `codeassembly`'s two post-compile steps move into its `build:post` hook. The warning nmr printed for each, five on every build, goes with them.
+
+  A root test keeps the pattern out: It fails when any manifest in the repo, the monorepo root's included, declares a script reaching `nmr`. It catches the forms nmr's own warning misses, `npx nmr` and `pnpm --recursive exec nmr` among them, and exempts the npm lifecycle names along with root's `bootstrap`.
+
+- Upgrade eslint-config-typescript to 10 and complete manifest metadata (#1301)
+
+  Upgrades `@williamthorsen/eslint-config-typescript` to v10 and adds missing `package.json` values required by rules activated in the upgrade.
+
+  `codeassembly`'s empty `exports` had been the declaration that the package has no library surface. This has been changed to `{"./package.json": "./package.json"}`, which complies with the new rules without exposing an importable module.
+
 ## 0.8.0 — 2026-08-09
 
 ### 🎉 Features

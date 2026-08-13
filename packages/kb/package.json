@@ -1,6 +1,6 @@
 {
   "name": "@williamthorsen/kb",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Knowledge-base foundation: discovery, config, frontmatter parsing, records, tags, and vault-integrity checks",
   "keywords": [
     "frontmatter",

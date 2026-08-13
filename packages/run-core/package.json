@@ -1,6 +1,6 @@
 {
   "name": "codeassembly-run-core",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "description": "Core runtime for orchestrated development runs",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",

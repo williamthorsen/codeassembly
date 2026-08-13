@@ -1,5 +1,49 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-08-13",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Attach causes to kb's loader errors and retire its lint deferral (#1272)",
+            "body": "Errors `kb` raises on malformed input now carry the underlying parse error as their cause. Callers constructing one of these errors themselves can attach a cause. When `kb` reports a thrown error that carries no message, the diagnostic now names the error's class instead of trailing off empty.",
+            "hash": "dbc91bd62d8ea7ab2e3c1d9d4790ce55e4be810b"
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Fix lint and retire rule deferrals (#1265)",
+            "body": "Fixes deferred lint violations in the `lifecycle`, `run-core`, and `foreman` packages and removes the cap on the severity of associated rules when a strict-lint check is run.",
+            "hash": "70f17b8fc2ba06c8dfb1fde4bcc2128069e8b59f"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Remove shelled nmr calls from package manifests (#1291)",
+            "body": "`nmr build` no longer reaches nmr through a shell, so a failing package build reports the step that failed instead of the whole nested subtree, and interrupting a run stops what would have followed. Five packages had a `build` override doing that: `kb`, `lifecycle`, `mcp`, and `run-core` restated a default nmr already supplies and now resolve `build` to its built-in `['compile']`, and `codeassembly`'s two post-compile steps move into its `build:post` hook. The warning nmr printed for each, five on every build, goes with them.\n\nA root test keeps the pattern out: It fails when any manifest in the repo, the monorepo root's included, declares a script reaching `nmr`. It catches the forms nmr's own warning misses, `npx nmr` and `pnpm --recursive exec nmr` among them, and exempts the npm lifecycle names along with root's `bootstrap`.",
+            "hash": "8cc3027bc0abf4966b66ba61900f8a1e933fc076"
+          },
+          {
+            "description": "Upgrade eslint-config-typescript to 10 and complete manifest metadata (#1301)",
+            "body": "Upgrades `@williamthorsen/eslint-config-typescript` to v10 and adds missing `package.json` values required by rules activated in the upgrade.\n\n`codeassembly`'s empty `exports` had been the declaration that the package has no library surface. This has been changed to `{\"./package.json\": \"./package.json\"}`, which complies with the new rules without exposing an importable module.",
+            "hash": "0cff9d7d8cb4c32588e5776e165d9136acb79eae"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.3.0",
     "date": "2026-08-07",
     "sections": [

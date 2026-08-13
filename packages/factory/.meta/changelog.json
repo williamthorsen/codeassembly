@@ -1,5 +1,33 @@
 [
   {
+    "version": "0.2.6",
+    "date": "2026-08-13",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Consolidate error-message extraction on toolbelt.errors' describeError (#1284)",
+            "body": "Consolidates error-message extraction across the workspace on `@williamthorsen/toolbelt.errors`, replacing the local copies each package had defined under its own name. The repository's exact-version dependency rule now accepts shared pins (via `catalog:`) as an alternative and enforces sharing over duplication. The packages that stated no Node requirement now declare the workspace's Node 24 minimum.",
+            "hash": "89280bf023be0cd4923d6fb0fcd33382b712b0a9"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrade eslint-config-typescript to 10 and complete manifest metadata (#1301)",
+            "body": "Upgrades `@williamthorsen/eslint-config-typescript` to v10 and adds missing `package.json` values required by rules activated in the upgrade.\n\n`codeassembly`'s empty `exports` had been the declaration that the package has no library surface. This has been changed to `{\"./package.json\": \"./package.json\"}`, which complies with the new rules without exposing an importable module.",
+            "hash": "0cff9d7d8cb4c32588e5776e165d9136acb79eae"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.5",
     "date": "2026-08-08",
     "sections": [
