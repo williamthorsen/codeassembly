@@ -2,7 +2,7 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';

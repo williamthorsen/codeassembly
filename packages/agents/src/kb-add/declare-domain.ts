@@ -10,7 +10,7 @@ import {
   type TaxonomyDeclaration,
   writeTaxonomy,
 } from '@williamthorsen/kb/taxonomy';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 /** A domain a write added to the taxonomy. */
 export interface AddedDomain {

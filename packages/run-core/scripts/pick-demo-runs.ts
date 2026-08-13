@@ -2,7 +2,7 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { resolveProjectsDir } from '~/src/config.ts';
 import { foldEvents } from '~/src/event-folder.ts';

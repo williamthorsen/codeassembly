@@ -1,7 +1,7 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';

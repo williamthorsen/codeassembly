@@ -8,7 +8,7 @@ import type { Finding } from '@williamthorsen/kb';
 import type { EnumeratedNote } from '@williamthorsen/kb/check';
 import { check } from '@williamthorsen/kb/check';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

@@ -1,4 +1,4 @@
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { enumerateNotes } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';

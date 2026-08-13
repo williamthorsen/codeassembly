@@ -11,7 +11,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { getOrCreate, retainKeys } from '../common/maps.ts';
 import type {

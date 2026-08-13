@@ -1,4 +1,4 @@
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { check, type CheckResult } from '../../check/check.ts';
 import type { EnumeratedNote } from '../../check/enumerate.ts';

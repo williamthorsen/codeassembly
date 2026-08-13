@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { type Document, isMap, isPair, isScalar, type Pair, parseDocument } from 'yaml';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';

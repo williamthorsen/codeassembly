@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { v2RunIndexSchema } from '../server/adapters/schemas/run-index-schema.js';
 

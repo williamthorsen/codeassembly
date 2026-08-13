@@ -10,7 +10,7 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { readAll } from '../lib/stream-helpers.ts';
 import { check } from './check.ts';

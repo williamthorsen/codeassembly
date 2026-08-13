@@ -4,7 +4,7 @@ import type { NoteScopeMatcher } from '@williamthorsen/kb/config';
 import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@williamthorsen/kb/config';
 import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
 import type { RecallFn } from './recall.ts';

@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { rename, unlink, writeFile } from 'node:fs/promises';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 /**
  * The subset of `node:fs/promises` operations `commitSupersede` performs. Tests inject mocks via this interface

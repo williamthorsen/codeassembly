@@ -13,7 +13,7 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { bundleSkillHelpers, type BundleTarget, packageRoot, targets } from '../bundle-skill-helpers.ts';
 import {

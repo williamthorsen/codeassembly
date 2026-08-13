@@ -51,9 +51,9 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@hyperjump/json-schema": "1.17.7",
+    "@hyperjump/json-schema": "1.17.8",
     "@types/node": "24.13.3",
-    "@williamthorsen/toolbelt.strings": "3.2.0",
+    "@williamthorsen/toolbelt.strings": "4.0.0",
     "esbuild": "0.28.1",
     "readyup": "0.27.0"
   },

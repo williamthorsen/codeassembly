@@ -1,4 +1,4 @@
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { renderRulebookBlock } from './sentinel-inliner.ts';

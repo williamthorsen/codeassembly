@@ -4,7 +4,7 @@ import type { Finding } from '@williamthorsen/kb';
 import type { EnumeratedNote } from '@williamthorsen/kb/check';
 import { asStringList } from '@williamthorsen/kb/note-io';
 import { buildVaultIndex } from '@williamthorsen/kb/vault-integrity';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { canonicalizeTags } from './apply/canonicalize-tags.ts';
 import { rewriteWikilinks } from './apply/rewrite-wikilinks.ts';

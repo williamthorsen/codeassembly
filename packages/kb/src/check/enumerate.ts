@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import process from 'node:process';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';

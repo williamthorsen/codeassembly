@@ -1,4 +1,4 @@
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';

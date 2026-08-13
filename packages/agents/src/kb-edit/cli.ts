@@ -10,7 +10,7 @@ import type { AliasMap, KbRoot } from '@williamthorsen/kb';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
 import type { KbAssertion } from '@williamthorsen/kb/records';
 import { loadAliases } from '@williamthorsen/kb/tags';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

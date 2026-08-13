@@ -1,4 +1,4 @@
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 /**
  * Awaits an actor animation, absorbing the rejection Excalibur raises when the actor is killed

@@ -36,7 +36,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.ts';

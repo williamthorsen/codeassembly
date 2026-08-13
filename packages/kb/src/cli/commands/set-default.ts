@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { tryLoadKbRegistry } from '../../discovery/load-registry.ts';
 import { clearDefaultKb, setDefaultKb } from '../../discovery/set-default-kb.ts';

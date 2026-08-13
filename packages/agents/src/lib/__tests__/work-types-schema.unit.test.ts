@@ -8,7 +8,7 @@ import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-202
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { describe, expect, it } from 'vitest';
 

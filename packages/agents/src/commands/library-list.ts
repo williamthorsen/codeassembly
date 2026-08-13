@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';

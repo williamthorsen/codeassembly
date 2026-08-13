@@ -6,7 +6,7 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { ulid } from 'ulid';
 
 import { writeEvent } from '../capture-event/write-event.ts';

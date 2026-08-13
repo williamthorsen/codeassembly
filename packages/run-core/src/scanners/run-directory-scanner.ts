@@ -1,7 +1,7 @@
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isEnoent } from '../type-guards.ts';
 

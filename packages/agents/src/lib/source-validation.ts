@@ -1,7 +1,7 @@
 import { constants } from 'node:fs';
 import { access, stat } from 'node:fs/promises';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isMissingFile } from './type-guards.ts';
 

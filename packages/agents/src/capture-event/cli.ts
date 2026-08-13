@@ -15,7 +15,7 @@ import {
   parseEvent,
   renderEvent,
 } from '@williamthorsen/kb/records';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { ulid } from 'ulid';
 
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';

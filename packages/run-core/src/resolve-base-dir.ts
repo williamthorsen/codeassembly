@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
 import { isRecord } from './type-guards.ts';

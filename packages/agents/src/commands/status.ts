@@ -1,4 +1,4 @@
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { readHomeProvenance } from '../lib/home-provenance.ts';

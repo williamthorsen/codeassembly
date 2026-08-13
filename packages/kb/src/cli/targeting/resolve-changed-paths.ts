@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isRecord } from '../../type-guards.ts';
 

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 

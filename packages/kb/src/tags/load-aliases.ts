@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { chainError, describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
+import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse } from 'yaml';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';

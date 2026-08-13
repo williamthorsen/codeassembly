@@ -9,7 +9,7 @@ import type { AliasMap, KbRoot } from '@williamthorsen/kb';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
 import { loadAliases } from '@williamthorsen/kb/tags';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';

@@ -9,7 +9,7 @@ import { resolveEventPath, resolveKbDir } from '@williamthorsen/kb/layout';
 import { type ReadNote, readNote, writeNote } from '@williamthorsen/kb/note-io';
 import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/records';
 import { loadAliases } from '@williamthorsen/kb/tags';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';

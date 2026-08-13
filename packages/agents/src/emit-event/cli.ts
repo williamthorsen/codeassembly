@@ -20,7 +20,7 @@ import { homedir } from 'node:os';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { EVENT_TYPES, isEventType } from 'codeassembly-lifecycle';
 import { ulid } from 'ulid';
 

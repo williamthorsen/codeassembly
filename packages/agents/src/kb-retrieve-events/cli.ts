@@ -5,7 +5,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@williamthorsen/kb/records';
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';

@@ -4,7 +4,7 @@
 
 import { statSync, watch } from 'node:fs';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 /** A running watcher; `stop` releases the watch handle and every timer. */
 export interface Watcher {

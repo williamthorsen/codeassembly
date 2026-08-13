@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors/candidate';
+import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { create, type CreatedStore } from '../../create/create.ts';
 import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
