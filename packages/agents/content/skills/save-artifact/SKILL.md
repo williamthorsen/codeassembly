@@ -18,7 +18,7 @@ Save AI-generated files with standardized naming conventions.
 
 - **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
 - **slug**: Kebab-case descriptor drawn from work context — e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
-- **artifact-type**: Type of artifact (see below)
+- **artifact-type**: Type of artifact. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the artifact type list.
 
 ### Run artifacts (review workflow)
 
