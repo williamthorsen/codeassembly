@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
-import { buildContentTree } from './build-content-tree.ts';
+import { buildContentTree } from '../test-utils/build-content-tree.ts';
 
 describe('install (designated-writer guard)', () => {
   let tempDir: string;

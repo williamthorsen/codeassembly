@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
-import { buildContentTree } from './build-content-tree.ts';
+import { buildContentTree } from '../test-utils/build-content-tree.ts';
 
 // A declared guidance hook is inert until a binding fills it, and `install` resolves no declaration, so every hook it
 // meets is unbound. These pin that the directive reaches no installed file along either of install's render routes:

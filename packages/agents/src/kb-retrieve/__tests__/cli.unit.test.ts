@@ -2,7 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildRecallStub } from '../../kb-search/test-utils/build-recall-stub.ts';
+import { buildRecallStub } from '../../test-utils/build-recall-stub.ts';
 import { parseArgs, runRetrieve } from '../cli.ts';
 
 // The vault and registry fixtures live with the shared search primitive (kb-search), which owns scope and recall; the

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { makeRegistryPath, makeTempDir } from '../../test-utils/scaffolding.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
+import { makeRegistryPath } from '../../test-utils/registry.ts';
 import { create } from '../create.ts';
 
 // Forces the registry writer to report a name collision detected at write time — a TOCTOU race the `isNameRegistered`

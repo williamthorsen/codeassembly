@@ -2,7 +2,7 @@
 /* eslint-disable unicorn/no-nonstandard-builtin-properties -- unicorn's Symbol allowlist predates Explicit Resource Management, and the rule accepts no options. */
 import { describe, expect, expectTypeOf, it, type MockInstance } from 'vitest';
 
-import { silencedConsole } from '../test-utils.js';
+import { silencedConsole } from '../silenced-console.ts';
 
 describe('silencedConsole', () => {
   describe('type narrowing', () => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
-import { silencedConsole } from '../../../utils/test-utils.ts';
+import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { ProjectScanner } from '../project-scanner.js';
 
 const { mockedDiscover, mockedValidate } = vi.hoisted(() => ({

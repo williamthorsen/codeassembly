@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { enumerateNotes } from '../../../check/enumerate.ts';
 import { defaultKbConfig } from '../../../config/config-schema.ts';
-import { makeTree } from '../../../test-utils/scaffolding.ts';
+import { makeTree } from '../../../test-utils/make-tree.ts';
 import { selectNotes } from '../select-notes.ts';
 
 const NOTE =

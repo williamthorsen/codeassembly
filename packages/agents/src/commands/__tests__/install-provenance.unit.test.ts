@@ -10,7 +10,7 @@ import { getManifestPath, readManifest } from '../../lib/manifest.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
-import { buildContentTree } from './build-content-tree.ts';
+import { buildContentTree } from '../test-utils/build-content-tree.ts';
 
 describe('install (home provenance)', () => {
   let tempDir: string;

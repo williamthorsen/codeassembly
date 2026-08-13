@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import { loadKbRegistry } from '../../discovery/load-registry.ts';
 import { pathExists } from '../../filesystem/exists.ts';
-import { makeRegistryPath, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
+import { makeRegistryPath, seedRegistry } from '../../test-utils/registry.ts';
 import { create } from '../create.ts';
 
 describe(create, () => {

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultKbConfig } from '../../config/config-schema.ts';
 import { loadKbConfig } from '../../config/load-config.ts';
 import { loadAliases } from '../../tags/load-aliases.ts';
-import { makeKbRoot } from '../../test-utils/scaffolding.ts';
+import { makeKbRoot } from '../../test-utils/kb-root.ts';
 import { renderAliasesSeed, renderConfigSeed } from '../render-seeds.ts';
 
 describe(renderConfigSeed, () => {

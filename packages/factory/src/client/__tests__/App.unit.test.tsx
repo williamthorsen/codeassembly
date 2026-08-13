@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRunStatus } from '../../__test-helpers__/fixtures.js';
 import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.js';
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
-import { silencedConsole } from '../../utils/test-utils.ts';
+import { silencedConsole } from '../../test-utils/silenced-console.ts';
 
 const {
   mockUseRunStatus,

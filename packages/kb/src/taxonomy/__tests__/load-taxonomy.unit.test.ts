@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { isKbLoaderError, KbLoaderError } from '../../config/kb-loader-error.ts';
-import { makeKbRoot } from '../../test-utils/scaffolding.ts';
+import { makeKbRoot } from '../../test-utils/kb-root.ts';
 import { loadTaxonomy } from '../load-taxonomy.ts';
 
 describe(loadTaxonomy, () => {

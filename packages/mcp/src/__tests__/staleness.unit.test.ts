@@ -8,7 +8,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isBuildStale } from '../staleness.ts';
-import { getStringField, toRecord } from './helpers.ts';
+import { getStringField, toRecord } from '../test-utils/records.ts';
 
 // region | Test helper: create a fake package directory mirroring packages/mcp layout
 

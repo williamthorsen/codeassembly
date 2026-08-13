@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { silencedConsole } from '../../../utils/test-utils.ts';
+import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { SettingsStore } from '../settings-store.js';
 
 describe('SettingsStore', () => {

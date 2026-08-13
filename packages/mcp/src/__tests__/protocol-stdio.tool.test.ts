@@ -7,7 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { describe, expect, it } from 'vitest';
 
-import { isErrorResult, parseAndGetString } from './helpers.ts';
+import { isErrorResult, parseAndGetString } from '../test-utils/tool-result.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(__dirname, '../cli.ts');
