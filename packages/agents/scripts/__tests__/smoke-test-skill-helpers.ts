@@ -16,19 +16,17 @@ import process from 'node:process';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { bundleSkillHelpers, type BundleTarget, packageRoot, targets } from '../bundle-skill-helpers.ts';
-import {
-  makeCaptureEventSmokeTest,
-  makeDeriveSessionContextSmokeTest,
-  makeEmitEventSmokeTest,
-  makeFeedbackMemoriesSmokeTest,
-  makeKbCurateSmokeTest,
-  makeKbEditSmokeTest,
-  makeKbRetrieveEventsSmokeTest,
-  makeKbUpdateEventsSmokeTest,
-  makeRelayHookEventSmokeTest,
-  makeUpdateJiraTicketSmokeTest,
-  type SmokeTestInvocation,
-} from '../testing/smoke-test-utils.ts';
+import { makeCaptureEventSmokeTest } from '../test-utils/make-capture-event-smoke-test.ts';
+import { makeDeriveSessionContextSmokeTest } from '../test-utils/make-derive-session-context-smoke-test.ts';
+import { makeEmitEventSmokeTest } from '../test-utils/make-emit-event-smoke-test.ts';
+import { makeFeedbackMemoriesSmokeTest } from '../test-utils/make-feedback-memories-smoke-test.ts';
+import { makeKbCurateSmokeTest } from '../test-utils/make-kb-curate-smoke-test.ts';
+import { makeKbEditSmokeTest } from '../test-utils/make-kb-edit-smoke-test.ts';
+import { makeKbRetrieveEventsSmokeTest } from '../test-utils/make-kb-retrieve-events-smoke-test.ts';
+import { makeKbUpdateEventsSmokeTest } from '../test-utils/make-kb-update-events-smoke-test.ts';
+import { makeRelayHookEventSmokeTest } from '../test-utils/make-relay-hook-event-smoke-test.ts';
+import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ticket-smoke-test.ts';
+import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts';
 
 // Each bundle that needs a non-default smoke run, keyed by its `entry`; a bundle absent here runs with no args and
 // empty stdin. The builders run here, not on import of the utilities module, so building a bundle never triggers
