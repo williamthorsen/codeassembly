@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,9 +7,9 @@ import { describe, expect, it } from 'vitest';
 import type { ViteUserConfig } from 'vitest/config';
 import type { ProjectConfig } from 'vitest/node';
 
+import { listWorkspacePackages } from '../../test-utils/workspace-packages.ts';
 import { sharedVitestOptions } from '../shared-options.ts';
 
-const PACKAGES_DIR = fileURLToPath(new URL('../../../packages/', import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SHARED_OPTIONS_PATH = '.config/vitest/shared-options.ts';
 const GIT_ISOLATION_SETUP_FILE = fileURLToPath(new URL('../vitest.setup.ts', import.meta.url));
@@ -75,14 +75,6 @@ function getProjectName(name: ProjectConfig['name']): string {
 function listVitestConfigPaths(): string[] {
   const packageConfigPaths = listWorkspacePackages().map((packageName) => `packages/${packageName}/vitest.config.ts`);
   return [...ROOT_VITEST_CONFIG_PATHS, ...packageConfigPaths];
-}
-
-/** Names every directory under `packages/` that holds a workspace package. */
-function listWorkspacePackages(): string[] {
-  return readdirSync(PACKAGES_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && existsSync(path.join(PACKAGES_DIR, entry.name, 'package.json')))
-    .map((entry) => entry.name)
-    .toSorted();
 }
 
 /** Normalizes Vitest's string-or-array `setupFiles` to a list, empty for a project that sets none. */

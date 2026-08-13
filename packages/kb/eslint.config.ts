@@ -1,16 +1,7 @@
-import baseConfig from '@williamthorsen/eslint-config-typescript';
-import { defineConfig, globalIgnores } from 'eslint/config';
+import { defineConfig } from 'eslint/config';
 
-const config = defineConfig([
-  ...baseConfig,
-  globalIgnores([
-    '**/coverage/**',
-    '**/dist/**',
-    '**/local/**',
-    // Ignore test fixtures that are intentionally syntactically broken.
-    '**/__tests__/**/fixtures/**/*malformed*/**',
-    '**/__tests__/**/fixtures/**/*malformed*',
-  ]),
-]);
+import baseConfig from '../../eslint.config.ts';
+
+const config = defineConfig([...baseConfig]);
 
 export default config;

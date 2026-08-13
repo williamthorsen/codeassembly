@@ -6,6 +6,12 @@ import baseConfig from '../../eslint.config.ts';
 const config = defineConfig([
   ...baseConfig,
   {
+    // This package's specifiers name `.js` files for its `.ts` modules, so the honest-extension rule is off here.
+    rules: {
+      'import/extensions': 'off',
+    },
+  },
+  {
     files: ['**/*.tsx'],
     languageOptions: {
       globals: {
