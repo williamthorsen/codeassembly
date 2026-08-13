@@ -41,41 +41,11 @@ Save AI-generated files with standardized naming conventions.
 **Common fields (both formats):**
 
 - **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType` (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`). See [artifact-conventions.md](../_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy).
-- **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the complete artifact type list.
+- **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the artifact type list.
 
 Run artifacts are saved by the skills that produce them (`review-branch`, `respond-to-review`). They handle run directory discovery and creation.
 
 > **Note:** In orchestrated runs, the orchestrator is responsible for maintaining `run-index.json` — individual skills do not write to it directly.
-
-## Artifact types
-
-### Ticket-level
-
-- `change-summary` — Branch change summary for PRs
-- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to any tickets created (ticket-scoped when a ticket is in session; falls back to project-scoped `deferred-findings/` otherwise)
-- `devlog` — Development log entry (ticket-scoped when a ticket is in session; falls back to project-scoped `devlogs/` otherwise)
-- `merge` — Record of a merged pull request
-- `orchestration-plan` — Orchestration plan for the orchestrate engine
-- `plan` — Implementation plan document
-- `plan-review` — Plan review findings (completeness and correctness analysis)
-- `plan-v2` — Refined implementation plan after review and revision
-- `pull-request` — PR description file
-- `review` — Code review (ticket-level, commit scope)
-- `ticket` — Issue ticket
-
-### Run artifacts
-
-- `run-manifest` — Immutable record of run initial conditions
-- `change-summary` — What changed + dispositions on prior findings
-- `orchestration-plan` — Structured orchestration steps
-- `plan` — Implementation plan document
-- `review` — Code review findings + dispositions on own prior findings
-- `holistic-review` — Holistic review after iterative convergence
-- `run-summary` — Final summary of the orchestrated run
-
-### Non-ticket
-
-- `chat-summary` — Conversation summary
 
 ## Path resolution
 
