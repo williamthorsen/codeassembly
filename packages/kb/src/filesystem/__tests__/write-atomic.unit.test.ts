@@ -68,11 +68,11 @@ describe(writeAtomic, () => {
 
 /** Returns the path the mocked `writeFile` was called with, which is the temp file `writeAtomic` staged. */
 function readStagedTempPath(): string {
-  const call = vi.mocked(writeFile).mock.calls[0];
-  if (call === undefined) {
-    throw new Error('writeFile was not called');
+  const stagedPath = vi.mocked(writeFile).mock.calls[0]?.[0];
+  if (typeof stagedPath !== 'string') {
+    throw new TypeError('writeFile was not called with a path');
   }
-  return String(call[0]);
+  return stagedPath;
 }
 
 // endregion | Helpers
