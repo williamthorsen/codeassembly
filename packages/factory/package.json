@@ -3,6 +3,7 @@
   "version": "0.2.5",
   "private": true,
   "description": "Visual factory for orchestrated workflow management",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "scripts": {
     "build": "pnpm vite build",

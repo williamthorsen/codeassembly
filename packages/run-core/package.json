@@ -3,6 +3,7 @@
   "version": "0.2.3",
   "private": true,
   "description": "Core runtime for orchestrated development runs",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "exports": {
     ".": {
