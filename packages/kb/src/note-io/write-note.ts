@@ -1,6 +1,4 @@
-import { randomBytes } from 'node:crypto';
-import { rename, unlink, writeFile } from 'node:fs/promises';
-
+import { writeAtomic } from '../filesystem/write-atomic.ts';
 import { renderFrontmatterFields } from './yaml-fields.ts';
 
 const FENCE = '---';
@@ -17,21 +15,9 @@ export function renderNote(fields: Record<string, unknown>, body: string): strin
 }
 
 /**
- * Atomically writes a note to `path` via a same-directory temp file plus `rename`, so a concurrent reader never sees a
- * partial write. On rename failure the temp file is cleaned up best-effort and the error re-thrown.
+ * Atomically writes a note to `path`, so a concurrent reader never sees a partial write. See {@link writeAtomic} for
+ * the guarantee and its failure behavior.
  */
 export async function writeNote(path: string, fields: Record<string, unknown>, body: string): Promise<void> {
-  const content = renderNote(fields, body);
-  const tempPath = `${path}.${randomBytes(8).toString('hex')}.tmp`;
-  await writeFile(tempPath, content, 'utf8');
-  try {
-    await rename(tempPath, path);
-  } catch (error) {
-    try {
-      await unlink(tempPath);
-    } catch {
-      // The rename failure is what the caller needs; a failed cleanup must not mask it.
-    }
-    throw error;
-  }
+  await writeAtomic(path, renderNote(fields, body));
 }

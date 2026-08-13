@@ -1,11 +1,11 @@
-import { randomBytes } from 'node:crypto';
-import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { type Document, isMap, isPair, isScalar, type Pair, parseDocument } from 'yaml';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';
+import { writeAtomic } from '../filesystem/write-atomic.ts';
 import { TAXONOMY_FILE } from '../layout/index.ts';
 import { isEnoent, isRecord } from '../type-guards.ts';
 import type { KbRoot } from '../types.ts';
@@ -33,8 +33,8 @@ export interface TaxonomyDeclaration {
  * than moved.
  *
  * A path either block already declares is skipped rather than overwritten, so a repeat call adds nothing; when nothing
- * is left to add, the file is not opened for writing at all. The write is atomic (temp file plus rename, matching
- * `note-io`), so an interrupted call cannot truncate the taxonomy.
+ * is left to add, the file is not opened for writing at all. The write goes through the shared `writeAtomic` helper,
+ * so an interrupted call cannot truncate the taxonomy.
  *
  * Throws a {@link KbLoaderError} on a malformed key, or on an existing file that cannot be safely appended to: one
  * that fails to parse, one whose top level is not a mapping, and one whose `domains` or `provisional` block holds
@@ -213,22 +213,6 @@ function sortByPath(declarations: readonly TaxonomyDeclaration[]): TaxonomyDecla
     if (a.path === b.path) return 0;
     return a.path < b.path ? -1 : 1;
   });
-}
-
-/** Writes `content` to `path` via a same-directory temp file plus rename, so a reader never sees a partial write. */
-async function writeAtomic(path: string, content: string): Promise<void> {
-  const tempPath = `${path}.${randomBytes(8).toString('hex')}.tmp`;
-  await writeFile(tempPath, content, 'utf8');
-  try {
-    await rename(tempPath, path);
-  } catch (error) {
-    try {
-      await unlink(tempPath);
-    } catch {
-      // The rename failure is what the caller needs; a failed cleanup must not mask it.
-    }
-    throw error;
-  }
 }
 
 // endregion | Helpers
