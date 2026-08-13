@@ -29,6 +29,10 @@ Diagnostic: would this test exist if the deleted code had never existed? If no, 
 
 Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Verification step), not a standing test. This applies to any change that removes something, not only removal-only changes.
 
+### Loosen a test broken by a wording-only change
+
+When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior hangs on the text.
+
 ## Naming of tests
 
 **Always** use test names that describe the specific behavior being tested.
