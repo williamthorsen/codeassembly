@@ -419,7 +419,7 @@ describe(runAdd, () => {
     // itself stays in an isolated tempdir while the alias-load arm hits a real parse failure.
     const kbPath = await makeKb();
     await copyFile(
-      join(FIXTURES, 'malformed-aliases', '.kb', 'tag-aliases.yaml'),
+      join(FIXTURES, 'aliases.malformed', '.kb', 'tag-aliases.yaml'),
       join(kbPath, '.kb', 'tag-aliases.yaml'),
     );
 

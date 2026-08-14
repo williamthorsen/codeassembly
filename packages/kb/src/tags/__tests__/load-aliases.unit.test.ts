@@ -67,19 +67,17 @@ describe(parseAliases, () => {
   });
 
   it('throws naming the source when the YAML is syntactically malformed', async () => {
-    const text = await readFixture('syntactically-malformed.yaml');
+    const text = await readFixture('aliases.malformed.yaml');
 
-    expect(() => parseAliases(text, 'syntactically-malformed.yaml')).toThrow(
-      /syntactically-malformed\.yaml: malformed YAML:/,
-    );
+    expect(() => parseAliases(text, 'aliases.malformed.yaml')).toThrow(/aliases\.malformed\.yaml: malformed YAML:/);
   });
 
   it('attaches the YAML parse failure as the cause', async () => {
-    const text = await readFixture('syntactically-malformed.yaml');
+    const text = await readFixture('aliases.malformed.yaml');
 
     let thrown: unknown;
     try {
-      parseAliases(text, 'syntactically-malformed.yaml');
+      parseAliases(text, 'aliases.malformed.yaml');
     } catch (error) {
       thrown = error;
     }

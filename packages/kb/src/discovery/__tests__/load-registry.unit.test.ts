@@ -100,13 +100,13 @@ describe(loadKbRegistry, () => {
 
   it('throws naming the source file when a registry contains malformed YAML', async () => {
     await expect(
-      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') }),
-    ).rejects.toThrow(/malformed-yaml.*kb\.yaml: malformed YAML:/s);
+      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'yaml.malformed') }),
+    ).rejects.toThrow(/yaml\.malformed.*kb\.yaml: malformed YAML:/s);
   });
 
   it('attaches the YAML parse failure as the cause', async () => {
     await expect(
-      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') }),
+      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'yaml.malformed') }),
     ).rejects.toHaveProperty('cause', expect.any(Error));
   });
 
@@ -138,7 +138,7 @@ describe(tryLoadKbRegistry, () => {
   });
 
   it('captures the error and degrades to an empty config for a malformed file', async () => {
-    const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') });
+    const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'yaml.malformed') });
 
     expect(result.error).toMatch(/malformed YAML:/);
     expect(result.config).toEqual({ entries: [], sources: {} });

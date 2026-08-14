@@ -9,8 +9,8 @@ import { parseArgs, runRetrieve } from '../cli.ts';
 // retrieve command's integration tests reuse them.
 const FIXTURES = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
-const MALFORMED_NO_KB = join(FIXTURES, 'malformed-no-kb');
-const MALFORMED_REGISTRY = join(FIXTURES, 'malformed-registry');
+const MALFORMED_NO_KB = join(FIXTURES, 'no-kb.malformed');
+const MALFORMED_REGISTRY = join(FIXTURES, 'registry.malformed');
 const DEAD_PATH_REGISTRY = join(FIXTURES, 'dead-path-registry');
 const MIXED_REGISTRY = join(FIXTURES, 'mixed-registry');
 const CUSTOM_SCHEMA_VAULT = join(FIXTURES, 'custom-schema-vault');
