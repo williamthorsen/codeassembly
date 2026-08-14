@@ -165,7 +165,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
 ## Run initialization
 
-1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one. Then emit `skill.started` (payload `{"skill":"orchestrate-dev"}` or `{"skill":"orchestrate-review"}`, naming the wrapper skill that invoked this engine) per [Lifecycle events](#lifecycle-events).
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: Run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one. Then emit `skill.started` (payload `{"skill":"orchestrate-dev"}` or `{"skill":"orchestrate-review"}`, naming the wrapper skill that invoked this engine) per [Lifecycle events](#lifecycle-events).
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
 3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
 
@@ -333,7 +333,7 @@ Store the full path as `{run-manifest-path}`; increment `{seq}`.
 
 ### MCP call policy
 
-When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. No per-call-site guards are needed — this one policy governs every call site in this file and in loaded modules. It governs MCP tool calls only: lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
+When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. No per-call-site guards are needed — this one policy governs every call site in this file and in loaded modules. It governs MCP tool calls only: Lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
 
 `get_run_state` retains its existing conversation-tracked fallback (see "Error handling" and `review-cycle.md` fallback policy note).
 
@@ -504,7 +504,7 @@ To execute a module phase:
 1. **Read the module file**: Read `modules/{module-name}.md` (relative to this skill's directory). If the module file cannot be read, emit `phase_decision` events with `run: false` and `reason: "Module file could not be loaded"` for each sub-phase (for `review-cycle`: `parallelReview`, `codeSimplifier`, `holisticReview`) and emit `phase_completed` events with `status: "failed"` for the module's known sub-phases (for `review-cycle`: `review`, `simplifier`, `holistic`). Then proceed to the summary phase.
 2. **Prepare context variables**: Set all variables listed in the module's Inputs table. See the context preparation section for each module's requirements. If a required context variable cannot be resolved, set it to an empty string and record a warning in the run summary.
 3. **Follow module instructions**: Execute the module's instructions as if they were inline in this file. The module uses `{run-dir}` for all MCP tool calls.
-4. **Capture exit state**: After the module completes, read the exit state variables it produces and use them for subsequent flow control. If an expected exit state variable is missing, treat it as module failure: emit `phase_completed` with `status: "failed"` for the relevant phase and proceed to the summary phase.
+4. **Capture exit state**: After the module completes, read the exit state variables it produces and use them for subsequent flow control. If an expected exit state variable is missing, treat it as module failure: Emit `phase_completed` with `status: "failed"` for the relevant phase and proceed to the summary phase.
 
 **Example**: Invoking review-cycle:
 
@@ -770,20 +770,20 @@ See [artifact-conventions.md](../_data/artifact-conventions.md) for artifact nam
 
 Subagents include a structured return block at the end of their {tool:Task} response. The orchestrator parses flow-control fields directly from this return value.
 
-**Parse format:** look for lines matching `{Key}: {value}` in the {tool:Task} return. Expected fields per role:
+**Parse format:** Look for lines matching `{Key}: {value}` in the {tool:Task} return. Expected fields per role:
 
 - **Architect:** `Phase`, `Status`, `Artifact`, `Impact` (`none`|`low`|`medium`|`high`)
 - **Planner:** `Phase`, `Status`, `Artifact`, `Steps` (integer)
 - **Coder:** `Phase`, `Status`, `Artifact`, `QualityGates` (`passed`|`failed`|`skipped`)
 - **Reviewers:** `Phase`, `Status`, `Artifact`, `Criticality` (`none`|`low`|`medium`|`high`)
 
-**Strict parsing:** if any required field is missing or its value does not match the expected enum, record the subagent as `failed` for that phase. Do not attempt to parse the artifact file as a fallback. Emit `phase_completed` with `status: "failed"`.
+**Strict parsing:** If any required field is missing or its value does not match the expected enum, record the subagent as `failed` for that phase. Do not attempt to parse the artifact file as a fallback. Emit `phase_completed` with `status: "failed"`.
 
 ## Usage capture
 
 {tool:Task} results include a `<usage>` block reporting resource consumption. Parse these fields and map them to event fields for downstream analysis.
 
-**Parse format:** look for a `<usage>` block in the {tool:Task} return value. Extract key-value pairs:
+**Parse format:** Look for a `<usage>` block in the {tool:Task} return value. Extract key-value pairs:
 
 | {tool:Task} result field | Event field  |
 | ------------------------ | ------------ |
@@ -802,7 +802,7 @@ Subagents include a structured return block at the end of their {tool:Task} resp
 - **`max_turns` exhausted (reviewers):** The engine dispatches one constrained retry per the "Retry-on-interruption hook" in `modules/review-cycle.md`. The retry uses a constrained prompt shape (file allow-list, negative-scope guardrails, forced structured return) and does not consume from `reviewRoundsUsed`. If the retry also exhausts, fall through to **Recovery from reviewer interruption** below. Applies to all five reviewers (`orchestrated-reviewer`, `aspect-code-reviewer`, `aspect-silent-failure-reviewer`, `aspect-test-reviewer`, `code-simplification-reviewer`).
 - **`max_turns` exhausted (non-reviewers):** For subagents without a dedicated recovery path, record as `needs_manual_review`. The coder has its own continuation path (see **Recovery from coder interruption** below).
 - **Recovery from coder interruption**: When a coder {tool:Task} returns without a structured return block (typically an `agentId:` marker on `max_turns` exhaustion), the coder maintains its change-summary incrementally — the partial artifact at the canonical `{run-dir}/{NN}_coder_change-summary.md` path will list which plan tasks or findings were completed vs. pending. Read the partial summary and use it to seed a continuation dispatch or populate the run summary. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel.
-- **Recovery from reviewer interruption**: Applies after the constrained retry (per the **`max_turns` exhausted (reviewers)** rule above) has also exhausted. The reviewer maintains its review file incrementally — read the partial artifact at the canonical reviewer path (`{run-dir}/{NN}_{reviewer}_*.md`). Inspect the `### Criticality:` line: if it is the literal sentinel `(pending)`, the reviewer did not converge. Treat the dispatch as `failed` for flow control purposes, but retain the partial findings list to inform the run summary. Do NOT use `(pending)` as a criticality value in aggregation — it is not in the enum. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel. See the `failed`-reviewer rule in `modules/review-cycle.md`'s "Handling failures" note for how the reviewer's contribution to aggregated criticality is computed (`medium`).
+- **Recovery from reviewer interruption**: Applies after the constrained retry (per the **`max_turns` exhausted (reviewers)** rule above) has also exhausted. The reviewer maintains its review file incrementally — read the partial artifact at the canonical reviewer path (`{run-dir}/{NN}_{reviewer}_*.md`). Inspect the `### Criticality:` line: If it is the literal sentinel `(pending)`, the reviewer did not converge. Treat the dispatch as `failed` for flow control purposes, but retain the partial findings list to inform the run summary. Do NOT use `(pending)` as a criticality value in aggregation — it is not in the enum. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel. See the `failed`-reviewer rule in `modules/review-cycle.md`'s "Handling failures" note for how the reviewer's contribution to aggregated criticality is computed (`medium`).
 - **Reviewer recovery scope:** The retry hook and reviewer-interruption recovery rules apply uniformly to all five reviewers. The `### Criticality: (pending)` sentinel in the artifact file is the unified interruption marker — `code-simplification-reviewer` is included despite having no structured return block, because the file-side sentinel is the authoritative trigger.
 - **Quality gate failure** (coder reports failing gates): Treat as review finding at `critical` severity.
 - **`get_run_state` unavailable**: If any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.

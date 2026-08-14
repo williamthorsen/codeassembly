@@ -19,9 +19,9 @@ A record exists because the author looked at the lede and decided. There are exa
 - **`accepted`** — the author read the agent's lede and shipped it as written.
 - **`revised`** — the author rewrote it before merge.
 
-Declining to decide writes nothing. **The absence of a record carries no meaning, and in particular is not an acceptance**: a merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give — a lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
+Declining to decide writes nothing. **The absence of a record carries no meaning, and in particular is not an acceptance**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give — a lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
 
-For the same reason, the corpus is outcome-selected: it holds only changes someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison's fixture draw must never read it.
+For the same reason, the corpus is outcome-selected: It holds only changes someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison's fixture draw must never read it.
 
 ## Arguments
 
@@ -80,7 +80,7 @@ When `differ` is `false`, show the single lede and ask:
 1. ■■□ Record it as accepted — you read it and shipped it as written
 2. ■□□ Skip — you did not evaluate it
 
-Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: the corpus is better off one record smaller than holding a decision the author did not make.
+Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than holding a decision the author did not make.
 
 ### 3. Record the decision
 
@@ -100,13 +100,13 @@ cat <<'EOF' | node {harness_home_dir}/skills/capture-lede-decision/capture-lede-
 EOF
 ```
 
-Relay the comment verbatim. It is free text on purpose: naming which doctrine rule the fix invoked is the refinement pass's job, and a rule list offered at capture time would presuppose which rules matter, which is the question the corpus exists to answer.
+Relay the comment verbatim. It is free text on purpose: Naming which doctrine rule the fix invoked is the refinement pass's job, and a rule list offered at capture time would presuppose which rules matter, which is the question the corpus exists to answer.
 
 Report the written `path` on success.
 
 ### Recording a pull request merged outside the merge flow
 
-Such a pull request wrote no merge artifact, so the merged lede has to be supplied. A lede file is read whole and recorded as the lede, with none of the heading extraction the artifact path applies: a file holding the entire pull-request body records the entire body as the lede. Extract the `## What` section as the file is written:
+Such a pull request wrote no merge artifact, so the merged lede has to be supplied. A lede file is read whole and recorded as the lede, with none of the heading extraction the artifact path applies: A file holding the entire pull-request body records the entire body as the lede. Extract the `## What` section as the file is written:
 
 ```bash
 gh pr view <number> --json body --jq '.body' \
@@ -127,7 +127,7 @@ One event per decision, in the corpus:
 - **Frontmatter** — the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the install manifest supplies one.
 - **Body** — `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
-`doctrine-hash` is what groups records by doctrine generation. Nothing is recorded at install time to make that work: the mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the doctrine file's own history.
+`doctrine-hash` is what groups records by doctrine generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the doctrine file's own history.
 
 ## Handling failures
 

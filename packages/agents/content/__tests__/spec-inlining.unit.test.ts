@@ -79,13 +79,13 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     '### Proposed-edit preview',
     // The carve-out that exempts the preview from the sub-blocks' terseness default. Without it that default
     // suppresses the preview again, which is the consent-blind render this spec exists to prevent.
-    'it never suppresses the proposed-edit preview, which is required content',
+    'It never suppresses the proposed-edit preview, which is required content',
     // The mode that keeps the Deviations edit inside the criteria it previews. Without it the option invokes
     // the default whole-ticket regeneration and the preview under-describes the edit again.
     'in criteria-only mode',
     // The trigger's computation order. Without it the sub-block renders off the compliance status rows again,
     // prompting for a ticket edit wherever a criterion's wording merely differs from what was built.
-    'Compute the delta first: an empty delta renders no sub-block',
+    'Compute the delta first: An empty delta renders no sub-block',
     // The carve-out for work that is unfinished rather than redirected. Without it a mid-implementation review
     // proposes dropping criteria the branch has not reached yet, aligning the contract to a moving target.
     'A criterion that is merely unbuilt contributes no line',

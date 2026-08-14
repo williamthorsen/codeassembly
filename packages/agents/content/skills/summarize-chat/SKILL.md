@@ -64,7 +64,7 @@ Use these to mark significant sections:
 ## Formatting
 
 - Use proper Markdown
-- Compose tight from the start ([concision principle](../_data/concision.md)): a summary is a distillation, not a transcript
+- Compose tight from the start ([concision principle](../_data/concision.md)): A summary is a distillation, not a transcript
 - Focus on the most important findings
 
 ## Frontmatter resolution

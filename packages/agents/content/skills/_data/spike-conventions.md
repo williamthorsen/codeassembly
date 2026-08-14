@@ -40,7 +40,7 @@ The concision and content-placement doctrines that govern feature tickets and pl
 Deliverable: a findings & recommendation artifact.
 ```
 
-`Context` and `Scope` are opt-in: include either only when it carries signal the reader must act on.
+`Context` and `Scope` are opt-in: Include either only when it carries signal the reader must act on.
 
 Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is a first-class section; acceptance criteria are questions-to-answer and decisions-to-enable rather than observable-behavior checkboxes; there is no test or documentation criterion; the deliverable is a findings artifact, saved via the standard `save-artifact` conventions (no dedicated artifact type).
 
@@ -78,8 +78,8 @@ Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is
 {The findings & recommendation artifact: the answers reached, a recommendation, and residual unknowns.}
 ```
 
-Differences from the feature plan: investigation steps framed by the question each probes replace tasks with create/modify/test file lists; `Timebox` is first-class; `Deliverable` replaces `Verification`, since a spike produces findings rather than verifiable behavior; there is no per-step test or documentation criterion.
+Differences from the feature plan: Investigation steps framed by the question each probes replace tasks with create/modify/test file lists; `Timebox` is first-class; `Deliverable` replaces `Verification`, since a spike produces findings rather than verifiable behavior; there is no per-step test or documentation criterion.
 
 ## Aligning a spike
 
-When `align-ticket-with-implementation` reconciles a spike, the branch's "implementation" is the findings: reconcile whether the investigation answered its questions and reached a recommendation, not whether the branch met acceptance criteria. Align the ticket's questions and decisions to what the investigation actually concluded.
+When `align-ticket-with-implementation` reconciles a spike, the branch's "implementation" is the findings: Reconcile whether the investigation answered its questions and reached a recommendation, not whether the branch met acceptance criteria. Align the ticket's questions and decisions to what the investigation actually concluded.

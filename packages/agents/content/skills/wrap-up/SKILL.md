@@ -357,7 +357,7 @@ Set these skill-specific values inline (not in the script's output):
 
 - `provenance.skill`: always `wrap-up`.
 - `provenance.isInteractive`: always `true`.
-- `run_id`: **override** the script's value — reuse the run ID Phase 1a captured (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
+- `run_id`: **Override** the script's value — reuse the run ID Phase 1a captured (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
 - `session_type` (deferred-findings extension): the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
 - `tickets_created` (deferred-findings extension): list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list. Omit when empty.
 

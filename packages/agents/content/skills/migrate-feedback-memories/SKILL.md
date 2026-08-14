@@ -8,7 +8,7 @@ user-invocable: true
 
 Route every `feedback`-type agent memory on this machine to its proper home. A bundled helper does the mechanical work — it enumerates feedback memories across every memory store, and executes deletions with `MEMORY.md` reconciliation. You do the judgment work — classify each memory, dedup capture candidates against the knowledge base, and compose each capture.
 
-A **memory store** is one project's memory directory under `~/.claude/projects/`. It is not a **KB store** — the `~/.agents/kb.yaml` registry entry that `capture-event` and the `kb-*` skills select with `--store`. This procedure uses both: the helper's `--memory-store` names the origin (step 1), and `capture-event`'s `--store` names the destination (step 5).
+A **memory store** is one project's memory directory under `~/.claude/projects/`. It is not a **KB store** — the `~/.agents/kb.yaml` registry entry that `capture-event` and the `kb-*` skills select with `--store`. This procedure uses both: The helper's `--memory-store` names the origin (step 1), and `capture-event`'s `--store` names the destination (step 5).
 
 The three destinations:
 
@@ -16,7 +16,7 @@ The three destinations:
 - **Retain** — a genuinely local, non-propagating fact (a project-specific deadline or quirk) stays a memory, untouched.
 - **Delete** — a memory already captured (including one migrated from another machine) or otherwise redundant is removed.
 
-The split is deliberate: the helper is narrow and mechanical (it never classifies); the routing is wide and judgment-driven.
+The split is deliberate: The helper is narrow and mechanical (it never classifies); the routing is wide and judgment-driven.
 
 **Announce at start:** "Using migrate-feedback-memories to route this machine's feedback memories."
 
@@ -35,8 +35,8 @@ The `--auto` flag is consumed by you, not the helper; it controls whether you pr
 
 ## Modes
 
-- **Default mode**: enumerate, classify, dedup, present the routing plan, and execute only after confirmation.
-- **Auto mode (`--auto`)**: enumerate, classify, dedup, and execute silently, with no confirmation.
+- **Default mode**: Enumerate, classify, dedup, present the routing plan, and execute only after confirmation.
+- **Auto mode (`--auto`)**: Enumerate, classify, dedup, and execute silently, with no confirmation.
 
 ## Process
 
@@ -54,21 +54,21 @@ It prints `{ ok, machine, projectsRoot, memories, skipped }`. Each entry in `mem
 
 ### 2. Classify
 
-Work through the memories **one store at a time**, not as a single undifferentiated batch. The `memories` array is already ordered by store, so group it by the `memoryStore` field and process each group in turn. On a machine with many memories, prefer scoping each run to one store with `--memory-store <name>`: a fresh invocation per store keeps the context lean and grounded in a single project. Processing all stores in one run stays the default, and is fine when the machine holds few.
+Work through the memories **one store at a time**, not as a single undifferentiated batch. The `memories` array is already ordered by store, so group it by the `memoryStore` field and process each group in turn. On a machine with many memories, prefer scoping each run to one store with `--memory-store <name>`: A fresh invocation per store keeps the context lean and grounded in a single project. Processing all stores in one run stays the default, and is fine when the machine holds few.
 
-Before classifying a store's memories, ground yourself in that project: when `repoPath` is set, read that repo's root `AGENTS.md` and any project guidance it points to, so the routing calls reflect what the project already codifies. When `repoPath` is null — the store's slug does not resolve to a working repo on this machine — classify that store's memories ungrounded. Grounding is best-effort, never a blocker.
+Before classifying a store's memories, ground yourself in that project: When `repoPath` is set, read that repo's root `AGENTS.md` and any project guidance it points to, so the routing calls reflect what the project already codifies. When `repoPath` is null — the store's slug does not resolve to a working repo on this machine — classify that store's memories ungrounded. Grounding is best-effort, never a blocker.
 
 Then decide one destination per memory:
 
 - **Capture** when the lesson generalizes beyond its origin project — a behavior, correction, or convention that should propagate. This is the default for behavioral feedback.
 - **Retain** when the fact is genuinely local and non-propagating (a project-specific deadline, a one-off quirk).
-- **Delete** only when the memory _restates_ a rule that shared guidance, a prior capture, or the origin project's own guidance already codifies, adding no signal the guidance does not already carry. Redundancy here is of signal, not topic. A memory that **narrates a violation** of already-existing guidance is not redundant: an agent breaking a codified rule is fresh evidence the guidance is not landing, so route it to **Capture** with `,mistake`, never Delete. When a body is ambiguous between restatement and violation, prefer Capture; a needless capture dedups away on the next run, but a deleted violation is gone for good. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is a pure restatement (its rule now lives in `shared/AGENTS.md`), so it is a delete like any other.
+- **Delete** only when the memory _restates_ a rule that shared guidance, a prior capture, or the origin project's own guidance already codifies, adding no signal the guidance does not already carry. Redundancy here is of signal, not topic. A memory that **narrates a violation** of already-existing guidance is not redundant: An agent breaking a codified rule is fresh evidence the guidance is not landing, so route it to **Capture** with `,mistake`, never Delete. When a body is ambiguous between restatement and violation, prefer Capture; a needless capture dedups away on the next run, but a deleted violation is gone for good. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is a pure restatement (its rule now lives in `shared/AGENTS.md`), so it is a delete like any other.
 
 ### 3. Dedup capture candidates by origin
 
 For each capture candidate, invoke the {skill:kb-retrieve-events} skill on the memory's topic. That skill surfaces candidates by term and tag overlap, so a hit may share only a tag (e.g. `feedback`) with the memory rather than its actual lesson — treat every hit as a _candidate_ duplicate, not a confirmed one. For each surfaced event, read the `Origin: project …, machine …, session …` line each migration writes into an event body (step 5), when present.
 
-An event is this memory — already captured — only when **both** conditions hold: its topic records the memory's lesson **and** its origin matches. A session id does not uniquely identify a source memory: one working session routinely emits several feedback memories and/or captured events, each on a different topic, so a shared `originSessionId` (or `memoryStore`) establishes common origin, not common lesson.
+An event is this memory — already captured — only when **both** conditions hold: Its topic records the memory's lesson **and** its origin matches. A session id does not uniquely identify a source memory: One working session routinely emits several feedback memories and/or captured events, each on a different topic, so a shared `originSessionId` (or `memoryStore`) establishes common origin, not common lesson.
 
 - **Delete** the candidate only when a surfaced event both records the memory's lesson and shares its origin — origin matched on the `originSessionId` when the memory has one, else on the origin `memoryStore` by judgment. Such an event _is_ this memory, already captured on an earlier run or migrated from another machine, so re-capturing would double-count. This is what makes a re-run, and a second machine's run, converge.
 - **Keep the capture** when a surfaced event's topic _diverges_ from the memory's, even if the origins match. Deleting on the origin match alone would remove the memory without ever capturing its lesson — an unrecoverable loss.
@@ -88,7 +88,7 @@ Show every memory with its destination, and for each capture the proposed `--tag
 
 On approval, run all captures first, then a single deletion pass:
 
-1. **Capture** — for each memory routed to capture, compose the arguments and body per the {skill:capture-event} contract and pipe the body to its bundled helper directly (a batch this size cannot afford a per-item skill invocation). Run the capture from the memory's origin repo, so `capture-event`'s auto-filled `cwd` and `repo` resolve to the origin rather than this migration run: wrap the invocation in a subshell that changes to the memory's `repoPath` first. The subshell contains the `cd`, keeping the origin directory out of the deletion pass and the next capture.
+1. **Capture** — for each memory routed to capture, compose the arguments and body per the {skill:capture-event} contract and pipe the body to its bundled helper directly (a batch this size cannot afford a per-item skill invocation). Run the capture from the memory's origin repo, so `capture-event`'s auto-filled `cwd` and `repo` resolve to the origin rather than this migration run: Wrap the invocation in a subshell that changes to the memory's `repoPath` first. The subshell contains the `cd`, keeping the origin directory out of the deletion pass and the next capture.
 
    ```bash
    (cd "<repoPath>" && cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \

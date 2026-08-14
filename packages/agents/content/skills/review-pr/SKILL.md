@@ -26,7 +26,7 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 
 ### 2. Resolve the PR
 
-Resolve the PR to review per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): an explicit `<pr_id>` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR. The resolved value is passed to the delegate as `pr_id` in step 5.
+Resolve the PR to review per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): An explicit `<pr_id>` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR. The resolved value is passed to the delegate as `pr_id` in step 5.
 
 ### 3. Detect platform
 

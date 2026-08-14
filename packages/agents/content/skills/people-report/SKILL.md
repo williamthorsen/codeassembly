@@ -65,9 +65,9 @@ Examine the column headers and infer their meaning. Map each column to a recogni
 >
 > **Action items**
 >
-> **Q1** — `DoT`: is this date of termination or date of transfer? 🤔
+> **Q1** — `DoT`: Is this date of termination or date of transfer? 🤔
 >
-> **Q2** — `L`: is this level or location? 🤔
+> **Q2** — `L`: Is this level or location? 🤔
 
 Do not guess silently on ambiguous columns.
 

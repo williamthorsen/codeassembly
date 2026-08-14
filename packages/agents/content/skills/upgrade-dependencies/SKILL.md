@@ -29,9 +29,9 @@ Identify the environment before assessing:
 Before touching anything:
 
 - **Read the full outdated report.** Run the PM's recursive outdated report (e.g. `pnpm outdated --recursive`) and read every row. Never truncate, page, or sample it; a hidden row is an upgrade that resurfaces as a surprise at final verification.
-- **Check vulnerabilities — and verify the check ran.** Run the PM's audit command and confirm it actually returned results. Audit endpoints get retired out from under PMs (pnpm's audit endpoint, for one), so a failing audit channel is a lookup problem, not a reason to skip: fall back to the project's own audit tooling, the registry's advisory API, or an independent vulnerability scanner. Prioritize whatever the working channel reports.
+- **Check vulnerabilities — and verify the check ran.** Run the PM's audit command and confirm it actually returned results. Audit endpoints get retired out from under PMs (pnpm's audit endpoint, for one), so a failing audit channel is a lookup problem, not a reason to skip: Fall back to the project's own audit tooling, the registry's advisory API, or an independent vulnerability scanner. Prioritize whatever the working channel reports.
 - **Inspect ceilings before installing.** For each planned upgrade, read the registry metadata first: `<pm> view <pkg> peerDependencies engines peerDependenciesMeta`. A ceiling is anything that caps a package below latest: a transitive peer pin on a foundation package, an `engines.node` requirement above the project's floor, or the project's own support policy. Finding ceilings now shapes the plan; finding them mid-install produces thrash.
-- **Check whether a "required" peer is optional.** Before adding a peer the upgrade appears to demand, read `peerDependenciesMeta`: an optional peer is satisfied transitively, produces no unmet-peer warning, and needs no manifest entry in a project that does not use it directly.
+- **Check whether a "required" peer is optional.** Before adding a peer the upgrade appears to demand, read `peerDependenciesMeta`: An optional peer is satisfied transitively, produces no unmet-peer warning, and needs no manifest entry in a project that does not use it directly.
 - **Recall prior learnings.** If a knowledge store is registered, invoke `{skill:kb-retrieve-events}` for events touching the packages and tools in scope; past upgrades often recorded the exact ceiling, shim, or retired endpoint you are about to rediscover. Skip this step when no store is configured.
 
 ### 3. Triage
@@ -48,16 +48,16 @@ Check changelogs for ALL updates, not just majors. Behavioral changes hide in mi
 Three triage judgments go beyond the version-number table:
 
 - **Ceilings are policy, not just conflicts.** The target for each package is the highest version compatible with the project's support policy, not merely the highest that installs without a dependency-vs-dependency conflict. A pin can be forced by the Node floor, by a transitive peer cap, or by a single package's `engines`; each is a deliberate ceiling, and a ceiling that would move the project's own support policy (e.g. raising the Node floor) is a consumer-facing breaking change to decide, not a technicality to absorb.
-- **Identify cohorts.** Interdependent majors whose peer constraints reference each other (a linter major and its plugin majors, a framework and its adapter) cannot land separately: any split leaves an uninstallable intermediate state. Treat such a cohort as a single unit through planning, execution, and commit.
-- **Watch for abandoned-at-latest packages.** The outdated report cannot reveal a package that is simultaneously "latest" and broken under the new major of its host (it calls an API the host removed). Only running the target major surfaces these: after any major runtime, framework, or linter bump, run the tool and watch for removed-API errors, and expect the remedy to be migrating to a maintained fork rather than any version bump.
+- **Identify cohorts.** Interdependent majors whose peer constraints reference each other (a linter major and its plugin majors, a framework and its adapter) cannot land separately: Any split leaves an uninstallable intermediate state. Treat such a cohort as a single unit through planning, execution, and commit.
+- **Watch for abandoned-at-latest packages.** The outdated report cannot reveal a package that is simultaneously "latest" and broken under the new major of its host (it calls an API the host removed). Only running the target major surfaces these: After any major runtime, framework, or linter bump, run the tool and watch for removed-API errors, and expect the remedy to be migrating to a maintained fork rather than any version bump.
 
 ### 4. Plan
 
 **Scope:**
 
 - Security fixes: always a dedicated fast-track PR.
-- Patches/minors: batch in one PR.
-- Majors: if 2 or fewer, include in the same PR as sequential commits; if more, separate PR per major.
+- Patches/minors: Batch in one PR.
+- Majors: If 2 or fewer, include in the same PR as sequential commits; if more, separate PR per major.
 
 **Execution order** — follow the dependency graph, foundations first:
 
@@ -83,8 +83,8 @@ For each dependency or batch, install with the PM's add command at an explicit v
 
 **Peer dependency conflicts** come in two kinds; distinguish them before acting:
 
-- **Genuine incompatibility:** the package really does not support the new version. Resolve the actual conflict — upgrade the conflicting packages to compatible versions, or hold the upgrade at the ceiling. Never mask it with dependency overrides, legacy-peer-deps behavior, or disabling strict peer checks.
-- **Ecosystem lag:** the declared peer range excludes the new major, but the package works because it shims the removed APIs internally. Verify which kind you have by inspecting the package's use of the removed API (does its code path call the removed method, or route through a compat layer?). Clear a confirmed false positive through the PM's sanctioned allowance mechanism — pnpm's is `pnpm.peerDependencyRules.allowedVersions`; find the current PM's equivalent in its docs — scoped to the specific package and range, never via blanket suppression.
+- **Genuine incompatibility:** The package really does not support the new version. Resolve the actual conflict — upgrade the conflicting packages to compatible versions, or hold the upgrade at the ceiling. Never mask it with dependency overrides, legacy-peer-deps behavior, or disabling strict peer checks.
+- **Ecosystem lag:** The declared peer range excludes the new major, but the package works because it shims the removed APIs internally. Verify which kind you have by inspecting the package's use of the removed API (does its code path call the removed method, or route through a compat layer?). Clear a confirmed false positive through the PM's sanctioned allowance mechanism — pnpm's is `pnpm.peerDependencyRules.allowedVersions`; find the current PM's equivalent in its docs — scoped to the specific package and range, never via blanket suppression.
 
 **Fork and successor swaps preserve the public surface.** When an abandoned package is replaced by a maintained fork, the swap can rename what consumers reference (rule namespaces, export names). Keep the old surface working — remap old names to new via the project's config or an adapter — so downstream consumers' overrides and references survive the swap.
 
@@ -99,8 +99,8 @@ A green signal is only as good as what it exercised. Each check below exists bec
 - **Smoke-test opt-in surfaces.** A self-linting config package exercises only its default config path; instantiate each optionally-loaded config under the new major, since the configs the host repo does not use are the ones most at risk.
 - **Re-run the outdated report and enumerate the pins.** The end state is exactly N intentional pins, each with its recorded rationale and its matching update-tooling cap. Anything below latest without both is unfinished work, not an acceptable remainder.
 - **Re-run the vulnerability check** through the channel verified in Assess.
-- **Check root↔workspace alignment** in a monorepo: a root-only bump leaves workspaces on the old version; confirm the same dependency resolves to aligned versions across workspaces.
-- **Assess consumer impact for published packages.** If an upgrade raised the package's effective engine or peer requirements, that narrowing is a breaking change for consumers: plan a major release with matching `peerDependencies` updates, marked per the project's breaking-change convention.
+- **Check root↔workspace alignment** in a monorepo: A root-only bump leaves workspaces on the old version; confirm the same dependency resolves to aligned versions across workspaces.
+- **Assess consumer impact for published packages.** If an upgrade raised the package's effective engine or peer requirements, that narrowing is a breaking change for consumers: Plan a major release with matching `peerDependencies` updates, marked per the project's breaking-change convention.
 
 ### 7. Commit and capture
 

@@ -8,7 +8,7 @@ user-invocable: true
 
 Apply one mutation to one or more existing event records in a single invocation. A bundled helper does the mechanical work — it resolves the event store by name, resolves each id to its record, reads it through the type-blind note I/O layer, parses it to a typed `KbEvent`, applies the operation, and writes it back atomically. You supply the store, the operation, and the event ids.
 
-The operation surface is the **curatorial mutable set** only: `addressed-by` (mark an event as addressed by a reference), `tags` (retag), and `impact` (set the impact rating). These are curatorial annotations that stamp no timestamp. Impact is a subjective assessment that may legitimately change, which is why it lives in the mutable set rather than among the substantive fields. They are not substantive edits: to change an event's summary or body, use `capture-event --amend`. For new events, use `capture-event`. For editing assertions, use `kb-edit`.
+The operation surface is the **curatorial mutable set** only: `addressed-by` (mark an event as addressed by a reference), `tags` (retag), and `impact` (set the impact rating). These are curatorial annotations that stamp no timestamp. Impact is a subjective assessment that may legitimately change, which is why it lives in the mutable set rather than among the substantive fields. They are not substantive edits: To change an event's summary or body, use `capture-event --amend`. For new events, use `capture-event`. For editing assertions, use `kb-edit`.
 
 **Announce at start:** "Using kb-update-events to {mark|retag|rate} {N} event(s)."
 
@@ -26,7 +26,7 @@ A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,obs
 
 ### Store selection
 
-`--store` is required: every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, or `--store @default` for the registry's `default_kb`. Omitting `--store` is refused with an error that lists the registered stores.
+`--store` is required: Every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, or `--store @default` for the registry's `default_kb`. Omitting `--store` is refused with an error that lists the registered stores.
 
 ## Runtime dependencies
 
@@ -73,4 +73,4 @@ On `ok: false`, route by the `error` code:
 
 ## Completion
 
-Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: succeeded events are written; failed ids are reported and left untouched. These `addressed-by`/`tags`/`impact` annotations are curatorial; substantive content edits go through `capture-event --amend`.
+Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: Succeeded events are written; failed ids are reported and left untouched. These `addressed-by`/`tags`/`impact` annotations are curatorial; substantive content edits go through `capture-event --amend`.

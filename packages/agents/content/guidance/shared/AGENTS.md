@@ -53,7 +53,7 @@ Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code
 
 When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
-A saved artifact records a moment, not a running state. Once written it stands: never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
+A saved artifact records a moment, not a running state. Once written it stands: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
 
 The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements arrive as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 

@@ -160,7 +160,7 @@ Stamp the revised plan with frontmatter conforming to the [universal artifact fr
 
 The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
 
-This site uses `--format json` because the `provenance:` Block is case-branched on the input artifact's existing provenance — see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
+This site uses `--format json` because the `provenance:` block is case-branched on the input artifact's existing provenance — see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
 

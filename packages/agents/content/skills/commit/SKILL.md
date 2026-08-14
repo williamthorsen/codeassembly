@@ -43,7 +43,7 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 For the structural scope values (`root`, `*`, workspace name), see "Scope values" in [`../_data/title-templates.md`](../_data/title-templates.md).
 
-Commit-side application: When more than one scope-value would technically apply, use the closest fit. If a root change is tightly associated with only one workspace, count it as a workspace change rather than a root change. Common example: if a package is added to `packages/workspace-a`, that updates the package lock file in root — still treat the commit as a workspace change.
+Commit-side application: When more than one scope-value would technically apply, use the closest fit. If a root change is tightly associated with only one workspace, count it as a workspace change rather than a root change. Common example: If a package is added to `packages/workspace-a`, that updates the package lock file in root — still treat the commit as a workspace change.
 
 ## Branch naming
 

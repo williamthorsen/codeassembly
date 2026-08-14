@@ -12,11 +12,11 @@ Use `~/`-relative paths where possible and absolute paths otherwise. Every line 
 
 Two of the sub-blocks below offer options that rewrite an artifact: the ticket's acceptance criteria, the PR description, or both. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which criteria are genuinely in conflict with the implementation is a judgment the reviewer makes, and the preview is where that judgment becomes reviewable instead of silent.
 
-**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: the preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", carries no preview.
+**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", carries no preview.
 
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
-- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection and, for `Rewrite:` lines, from the divergent `D{n}` rows of `## Specification consistency` that the ratification carries into the ticket's narrative sections. Unplanned work is never a source: implementation that goes beyond the criteria is not a deviation, so it yields no line.
+- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection and, for `Rewrite:` lines, from the divergent `D{n}` rows of `## Specification consistency` that the ratification carries into the ticket's narrative sections. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it yields no line.
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
   - `Rewrite: {## Section} — {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
@@ -33,7 +33,7 @@ Render no exclusions line. A criterion genuinely arguable as in conflict belongs
 
 ### Deviations sub-block
 
-Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta carries at least one line. Compute the delta first: an empty delta renders no sub-block.
+Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta carries at least one line. Compute the delta first: An empty delta renders no sub-block.
 
 A criterion from another spec source never fires this sub-block, whose only edit rewrites the ticket. A PR description at odds with the implementation is the [source divergence sub-block](#source-divergence-sub-block)'s case 2.
 
@@ -48,7 +48,7 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
 Example (rendered for the recommendation case):
 
@@ -69,9 +69,9 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Recommendation rules
 
-1. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): the implementation's direction is deliberate and sound, so the criteria as written would lead a later reader to judge correct code wrong.
-2. **Recommend "Leave as-is"** (■■□ on it, ■□□ on Update the acceptance criteria): the review raised a finding on the conflicting behavior. The code is what is in question, and revising the contract to match it would bury the finding.
-3. **No recommendation** (omit markers from both options): the reviewer cannot tell whether the criteria or the implementation is the wrong one. The user decides.
+1. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): The implementation's direction is deliberate and sound, so the criteria as written would lead a later reader to judge correct code wrong.
+2. **Recommend "Leave as-is"** (■■□ on it, ■□□ on Update the acceptance criteria): The review raised a finding on the conflicting behavior. The code is what is in question, and revising the contract to match it would bury the finding.
+3. **No recommendation** (omit markers from both options): The reviewer cannot tell whether the criteria or the implementation is the wrong one. The user decides.
 
 ### Source divergence sub-block
 
@@ -92,9 +92,9 @@ Each case renders two of these options; the specific options and their ordering 
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" carries none. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a context-specific tradeoff (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" carries none. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a context-specific tradeoff (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default governs pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
-Case 2 (implementation matches ticket; PR description is the stale source) mirrors case 3 with the PR description as the target: its delta uses the `D{n}:` notation and option 1 reads "Update PR description".
+Case 2 (implementation matches ticket; PR description is the stale source) mirrors case 3 with the PR description as the target: Its delta uses the `D{n}:` notation and option 1 reads "Update PR description".
 
 Case 3 — implementation matches PR description; ticket is the stale source:
 
@@ -126,7 +126,7 @@ Proposed edit to the PR description:
 2. ⏭️ Leave as-is
 ```
 
-Case 4 renders marker-free: the reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here — the review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
+Case 4 renders marker-free: The reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here — the review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
 
 Source-divergence options preserve conversation context, and the preview each renders binds the reconciliation that follows, per [proposed-edit preview](#proposed-edit-preview).
 
@@ -152,11 +152,11 @@ Shown when the review holds at least one finding.
 
 There is no tier condition, and none should be reintroduced. Every finding a review emits has already cleared the [Actionability gate](../_data/artifact-conventions.md#actionability-gate), which requires it to hand the author a concrete decision they can act on; anything producing no decision was dropped before it reached the artifact. Severity orders how findings rank and what blocks merge. It never decides whether they are shown, or whether the user is offered a way to act on them.
 
-Stating the trigger as a list of tiers is the failure this rule replaces: an enumeration goes stale the next time the finding scheme moves, and silently withdraws the menu from whichever tier it forgot.
+Stating the trigger as a list of tiers is the failure this rule replaces: An enumeration goes stale the next time the finding scheme moves, and silently withdraws the menu from whichever tier it forgot.
 
-Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: that would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since no ticket criterion constrains a legacy fix and no design discussion stands behind it. The recommendation rules route legacy without a carve-out: a legacy fix naming its exact edit satisfies rule 2 like any other, and one that does not falls through to a ticket or a hand-off.
+Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: That would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since no ticket criterion constrains a legacy fix and no design discussion stands behind it. The recommendation rules route legacy without a carve-out: A legacy fix naming its exact edit satisfies rule 2 like any other, and one that does not falls through to a ticket or a hand-off.
 
-The option set depends on whether the review covers a pull request. Select the variant by the review the agent just produced: a `review-pr` run carries a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
+The option set depends on whether the review covers a pull request. Select the variant by the review the agent just produced: A `review-pr` run carries a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
 
 #### Options: local-branch variant (review-branch)
 
@@ -177,9 +177,9 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default: add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default: Add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
 
-**Naming the ticket's subset.** When only some open findings clear rule 1's spin-off bar, the follow-up-ticket line names the ones it would carry, as `Create a follow-up ticket for R2, S1`. Choosing it disposes of those findings alone. In this case the ticket option composes with the recommendation rather than replacing it: the cascade's remaining rules run on the findings the ticket does not carry, the option they select is the one marked, and answering with both numbers disposes of every open finding. A ticket option carrying every open finding renders bare.
+**Naming the ticket's subset.** When only some open findings clear rule 1's spin-off bar, the follow-up-ticket line names the ones it would carry, as `Create a follow-up ticket for R2, S1`. Choosing it disposes of those findings alone. In this case the ticket option composes with the recommendation rather than replacing it: The cascade's remaining rules run on the findings the ticket does not carry, the option they select is the one marked, and answering with both numbers disposes of every open finding. A ticket option carrying every open finding renders bare.
 
 Local-branch variant, rendered for a review whose findings are all discretionary and all determinate:
 
@@ -236,21 +236,21 @@ Actionable findings:
 
 Per the session-boundary rule, two options name a skill in the render:
 
-- **Ask the author to address the findings**: the author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
+- **Ask the author to address the findings**: The author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
 - **Wait for the author to address the findings, then re-review**: names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix, since the reviewer's memory of what it found is what lets it check the fixes.
 
 #### Recommendation rules
 
-Both variants share one cascade. Check the rules in order and stop at the first match. Every rule carries a firing condition, and no option is a default that fires for want of one: a conditionless option outranks a conditioned one in practice, however the conditions are worded.
+Both variants share one cascade. Check the rules in order and stop at the first match. Every rule carries a firing condition, and no option is a default that fires for want of one: A conditionless option outranks a conditioned one in practice, however the conditions are worded.
 
-1. **Create a follow-up ticket**: every open finding clears one of [`scope-and-deferral.md`](../_data/scope-and-deferral.md)'s affirmative reasons for spinning off, namely a genuinely separable concern, a materially different risk surface, size that would swamp the current change, or independent prioritization. "The ticket didn't mention it" is never such a reason. Absent an affirmative reason the fold-in default holds and the cascade continues.
-2. **Implement directly**: every open finding is determinate, meaning its Recommendation states the exact change and applying it needs no judgment its author would have to supply. Implementing forfeits the second look, and determinacy is what makes that acceptable: the fix's diff is the finding restated, so a reviewer would be re-reading text the review already contains. A finding posing a question rather than naming an edit is not determinate, however small it looks.
-3. **Wait for the author to address the findings, then re-review**: the findings need judgment the author owns, and the fixes are substantial enough that the result needs another review pass. PR variant: skip this rule.
+1. **Create a follow-up ticket**: Every open finding clears one of [`scope-and-deferral.md`](../_data/scope-and-deferral.md)'s affirmative reasons for spinning off, namely a genuinely separable concern, a materially different risk surface, size that would swamp the current change, or independent prioritization. "The ticket didn't mention it" is never such a reason. Absent an affirmative reason the fold-in default holds and the cascade continues.
+2. **Implement directly**: Every open finding is determinate, meaning its Recommendation states the exact change and applying it needs no judgment its author would have to supply. Implementing forfeits the second look, and determinacy is what makes that acceptable: The fix's diff is the finding restated, so a reviewer would be re-reading text the review already contains. A finding posing a question rather than naming an edit is not determinate, however small it looks.
+3. **Wait for the author to address the findings, then re-review**: The findings need judgment the author owns, and the fixes are substantial enough that the result needs another review pass. PR variant: Skip this rule.
 4. **Ask the author to address the findings**: residual. The reviewer surfaces; the author disposes. PR variant: **Post findings on the PR**, since the author is typically someone else and comments on the PR are how the findings reach them.
 
-Every rule tests the open findings as a collection, which is what lets one recommendation stand for the set. When only some findings clear rule 1's spin-off bar, the cascade evaluates the remainder: the recommendation comes from the findings that stay, while the separable ones ride the follow-up-ticket option, whose rendered line names them.
+Every rule tests the open findings as a collection, which is what lets one recommendation stand for the set. When only some findings clear rule 1's spin-off bar, the cascade evaluates the remainder: The recommendation comes from the findings that stay, while the separable ones ride the follow-up-ticket option, whose rendered line names them.
 
-Discretionary and determinate are independent axes. Whether a change is optional is a different question from who decides it: an `S` reading "rename `x` to `descriptiveName`" is discretionary but fully determinate, since the only decision left is yes or no and the person reading the menu is the one making it. Routing that to the author round-trips a settled edit through a second session.
+Discretionary and determinate are independent axes. Whether a change is optional is a different question from who decides it: An `S` reading "rename `x` to `descriptiveName`" is discretionary but fully determinate, since the only decision left is yes or no and the person reading the menu is the one making it. Routing that to the author round-trips a settled edit through a second session.
 
 Do not attempt to detect whether the author is the person reading the review. Agents commit under the user's git identity, so the review's resolved `$author` cannot distinguish them. Rule 2 turns on the review's own content, which is decidable.
 
@@ -260,7 +260,7 @@ The selected option carries the ■■□ marker in the rendered output; the oth
 
 Complexity levels classify individual findings, but the recommendation applies to the collection.
 
-Where the cascade's conditions leave two options genuinely in balance, prefer the one that keeps a human in the loop. That resolves a tie and nothing more: it never overrides a rule that fired, and a fix that satisfies rule 2's determinacy test is not a tie.
+Where the cascade's conditions leave two options genuinely in balance, prefer the one that keeps a human in the loop. That resolves a tie and nothing more: It never overrides a rule that fired, and a fix that satisfies rule 2's determinacy test is not a tie.
 
 ### Combined output format
 

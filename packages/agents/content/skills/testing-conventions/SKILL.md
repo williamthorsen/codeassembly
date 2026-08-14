@@ -8,7 +8,7 @@ user-invocable: false
 
 ## When tests are required
 
-**Default rule:** every code change that creates or modifies testable behavior must include tests that cover that behavior. The burden is on justifying the exception, not the rule.
+**Default rule:** Every code change that creates or modifies testable behavior must include tests that cover that behavior. The burden is on justifying the exception, not the rule.
 
 **Carve-outs** — the following categories are exempt from the test requirement:
 
@@ -23,9 +23,9 @@ If a change does not fall into one of these categories, it requires tests. When 
 
 ### Do not test that removed things stay removed
 
-When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: it can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
+When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
 
-Diagnostic: would this test exist if the deleted code had never existed? If no, don't write it.
+Diagnostic: Would this test exist if the deleted code had never existed? If no, don't write it.
 
 Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Verification step), not a standing test. This applies to any change that removes something, not only removal-only changes.
 

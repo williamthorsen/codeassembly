@@ -15,7 +15,7 @@ Inspect your available MCP tools and match the shape:
 - **`contentFormat`-based tool** — e.g. `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
 - **`description_html`-based tool** — `update_jira_issue` / `create_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
 
-If both are available, prefer the `contentFormat` tool: the Markdown path is simpler and cannot trigger the HTML→ADF failure classes.
+If both are available, prefer the `contentFormat` tool: The Markdown path is simpler and cannot trigger the HTML→ADF failure classes.
 
 ## Markdown path
 
@@ -195,9 +195,9 @@ Required fields:
 
 When (and only when) a probe ticket is created in step 2a, it **must** carry all three markers:
 
-- **Label:** include `mcp-probe` in the `labels` argument of the create call.
+- **Label:** Include `mcp-probe` in the `labels` argument of the create call.
 - **Title:** `mcp-probe: {YYYY-MM-DD HH:MM} bisection probe`. Use UTC.
-- **Description:** prefix the description with `Auto-created by recovery protocol on {YYYY-MM-DD}; safe to delete.` followed by a blank line and then the probe payload.
+- **Description:** Prefix the description with `Auto-created by recovery protocol on {YYYY-MM-DD}; safe to delete.` followed by a blank line and then the probe payload.
 
 A probe ticket that lacks any of these markers will not be picked up by the cleanup query below and risks polluting the user's backlog indefinitely.
 

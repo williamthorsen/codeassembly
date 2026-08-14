@@ -51,9 +51,9 @@ The block is assembled from two independent sources by the helper script `{harne
 
 ### Steps
 
-1. **Recompute the changed-file list:** the dispatch site already has `{changed-files}` available (Phase 4 computes it once at the start of the parallel review; Phase 4a recomputes it before the simplifier dispatch; Phase 4b recomputes it before the holistic dispatch). Write the value to a temp file `{run-dir}/.tmp_changed-files.txt`. The temp file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
+1. **Recompute the changed-file list:** The dispatch site already has `{changed-files}` available (Phase 4 computes it once at the start of the parallel review; Phase 4a recomputes it before the simplifier dispatch; Phase 4b recomputes it before the holistic dispatch). Write the value to a temp file `{run-dir}/.tmp_changed-files.txt`. The temp file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
 
-2. **Invoke the helper script:** capture stdout into `{reviewer-context}` and redirect stderr to a temp file so the failure-handling step below can read it:
+2. **Invoke the helper script:** Capture stdout into `{reviewer-context}` and redirect stderr to a temp file so the failure-handling step below can read it:
 
    ```
    # Only include --sidecar when {reviewer-context-sidecar-path} is non-empty;
@@ -67,7 +67,7 @@ The block is assembled from two independent sources by the helper script `{harne
 
    The temp stderr file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
 
-3. **Inline conditionally:** if `{reviewer-context}` is non-empty, the dispatch's prompt template appends a final block:
+3. **Inline conditionally:** If `{reviewer-context}` is non-empty, the dispatch's prompt template appends a final block:
 
    ```
    ## Reviewer context
@@ -147,10 +147,10 @@ For each interrupted reviewer:
 
 ### Properties
 
-- **Round budget:** retries do **not** increment `reviewRoundsUsed`. They are recovery within an existing round, not a new round.
-- **Phase 4 retry timing:** in Phase 4's parallel batch, retries are dispatched after the entire batch completes (before findings aggregation), so peer reviewers' completed structured returns are available to populate `{peer-coverage-summary}`. Multiple Phase 4 retries dispatch in parallel.
-- **Phase 4a and 4b:** each phase's single reviewer retries serially (single retry, single re-dispatch). The retry of an initial Phase 4b dispatch is exempt from Phase 4b's "shares budget for re-review cycles" rule — the initial dispatch and its retry always run regardless of remaining `reviewRoundsUsed`.
-- **Selective re-review and Phase 4b re-review:** these dispatches are subject to the hook on the same terms as initial dispatches. A re-review can also exhaust.
+- **Round budget:** Retries do **not** increment `reviewRoundsUsed`. They are recovery within an existing round, not a new round.
+- **Phase 4 retry timing:** In Phase 4's parallel batch, retries are dispatched after the entire batch completes (before findings aggregation), so peer reviewers' completed structured returns are available to populate `{peer-coverage-summary}`. Multiple Phase 4 retries dispatch in parallel.
+- **Phase 4a and 4b:** Each phase's single reviewer retries serially (single retry, single re-dispatch). The retry of an initial Phase 4b dispatch is exempt from Phase 4b's "shares budget for re-review cycles" rule — the initial dispatch and its retry always run regardless of remaining `reviewRoundsUsed`.
+- **Selective re-review and Phase 4b re-review:** These dispatches are subject to the hook on the same terms as initial dispatches. A re-review can also exhaust.
 
 ## Phase 4: Parallel review (required, max N iterations)
 
@@ -438,7 +438,7 @@ Call MCP tool emit_event with:
            reason: "{executed or skipped reason}" }
 ```
 
-If Phase 4b will run: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: only the implementation phase coder supplies a sidecar, so the value carried from Phase 4 dispatch remains current.
+If Phase 4b will run: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: Only the implementation phase coder supplies a sidecar, so the value carried from Phase 4 dispatch remains current.
 
 If Phase 4b is skipped: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
 

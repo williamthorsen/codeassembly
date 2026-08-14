@@ -14,7 +14,7 @@ Generate or refresh the repository-root `AGENTS.md` — the repo-specific guidan
 
 Explore the codebase, classify each finding by scope and tier, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project — and nothing more.
 
-**Two paths.** Where no guidance content exists yet, the **authoring path** drafts a file from the skeleton. Where it does, the **refresh path** reconciles against what is already there: it audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
+**Two paths.** Where no guidance content exists yet, the **authoring path** drafts a file from the skeleton. Where it does, the **refresh path** reconciles against what is already there: It audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
 
 **Core principle:** Every line must merit its inclusion. Omit anything an agent would figure out on its own or that is already covered by general guidance.
 
@@ -62,7 +62,7 @@ Collect findings as a flat list before moving to classification.
 
 #### Resolve the baseline and select the path
 
-The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: take the repo-root `AGENTS.md` when it carries substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root — a title and a pointer — does not shadow a mature legacy file, because a pointer is not a claim.
+The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: Take the repo-root `AGENTS.md` when it carries substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root — a title and a pointer — does not shadow a mature legacy file, because a pointer is not a claim.
 
 Where both legacy files carry content, `.agents/PROJECT.md` is the baseline as the later convention, and the other joins the gap-scan sources so its content reaches the change list rather than being archived unread.
 
@@ -86,7 +86,7 @@ For each finding, assign one of these classes:
 
 **Rules:**
 
-- Two axes decide the destination. **Scope** (general vs project-specific) separates `~/.agents/AGENTS.md` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` carries from what a package README does. Neither axis is nature (prescriptive vs descriptive): conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
+- Two axes decide the destination. **Scope** (general vs project-specific) separates `~/.agents/AGENTS.md` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` carries from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
 - A finding earns the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch rots silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, ask the user — one question at a time, prefer multiple choice.
@@ -111,7 +111,7 @@ Before generating the main file, check these prerequisites:
 1. Read `.agents/preferences.yaml`. If it does not exist, or if it exists but has no `project.slug` value, ask the user to confirm the project slug (suggest one derived from the repo directory name).
 2. Create or update `.agents/preferences.yaml` to include the confirmed `project.slug`.
 
-#### 3b. Authoring path: produce the draft
+#### 3b. Authoring path: Produce the draft
 
 On the authoring path only. The refresh path skips to 3c.
 
@@ -149,9 +149,9 @@ Generate `AGENTS.md` using the standard structure below. Include only sections t
 Do NOT write any files until the user has reviewed and approved the draft. Present the draft AGENTS.md content and wait for explicit approval. This applies regardless of perceived simplicity.
 </HARD-GATE>
 
-#### 3c. Refresh path: produce the change list
+#### 3c. Refresh path: Produce the change list
 
-On the refresh path only. The baseline is the working document: audit what it claims, find what it is missing, and emit edits against it.
+On the refresh path only. The baseline is the working document: Audit what it claims, find what it is missing, and emit edits against it.
 
 ##### Check the constraints
 
@@ -172,7 +172,7 @@ Record every audited claim as a ledger row — claim, verdict, evidence:
 - `drifted` — no longer true, stating what is true now.
 - `unchecked` — not verified, stating why.
 
-A `holds` row without an evidence token is not a permitted state. The audit is otherwise unfalsifiable: a claim that holds produces no edit, so a run that checked nothing emits the same change list as one that checked everything.
+A `holds` row without an evidence token is not a permitted state. The audit is otherwise unfalsifiable: A claim that holds produces no edit, so a run that checked nothing emits the same change list as one that checked everything.
 
 Close the ledger by naming what was not audited, so a bounded run reads as bounded.
 
@@ -188,7 +188,7 @@ Every `git log` here names its own `--format`. A global or repository `format.pr
 
 Where git cannot answer — no repository, or the file untracked — state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
 
-Then one unbounded check against the skeleton: is an ambient category missing altogether, such as a required bootstrap, a dependency ordering, or a tool that behaves surprisingly? It is the only reach for the fact that was always worth carrying and never captured.
+Then one unbounded check against the skeleton: Is an ambient category missing altogether, such as a required bootstrap, a dependency ordering, or a tool that behaves surprisingly? It is the only reach for the fact that was always worth carrying and never captured.
 
 ##### Emit the change list
 
@@ -242,7 +242,7 @@ Do NOT write any files until the user has reviewed and approved both the ledger 
 
 After the user approves:
 
-1. Write `AGENTS.md` at the repository root. Rovo Dev loads it from there with no further wiring. On the refresh path the content is the baseline with the approved edits applied: apply them rather than re-rendering the file, so everything the change list does not name survives unaltered. A baseline that came from a legacy path lands here too.
+1. Write `AGENTS.md` at the repository root. Rovo Dev loads it from there with no further wiring. On the refresh path the content is the baseline with the approved edits applied: Apply them rather than re-rendering the file, so everything the change list does not name survives unaltered. A baseline that came from a legacy path lands here too.
 2. Ensure `.claude/CLAUDE.md` reaches it through a raw include. Claude Code resolves a relative include against the directory holding the file that carries it, not against the repository root, so an include written in `.claude/CLAUDE.md` must climb out of `.claude/` to reach the root: `@../AGENTS.md`. Derive the include from where the importing file sits rather than copying a literal, and confirm the path it resolves to is the guidance file you just wrote.
    - If `.claude/CLAUDE.md` does not exist, create it with that include as its content.
    - If it exists and carries a prose instruction referencing the guidance file (e.g., `Read @../AGENTS.md, which provides...`), replace it with the raw include.
@@ -272,7 +272,7 @@ Close by running the published `guidance` checklist against the result: `rdy run
 
 Skip the step where `rdy` is unavailable, or where no configured package publishes the checklist. It ships as a development dependency of the package that publishes it, not something a consuming repository inherits. Report the step as skipped; never report a pass it did not produce.
 
-The freshness check reads committed history, so the write just made does not move it. On the stale file that motivated a refresh it still reports stale, and its remediation text advises running this very skill. That is expected, and it clears when the change is committed: do not act on that advice, and do not commit in order to clear it.
+The freshness check reads committed history, so the write just made does not move it. On the stale file that motivated a refresh it still reports stale, and its remediation text advises running this very skill. That is expected, and it clears when the change is committed: Do not act on that advice, and do not commit in order to clear it.
 
 ## Quality checklist
 

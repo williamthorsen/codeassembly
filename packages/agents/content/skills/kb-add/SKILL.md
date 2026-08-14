@@ -8,7 +8,7 @@ user-invocable: true
 
 Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, reports that base's declared structure, generates UTC dates, canonicalizes known-alias tags, composes a typed assertion record, writes the file atomically under the KB's assertions root (`content/assertions/`), and records the note's folder in the base's taxonomy. You do the judgment work — pick the topic folder, the Diátaxis label, the title, and the tags; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
 
-The split is deliberate: the helper is narrow and mechanical; the classification and composition are wide and judgment-driven. Treat the helper as a guardrail (it refuses a title that cannot be a filename and will not overwrite an existing file), not as a classifier.
+The split is deliberate: The helper is narrow and mechanical; the classification and composition are wide and judgment-driven. Treat the helper as a guardrail (it refuses a title that cannot be a filename and will not overwrite an existing file), not as a classifier.
 
 **Announce at start:** "Using kb-add to capture {short description of the note}."
 
@@ -44,15 +44,15 @@ By default the helper writes to the knowledge base discovered by walking up from
 
 ## Placement
 
-The declared taxonomy is the primary placement signal; the folders the survey found on disk corroborate it. A folder holding notes that no domain declares is drift: surface it rather than quietly writing another note into it.
+The declared taxonomy is the primary placement signal; the folders the survey found on disk corroborate it. A folder holding notes that no domain declares is drift: Surface it rather than quietly writing another note into it.
 
 Treat the taxonomy as a strong prior, not a hard constraint. When a note's topic sits in the long tail, let the tags carry it and place the note in the nearest domain that genuinely fits — do not force it into an ill-fitting folder to avoid proposing a new one, and do not mint a domain per note.
 
-A new domain is warranted by intent, not by note count: propose one when the user means to keep that shelf, however few notes will sit on it. Name it to match the form of the domains the survey reported, since the name is durable structure that later captures inherit. In auto mode, do not mint a top-level domain — a new top-level shelf reshapes the base and deserves confirmation.
+A new domain is warranted by intent, not by note count: Propose one when the user means to keep that shelf, however few notes will sit on it. Name it to match the form of the domains the survey reported, since the name is durable structure that later captures inherit. In auto mode, do not mint a top-level domain — a new top-level shelf reshapes the base and deserves confirmation.
 
 Folders serve human browsing and tags serve machine retrieval, so a folder name that restates a tag is expected rather than redundant. Do not contort either list to keep them orthogonal.
 
-Where two declared domains both fit, prefer the reviewed one: a domain reported with `provisional: true` was declared but never reviewed, and adding to it deepens an unreviewed shelf.
+Where two declared domains both fit, prefer the reviewed one: A domain reported with `provisional: true` was declared but never reviewed, and adding to it deepens an unreviewed shelf.
 
 ## Process
 

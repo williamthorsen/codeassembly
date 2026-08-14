@@ -268,7 +268,7 @@ The body following the frontmatter has this structure:
 
 ## Section handling
 
-- Code changes summarized under `## Changes made` must themselves satisfy [Comment discipline](#comment-discipline): comments in the edited code state the code's current contract, not the change history or the reviewer's concern.
+- Code changes summarized under `## Changes made` must themselves satisfy [Comment discipline](#comment-discipline): Comments in the edited code state the code's current contract, not the change history or the reviewer's concern.
 - Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
 - File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) — use repo-relative paths

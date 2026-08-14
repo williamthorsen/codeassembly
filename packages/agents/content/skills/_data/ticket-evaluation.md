@@ -5,7 +5,7 @@ A ticket — regardless of who created it — is a request, report, or suggestio
 The author may have framed it poorly, missed the actual problem, scoped it too narrowly, proposed an unsound fix, or filed work that turns out to be inadvisable. Before designing to a ticket, evaluate it on its merits:
 
 - **Is the problem real?** Reproduce or verify the underlying observation, not just the framing.
-- **Is the scope right?** Look for related instances of the same defect class, neighboring code paths, or assumptions that don't hold beyond the ticket's frame. Scope can grow, not only shrink: work the problem requires folds into the current change by default rather than deferring; see [scope-and-deferral](./scope-and-deferral.md).
+- **Is the scope right?** Look for related instances of the same defect class, neighboring code paths, or assumptions that don't hold beyond the ticket's frame. Scope can grow, not only shrink: Work the problem requires folds into the current change by default rather than deferring; see [scope-and-deferral](./scope-and-deferral.md).
 - **Is the proposed solution sound?** A ticket may include a recommended fix that solves the symptom but not the cause, or that fixes the cause less well than an alternative. Apply the [design priorities](./design-priorities.md) lens — a convenient-but-wrong fix is unsound, even if it matches surrounding code.
 - **Is the title accurate?** "Flaky test in X" may be a hygiene anti-pattern that exists in three places. Reframe titles when the underlying truth is broader or different.
 - **Is the change worth making?** Synthesize the above: Doing nothing, or doing something narrower, may be the right call. Don't treat acceptance as the default.
