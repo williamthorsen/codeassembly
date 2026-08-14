@@ -189,6 +189,8 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 
 <!-- guidance-hook: implementation-preferences -->
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Constraints
 
 - **Follow the plan**: Implement what the plan specifies. If you discover the plan is wrong or incomplete, document the deviation in your response under "Notes"; don't silently diverge.

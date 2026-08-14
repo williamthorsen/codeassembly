@@ -41,6 +41,8 @@ Detect and preserve the original plan's format:
 - **Prose plans** (markdown with sections and steps): Produce a refined markdown document with the same structure.
 - **Orchestration plans** (`.md` + `.json` companion): Produce both files. Write the `.md` to the provided output path. If the original had a `.json` companion, write the updated `.json` to the same directory as the output path, using the same base name with a `.json` extension.
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output format
 
 Write a complete plan document to the output path. The refined plan should be identical in structure to the original, with corrections and additions incorporated inline. Do not use strikethrough, diff markers, or "changed from" annotations within the plan body -- the plan should read as a clean, standalone document.

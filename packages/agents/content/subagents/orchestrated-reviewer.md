@@ -92,6 +92,8 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill.
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output format
 
 The finalized form of the review file. See [Incremental review writes](#incremental-review-writes) for the scaffold and interim-write shapes — this section shows only the post-finalize structure.
