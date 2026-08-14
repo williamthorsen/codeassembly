@@ -193,12 +193,12 @@ Score: X/10
 
 Status values: ✅ Met, ⚠️ Partial, ❌ Not addressed
 
-Assign the status against the criterion's substantive guarantee, not its wording. A criterion is ✅ Met when the implementation delivers that guarantee, whatever shape it took: a criterion phrased "merges additively" is met by an implementation that refuses by default and merges under a flag, because it never overwrites. Implementation that goes beyond a criterion is ✅ Met as well; the excess is reported under Unplanned work and is never a shortfall.
+Assign the status against the criterion's substantive guarantee, not its wording. A criterion is ✅ Met when the implementation delivers that guarantee, whatever shape it took: A criterion phrased "merges additively" is met by an implementation that refuses by default and merges under a flag, because it never overwrites. Implementation that goes beyond a criterion is ✅ Met as well; the excess is reported under Unplanned work and is never a shortfall.
 
 ⚠️ Partial and ❌ Not addressed mean the guarantee is undelivered. Two situations produce them, and the Notes cell states which, because only one is a deviation:
 
-- **Unbuilt**: the work is incomplete. At review time this is ordinary, and the contract is not in question.
-- **In conflict**: the implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
+- **Unbuilt**: The work is incomplete. At review time this is ordinary, and the contract is not in question.
+- **In conflict**: The implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
 
 Extract criteria from whatever structure the source uses (numbered lists, checkboxes, prose). If the source does not have clearly delimited acceptance criteria, derive them from its problem statement and solution description. PR descriptions typically expose criteria as the bullet items under `## What`, `## Summary`, or an explicit acceptance-criteria heading; fall back to the description body when no list is present.
 
@@ -232,7 +232,7 @@ Cell encoding:
 | 🟠 {ref}    | Partial mismatch with the named reference        |
 | 🔴 {ref}    | Severe mismatch with the named reference         |
 
-Baseline-selection rule: ticket is baseline when it mentions the aspect; otherwise PR description is baseline. An aspect introduced only by the implementation belongs in `## Specification compliance`'s "Unplanned work" sub-section, not here.
+Baseline-selection rule: Ticket is baseline when it mentions the aspect; otherwise PR description is baseline. An aspect introduced only by the implementation belongs in `## Specification compliance`'s "Unplanned work" sub-section, not here.
 
 Implementation-column ordering: always `{ticket-state}, {PR-state}` regardless of which is meaningful, so the scan rhythm stays consistent across rows.
 
