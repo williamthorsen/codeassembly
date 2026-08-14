@@ -53,9 +53,9 @@ describe(parseAliases, () => {
   });
 
   it('throws naming the canonical and source when an alias value is not a list', async () => {
-    const text = await readFixture('malformed.yaml');
+    const text = await readFixture('non-list-alias.yaml');
 
-    expect(() => parseAliases(text, 'malformed.yaml')).toThrow(/malformed\.yaml.*git.*list/);
+    expect(() => parseAliases(text, 'non-list-alias.yaml')).toThrow(/non-list-alias\.yaml.*git.*list/);
   });
 
   it('throws naming the source when the "aliases" key is missing', () => {
