@@ -22,8 +22,10 @@ const VENDOR_BOUNDARY_BARRELS = [{ barrel: 'src/integrations/mantine/index.ts', 
 describe('barrel placement', () => {
   const barrels = listBarrels();
 
+  // A nested barrel, not merely a non-zero count: a walk that stopped at the top of `src/` would still surface the
+  // four root entry points, all of them permitted, and both assertions below would pass over an unwalked tree.
   it('finds the barrels the repo already publishes', () => {
-    expect(barrels.length).toBeGreaterThan(0);
+    expect(barrels).toContain(resolvePackagePath('kb', 'src/tags/index.ts'));
   });
 
   it('permits no barrel outside a package entry point', () => {
