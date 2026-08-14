@@ -6,24 +6,11 @@
 
 ## Style
 
-- Never use title case. Use sentence case for titles, headings, section headers, and interface elements. Preserve the case of proper nouns.
 - Code style should adhere to `.editorconfig`, if there is one.
 - Order lists and collections logically (alphabetically unless there is a good reason to sort or group differently).
 - Use long-form CLI options (`--force`, not `-f`) in generated commands and scripts.
 - Structure code so the primary logic comes first; place helper functions at the end.
 - Name functions with a leading verb (`show_usage`, not `usage`; `build_payload`, not `payload`).
-
-## Writing style
-
-Use sentence case for all titles, headings, steps, labels, and similar text.
-Preserve the case of proper nouns, actual titles of books and movies, and named entities.
-Examples:
-
-- "Backend: Express API routes and server" not "Backend: Express API Routes And Server"
-- "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
-- "Customizing the Status Adapter for your backend", not "Customizing the Status Adapter for Your Backend"
-
-Capitalize the first word after a colon, unless the colon falls mid-sentence and introduces a fragment or list.
 
 ## Concision
 
