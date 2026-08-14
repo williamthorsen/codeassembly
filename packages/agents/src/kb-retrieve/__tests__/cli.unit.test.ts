@@ -309,7 +309,7 @@ describe(runRetrieve, () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('leaves a malformed store schema inert: it no longer affects recall or warns', async () => {
+  it('leaves an invalid store schema inert: it no longer affects recall or warns', async () => {
     const result = await runRetrieve({
       argv: ['brokenschema'],
       startDir: INVALID_SCHEMA_VAULT,
@@ -338,7 +338,7 @@ describe(runRetrieve, () => {
 
     const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
     const plain = result.candidates.find((candidate) => candidate.path.includes('plain-note.md'));
-    // A non-assertion record type is excluded from recall; the assertion surfaces; the malformed sibling schema is inert.
+    // A non-assertion record type is excluded from recall; the assertion surfaces; the invalid sibling schema is inert.
     expect(insight).toBeUndefined();
     expect(plain).toBeDefined();
     expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(0);
@@ -380,7 +380,7 @@ describe(runRetrieve, () => {
     expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
   });
 
-  it('degrades a malformed config to the default and warns instead of failing the search', async () => {
+  it('degrades an invalid config to the default and warns instead of failing the search', async () => {
     const result = await runRetrieve({
       argv: ['splonktastic'],
       startDir: INVALID_CONFIG_VAULT,

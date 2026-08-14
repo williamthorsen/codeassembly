@@ -6,4 +6,4 @@ kbs:
     description: Valid custom schema (insight -> recurrence-recency)
   broken-vault:
     path: ../../invalid-schema-vault
-    description: Malformed schema that must degrade to the default
+    description: Invalid schema that must degrade to the default
