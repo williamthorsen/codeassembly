@@ -2,7 +2,7 @@
 
 Governs one decision: When work surfaces that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change), does it fold into the current change, or spin off into a separate ticket?
 
-## The default: fold in
+## The default: Fold in
 
 Work the problem requires, or that is cheap and serves the ticket's goal, folds into the current change by default. A ticket is a signal of intent, not a boundary; it belongs to us and can be refined. Spinning off a separate ticket needs an affirmative, stated reason:
 

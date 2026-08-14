@@ -145,8 +145,8 @@ For each requested report type, check which analyses are possible given the avai
 
 After assessing coverage, inform the user what will and won't be included:
 
-- **Available analyses:** headcount by department, by level, by tenure
-- **Not available (missing fields):** headcount by location — add a `location` column to enable this
+- **Available analyses:** Headcount by department, by level, by tenure
+- **Not available (missing fields):** Headcount by location — add a `location` column to enable this
 
 ### 6. Analyze and generate report
 

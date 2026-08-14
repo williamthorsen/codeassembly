@@ -7,7 +7,7 @@ Use full words. Abbreviations save keystrokes but cost comprehension.
 - ✅ `position`, `request`, `response`, `configuration`, `message`
 - ❌ `pos`, `req`, `res`, `config`, `msg`
 
-**Exception:** trivial predicate callbacks where the variable is used once and the type is obvious: `.map(c => c.trim())`, `.filter(n => n > 0)`.
+**Exception:** Trivial predicate callbacks where the variable is used once and the type is obvious: `.map(c => c.trim())`, `.filter(n => n > 0)`.
 
 ## Kind in the tail
 

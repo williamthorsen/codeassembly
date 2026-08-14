@@ -35,7 +35,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 2. **Resolve the plan** — stop at the first source that yields one:
    - **Explicit `--plan=<path>`**: Read it.
    - **Already in context**: This session produced or read the plan. Use it as-is; do not re-read the file.
-   - **Newest plan for the ticket**: the newest of `*_plan.md` and `*_plan-v*.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` (run subdirectories included), by the greatest `YYYYMMDD-HHMMSSZ` filename prefix. Both forms carry that prefix, so they sort chronologically together and the lexicographically greatest is the newest across the two. `refine-plan` writes its revision as `_plan-v2.md` under a later prefix than the plan it revises, so matching both forms is what lets a refined plan win over the original it supersedes. Do not widen to `*_plan*.md`, which also matches the `_plan-review.md` artifact written beside the revision.
+   - **Newest plan for the ticket**: The newest of `*_plan.md` and `*_plan-v*.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` (run subdirectories included), by the greatest `YYYYMMDD-HHMMSSZ` filename prefix. Both forms carry that prefix, so they sort chronologically together and the lexicographically greatest is the newest across the two. `refine-plan` writes its revision as `_plan-v2.md` under a later prefix than the plan it revises, so matching both forms is what lets a refined plan win over the original it supersedes. Do not widen to `*_plan*.md`, which also matches the `_plan-review.md` artifact written beside the revision.
    - **Ask**: No plan is resolvable. Ask the user for a path rather than implementing from the ticket alone — a caller who invoked this skill has a plan in mind.
 
    Announce the resolved path and its timestamp before executing anything. Several plans can exist for one ticket, and the newest is not always the intended one: This announcement is how the user catches a superseded plan while the choice is still free. It is not ceremony, and it is not skippable when the resolution was unambiguous.
@@ -44,7 +44,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
    - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md).
    - **Already in context**: This session already resolved the ticket. Use it as-is.
    - **Stored URL**: `ticket_url` from step 1, fetched per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url).
-   - **Plan provenance**: the plan's frontmatter `ticket_ref` / `ticket_id`, resolved per [auto-resolve](../_data/ticket-source-resolution.md#auto-resolve).
+   - **Plan provenance**: The plan's frontmatter `ticket_ref` / `ticket_id`, resolved per [auto-resolve](../_data/ticket-source-resolution.md#auto-resolve).
    - **No ticket**: Every source failed — the plan was produced from a free-form description, or the ticket is unreachable. Announce that no ticket governs the run and execute against the plan as the sole contract. Do not stall on a missing ticket; do not silently substitute the plan for one without saying so.
 
 4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section — it names where the plan expects to need adaptation.

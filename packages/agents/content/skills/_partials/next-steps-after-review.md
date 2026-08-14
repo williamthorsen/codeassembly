@@ -158,7 +158,7 @@ Legacy (`-L`) findings trigger the sub-block on the same terms, with the full op
 
 The option set depends on whether the review covers a pull request. Select the variant by the review the agent just produced: A `review-pr` run carries a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
 
-#### Options: local-branch variant (review-branch)
+#### Options: Local-branch variant (review-branch)
 
 | #   | Emoji | Option                                                      | Description                                                                                                              |
 | --- | ----- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -237,7 +237,7 @@ Actionable findings:
 Per the session-boundary rule, two options name a skill in the render:
 
 - **Ask the author to address the findings**: The author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
-- **Wait for the author to address the findings, then re-review**: names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix, since the reviewer's memory of what it found is what lets it check the fixes.
+- **Wait for the author to address the findings, then re-review**: Names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix, since the reviewer's memory of what it found is what lets it check the fixes.
 
 #### Recommendation rules
 

@@ -45,7 +45,7 @@ The destination knowledge base is inferred by walking up from the note's directo
 
 The `--auto` flag is consumed by you, not by the bundled helper; it controls whether you present the proposal for confirmation before invoking the helper.
 
-## Operations: when to use each
+## Operations: When to use each
 
 - **`--bump-updated`** — A non-empirical edit to the note (rewording, restructuring, fact correction) where the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
 - **`--verify`** — You reran the note's instructions or re-confirmed its claims and they still hold. Use this for the "I just checked; still good" path. Does not bump `updated:` because nothing about the content changed.
@@ -54,7 +54,7 @@ The `--auto` flag is consumed by you, not by the bundled helper; it controls whe
 - **`--add-addressed-by`** — Record what addressed a problem: Append references to a record's recall-facing `addressed-by` list so the response surfaces when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
 - **`--supersede-with`** — Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): Old gains `superseded-by` and the `deprecated` tag, new gains `supersedes`. Use when a note is no longer canonical but should remain discoverable.
 
-## Update semantics: which operations bump `updated:`
+## Update semantics: Which operations bump `updated:`
 
 `updated:` records the last _substantive_ change to a record — what it asserts, its body, or its lifecycle state. Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
 

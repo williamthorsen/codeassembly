@@ -67,7 +67,7 @@ Three triage judgments go beyond the version-number table:
 4. Tooling (`eslint`, `prettier`, `vitest`)
 5. Leaf dependencies
 
-**Commit granularity:** one major per commit for bisectability — except a cohort, which lands as one atomic commit because no smaller step is installable.
+**Commit granularity:** One major per commit for bisectability — except a cohort, which lands as one atomic commit because no smaller step is installable.
 
 **Plan every pin twice.** A package held below latest carries two obligations: a recorded rationale (in the commit body or ticket, so a future maintainer can tell a deliberate ceiling from an oversight) and a matching cap in the update tooling (ncu filter, renovate/dependabot ignore rule) so the next automated bump does not silently revert it.
 

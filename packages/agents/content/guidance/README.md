@@ -8,7 +8,7 @@ This README is for maintainers of this directory. It is not referenced by any `<
 
 Inlined verbatim into every rendered platform guidance file via the directive expander, which means it reaches every agent invocation — including subagents — as ambient context.
 
-## Ambient delivery: harness regions
+## Ambient delivery: Harness regions
 
 A rulebook with `delivery: ambient` is delivered by `sync` into the ambient region (`<!-- codeassembly-ambient:start -->` / `<!-- codeassembly-ambient:end -->`) of a per-harness guidance file, wrapped in `<!-- rulebook:<slug> -->` sentinels. The region opens with a comment naming its content generated and warning that edits inside the region are overwritten; the comment is part of the rendered body, so a region holding no ambient content carries none. Both domains work this way, and both are mechanical end to end: Every host is a file its harness loads at launch, with no agent-elective read anywhere on the path. They differ in which file, and in who creates the region.
 

@@ -28,7 +28,7 @@ You operate in one of two modes based on your input:
 
 ### Mode 1: Implementation
 
-**Input:** plan steps (from plan JSON or task description), architectural guidance (optional), artifact directory
+**Input:** Plan steps (from plan JSON or task description), architectural guidance (optional), artifact directory
 
 **Process:**
 
@@ -78,7 +78,7 @@ completed
 
 ### Mode 2: Review response
 
-**Input:** review findings, previous response (if any), artifact directory, round number
+**Input:** Review findings, previous response (if any), artifact directory, round number
 
 **Process:**
 
