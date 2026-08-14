@@ -33,7 +33,7 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 
 ### 2. Resolve the PR
 
-Resolve the PR to merge per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): an explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR.
+Resolve the PR to merge per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): An explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR.
 
 Read the PR's metadata for the steps below:
 
@@ -191,7 +191,7 @@ If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"
 
 ### 10. Record the lede decision
 
-Skip this step when the delegate's completion report carries no merge commit SHA: nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+Skip this step when the delegate's completion report carries no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
 
 Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge — never present a failure at this step as a merge failure.
 
@@ -204,7 +204,7 @@ Invoke `{skill:capture-lede-decision}` with:
 | `--merge-commit`    | The merge commit SHA from the delegate's completion report         |
 | `--type`, `--scope` | The values resolved in step 3, as settled at the approval gate     |
 
-That skill owns the prompt and the record: it asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ — a lede that shipped unchanged under time pressure is not an accepted lede.
+That skill owns the prompt and the record: It asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ — a lede that shipped unchanged under time pressure is not an accepted lede.
 
 Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle events](#lifecycle-events).
 

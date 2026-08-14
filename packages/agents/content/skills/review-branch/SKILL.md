@@ -30,14 +30,14 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 2. **Resolve diff base** — If `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
 3. **Resolve specification sources** — Produce a list of spec sources (each a `{ source_type, label, content, criteria?, provenance, last_updated }` record). `provenance` is `remote` (a live platform fetch, never stale) or `local_snapshot` (a frozen plan-time artifact that can lag the contract); `last_updated` is the source's last-modified timestamp (ISO 8601), or null when the platform does not expose one.
    - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source. A fetched platform issue is `remote` with its `updatedAt` as `last_updated`; a file or plain-text source is `local_snapshot` with `last_updated` null when unknown. When the source resolves to a URL, persist it per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url). `--spec-source` does not apply on this path.
-   - **Auto-resolve** (when `--ticket` is omitted): resolve up to two candidates and choose between them.
-     - _Remote candidate_: when `ticket_id` is non-null and resolves to a platform ticket (use `scm` from step 1), fetch the remote issue per [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve) — but substitute the local fallback below for that section's "ask the user" terminal step. Its `last_updated` is the issue's `updatedAt`.
-     - _Local candidate_: the most recent `*_ticket.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. Its `last_updated` is the filename's `YYYYMMDD-HHMMSSZ` prefix converted to ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`), so it shares the remote candidate's format; treat an unparseable prefix as no local candidate. (The artifact filename keeps the compact form per `artifact-conventions.md`; only the recorded `last_updated` is normalized.)
+   - **Auto-resolve** (when `--ticket` is omitted): Resolve up to two candidates and choose between them.
+     - _Remote candidate_: When `ticket_id` is non-null and resolves to a platform ticket (use `scm` from step 1), fetch the remote issue per [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve) — but substitute the local fallback below for that section's "ask the user" terminal step. Its `last_updated` is the issue's `updatedAt`.
+     - _Local candidate_: The most recent `*_ticket.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. Its `last_updated` is the filename's `YYYYMMDD-HHMMSSZ` prefix converted to ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`), so it shares the remote candidate's format; treat an unparseable prefix as no local candidate. (The artifact filename keeps the compact form per `artifact-conventions.md`; only the recorded `last_updated` is normalized.)
      - _Selection_:
        - If `--spec-source=remote|local` is set, use that candidate. If the named candidate is unavailable (e.g. `--spec-source=local` with no snapshot, or `--spec-source=remote` with a failed/offline fetch or null `ticket_id`), stop and report the missing source rather than silently using the other side — an explicit instruction must not be redirected to the wrong contract. State the remedy (drop the flag to re-enable recency) in the message.
        - Otherwise use the candidate with the newer `last_updated`. Both values are ISO 8601 at the same precision, so they compare chronologically as plain strings — no per-format parsing. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
        - If only one candidate exists, use it. This single-candidate fallback also covers a failed/offline remote fetch and a null `ticket_id`.
-     - Append the chosen candidate as a `ticket` source carrying its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, hold that rejected candidate's `content` in-process for the divergence check. Hold raw content rather than extracted criteria: the comparison runs at render time under the extraction rule the compliance table states, so both candidates are read by one rule. It rides working memory, not the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout cannot fire on that branch.
+     - Append the chosen candidate as a `ticket` source carrying its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, hold that rejected candidate's `content` in-process for the divergence check. Hold raw content rather than extracted criteria: The comparison runs at render time under the extraction rule the compliance table states, so both candidates are read by one rule. It rides working memory, not the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout cannot fire on that branch.
    - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
@@ -45,7 +45,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 4. **Read prior artifacts**: If a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
-7. **Challenge your own findings**: re-read each finding and delete every one you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
+7. **Challenge your own findings**: Re-read each finding and delete every one you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
 8. **Assign a score** out of 10.
 9. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 10. **Save the review** per the [Saving](#saving) section.
@@ -193,12 +193,12 @@ Score: X/10
 
 Status values: ✅ Met, ⚠️ Partial, ❌ Not addressed
 
-Assign the status against the criterion's substantive guarantee, not its wording. A criterion is ✅ Met when the implementation delivers that guarantee, whatever shape it took: a criterion phrased "merges additively" is met by an implementation that refuses by default and merges under a flag, because it never overwrites. Implementation that goes beyond a criterion is ✅ Met as well; the excess is reported under Unplanned work and is never a shortfall.
+Assign the status against the criterion's substantive guarantee, not its wording. A criterion is ✅ Met when the implementation delivers that guarantee, whatever shape it took: A criterion phrased "merges additively" is met by an implementation that refuses by default and merges under a flag, because it never overwrites. Implementation that goes beyond a criterion is ✅ Met as well; the excess is reported under Unplanned work and is never a shortfall.
 
 ⚠️ Partial and ❌ Not addressed mean the guarantee is undelivered. Two situations produce them, and the Notes cell states which, because only one is a deviation:
 
-- **Unbuilt**: the work is incomplete. At review time this is ordinary, and the contract is not in question.
-- **In conflict**: the implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
+- **Unbuilt**: The work is incomplete. At review time this is ordinary, and the contract is not in question.
+- **In conflict**: The implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
 
 Extract criteria from whatever structure the source uses (numbered lists, checkboxes, prose). If the source does not have clearly delimited acceptance criteria, derive them from its problem statement and solution description. PR descriptions typically expose criteria as the bullet items under `## What`, `## Summary`, or an explicit acceptance-criteria heading; fall back to the description body when no list is present.
 
@@ -232,7 +232,7 @@ Cell encoding:
 | 🟠 {ref}    | Partial mismatch with the named reference        |
 | 🔴 {ref}    | Severe mismatch with the named reference         |
 
-Baseline-selection rule: ticket is baseline when it mentions the aspect; otherwise PR description is baseline. An aspect introduced only by the implementation belongs in `## Specification compliance`'s "Unplanned work" sub-section, not here.
+Baseline-selection rule: Ticket is baseline when it mentions the aspect; otherwise PR description is baseline. An aspect introduced only by the implementation belongs in `## Specification compliance`'s "Unplanned work" sub-section, not here.
 
 Implementation-column ordering: always `{ticket-state}, {PR-state}` regardless of which is meaningful, so the scan rhythm stays consistent across rows.
 

@@ -36,18 +36,18 @@ An item is a question, punctuated as one, naming the concrete action:
 
 | Prefix | Kind                                                                                        | Marker                                                            |
 | ------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `A`    | An action you propose to take: a "yes" makes you act.                                       | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
-| `Q`    | Information or a judgment you need: a "yes" only informs you; nothing happens on your side. | `🤔`                                                              |
+| `A`    | An action you propose to take: A "yes" makes you act.                                       | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
+| `Q`    | Information or a judgment you need: A "yes" only informs you; nothing happens on your side. | `🤔`                                                              |
 
-The prefix follows from the marker, so it demands no classification the agent was not already making. A-items come first: they are what the turn is blocked on.
+The prefix follows from the marker, so it demands no classification the agent was not already making. A-items come first: They are what the turn is blocked on.
 
-A statement that is not an ask (a status note, a merge-ready report) is neither `A` nor `Q`; it stays in the prose, never the block. The prefix and marker always agree: an `A` never carries `🤔`, a `Q` never carries `👍🏼👎🏼`.
+A statement that is not an ask (a status note, a merge-ready report) is neither `A` nor `Q`; it stays in the prose, never the block. The prefix and marker always agree: An `A` never carries `🤔`, a `Q` never carries `👍🏼👎🏼`.
 
 A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line — "A1 y, A2 2". A single-item block carries no prefix, since there is nothing to disambiguate.
 
-**Blocks with more than one list.** A canonical block can hold several independently-numbered lists, such as a next-steps menu offering a remote-issue select and a next-action select. Each list is an item, so the render contract's identifier rule applies to it unchanged: canonical blocks are not exempt, and a bare `Remote issue:` label is not an identifier the reader can cite.
+**Blocks with more than one list.** A canonical block can hold several independently-numbered lists, such as a next-steps menu offering a remote-issue select and a next-action select. Each list is an item, so the render contract's identifier rule applies to it unchanged: Canonical blocks are not exempt, and a bare `Remote issue:` label is not an identifier the reader can cite.
 
-**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, where the user picks any subset ("reply with numbers, or 'all'"). Its actions carry no options of their own, so the bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. The letter prefix is what a single-select list needs and a multi-select does not: in the first it fences the list identifier off from the option numbers beneath it; in the second there are no option numbers to fence off.
+**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, where the user picks any subset ("reply with numbers, or 'all'"). Its actions carry no options of their own, so the bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. The letter prefix is what a single-select list needs and a multi-select does not: In the first it fences the list identifier off from the option numbers beneath it; in the second there are no option numbers to fence off.
 
 ## Rendering
 

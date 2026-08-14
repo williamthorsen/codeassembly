@@ -8,7 +8,7 @@ user-invocable: true
 
 Surface the knowledge-base assertions most relevant to a query. A bundled helper does the mechanical recall — it resolves which knowledge bases to search, runs ripgrep over note files, expands query terms through the tag aliases, and emits a structured candidate table. You then rank those candidates by genuine relevance and present a ranked list.
 
-The split is deliberate: the helper is wide and mechanical; the ranking is narrow and judgment-driven. Treat the helper's output as evidence, not as a finished answer.
+The split is deliberate: The helper is wide and mechanical; the ranking is narrow and judgment-driven. Treat the helper's output as evidence, not as a finished answer.
 
 This skill returns assertions — the canonical knowledge-base notes. For event recall — the raw observations captured to refine assertions — use `kb-retrieve-events` instead.
 
@@ -67,16 +67,16 @@ The helper prints a JSON object to stdout:
 
 Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag, Diátaxis, and folder overlap with the query are **evidence**, not terms in a weighted sum — a note in the right folder with the wrong intent ranks below a note that directly answers the question. Read each `snippet` to judge whether the note actually addresses the query rather than merely mentioning its terms.
 
-Once relevance is established, rank by freshness: a recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal — the whole days since the note was last verified.
+Once relevance is established, rank by freshness: A recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal — the whole days since the note was last verified.
 
 ### 3. Present a ranked list
 
 Present the ranked notes, each showing `path`, `title`, `snippet`, and `diataxis`. Apply these annotations:
 
 - **Stale notes** — when `lastVerifiedAgeDays` exceeds 90, annotate the note as not recently verified.
-- **Volatile notes** — when a note's `tags` include `volatile`, flag it prominently: its claims may have rotted and should be re-confirmed before use.
-- **Deprecated notes** — when a note's `tags` include `deprecated`, or its `supersession.superseded` is `true`, route the reader to the successor: prefer `supersession.canonicalPath` and present the canonical note in place of the deprecated one. When `supersession.diagnostic` is set (a broken or cyclic `superseded-by` chain), surface that the chain could not be fully followed.
-- **Addressed problems** — when a candidate carries `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: it records what was done about the problem, not that the problem is verifiably resolved. Unlike supersession, it does not redirect the reader; the record remains a true observation worth keeping.
+- **Volatile notes** — when a note's `tags` include `volatile`, flag it prominently: Its claims may have rotted and should be re-confirmed before use.
+- **Deprecated notes** — when a note's `tags` include `deprecated`, or its `supersession.superseded` is `true`, route the reader to the successor: Prefer `supersession.canonicalPath` and present the canonical note in place of the deprecated one. When `supersession.diagnostic` is set (a broken or cyclic `superseded-by` chain), surface that the chain could not be fully followed.
+- **Addressed problems** — when a candidate carries `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: It records what was done about the problem, not that the problem is verifiably resolved. Unlike supersession, it does not redirect the reader; the record remains a true observation worth keeping.
 
 ### 4. Report empty results plainly
 

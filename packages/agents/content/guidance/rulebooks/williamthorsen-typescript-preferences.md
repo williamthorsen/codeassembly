@@ -11,7 +11,7 @@ TypeScript language mechanics, the shape of a module's public surface, and docum
 
 ## Exports
 
-Export by name. Never use a default export: importers invent their own names, and renames never propagate.
+Export by name. Never use a default export: Importers invent their own names, and renames never propagate.
 
 ## Barrels
 
@@ -19,7 +19,7 @@ A barrel (an `index.ts` that re-exports a directory's modules) is permitted only
 
 Importing one symbol through a barrel loads every module it touches.
 
-A barrel is also permitted at a vendor boundary that lint enforces: a directory holding the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary no lint rule protects admits no barrel.
+A barrel is also permitted at a vendor boundary that lint enforces: A directory holding the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary no lint rule protects admits no barrel.
 
 ## Import specifiers
 
@@ -29,7 +29,7 @@ This requires `allowImportingTsExtensions` and a build that rewrites extensions 
 
 ## Type safety
 
-Never use a type assertion (`as Type`, `<Type>value`): it claims a runtime guarantee the code cannot make. Where the type is not guaranteed, return `unknown` and let the caller narrow it with a type guard.
+Never use a type assertion (`as Type`, `<Type>value`): It claims a runtime guarantee the code cannot make. Where the type is not guaranteed, return `unknown` and let the caller narrow it with a type guard.
 
 ```typescript
 // ❌ Claims a type nothing verified

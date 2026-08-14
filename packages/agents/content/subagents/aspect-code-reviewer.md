@@ -114,6 +114,8 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `medium`: 1-2 straightforward guideline/bug findings, or many W findings collectively indicating a quality concern
 - `high`: Systematic guideline violations indicating the developer missed key conventions
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output format
 
 The finalized form of the review file. See [Incremental review writes](#incremental-review-writes) for the scaffold and interim-write shapes — this section shows only the post-finalize structure.

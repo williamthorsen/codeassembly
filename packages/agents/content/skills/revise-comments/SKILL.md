@@ -24,7 +24,7 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
    git diff --name-only "$default_branch...HEAD"
    ```
 
-   With explicit arguments: for each argument, if it is a file, add it to the set; if it is a directory, list its contents via `git ls-files <dir>` and `git ls-files --others --exclude-standard <dir>`, then add the comment-supporting files from that listing. The `git ls-files` form respects `.gitignore`, so `node_modules/`, `dist/`, and other non-authored trees stay out of the set.
+   With explicit arguments: For each argument, if it is a file, add it to the set; if it is a directory, list its contents via `git ls-files <dir>` and `git ls-files --others --exclude-standard <dir>`, then add the comment-supporting files from that listing. The `git ls-files` form respects `.gitignore`, so `node_modules/`, `dist/`, and other non-authored trees stay out of the set.
 
 2. **Apply the audit per file.** Read each target file. Put every comment through the three tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
 

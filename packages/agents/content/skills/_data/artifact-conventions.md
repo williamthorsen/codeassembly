@@ -234,7 +234,7 @@ Invocation surface:
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 ```
 
-The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
+The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
 
 When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first — the deriver is the single derivation surface and is safe to call from any context.
 
@@ -664,7 +664,7 @@ V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ## Artifact types
 
-Every type below is governed by [Mutability](#mutability): a saved artifact is a point-in-time record, never revised to match anything downstream of it, and revision writes a new artifact rather than editing one.
+Every type below is governed by [Mutability](#mutability): A saved artifact is a point-in-time record, never revised to match anything downstream of it, and revision writes a new artifact rather than editing one.
 
 ### Run artifacts (in run directories)
 
@@ -775,9 +775,9 @@ This gate is the [concision principle](./concision.md) applied to findings: A fi
 
 Self-test before writing each finding: _Would I make this exact change right now if it were my code?_ If no, it is not a finding.
 
-Where dropped content goes: an observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
+Where dropped content goes: An observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
 
-This holds at the whole-review level too: a review that surfaces no findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
+This holds at the whole-review level too: A review that surfaces no findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
 
 Apply this gate **hardest** to R and S, where the low criticality bar invites filler.
 
@@ -822,7 +822,7 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 **Legacy (`-L` suffix)** — pre-existing code observation:
 
 - Issues in code not authored in this branch — use the same severity letter as the equivalent author finding.
-- The `-L` is a marker, not part of the ID — the ID is the number in front of it. Assign that number from the shared per-letter sequence as if this were an author finding, then append `-L`. Example: after author findings `F1`, `F2`, the first legacy FIXME is `F3-L`.
+- The `-L` is a marker, not part of the ID — the ID is the number in front of it. Assign that number from the shared per-letter sequence as if this were an author finding, then append `-L`. Example: After author findings `F1`, `F2`, the first legacy FIXME is `F3-L`.
 - Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
 - Frame as future opportunities, not current defects
 - Never count against the review score
@@ -844,7 +844,7 @@ Criticality classifies; it does not decide what a reviewer shows the user. Legac
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: they have no criticality and are never merge-blocking. They belong wherever knowledge is worth carrying forward — housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
+Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality and are never merge-blocking. They belong wherever knowledge is worth carrying forward — housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
@@ -854,7 +854,7 @@ Consumers that present insights (`wrap-up`, `summarize-chat`, review skills and 
 
 ### Insight gate
 
-An insight is the deliberate complement to a finding: a finding hands the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate) — "no severity, no action" is exactly the low bar that invites filler.
+An insight is the deliberate complement to a finding: A finding hands the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate) — "no severity, no action" is exactly the low bar that invites filler.
 
 Emit an insight only when it is **non-obvious knowledge a future reader is materially worse off without**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
 
@@ -875,7 +875,7 @@ These mutations are sanctioned, and no others:
 
 - **Frontmatter a skill's own step directs**: `create-pr` backfills a `pr:` line into the change summary, and `plan-orchestrable-steps` prepends resolved frontmatter to the planner's markdown snapshot. A pointer added after the fact is provenance the artifact could not carry at write time, which is what separates it from a content rewrite.
 - **Artifacts declared mutable**: `orchestration-plan.json` is overwritten each planning iteration, while its `.md` counterparts are versioned snapshots.
-- **Working input forwarded to another agent**: the receiving agent acts on the contents, so staleness would misdirect real work.
+- **Working input forwarded to another agent**: The receiving agent acts on the contents, so staleness would misdirect real work.
 
 Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
 

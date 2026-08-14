@@ -42,6 +42,8 @@ You will receive:
 - **Test coverage in acceptance criteria**: When a step creates or modifies testable behavior, its acceptance criteria must include test coverage. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
 - **Documentation coverage in acceptance criteria**: When a step adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output: Plan (Markdown)
 
 Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc. Format:

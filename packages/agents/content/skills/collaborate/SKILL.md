@@ -23,7 +23,7 @@ This skill is invoked by a directive in `~/.agents/AGENTS.md` (the shared agent 
 
 Reason silently and surface a concise answer or recommendation; deep-dive only on request. This applies the [concision principle](../_data/concision.md) to interactive replies, with the ambient `## Concision` guidance as the always-on backstop.
 
-Concise never means partial: a flaw, risk, or dissent worth raising is signal (see "Critical evaluation when invited"), so cut the walk-through, never the conclusion the user must act on.
+Concise never means partial: A flaw, risk, or dissent worth raising is signal (see "Critical evaluation when invited"), so cut the walk-through, never the conclusion the user must act on.
 
 ## Critical evaluation when invited
 
@@ -81,6 +81,6 @@ When you deem appropriate, proactively dispatch subagents to perform tasks. Good
 
 ## Skill improvement
 
-- When the user corrects the agent, or specifies a new desired behavior, that feedback is evidence for refining a skill, subagent, rulebook, general guidance, or helper. Invoke the `{skill:capture-feedback}` skill: it applies the immediate fix when there is something concrete and records a generalized `feedback` event — tagged `mistake` when existing guidance was missed — for a later refinement pass to mine.
+- When the user corrects the agent, or specifies a new desired behavior, that feedback is evidence for refining a skill, subagent, rulebook, general guidance, or helper. Invoke the `{skill:capture-feedback}` skill: It applies the immediate fix when there is something concrete and records a generalized `feedback` event — tagged `mistake` when existing guidance was missed — for a later refinement pass to mine.
 
 <!-- include: ../_partials/option-format.md / -->

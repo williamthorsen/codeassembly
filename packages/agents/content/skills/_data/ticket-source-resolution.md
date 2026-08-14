@@ -39,7 +39,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
    d. If the platform still cannot be determined, ask the user.
 
-   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for platforms with no automated fetch (e.g. Jira): it yields a URL to present and persist even when the content cannot be fetched.
+   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for platforms with no automated fetch (e.g. Jira): It yields a URL to present and persist even when the content cannot be fetched.
 
 5. **Fetch the ticket** using the platform-specific command from [platform-specific fetch commands](#platform-specific-fetch-commands).
 
@@ -77,7 +77,7 @@ Skills may request a subset of these fields. The `updatedAt` field is needed by 
 
 ### Jira
 
-Not yet supported for automated fetch. If the platform is determined to be Jira, present the Jira key to the user and ask them to provide the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted; the user is still asked for the content, since Jira has no automated fetch. The stored URL still applies: a Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
+Not yet supported for automated fetch. If the platform is determined to be Jira, present the Jira key to the user and ask them to provide the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted; the user is still asked for the content, since Jira has no automated fetch. The stored URL still applies: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
 
 ## Stored ticket URL
 
@@ -86,8 +86,8 @@ The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolve
 The manifest also surfaces `ticket_base_url`, mirroring the `ticket.base_url` preference. When a base and a `ticket_id` are both known, the deriver seeds `ticket_url` by joining them, so a bare Jira-style reference resolves to a URL without a supplied one. An explicitly stored URL always overrides that constructed default.
 
 - **Prefer** — auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
-- **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
-- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: there is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-prompts the user for a corrected URL (Jira has no automated fetch).
+- **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: Run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
+- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-prompts the user for a corrected URL (Jira has no automated fetch).
 
 ## Resolved metadata
 

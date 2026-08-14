@@ -42,11 +42,11 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 ## Actionability gate
 
-Before emitting any F/W/T/R/S finding, confirm it hands the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
+Before emitting any F/W/T/R/S finding, confirm it hands the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _Would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
 
 ## Insight gate
 
-Reviewers may emit insights (`I{n}`) — knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: emit it only when it is non-obvious knowledge a future reader is materially worse off without, and name that benefit. Distinguish it from a Suggestion (`S`): an `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
+Reviewers may emit insights (`I{n}`) — knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge a future reader is materially worse off without, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
 
 ## Finding concision
 
@@ -60,7 +60,7 @@ Comment text you propose for a source file — a replacement doc comment, a sugg
 
 ## Do not recommend tests that assert removed things stay removed
 
-Do not raise a finding recommending a test that asserts deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: it encodes history, fails only on a verbatim revert, and accretes without bound. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions; see the `testing-conventions` skill for the authoring-side rule.
+Do not raise a finding recommending a test that asserts deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: It encodes history, fails only on a verbatim revert, and accretes without bound. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions; see the `testing-conventions` skill for the authoring-side rule.
 
 ## Finding references
 

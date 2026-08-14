@@ -6,24 +6,11 @@
 
 ## Style
 
-- Never use title case. Use sentence case for titles, headings, section headers, and interface elements. Preserve the case of proper nouns.
 - Code style should adhere to `.editorconfig`, if there is one.
 - Order lists and collections logically (alphabetically unless there is a good reason to sort or group differently).
 - Use long-form CLI options (`--force`, not `-f`) in generated commands and scripts.
 - Structure code so the primary logic comes first; place helper functions at the end.
 - Name functions with a leading verb (`show_usage`, not `usage`; `build_payload`, not `payload`).
-
-## Writing style
-
-Use sentence case for all titles, headings, steps, labels, and similar text.
-Preserve the case of proper nouns, actual titles of books and movies, and named entities.
-Examples:
-
-- "Backend: Express API routes and server" not "Backend: Express API Routes And Server"
-- "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
-- "Customizing the Status Adapter for your backend", not "Customizing the Status Adapter for Your Backend"
-
-Capitalize the first word after a colon, unless the colon falls mid-sentence and introduces a fragment or list.
 
 ## Concision
 
@@ -66,7 +53,7 @@ Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code
 
 When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
-A saved artifact records a moment, not a running state. Once written it stands: never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
+A saved artifact records a moment, not a running state. Once written it stands: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
 
 The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements arrive as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 

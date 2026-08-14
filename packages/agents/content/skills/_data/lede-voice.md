@@ -14,9 +14,9 @@ The reader is glancing through entries asking "what did this change do?" and dec
 
 **Name things.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule, backticked. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). For a release-notes reader, define any term the audience may not share.
 
-**Punch the highlights.** Decide what matters most, lead with it, and stop after the two or three facts a glancing reader needs. Everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog -- and craft is welcome: a vivid concrete detail ("earns a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure.
+**Punch the highlights.** Decide what matters most, lead with it, and stop after the two or three facts a glancing reader needs. Everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog -- and craft is welcome: A vivid concrete detail ("earns a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure.
 
-**Claims match the diff.** A mitigation is not a fix. Agency lands on the true actor: violations fail the build; rules only classify. A promise that holds only on some version or configuration carries that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
+**Claims match the diff.** A mitigation is not a fix. Agency lands on the true actor: Violations fail the build; rules only classify. A promise that holds only on some version or configuration carries that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
 ## Form
 
@@ -45,7 +45,7 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
   > Upgrades several dependencies, most notably `nmr` to v0.24. That upgrade changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. [...] The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
 - **tests / tooling / ci** -- the operation performed on the pipeline or configuration, tools named.
   > Fixes deferred violations of Vitest lint rules in the `readyup` package and restores the severity of the associated rules to `error` when a strict-lint check is run.
-- **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration sentence; unpublished or never-released surface goes quietly -- no headline, no breaking-change framing. When unsure, include the migration sentence. A removal whose surface moved is stated as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."). A deprecation reports the same facts in advance: the surface still works, the replacement is named, and the removal horizon is stated when it is known.
+- **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration sentence; unpublished or never-released surface goes quietly -- no headline, no breaking-change framing. When unsure, include the migration sentence. A removal whose surface moved is stated as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."). A deprecation reports the same facts in advance: The surface still works, the replacement is named, and the removal horizon is stated when it is known.
   > Removes `@williamthorsen/eslint-config-basic`; no further versions will be published. No remaining package lints Markdown, while `@williamthorsen/eslint-config-typescript` continues to cover JavaScript, JSON, YAML, and `package.json`.
 - **revert** -- the change undone and what is restored. The PR number may accompany the name, never substitute for it. A revert carries the work type of the change it undoes; `revert` is not itself a key in `work-types.json`.
 
@@ -69,5 +69,5 @@ A lede can be cut past comprehension, and a too-abstract lede is worse than a lo
 A title is a one-sentence lede; everything above applies, distilled, plus:
 
 - The code change, not what prompted it. Never "Address review findings" or "Apply feedback".
-- No ephemeral references: the title must make sense to a reader with only `git log`.
-- Only what is in the diff: external actions (ticket updates, notifications) are not part of the change.
+- No ephemeral references: The title must make sense to a reader with only `git log`.
+- Only what is in the diff: External actions (ticket updates, notifications) are not part of the change.

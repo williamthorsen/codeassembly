@@ -47,7 +47,7 @@ Refuse the merge with a specific reason on any of the following. Each refusal ex
 | `mergeStateStatus` | `"BLOCKED"`                                                  | "PR #{n} is blocked (failing required checks or missing required reviews)." |
 | `reviewDecision`   | `"CHANGES_REQUESTED"` or `"REVIEW_REQUIRED"` (when required) | "PR #{n} has unresolved review requirements."                               |
 
-**Failure-mode policy:** when a required field is missing or null in the JSON response (older `gh` versions, repository configurations that don't expose the field), **fail closed**: Refuse with "Cannot determine merge state for PR #{n} — verify and merge manually." Never proceed when state is inconclusive.
+**Failure-mode policy:** When a required field is missing or null in the JSON response (older `gh` versions, repository configurations that don't expose the field), **fail closed**: Refuse with "Cannot determine merge state for PR #{n} — verify and merge manually." Never proceed when state is inconclusive.
 
 ### 3. Verify branch sync
 

@@ -1,8 +1,8 @@
 # Scope and deferral decisions
 
-Governs one decision: when work surfaces that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change), does it fold into the current change, or spin off into a separate ticket?
+Governs one decision: When work surfaces that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change), does it fold into the current change, or spin off into a separate ticket?
 
-## The default: fold in
+## The default: Fold in
 
 Work the problem requires, or that is cheap and serves the ticket's goal, folds into the current change by default. A ticket is a signal of intent, not a boundary; it belongs to us and can be refined. Spinning off a separate ticket needs an affirmative, stated reason:
 
@@ -21,7 +21,7 @@ Work the problem requires, or that is cheap and serves the ticket's goal, folds 
 
 A new ticket is not free. Beyond the work itself, it commits the whole pipeline (creation, reading, evaluation, design, planning, implementation, review, checks, push, PR, approval, merge, and cleanup) and carries an opportunity cost against everything else in the backlog. Small, clean tickets yield small, clean PRs that are easy to approve; that value is real, but it must clear the pipeline-and-opportunity bar, weighed against the whole flow rather than any single step. For a one-line vocabulary fix or a two-line cleanup, the overhead can dwarf the underlying work by an order of magnitude; routing it into a separate ticket is not risk-management but unnecessary cost.
 
-Once work is judged genuinely separable, ticket it immediately rather than parking it in the conversation; a tracker moves that state out of the user's head. That governs _how_ to defer; the fold-in default governs _whether_. The two compose: decide the disposition here, and execute create-immediately when the disposition is "separate ticket."
+Once work is judged genuinely separable, ticket it immediately rather than parking it in the conversation; a tracker moves that state out of the user's head. That governs _how_ to defer; the fold-in default governs _whether_. The two compose: Decide the disposition here, and execute create-immediately when the disposition is "separate ticket."
 
 ## Three-lane disposition model
 

@@ -62,6 +62,8 @@ Tag every suggestion:
 - **low-risk** -- efficiency improvement, quality preserved
 - **tradeoff** -- could affect quality, present data and let human decide
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output format
 
 Write a markdown artifact with this structure. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc); see the [Frontmatter](#frontmatter) section below for field resolution.

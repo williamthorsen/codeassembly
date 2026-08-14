@@ -78,7 +78,7 @@ Three relationships are available, each stated from the new ticket's side:
 - **blocked-by** — the new ticket cannot proceed until an existing ticket lands.
 - **blocking** — an existing ticket cannot proceed until the new ticket lands.
 
-Decide which apply from the reason this ticket is being created, sharpened by `branch_ticket_id` (step 1): work split out of the current branch's ticket stands in a relationship to it, and a backlog idea raised in passing stands in none. An argument supplied by the caller replaces the inference for its own relationship.
+Decide which apply from the reason this ticket is being created, sharpened by `branch_ticket_id` (step 1): Work split out of the current branch's ticket stands in a relationship to it, and a backlog idea raised in passing stands in none. An argument supplied by the caller replaces the inference for its own relationship.
 
 **Most tickets carry none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
 
@@ -190,7 +190,7 @@ Use whatever the platform's own tooling offers for parent and blocking relations
 
 #### When a relationship does not land
 
-A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: the ticket already exists by this point, and losing the link costs less than losing the ticket. Carry every skipped relationship and its reason into the completion output — that report is how a platform's missing relationship surface becomes visible.
+A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Carry every skipped relationship and its reason into the completion output — that report is how a platform's missing relationship surface becomes visible.
 
 ### 8. Save local artifacts
 

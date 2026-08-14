@@ -279,7 +279,7 @@ The user may respond with:
 - **Per-item adjustments:** `"1 but combine F1+F2"` — execute the action with modifications
 - **Multiple action selections:** `"1a with F1+F2; 3"` — apply action 1a to F1 and F2, then execute action 3
 - **Exclusions:** `"all except I2"` — execute everything, omitting specific items
-- **Custom instructions:** free-form text — interpret and confirm before executing
+- **Custom instructions:** Free-form text — interpret and confirm before executing
 
 Any finding not selected for a ticket-creation action is implicitly dropped.
 
@@ -357,7 +357,7 @@ Set these skill-specific values inline (not in the script's output):
 
 - `provenance.skill`: always `wrap-up`.
 - `provenance.isInteractive`: always `true`.
-- `run_id`: **override** the script's value — reuse the run ID Phase 1a captured (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
+- `run_id`: **Override** the script's value — reuse the run ID Phase 1a captured (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
 - `session_type` (deferred-findings extension): the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
 - `tickets_created` (deferred-findings extension): list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list. Omit when empty.
 

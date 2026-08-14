@@ -8,7 +8,7 @@ user-invocable: true
 
 Apply a single mutation to a note that already exists in a knowledge base. A bundled helper does the mechanical work — it resolves the writable KB the note belongs to, loads the note as a typed assertion record, runs alias canonicalization where relevant, applies the change, and writes atomically. You do the judgment work — pick which operation fits the change, supply the new tags or body content, and decide when supersession is the right move.
 
-The split is deliberate: the helper is narrow and mechanical; the operation choice is wide and judgment-driven. Treat the helper as a guardrail. It refuses to write into a KB marked `readonly: true`, refuses a note that does not parse as an assertion, and refuses to leave a half-finished supersede chain.
+The split is deliberate: The helper is narrow and mechanical; the operation choice is wide and judgment-driven. Treat the helper as a guardrail. It refuses to write into a KB marked `readonly: true`, refuses a note that does not parse as an assertion, and refuses to leave a half-finished supersede chain.
 
 For new notes, use `kb-add`. For finding notes, use `kb-retrieve`. For periodic vault hygiene (broken wikilinks, stale verifications, tag drift), use `kb-curate` once it ships.
 
@@ -32,7 +32,7 @@ A value-bearing flag accepts both `--retag node,react` and `--retag=node,react`.
 
 ### KB selection
 
-The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. There is no `--kb` override: the note's location is the selector. A KB whose `kb.yaml` entry sets `readonly: true` refuses writes with `readonly-kb`.
+The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. There is no `--kb` override: The note's location is the selector. A KB whose `kb.yaml` entry sets `readonly: true` refuses writes with `readonly-kb`.
 
 ## Runtime dependencies
 
@@ -45,21 +45,21 @@ The destination knowledge base is inferred by walking up from the note's directo
 
 The `--auto` flag is consumed by you, not by the bundled helper; it controls whether you present the proposal for confirmation before invoking the helper.
 
-## Operations: when to use each
+## Operations: When to use each
 
 - **`--bump-updated`** — A non-empirical edit to the note (rewording, restructuring, fact correction) where the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
 - **`--verify`** — You reran the note's instructions or re-confirmed its claims and they still hold. Use this for the "I just checked; still good" path. Does not bump `updated:` because nothing about the content changed.
 - **`--append`** — Add a section to an existing note. The new content lands after the existing body with a separating blank line. Use for accumulating findings or extending a list.
-- **`--retag`** — Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`. Curatorial: it changes how a record is found, not what it asserts, so it leaves `updated:` unchanged.
-- **`--add-addressed-by`** — Record what addressed a problem: append references to a record's recall-facing `addressed-by` list so the response surfaces when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
-- **`--supersede-with`** — Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): old gains `superseded-by` and the `deprecated` tag, new gains `supersedes`. Use when a note is no longer canonical but should remain discoverable.
+- **`--retag`** — Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`. Curatorial: It changes how a record is found, not what it asserts, so it leaves `updated:` unchanged.
+- **`--add-addressed-by`** — Record what addressed a problem: Append references to a record's recall-facing `addressed-by` list so the response surfaces when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
+- **`--supersede-with`** — Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): Old gains `superseded-by` and the `deprecated` tag, new gains `supersedes`. Use when a note is no longer canonical but should remain discoverable.
 
-## Update semantics: which operations bump `updated:`
+## Update semantics: Which operations bump `updated:`
 
 `updated:` records the last _substantive_ change to a record — what it asserts, its body, or its lifecycle state. Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
 
 - **Bump `updated:`** (substantive change): `--append` (body change), `--add-addressed-by` (records a response relation), and `--supersede-with` (lifecycle-state change). `--bump-updated` is the explicit escape hatch for an out-of-band edit made elsewhere.
-- **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: reorganizes findability only) and `--verify` (re-confirmation: content is unchanged).
+- **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: reorganizes findability only) and `--verify` (re-confirmation: Content is unchanged).
 
 ## Process
 
@@ -69,7 +69,7 @@ Identify which single operation fits the change. If you have several distinct ch
 
 ### 2. Survey context with kb-retrieve when warranted
 
-For `--retag` and `--supersede-with`, run `{skill:kb-retrieve}` for related notes first: a retag is often a vault-wide pattern change worth applying consistently, and a supersession needs the right successor identified.
+For `--retag` and `--supersede-with`, run `{skill:kb-retrieve}` for related notes first: A retag is often a vault-wide pattern change worth applying consistently, and a supersession needs the right successor identified.
 
 ### 3. Present the proposal (default mode)
 
@@ -112,7 +112,7 @@ node {harness_home_dir}/skills/kb-edit/kb-edit.mjs Tools/tmux/tmux-insights.md -
 
 The helper prints a JSON object to stdout. On success the payload carries `ok: true`, the resolved `kb`, the written `record`, and (for `--retag`) the `originalTags` / `canonicalTags` audit trail. `--supersede-with` returns `oldRecord` and `newRecord` for both files.
 
-`--add-addressed-by` returns a `results` array — one entry per target note, in the order supplied — instead of a single-note payload. Each entry carries its own `ok`: a success entry has the written `record`, a failure entry has an `error` code and `message`. Its top-level `ok: true` means the batch ran (no usage or system error), not that every record succeeded; inspect each `results[]` entry to see which notes were written and which failed, then re-run for the failures (the append de-duplicates, so re-running is safe).
+`--add-addressed-by` returns a `results` array — one entry per target note, in the order supplied — instead of a single-note payload. Each entry carries its own `ok`: A success entry has the written `record`, a failure entry has an `error` code and `message`. Its top-level `ok: true` means the batch ran (no usage or system error), not that every record succeeded; inspect each `results[]` entry to see which notes were written and which failed, then re-run for the failures (the append de-duplicates, so re-running is safe).
 
 On failure, `ok: false` plus a categorical `error` code:
 

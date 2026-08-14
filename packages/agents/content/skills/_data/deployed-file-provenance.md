@@ -17,7 +17,7 @@ A file is deployed when any of the following holds.
 - `<!-- codeassembly-subagent:{slug} -->` in a subagent's file
 - `<!-- codeassembly-rulebook:{slug} -->` in a rulebook delivered as a skill
 
-**It sits under a harness's `skills/` tree.** Both commands populate that tree and mark only part of what they leave there: a skill's root `SKILL.md` carries an ownership marker while its nested Markdown and bundled scripts carry none, the shared `_data/` tree and the helper directories holding no `SKILL.md` are `install`'s, and a declared source's support entries land under `_sources/`. The one thing there that is not deployed is a skill added by hand, whose `SKILL.md` carries no ownership marker.
+**It sits under a harness's `skills/` tree.** Both commands populate that tree and mark only part of what they leave there: A skill's root `SKILL.md` carries an ownership marker while its nested Markdown and bundled scripts carry none, the shared `_data/` tree and the helper directories holding no `SKILL.md` are `install`'s, and a declared source's support entries land under `_sources/`. The one thing there that is not deployed is a skill added by hand, whose `SKILL.md` carries no ownership marker.
 
 **It sits in a harness's `scripts/` directory.** `install` copies those files verbatim and marks none of them, whatever the extension.
 
@@ -27,7 +27,7 @@ One deployed file carries neither a marker nor a marked artifact around it: `ins
 
 ## Finding the source
 
-An `install`-deployed file's marker carries a `Source:` line linking to the file it was built from. A script carries no marker: a shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `src/<name>/cli.ts` entry that `packages/agents/scripts/bundle-skill-helpers.ts` maps to it.
+An `install`-deployed file's marker carries a `Source:` line linking to the file it was built from. A script carries no marker: A shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `src/<name>/cli.ts` entry that `packages/agents/scripts/bundle-skill-helpers.ts` maps to it.
 
 A `sync`-deployed artifact has no such line either. Read the resolution report from the dry run for the domain the file sits in: `codeassembly sync --dry-run` for a file under a project's harness directory, and `codeassembly sync --global --dry-run` for one under the home directory. A dry run of the wrong domain lists other artifacts, or none at all where that domain declares nothing. The report names each deployed artifact's origin:
 

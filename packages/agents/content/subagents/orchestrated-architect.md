@@ -54,6 +54,8 @@ Classify the task into exactly one impact level:
 - Risk of breaking existing functionality
 - Example: Migrating state management, changing database schema, adding a new service layer
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output format
 
 Write your analysis to the file path provided in your task prompt using the {tool:Write} tool. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).

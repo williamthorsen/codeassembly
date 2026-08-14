@@ -5,9 +5,9 @@ This is the canonical contract for extracting a Jira-style ticket ID from a bran
 ## Contract
 
 - **Pattern (case-insensitive):** `[A-Za-z]{2,}-[0-9]+`. Two or more letters, a hyphen, one or more digits. Single-letter prefixes (`a-1`, `x-99`) are not valid ticket IDs.
-- **Position:** matched anywhere in the input. The first match wins.
-- **Output normalization:** the captured ID is uppercased before being returned (`mac-130` → `MAC-130`).
-- **Suffix tolerance:** trailing `.N` (sub-ticket) and `-description` segments are accepted in input but are not part of the canonical ID. The greedy `[0-9]+` boundary stops at any non-digit (`.`, `-letter`, `/`, `_`, end-of-string), so these suffixes are naturally truncated — no post-match stripping is required.
+- **Position:** Matched anywhere in the input. The first match wins.
+- **Output normalization:** The captured ID is uppercased before being returned (`mac-130` → `MAC-130`).
+- **Suffix tolerance:** Trailing `.N` (sub-ticket) and `-description` segments are accepted in input but are not part of the canonical ID. The greedy `[0-9]+` boundary stops at any non-digit (`.`, `-letter`, `/`, `_`, end-of-string), so these suffixes are naturally truncated — no post-match stripping is required.
 
 ## Behavior table
 

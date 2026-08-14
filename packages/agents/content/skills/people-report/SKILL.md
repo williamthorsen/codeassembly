@@ -65,9 +65,9 @@ Examine the column headers and infer their meaning. Map each column to a recogni
 >
 > **Action items**
 >
-> **Q1** — `DoT`: is this date of termination or date of transfer? 🤔
+> **Q1** — `DoT`: Is this date of termination or date of transfer? 🤔
 >
-> **Q2** — `L`: is this level or location? 🤔
+> **Q2** — `L`: Is this level or location? 🤔
 
 Do not guess silently on ambiguous columns.
 
@@ -145,8 +145,8 @@ For each requested report type, check which analyses are possible given the avai
 
 After assessing coverage, inform the user what will and won't be included:
 
-- **Available analyses:** headcount by department, by level, by tenure
-- **Not available (missing fields):** headcount by location — add a `location` column to enable this
+- **Available analyses:** Headcount by department, by level, by tenure
+- **Not available (missing fields):** Headcount by location — add a `location` column to enable this
 
 ### 6. Analyze and generate report
 

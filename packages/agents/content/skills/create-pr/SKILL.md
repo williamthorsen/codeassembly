@@ -112,7 +112,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 ### 11. Backfill the PR URL into the change summary and persist it
 
-The delegate reports the created PR's URL (its `PR created: {URL}` line). Stamp it into the change summary from step 3 so the artifact carries a backlink to its PR: insert a `pr: {URL}` line into the change summary's YAML frontmatter, immediately after the `commit:` line. Skip the insertion when a `pr:` line is already present, so a re-run never duplicates it. PR URLs need no quoting in YAML.
+The delegate reports the created PR's URL (its `PR created: {URL}` line). Stamp it into the change summary from step 3 so the artifact carries a backlink to its PR: Insert a `pr: {URL}` line into the change summary's YAML frontmatter, immediately after the `commit:` line. Skip the insertion when a `pr:` line is already present, so a re-run never duplicates it. PR URLs need no quoting in YAML.
 
 Also persist the URL into the branch manifest so PR-aware skills reuse it on later sessions (see [PR source resolution](../_data/pr-source-resolution.md#stored-pr-url)):
 

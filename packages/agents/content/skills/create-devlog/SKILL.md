@@ -44,7 +44,7 @@ The devlog file begins with YAML frontmatter conforming to the canonical schema;
 
 ## Guidance
 
-- Compose tight from the start ([concision principle](../_data/concision.md)): a devlog records the lessons and outcome, not a play-by-play
+- Compose tight from the start ([concision principle](../_data/concision.md)): A devlog records the lessons and outcome, not a play-by-play
 - Include code snippets only for important lessons learned
 - Never include lengthy code snippets
 - Focus on the most important findings

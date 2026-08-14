@@ -63,6 +63,8 @@ Each finding is tagged with a resolution type:
 | Structural soundness      | Dependencies ordered? Steps scoped correctly?                     | `auto`                                                |
 | Requirements traceability | Every requirement has a step? Every step traces to a requirement? | `user` if intentionally omitted; `auto` if overlooked |
 
+<!-- guidance-hook: writing-preferences -->
+
 ## Output format
 
 Write the review to the output path provided in your task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc); see the [Frontmatter](#frontmatter) section below for field resolution.

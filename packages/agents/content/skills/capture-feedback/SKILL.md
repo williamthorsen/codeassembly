@@ -30,7 +30,7 @@ Both are captured the same way; the difference is recorded in the tags.
 
 ### 1. Classify the feedback
 
-Decide one question: **did relevant guidance already exist?**
+Decide one question: **Did relevant guidance already exist?**
 
 - **Yes — misapplied existing guidance.** A rule was in force and the agent missed it. This is a mistake plus its correction.
 - **No — no such guidance.** The user is establishing a net-new expectation. There is no mistake, only a refinement to propose.
@@ -50,7 +50,7 @@ If the feedback is purely behavioral — a standing rule with nothing to fix rig
 
 Invoke the `{skill:capture-event}` skill to append the record, composing its arguments and body as follows:
 
-- `--store <name|@default>` — the KB housing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: a lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent carries into every project goes to `@default`.
+- `--store <name|@default>` — the KB housing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: A lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent carries into every project goes to `@default`.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>` — when the refinement target is a skill.
 - `--impact <level>` — optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.

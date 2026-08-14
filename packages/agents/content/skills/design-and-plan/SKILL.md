@@ -42,9 +42,9 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 **Override arguments take precedence:**
 
-- If `--check-staleness` was passed: run the relevancy check immediately (no prompt).
-- If `--skip-staleness` was passed: skip the relevancy check entirely.
-- If neither was passed: evaluate the heuristic below.
+- If `--check-staleness` was passed: Run the relevancy check immediately (no prompt).
+- If `--skip-staleness` was passed: Skip the relevancy check entirely.
+- If neither was passed: Evaluate the heuristic below.
 
 **Heuristic** (evaluated only when the task source is a remote ticket with a last-updated date):
 
@@ -66,9 +66,9 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 ### Phase 2: Understand the task
 
-1. **Explore project context:** check relevant files, docs, recent commits to understand the affected area of the codebase.
+1. **Explore project context:** Check relevant files, docs, recent commits to understand the affected area of the codebase.
 
-2. **Evaluate the ticket on its merits** — apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation surfaces a divergence from the ticket as written, raise it to the user before forming questions or designing. Divergence includes scope that should grow: work the problem requires folds into this change by default rather than a follow-up (see [scope-and-deferral](../_data/scope-and-deferral.md)).
+2. **Evaluate the ticket on its merits** — apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation surfaces a divergence from the ticket as written, raise it to the user before forming questions or designing. Divergence includes scope that should grow: Work the problem requires folds into this change by default rather than a follow-up (see [scope-and-deferral](../_data/scope-and-deferral.md)).
 
 3. **Ask clarifying questions** — one at a time:
    - Purpose and motivation
@@ -84,8 +84,8 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 ### Phase 3: Converge on a design
 
-1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.
-2. **When the solution is not obvious:** propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why. Rank options per [design priorities](../_data/design-priorities.md).
+1. **When the solution is obvious:** Present the recommended approach directly. Don't manufacture alternatives for the sake of it.
+2. **When the solution is not obvious:** Propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why. Rank options per [design priorities](../_data/design-priorities.md).
    - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 3. **Present the design** in sections scaled to complexity. Ask after each section whether it looks right.
 4. **Get explicit approval** before proceeding.
@@ -112,7 +112,7 @@ When the ticket needs work, produce or update it to capture the proposed approac
 
 <!-- include: ../_partials/ticket-placement.md / -->
 
-Here, _the implementation_ is the plan artifact (Phase 5): mechanism the ticket omits is recorded there, not dropped.
+Here, _the implementation_ is the plan artifact (Phase 5): Mechanism the ticket omits is recorded there, not dropped.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
@@ -167,7 +167,7 @@ Design and plan complete:
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference) and the refined ticket differs from the remote body. Phase 4 may adopt a good source ticket unchanged and the sweep may find nothing to fold in; the remote is then already current, and no offer is made. This is a shared-state action — do not update without explicit consent, and never open a turn of its own for the ask.
 
-Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each carries its `A`/`Q` identifier as a bold prefix (`**A1 — Remote issue:**`, `**A2 — Next action:**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent stays orthogonal to the single-select next-step choice, and the next-action options keep their order. Recommend the update (■■□): the offer appears only when the remote body is stale against the refined ticket.
+Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each carries its `A`/`Q` identifier as a bold prefix (`**A1 — Remote issue:**`, `**A2 — Next action:**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent stays orthogonal to the single-select next-step choice, and the next-action options keep their order. Recommend the update (■■□): The offer appears only when the remote body is stale against the refined ticket.
 
 ```
 Next steps:

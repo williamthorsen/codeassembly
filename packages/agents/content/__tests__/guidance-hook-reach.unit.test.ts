@@ -85,6 +85,34 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
       coexisting: ['{Clear statement of what needs to be solved and why}'],
     },
   },
+  {
+    hook: 'writing-preferences',
+    role: 'composes prose',
+    declaringBodies: [
+      { label: 'aspect-code-reviewer', relativePath: 'subagents/aspect-code-reviewer.md' },
+      { label: 'aspect-silent-failure-reviewer', relativePath: 'subagents/aspect-silent-failure-reviewer.md' },
+      { label: 'aspect-test-reviewer', relativePath: 'subagents/aspect-test-reviewer.md' },
+      { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
+      { label: 'orchestrated-architect', relativePath: 'subagents/orchestrated-architect.md' },
+      { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
+      { label: 'orchestrated-planner', relativePath: 'subagents/orchestrated-planner.md' },
+      { label: 'orchestrated-reviewer', relativePath: 'subagents/orchestrated-reviewer.md' },
+      { label: 'plan-reviewer', relativePath: 'subagents/plan-reviewer.md' },
+      { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },
+      { label: 'planner', relativePath: 'subagents/planner.md' },
+      { label: 'savings-analyzer', relativePath: 'subagents/savings-analyzer.md' },
+    ],
+    boundRulebooks: [
+      {
+        slug: 'williamthorsen-writing-preferences',
+        rule: 'Capitalize what follows as though the label were absent',
+      },
+    ],
+    spliceProbe: {
+      body: { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
+      coexisting: ['No hard line breaks'],
+    },
+  },
 ];
 
 /** The skill every reviewer subagent preloads, and so the one that carries the hooks it declares to all of them. */
