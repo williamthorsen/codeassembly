@@ -2,7 +2,7 @@
 slug: williamthorsen-typescript-preferences
 description: 'TypeScript language mechanics, module shape, and documentation form: type safety, exports and barrels, import specifiers, type placement, and doc tags. Consult before writing or modifying TypeScript.'
 delivery: [hook, skill]
-version: 2
+version: 3
 ---
 
 # William Thorsen's TypeScript preferences
@@ -18,6 +18,8 @@ Export by name. Never use a default export: importers invent their own names, an
 A barrel (an `index.ts` that re-exports a directory's modules) is permitted only at a package's published entry point: a module named in the package's `exports` map, whether the root entry or a subpath. Everywhere else, an import reaches the defining module directly.
 
 Importing one symbol through a barrel loads every module it touches.
+
+A barrel is also permitted at a vendor boundary that lint enforces: a directory holding the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary no lint rule protects admits no barrel.
 
 ## Import specifiers
 

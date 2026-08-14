@@ -9,7 +9,7 @@ const PROJECT_KB = join(FIXTURES, 'project-kb');
 const VAULT_A = join(FIXTURES, 'vault-a');
 const VAULT_B = join(FIXTURES, 'vault-b');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
-const MALFORMED_REGISTRY = join(FIXTURES, 'malformed-registry');
+const MALFORMED_REGISTRY = join(FIXTURES, 'registry.malformed');
 const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
 // A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
 const HOME_EMPTY = FIXTURES;

@@ -9,16 +9,16 @@ import { parseArgs, runRetrieve } from '../cli.ts';
 // retrieve command's integration tests reuse them.
 const FIXTURES = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
-const MALFORMED_NO_KB = join(FIXTURES, 'malformed-no-kb');
-const MALFORMED_REGISTRY = join(FIXTURES, 'malformed-registry');
+const MALFORMED_NO_KB = join(FIXTURES, 'no-kb.malformed');
+const MALFORMED_REGISTRY = join(FIXTURES, 'registry.malformed');
 const DEAD_PATH_REGISTRY = join(FIXTURES, 'dead-path-registry');
 const MIXED_REGISTRY = join(FIXTURES, 'mixed-registry');
 const CUSTOM_SCHEMA_VAULT = join(FIXTURES, 'custom-schema-vault');
-const MALFORMED_SCHEMA_VAULT = join(FIXTURES, 'malformed-schema-vault');
+const INVALID_SCHEMA_VAULT = join(FIXTURES, 'invalid-schema-vault');
 const MULTI_SCHEMA_REGISTRY = join(FIXTURES, 'multi-schema-registry');
 const SCOPED_VAULT = join(FIXTURES, 'scoped-vault');
 const DEFAULT_SCOPE_VAULT = join(FIXTURES, 'default-scope-vault');
-const MALFORMED_CONFIG_VAULT = join(FIXTURES, 'malformed-config-vault');
+const INVALID_CONFIG_VAULT = join(FIXTURES, 'invalid-config-vault');
 const NOW = new Date('2026-05-01T00:00:00Z');
 
 describe(parseArgs, () => {
@@ -309,13 +309,13 @@ describe(runRetrieve, () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('leaves a malformed store schema inert: it no longer affects recall or warns', async () => {
+  it('leaves an invalid store schema inert: it no longer affects recall or warns', async () => {
     const result = await runRetrieve({
       argv: ['brokenschema'],
-      startDir: MALFORMED_SCHEMA_VAULT,
+      startDir: INVALID_SCHEMA_VAULT,
       now: NOW,
       home: FIXTURES,
-      recall: buildRecallStub({ hits: [join(MALFORMED_SCHEMA_VAULT, 'plain-note.md')] }),
+      recall: buildRecallStub({ hits: [join(INVALID_SCHEMA_VAULT, 'plain-note.md')] }),
     });
 
     expect(result.candidates).toHaveLength(1);
@@ -332,13 +332,13 @@ describe(runRetrieve, () => {
       now: NOW,
       home: FIXTURES,
       recall: buildRecallStub({
-        hits: [join(CUSTOM_SCHEMA_VAULT, 'insight-note.md'), join(MALFORMED_SCHEMA_VAULT, 'plain-note.md')],
+        hits: [join(CUSTOM_SCHEMA_VAULT, 'insight-note.md'), join(INVALID_SCHEMA_VAULT, 'plain-note.md')],
       }),
     });
 
     const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
     const plain = result.candidates.find((candidate) => candidate.path.includes('plain-note.md'));
-    // A non-assertion record type is excluded from recall; the assertion surfaces; the malformed sibling schema is inert.
+    // A non-assertion record type is excluded from recall; the assertion surfaces; the invalid sibling schema is inert.
     expect(insight).toBeUndefined();
     expect(plain).toBeDefined();
     expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(0);
@@ -380,13 +380,13 @@ describe(runRetrieve, () => {
     expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
   });
 
-  it('degrades a malformed config to the default and warns instead of failing the search', async () => {
+  it('degrades an invalid config to the default and warns instead of failing the search', async () => {
     const result = await runRetrieve({
       argv: ['splonktastic'],
-      startDir: MALFORMED_CONFIG_VAULT,
+      startDir: INVALID_CONFIG_VAULT,
       now: NOW,
       home: FIXTURES,
-      recall: buildRecallStub({ hits: [join(MALFORMED_CONFIG_VAULT, 'content', 'note.md')] }),
+      recall: buildRecallStub({ hits: [join(INVALID_CONFIG_VAULT, 'content', 'note.md')] }),
     });
 
     // The content/ note still survives under the degraded default config, and the defect surfaces as one warning.

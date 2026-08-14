@@ -1,9 +1,9 @@
-# Registry pairing a valid custom-schema vault with a malformed-schema vault, both searched under `--all-kbs`,
+# Registry pairing a valid custom-schema vault with an invalid-schema vault, both searched under `--all-kbs`,
 # to prove one bad schema degrades with a warning while its sibling still applies its declared recall policy.
 kbs:
   custom-vault:
     path: ../../custom-schema-vault
     description: Valid custom schema (insight -> recurrence-recency)
   broken-vault:
-    path: ../../malformed-schema-vault
-    description: Malformed schema that must degrade to the default
+    path: ../../invalid-schema-vault
+    description: Invalid schema that must degrade to the default

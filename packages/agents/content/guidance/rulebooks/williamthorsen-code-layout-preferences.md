@@ -2,7 +2,7 @@
 slug: williamthorsen-code-layout-preferences
 description: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order. Consult before creating a file or directory, before placing a test, helper, or fixture, and before ordering declarations in a module.'
 delivery: [hook, skill]
-version: 2
+version: 3
 ---
 
 # William Thorsen's code layout preferences
@@ -13,7 +13,7 @@ Where code lives and what it is called, at three scales: the directory tree, the
 
 Group source by role. A directory holding unrelated modules because they arrived at the same time is not a grouping.
 
-Never scaffold a flat `src/`: later readers extend flatness as convention.
+Never scaffold a flat `src/`; later readers would extend flatness as convention.
 
 Worked examples, not a closed set:
 
@@ -47,7 +47,7 @@ Fixture **data** -- JSON, Markdown, sample sources, directory trees -- lives in 
 
 Fixture **builders** are code, and follow the test-helper rule above.
 
-Deliberately-invalid inputs get their own directory rather than a filename convention, so configuration can exclude them by path.
+A deliberately-invalid input that a tool cannot parse carries a delimited `.malformed` marker in its name, so lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema carries no marker and stays covered.
 
 ## File naming
 
@@ -95,6 +95,6 @@ Identifier naming (no abbreviations, kind-bearing tails, unit-of-measure suffixe
 
 ## What binds only through configuration
 
-State the directory names above in the project's own coverage and lint configuration; unwired, they bind nothing.
+State the directory names and the marker above in the project's own coverage and lint configuration; unwired, they bind nothing.
 
-Scope those globs by directory rather than by filename.
+Anchor those globs on a delimiter rather than on a bare substring, which over-matches by accident.

@@ -53,9 +53,9 @@ describe(parseAliases, () => {
   });
 
   it('throws naming the canonical and source when an alias value is not a list', async () => {
-    const text = await readFixture('malformed.yaml');
+    const text = await readFixture('non-list-alias.yaml');
 
-    expect(() => parseAliases(text, 'malformed.yaml')).toThrow(/malformed\.yaml.*git.*list/);
+    expect(() => parseAliases(text, 'non-list-alias.yaml')).toThrow(/non-list-alias\.yaml.*git.*list/);
   });
 
   it('throws naming the source when the "aliases" key is missing', () => {
@@ -67,19 +67,17 @@ describe(parseAliases, () => {
   });
 
   it('throws naming the source when the YAML is syntactically malformed', async () => {
-    const text = await readFixture('syntactically-malformed.yaml');
+    const text = await readFixture('aliases.malformed.yaml');
 
-    expect(() => parseAliases(text, 'syntactically-malformed.yaml')).toThrow(
-      /syntactically-malformed\.yaml: malformed YAML:/,
-    );
+    expect(() => parseAliases(text, 'aliases.malformed.yaml')).toThrow(/aliases\.malformed\.yaml: malformed YAML:/);
   });
 
   it('attaches the YAML parse failure as the cause', async () => {
-    const text = await readFixture('syntactically-malformed.yaml');
+    const text = await readFixture('aliases.malformed.yaml');
 
     let thrown: unknown;
     try {
-      parseAliases(text, 'syntactically-malformed.yaml');
+      parseAliases(text, 'aliases.malformed.yaml');
     } catch (error) {
       thrown = error;
     }
