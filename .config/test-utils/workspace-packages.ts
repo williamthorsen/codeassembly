@@ -1,8 +1,26 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PACKAGES_DIR = fileURLToPath(new URL('../../packages/', import.meta.url));
+
+/**
+ * Names every module a package publishes as a `source` target in its `exports` map, as an absolute path.
+ * A package declaring no `exports` map publishes nothing and yields an empty list.
+ */
+export function listExportedSourcePaths(packageName: string): string[] {
+  const manifestPath = resolvePackagePath(packageName, 'package.json');
+  if (!existsSync(manifestPath)) return [];
+
+  const manifest: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  const exportsMap = isRecord(manifest) ? manifest['exports'] : undefined;
+  if (!isRecord(exportsMap)) return [];
+
+  return Object.values(exportsMap)
+    .map(readSourceTarget)
+    .filter((target) => typeof target === 'string')
+    .map((target) => path.join(PACKAGES_DIR, packageName, target));
+}
 
 /** Names every directory under `packages/` that holds a workspace package. */
 export function listWorkspacePackages(): string[] {
@@ -16,3 +34,19 @@ export function listWorkspacePackages(): string[] {
 export function resolvePackagePath(packageName: string, relativePath: string): string {
   return path.join(PACKAGES_DIR, packageName, relativePath);
 }
+
+// region | Helpers
+
+/** Reports whether a value is a non-null object, so its properties can be read. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/** Reads the `source` target of one `exports` entry, which is either a bare specifier or a conditions object. */
+function readSourceTarget(entry: unknown): unknown {
+  if (typeof entry === 'string') return entry;
+
+  return isRecord(entry) ? entry['source'] : undefined;
+}
+
+// endregion | Helpers
