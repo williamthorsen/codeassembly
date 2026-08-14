@@ -16,7 +16,8 @@ const SLUG = 'williamthorsen-writing-preferences';
 
 /** Phrases that must survive an edit to the rulebook, so a gutted rule cannot still pass on its heading alone. */
 const RULE_PHRASES: ReadonlyArray<string> = [
-  'Capitalize the first word after a colon',
+  'Capitalize a complete sentence, keep a fragment or list lowercase',
+  'Capitalize what follows as though the label were absent',
   'Never use title case',
   'Use sentence case',
 ];

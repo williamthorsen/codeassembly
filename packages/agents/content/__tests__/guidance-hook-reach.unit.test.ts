@@ -105,7 +105,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     boundRulebooks: [
       {
         slug: 'williamthorsen-writing-preferences',
-        rule: 'Capitalize the first word after a colon',
+        rule: 'Capitalize what follows as though the label were absent',
       },
     ],
     spliceProbe: {
