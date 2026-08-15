@@ -3,9 +3,10 @@ name: orchestrated-coder
 description: Implement code changes within an orchestrated workflow. Follows plans, addresses review feedback, and produces structured responses.
 tools: [Read, Write, Edit, Grep, Glob, Bash]
 maxTurns: 150
+rulebooks:
+  - commit-conventions
 skills:
   - anti-patterns
-  - commit
   - development-workflows
   - software-engineering
   - testing-conventions
@@ -199,7 +200,7 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 
 - **Follow the plan**: Implement what the plan specifies. If you discover the plan is wrong or incomplete, document the deviation in your response under "Notes"; don't silently diverge.
 - **Don't over-engineer**: Implement exactly what is asked. No extra features, no premature abstractions, no "while I'm here" improvements.
-- **Commit conventions**: Follow the git commit conventions skill. Each logical unit of work gets its own commit.
+- **Commit conventions**: Follow the `consult-commit-conventions` skill. Each logical unit of work gets its own commit.
 - **File scope**: Only modify files that are part of the plan or directly required by it.
 - **Tests are part of the deliverable**: Write tests for changed behavior as part of each implementation step, not as a follow-up or separate step. See the `testing-conventions` skill for what constitutes testable behavior and the carve-outs where tests may be omitted.
 

@@ -55,9 +55,9 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation — carry on and note it in the closing summary.
 
-   Commit each task's work as its own commit, composing the message with the `{skill:commit}` skill. Work that does not stand on its own (a scaffold a later task fills in) rides with the task that completes it. Everything the closing menu offers reads committed history, so work left uncommitted is work the next step cannot see.
+   Commit each task's work as its own commit with the `{skill:create-commit}` skill. Everything the closing menu offers reads committed history, so work left uncommitted is work the next step cannot see.
 
-6. **Audit the diff** per [Diff audit](#diff-audit). The audit runs over the work of every task, ahead of the gates, so a repair it forces is itself covered by them. A repair made once the tasks are committed, whether the audit forces it or a gate does, is committed the same way: amended into the commit it corrects, or riding its own, composed with the `{skill:commit}` skill.
+6. **Audit the diff** per [Diff audit](#diff-audit). The audit runs over the work of every task, ahead of the gates, so a repair it forces is itself covered by them. A repair made once the tasks are committed, whether the audit forces it or a gate does, is committed the same way: amended into the commit it corrects, or riding its own, composed with the `{skill:create-commit}` skill.
 
 7. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
 

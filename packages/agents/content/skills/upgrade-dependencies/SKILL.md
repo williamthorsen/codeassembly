@@ -104,7 +104,7 @@ A green signal is only as good as what it exercised. Each check below exists bec
 
 ### 7. Commit and capture
 
-One commit per logical change (a cohort is one logical change), each leaving the repo green. Follow the `{skill:commit}` conventions with the `deps` work type, and put each pin's rationale in the body of the commit that introduces it.
+One commit per logical change (a cohort is one logical change), each leaving the repo green. Follow the `{rulebook:commit-conventions}` conventions with the `deps` work type, and put each pin's rationale in the body of the commit that introduces it.
 
 If a knowledge store is registered, invoke `{skill:capture-event}` for each ecosystem fact discovered the hard way — a retired endpoint, a shim that clears an unmet-peer false positive, a fork swap, a ceiling and its reason — so the next upgrade recalls it instead of rediscovering it. Skip when no store is configured.
 

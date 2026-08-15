@@ -44,7 +44,7 @@ Use `{skill:summarize-change}` to compose a good commit message. Save the descri
 
 ## Commit format
 
-Follow the [commit conventions](../commit/SKILL.md). Use `describe-change.sh` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax):
+Follow the `{rulebook:commit-conventions}` conventions. Use `describe-change.sh` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax):
 
 ```bash
 json=$({harness_home_dir}/scripts/describe-change.sh \
