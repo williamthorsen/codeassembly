@@ -22,7 +22,7 @@ git diff $DEFAULT_BRANCH...HEAD
 Check commit messages for additional context.
 
 3. **Compose title**: `{ticket_ref} {title}` (or just `{title}` when `ticket_ref` is null)
-   - The ticket reference appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
+   - The ticket reference appears in the change summary title (for identification) but must never appear in commit titles (per `{rulebook:commit-conventions}`)
 
 4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) is composed last, in step 5, so the factual substance must exist first.
 

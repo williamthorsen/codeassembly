@@ -59,4 +59,4 @@ The same restraint governs the remote ticket. Align its acceptance criteria to t
 
 ## Commits
 
-Invoke the `commit` skill before writing a commit message. It carries the title and body conventions, the work-type taxonomy, and the branch-naming format.
+Invoke the `create-commit` skill to make a commit. It carries the procedure: what to stage, one commit per logical unit of work, and how the title is rendered. The `consult-commit-conventions` skill carries what the message is composed to -- the title and body conventions, the work-type taxonomy, and the branch-naming format -- and is worth consulting on its own before writing a message by hand.

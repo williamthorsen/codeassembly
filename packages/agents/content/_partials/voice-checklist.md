@@ -7,4 +7,4 @@ Before saving, audit the draft against the doctrine.
 - **Claims.** Each sentence reports an effect of the diff, and no claim outruns what the diff supports.
 - **Cuts.** No empty contrast, no assurance against a harm nobody suspected, no process narration, no second person.
 
-This list tests a draft; it does not stand in for the doctrine. Read [`lede-voice.md`](../_data/lede-voice.md) in full before drafting.
+This list tests a draft; it does not stand in for the doctrine. Read `{harness_home_dir}/skills/_data/lede-voice.md` in full before drafting.

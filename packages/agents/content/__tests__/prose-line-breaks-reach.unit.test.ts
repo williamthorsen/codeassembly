@@ -29,11 +29,12 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 // discovered list would move with the bug.
 //
 // Delivery is narrower than governance. The partial governs any generated Markdown, saved artifacts included, but a
-// place here is earned by composing prose and writing it somewhere outside the repository: a commit body, or a GitHub
-// issue, pull request, or comment. A skill that composes only into a local artifact is absent by decision, not by
-// oversight, and a skill that passes along prose someone else composed belongs with that composer instead.
+// place here is earned by being in context as prose is composed for somewhere outside the repository: a commit body,
+// or a GitHub issue, pull request, or comment. A body that composes only into a local artifact is absent by decision,
+// not by oversight, and one that passes along prose someone else composed belongs with that composer instead.
 const CARRIERS: ReadonlyArray<string> = [
-  'skills/commit/SKILL.md',
+  'guidance/rulebooks/commit-conventions.md',
+  'skills/create-commit/SKILL.md',
   'skills/create-ticket/SKILL.md',
   'skills/design-and-plan/SKILL.md',
   'skills/refine-plan/SKILL.md',

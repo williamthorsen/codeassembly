@@ -44,22 +44,9 @@ Use `{skill:summarize-change}` to compose a good commit message. Save the descri
 
 ## Commit format
 
-Follow the [commit conventions](../commit/SKILL.md). Use `describe-change.sh` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax):
+Compose the message per `{rulebook:commit-conventions}`. Use `describe-change.sh` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax):
 
-```bash
-json=$({harness_home_dir}/scripts/describe-change.sh \
-  --title "{title}" \
-  --scope "{scope}" \
-  --type "{type}" \
-  --ticket-ref "{ticket_ref}")
-commit_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('commit_title',''))")
-```
-
-Pass `--ticket-ref` from the bundled session-context deriver so projects whose `commit.title_format` references `{ticket_ref}` render the ref correctly. Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`).
-
-Use a JSON parser (python3 above; `jq -r '.commit_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
-
-Use `commit_title` directly as the commit title — it already includes the rendered prefix (per the configured `commit.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+<!-- include: ../_partials/commit-title-rendering.md / -->
 
 ## Safety
 
