@@ -6,12 +6,40 @@
         "guidance"
       ],
       "description": "Project-guidance wiring, freshness, and size",
+      "esbuildVersion": "0.28.1",
+      "inputs": [
+        {
+          "hash": "060b4f33",
+          "kind": "module",
+          "path": "kits/default.ts"
+        },
+        {
+          "hash": "ef5ee95c",
+          "kind": "module",
+          "path": "lib/guidance-constraints.ts"
+        },
+        {
+          "hash": "d1d7f584",
+          "kind": "module",
+          "path": "lib/guidance-import.ts"
+        },
+        {
+          "hash": "59fd74ac",
+          "kind": "module",
+          "path": "lib/guidance-size.ts"
+        },
+        {
+          "hash": "0b0dfb39",
+          "kind": "module",
+          "path": "lib/guidance-staleness.ts"
+        }
+      ],
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.27.0",
+      "readyupVersion": "0.28.0",
       "source": "kits/default.ts",
       "sourceHash": "060b4f33",
-      "targetHash": "db5b5417"
+      "targetHash": "82469eb3"
     }
   ]
 }
