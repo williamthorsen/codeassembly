@@ -43,7 +43,7 @@ After addressing each finding, overwrite the file:
 
 - Replace that finding's `— pending` marker with the filled subsection:
   - `**Status:** FIXED | NOT_FIXED | ALREADY_RESOLVED`
-  - `**Action:** {what was done, or why no change was made}`
+  - `**Action:** {what the diff does, read back from it, or why no change was made}`
 - Bump `## Status` to `In progress — finding {N+1} of {F}`.
 
 Before your final structured return block, finalize `## Quality gates` and set `## Status` to `completed`.

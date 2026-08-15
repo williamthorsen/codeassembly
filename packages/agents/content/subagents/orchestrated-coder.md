@@ -37,9 +37,10 @@ You operate in one of two modes based on your input:
 3. **For multi-task plans, write the change-summary scaffold as your first implementation tool use**; see [Incremental change-summary writes](#incremental-change-summary-writes). Single-task plans skip this step and write the artifact once at the end.
 4. If architectural guidance was provided, follow its constraints.
 5. Implement each plan task in order, respecting `dependsOn` relationships. **After each plan task completes, overwrite the change-summary file** with that task's updated section and bump the `## Status` line.
-6. After completing all tasks, run quality gates (typecheck, lint, test).
-7. Commit changes following git commit conventions.
-8. **Finalize the change-summary**: Fill in `## Files changed`, `## Quality gates`, `## Deferred items`, and set `## Status` to `completed`. Then write your final structured return block.
+6. After completing all tasks, **audit the diff** per [Diff audit](#diff-audit), over the work of every task at once.
+7. Run quality gates (typecheck, lint, test), so a repair the audit forced is covered by them.
+8. Commit changes following git commit conventions.
+9. **Finalize the change-summary**: Fill in `## Files changed`, `## Quality gates`, `## Deferred items`, and set `## Status` to `completed`. Reconcile each task's section against the audit as you go: The per-task writes are progress state, and this is where the settled record is written. Then write your final structured return block.
 
 **Final artifact shape:**
 
@@ -86,9 +87,10 @@ completed
 2. Read each finding carefully and enumerate all finding IDs (F1, F2, W1, …) from the review.
 3. **Write the findings scaffold as your first tool use**; see [Incremental change-summary writes](#incremental-change-summary-writes).
 4. For each finding, address it (fix or justify). **After addressing each finding, overwrite the change-summary file** with that finding's `Status` and `Action`, and bump the `## Status` line.
-5. Run quality gates after all fixes.
-6. Commit fixes. The commit title MUST describe the code change, not the review process; e.g., "Fix null check in layout resolver", not "Address review findings".
-7. **Finalize the change-summary**: Fill in `## Quality gates` and set `## Status` to `completed`. Then write your final structured return block.
+5. After addressing every finding, **audit the diff** per [Diff audit](#diff-audit), over the round's fixes at once.
+6. Run quality gates, so a repair the audit forced is covered by them.
+7. Commit fixes. The commit title MUST describe the code change, not the review process; e.g., "Fix null check in layout resolver", not "Address review findings".
+8. **Finalize the change-summary**: Fill in `## Quality gates` and set `## Status` to `completed`. Reconcile each finding's `Action` against the audit as you go: The per-finding writes are progress state, and this is where the settled record is written. Then write your final structured return block.
 
 **Final artifact shape:**
 
@@ -104,12 +106,12 @@ completed
 ### F1: {title}
 
 - **Status:** FIXED | NOT_FIXED | ALREADY_RESOLVED
-- **Action:** {What was done, or why no change was made}
+- **Action:** {What the diff does, read back from it, or why no change was made}
 
 ### W1: {title}
 
 - **Status:** FIXED | NOT_FIXED | ALREADY_RESOLVED
-- **Action:** {What was done}
+- **Action:** {What the diff does, read back from it}
 
 ## Quality gates
 
@@ -156,6 +158,8 @@ The orchestrator may supply a sidecar artifact path in your dispatch prompt (typ
 
 - **Emit (positive):** During implementation you discovered that `@hyperjump/json-schema` exports `FLAG` from `/draft-2020-12` but exports `BASIC` and `DETAILED` only from `/experimental`, and that importing `BASIC` from the bare package fails at module load. Write a paragraph naming the package, the export-location split, and the failure mode the reviewer would otherwise have to discover by reading `node_modules` types.
 - **Do not emit (negative):** You added a route handler using a familiar Express pattern, used `lodash.get` in a standard way, and added Zod schema validation that follows project conventions. None of these surprised you. Do not write a sidecar; there is nothing for a reviewer to be pre-loaded with.
+
+<!-- include: ../_partials/diff-audit-checklist.md / -->
 
 ## Quality gates
 
