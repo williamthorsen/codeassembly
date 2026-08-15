@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
+import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Output-shaping specs — the option-format contract and the next-steps menus — must reach the agent inlined, not
 // behind a runtime Markdown link. A link is an optional read at generation time, and the model will fill from its
@@ -14,6 +15,10 @@ import { countOccurrences } from '../test-utils/count-occurrences.ts';
 //
 // The consumer lists are explicit rather than discovered from the include directives themselves: the failure this
 // guards against is a consumer being *dropped*, and a discovered list would move with the bug.
+//
+// A second guard runs beside them, over the diff-audit checklist. Its risk is the mirror image: a host that states
+// the checklist in its own prose carries no include directive and no anchor, so nothing in the deployment mechanism
+// can see the fork. Two carriers of `prose-line-breaks` drifted that way before it was guarded.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
@@ -115,6 +120,16 @@ const RELOCATED_SPEC_LINKS: ReadonlyArray<string> = [
   '_data/next-steps-after-review.md',
 ];
 
+/** The sole permitted statement of the diff-audit checklist; every host reaches it through an include. */
+const DIFF_AUDIT_PARTIAL = '_partials/diff-audit-checklist.md';
+
+/** Phrases distinctive enough that a file containing one has restated the checklist rather than included it. */
+const DIFF_AUDIT_PHRASES: ReadonlyArray<string> = [
+  'A green gate is not this audit',
+  'the site you were pointed at is a sample of its class',
+  'This audit is bounded by your own edit',
+];
+
 describe('output-shaping spec inlining', () => {
   describe.each(CONSUMERS)('$slug', ({ slug, specs }) => {
     it.each(specs)('inlines the $name spec', async (spec) => {
@@ -155,6 +170,27 @@ describe('output-shaping spec inlining', () => {
       }
     }
     const message = `These specs are inlined now; replace each link with an in-file anchor:\n  ${violations.join('\n  ')}`;
+    expect(violations, message).toEqual([]);
+  });
+});
+
+describe('diff-audit checklist inlining', () => {
+  it('is stated in no content file but its partial', async () => {
+    const violations: Array<string> = [];
+    const files = await listMarkdownFiles(CONTENT_ROOT);
+    for (const file of files) {
+      const relativePath = path.relative(CONTENT_ROOT, file);
+      if (relativePath === DIFF_AUDIT_PARTIAL) {
+        continue;
+      }
+      const content = await readFile(file, 'utf8');
+      for (const phrase of DIFF_AUDIT_PHRASES) {
+        if (content.includes(phrase)) {
+          violations.push(`${relativePath} -> ${phrase}`);
+        }
+      }
+    }
+    const message = `The checklist is inlined from one partial; these files restate it instead of including it:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 });
