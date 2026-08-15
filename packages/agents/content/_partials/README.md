@@ -1,6 +1,6 @@
 # Partials
 
-Partials are reusable Markdown fragments shared across skills, subagents, and platform guidance. The install pipeline expands include directives at install time, before frontmatter merging, marker injection, and link rewriting. Partials never reach installed output as standalone files; their content is inlined into each consumer.
+Partials are reusable Markdown fragments shared across rulebooks, skills, subagents, and platform guidance. The install pipeline expands include directives at install time, before frontmatter merging, marker injection, and link rewriting. Partials never reach installed output as standalone files; their content is inlined into each consumer.
 
 This README is the canonical reference for the partial system. The expander is implemented in `packages/agents/src/lib/directive-expander.ts`.
 
@@ -50,6 +50,14 @@ Slot content is the caller's own text and contributes nothing here: A heading pa
 Include paths are resolved relative to the directive-bearing file's directory in the source tree. The resolved target must remain inside `packages/agents/content/` (lexical containment is checked, not symlink resolution). Out-of-tree references throw `out-of-tree`.
 
 A partial's own includes are resolved relative to that partial's directory, not the caller's. This means a deeply nested partial can include a sibling partial without knowing where its caller lives.
+
+### What a partial cannot carry across host kinds
+
+Two things a partial may hold are resolved against the host that inlines it rather than against the partial, so neither survives a move between host kinds.
+
+A **relative Markdown link** cannot serve both a skill host and a rulebook host. A skill's links resolve against `<slug>/SKILL.md` in skills-dir space; a rulebook's resolve against `guidance/rulebooks/<slug>.md` in content-root space. One authored target therefore names two different files, and a skill-shaped one resolves outside a rulebook's linkable roots and fails the run. `voice-checklist.md` carries such a link today, which is why it inlines into skills alone. Write the target as `{harness_home_dir}/...` inside inline code where a partial must reach a file from both.
+
+A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. Only a host that resolves a declaration knows the deployed rulebook set, and `install` ships a support entry having resolved none, so the token renders in the skill and fails the install of the support entry.
 
 ## Path references in installed content
 
