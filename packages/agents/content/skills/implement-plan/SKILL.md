@@ -57,13 +57,17 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Commit each task's work as its own commit, composing the message with the `{skill:commit}` skill. Work that does not stand on its own (a scaffold a later task fills in) rides with the task that completes it. Everything the closing menu offers reads committed history, so work left uncommitted is work the next step cannot see.
 
-6. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
+6. **Audit the diff** per [Diff audit](#diff-audit). The audit runs over the work of every task, ahead of the gates, so a repair it forces is itself covered by them. A repair made once the tasks are committed, whether the audit forces it or a gate does, is committed the same way: amended into the commit it corrects, or riding its own, composed with the `{skill:commit}` skill.
 
-7. **Report completion.** Summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
+7. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
 
-8. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
+8. **Report completion.** Summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
+
+9. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 <!-- include: ../../_partials/comment-discipline.md / -->
+
+<!-- include: ../../_partials/diff-audit-checklist.md / -->
 
 <!-- guidance-hook: implementation-preferences -->
 
