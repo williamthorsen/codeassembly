@@ -8,7 +8,7 @@ user-invocable: true
 
 Record finished work as a commit: stage one logical unit, render its title, compose its body, and commit.
 
-The conventions the message is composed to -- title format, body voice, the work-type taxonomy, and branch naming -- are carried by {rulebook:commit-conventions}. Consult it before composing; this skill carries the procedure alone.
+The conventions the message is composed to -- title format, body voice, the work-type taxonomy, and branch naming -- are carried by `{rulebook:commit-conventions}`. Consult it before composing; this skill carries the procedure alone.
 
 ## What one commit holds
 
