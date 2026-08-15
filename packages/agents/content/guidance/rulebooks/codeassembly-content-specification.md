@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 10
+version: 11
 ---
 
 # CodeAssembly content specification
@@ -15,7 +15,7 @@ Every rule below belongs to one of three classes, marked where it appears.
 
 **Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`hook`/`skill`, an empty `delivery` list, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Six more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, a rulebook token naming a target that deploys no skill to invoke fails the same pre-write pass, an anchor-only link target that names no heading in its own body fails wherever that body is rendered or shipped, so does a code fence nothing closes, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
 
-**Enforced by test.** The suites in `packages/agents/src/__tests__/` read the shipped library and assert its conventions hold. A rule one of them guards names its test.
+**Enforced by test.** The suites in `content/__tests__/` read the shipped library and assert its conventions hold. A rule one of them guards names its test.
 
 **Convention.** The rest is marked _(Convention; not enforced.)_ Nothing checks it.
 
@@ -43,9 +43,11 @@ When a skill or subagent invocation appears inline in a skill's or subagent's bo
 
 Slugs are kebab-case and letter-led (`[a-z][a-z0-9-]*`). The sigils are a typed property of each harness in `HarnessConfig`, so a new harness must declare its own rendering or the build fails.
 
-A token is also a dependency edge: `sync` extracts the tokens from a skill's or subagent's include-expanded body and pulls each target into the deploy closure. An inline invocation is therefore expressed once, as the token -- it needs no duplicate `dependencies:` entry, and a token naming a non-existent artifact fails the run just as a missing `dependencies:` edge does. Because extraction runs on the include-expanded body, a token inside a shared `_partials` file becomes an edge for every skill that includes it.
+A token is also a dependency edge: `sync` extracts the tokens from a rulebook's, skill's, or subagent's include-expanded body and pulls each target into the deploy closure. An inline invocation is therefore expressed once, as the token -- it needs no duplicate `dependencies:` entry, and a token naming a non-existent artifact fails the run just as a missing `dependencies:` edge does. Because extraction runs on the include-expanded body, a token inside a shared `_partials` file becomes an edge for every artifact that inlines it.
 
-Rulebooks, skills, and subagents all honor tokens; collections carry no body to render. `{rulebook:<slug>}` is the exception: Only a rulebook body renders one, because `install` deploys skills without resolving a declaration and so has no rulebook to resolve against. A rulebook token elsewhere fails the run, as does one naming a rulebook that deploys no skill -- an `ambient`-only target is already in the reader's context, so there is nothing to route to. Express that relationship with `dependencies:` instead.
+Rulebooks, skills, and subagents all honor tokens; collections carry no body to render. `{rulebook:<slug>}` carries one restriction the others do not: It renders only where a declaration supplies the deployed rulebook set, which covers every body `sync` and `validate` render and excludes a support entry under `skills/`, since `install` ships one having resolved no declaration. A rulebook token in a support entry fails the run, as does one naming a rulebook that deploys no skill -- an `ambient`-only target is already in the reader's context, so there is nothing to route to. Express that relationship with `dependencies:` instead.
+
+That boundary decides what a shared partial may carry. A partial inlined by both a skill body and a support entry cannot hold a `{rulebook:<slug>}` token: It renders in the skill and fails the install of the support entry. The pairing is live -- `skills/_data/recommendation-gradient.md` inlines `skills/_partials/option-format.md`, which skill bodies inline too.
 
 Only `{rulebook:<slug>}` is checked for deployability. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness the body reaches, including one its target does not deploy to: A skill that narrows itself with `supported-harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
 
@@ -57,6 +59,8 @@ A rulebook addresses a file by linking to it, not by naming it in prose. Author 
 
 A rulebook may link only into `skills/` and `scripts/`, the two trees whose source layout matches where they deploy under every harness home. Any other target fails the run, with an error naming the rulebook, the target as authored, and why it was rejected. `subagents/` is rejected because a subagent is dispatched rather than read, so no link into one is worth authoring; `_partials/` and `collections/` never deploy as files, so a link into one would name nothing.
 
+A rulebook inlines partials, which is how shared doctrine reaches one, and that puts a constraint on a partial written for two kinds of host: A relative Markdown link cannot serve both a skill host and a rulebook host. A skill's links resolve against `<slug>/SKILL.md` in skills-dir space and a rulebook's against `guidance/rulebooks/<slug>.md` in content-root space, so one authored target names two different files. A skill-shaped target resolves outside a linkable root from a rulebook host and fails the run rather than shipping dead, but a partial meant for both hosts carries no relative link at all.
+
 A link to a sibling rulebook is rejected too, and its error names the `{rulebook:<slug>}` token that addresses it instead. A rulebook is invoked rather than read: The skill it deploys is discovered by name, so an invocation resolves wherever it was deployed, while a path would be right in one domain and dead in the other. _(Validated on parse.)_
 
 A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.unit.test.ts`, which also resolves a fragment carried on such a target to exactly one heading in the file it points into. _(Enforced by test.)_
@@ -67,7 +71,7 @@ One limitation is worth knowing before writing a rulebook that documents linking
 
 An anchor-only link addresses the body it appears in, so its fragment must name exactly one heading there. Naming none fails the run, and so does naming two: A locator that resolves by accident is not a locator. The rule covers every rulebook, skill, and subagent, and the guidance files `install` ships. _(Validated on parse.)_
 
-Where the pipeline expands includes -- skills, subagents, and harness guidance -- the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial. A rulebook body and a shared guidance file are checked as authored, since neither inlines a partial.
+Where the pipeline expands includes -- rulebooks, skills, subagents, and harness guidance -- the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial. A shared guidance file is checked as authored, since it inlines no partial.
 
 Frontmatter, fenced code blocks (backtick or tilde), and inline code spans are exempt on both sides: A heading inside one offers no anchor, and a link inside one requests none. A code span _within_ a heading is the opposite case: It is part of that heading's text, so the heading still anchors, with the backticks dropped as punctuation -- ``### The `respond-to-review` path`` answers to `#the-respond-to-review-path`. An indented code block is not exempt, because telling one from a nested list item would take block-level parsing, so show an example anchor in a fence or a code span. An anchor-only target is never rewritten, so unlike a relative one it survives either intact.
 
@@ -124,7 +128,7 @@ A vetted collection is closed under its dependency edges, which is what makes th
 
 - **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; defaults to `ambient`), optional `skill-name`, optional `version`.
 - **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
-- **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context; `sync` pulls them into the deploy closure automatically).
+- **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context), optional `rulebooks` (rulebooks injected the same way, named by slug rather than by deploy name, so a `skill-name` override on the target stays honest). `sync` pulls both lists into the deploy closure, merges each injected rulebook's deploy name into the deployed `skills:`, and drops the `rulebooks:` key from what it writes.
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
 
 Only the rulebook row is validated on parse; a `members:` block is validated wherever it appears. The other rows are read leniently: A field a deploy pass consumes takes effect, and an absent one falls back to a default rather than failing, so a skill with no `description` reaches Rovo's prompt index with an empty one. _(Convention; not enforced.)_

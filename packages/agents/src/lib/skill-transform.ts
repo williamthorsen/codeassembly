@@ -4,7 +4,7 @@ import path from 'node:path';
 import { expandIncludes } from './directive-expander.ts';
 import { isTestDirectory } from './fs-helpers.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
-import { rewriteInvocationTokens } from './invocation-tokens.ts';
+import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
@@ -27,6 +27,11 @@ export interface SkillDeployContext {
    * declaration — `install`, `validate`, and the support-entry route — which is what keeps them stripping.
    */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
+  /**
+   * The deployed rulebooks a `{rulebook:<slug>}` token may address. Absent for the support-entry route, which
+   * `install` ships having resolved no declaration, so a token there is rejected rather than rendered.
+   */
+  readonly rulebooks?: RulebookInvocationCatalog | undefined;
 }
 
 /**
@@ -80,7 +85,10 @@ export async function renderSkillDirectory(
  *
  * A support entry never fills a hook, whichever route it takes, so any fills the caller carries are dropped here. A
  * support entry is reached by a link rather than inlined, and guidance behind a link is the thing the hook mechanism
- * exists to route around.
+ * exists to route around. Its rulebook catalog is dropped for a different reason: `install` ships a support entry
+ * having resolved no declaration, so honoring a `{rulebook:<slug>}` token under `sync` or `validate` alone would pass
+ * a gate the ship then fails. Dropping both here rather than at each call site is what keeps the three routes agreeing
+ * on what a support entry is.
  *
  * Shared by the installer, which writes what comes back, and by `validate`, which discards it. Rendering is where a
  * defect surfaces, so the pass that checks a support entry and the pass that ships it run the same one.
@@ -94,7 +102,7 @@ export async function renderSupportEntry(
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<RenderedSupportEntry> {
-  const unbound: SkillDeployContext = { ...context, guidanceHookFills: undefined };
+  const unbound: SkillDeployContext = { ...context, guidanceHookFills: undefined, rulebooks: undefined };
   if ((await stat(srcPath)).isDirectory()) {
     return { kind: 'directory', entries: await renderSkillDirectory(srcPath, destName, contentRoot, unbound) };
   }
@@ -168,7 +176,12 @@ async function renderMarkdown(
   const filled = fillGuidanceHooks(await expandIncludes(srcPath, contentRoot), context.guidanceHookFills, contextLabel);
   assertFilledAnchorsResolve(filled, contextLabel);
   const toolRewritten = rewriteToolNames(filled.content, toolMapping, contextLabel);
-  const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil }, contextLabel);
+  const invocationRewritten = rewriteInvocationTokens(
+    toolRewritten,
+    { skillSigil, subagentSigil },
+    contextLabel,
+    context.rulebooks,
+  );
   const pathRewritten = rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor);
   return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
 }

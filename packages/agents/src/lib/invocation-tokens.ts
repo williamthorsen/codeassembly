@@ -17,8 +17,10 @@ export interface RulebookInvocationTarget {
 }
 
 /**
- * The rulebooks a body may address by token, keyed by slug. Supplied by hosts that render rulebook bodies and absent
- * everywhere else, which is what makes a `{rulebook:<slug>}` token outside a rulebook fail rather than pass through.
+ * The rulebooks a body may address by token, keyed by slug. Supplied by every host that resolves a declaration and so
+ * knows the deployed set -- a rulebook, skill, or subagent body under `sync` or `validate`. A support entry under
+ * `skills/` renders without one, because `install` ships it having resolved no declaration, which is what makes a
+ * `{rulebook:<slug>}` token there fail rather than pass through.
  */
 export type RulebookInvocationCatalog = ReadonlyMap<string, RulebookInvocationTarget>;
 
@@ -77,7 +79,12 @@ export function resolveRulebookToken(
   rulebooks: RulebookInvocationCatalog | undefined,
 ): RulebookTokenResolution {
   if (rulebooks === undefined) {
-    return { kind: 'rejected', reason: 'is honored only in a rulebook body' };
+    return {
+      kind: 'rejected',
+      reason:
+        'is honored only where a declaration supplies the deployed rulebook set; a support entry under skills/ ' +
+        'renders without one',
+    };
   }
   const target = rulebooks.get(slug);
   if (target === undefined) {
@@ -99,7 +106,7 @@ export function resolveRulebookToken(
  * `{rulebook:<slug>}` token renders the skill sigil and the target's deployed skill name, resolved through
  * `rulebooks` — so a rulebook is addressed by the name it actually deploys under, not by its slug.
  *
- * Throws when a rulebook token cannot render: no catalog (the host does not honor them), an unknown slug, or an
+ * Throws when a rulebook token cannot render: no catalog (the host resolved no declaration), an unknown slug, or an
  * ambient-only target. `sourceLabel` names the host in that error, so an author sees which file to fix. Skill and
  * subagent tokens have no such failure path — their sigils are fixed properties of the typed harness config.
  * Non-token text passes through unchanged.

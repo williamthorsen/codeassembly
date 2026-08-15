@@ -1,7 +1,8 @@
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
-import { rewriteInvocationTokens } from './invocation-tokens.ts';
+import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import { injectDeclaredRulebooks } from './subagent-rulebook-injection.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The harness-specific inputs a subagent render depends on, resolved once per harness by the caller. */
@@ -25,6 +26,11 @@ export interface SubagentRenderContext {
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
   /**
+   * The deployed rulebooks a `{rulebook:<slug>}` token may address. Required rather than optional: every pass that
+   * renders a subagent resolves a declaration, since `install` deploys none.
+   */
+  readonly rulebooks: RulebookInvocationCatalog;
+  /**
    * Guidance bound to each hook the subagent's body may declare. Absent for every caller that resolves no declaration
    * — `install` and `validate` — which is what keeps them stripping.
    */
@@ -33,8 +39,11 @@ export interface SubagentRenderContext {
 
 /**
  * Renders a subagent's harness-specific deployed body from its include-expanded source: resolves guidance-hook
- * declarations, merges the harness overlay frontmatter, rewrites `{tool:NAME}` placeholders, rewrites relative Markdown
- * links, then expands template variables. Pure string in, marker-free string out — both `install` and `sync` compose
+ * declarations, compiles any `rulebooks:` injection into `skills:`, merges the harness overlay frontmatter, rewrites
+ * `{tool:NAME}` placeholders, rewrites relative Markdown links, then expands template variables.
+ *
+ * The injection precedes the overlay merge, so the overlay stays the last word on deployed frontmatter and its
+ * line-based replacement runs over the re-serialized text rather than being undone by it. Pure string in, marker-free string out — both `install` and `sync` compose
  * ownership/provenance marking around it. In-body anchors are validated on the resolved text, ahead of every rewrite,
  * so the verdict holds for every harness and a collision between host and bound guidance is caught.
  *
@@ -58,14 +67,21 @@ export function renderSubagentForHarness(
     harnessId,
     skillSigil,
     subagentSigil,
+    rulebooks,
     guidanceHookFills,
   }: SubagentRenderContext,
 ): string {
   const filled = fillGuidanceHooks(expandedSource, guidanceHookFills, sourceLabel);
   assertFilledAnchorsResolve(filled, sourceLabel);
-  const merged = mergeFrontmatter(filled.content, overlayYaml);
+  const injected = injectDeclaredRulebooks(filled.content, rulebooks, sourceLabel);
+  const merged = mergeFrontmatter(injected, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
-  const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil }, sourceLabel);
+  const rewrittenInvocations = rewriteInvocationTokens(
+    rewrittenTools,
+    { skillSigil, subagentSigil },
+    sourceLabel,
+    rulebooks,
+  );
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);
   return rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 }

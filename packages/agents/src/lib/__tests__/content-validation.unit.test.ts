@@ -163,6 +163,46 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('shared-name');
   });
 
+  it('renders a rulebook token in a skill body and in a subagent body', async () => {
+    await writeRulebook(root, 'house-style', { delivery: 'skill', skillName: 'style-rules' });
+    await writeSkill(root, 'alpha', { body: 'See {rulebook:house-style}.' });
+    await writeSubagent(root, 'helper', { body: 'See {rulebook:house-style}.' });
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+  });
+
+  it('reports a skill body token naming a rulebook that deploys no skill to invoke', async () => {
+    await writeRulebook(root, 'house-style', { delivery: 'ambient' });
+    await writeSkill(root, 'alpha', { body: 'See {rulebook:house-style}.' });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects[0]).toMatchObject({ file: 'skills/alpha/SKILL.md', kind: 'render' });
+    expect(defects[0]?.detail).toContain('ambient-only rulebook');
+  });
+
+  it('reports a subagent body token naming a rulebook that deploys no skill to invoke', async () => {
+    await writeRulebook(root, 'house-style', { delivery: 'ambient' });
+    await writeSubagent(root, 'helper', { body: 'See {rulebook:house-style}.' });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects[0]).toMatchObject({ file: 'subagents/helper.md', kind: 'render' });
+    expect(defects[0]?.detail).toContain('ambient-only rulebook');
+  });
+
+  it('renders a subagent that injects a rulebook, and reports one injecting an ambient-only rulebook', async () => {
+    await writeRulebook(root, 'house-style', { delivery: 'skill' });
+    await writeRulebook(root, 'ambient-only', { delivery: 'ambient' });
+    await writeSubagent(root, 'helper', { rulebooks: ['house-style'] });
+    await writeSubagent(root, 'stray', { rulebooks: ['ambient-only'] });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects.filter((defect) => defect.file === 'subagents/helper.md')).toEqual([]);
+    expect(defects.find((defect) => defect.file === 'subagents/stray.md')).toMatchObject({ kind: 'render' });
+  });
+
   it('reports a rulebook link target that no harness home would carry', async () => {
     await writeRulebook(root, 'house-style', { body: 'Read [the notes](../../notes.md).' });
 
@@ -265,9 +305,19 @@ async function writeSkill(
   );
 }
 
-/** Writes a subagent `.md` file, optionally carrying a custom body. */
-async function writeSubagent(root: string, slug: string, options: { body?: string } = {}): Promise<void> {
-  const frontmatter = ['---', `name: ${slug}`, `description: ${slug} fixture subagent`, '---'];
+/** Writes a subagent `.md` file, optionally carrying a custom body or a `rulebooks:` injection list. */
+async function writeSubagent(
+  root: string,
+  slug: string,
+  options: { body?: string; rulebooks?: ReadonlyArray<string> } = {},
+): Promise<void> {
+  const frontmatter = [
+    '---',
+    `name: ${slug}`,
+    `description: ${slug} fixture subagent`,
+    ...(options.rulebooks === undefined ? [] : ['rulebooks:', ...options.rulebooks.map((slug) => `  - ${slug}`)]),
+    '---',
+  ];
   await writeFileAt(
     root,
     `subagents/${slug}.md`,

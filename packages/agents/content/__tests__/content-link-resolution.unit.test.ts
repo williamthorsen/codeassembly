@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
@@ -93,8 +93,9 @@ describe('shipped rulebook reference deliverability', () => {
 });
 
 /**
- * Renders every shipped rulebook the way `sync` does, collecting the error from each that names an undeliverable link
- * target or an unusable `{rulebook:<slug>}` token. Every shipped rulebook stands in for the deployed set, which is the
+ * Renders every shipped rulebook the way `sync` does -- includes expanded first, so a link or token authored in an
+ * inlined partial is checked against the rulebook that inlines it -- collecting the error from each that names an
+ * undeliverable link target or an unusable `{rulebook:<slug>}` token. Every shipped rulebook stands in for the deployed set, which is the
  * strictest catalog available here: a token naming one that is missing or ambient-only has nothing to invoke under any
  * declaration. The root allowlist and the catalog are both harness-invariant, so one harness context stands for all.
  */
@@ -105,7 +106,7 @@ async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
   const parsed = await Promise.all(
     rulebookFiles.map(async (file) => {
       const slug = path.basename(file, '.md');
-      const { rulebook, body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
+      const { rulebook, body } = parseRulebookFile(await expandIncludes(file, CONTENT_ROOT), `${slug}.md`);
       return {
         slug,
         body,
