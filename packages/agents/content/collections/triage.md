@@ -16,6 +16,7 @@ members:
     - collaborate
     - condense-branch
     - create-bitbucket-pr
+    - create-commit
     - create-devlog
     - create-gh-pr
     - create-pr
