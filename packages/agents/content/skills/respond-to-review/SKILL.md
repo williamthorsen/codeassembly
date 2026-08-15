@@ -27,9 +27,10 @@ This skill bridges the gap between receiving a code review and implementing fixe
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below.
-6. **Write response** per the output format
-7. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
-8. **Save** per the [Saving](#saving) section
+6. **Audit the diff** per [Diff audit](#diff-audit). Every fix you implemented is verified here, before any of it is written down.
+7. **Write response** per the output format
+8. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
+9. **Save** per the [Saving](#saving) section
 
 ## Frontmatter resolution
 
@@ -152,6 +153,8 @@ The disposition conflates two decisions: whether the change belongs (substance),
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
+<!-- include: ../../_partials/diff-audit-checklist.md / -->
+
 <!-- guidance-hook: implementation-preferences -->
 
 ## Writing code after a review
@@ -216,7 +219,7 @@ The body following the frontmatter has this structure:
 
 - **Disposition:** ACCEPT | REJECT | PARTIAL
 - **Rationale:** {technical reasoning}
-- **Action taken:** {what was done, or what subset}
+- **Action taken:** {what the diff does, read back from it, or what subset}
 
 ### Warnings ⚠️
 
@@ -224,7 +227,7 @@ The body following the frontmatter has this structure:
 
 - **Disposition:** ACCEPT | REJECT | PARTIAL
 - **Rationale:** {technical reasoning}
-- **Action taken:** {what was done, or what subset}
+- **Action taken:** {what the diff does, read back from it, or what subset}
 
 ### TODOs 📋
 
@@ -232,7 +235,7 @@ The body following the frontmatter has this structure:
 
 - **Disposition:** ACCEPT | REJECT | PARTIAL
 - **Rationale:** {technical reasoning}
-- **Action taken:** {what was done, or what subset}
+- **Action taken:** {what the diff does, read back from it, or what subset}
 
 ### Recommendations 🧠
 
@@ -240,7 +243,7 @@ The body following the frontmatter has this structure:
 
 - **Disposition:** ACCEPT | REJECT | PARTIAL
 - **Rationale:** {technical reasoning}
-- **Action taken:** {what was done, or what subset}
+- **Action taken:** {what the diff does, read back from it, or what subset}
 
 ### Suggestions ☝️
 
@@ -248,7 +251,7 @@ The body following the frontmatter has this structure:
 
 - **Disposition:** ACCEPT | REJECT | PARTIAL
 - **Rationale:** {technical reasoning}
-- **Action taken:** {what was done, or what subset}
+- **Action taken:** {what the diff does, read back from it, or what subset}
 
 ### Legacy 🔍
 
@@ -269,6 +272,7 @@ The body following the frontmatter has this structure:
 ## Section handling
 
 - Code changes summarized under `## Changes made` must themselves satisfy [Comment discipline](#comment-discipline): Comments in the edited code state the code's current contract, not the change history or the reviewer's concern.
+- `Action taken` and `## Changes made` report the diff, read back per [Diff audit](#diff-audit). A disposition asserting that something was left unchanged is a claim about the diff too, and takes the same evidence as one asserting that something changed.
 - Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
 - File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) — use repo-relative paths
