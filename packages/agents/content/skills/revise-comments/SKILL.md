@@ -28,7 +28,7 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
 
 2. **Apply the audit per file.** Read each target file. Put every comment through the three tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
 
-3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing it replaced. `--dry-run` applies no edits, so the step is skipped there.
+3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing it replaced. Such a file sits outside the resolved target set, so [Safety](#safety) governs and the hit is reported to the user alongside the summary rather than repaired. `--dry-run` applies no edits, so the step is skipped there.
 
 4. **Emit the summary.** After processing all targets, emit one table per file with non-trivial decisions.
 
