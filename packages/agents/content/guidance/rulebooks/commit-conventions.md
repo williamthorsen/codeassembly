@@ -1,7 +1,8 @@
 ---
-name: commit
-description: Git commit message format and metadata conventions for version control
-user-invocable: true
+slug: commit-conventions
+description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
+delivery: skill
+version: 1
 ---
 
 # Git commit conventions
@@ -10,15 +11,15 @@ Commit titles and bodies are extracted into the changelog and, for release-notes
 
 ## Commit metadata
 
-- `WORK_TYPE` describes the category of work (see `../_data/work-types.json`).
+- `WORK_TYPE` describes the category of work (see [`work-types.json`](../../skills/_data/work-types.json)).
 
 ## Commit title
 
-Render via `describe-change.sh` — see `../_data/title-templates.md` for the full template syntax, supported tokens, and rendering pipeline.
+Render via `describe-change.sh` — see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
 
 - **72 characters max** (hard limit).
 - **Imperative, task-oriented voice.** "Add…", "Fix…", "Prevent…", "Enable…" — describing what the coder did. The title appears next to the PR number in release notes; it reads as the task. Distinct from the lede voice, which is declarative ("Adds…", "Fixes…").
-- For content discipline (the code change rather than what prompted it, no ephemeral references, only what's in the diff), see [Titles](../_data/lede-voice.md#titles).
+- For content discipline (the code change rather than what prompted it, no ephemeral references, only what's in the diff), see [Titles](../../skills/_data/lede-voice.md#titles).
 - Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
 
 ## Ticket ID
@@ -41,17 +42,17 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 ## Changes touching multiple scopes
 
-For the structural scope values (`root`, `*`, workspace name), see "Scope values" in [`../_data/title-templates.md`](../_data/title-templates.md).
+For the structural scope values (`root`, `*`, workspace name), see "Scope values" in [`title-templates.md`](../../skills/_data/title-templates.md).
 
 Commit-side application: When more than one scope-value would technically apply, use the closest fit. If a root change is tightly associated with only one workspace, count it as a workspace change rather than a root change. Common example: If a package is added to `packages/workspace-a`, that updates the package lock file in root — still treat the commit as a workspace change.
 
 ## Branch naming
 
-Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as a separator. See `../_data/branch-format.md` for the full specification.
+Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as a separator. See [`branch-format.md`](../../skills/_data/branch-format.md) for the full specification.
 
 ## Work types reference
 
-See `../_data/work-types.json` for the canonical taxonomy. Each type belongs to one of three tiers:
+See [`work-types.json`](../../skills/_data/work-types.json) for the canonical taxonomy. Each type belongs to one of three tiers:
 
 - **Public** — consumer-facing.
 - **Internal** — not consumer-facing.

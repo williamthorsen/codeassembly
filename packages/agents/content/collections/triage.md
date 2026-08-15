@@ -3,6 +3,7 @@ name: triage
 description: The not-yet-examined set — the default home for library content awaiting a disposition.
 members:
   rulebooks:
+    - commit-conventions
     - shell-conventions
   skills:
     - add-test-ids
@@ -13,7 +14,6 @@ members:
     - capture-lede-decision
     - classify-complexity
     - collaborate
-    - commit
     - condense-branch
     - create-bitbucket-pr
     - create-devlog
