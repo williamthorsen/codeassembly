@@ -99,6 +99,43 @@ describe(injectDeclaredRulebooks, () => {
     expect(output).not.toContain('rulebooks:');
   });
 
+  it('keeps a structured skills entry and the extra keys it carries', () => {
+    const source = unindent`
+      ---
+      name: demo-agent
+      skills:
+        - name: commit
+          source: npm
+      rulebooks:
+        - nmr-scripts
+      ---
+
+      Body.
+
+    `;
+
+    expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(unindent`
+      ---
+      name: demo-agent
+      skills:
+        - name: commit
+          source: npm
+        - consult-nmr-scripts
+      ---
+
+      Body.
+
+    `);
+  });
+
+  it('keeps a flow skills sequence flow', () => {
+    const source = '---\nname: demo-agent\nskills: [commit]\nrulebooks:\n  - nmr-scripts\n---\n\nBody.\n';
+
+    expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(
+      '---\nname: demo-agent\nskills: [commit, consult-nmr-scripts]\n---\n\nBody.\n',
+    );
+  });
+
   it('throws naming every unusable entry at once', () => {
     const source = '---\nname: demo-agent\nrulebooks:\n  - nmr-cheatsheet\n  - never-declared\n---\n\nBody.\n';
 
