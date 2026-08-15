@@ -146,13 +146,13 @@ function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): strin
   }
 }
 
-/** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
 /** Names the skills whose declaration of a hook overlaps an ambient route, as the relative clause the line embeds. */
 function describeDeclaringSkills(skills: ReadonlyArray<string>): string {
   const quoted = skills.map((slug) => `"${slug}"`).join(', ');
   return skills.length === 1 ? `skill ${quoted} declares` : `skills ${quoted} declare`;
 }
 
+/** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
 function describeDeliveries(plan: SyncPlan): string {
   const skillFilesWritten = plan.resolved.filter((rulebook) => rulebook.skill).length * plan.harnessSkillTargets.length;
   const declaredSkillsDeployed = plan.harnessSkillTargets.reduce(

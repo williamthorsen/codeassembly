@@ -57,6 +57,35 @@ describe(findGuidanceHookDeclarers, () => {
     expect(declarers.get('impl')).toEqual({ skills: ['implement-plan'], subagents: [] });
   });
 
+  // Every Markdown file the skill walk reaches is filled, so a nested body declares as much as the entry does.
+  it('lists a skill that declares a hook in a nested body rather than its entry', async () => {
+    const skill = await writeSkill(contentDir, 'orchestrate', 'Run the pipeline.\n');
+    await writeSkillFile(contentDir, 'orchestrate', 'modules/review-cycle.md', '<!-- guidance-hook: impl -->\n');
+
+    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+
+    expect(declarers.get('impl')).toEqual({ skills: ['orchestrate'], subagents: [] });
+  });
+
+  it('names a skill once when two of its bodies declare the same hook', async () => {
+    const skill = await writeSkill(contentDir, 'orchestrate', '<!-- guidance-hook: impl -->\n');
+    await writeSkillFile(contentDir, 'orchestrate', '_data/context.md', '<!-- guidance-hook: impl -->\n');
+
+    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+
+    expect(declarers.get('impl')).toEqual({ skills: ['orchestrate'], subagents: [] });
+  });
+
+  it('ignores a declaration in a file the skill walk passes over', async () => {
+    const skill = await writeSkill(contentDir, 'orchestrate', 'Run the pipeline.\n');
+    await writeSkillFile(contentDir, 'orchestrate', '_partials/fragment.md', '<!-- guidance-hook: impl -->\n');
+    await writeSkillFile(contentDir, 'orchestrate', '__tests__/case.md', '<!-- guidance-hook: other -->\n');
+
+    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+
+    expect(declarers.size).toBe(0);
+  });
+
   it('skips a skill that targets no harness the run deploys to', async () => {
     const skill = await writeSkill(contentDir, 'rovo-only', '<!-- guidance-hook: impl -->\n', ['rovo']);
 
@@ -95,6 +124,13 @@ async function writeSkill(
   await writeFile(path.join(srcDir, 'SKILL.md'), body, 'utf8');
   const skill = { slug, srcDir, contentRoot: contentDir, source: undefined };
   return targetHarnesses === undefined ? skill : { ...skill, targetHarnesses };
+}
+
+/** Writes a Markdown file inside an already-written skill's directory, at the given path relative to it. */
+async function writeSkillFile(contentDir: string, slug: string, relativePath: string, body: string): Promise<void> {
+  const fullPath = path.join(contentDir, 'skills', slug, relativePath);
+  await mkdir(path.dirname(fullPath), { recursive: true });
+  await writeFile(fullPath, body, 'utf8');
 }
 
 /** Writes a declared subagent's body under the content root and returns the subagent as the resolver would. */
