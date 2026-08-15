@@ -19,13 +19,13 @@ import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resol
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
-import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hooks.ts';
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
 import { recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
+import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import {
   createContentRootLinkAnchor,
