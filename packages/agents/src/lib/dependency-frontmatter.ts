@@ -54,27 +54,22 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
 }
 
 /**
+ * Reads a subagent's top-level `rulebooks:` frontmatter — the rulebooks whose deployed skills the render pass merges
+ * into `skills:`, and which resolution pulls into the closure. Shape and leniency match `readInjectedSkills`; the two
+ * lists differ only in which namespace their slugs resolve against.
+ */
+export function readInjectedRulebooks(content: string, sourceLabel?: string): ReadonlyArray<string> {
+  return readInjectionList(content, 'rulebooks', sourceLabel);
+}
+
+/**
  * Reads a subagent's top-level `skills:` frontmatter — the runtime injection list the harness loads into the
  * subagent's context. Each entry is a bare slug or a `{ name }` object (extra keys tolerated). Absent frontmatter,
  * an absent `skills:` key, or a null value all resolve to no injected skills. A non-list value throws, naming
  * `sourceLabel` when provided.
  */
 export function readInjectedSkills(content: string, sourceLabel?: string): ReadonlyArray<string> {
-  const { lines } = parseFrontmatter(content);
-  const parsed: unknown = parseYaml(lines.join('\n'));
-  if (!isRecord(parsed)) {
-    return [];
-  }
-  if (parsed.skills === undefined || parsed.skills === null) {
-    return [];
-  }
-
-  const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
-  const entries = z.array(EntrySchema).safeParse(parsed.skills);
-  if (!entries.success) {
-    throw new Error(`Invalid skills${where}: "skills" must be a list of slugs.`);
-  }
-  return entries.data.map((entry) => entry.name);
+  return readInjectionList(content, 'skills', sourceLabel);
 }
 
 /**
@@ -145,6 +140,29 @@ function parseTypeBlock(block: Record<string, unknown>, errorPrefix: string): Ar
     edges[type] = entries.data.map((entry) => entry.name);
   }
   return edges;
+}
+
+/**
+ * Reads one top-level injection list, whose entries are bare slugs or `{ name }` objects (extra keys tolerated).
+ * Absent frontmatter, an absent key, and a null value all resolve to no entries; a non-list value throws.
+ */
+function readInjectionList(content: string, key: string, sourceLabel?: string): ReadonlyArray<string> {
+  const { lines } = parseFrontmatter(content);
+  const parsed: unknown = parseYaml(lines.join('\n'));
+  if (!isRecord(parsed)) {
+    return [];
+  }
+  const value = parsed[key];
+  if (value === undefined || value === null) {
+    return [];
+  }
+
+  const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
+  const entries = z.array(EntrySchema).safeParse(value);
+  if (!entries.success) {
+    throw new Error(`Invalid ${key}${where}: "${key}" must be a list of slugs.`);
+  }
+  return entries.data.map((entry) => entry.name);
 }
 
 // endregion | Helpers

@@ -1802,11 +1802,11 @@ describe(syncCommand, () => {
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
     async function writeLibrarySubagent(
       slug: string,
-      { body = `# ${slug}\n\n${SUBAGENT_BODY}` }: { body?: string } = {},
+      { body = `# ${slug}\n\n${SUBAGENT_BODY}`, frontmatter = '' }: { body?: string; frontmatter?: string } = {},
     ): Promise<void> {
       const dir = path.join(contentDir, 'subagents');
       await mkdir(dir, { recursive: true });
-      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n${body}\n`, 'utf8');
+      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n${frontmatter}---\n\n${body}\n`, 'utf8');
     }
 
     /** Writes the project-scope codeassembly.yaml declaring the given subagent slugs. */
@@ -1852,6 +1852,32 @@ describe(syncCommand, () => {
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).toContain('See /consult-nmr-scripts.');
       expect(existsSync(skillPath('consult-nmr-scripts'))).toBe(true);
+    });
+
+    it('compiles an injected rulebook into the deployed skills list and drops the source key', async () => {
+      await writeOverlays();
+      await writeLibraryRulebook('review-criteria', 'delivery: skill', 'Review with care.');
+      await writeLibrarySubagent('canary', { frontmatter: 'rulebooks:\n  - review-criteria\n' });
+      await declareSubagents('canary');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).toContain('skills:\n  - consult-review-criteria\n');
+      expect(deployed).not.toContain('rulebooks:');
+      expect(existsSync(skillPath('consult-review-criteria'))).toBe(true);
+    });
+
+    it('fails a dry run with nothing written when a subagent injects an ambient-only rulebook', async () => {
+      await writeOverlays();
+      await writeLibraryRulebook('review-criteria', 'delivery: ambient', 'Review with care.');
+      await writeLibrarySubagent('canary', { frontmatter: 'rulebooks:\n  - review-criteria\n' });
+      await declareSubagents('canary');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /subagents\/canary\.md declares 1 unusable rulebook injection[\s\S]*names an ambient-only rulebook/,
+      );
+      expect(existsSync(subagentPath('canary'))).toBe(false);
     });
 
     it('fails a dry run with nothing written when a subagent body names an ambient-only rulebook', async () => {

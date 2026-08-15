@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readDependencies, readInjectedSkills, readMembers } from '../dependency-frontmatter.ts';
+import { readDependencies, readInjectedRulebooks, readInjectedSkills, readMembers } from '../dependency-frontmatter.ts';
 
 /** Wraps a frontmatter body in `---` delimiters with a throwaway markdown body. */
 function withFrontmatter(frontmatter: string): string {
@@ -99,6 +99,37 @@ describe(readMembers, () => {
     const content = withFrontmatter("members: '@library'\ndependencies:\n  skills:\n    - people-report");
 
     expect(() => readMembers(content, 'collections/all.md')).toThrow(/all\.md.*dependencies/s);
+  });
+});
+
+describe(readInjectedRulebooks, () => {
+  it('reads the top-level rulebooks list, normalizing bare and structured entries alike', () => {
+    const content = withFrontmatter(
+      'name: orchestrated-coder\nrulebooks:\n  - review-criteria\n  - name: shell-conventions\n    source: npm',
+    );
+
+    expect(readInjectedRulebooks(content)).toEqual(['review-criteria', 'shell-conventions']);
+  });
+
+  it('returns no rulebooks for an absent key, absent frontmatter, or a null value', () => {
+    expect(readInjectedRulebooks(withFrontmatter('name: canary'))).toEqual([]);
+    expect(readInjectedRulebooks('# No frontmatter\n')).toEqual([]);
+    expect(readInjectedRulebooks(withFrontmatter('rulebooks:'))).toEqual([]);
+  });
+
+  it('reads the rulebooks list independently of the skills list', () => {
+    const content = withFrontmatter('skills:\n  - commit\nrulebooks:\n  - review-criteria');
+
+    expect(readInjectedRulebooks(content)).toEqual(['review-criteria']);
+    expect(readInjectedSkills(content)).toEqual(['commit']);
+  });
+
+  it('throws when rulebooks is not a list, naming the source label', () => {
+    const content = withFrontmatter('rulebooks: review-criteria');
+
+    expect(() => readInjectedRulebooks(content, 'subagents/orchestrated-coder.md')).toThrow(
+      /orchestrated-coder\.md.*list/s,
+    );
   });
 });
 

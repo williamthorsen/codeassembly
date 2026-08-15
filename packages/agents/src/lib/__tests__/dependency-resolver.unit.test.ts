@@ -227,6 +227,29 @@ describe(resolveClosure, () => {
       expect(closure).toEqual({ rulebooks: ['nmr-scripts'], skills: ['capture-event'], subagents: [] });
     });
 
+    it('pulls a rulebook a subagent injects into the closure', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'review-criteria');
+      await writeArtifact(contentDir, 'skill', 'anti-patterns');
+      await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns'], undefined, ['review-criteria']);
+
+      const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({
+        rulebooks: ['review-criteria'],
+        skills: ['anti-patterns'],
+        subagents: ['orchestrated-coder'],
+      });
+    });
+
+    it('fails the run when an injected rulebook names a non-existent artifact', async () => {
+      await writeArtifact(contentDir, 'skill', 'anti-patterns');
+      await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns'], undefined, ['ghost']);
+
+      await expect(resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir))).rejects.toThrow(
+        /rulebook "ghost" was not found/,
+      );
+    });
+
     it('fails the run when a body token names a non-existent artifact', async () => {
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:ghost}.');
 
@@ -537,11 +560,14 @@ async function writeSubagent(
   slug: string,
   injects: ReadonlyArray<string>,
   edges?: DirectArtifacts,
+  injectedRulebooks: ReadonlyArray<string> = [],
 ): Promise<void> {
   const filePath = path.join(contentDir, artifactFrontmatterPath('subagent', slug));
   await mkdir(path.dirname(filePath), { recursive: true });
   const injected = injects.map((skill) => `  - ${skill}`).join('\n');
-  const frontmatter = `name: ${slug}\nskills:\n${injected}\n${renderEdges('subagent', edges)}`;
+  const rulebookBlock =
+    injectedRulebooks.length === 0 ? '' : `rulebooks:\n${injectedRulebooks.map((slug) => `  - ${slug}`).join('\n')}\n`;
+  const frontmatter = `name: ${slug}\nskills:\n${injected}\n${rulebookBlock}${renderEdges('subagent', edges)}`;
   await writeFile(filePath, `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
 }
 
