@@ -8,7 +8,7 @@ user-invocable: true
 
 Record finished work as a commit: stage one logical unit, render its title, compose its body, and commit.
 
-The conventions the message is composed to -- title format, body voice, the work-type taxonomy, and branch naming -- are carried by `{rulebook:commit-conventions}`. Consult it before composing; this skill carries the procedure alone.
+The conventions the message is composed to -- title format, body voice and mechanics, the work-type taxonomy, and branch naming -- are carried by `{rulebook:commit-conventions}`. Consult it before composing; this skill carries the procedure alone.
 
 ## What one commit holds
 
@@ -41,7 +41,7 @@ Record each unit as it is finished. Several single-concern commits read better t
 
    Use `commit_title` as the commit title verbatim -- it already carries the rendered prefix and the bare title text. Where the script is not found, fall back to the bare title.
 
-5. **Compose the body**, observing [Body mechanics](#body-mechanics).
+5. **Compose the body.** The conventions carry its voice and its mechanics; [Line breaks](#line-breaks) below carries the one mechanic that binds only while the body is being written.
 
 6. **Commit**, passing the title and body as separate `--message` values so the blank line between them is git's rather than the shell's:
 
@@ -49,6 +49,6 @@ Record each unit as it is finished. Several single-concern commits read better t
    git commit --message "$commit_title" --message "$body"
    ```
 
-## Body mechanics
+## Line breaks
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
