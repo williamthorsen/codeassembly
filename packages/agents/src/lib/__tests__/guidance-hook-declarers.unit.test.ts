@@ -93,7 +93,8 @@ async function writeSkill(
   const srcDir = path.join(contentDir, 'skills', slug);
   await mkdir(srcDir, { recursive: true });
   await writeFile(path.join(srcDir, 'SKILL.md'), body, 'utf8');
-  return { slug, srcDir, contentRoot: contentDir, source: undefined, targetHarnesses };
+  const skill = { slug, srcDir, contentRoot: contentDir, source: undefined };
+  return targetHarnesses === undefined ? skill : { ...skill, targetHarnesses };
 }
 
 /** Writes a declared subagent's body under the content root and returns the subagent as the resolver would. */

@@ -178,7 +178,31 @@ describe('syncCommand with guidance-hook bindings', () => {
 
       const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
 
-      expect(advisories).toEqual([{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }]);
+      expect(advisories).toEqual([
+        { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl', skills: ['implement-plan'] },
+      ]);
+    });
+
+    // The two routes reach disjoint audiences here: the ambient region is loaded by a session, and a subagent runs
+    // without it, so the pairing is how one rulebook reaches both rather than a rulebook charging anyone twice.
+    it('reports nothing when only a subagent declares the bound hook', async () => {
+      await writeLibrarySubagent(contentDir, 'coder', '<!-- guidance-hook: impl -->\n');
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[ambient, hook]');
+      await declareSubagentBinding(projectRoot, 'layout-preferences');
+
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+      expect(advisories).toEqual([]);
+    });
+
+    it('reports a binding whose hook no deployed skill or subagent declares', async () => {
+      await writeLibrarySkill(contentDir, 'implement-plan', 'Prose carrying no directive.\n');
+      await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
+      await declareBinding(projectRoot, 'layout-preferences');
+
+      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+
+      expect(advisories).toEqual([{ kind: 'bound-unreached', hook: 'impl' }]);
     });
 
     it('reports both findings for a bound rulebook that is ambient and claims no hook route', async () => {
@@ -190,7 +214,7 @@ describe('syncCommand with guidance-hook bindings', () => {
 
       expect(advisories).toEqual([
         { kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' },
-        { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' },
+        { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl', skills: ['implement-plan'] },
       ]);
     });
 
@@ -228,6 +252,19 @@ async function declareBinding(projectRoot: string, slug: string): Promise<void> 
     'skills:',
     '  use:',
     '    - implement-plan',
+    'guidance-hooks:',
+    '  impl:',
+    '    use:',
+    `      - ${slug}`,
+  ]);
+}
+
+/** Declares the `coder` subagent with `slug` bound to the `impl` hook, reaching the hook without any skill. */
+async function declareSubagentBinding(projectRoot: string, slug: string): Promise<void> {
+  await declare(projectRoot, [
+    'subagents:',
+    '  use:',
+    '    - coder',
     'guidance-hooks:',
     '  impl:',
     '    use:',

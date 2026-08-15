@@ -36,11 +36,11 @@ export async function findGuidanceHookDeclarers(
   const declarers = new Map<string, MutableDeclarers>();
 
   for (const skill of resolvedSkills) {
-    if (!harnessIds.some((harnessId) => skillTargetsHarness(skill, harnessId))) {
+    if (harnessIds.every((harnessId) => !skillTargetsHarness(skill, harnessId))) {
       continue;
     }
-    const entryPath = path.join(skill.srcDir, 'SKILL.md');
-    for (const { name } of listGuidanceHooks(await expandIncludes(entryPath, skill.contentRoot), skill.slug)) {
+    const body = await expandIncludes(path.join(skill.srcDir, 'SKILL.md'), skill.contentRoot);
+    for (const { name } of listGuidanceHooks(body, skill.slug)) {
       readDeclarers(declarers, name).skills.push(skill.slug);
     }
   }

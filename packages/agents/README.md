@@ -239,15 +239,18 @@ Name a hook for the concern rather than the consumer — `implementation-prefere
 
 Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
 
-Three further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
+Four further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
 
-| Reported          | Condition                                                                                | Level   |
-| ----------------- | ---------------------------------------------------------------------------------------- | ------- |
-| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                                 | warning |
-| Bound and ambient | a bound rulebook's `delivery` also names `ambient`, so a session receives its text twice | warning |
-| Declared, unbound | a rulebook names `hook` and no binding uses it                                           | advice  |
+| Reported          | Condition                                                                                 | Level   |
+| ----------------- | ----------------------------------------------------------------------------------------- | ------- |
+| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                                  | warning |
+| Bound and ambient | a bound rulebook's `delivery` also names `ambient` and a deployed skill declares the hook | warning |
+| Bound, unreached  | a binding names a hook no deployed skill or subagent declares, so it delivers nothing     | advice  |
+| Declared, unbound | a rulebook names `hook` and no binding uses it                                            | advice  |
 
-The last is not a defect. A collection can carry a hook-declaring rulebook into a project that never binds it, so the line names an affordance going unused rather than something broken.
+"Bound and ambient" turns on the skill because that is where the two routes overlap: ambient delivery lands in the guidance file a session loads, so a skill spliced with the same rulebook hands that session a second copy. A hook only subagents declare is silent, and deliberately so: A subagent's context never carries the ambient region, so the pairing is how one rulebook reaches a session and a subagent both.
+
+The last two are not defects. A collection can carry a hook-declaring rulebook into a project that never binds it, and a home-tier binding can outrun a project that declares few skills and no subagents, so each line names an affordance going unused rather than something broken. A binding that reaches nothing is also how a mistyped hook name surfaces, since nothing else would say so.
 
 A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance every consumer of the library should get is a partial; guidance one user or one project wants is a hook. See `content/_partials/README.md`.
 
