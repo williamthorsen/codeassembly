@@ -212,6 +212,21 @@ describe(resolveClosure, () => {
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
 
+    it('pulls a token that arrives via a partial a rulebook inlines into the closure', async () => {
+      await writeArtifact(contentDir, 'skill', 'capture-event');
+      await writeRulebookPartial(contentDir, 'frag.md', 'Then invoke {skill:capture-event}.');
+      await writeArtifactWithBody(
+        contentDir,
+        'rulebook',
+        'nmr-scripts',
+        '# nmr-scripts\n\n<!-- include: _partials/frag.md / -->',
+      );
+
+      const closure = await resolveClosure({ rulebook: ['nmr-scripts'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: ['nmr-scripts'], skills: ['capture-event'], subagents: [] });
+    });
+
     it('fails the run when a body token names a non-existent artifact', async () => {
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:ghost}.');
 
@@ -432,20 +447,7 @@ describe(resolveClosure, () => {
   });
 });
 
-/**
- * Writes an artifact's frontmatter file under `contentDir`. A collection's edges render as `members:` (either the
- * `'@library'` token or a per-type block); every other type's render as `dependencies:`. Omit `edges` for a leaf.
- */
-async function writeArtifact(
-  contentDir: string,
-  type: ArtifactType,
-  slug: string,
-  edges?: DirectArtifacts | '@library',
-): Promise<void> {
-  const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n# ${slug}\n`, 'utf8');
-}
+// region | Helpers
 
 /** Renders an artifact's edge block: `members:` for a collection, `dependencies:` otherwise; empty when there are none. */
 function renderEdges(type: ArtifactType, edges: DirectArtifacts | '@library' | undefined): string {
@@ -465,6 +467,21 @@ function renderEdges(type: ArtifactType, edges: DirectArtifacts | '@library' | u
 }
 
 /**
+ * Writes an artifact's frontmatter file under `contentDir`. A collection's edges render as `members:` (either the
+ * `'@library'` token or a per-type block); every other type's render as `dependencies:`. Omit `edges` for a leaf.
+ */
+async function writeArtifact(
+  contentDir: string,
+  type: ArtifactType,
+  slug: string,
+  edges?: DirectArtifacts | '@library',
+): Promise<void> {
+  const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n# ${slug}\n`, 'utf8');
+}
+
+/**
  * Writes an artifact's file with a custom body following the frontmatter. Unlike `writeArtifact` (which emits a bare
  * `# <slug>` body), this lets a test place invocation tokens or include directives in the body.
  */
@@ -478,6 +495,13 @@ async function writeArtifactWithBody(
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n${body}\n`, 'utf8');
+}
+
+/** Writes a partial beside the rulebooks — the include target a rulebook body expands, resolved against its own dir. */
+async function writeRulebookPartial(contentDir: string, name: string, body: string): Promise<void> {
+  const filePath = path.join(contentDir, 'guidance', 'rulebooks', '_partials', name);
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `${body}\n`, 'utf8');
 }
 
 /** Writes a partial inside a skill's `_partials/` directory — the include target a skill body expands. */
@@ -503,3 +527,5 @@ async function writeSubagent(
   const frontmatter = `name: ${slug}\nskills:\n${injected}\n${renderEdges('subagent', edges)}`;
   await writeFile(filePath, `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
 }
+
+// endregion | Helpers

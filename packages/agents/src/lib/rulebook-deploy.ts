@@ -1,8 +1,8 @@
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { artifactFrontmatterPath } from './artifact-types.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
+import { expandIncludes } from './directive-expander.ts';
 import { parseRulebookFile } from './rulebook-schema.ts';
 import { resolveSkillName } from './rulebook-skill.ts';
 import { isEnoent } from './type-guards.ts';
@@ -22,9 +22,13 @@ export interface ResolvedRulebook {
 }
 
 /**
- * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), validates
- * its frontmatter, and returns its neutral body and delivery. A missing frontmatter file throws an error naming the
- * resolving source.
+ * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), expands its
+ * include directives against that source's own root, validates its frontmatter, and returns its neutral body and
+ * delivery. A missing frontmatter file throws an error naming the resolving source.
+ *
+ * Expanding here rather than at render is what puts the hook checks, both delivery modes, and the guidance-hook fills
+ * on one inlined body. A hook arriving through a partial would otherwise reach the fill pass unseen by the check that
+ * rejects one on a bound rulebook.
  */
 export async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<ResolvedRulebook> {
   const resolved = await resolver.resolve('rulebook', slug);
@@ -36,7 +40,7 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
   const srcPath = path.join(resolved.dir, artifactFrontmatterPath('rulebook', slug));
   let content: string;
   try {
-    content = await readFile(srcPath, 'utf8');
+    content = await expandIncludes(srcPath, resolved.dir);
   } catch (error: unknown) {
     if (isEnoent(error)) {
       const origin = resolved.source === undefined ? 'the library' : `source "${resolved.source}"`;

@@ -93,8 +93,8 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
  * partial becomes an edge for every artifact that includes it — and a subagent further unions its top-level `skills:`
  * injection list. A body token that names the artifact itself is dropped rather than unioned: a self-reference renders
  * per harness but is not a dependency and must not trip the cycle check; a self-dependency written in `dependencies:`
- * is not dropped, so it still errors. A rulebook unions its own body tokens the same way, reading them off the file as
- * read: its frontmatter file is also its body file, and it carries no includes to expand. A `{rulebook:<slug>}` token
+ * is not dropped, so it still errors. A rulebook unions its own body tokens the same way, off its include-expanded
+ * body, since its frontmatter file is also its body file. A `{rulebook:<slug>}` token
  * is unioned only from a rulebook, because only a rulebook body renders one. Every unioned edge enters the closure
  * without a duplicate `dependencies:` declaration.
  */
@@ -122,7 +122,9 @@ async function readArtifactEdges(
 
   const dependencies = readDependencies(content, label);
   if (type === 'rulebook') {
-    const tokens = extractInvocationEdges(content);
+    // Expanded to match the render surface, so a token inside an inlined partial becomes an edge for the rulebook that
+    // inlines it.
+    const tokens = extractInvocationEdges(await expandIncludes(filePath, resolved.dir));
     return {
       ...dependencies,
       rulebook: [...(dependencies.rulebook ?? []), ...tokens.rulebooks.filter((edge) => edge !== slug)],
