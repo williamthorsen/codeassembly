@@ -24,22 +24,7 @@ Record each unit as it is finished. Several single-concern commits read better t
 
 3. **Resolve the title's fields.** The scope, the work type, and the title text, each per the conventions.
 
-4. **Render the title.** Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash for `ticket_ref`, then render:
-
-   ```bash
-   json=$({harness_home_dir}/scripts/describe-change.sh \
-     --title "{title}" \
-     --scope "{scope}" \
-     --type "{type}" \
-     --ticket-ref "{ticket_ref}")
-   commit_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('commit_title',''))")
-   ```
-
-   Omit any flag whose value is empty or null, `--ticket-ref` included when session context reports `ticket_ref` as `null`. Projects whose `commit.title_format` references `{ticket_ref}` render the ref from that flag alone.
-
-   Parse the output with a JSON parser (`python3` above; `jq -r '.commit_title'` where `jq` is available) rather than `grep` or `cut`: A rendered title may carry backslash-escaped double quotes, which a regex extractor silently truncates.
-
-   Use `commit_title` as the commit title verbatim -- it already carries the rendered prefix and the bare title text. Where the script is not found, fall back to the bare title.
+4. **Render the title** per [Rendering the title](#rendering-the-title).
 
 5. **Compose the body.** The conventions carry its voice and its mechanics; [Line breaks](#line-breaks) below carries the one mechanic that binds only while the body is being written.
 
@@ -48,6 +33,12 @@ Record each unit as it is finished. Several single-concern commits read better t
    ```bash
    git commit --message "$commit_title" --message "$body"
    ```
+
+## Rendering the title
+
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash for `ticket_ref`, then render:
+
+<!-- include: ../_partials/commit-title-rendering.md / -->
 
 ## Line breaks
 
