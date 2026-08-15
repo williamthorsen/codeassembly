@@ -15,6 +15,7 @@ const LOCAL_HOST = '/project/CLAUDE.local.md';
 const ADVISORY_ANCHORS = {
   'bound-ambient': 'receives its text twice',
   'bound-undeclared': 'whose delivery does not name',
+  'bound-unreached': 'the binding delivers nothing',
   'declared-unbound': 'guidance-hook delivery that nothing binds',
 } as const;
 
@@ -110,7 +111,9 @@ describe('guidance-hook advisories', () => {
 
   it('warns on both paths that a bound rulebook also charges every session', () => {
     const outcome = reconciled({
-      guidanceHookAdvisories: [{ kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl' }],
+      guidanceHookAdvisories: [
+        { kind: 'bound-ambient', slug: 'layout-preferences', hook: 'impl', skills: ['implement-plan'] },
+      ],
     });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
@@ -118,6 +121,35 @@ describe('guidance-hook advisories', () => {
 
       expect(advisory?.level).toBe('warn');
       expect(advisory?.text).toContain('layout-preferences');
+      expect(advisory?.text).toContain('skill "implement-plan" declares');
+    }
+  });
+
+  it('names every declaring skill when more than one creates the overlap', () => {
+    const outcome = reconciled({
+      guidanceHookAdvisories: [
+        {
+          kind: 'bound-ambient',
+          slug: 'layout-preferences',
+          hook: 'impl',
+          skills: ['implement-plan', 'review-branch'],
+        },
+      ],
+    });
+
+    const advisory = renderSyncReport(outcome).find((line) => line.text.includes(ADVISORY_ANCHORS['bound-ambient']));
+
+    expect(advisory?.text).toContain('skills "implement-plan", "review-branch" declare');
+  });
+
+  it('advises on both paths that a binding reaches no body at all', () => {
+    const outcome = reconciled({ guidanceHookAdvisories: [{ kind: 'bound-unreached', hook: 'impl' }] });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const advisory = lines.find((line) => line.text.includes(ADVISORY_ANCHORS['bound-unreached']));
+
+      expect(advisory?.level).toBe('info');
+      expect(advisory?.text).toContain('impl');
     }
   });
 

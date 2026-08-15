@@ -146,6 +146,12 @@ function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): strin
   }
 }
 
+/** Names the skills whose declaration of a hook overlaps an ambient route, as the relative clause the line embeds. */
+function describeDeclaringSkills(skills: ReadonlyArray<string>): string {
+  const quoted = skills.map((slug) => `"${slug}"`).join(', ');
+  return skills.length === 1 ? `skill ${quoted} declares` : `skills ${quoted} declare`;
+}
+
 /** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
 function describeDeliveries(plan: SyncPlan): string {
   const skillFilesWritten = plan.resolved.filter((rulebook) => rulebook.skill).length * plan.harnessSkillTargets.length;
@@ -170,6 +176,9 @@ function describeDeliveries(plan: SyncPlan): string {
  * Renders one guidance-hook advisory. `bound-undeclared` names both remedies because the reader may control only
  * one: a rulebook resolved from the library carries frontmatter they cannot edit, leaving the binding as the half
  * that is theirs.
+ *
+ * `bound-unreached` is info rather than a warning, because a home-tier binding legitimately outruns a project that
+ * declares few skills and no subagents, and warning on that would be noise on every sync there.
  */
 function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLine {
   switch (advisory.kind) {
@@ -184,8 +193,16 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
       return {
         level: 'warn',
         text:
-          `⚠️ Rulebook "${advisory.slug}" is bound to guidance hook "${advisory.hook}" and also delivers ` +
-          '`ambient`, so a session carrying both receives its text twice. Drop one of the two routes.',
+          `⚠️ Rulebook "${advisory.slug}" is bound to guidance hook "${advisory.hook}", which ` +
+          `${describeDeclaringSkills(advisory.skills)}, and also delivers \`ambient\`, so a session loading such a ` +
+          'skill receives its text twice. Drop one of the two routes.',
+      };
+    case 'bound-unreached':
+      return {
+        level: 'info',
+        text:
+          `💡 Guidance hook "${advisory.hook}" is bound, but no deployed skill or subagent declares it, so the ` +
+          'binding delivers nothing. Check the hook name, or declare a skill or subagent that carries it.',
       };
     case 'declared-unbound':
       return {

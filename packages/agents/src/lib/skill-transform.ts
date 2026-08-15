@@ -52,6 +52,15 @@ export type RenderedSupportEntry =
   | { readonly kind: 'verbatim' };
 
 /**
+ * Whether a directory entry's name is one the skill walk passes over at every depth: a `_partials/` directory, a test
+ * directory, or a dotfile. Exported so a pass that asks what a skill deploys answers it from the same rule the deploy
+ * itself applies.
+ */
+export function isSkippedSkillEntry(name: string): boolean {
+  return name === '_partials' || isTestDirectory(name) || name.startsWith('.');
+}
+
+/**
  * Renders a declared skill's directory for one harness: Every `.md` file is include-expanded, then tool-name-rewritten,
  * then link/template-rewritten; non-`.md` files are returned as assets to copy verbatim.
  * Read-only; the caller composes its own write strategy and markers around the transform.
@@ -129,7 +138,7 @@ async function collectEntries(
 ): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name === '_partials' || isTestDirectory(entry.name) || entry.name.startsWith('.')) {
+    if (isSkippedSkillEntry(entry.name)) {
       continue;
     }
     const srcPath = path.join(dir, entry.name);
