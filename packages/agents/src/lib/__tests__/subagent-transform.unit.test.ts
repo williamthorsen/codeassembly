@@ -2,10 +2,19 @@ import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
-import { rewriteInvocationTokens } from '../invocation-tokens.ts';
+import { rewriteInvocationTokens, type RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
+
+/** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
+const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
+
+// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+const RULEBOOKS: RulebookInvocationCatalog = new Map([
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+]);
 
 const SOURCE = unindent`
   ---
@@ -50,6 +59,7 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
 
     expect(output).toContain('permissionMode: bypassPermissions');
@@ -70,6 +80,7 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'rovo',
       skillSigil: '!',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
 
     expect(output).toContain('tools: [bash, open_files]');
@@ -98,6 +109,7 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
     expect(claude).toContain('Invoke /capture-event, then dispatch code-reviewer.');
     expect(claude).not.toContain('{skill:');
@@ -113,8 +125,64 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'rovo',
       skillSigil: '!',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
     expect(rovo).toContain('Invoke !capture-event, then dispatch code-reviewer.');
+  });
+
+  it('renders a rulebook token as the deploy name its target takes', () => {
+    const source = unindent`
+      ---
+      name: demo-agent
+      description: Demo subagent
+      ---
+
+      See {rulebook:shell-conventions} before writing a script.
+
+    `;
+
+    const output = renderSubagentForHarness(source, {
+      overlayYaml: CLAUDE_OVERLAY,
+      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+      fileRelPath: 'demo-agent.md',
+      sourceLabel: 'subagents/demo-agent.md',
+      anchor: homeAnchor('.claude'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+      rulebooks: RULEBOOKS,
+    });
+
+    expect(output).toContain('See /shell-rules before writing a script.');
+    expect(output).not.toContain('{rulebook:');
+  });
+
+  it('throws when a subagent body names a rulebook that deploys no skill to invoke', () => {
+    const source = unindent`
+      ---
+      name: demo-agent
+      description: Demo subagent
+      ---
+
+      See {rulebook:nmr-cheatsheet} for detail.
+
+    `;
+
+    expect(() =>
+      renderSubagentForHarness(source, {
+        overlayYaml: CLAUDE_OVERLAY,
+        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+        fileRelPath: 'demo-agent.md',
+        sourceLabel: 'subagents/demo-agent.md',
+        anchor: homeAnchor('.claude'),
+        homeDir: '.claude',
+        harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
+        rulebooks: RULEBOOKS,
+      }),
+    ).toThrow(/names an ambient-only rulebook/);
   });
 
   it('rewrites a relative Markdown link to the path its anchor names', () => {
@@ -128,6 +196,7 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
 
     expect(output).toContain('[the guide](~/.claude/guide.md)');
@@ -146,6 +215,7 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
 
     expect(output).not.toContain('guidance-hook');
@@ -165,6 +235,7 @@ describe(renderSubagentForHarness, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
       guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: '# Layout\n\nGroup source by role.\n' }]]]),
     });
 
@@ -189,6 +260,7 @@ describe(renderSubagentForHarness, () => {
         harnessId: 'claude',
         skillSigil: '/',
         subagentSigil: '',
+        rulebooks: NO_RULEBOOKS,
         guidanceHookFills: new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]),
       }),
     ).toThrow(/subagents\/demo-agent\.md:3 .* reason=fill-in-frontmatter/);
@@ -208,6 +280,7 @@ describe(renderSubagentForHarness, () => {
         harnessId: 'claude',
         skillSigil: '/',
         subagentSigil: '',
+        rulebooks: NO_RULEBOOKS,
       }),
     ).toThrow(/subagents\/demo-agent\.md:\d+ name="preferences" .* reason=duplicate-hook/);
   });
@@ -226,6 +299,7 @@ describe(renderSubagentForHarness, () => {
         harnessId: 'claude',
         skillSigil: '/',
         subagentSigil: '',
+        rulebooks: NO_RULEBOOKS,
       }),
     ).toThrow(/subagents\/demo-agent\.md carries 1 unresolvable anchor link target/);
   });
@@ -242,6 +316,7 @@ describe(renderSubagentForHarness, () => {
         harnessId: 'claude',
         skillSigil: '/',
         subagentSigil: '',
+        rulebooks: NO_RULEBOOKS,
       }),
     ).toThrow(ToolNameRewriteError);
   });
@@ -259,6 +334,7 @@ describe(renderSubagentForHarness, () => {
         rewrittenTools,
         { skillSigil, subagentSigil },
         'subagents/demo-agent.md',
+        NO_RULEBOOKS,
       );
       const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, 'demo-agent.md', homeAnchor(homeDir));
       const expected = rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
@@ -273,6 +349,7 @@ describe(renderSubagentForHarness, () => {
         harnessId,
         skillSigil,
         subagentSigil,
+        rulebooks: NO_RULEBOOKS,
       });
 
       expect(rendered).toBe(expected);

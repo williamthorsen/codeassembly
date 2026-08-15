@@ -281,14 +281,31 @@ describe(resolveClosure, () => {
       expect(closure.rulebooks).toEqual(['nmr-scripts']);
     });
 
-    it('leaves a rulebook token in a skill body out of the closure', async () => {
-      // Only a rulebook body renders a rulebook token, so unioning one here would deploy a target for a reference the
-      // render pass rejects. The named rulebook is not existence-checked either: it does not exist, and this resolves.
+    it('pulls a rulebook named by a skill body token into the closure', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'nmr-scripts');
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'See {rulebook:nmr-scripts}.');
 
       const closure = await resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir));
 
-      expect(closure).toEqual({ rulebooks: [], skills: ['wrap-up'], subagents: [] });
+      expect(closure).toEqual({ rulebooks: ['nmr-scripts'], skills: ['wrap-up'], subagents: [] });
+    });
+
+    it('pulls a rulebook named by a subagent body token into the closure', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'nmr-scripts');
+      await writeArtifactWithBody(contentDir, 'subagent', 'planner', 'See {rulebook:nmr-scripts}.');
+
+      const closure = await resolveClosure({ subagent: ['planner'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: ['nmr-scripts'], skills: [], subagents: ['planner'] });
+    });
+
+    it('keeps a rulebook and a skill of the same slug as distinct edges', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'commit');
+      await writeArtifactWithBody(contentDir, 'skill', 'commit', 'See {rulebook:commit} for the format.');
+
+      const closure = await resolveClosure({ skill: ['commit'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: ['commit'], skills: ['commit'], subagents: [] });
     });
 
     it('drops a skill body self-token so a self-reference renders without becoming an edge', async () => {

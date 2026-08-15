@@ -9,10 +9,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeArtifactMarker } from '../artifact-marker.ts';
 import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
+import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor } from '../path-rewriter.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping } from '../tool-name-rewriter.ts';
+
+/** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
+const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 const CLAUDE_OVERLAY = unindent`
   _tools:
@@ -56,6 +60,7 @@ describe(deploySubagent, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     };
   }
 
@@ -72,6 +77,7 @@ describe(deploySubagent, () => {
       harnessId: 'claude',
       skillSigil: '/',
       subagentSigil: '',
+      rulebooks: NO_RULEBOOKS,
     });
     return makeArtifactMarker('subagent').injectMarker(rendered, 'canary');
   }

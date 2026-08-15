@@ -13,6 +13,7 @@ import { parseFrontmatter } from './frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from './fs-helpers.ts';
 import { HARNESSES, resolveSkillsPathPrefix } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
+import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
 import { homeAnchor } from './path-rewriter.ts';
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
@@ -262,6 +263,10 @@ async function renderForHarness(
   // and this is the mapping a consumer's deploy would apply to the root's content.
   const overlayYaml = await loadHarnessOverlay(libraryDir, config);
   const toolMapping = loadToolMapping(overlayYaml);
+  // One catalog for all three renders, so a `{rulebook:<slug>}` token resolves here exactly as it will under `sync`.
+  const rulebooks: RulebookInvocationCatalog = new Map(
+    artifacts.rulebooks.map((book) => [book.slug, { skillName: book.skillName, skill: book.skill }]),
+  );
   const skillContext: SkillDeployContext = {
     toolMapping,
     anchor: homeAnchor(resolveSkillsPathPrefix(config)),
@@ -269,6 +274,7 @@ async function renderForHarness(
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
+    rulebooks,
   };
   const subagentContext: SubagentDeployContext = {
     overlayYaml,
@@ -278,6 +284,7 @@ async function renderForHarness(
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
+    rulebooks,
   };
   const rulebookContext: RulebookRenderContext = {
     anchor: homeAnchor(config.homeDir),
@@ -285,9 +292,7 @@ async function renderForHarness(
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
-    rulebooks: new Map(
-      artifacts.rulebooks.map((book) => [book.slug, { skillName: book.skillName, skill: book.skill }]),
-    ),
+    rulebooks,
   };
 
   const raised: Array<HarnessDefect> = [];

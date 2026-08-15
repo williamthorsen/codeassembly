@@ -7,6 +7,7 @@ import { describeSearchedLocations, type SourceResolver } from './content-source
 import { expandIncludes } from './directive-expander.ts';
 import { writeIfChanged } from './fs-helpers.ts';
 import type { GuidanceHookFills } from './guidance-hooks.ts';
+import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
 import type { ResolveLinkAnchor } from './path-rewriter.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
 
@@ -38,6 +39,8 @@ export interface SubagentDeployContext {
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
+  /** The deployed rulebooks a `{rulebook:<slug>}` token may address, keyed by slug. */
+  readonly rulebooks: RulebookInvocationCatalog;
   /** Guidance bound to each hook the subagent's body may declare; absent under `install`, which resolves no binding. */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }
@@ -62,8 +65,8 @@ export async function deploySubagent(
 
 /**
  * Renders a resolved subagent for one harness: include expansion, then the harness transform. Throws on a broken
- * include, an unmapped `{tool:NAME}` placeholder, a `{rulebook:<slug>}` token, which no subagent body may carry, or a
- * guidance hook whose fill cannot be honored.
+ * include, an unmapped `{tool:NAME}` placeholder, a `{rulebook:<slug>}` token naming an unknown or ambient-only
+ * rulebook, or a guidance hook whose fill cannot be honored.
  * The pre-write render gate and `deploySubagent` share this one path, so the gate raises exactly what the write would.
  */
 export async function renderSubagent(resolved: ResolvedSubagent, context: SubagentDeployContext): Promise<string> {
@@ -79,6 +82,7 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
     harnessId: context.harnessId,
     skillSigil: context.skillSigil,
     subagentSigil: context.subagentSigil,
+    rulebooks: context.rulebooks,
     guidanceHookFills: context.guidanceHookFills,
   });
 }

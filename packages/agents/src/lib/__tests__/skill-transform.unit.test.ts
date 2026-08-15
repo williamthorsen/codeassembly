@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DirectiveExpansionError } from '../directive-expander.ts';
 import { GuidanceHookError } from '../guidance-hooks.ts';
+import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor } from '../path-rewriter.ts';
 import {
   type RenderedSkillEntry,
@@ -16,6 +17,13 @@ import {
 import { ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 const TOOL_MAPPING = new Map([['Read', 'open_files']]);
+
+// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+const RULEBOOKS: RulebookInvocationCatalog = new Map([
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+]);
 
 describe(renderSkillDirectory, () => {
   let contentDir: string;
@@ -71,6 +79,29 @@ describe(renderSkillDirectory, () => {
       'SKILL.md',
     );
     expect(rovo).toContain('Then invoke !capture-event.');
+  });
+
+  it('renders a rulebook token as the deploy name its target takes, including from an included partial', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n\nSee {rulebook:shell-conventions}.\n\n<!-- include: _partials/frag.md / -->\n',
+      '_partials/frag.md': 'Also see {rulebook:nmr-scripts}.\n',
+    });
+
+    const content = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ rulebooks: RULEBOOKS })),
+      'SKILL.md',
+    );
+
+    expect(content).toContain('See /shell-rules.');
+    expect(content).toContain('Also see /consult-nmr-scripts.');
+  });
+
+  it('throws when a skill body names a rulebook that deploys no skill to invoke', async () => {
+    await writeSkill({ 'SKILL.md': '# Demo\n\nSee {rulebook:nmr-cheatsheet}.\n' });
+
+    await expect(
+      renderSkillDirectory(skillDir, 'demo', contentDir, buildContext({ rulebooks: RULEBOOKS })),
+    ).rejects.toThrow(/names an ambient-only rulebook/);
   });
 
   it('rewrites a bare-relative link in a nested .md against the skill slug and prefix', async () => {
@@ -315,6 +346,17 @@ describe(renderSupportEntry, () => {
     );
 
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
+  });
+
+  it('rejects a rulebook token even when the caller carries a catalog', async () => {
+    // `install` ships a support entry having resolved no declaration, so honoring the token here would pass a gate the
+    // ship then fails.
+    const srcPath = path.join(skillsDir, 'table.md');
+    await writeFile(srcPath, '# Table\n\nSee {rulebook:nmr-scripts}.\n', 'utf8');
+
+    await expect(
+      renderSupportEntry(srcPath, 'table.md', contentDir, buildContext({ rulebooks: RULEBOOKS })),
+    ).rejects.toThrow(/a support entry under skills\/ renders without one/);
   });
 
   it('rewrites links, invocation tokens, and template variables in a Markdown file support entry', async () => {

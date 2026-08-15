@@ -1368,12 +1368,25 @@ describe(syncCommand, () => {
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), content, 'utf8');
     }
 
-    it('fails a dry run with nothing written when a skill body carries a rulebook token', async () => {
+    it('renders a skill body rulebook token and deploys the target the token alone named', async () => {
+      await writeLibraryRulebook('nmr-scripts', 'delivery: skill', 'Run scripts with nmr.');
+      await writeLibrarySkill('people-report', { body: 'See {rulebook:nmr-scripts}.' });
+      await declareSkills('people-report');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+      const deployed = await readFile(skillPath('people-report'), 'utf8');
+      expect(deployed).toContain('See /consult-nmr-scripts.');
+      expect(existsSync(skillPath('consult-nmr-scripts'))).toBe(true);
+    });
+
+    it('fails a dry run with nothing written when a skill body names an ambient-only rulebook', async () => {
+      await writeLibraryRulebook('nmr-scripts', 'delivery: ambient', 'Run scripts with nmr.');
       await writeLibrarySkill('people-report', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSkills('people-report');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /\{rulebook:nmr-scripts\} in skills\/people-report\/SKILL\.md[\s\S]*only in a rulebook body/,
+        /\{rulebook:nmr-scripts\} in skills\/people-report\/SKILL\.md[\s\S]*names an ambient-only rulebook/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
     });
@@ -1828,13 +1841,27 @@ describe(syncCommand, () => {
       expect(existsSync(target)).toBe(true);
     });
 
-    it('fails a dry run with nothing written when a subagent body carries a rulebook token', async () => {
+    it('renders a subagent body rulebook token and deploys the target the token alone named', async () => {
       await writeOverlays();
+      await writeLibraryRulebook('nmr-scripts', 'delivery: skill', 'Run scripts with nmr.');
+      await writeLibrarySubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
+      await declareSubagents('canary');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).toContain('See /consult-nmr-scripts.');
+      expect(existsSync(skillPath('consult-nmr-scripts'))).toBe(true);
+    });
+
+    it('fails a dry run with nothing written when a subagent body names an ambient-only rulebook', async () => {
+      await writeOverlays();
+      await writeLibraryRulebook('nmr-scripts', 'delivery: ambient', 'Run scripts with nmr.');
       await writeLibrarySubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSubagents('canary');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /\{rulebook:nmr-scripts\} in subagents\/canary\.md[\s\S]*only in a rulebook body/,
+        /\{rulebook:nmr-scripts\} in subagents\/canary\.md[\s\S]*names an ambient-only rulebook/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
@@ -1850,10 +1877,11 @@ describe(syncCommand, () => {
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
 
-    it('fails a real sync before the ambient host is written when a subagent body carries a rulebook token', async () => {
+    it('fails a real sync before the ambient host is written when a subagent body names an ambient-only rulebook', async () => {
       // Subagents deploy last, so this pins the failure ahead of the earlier ambient and skill write passes.
       await writeOverlays();
       await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+      await writeLibraryRulebook('nmr-scripts', 'delivery: ambient', 'Run scripts with nmr.');
       await writeLibrarySubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
       await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
       await writeFile(

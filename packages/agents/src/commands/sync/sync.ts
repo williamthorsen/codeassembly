@@ -19,6 +19,7 @@ import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resol
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
+import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hooks.ts';
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
@@ -356,6 +357,11 @@ async function reconcileDomain(
   const desiredSkillDirs = new Map(
     resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
   );
+
+  // One catalog for every body that addresses a rulebook by token — rulebook, skill, and subagent alike — so no two
+  // passes can disagree about what is addressable. The closure it indexes already holds a rulebook named only by a
+  // skill's or subagent's token, since those tokens are dependency edges.
+  const rulebookCatalog = buildRulebookInvocationCatalog(resolved);
   const declaredSkillSet = new Set(resolvedSkills.map((skill) => skill.slug));
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
@@ -408,7 +414,7 @@ async function reconcileDomain(
 
   const harnessSkillTargets = await Promise.all(
     harnessIds.map((harnessId) =>
-      resolveSkillTarget(harnessId, domain.baseDir, contentDir, fillsByHarness.get(harnessId)),
+      resolveSkillTarget(harnessId, domain.baseDir, contentDir, rulebookCatalog, fillsByHarness.get(harnessId)),
     ),
   );
 
@@ -418,7 +424,7 @@ async function reconcileDomain(
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
     harnessIds.map((harnessId) =>
-      resolveSubagentTarget(harnessId, domain.baseDir, contentDir, fillsByHarness.get(harnessId)),
+      resolveSubagentTarget(harnessId, domain.baseDir, contentDir, rulebookCatalog, fillsByHarness.get(harnessId)),
     ),
   );
 
@@ -1501,10 +1507,17 @@ function buildRulebookRenderContext(
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
-    rulebooks: new Map(
-      resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]),
-    ),
+    rulebooks: buildRulebookInvocationCatalog(resolved),
   };
+}
+
+/**
+ * Indexes the deployed rulebooks by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys
+ * under. Harness-invariant, unlike the render contexts that carry it: what a rulebook deploys as does not vary by
+ * harness.
+ */
+function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedRulebook>): RulebookInvocationCatalog {
+  return new Map(resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]));
 }
 
 /**
@@ -1599,6 +1612,7 @@ async function resolveSubagentTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
+  rulebooks: RulebookInvocationCatalog,
   guidanceHookFills: GuidanceHookFills | undefined,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
@@ -1613,6 +1627,7 @@ async function resolveSubagentTarget(
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
       subagentSigil: harnessConfig.subagentSigil,
+      rulebooks,
       guidanceHookFills,
     },
   };
@@ -1627,6 +1642,7 @@ async function resolveSkillTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
+  rulebooks: RulebookInvocationCatalog,
   guidanceHookFills: GuidanceHookFills | undefined,
 ): Promise<HarnessSkillTarget> {
   const harnessConfig = HARNESSES[harnessId];
@@ -1640,6 +1656,7 @@ async function resolveSkillTarget(
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
       subagentSigil: harnessConfig.subagentSigil,
+      rulebooks,
       guidanceHookFills,
     },
   };

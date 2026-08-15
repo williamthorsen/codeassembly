@@ -6,9 +6,13 @@ import { resolveContentDir } from '../../lib/content-resolver.ts';
 import { expandIncludes } from '../../lib/directive-expander.ts';
 import { HARNESSES } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { homeAnchor } from '../../lib/path-rewriter.ts';
 import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
 import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
+
+/** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
+const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 /**
  * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
@@ -41,6 +45,7 @@ describe('reviewer and coder partials render correctly', () => {
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
       subagentSigil: harnessConfig.subagentSigil,
+      rulebooks: NO_RULEBOOKS,
     });
   }
 

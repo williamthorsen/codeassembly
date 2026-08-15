@@ -1,6 +1,6 @@
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
-import { rewriteInvocationTokens } from './invocation-tokens.ts';
+import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
@@ -24,6 +24,11 @@ export interface SubagentRenderContext {
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
+  /**
+   * The deployed rulebooks a `{rulebook:<slug>}` token may address. Required rather than optional: every pass that
+   * renders a subagent resolves a declaration, since `install` deploys none.
+   */
+  readonly rulebooks: RulebookInvocationCatalog;
   /**
    * Guidance bound to each hook the subagent's body may declare. Absent for every caller that resolves no declaration
    * — `install` and `validate` — which is what keeps them stripping.
@@ -58,6 +63,7 @@ export function renderSubagentForHarness(
     harnessId,
     skillSigil,
     subagentSigil,
+    rulebooks,
     guidanceHookFills,
   }: SubagentRenderContext,
 ): string {
@@ -65,7 +71,12 @@ export function renderSubagentForHarness(
   assertFilledAnchorsResolve(filled, sourceLabel);
   const merged = mergeFrontmatter(filled.content, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
-  const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil }, sourceLabel);
+  const rewrittenInvocations = rewriteInvocationTokens(
+    rewrittenTools,
+    { skillSigil, subagentSigil },
+    sourceLabel,
+    rulebooks,
+  );
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);
   return rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 }

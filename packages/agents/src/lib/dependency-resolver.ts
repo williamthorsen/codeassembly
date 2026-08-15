@@ -94,9 +94,9 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
  * injection list. A body token that names the artifact itself is dropped rather than unioned: a self-reference renders
  * per harness but is not a dependency and must not trip the cycle check; a self-dependency written in `dependencies:`
  * is not dropped, so it still errors. A rulebook unions its own body tokens the same way, off its include-expanded
- * body, since its frontmatter file is also its body file. A `{rulebook:<slug>}` token
- * is unioned only from a rulebook, because only a rulebook body renders one. Every unioned edge enters the closure
- * without a duplicate `dependencies:` declaration.
+ * body, since its frontmatter file is also its body file. A `{rulebook:<slug>}` token is unioned from every body that
+ * renders one -- rulebook, skill, and subagent alike -- so a rulebook named only inline deploys. Every unioned edge
+ * enters the closure without a duplicate `dependencies:` declaration.
  */
 async function readArtifactEdges(
   type: ArtifactType,
@@ -147,6 +147,9 @@ async function readArtifactEdges(
   const injectedSkills = type === 'subagent' ? readInjectedSkills(content, label) : [];
   return {
     ...dependencies,
+    // Unfiltered: a rulebook and a skill of the same slug are distinct artifacts, so a same-slug token here is a
+    // genuine cross-type edge rather than the self-reference the per-kind filters above drop.
+    rulebook: [...(dependencies.rulebook ?? []), ...tokens.rulebooks],
     skill: [...(dependencies.skill ?? []), ...bodySkills, ...injectedSkills],
     subagent: [...(dependencies.subagent ?? []), ...bodySubagents],
   };
