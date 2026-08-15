@@ -42,10 +42,10 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     const skillsDir = path.join(homeDir, '.claude', 'skills');
     const deployedSkills = await readdir(skillsDir);
     // A representative sample of the real skill catalog landed, sync-owned.
-    expect(deployedSkills).toContain('commit');
+    expect(deployedSkills).toContain('create-commit');
     expect(deployedSkills).toContain('create-pr');
-    const commit = await readFile(path.join(skillsDir, 'commit', 'SKILL.md'), 'utf8');
-    expect(commit).toContain('<!-- codeassembly-skill:commit -->');
+    const createCommit = await readFile(path.join(skillsDir, 'create-commit', 'SKILL.md'), 'utf8');
+    expect(createCommit).toContain('<!-- codeassembly-skill:create-commit -->');
 
     // Transforms ran across the real catalog. The three ticket-emitting skills share the ticket-authoring
     // partials, so each must deploy with every include directive expanded; design-and-plan additionally

@@ -11,8 +11,10 @@ import { homeAnchor } from '../../lib/path-rewriter.ts';
 import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
 import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
 
-/** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
-const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
+/** The rulebook `orchestrated-coder` injects; no source under test addresses another. */
+const RULEBOOKS: RulebookInvocationCatalog = new Map([
+  ['commit-conventions', { skillName: 'consult-commit-conventions', skill: true }],
+]);
 
 /**
  * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
@@ -45,7 +47,7 @@ describe('reviewer and coder partials render correctly', () => {
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
       subagentSigil: harnessConfig.subagentSigil,
-      rulebooks: NO_RULEBOOKS,
+      rulebooks: RULEBOOKS,
     });
   }
 
