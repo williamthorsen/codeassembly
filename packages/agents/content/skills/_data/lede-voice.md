@@ -21,7 +21,7 @@ Where one text serves both, write at the register of the most external realistic
 
 ## The stance
 
-**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. Open with a change verb whose implied subject is the PR ("Adds", "Fixes", "Upgrades", "Reorganizes", "Removes"), or with the changed artifact and a temporal marker ("`nmr prepush` now runs the audit first"). Either way, the opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" places the reader in four words; a scenario clause that reaches the name later makes them travel to find out what is under discussion.
+**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. The opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" places the reader in four words; a scenario clause that reaches the name later makes them travel to find out what is under discussion.
 
 **Every sentence reports an effect of the diff.** The symptom a fix ends, the purpose a change serves, and the invariant a risky change preserves are effects, even when no hunk spells them out. The deliberation that produced the diff -- options weighed, review history, what the ticket asked for -- is not. The PR is written on its own merits, not the ticket's.
 
@@ -32,6 +32,15 @@ Where one text serves both, write at the register of the most external realistic
 **Punch the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog -- and craft is welcome: A vivid concrete detail ("earns a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure.
 
 **Claims match the diff.** A mitigation is not a fix. Agency lands on the true actor: Violations fail the build; rules only classify. A promise that holds only on some version or configuration carries that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
+
+## Openers
+
+Opener discipline is positional. Each form has a place, and the places are not interchangeable.
+
+- **The opening sentence reports the change, verb-first.** The implied subject is the pull request: "Adds", "Fixes", "Upgrades", "Reorganizes", "Removes".
+- **A state description's place is the follow-up sentence.** It elaborates what the opening reported rather than standing in for it.
+- **The temporal-marker opener is reserved for a sentence that is itself the whole delta**, one the reader recovers by negating it: "`nmr prepush` now runs the audit first." Where the state is an aggregate of operations the reader cannot recover, the form hides the change instead.
+- **A fix opens with what was fixed**: "Fixes an issue where doing X failed to Y." Opening with the repaired state leaves the reader unable to tell what was wrong.
 
 ## Form
 
@@ -65,7 +74,8 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
 
 ## Don't
 
-- **State description that hides the change.** The "X now does Y" form is legitimate when the sentence is itself the behavioral delta -- the reader recovers the before-state by negating it ("`nmr prepush` now runs the audit first"). It hides the change when the state is the aggregate of operations the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals the change, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
+- **The recency trap.** A fact enters the lede on the effort spent establishing it rather than on its worth to the reader, and the most recently verified facts are the ones that feel most load-bearing. Diagnostic symptom: The fact stands in both `## What` and `## Details`, because the section that legitimately holds it already does. The correction is deleting the fact, never compressing the sentence carrying it -- one lede's first correction dropped every enumeration and kept the mechanism, a term of art, and an explanatory tail, and the author rejected that draft too.
+- **State description that hides the change.** The "X now does Y" form hides the change where the state is an aggregate of operations the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals the change, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
 - **An invented beneficiary.** "Finding a module in the `readyup` package now means asking what role it plays" dramatizes a hypothetical reader; the shipped lede reports the operation (see the refactor exemplar).
 - **The catalog.** Enumerating every delta at equal weight buries the one that matters. Status tallies ("Twelve rules remain deferred"), edge-case inventories, and doc-update mentions are body content at best; never mention that documentation was updated unless documentation is the subject of the PR.
 - **Teaching instead of reporting.** A lede that explains the team's conventions, tutors the reader in a new language feature, or walks through the rule content the diff touches has stopped reporting. Name what changed; the document itself does the teaching.
