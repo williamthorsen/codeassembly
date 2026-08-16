@@ -85,12 +85,14 @@ Jira Cloud is reached through Atlassian's `acli`, falling back to a connected Ji
 acli jira workitem view {key}
 ```
 
+Where the source is a Jira URL rather than a key, the key is its `PROJECT-NUMBER` segment, which is the final segment of a `/browse/` URL.
+
 Where a skill needs structured metadata, such as the `updated` timestamp for a staleness check, add `--json --fields '*navigable,-description'`. The `--json` flag returns the raw REST v3 response, in which the description arrives as Atlassian Document Format rather than Markdown, so exclude it there and take the body from the default view. First-time setup is `acli jira auth login --web`, a browser flow that mints no API token.
 
 **Fallback: a connected Jira read tool.** Tool names vary by server and by machine alias, so identify the tool by its parameters:
 
 - **Takes an issue URL**: Pass the ticket URL. Prefer this shape where both are connected, since it needs no site resolution.
-- **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. The cloud ID is the `id` of the site whose URL matches the ticket URL's host. Resolve it once and reuse it for the rest of the session.
+- **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. It is the `id` of the site whose URL matches the ticket URL's host, or of the sole site listed where no ticket URL is known. Where neither settles it, ask the user which site hosts the ticket. Resolve it once and reuse it for the rest of the session.
 
 **Last resort.** Where neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
 
