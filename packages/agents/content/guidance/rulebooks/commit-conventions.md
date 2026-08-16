@@ -28,7 +28,7 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 ## Commit body
 
-**Body voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. The first paragraph of the body must stand alone as the entry; subsequent paragraphs may elaborate for the engaged reader who has clicked through.
+**Body voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. The first paragraph of the body is the lede and must stand alone as the entry, so the budget below governs it alone; subsequent paragraphs are elaboration for the engaged reader who has clicked through, and the budget does not reach them.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
