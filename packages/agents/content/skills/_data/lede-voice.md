@@ -43,7 +43,9 @@ Shipped:
 
 On the gap:
 
-> A change of altitude, not a better ranking. The author's framing -- "a lede is an overview, an introduction, it hits the highlights" -- moved the question from "which of these facts matter most?" to "what kind of change is this?". Answered at that altitude the lede writes itself: a rename, a correctness fix, a new sibling function, a breaking migration. No specific finding appears, however important, because findings sit one level below the altitude the lede occupies. [...] The two clauses the author struck by name, byte-order mark and CRLF, were precisely the ones most recently probed against the built output.
+> A change of altitude, not a better ranking. The author's framing -- "a lede is an overview, an introduction, it hits the highlights" -- moved the question from "which of these facts matter most?" to "what kind of change is this?". Answered at that altitude the lede writes itself: a rename, a correctness fix, a new sibling function, a breaking migration. No specific finding appears, however important, because findings sit one level below the altitude the lede occupies.
+
+> The two clauses the author struck by name, byte-order mark and CRLF, were precisely the ones most recently probed against the built output.
 
 ### Internal focus: an import source moved
 
