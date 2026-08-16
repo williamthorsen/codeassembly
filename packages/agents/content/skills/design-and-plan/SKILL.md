@@ -192,7 +192,7 @@ On consent:
 Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1 — Remote issue:**` and `**A2 — Next action:**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
-**STOP.** Do not invoke any other skill. Do not begin implementation.
+**STOP.** Beyond the remote-issue update above, do not invoke any skill. Do not begin implementation.
 
 ## Key principles
 
