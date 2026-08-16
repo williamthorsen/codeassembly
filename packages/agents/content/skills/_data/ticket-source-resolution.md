@@ -4,14 +4,14 @@ Resolve a ticket source argument into ticket content and metadata. Skills that a
 
 ## Resolution table
 
-| Input form                                                  | Resolution                                                        |
-| ----------------------------------------------------------- | ----------------------------------------------------------------- |
-| URL to a known platform (GitHub, Jira, etc.)                | Use platform CLI if available; otherwise, fetch the URL content   |
-| Other URL                                                   | Fetch the URL content                                             |
-| Shorthand reference (`#99`, `issue 99`, `GitHub issue #99`) | Resolve platform (see below), then fetch via platform CLI         |
-| File path                                                   | Read the file                                                     |
-| Plain text                                                  | Use as-is                                                         |
-| _(no source provided)_                                      | Auto-resolve from environment (see [auto-resolve](#auto-resolve)) |
+| Input form                                                  | Resolution                                                                                       |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| URL to a known platform (GitHub, Jira, etc.)                | Use the platform CLI or a connected read tool if available; otherwise, fetch the URL content     |
+| Other URL                                                   | Fetch the URL content                                                                            |
+| Shorthand reference (`#99`, `issue 99`, `GitHub issue #99`) | Resolve platform (see below), then fetch per [platform-specific fetch](#platform-specific-fetch) |
+| File path                                                   | Read the file                                                                                    |
+| Plain text                                                  | Use as-is                                                                                        |
+| _(no source provided)_                                      | Auto-resolve from environment (see [auto-resolve](#auto-resolve))                                |
 
 **Persist the resolved URL.** After resolving by any form above (an explicitly supplied URL included, not only the auto-resolve path), store the resolved `ticket_url` in the branch manifest so later sessions reuse it without re-resolving or re-pasting. See [Stored ticket URL](#stored-ticket-url).
 
@@ -39,9 +39,9 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
    d. If the platform still cannot be determined, ask the user.
 
-   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for platforms with no automated fetch (e.g. Jira): It yields a URL to present and persist even when the content cannot be fetched.
+   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for a Jira-style key: It yields the URL a URL-taking Jira read tool consumes, and the URL to present and persist where the content cannot be fetched.
 
-5. **Fetch the ticket** using the platform-specific command from [platform-specific fetch commands](#platform-specific-fetch-commands).
+5. **Fetch the ticket** per [platform-specific fetch](#platform-specific-fetch).
 
 6. **Persist the resolved URL.** Once a ticket URL is in hand — whether reconstructed here, supplied by the user, or fetched — store it for future sessions per [Stored ticket URL](#stored-ticket-url).
 
@@ -65,7 +65,7 @@ This cascade is used by both [shorthand reference resolution](#shorthand-referen
 
 Determine which platform `#99` refers to using the [platform resolution cascade](#platform-resolution-cascade).
 
-## Platform-specific fetch commands
+## Platform-specific fetch
 
 ### GitHub
 
@@ -77,7 +77,24 @@ Skills may request a subset of these fields. The `updatedAt` field is needed by 
 
 ### Jira
 
-Not yet supported for automated fetch. If the platform is determined to be Jira, present the Jira key to the user and ask them to provide the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted; the user is still asked for the content, since Jira has no automated fetch. The stored URL still applies: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
+Jira Cloud is reached through Atlassian's `acli`, falling back to a connected Jira read tool. Detect the CLI with `command -v acli`, and treat a non-zero exit from the fetch itself as unavailable: An `acli` that is installed but unauthenticated exits non-zero with an error on stderr and nothing on stdout, and that error does not distinguish an authentication failure from a missing issue, so fall through on the exit status rather than on the message.
+
+**Preferred: `acli`.** Read the ticket body with the default view, which renders the description as text.
+
+```
+acli jira workitem view {key}
+```
+
+Where a skill needs structured metadata, such as the `updated` timestamp for a staleness check, add `--json --fields '*navigable,-description'`. The `--json` flag returns the raw REST v3 response, in which the description arrives as Atlassian Document Format rather than Markdown, so exclude it there and take the body from the default view. First-time setup is `acli jira auth login --web`, a browser flow that mints no API token.
+
+**Fallback: a connected Jira read tool.** Tool names vary by server and by machine alias, so identify the tool by its parameters:
+
+- **Takes an issue URL**: Pass the ticket URL. Prefer this shape where both are connected, since it needs no site resolution.
+- **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. The cloud ID is the `id` of the site whose URL matches the ticket URL's host. Resolve it once and reuse it for the rest of the session.
+
+**Last resort.** Where neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
+
+The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
 
 ## Stored ticket URL
 
@@ -87,7 +104,7 @@ The manifest also surfaces `ticket_base_url`, mirroring the `ticket.base_url` pr
 
 - **Prefer** — auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
 - **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: Run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
-- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-prompts the user for a corrected URL (Jira has no automated fetch).
+- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-fetches through `acli` or a connected read tool, and re-prompts the user only where neither is available.
 
 ## Resolved metadata
 
