@@ -185,6 +185,7 @@ Next steps:
 On consent:
 
 - GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
+- Jira: Update through {skill:update-jira-ticket}, which carries the tool-shape branch and the pre-flight checker its HTML surface needs.
 - Other platforms: Note that automated update is not yet supported; suggest manual update
 
 <HARD-GATE>
