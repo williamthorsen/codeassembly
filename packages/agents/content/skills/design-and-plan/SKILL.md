@@ -185,13 +185,14 @@ Next steps:
 On consent:
 
 - GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
+- Jira: Update through {skill:update-jira-ticket}, which carries the tool-shape branch and the pre-flight checker its HTML surface needs.
 - Other platforms: Note that automated update is not yet supported; suggest manual update
 
 <HARD-GATE>
 Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1 — Remote issue:**` and `**A2 — Next action:**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
-**STOP.** Do not invoke any other skill. Do not begin implementation.
+**STOP.** Beyond the remote-issue update above, do not invoke any skill. Do not begin implementation.
 
 ## Key principles
 
