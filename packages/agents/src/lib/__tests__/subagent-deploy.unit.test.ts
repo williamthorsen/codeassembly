@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
+import { dedent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeArtifactMarker } from '../artifact-marker.ts';
@@ -18,7 +18,7 @@ import { loadToolMapping } from '../tool-name-rewriter.ts';
 /** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
-const CLAUDE_OVERLAY = unindent`
+const CLAUDE_OVERLAY = dedent`
   _tools:
     Read: Read
 
@@ -82,7 +82,7 @@ describe(deploySubagent, () => {
     return makeArtifactMarker('subagent').injectMarker(rendered, 'canary');
   }
 
-  const SOURCE = unindent`
+  const SOURCE = dedent`
     ---
     name: canary
     description: Deployment canary

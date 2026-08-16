@@ -6,7 +6,7 @@
         "guidance"
       ],
       "description": "Project-guidance wiring, freshness, and size",
-      "esbuildVersion": "0.28.1",
+      "esbuildVersion": "0.28.2",
       "inputs": [
         {
           "hash": "060b4f33",

@@ -1,4 +1,4 @@
-import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
+import { dedent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
@@ -26,7 +26,7 @@ describe(renderSkillFile, () => {
       '# Shell\n\nBody.',
     );
 
-    expect(output).toBe(unindent`
+    expect(output).toBe(dedent`
       ---
       name: consult-shell-conventions
       description: Shell rules.

@@ -1,4 +1,4 @@
-import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
+import { dedent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 
 import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
@@ -15,7 +15,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
 
 describe(injectDeclaredRulebooks, () => {
   it('merges each declared rulebook into skills under its deploy name and drops the source key', () => {
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       skills:
@@ -29,7 +29,7 @@ describe(injectDeclaredRulebooks, () => {
 
     `;
 
-    expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(unindent`
+    expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(dedent`
       ---
       name: demo-agent
       skills:
@@ -61,7 +61,7 @@ describe(injectDeclaredRulebooks, () => {
 
   it('returns content declaring no rulebooks byte-identically, leaving its frontmatter unserialized', () => {
     // The long description and the flow sequence are what a re-serialization would rewrite.
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       description: A subagent whose description runs past any wrap column a stringifier might otherwise fold it at, twice over.
@@ -78,7 +78,7 @@ describe(injectDeclaredRulebooks, () => {
   });
 
   it('preserves a long description and a flow sequence when it does rewrite the frontmatter', () => {
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       description: A subagent whose description runs past any wrap column a stringifier might otherwise fold it at, twice over.
@@ -100,7 +100,7 @@ describe(injectDeclaredRulebooks, () => {
   });
 
   it('keeps a structured skills entry and the extra keys it carries', () => {
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       skills:
@@ -114,7 +114,7 @@ describe(injectDeclaredRulebooks, () => {
 
     `;
 
-    expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(unindent`
+    expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(dedent`
       ---
       name: demo-agent
       skills:

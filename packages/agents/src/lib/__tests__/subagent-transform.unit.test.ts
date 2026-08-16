@@ -1,4 +1,4 @@
-import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
+import { dedent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
@@ -16,7 +16,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['shell-conventions', { skillName: 'shell-rules', skill: true }],
 ]);
 
-const SOURCE = unindent`
+const SOURCE = dedent`
   ---
   name: demo-agent
   description: Demo subagent
@@ -30,7 +30,7 @@ const SOURCE = unindent`
 
 `;
 
-const CLAUDE_OVERLAY = unindent`
+const CLAUDE_OVERLAY = dedent`
   _tools:
     Read: Read
 
@@ -38,7 +38,7 @@ const CLAUDE_OVERLAY = unindent`
     permissionMode: bypassPermissions
 
 `;
-const ROVO_OVERLAY = unindent`
+const ROVO_OVERLAY = dedent`
   _tools:
     Read: open_files
 
@@ -89,7 +89,7 @@ describe(renderSubagentForHarness, () => {
   });
 
   it('rewrites skill and subagent invocation tokens to their harness-rendered form', () => {
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       description: Demo subagent
@@ -131,7 +131,7 @@ describe(renderSubagentForHarness, () => {
   });
 
   it('renders a rulebook token as the deploy name its target takes', () => {
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       description: Demo subagent
@@ -159,7 +159,7 @@ describe(renderSubagentForHarness, () => {
   });
 
   it('throws when a subagent body names a rulebook that deploys no skill to invoke', () => {
-    const source = unindent`
+    const source = dedent`
       ---
       name: demo-agent
       description: Demo subagent

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
-import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
+import { dedent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
@@ -1768,7 +1768,7 @@ describe(syncCommand, () => {
   });
 
   describe('declared subagents', () => {
-    const CLAUDE_OVERLAY = unindent`
+    const CLAUDE_OVERLAY = dedent`
       _tools:
         Read: Read
 
@@ -1776,7 +1776,7 @@ describe(syncCommand, () => {
         permissionMode: bypassPermissions
 
     `;
-    const ROVO_OVERLAY = unindent`
+    const ROVO_OVERLAY = dedent`
       _tools:
         Read: open_files
 
