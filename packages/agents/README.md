@@ -23,6 +23,8 @@ pnpm add --save-dev codeassembly
 
 Supported harnesses are Claude Code and Rovo Dev; `--harness` narrows a run to one.
 
+Optional: where a project's tickets live in Jira, the deployed guidance resolves them through Atlassian's [`acli`](https://developer.atlassian.com/cloud/acli/) when it is on `PATH`, so `acli jira auth login --web` is worth running once. Without it, resolution falls back to a connected Jira read tool and then to asking for the ticket content.
+
 ## Commands
 
 Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
