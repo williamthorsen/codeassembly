@@ -19,6 +19,48 @@ Where one text serves both, write at the register of the most external realistic
 
 **The budget is three sentences.** A cap on this lede, not an observation about typical ones. It has one escape: A second concern or a migration note takes a paragraph of its own, held to the same three. The span the budget governs is wherever the lede lands -- the whole `## What`, the whole merge-commit body, or a commit body's first paragraph, whose later paragraphs are elaboration rather than lede.
 
+## Worked exemplars
+
+Two changes whose ledes the author rewrote. Each carries what was drafted, what shipped, and what the author said about the distance between them.
+
+### Public focus: a rename and five correctness fixes
+
+Drafted:
+
+> Renames `unindent` to `dedent` in `@williamthorsen/toolbelt.strings/candidate` and corrects five defects in how it measures indentation. The most damaging: an interpolated value carrying an unindented newline silently disabled dedenting for the entire template, because values were concatenated before the common indent was computed. Values are now spliced after the literals are dedented, so nothing a value contains can alter the measurement.
+>
+> The common indent is the longest whitespace prefix matching exactly across content lines, counting only tabs and spaces. That makes mixed tabs and spaces well-defined without a tab width, and stops a byte-order mark from zeroing the calculation or a non-breaking space from being deleted as though it were layout. Two templates that used to dedent nothing silently now throw: one carrying an escaped line terminator or a line continuation, and one whose lines are all indented but share no common prefix.
+>
+> Adds `stripCommonIndent`, a plain-function counterpart for text that arrives at runtime rather than being written in source. It removes the common indent and empties whitespace-only lines, discarding no lines and re-emitting each line's own terminator, so CRLF text does not come back with mixed endings.
+>
+> Migration: `unindent` no longer exists. `${null}` and `${undefined}` rendered as the empty string and object values as `[object Object]`; all three are now compile errors, with `DedentValue` admitting strings, numbers, bigints, and booleans. Both exports stay at candidate tier.
+
+Shipped:
+
+> Renames `unindent` to `dedent` in `@williamthorsen/toolbelt.strings/candidate` and corrects five defects in how it removes indentation. Adds `stripCommonIndent`, the same rules as a plain function, for text that arrives at runtime rather than being written in source.
+>
+> Migration: `unindent` no longer exists, and nullish and object values are now compile errors.
+
+On the gap:
+
+> A change of altitude, not a better ranking. The author's framing -- "a lede is an overview, an introduction, it hits the highlights" -- moved the question from "which of these facts matter most?" to "what kind of change is this?". Answered at that altitude the lede writes itself: a rename, a correctness fix, a new sibling function, a breaking migration. No specific finding appears, however important, because findings sit one level below the altitude the lede occupies. [...] The two clauses the author struck by name, byte-order mark and CRLF, were precisely the ones most recently probed against the built output.
+
+### Internal focus: an import source moved
+
+Drafted:
+
+> Sources `expectTypeOf` from `vitest` in the eight test files that imported it from `expect-type`, and removes `expect-type` from the root `devDependencies`. Vitest re-exports the symbol bare, so the direct dependency only made a second import path resolvable; without it, `import { expectTypeOf } from 'expect-type'` no longer resolves and the split cannot reopen.
+>
+> `@vitest/eslint-plugin`'s `valid-expect` rule recognizes `expectTypeOf` only when it comes from `vitest`, so the move brought fourteen previously-unchecked assertions under it. Each was written as `expectTypeOf<T>(value)`, an assignability check that never reaches a matcher and passes for any subtype of the intended type; all fourteen now read `expectTypeOf(value).toEqualTypeOf<T>()`.
+
+Shipped:
+
+> Replaces all imports of `expectTypeOf` from `expect-type` with the same import from `vitest`. Previously there had been imports from both libraries. `expect-type` is removed as a dependency.
+
+On the gap:
+
+> The technical nuances have no place in the lede. The lede says, "This is what the change accomplished", not "Here is how a particular lint rule failed to detect a problem with the previous configuration, here's how many instances were changed, here's the exact syntax of the replacement."
+
 ## The stance
 
 **The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. The opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" places the reader in four words; a scenario clause that reaches the name later makes them travel to find out what is under discussion.
