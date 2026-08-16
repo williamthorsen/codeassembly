@@ -122,7 +122,7 @@ git log {default_branch}..HEAD --format=%B
 git diff {default_branch}...HEAD --stat
 ```
 
-Report what the change did. One short paragraph is usually enough; add a follow-up paragraph only when the change is substantial.
+Report what the change did. The whole body is the lede, so the budget below governs it end to end.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 

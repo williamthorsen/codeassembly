@@ -2,27 +2,94 @@
 
 This file defines how to write a lede: the `## What` section of a change summary and pull request, the changelog or release-notes entry rendered from it, and the opening of a commit or merge-commit body.
 
-The reader is glancing through entries asking "what did this change do?" and deciding in a few seconds whether to keep reading. A release-notes reader is a user of the package; every other reader (changelog, commit log, pull-request list) is a developer. A change reaches release notes when its work type sits in the public tier of [work-types.json](./work-types.json); the other tiers stop at the changelog. When one text serves both, write at the register of the most external realistic reader.
+The reader is glancing through entries asking "what did this change do?" and deciding in a few seconds whether to keep reading.
+
+## Altitude and focus
+
+Two axes govern a lede. One never varies; the other is set by the change's work type.
+
+**Altitude is constant, at the accomplishment level.** The lede says what the change accomplished, not how it works internally. A finding established during the work, a count of instances touched, an internal causal chain, and the before-and-after syntax of an edit all sit one level below that altitude, however true each is and however much effort established it; their place is `## Details` or the diff. Serviceable test: Would the sentence mean anything to a reader who does not maintain this subsystem?
+
+**Focus is keyed to tier.** A change reaches release notes when its work type sits in the public tier of [work-types.json](./work-types.json); the other tiers stop at the changelog.
+
+- **Public tier** -- the reader is a user of the package, and the lede answers what the product now does.
+- **Internal and process tiers** -- the reader is a developer, and the lede answers what was done to the code.
+
+Where one text serves both, write at the register of the most external realistic reader.
+
+**The budget is three sentences.** A cap on this lede, not an observation about typical ones. It has one escape: A second concern or a migration note takes a paragraph of its own, held to the same three. The span the budget governs is wherever the lede lands -- the whole `## What`, the whole merge-commit body, or a commit body's first paragraph, whose later paragraphs are elaboration rather than lede.
+
+## Worked exemplars
+
+Two changes whose ledes the author rewrote. Each carries what was drafted, what shipped, and what the author said about the distance between them.
+
+### Public focus: a rename and five correctness fixes
+
+Drafted:
+
+> Renames `unindent` to `dedent` in `@williamthorsen/toolbelt.strings/candidate` and corrects five defects in how it measures indentation. The most damaging: an interpolated value carrying an unindented newline silently disabled dedenting for the entire template, because values were concatenated before the common indent was computed. Values are now spliced after the literals are dedented, so nothing a value contains can alter the measurement.
+>
+> The common indent is the longest whitespace prefix matching exactly across content lines, counting only tabs and spaces. That makes mixed tabs and spaces well-defined without a tab width, and stops a byte-order mark from zeroing the calculation or a non-breaking space from being deleted as though it were layout. Two templates that used to dedent nothing silently now throw: one carrying an escaped line terminator or a line continuation, and one whose lines are all indented but share no common prefix.
+>
+> Adds `stripCommonIndent`, a plain-function counterpart for text that arrives at runtime rather than being written in source. It removes the common indent and empties whitespace-only lines, discarding no lines and re-emitting each line's own terminator, so CRLF text does not come back with mixed endings.
+>
+> Migration: `unindent` no longer exists. `${null}` and `${undefined}` rendered as the empty string and object values as `[object Object]`; all three are now compile errors, with `DedentValue` admitting strings, numbers, bigints, and booleans. Both exports stay at candidate tier.
+
+Shipped:
+
+> Renames `unindent` to `dedent` in `@williamthorsen/toolbelt.strings/candidate` and corrects five defects in how it removes indentation. Adds `stripCommonIndent`, the same rules as a plain function, for text that arrives at runtime rather than being written in source.
+>
+> Migration: `unindent` no longer exists, and nullish and object values are now compile errors.
+
+On the gap:
+
+> A change of altitude, not a better ranking. The author's framing -- "a lede is an overview, an introduction, it hits the highlights" -- moved the question from "which of these facts matter most?" to "what kind of change is this?". Answered at that altitude the lede writes itself: a rename, a correctness fix, a new sibling function, a breaking migration. No specific finding appears, however important, because findings sit one level below the altitude the lede occupies.
+
+> The two clauses the author struck by name, byte-order mark and CRLF, were precisely the ones most recently probed against the built output.
+
+### Internal focus: an import source moved
+
+Drafted:
+
+> Sources `expectTypeOf` from `vitest` in the eight test files that imported it from `expect-type`, and removes `expect-type` from the root `devDependencies`. Vitest re-exports the symbol bare, so the direct dependency only made a second import path resolvable; without it, `import { expectTypeOf } from 'expect-type'` no longer resolves and the split cannot reopen.
+>
+> `@vitest/eslint-plugin`'s `valid-expect` rule recognizes `expectTypeOf` only when it comes from `vitest`, so the move brought fourteen previously-unchecked assertions under it. Each was written as `expectTypeOf<T>(value)`, an assignability check that never reaches a matcher and passes for any subtype of the intended type; all fourteen now read `expectTypeOf(value).toEqualTypeOf<T>()`.
+
+Shipped:
+
+> Replaces all imports of `expectTypeOf` from `expect-type` with the same import from `vitest`. Previously there had been imports from both libraries. `expect-type` is removed as a dependency.
+
+On the gap:
+
+> The technical nuances have no place in the lede. The lede says, "This is what the change accomplished", not "Here is how a particular lint rule failed to detect a problem with the previous configuration, here's how many instances were changed, here's the exact syntax of the replacement."
 
 ## The stance
 
-**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. Open with a change verb whose implied subject is the PR ("Adds", "Fixes", "Upgrades", "Reorganizes", "Removes"), or with the changed artifact and a temporal marker ("`nmr prepush` now runs the audit first"). Either way, the opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" places the reader in four words; a scenario clause that reaches the name later makes them travel to find out what is under discussion.
+**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. The opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" places the reader in four words; a scenario clause that reaches the name later makes them travel to find out what is under discussion.
 
 **Every sentence reports an effect of the diff.** The symptom a fix ends, the purpose a change serves, and the invariant a risky change preserves are effects, even when no hunk spells them out. The deliberation that produced the diff -- options weighed, review history, what the ticket asked for -- is not. The PR is written on its own merits, not the ticket's.
 
-**Mechanism is substance.** For a developer reader, the operation performed -- the rename, the upgrade, the extraction, the new check -- is exactly what they want to know. Naming it is not implementation detail; it is the news. At the release-notes register, mechanism earns its place when it explains the visible change.
+**Mechanism is substance where it is the accomplishment.** The operation performed -- the rename, the upgrade, the extraction, the new check -- is usually what a change at developer focus accomplished, so naming it is the news rather than implementation detail. At public focus it is rare, earning its place only where it explains the visible change. Mechanism describing how the accomplishment works internally is below the altitude at either focus.
 
-**Name things.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule, backticked. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). For a release-notes reader, define any term the audience may not share.
+**Name things, up to the altitude.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule the change acted on, backticked. An identifier the reader never consumes -- an internal function, the lint rule that fired, a config key the change happens to read -- is mechanism wearing a name, and backticking it does not lift it to the altitude. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). At public focus, define any term the audience may not share.
 
-**Punch the highlights.** Decide what matters most, lead with it, and stop after the two or three facts a glancing reader needs. Everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog -- and craft is welcome: A vivid concrete detail ("earns a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure.
+**Punch the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog -- and craft is welcome: A vivid concrete detail ("earns a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure.
 
 **Claims match the diff.** A mitigation is not a fix. Agency lands on the true actor: Violations fail the build; rules only classify. A promise that holds only on some version or configuration carries that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
+## Openers
+
+Opener discipline is positional. Each form has a place, and the places are not interchangeable.
+
+- **The opening sentence reports the change, verb-first.** The implied subject is the pull request: "Adds", "Fixes", "Upgrades", "Reorganizes", "Removes".
+- **A state description's place is the follow-up sentence.** It elaborates what the opening reported rather than standing in for it.
+- **The temporal-marker opener is reserved for a sentence that is itself the whole delta**, one the reader recovers by negating it: "`nmr prepush` now runs the audit first." Where the state is an aggregate of operations the reader cannot recover, the form hides the change instead.
+- **A fix opens with what was fixed**: "Fixes an issue where doing X failed to Y." Opening with the repaired state leaves the reader unable to tell what was wrong.
+
 ## Form
 
-- Most ledes are one to three sentences. Length is earned fact by fact, never by enumeration.
 - Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. Never address the reader as "you"; migration steps are third person ("Consumers import `defineConfig` from the `/config` subpath instead"), not imperatives.
-- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that earns a paragraph gets a labeled one ("Migration: ..."). Three or more parallel items may be bulleted.
+- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that earns a paragraph gets a labeled one ("Migration: ..."). These two are the budget's one escape. Three or more parallel items may be bulleted.
 - A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
 
 ## What each kind of change reports
@@ -34,7 +101,7 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
 - **fix** -- the symptom that no longer occurs, then the fix; mechanism welcome.
   > Fixes an issue where lede decisions could be saved into the wrong store. Decisions are now saved by default into the `codeassembly` store, and a call to save them to `--store @default` (which could point to any arbitrary store) is refused. [...]
 - **sec** -- the class of vulnerability closed and the surface that exposed it, then the fix; the fix pattern governs, or the deps pattern when an upgrade delivers it. State enough that a reader can tell whether they were exposed, and no more -- a lede is not a reproduction.
-- **refactor** -- the operation performed on the code: what was reorganized, extracted, renamed, consolidated, or deleted. The restructuring is the outcome; external behavior needs no mention unless it changed. A routine restructuring earns one line ("Aligns property names with in-house naming conventions.").
+- **refactor** -- the operation performed on the code: what was reorganized, extracted, renamed, consolidated, or deleted. The restructuring is the outcome; external behavior needs no mention unless it changed. One line is the default for a routine restructuring ("Aligns property names with in-house naming conventions."), not a floor to build up from.
   > Reorganizes the files in the `readyup` package for better usability and maintainability. Functions are now grouped by domain.
 - **internal** -- a capability or restructuring of unpublished surface; the feat or refactor pattern applies, at developer register.
 - **docs** -- the edit made to the document: what was added, removed, moved, or corrected.
@@ -43,7 +110,7 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
   > Revises the code-review guidance to limit the circumstances under which the agent should offer to revise the acceptance criteria (AC). [...]
 - **deps** -- the version delta, and the consequence that matters; a routine bump with none is one sentence.
   > Upgrades several dependencies, most notably `nmr` to v0.24. That upgrade changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. [...] The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
-- **tests / tooling / ci** -- the operation performed on the pipeline or configuration, tools named.
+- **tests / tooling / ci** -- the operation performed on the pipeline or configuration. Name the tool the change acted on; the rule it enables, the option it sets, and the severity it raises are mechanism.
   > Fixes deferred violations of Vitest lint rules in the `readyup` package and restores the severity of the associated rules to `error` when a strict-lint check is run.
 - **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration sentence; unpublished or never-released surface goes quietly -- no headline, no breaking-change framing. When unsure, include the migration sentence. A removal whose surface moved is stated as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."). A deprecation reports the same facts in advance: The surface still works, the replacement is named, and the removal horizon is stated when it is known.
   > Removes `@williamthorsen/eslint-config-basic`; no further versions will be published. No remaining package lints Markdown, while `@williamthorsen/eslint-config-typescript` continues to cover JavaScript, JSON, YAML, and `package.json`.
@@ -51,7 +118,8 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
 
 ## Don't
 
-- **State description that hides the change.** The "X now does Y" form is legitimate when the sentence is itself the behavioral delta -- the reader recovers the before-state by negating it ("`nmr prepush` now runs the audit first"). It hides the change when the state is the aggregate of operations the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals the change, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
+- **The recency trap.** A fact enters the lede on the effort spent establishing it rather than on its worth to the reader, and the most recently verified facts are the ones that feel most load-bearing. Diagnostic symptom: The fact stands in both `## What` and `## Details`, because the section that legitimately holds it already does. The correction is deleting the fact, never compressing the sentence carrying it -- one lede's first correction dropped every enumeration and kept the mechanism, a term of art, and an explanatory tail, and the author rejected that draft too.
+- **State description that hides the change.** The "X now does Y" form hides the change where the state is an aggregate of operations the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals the change, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
 - **An invented beneficiary.** "Finding a module in the `readyup` package now means asking what role it plays" dramatizes a hypothetical reader; the shipped lede reports the operation (see the refactor exemplar).
 - **The catalog.** Enumerating every delta at equal weight buries the one that matters. Status tallies ("Twelve rules remain deferred"), edge-case inventories, and doc-update mentions are body content at best; never mention that documentation was updated unless documentation is the subject of the PR.
 - **Teaching instead of reporting.** A lede that explains the team's conventions, tutors the reader in a new language feature, or walks through the rule content the diff touches has stopped reporting. Name what changed; the document itself does the teaching.
@@ -60,9 +128,11 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
 - **Talking around the name.** "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. If the reader would have to open the diff to learn what you mean, name it.
 - **Process narration.** Review mechanics, ticket numbers, finding IDs, test and CI runs, and roads not taken are not part of the change.
 
-## Cut detail, not meaning
+## Comprehension is the floor
 
-A lede can be cut past comprehension, and a too-abstract lede is worse than a longer concrete one. "Drops `jiti` from `release-kit`'s dependencies" passes every rule above -- change verb, named packages, an effect of the diff -- and still fails the reader, who cannot tell whether config loading survived. The shipped lede was longer: "`release-kit` now uses native Node with type-stripping to read its configs. `jiti` is no longer needed as a dependency." When a cut makes the entry harder to understand, the cut is wrong.
+The budget is the ceiling; comprehension is the floor. A lede can be cut past comprehension, and a too-abstract lede is worse than a longer concrete one. "Drops `jiti` from `release-kit`'s dependencies" passes every rule above -- change verb, named packages, an effect of the diff -- and still fails the reader, who cannot tell whether config loading survived. The shipped lede was two sentences, inside the budget: "`release-kit` now uses native Node with type-stripping to read its configs. `jiti` is no longer needed as a dependency." When a cut makes the entry harder to understand, the cut is wrong.
+
+Where both bounds bind at once, drop a fact rather than add a sentence.
 
 ## Titles
 
