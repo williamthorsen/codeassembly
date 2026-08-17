@@ -282,14 +282,14 @@ Dropping or omitting a collection, or setting `root: true`, excludes its entire 
 
 Four collections ship, each carrying a claim a reader can act on:
 
-| Collection       | Claim                                                                                                      |
-| ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.    |
-| `williamthorsen` | Examined and found deliberately personal — one author's preferences, environment, and domain.              |
-| `triage`         | Not yet examined, and where new content lands. It shrinks by promotion.                                    |
-| `all`            | The whole catalog, computed. It carries no claim, and is the escape hatch rather than the expected choice. |
+| Collection       | Claim                                                                                                                      |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.                    |
+| `williamthorsen` | Examined and found deliberately personal — one author's preferences, environment, and domain.                              |
+| `triage`         | Not yet examined, and where new content starts. It shrinks by promotion.                                                   |
+| `all`            | The whole catalog, computed. It makes no claim about its members, and is the escape hatch rather than the expected choice. |
 
-An artifact in none of them is standalone: deliberate, declared directly where wanted, and too rarely invoked to repay a standing line in the skill index. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
+An artifact in none of them is standalone: deliberate, declared directly where wanted, and too rarely invoked to justify a standing line in the skill index. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
 
 `codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`; add any other collection to that file yourself. A project adds a collection for repo deployment by declaring it explicitly.
 
