@@ -6,7 +6,9 @@ import path from 'node:path';
 import { readNoteContent } from '@williamthorsen/kb/note-io';
 
 import { extractString } from '../kb-shared/note-helpers.ts';
+import { extractSection } from '../lib/markdown-sections.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
+import { loadWorkTypes } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
 /** Artifact filename suffix holding the lede the agent published, and the heading that lede sits under. */
@@ -100,33 +102,6 @@ export async function resolveEpisode(input: {
   };
 }
 
-/**
- * Reads a named `## ` section from Markdown: everything between the heading and the next `## ` heading or the end of
- * the document, trimmed. Yields `null` when the heading is absent or its section is empty.
- *
- * Matching is line-based and case-insensitive on the heading text. The artifacts this reads carry no frontmatter, so
- * their heading structure is the only handle on their content.
- */
-export function extractSection(input: { text: string; heading: string }): string | null {
-  const lines = input.text.split('\n');
-  const target = input.heading.trim().toLowerCase();
-  let start = -1;
-
-  for (const [index, line] of lines.entries()) {
-    if (start === -1) {
-      if (line.startsWith('## ') && line.slice(3).trim().toLowerCase() === target) {
-        start = index + 1;
-      }
-      continue;
-    }
-    if (line.startsWith('## ')) {
-      return joinSection(lines.slice(start, index));
-    }
-  }
-
-  return start === -1 ? null : joinSection(lines.slice(start));
-}
-
 // region | Helpers
 
 /**
@@ -174,12 +149,6 @@ async function isDirectory(dirPath: string): Promise<boolean> {
     }
     throw error;
   }
-}
-
-/** Joins section lines and trims them, yielding `null` for a section that holds no text. */
-function joinSection(lines: readonly string[]): string | null {
-  const section = lines.join('\n').trim();
-  return section.length > 0 ? section : null;
 }
 
 /** Collapses runs of whitespace so two ledes differing only by reflow compare equal. */
@@ -272,8 +241,8 @@ async function readLede(input: {
   overrideFile?: string;
 }): Promise<string | null> {
   if (input.overrideFile !== undefined) {
-    const override = await readFileSafely(input.overrideFile);
-    return override === null ? null : joinSection([override]);
+    const override = (await readFileSafely(input.overrideFile))?.trim();
+    return override === undefined || override.length === 0 ? null : override;
   }
 
   const artifactPath = await findNewestArtifact({ artifactDir: input.artifactDir, suffix: input.source.suffix });
@@ -310,8 +279,9 @@ async function resolveIdentity(input: {
     return { ok: false, error: 'unresolved-identity', message: 'scope could not be resolved; pass --scope' };
   }
 
-  const tier = await resolveTier({ dataDir: input.dataDir, type });
-  if (tier === null) {
+  const workTypes = await loadWorkTypes(input.dataDir);
+  const tier = workTypes?.get(type)?.tier;
+  if (tier === undefined) {
     return {
       ok: false,
       error: 'unresolved-identity',
@@ -332,38 +302,6 @@ async function resolveIdentity(input: {
       ...(ticket !== null && { ticket }),
     },
   };
-}
-
-/**
- * Looks up a work type's tier in the installed taxonomy, matching the canonical key or any declared alias; `null` when
- * the taxonomy is unreadable or declares no such type.
- */
-async function resolveTier(input: { dataDir: string; type: string }): Promise<string | null> {
-  const content = await readFileSafely(path.join(input.dataDir, 'work-types.json'));
-  if (content === null) {
-    return null;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
-  if (!isRecord(parsed) || !Array.isArray(parsed.types)) {
-    return null;
-  }
-
-  for (const entry of parsed.types) {
-    if (!isRecord(entry) || typeof entry.tier !== 'string') {
-      continue;
-    }
-    const aliases = Array.isArray(entry.aliases) ? entry.aliases : [];
-    if (entry.key === input.type || aliases.includes(input.type)) {
-      return entry.tier;
-    }
-  }
-  return null;
 }
 
 // endregion | Helpers

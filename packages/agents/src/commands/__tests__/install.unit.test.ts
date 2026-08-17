@@ -418,8 +418,7 @@ describe(installCommand, () => {
 
     it('places a bundled .mjs helper alongside the shell scripts', async () => {
       const claudeHome = await setupClaudeHome();
-      // The hook relay ships as a bundled `.mjs` rather than a `.sh`: the harness invokes it directly, so it reaches a
-      // harness home by the same path as the shell helpers a skill invokes.
+      // A bundled `.mjs` reaches a harness home by the same path as the shell helpers beside it.
       await buildContentTree(contentDir, { scripts: { 'relay-demo.mjs': 'process.stdout.write("{}")\n' } });
 
       await installCommand(makeOptions(), tempDir, contentDir);

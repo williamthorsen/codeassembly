@@ -1,0 +1,115 @@
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+/** The work types the fixture taxonomy declares, spanning all three tiers so widening has somewhere to go. */
+export const FIXTURE_WORK_TYPES = [
+  { key: 'feat', tier: 'public', aliases: ['feature'] },
+  { key: 'fix', tier: 'public', aliases: [] },
+  { key: 'refactor', tier: 'internal', aliases: [] },
+  { key: 'ci', tier: 'process', aliases: [] },
+  { key: 'docs', tier: 'process', aliases: [] },
+];
+
+/** One decision record to plant in a fixture corpus. */
+export interface DecisionSpec {
+  /** Filename stem, which the scan reads as a ULID and orders by. */
+  id: string;
+  /** Work type as the record's frontmatter spells it, whether a canonical key or a declared alias. */
+  type: string;
+  capturedAt: string;
+  /** Merged lede, written to the section a revised decision carries; absent leaves the record with the agent lede alone. */
+  mergedLede?: string;
+  scope?: string;
+  pr?: string;
+  /** Tier as the record recorded it; defaults to the tier the fixture taxonomy declares for `type`. */
+  tier?: string;
+  tags?: readonly string[];
+}
+
+/** A temporary corpus: the event store, the `_data` directory holding the taxonomy, and a home registering the store. */
+export interface CorpusFixture {
+  storePath: string;
+  dataDir: string;
+  /** Isolated home carrying a `kb.yaml` that registers the store, so no test reads the developer's own registry. */
+  home: string;
+}
+
+/** The agent lede a planted record carries, distinct per record so a test can tell which was selected. */
+export function agentLedeFor(id: string): string {
+  return `Agent lede of ${id}.`;
+}
+
+/**
+ * Stands up a temporary event store holding one record per decision spec, plus a `_data` directory carrying the
+ * fixture taxonomy and an isolated home registering the store. `files` plants raw content under `content/events/`, for
+ * a record whose own shape is the subject of the test; `storeName` registers the store under something other than the
+ * name the helper serves, which is how a test tells a resolved default from an unregistered one.
+ */
+export async function createCorpusFixture(
+  input: {
+    decisions?: readonly DecisionSpec[];
+    files?: Readonly<Record<string, string>>;
+    storeName?: string;
+  } = {},
+): Promise<CorpusFixture> {
+  const storePath = await mkdtemp(join(tmpdir(), 'lede-corpus-'));
+  const eventsDir = join(storePath, 'content', 'events');
+  await mkdir(join(storePath, '.kb'), { recursive: true });
+  await mkdir(eventsDir, { recursive: true });
+
+  const decisions = input.decisions ?? [];
+  for (const decision of decisions) {
+    await writeFile(join(eventsDir, `${decision.id}.md`), renderDecision(decision), 'utf8');
+  }
+  const files = Object.entries(input.files ?? {});
+  for (const [filename, content] of files) {
+    await writeFile(join(eventsDir, filename), content, 'utf8');
+  }
+
+  const dataDir = join(storePath, '_data');
+  await mkdir(dataDir, { recursive: true });
+  await writeFile(join(dataDir, 'work-types.json'), JSON.stringify({ types: FIXTURE_WORK_TYPES }), 'utf8');
+
+  const home = await mkdtemp(join(tmpdir(), 'lede-corpus-home-'));
+  const storeName = input.storeName ?? 'codeassembly';
+  await mkdir(join(home, '.agents'), { recursive: true });
+  await writeFile(
+    join(home, '.agents', 'kb.yaml'),
+    `default_kb: ${storeName}\nkbs:\n  ${storeName}:\n    path: ${storePath}\n`,
+    'utf8',
+  );
+
+  return { storePath, dataDir, home };
+}
+
+/** Renders a decision record in the shape `capture-lede-decision` writes. */
+export function renderDecision(spec: DecisionSpec): string {
+  const tier = spec.tier ?? FIXTURE_WORK_TYPES.find((entry) => entry.key === spec.type)?.tier ?? 'public';
+  const tags = spec.tags ?? [
+    'lede-decision',
+    `type:${spec.type}`,
+    spec.mergedLede === undefined ? 'accepted' : 'revised',
+  ];
+  const sections = [`## Agent lede\n\n${agentLedeFor(spec.id)}`];
+  if (spec.mergedLede !== undefined) {
+    sections.push(`## Merged lede\n\n${spec.mergedLede}`);
+  }
+
+  return [
+    '---',
+    'recordType: event',
+    `id: ${spec.id}`,
+    `captured-at: ${spec.capturedAt}`,
+    'cwd: /repo',
+    `summary: 'Lede decision for ${spec.id}'`,
+    `tags: [${tags.join(', ')}]`,
+    `type: ${spec.type}`,
+    `tier: ${tier}`,
+    `scope: ${spec.scope ?? 'agents'}`,
+    `pr: '${spec.pr ?? '1'}'`,
+    '---',
+    '',
+    `${sections.join('\n\n')}\n`,
+  ].join('\n');
+}
