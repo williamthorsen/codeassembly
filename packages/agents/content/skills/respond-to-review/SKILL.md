@@ -93,8 +93,6 @@ For each finding, apply technical rigor:
 
 Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](#comment-discipline) as you write. The reviewer conversation must not leak into the source.
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 ## Worked examples
 
 ### Bad → Good: Hedged move with doctrinal conflict

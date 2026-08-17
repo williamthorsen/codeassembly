@@ -7,11 +7,11 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Two routes carry this rule and both are asserted here. Shared guidance reaches every user's interactive session but
-// no subagent, and a subagent reads only what its own body carries, so neither route covers the other's gap. The
-// duplication is structural rather than chosen: `installSharedGuidance` copies shared guidance verbatim and expands no
-// includes, so the one file that cannot hold the directive holds the text instead, and the assertion below is what
-// keeps the two copies from drifting.
+// `guidance/shared/AGENTS.md` is where this rule primarily lives: it installs unconditionally, so every user's
+// interactive session carries it. It reaches no subagent, which is the whole reason the partial exists and the whole
+// reason its carriers are subagents. The duplication between the two files is structural rather than chosen:
+// `installSharedGuidance` copies shared guidance verbatim and expands no includes, so the one file that cannot hold the
+// directive holds the text instead, and the assertion below is what keeps the two copies from drifting.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the rule; every carrier reaches it through an include. */
@@ -33,38 +33,21 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A place here is earned by composing practical documentation. That is wider than the criterion `prose-line-breaks`
-// applies, which admits only prose bound for a rendering surface outside the repository, because a hard-wrapped line is
-// harmless in a source comment and a figurative verb is not. Comments, plans, and the guidance corpus itself are all
-// practical documentation, so a body composing any of them qualifies.
+// A place here is earned by being unable to read the primary statement. Shared guidance reaches the interactive
+// session, so a skill invoked there already carries the rule and an include would be reinforcement; reinforcement is
+// added when the primary statement is observed to fail, not in anticipation of it. A subagent runs on its own system
+// prompt and never loads shared guidance at all, so every subagent that composes prose is a carrier and no skill is.
 //
-// Two kinds of body are absent by decision. One that passes along prose another body composed belongs with that
-// composer instead, which is why `create-pr` is absent and `summarize-change`, which writes the body it hands over, is
-// present. One that reaches its reader through a body already on this list needs no entry of its own: `review-criteria`
-// stands in for the five reviewer subagents that preload it.
+// `canary.md` is the one subagent absent, because it exercises the deployment mechanism and is never invoked.
 const CARRIERS: ReadonlyArray<string> = [
-  'guidance/rulebooks/commit-conventions.md',
-  'skills/align-ticket-with-implementation/SKILL.md',
-  'skills/assess-ticket/SKILL.md',
-  'skills/condense-branch/SKILL.md',
-  'skills/create-commit/SKILL.md',
-  'skills/create-devlog/SKILL.md',
-  'skills/create-ticket/SKILL.md',
-  'skills/design-and-plan/SKILL.md',
-  'skills/implement-plan/SKILL.md',
-  'skills/merge-pr/SKILL.md',
-  'skills/plan/SKILL.md',
-  'skills/refine-plan/SKILL.md',
-  'skills/respond-to-review/SKILL.md',
-  'skills/review-criteria/SKILL.md',
-  'skills/revise-comments/SKILL.md',
-  'skills/summarize-change/SKILL.md',
-  'skills/summarize-chat/SKILL.md',
-  'skills/update-project-guidance/SKILL.md',
-  'skills/wrap-up/SKILL.md',
+  'subagents/aspect-code-reviewer.md',
+  'subagents/aspect-silent-failure-reviewer.md',
+  'subagents/aspect-test-reviewer.md',
+  'subagents/code-simplification-reviewer.md',
   'subagents/orchestrated-architect.md',
   'subagents/orchestrated-coder.md',
   'subagents/orchestrated-planner.md',
+  'subagents/orchestrated-reviewer.md',
   'subagents/plan-reviewer.md',
   'subagents/plan-reviser.md',
   'subagents/planner.md',

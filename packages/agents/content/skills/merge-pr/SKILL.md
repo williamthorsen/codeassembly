@@ -126,8 +126,6 @@ Report what the change did. The whole body is the lede, so the budget below gove
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 ### 7. Approval gate
 
 If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:

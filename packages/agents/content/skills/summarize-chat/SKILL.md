@@ -67,8 +67,6 @@ Use these to mark significant sections:
 - Compose tight from the start ([concision principle](../_data/concision.md)): A summary is a distillation, not a transcript
 - Focus on the most important findings
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 ## Frontmatter resolution
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.

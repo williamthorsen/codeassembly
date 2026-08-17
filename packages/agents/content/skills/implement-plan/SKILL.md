@@ -65,8 +65,6 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 9. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 <!-- include: ../../_partials/comment-discipline.md / -->
 
 <!-- include: ../../_partials/diff-audit-checklist.md / -->

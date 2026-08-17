@@ -39,8 +39,6 @@ The body following the frontmatter uses the shared implementation-plan template,
 - Call out risks and unknowns explicitly
 - When comparing approaches, rank options per [design priorities](../_data/design-priorities.md)
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 ## Sweep for completeness
 
 <!-- include: ../_partials/ticket-and-plan-completeness.md / -->

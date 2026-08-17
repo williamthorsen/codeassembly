@@ -245,8 +245,6 @@ This is a shared-state action; do not update without explicit consent. If the us
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 ### 7. Report completion and present next steps
 
 ```

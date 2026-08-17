@@ -32,8 +32,6 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
 
 4. **Emit the summary.** After processing all targets, emit one table per file with non-trivial decisions.
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 <!-- include: ../../_partials/comment-discipline.md / -->
 
 <!-- include: ../../_partials/diff-audit-checklist.md / -->

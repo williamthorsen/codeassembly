@@ -50,8 +50,6 @@ The devlog file begins with YAML frontmatter conforming to the canonical schema;
 - Focus on the most important findings
 - Use only sections appropriate for the task
 
-<!-- include: ../../_partials/plain-speech.md / -->
-
 ## Saving
 
 Resolve session context and the artifact directory before writing.

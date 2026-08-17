@@ -113,6 +113,8 @@ Each finding must include:
 
 See the "Finding references" section in the `review-criteria` skill for path-format rules (repo-relative paths, multi-range syntax, multi-file findings).
 
+<!-- include: ../_partials/plain-speech.md / -->
+
 ## Criticality classification
 
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:

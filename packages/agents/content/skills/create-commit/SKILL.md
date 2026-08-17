@@ -26,7 +26,7 @@ Record each unit as it is finished. Several single-concern commits read better t
 
 4. **Render the title** per [Rendering the title](#rendering-the-title).
 
-5. **Compose the body.** The conventions carry its voice and its mechanics; [Body mechanics](#body-mechanics) below carries the mechanics that bind only while the body is being written.
+5. **Compose the body.** The conventions carry its voice and its mechanics; [Line breaks](#line-breaks) below carries the one mechanic that binds only while the body is being written.
 
 6. **Commit**, passing the title and body as separate `--message` values so the blank line between them is git's rather than the shell's:
 
@@ -40,8 +40,6 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 
 <!-- include: ../_partials/commit-title-rendering.md / -->
 
-## Body mechanics
+## Line breaks
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
-
-<!-- include: ../../_partials/plain-speech.md / -->
