@@ -42,8 +42,9 @@ import type {
 import { ensureHarnessHookEntries } from './configure-hooks.ts';
 
 /**
- * The extensions that ship from `content/scripts/` to a harness home: `.sh` helpers a skill invokes, and `.mjs` bundles
- * the harness itself invokes. Anything else there — the README — documents the directory rather than shipping from it.
+ * The extensions that ship from `content/scripts/` to a harness home: `.sh` shell helpers and `.mjs` TypeScript
+ * bundles, either kind invoked by a skill, a subagent, or the harness itself. Anything else there — the README —
+ * documents the directory rather than shipping from it.
  */
 const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
 

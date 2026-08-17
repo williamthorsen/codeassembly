@@ -14,6 +14,7 @@ const KNOWN_SCRIPTS: ReadonlyArray<string> = [
   'resolve-frontmatter.sh',
   'resolve-merge-options.sh',
   'resolve-reviewer-context.sh',
+  'select-lede-exemplars.mjs',
 ];
 
 const REQUIRED_PREFIX = '{harness_home_dir}/scripts/';

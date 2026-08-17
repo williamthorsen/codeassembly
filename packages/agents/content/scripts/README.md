@@ -4,8 +4,10 @@ Shared helpers installed into every platform target. The install pipeline copies
 
 Two kinds of helper live here, distinguished by who invokes them:
 
-- **`.sh` — invoked by an agent.** Shell helpers a skill or subagent runs, via the `{harness_home_dir}/scripts/` prefix documented below.
-- **`.mjs` — invoked by the harness.** Bundled TypeScript helpers wired into a harness's own configuration, with no agent in the loop. The bundles are build output, generated into this directory by `scripts/bundle-skill-helpers.ts` and git-ignored; the source lives under `src/`.
+- **Agent-invoked.** Helpers a skill or subagent runs, via the `{harness_home_dir}/scripts/` prefix documented below.
+- **Harness-invoked.** Helpers wired into a harness's own configuration, with no agent in the loop.
+
+The extension says how a helper is written, not who runs it: a `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source lives under `src/`. The bundles are build output, generated here by `scripts/bundle-skill-helpers.ts` and git-ignored. Either kind serves either invoker.
 
 Files of any other extension (such as this README) are not installed.
 
@@ -32,6 +34,7 @@ Agent-invoked:
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields.
 - `resolve-merge-options.sh`: Resolves merge-method and squash-title inputs from CLI overrides, label maps, and commit majority.
 - `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.
+- `select-lede-exemplars.mjs`: Selects author-approved ledes of a given work type from the lede-decision corpus.
 
 Harness-invoked:
 
@@ -39,6 +42,6 @@ Harness-invoked:
 
 ## Drift detection
 
-The regression test at `packages/agents/src/__tests__/script-invocation-conventions.test.ts` walks every `.md` file under `content/skills/` and `content/subagents/` and fails when any executable invocation of a known helper script lacks the `{harness_home_dir}/scripts/` prefix.
+The regression test at `content/__tests__/script-invocation-conventions.unit.test.ts` walks every `.md` file under `content/skills/` and `content/subagents/` and fails when any executable invocation of a known helper script lacks the `{harness_home_dir}/scripts/` prefix.
 
 When adding a new helper script, append its filename to the `KNOWN_SCRIPTS` array in the test file.

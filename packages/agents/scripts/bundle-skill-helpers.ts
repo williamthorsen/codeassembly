@@ -8,8 +8,9 @@
  * and the dev and built layouts both ship the helper.
  *
  * A helper's destination follows its consumer: a skill's helper bundles into that skill's own directory under
- * `content/skills/`, while a helper with no skill to belong to — one the harness itself invokes — bundles into
- * `content/scripts/`, alongside the shell helpers that install to every harness home.
+ * `content/skills/`, while a helper with no skill to belong to — one the harness invokes, or one a subagent reaches
+ * through the `{harness_home_dir}/scripts/` prefix — bundles into `content/scripts/`, alongside the shell helpers
+ * that install to every harness home.
  *
  * The bundle list is a plain array of `BundleTarget` entries; a new helper registers itself by appending one.
  */
@@ -83,6 +84,10 @@ export const targets: BundleTarget[] = [
   {
     entry: 'src/relay-hook-event/cli.ts',
     outFile: 'content/scripts/relay-hook-event.mjs',
+  },
+  {
+    entry: 'src/select-lede-exemplars/cli.ts',
+    outFile: 'content/scripts/select-lede-exemplars.mjs',
   },
 ];
 
