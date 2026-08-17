@@ -22,7 +22,7 @@ const RULE_HEADLINE = 'No hard line breaks';
 const RULE_PHRASES: ReadonlyArray<string> = [
   RULE_HEADLINE,
   'Do not insert newlines to wrap at a column width',
-  "governed instead by the project's formatter",
+  'the convention already in the file',
 ];
 
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
