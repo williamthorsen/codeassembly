@@ -168,7 +168,7 @@ esac
 ## Error messages
 
 - **Always to stderr**: `echo "..." >&2`
-- **Prefix with `$PROG:`**, so that piped output identifies the source.
+- **Prefix with `$PROG:`**, so a reader of piped output can tell which script wrote the message.
 - **Be actionable**: Tell the user what to do, not just what went wrong.
 
 ```bash
@@ -197,7 +197,7 @@ Use `command -v` (POSIX), not `which` (non-standard behavior across platforms).
 
 ## The `functions/` library
 
-Reusable utilities live in `functions/` and are sourced at runtime. Scripts resolve their own repo root so they always use co-versioned code, regardless of which worktree they run from:
+Reusable utilities belong in `functions/` and are sourced at runtime. Scripts resolve their own repo root so they always use co-versioned code, regardless of which worktree they run from:
 
 ```bash
 _self="$0"; [[ "$_self" != */* ]] && _self="$(command -v "$0")"
@@ -223,7 +223,7 @@ source "$repo_dir/functions/output.sh"
 | `symlinks.sh`   | `create_symlink`, `verify_symlink`, `ensure_symlinks`, `ensure_parent_directory`, `assert_fso_exists` |
 | `yaml.sh`       | `parse_yaml_value` (two-level YAML value extraction without yq)                                       |
 
-Agent-specific modules live in `agents/functions/`:
+Agent-specific modules belong in `agents/functions/`:
 
 | Module            | Provides                                                                  |
 | ----------------- | ------------------------------------------------------------------------- |

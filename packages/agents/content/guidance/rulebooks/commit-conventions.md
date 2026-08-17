@@ -7,7 +7,7 @@ version: 1
 
 # Git commit conventions
 
-Commit titles and bodies are extracted into the changelog and, for release-notes-contributing work types, into release notes. Commit bodies also feed the PR's `## What` section via the `summarize-change` skill. Write with those downstream surfaces in mind.
+Commit titles and bodies are extracted into the changelog and, for release-notes-contributing work types, into release notes. The `summarize-change` skill also uses commit bodies for the PR's `## What` section. Write with those downstream surfaces in mind.
 
 ## Commit metadata
 
@@ -24,11 +24,11 @@ Render via `describe-change.sh` — see [`title-templates.md`](../../skills/_dat
 
 ## Ticket ID
 
-Do not include the ticket ID in the commit title. The branch name carries it. Include it at the end of the commit body only if the branch covers more than one ticket (rare).
+Do not include the ticket ID in the commit title. The branch name records it. Include it at the end of the commit body only if the branch covers more than one ticket (rare).
 
 ## Commit body
 
-**Body voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. The first paragraph of the body is the lede and must stand alone as the entry, so the budget below governs it alone; subsequent paragraphs are elaboration for the engaged reader who has clicked through, and the budget does not reach them.
+**Body voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. The first paragraph of the body is the lede and must stand alone as the entry, so the budget below applies to it alone; subsequent paragraphs are elaboration for the engaged reader who has clicked through, and the budget does not apply to them.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
@@ -64,7 +64,7 @@ Pick the type that best describes the commit's dominant purpose. When more than 
 
 ### Breaking changes
 
-Whether a commit can carry a breaking-change marker (`!`, e.g., `feat!`, `drop!`) is governed per-type by the `breakingPolicy` field in `work-types.json`:
+Whether a commit can take a breaking-change marker (`!`, e.g., `feat!`, `drop!`) is set per-type by the `breakingPolicy` field in `work-types.json`:
 
 - **`required`**: `drop` — removing a public surface is always breaking, so the marker is mandatory.
 - **`optional`**: `feat`, `sec` — additions or security work may or may not break consumers; mark with `!` when they do.

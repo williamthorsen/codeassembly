@@ -9,7 +9,7 @@ version: 2
 
 ## Capitalization after a colon
 
-Read what stands left of the colon. A label (such as a short tag naming a field, a category, or an option) is transparent: Capitalize what follows as though the label were absent. A clause puts the colon mid-sentence: Capitalize a complete sentence, keep a fragment or list lowercase. A lowercase code identifier keeps its own case on either branch.
+Read what appears left of the colon. A label (such as a short tag naming a field, a category, or an option) is transparent: Capitalize what follows as though the label were absent. A clause puts the colon mid-sentence: Capitalize a complete sentence, keep a fragment or list lowercase. A lowercase code identifier keeps its own case on either branch.
 
 - **Label, fragment follows:** "Exception: Trivial predicate callbacks where the type is obvious."
 - **Clause, sentence follows:** "The cache is not the problem: The transport reconnects on every request."

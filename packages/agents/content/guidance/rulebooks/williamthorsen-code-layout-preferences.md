@@ -11,7 +11,7 @@ Where code lives and what it is called, at three scales: the directory tree, the
 
 ## Source layout
 
-Group source by role. A directory holding unrelated modules because they arrived at the same time is not a grouping.
+Group source by role. A directory holding unrelated modules because they were added at the same time is not a grouping.
 
 Never scaffold a flat `src/`; later readers would extend flatness as convention.
 
@@ -23,15 +23,15 @@ Worked examples, not a closed set:
 
 ## Tests
 
-A `__tests__/` directory sits beside the code it covers, one per directory that holds tested code. Never roll a package's tests up into a single `src/__tests__/`.
+A `__tests__/` directory sits beside the code it covers, one per directory that contains tested code. Never roll a package's tests up into a single `src/__tests__/`.
 
 A missing `__tests__/` sibling then signals uncovered code.
 
 ## Test helpers
 
-Test helper code never lives inside `__tests__/`, where it would go uncovered.
+Test helper code never belongs inside `__tests__/`, where it would go uncovered.
 
-Helpers live in a `test-utils/` directory, at the first tier that fits:
+Helpers belong in a `test-utils/` directory, at the first tier that fits:
 
 1. Beside the `__tests__/` that uses them, when only those tests do.
 2. At the nearest common ancestor of the tests that import them, when several directories do.
@@ -39,15 +39,15 @@ Helpers live in a `test-utils/` directory, at the first tier that fits:
 
 `test-utils/` is always a directory, never a single `test-utils.ts`, so filenames name subjects rather than audience. One concern per file.
 
-A helper reached by a `../../` hop into a sibling module's `test-utils/` has outgrown its tier.
+A helper reached through a `../../` path into a sibling module's `test-utils/` has outgrown its tier.
 
 ## Fixtures
 
-Fixture **data** -- JSON, Markdown, sample sources, directory trees -- lives in `__tests__/fixtures/`, so one exemption covers tests and fixture data alike.
+Fixture **data** -- JSON, Markdown, sample sources, directory trees -- belongs in `__tests__/fixtures/`, so one exemption covers tests and fixture data alike.
 
 Fixture **builders** are code, and follow the test-helper rule above.
 
-A deliberately-invalid input that a tool cannot parse carries a delimited `.malformed` marker in its name, so lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema carries no marker and stays covered.
+A deliberately-invalid input that a tool cannot parse takes a delimited `.malformed` marker in its name, so lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema takes no marker and stays covered.
 
 ## File naming
 
@@ -56,9 +56,9 @@ A file takes the name of its main export. A file with no single main export take
 - `LaneCard.tsx` exports `LaneCard`
 - `status-adapter.ts` exports the adapter's several functions
 
-Components land in PascalCase because their exports are PascalCase, so no framework exception is needed.
+Components take PascalCase because their exports are PascalCase, so no framework exception is needed.
 
-Name a file for its subject, never for its audience. `test-utils.ts` names who reads it; `scaffolding.ts` names what it holds.
+Name a file for its subject, never for its audience. `test-utils.ts` names who reads it; `scaffolding.ts` names what it contains.
 
 ## Declaration order
 
@@ -73,7 +73,7 @@ In test files, module-level helpers go below the `describe` blocks, wrapped the 
 
 ## Section separators
 
-Do not use multi-line boxed separators or rulered headings. They wrap awkwardly and add noise without carrying information. Two forms replace them:
+Do not use multi-line boxed separators or rulered headings. They wrap awkwardly and add noise without adding information. Two forms replace them:
 
 - **Inline heading**: The default for primary-content sections:
 
