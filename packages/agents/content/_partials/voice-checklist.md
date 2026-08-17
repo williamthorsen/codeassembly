@@ -8,6 +8,7 @@ Before saving, answer the question your reader is asking, then audit the draft a
 - **Type.** The per-type section governing this work type was applied -- for `perf`, `sec`, `deprecate`, and `ci`, the host section named there.
 - **Names.** Every package, command, flag, file, or rule the reader consumes is named and backticked. An identifier they never consume is mechanism, and naming it does not admit it.
 - **Claims.** Each sentence reports an effect of the diff, and no claim outruns what the diff supports.
+- **Register.** Every verb is the plain one, and the sentence names who acts.
 - **Cuts.** No empty contrast, no assurance against a harm nobody suspected, no process narration, no second person.
 
 This list tests a draft; it does not stand in for the doctrine. Read `{harness_home_dir}/skills/_data/lede-voice.md` in full before drafting.
