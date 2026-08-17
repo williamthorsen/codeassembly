@@ -27,7 +27,7 @@ export type Widening = 'none' | 'tier' | 'any';
 export interface ExemplarSelection {
   exemplars: LedeExemplar[];
   widening: Widening;
-  /** One line per decision record that could not be read as an exemplar; a malformed record never fails the run. */
+  /** One line per record that could not be read as an exemplar; a malformed record never fails the run. */
   warnings: string[];
 }
 

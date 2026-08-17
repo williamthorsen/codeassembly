@@ -71,6 +71,18 @@ describe(selectExemplars, () => {
     expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
   });
 
+  it('buckets a record of a retired type by the tier the record carries', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'retired', capturedAt: '2026-01-01T00:00:00Z', tier: 'public' },
+      { id: 'B', type: 'docs', capturedAt: '2026-09-01T00:00:00Z' },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', count: 1 });
+
+    expect(selection.widening).toBe('tier');
+    expect(selection.exemplars.map((exemplar) => exemplar.type)).toStrictEqual(['retired']);
+  });
+
   it('returns an empty list for a corpus holding no decisions', async () => {
     const selection = await select({ decisions: [], type: 'feat', count: 5 });
 
@@ -134,6 +146,16 @@ describe(selectExemplars, () => {
     const selection = await select({ decisions: CORPUS, files, type: 'feat', count: 2 });
 
     expect(selection.warnings).toStrictEqual([]);
+  });
+
+  it.each([
+    ['a broken YAML block', '---\ntags: [lede-decision\ncwd: /repo\n---\n\n## Agent lede\n\nText.\n'],
+    ['no frontmatter block at all', '## Agent lede\n\nText.\n'],
+  ])('reports a record with %s, which carries no tag to place it by', async (_label, content) => {
+    const selection = await select({ decisions: CORPUS, files: { 'Z.md': content }, type: 'feat', count: 2 });
+
+    expect(selection.warnings).toHaveLength(1);
+    expect(selection.warnings[0]).toContain('Z.md: frontmatter does not parse');
   });
 
   it('reports a decision whose frontmatter will not parse as an event rather than failing the run', async () => {

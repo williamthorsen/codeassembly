@@ -85,14 +85,11 @@ export async function selectExemplars(input: {
 
 /** Reports which bucket a candidate belongs to: its own type, a tier-mate of it, or neither. */
 function classifyWidening(input: { candidate: Candidate; requested: WorkType }): Widening {
-  const { resolved } = input.candidate;
-  if (resolved === null) {
-    return 'any';
-  }
-  if (resolved.key === input.requested.key) {
+  const { exemplar, resolved } = input.candidate;
+  if (resolved?.key === input.requested.key) {
     return 'none';
   }
-  return resolved.tier === input.requested.tier ? 'tier' : 'any';
+  return exemplar.tier === input.requested.tier ? 'tier' : 'any';
 }
 
 /** Orders two strings greatest-first by code unit, which sorts ULID stems and ISO-8601 timestamps by recency. */
@@ -104,16 +101,23 @@ function compareDescending(left: string, right: string): number {
 }
 
 /**
- * Reads one event file as an exemplar candidate. A record carrying no `lede-decision` tag belongs to another capture
- * path and is passed over in silence; a tagged record that will not parse, carries no lede, or names no change is
- * reported so the run can go on without it.
+ * Reads one event file as an exemplar candidate. A record that parses and carries no `lede-decision` tag belongs to
+ * another capture path and is passed over in silence. Everything else that cannot be read as an exemplar is reported
+ * so the run goes on without it, unparseable frontmatter included: a record whose tags cannot be read might be a
+ * decision.
  */
 async function readDecision(input: {
   filePath: string;
   workTypes: ReadonlyMap<string, WorkType>;
 }): Promise<RecordOutcome> {
   const basename = path.basename(input.filePath);
-  const { fields, body } = readNoteContent(await readFile(input.filePath, 'utf8'));
+  const { fields, body, error } = readNoteContent(await readFile(input.filePath, 'utf8'));
+  if (error !== undefined) {
+    return {
+      kind: 'warning',
+      warning: `${basename}: frontmatter does not parse (${error}), so its tags cannot be read`,
+    };
+  }
   if (!readStringList(fields, 'tags').includes(LEDE_DECISION_TAG)) {
     return { kind: 'skip' };
   }
@@ -136,8 +140,9 @@ async function readDecision(input: {
     return { kind: 'warning', warning: `${basename}: does not name the change it describes (type, scope, pr)` };
   }
 
-  // The taxonomy decides the tier, so a request and a candidate are matched through one reading of it; a type the
-  // taxonomy no longer declares falls back to the tier the record recorded at merge time.
+  // The taxonomy decides a candidate's type and tier, so a request and a candidate are matched through one reading of
+  // it. A type the taxonomy no longer declares keeps the tier its record carries, which is what the taxonomy said when
+  // the change merged.
   const resolved = input.workTypes.get(type) ?? null;
   const tier = resolved?.tier ?? extractString(extra, 'tier');
   if (tier === null) {
