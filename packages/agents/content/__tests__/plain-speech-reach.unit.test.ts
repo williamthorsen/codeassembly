@@ -27,7 +27,7 @@ const RULE_HEADLINE = 'When writing practical documentation, speak plainly';
 /** Phrases that must survive an edit to the partial, so a gutted rule cannot still pass on its opening alone. */
 const RULE_PHRASES: ReadonlyArray<string> = [
   RULE_HEADLINE,
-  'Use the plain word and name who acts',
+  'Use the plain word and name the actor',
   'reserved for persuasive documentation such as marketing and website copy',
 ];
 

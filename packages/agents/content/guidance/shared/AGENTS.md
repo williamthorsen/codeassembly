@@ -18,7 +18,7 @@ Detail adds value up to a peak, then taxes the reader and buries the signal. Com
 
 ## Plain speech
 
-When writing practical documentation, speak plainly. "Practical documentation" is functional text such as tickets, plans, instructions, PR descriptions, commit messages, and comments. Use the plain word and name who acts: "The function reports two new warnings", not "Findings arrive as the advisory warnings". Creative prose and rhetorical devices are reserved for persuasive documentation such as marketing and website copy.
+When writing practical documentation, speak plainly. "Practical documentation" is functional text such as tickets, plans, instructions, PR descriptions, commit messages, and comments. Use the plain word and name the actor: "The function reports warnings", not "Findings arrive as warnings". Creative prose and rhetorical devices are reserved for persuasive documentation such as marketing and website copy.
 
 ## Code descriptions
 
