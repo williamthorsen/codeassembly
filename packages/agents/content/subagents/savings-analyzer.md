@@ -62,6 +62,8 @@ Tag every suggestion:
 - **low-risk** -- efficiency improvement, quality preserved
 - **tradeoff** -- could affect quality, present data and let human decide
 
+<!-- include: ../_partials/plain-speech.md / -->
+
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

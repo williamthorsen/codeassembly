@@ -21,7 +21,7 @@ Every rule below belongs to one of three classes, marked where it appears.
 
 ## Declaring dependencies
 
-When a rulebook, skill, or subagent relies on another -- a skill that invokes another skill, a subagent that calls a skill it does not inject -- declare the edge in its frontmatter `dependencies:` block, grouped by type:
+When a rulebook, skill, or subagent relies on another -- such as a skill that invokes another skill, or a subagent that calls a skill it does not inject -- declare the edge in its frontmatter `dependencies:` block, grouped by type:
 
 ```yaml
 dependencies:
@@ -71,9 +71,9 @@ One limitation is worth knowing before writing a rulebook that documents linking
 
 An anchor-only link addresses the body it appears in, so its fragment must name exactly one heading there. Naming none fails the run, and so does naming two: A locator that resolves by accident is not a locator. The rule covers every rulebook, skill, and subagent, and the guidance files `install` ships. _(Validated on parse.)_
 
-Where the pipeline expands includes -- rulebooks, skills, subagents, and harness guidance -- the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial. A shared guidance file is checked as authored, since it inlines no partial.
+Where the pipeline expands includes -- i.e., rulebooks, skills, subagents, and harness guidance -- the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial. A shared guidance file is checked as authored, since it inlines no partial.
 
-Frontmatter, fenced code blocks (backtick or tilde), and inline code spans are exempt on both sides: A heading inside one offers no anchor, and a link inside one requests none. A code span _within_ a heading is the opposite case: It is part of that heading's text, so the heading still anchors, with the backticks dropped as punctuation -- ``### The `respond-to-review` path`` answers to `#the-respond-to-review-path`. An indented code block is not exempt, because telling one from a nested list item would take block-level parsing, so show an example anchor in a fence or a code span. An anchor-only target is never rewritten, so unlike a relative one it survives either intact.
+Frontmatter, fenced code blocks (backtick or tilde), and inline code spans are exempt on both sides: A heading inside one offers no anchor, and a link inside one requests none. A code span _within_ a heading is the opposite case: It is part of that heading's text, so the heading still anchors, with the backticks dropped as punctuation -- ``### The `respond-to-review` path`` resolves to `#the-respond-to-review-path`. An indented code block is not exempt, because telling one from a nested list item would take block-level parsing, so show an example anchor in a fence or a code span. An anchor-only target is never rewritten, so unlike a relative one it survives either intact.
 
 A fence nothing closes fails the run in its own right. Everything below it reads as code, so no anchor there can be checked, and a silent pass over an unchecked remainder is worse than a rejection. A closing fence repeats the opening character at least as many times, which is the rule a four-backtick example wrapping a three-backtick one depends on. _(Validated on parse.)_
 
@@ -81,7 +81,7 @@ A heading carrying a token cannot be anchored: It renders to a different slug on
 
 ## Collections
 
-A collection's only payload is a `members:` block -- the constituents it pulls into the deployed closure. List them per type (the same shape `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the content root the collection belongs to -- the built-in library, or the owning source for a source collection:
+A collection's only payload is a `members:` block -- the constituents it pulls into the deployed closure. List them per type (the same shape `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the content root the collection belongs to -- i.e., the built-in library, or the owning source for a source collection:
 
 ```yaml
 members:
@@ -97,7 +97,7 @@ A collection enumerates every member, not just its dependency roots. Roots-only 
 
 ### Dispositions
 
-Declaring a collection is a claim about its members, so every artifact carries at least one disposition recording the claims it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: It neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence tolerate no conflicting claim: Standalone means membership in no collection, and triage excludes vetted membership. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+Declaring a collection is a claim about its members, so every artifact carries at least one disposition recording the claims it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- i.e., the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: It neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence tolerate no conflicting claim: Standalone means membership in no collection, and triage excludes vetted membership. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 
 Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
 
@@ -143,11 +143,11 @@ A `codeassembly-` prefix marks guidance for working in the CodeAssembly reposito
 
 ## Skill-local reinforcement
 
-Behavioural rules that govern an agent's output -- the recommendation gradient, the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs, then restated at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when it sits beside the action it governs than when it was read once at session start, and it imitates a nearby concrete example more reliably still than it follows a directive.
+Behavioural rules that govern an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. Where the boundary below calls for a restatement, it lands at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when it sits beside the action it governs than when it must be fetched through a link, and it imitates a nearby concrete example more reliably still than it follows a directive.
 
-Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
+Treat that restatement as load-bearing redundancy, not duplication, where the rule specifies an output shape the agent must reproduce: Stripping the skill-local pointers there leaves the agent to improvise the block instead of copying it. Where the agent can follow the rule from a single statement, extend it to skill-local surfaces after that statement has been seen to fail, not in anticipation. _(Enforced for the specs named above by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
 
-Where a step's guidance is a matter of local taste rather than library doctrine -- a user's code-style preferences, a project's own glossary -- neither restatement above fits: A pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. A rulebook written for that slot declares `delivery: hook`, which records the route and lets `sync` report a binding and a delivery that disagree. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/README.md`. _(Convention; not enforced.)_
+Where a step's guidance is a matter of local taste rather than library doctrine -- such as a user's code-style preferences, or a project's own glossary -- neither restatement above fits: A pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. A rulebook written for that slot declares `delivery: hook`, which records the route and lets `sync` report a binding and a delivery that disagree. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/README.md`. _(Convention; not enforced.)_
 
 ## Injection-point placement
 

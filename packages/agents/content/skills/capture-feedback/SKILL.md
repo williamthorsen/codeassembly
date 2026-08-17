@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture feedback
 
-Record feedback on the agent's behavior as evidence for a future guidance refinement, applying the immediate fix when there is something concrete to change. The user describes a correction or a desired behavior, the agent applies it when applicable, and the agent appends a generalized record that a later recall-driven pass mines to refine guidance.
+Record feedback on the agent's behavior as evidence for a future guidance refinement, applying the immediate fix when there is something concrete to change. The user describes a correction or a desired behavior, the agent applies it when applicable, and the agent appends a generalized record that a later recall-driven pass reads to refine guidance.
 
 The actual guidance refinement is **deferred** — this skill captures the candidate, it does not edit the skill, subagent, rulebook, general guidance, or helper. Refinement happens later, in bulk, by recalling the accumulated `feedback` records together, so a single data point never over-fits a rule.
 

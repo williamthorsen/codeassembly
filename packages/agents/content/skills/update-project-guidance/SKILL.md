@@ -64,7 +64,7 @@ Collect findings as a flat list before moving to classification.
 
 The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: Take the repo-root `AGENTS.md` when it carries substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root — a title and a pointer — does not shadow a mature legacy file, because a pointer is not a claim.
 
-Where both legacy files carry content, `.agents/PROJECT.md` is the baseline as the later convention, and the other joins the gap-scan sources so its content reaches the change list rather than being archived unread.
+Where both legacy files carry content, `.agents/PROJECT.md` is the baseline as the later convention, and the other is added to the gap-scan sources so its content reaches the change list rather than being archived unread.
 
 Resolve the baseline in memory. A legacy file is not moved here — its content becomes the baseline and reaches the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
 

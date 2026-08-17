@@ -16,6 +16,10 @@
 
 Detail adds value up to a peak, then taxes the reader and buries the signal. Compose tight from the start: Lead with the minimal skeleton and add a sentence only when it changes what the reader does. Never drop a decision, constraint, or actionable fact for brevity. If you find yourself trimming, you started too loose. Full principle: `_data/concision.md` in the agents skills tree.
 
+## Plain speech
+
+When writing practical documentation, speak plainly. "Practical documentation" is functional text such as tickets, plans, instructions, PR descriptions, commit messages, and comments. Use the plain word and name the actor: "The function reports warnings", not "Findings arrive as warnings". Creative prose and rhetorical devices are reserved for persuasive documentation such as marketing and website copy.
+
 ## Code descriptions
 
 - Every non-trivial function, method, class, and component gets a brief description.
@@ -55,7 +59,7 @@ When creating an artifact (plan, devlog, review, change summary, chat summary, e
 
 A saved artifact records a moment, not a running state. Once written it stands: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
 
-The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements arrive as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
+The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 
 ## Commits
 

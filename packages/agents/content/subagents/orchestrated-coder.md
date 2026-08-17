@@ -190,6 +190,8 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 
+<!-- include: ../_partials/plain-speech.md / -->
+
 </HARD-GATE>
 
 <!-- guidance-hook: implementation-preferences -->
