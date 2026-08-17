@@ -59,7 +59,7 @@ When creating an artifact (plan, devlog, review, change summary, chat summary, e
 
 A saved artifact records a moment, not a running state. Once written it stands: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
 
-The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements arrive as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
+The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 
 ## Commits
 

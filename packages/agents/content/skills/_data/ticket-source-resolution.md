@@ -87,7 +87,7 @@ acli jira workitem view {key}
 
 Where the source is a Jira URL rather than a key, the key is its `PROJECT-NUMBER` segment, which is the final segment of a `/browse/` URL.
 
-Where a skill needs structured metadata, such as the `updated` timestamp for a staleness check, add `--json --fields '*navigable,-description'`. The `--json` flag returns the raw REST v3 response, in which the description arrives as Atlassian Document Format rather than Markdown, so exclude it there and take the body from the default view. First-time setup is `acli jira auth login --web`, a browser flow that mints no API token.
+Where a skill needs structured metadata, such as the `updated` timestamp for a staleness check, add `--json --fields '*navigable,-description'`. The `--json` flag returns the raw REST v3 response, in which the description is Atlassian Document Format rather than Markdown, so exclude it there and take the body from the default view. First-time setup is `acli jira auth login --web`, a browser flow that mints no API token.
 
 **Fallback: a connected Jira read tool.** Tool names vary by server and by machine alias, so identify the tool by its parameters:
 
