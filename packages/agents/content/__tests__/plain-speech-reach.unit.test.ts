@@ -33,23 +33,34 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A place here is earned by being in context as practical documentation is composed. That is wider than the criterion
-// `prose-line-breaks` applies, which admits only prose bound for a rendering surface outside the repository, because a
-// hard-wrapped line is harmless in a source comment and a figurative verb is not. Comments, plans, and the guidance
-// corpus itself are all practical documentation, so a body composing any of them qualifies. `review-criteria` stands
-// in for the five reviewer subagents that preload it.
+// A place here is earned by composing practical documentation. That is wider than the criterion `prose-line-breaks`
+// applies, which admits only prose bound for a rendering surface outside the repository, because a hard-wrapped line is
+// harmless in a source comment and a figurative verb is not. Comments, plans, and the guidance corpus itself are all
+// practical documentation, so a body composing any of them qualifies.
+//
+// Two kinds of body are absent by decision. One that passes along prose another body composed belongs with that
+// composer instead, which is why `create-pr` is absent and `summarize-change`, which writes the body it hands over, is
+// present. One that reaches its reader through a body already on this list needs no entry of its own: `review-criteria`
+// stands in for the five reviewer subagents that preload it.
 const CARRIERS: ReadonlyArray<string> = [
   'guidance/rulebooks/commit-conventions.md',
+  'skills/align-ticket-with-implementation/SKILL.md',
+  'skills/assess-ticket/SKILL.md',
+  'skills/condense-branch/SKILL.md',
   'skills/create-commit/SKILL.md',
+  'skills/create-devlog/SKILL.md',
   'skills/create-ticket/SKILL.md',
   'skills/design-and-plan/SKILL.md',
   'skills/implement-plan/SKILL.md',
   'skills/merge-pr/SKILL.md',
+  'skills/plan/SKILL.md',
   'skills/refine-plan/SKILL.md',
   'skills/respond-to-review/SKILL.md',
   'skills/review-criteria/SKILL.md',
   'skills/revise-comments/SKILL.md',
   'skills/summarize-change/SKILL.md',
+  'skills/summarize-chat/SKILL.md',
+  'skills/update-project-guidance/SKILL.md',
   'skills/wrap-up/SKILL.md',
   'subagents/orchestrated-architect.md',
   'subagents/orchestrated-coder.md',

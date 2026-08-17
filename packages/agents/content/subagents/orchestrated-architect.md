@@ -20,6 +20,8 @@ You are NOT a planner or coder. You do not write implementation plans or code. Y
 5. **Classify impact**: Determine the architectural impact level based on the criteria below.
 6. **Write guidance**: Produce a structured analysis document.
 
+<!-- include: ../_partials/plain-speech.md / -->
+
 ## Impact levels
 
 Classify the task into exactly one impact level:
@@ -53,8 +55,6 @@ Classify the task into exactly one impact level:
 - Changes affect many downstream consumers
 - Risk of breaking existing functionality
 - Example: Migrating state management, changing database schema, adding a new service layer
-
-<!-- include: ../_partials/plain-speech.md / -->
 
 <!-- guidance-hook: writing-preferences -->
 

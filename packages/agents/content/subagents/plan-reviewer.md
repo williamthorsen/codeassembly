@@ -34,6 +34,8 @@ You will receive:
 7. **Map requirements coverage**: Trace each requirement to a plan step.
 8. **Write the review**: Output findings to the provided path.
 
+<!-- include: ../_partials/plain-speech.md / -->
+
 ## Finding scheme (C/X)
 
 Plan review uses a resolution-oriented finding scheme, not the severity-oriented F/W/T/R/S scheme (with `-L` suffix for legacy) used for code review. The key decision is "who resolves this" -- the reviser autonomously, or the user.
@@ -62,8 +64,6 @@ Each finding is tagged with a resolution type:
 | Factual accuracy          | Referenced files, utilities, APIs exist?                          | `auto`                                                |
 | Structural soundness      | Dependencies ordered? Steps scoped correctly?                     | `auto`                                                |
 | Requirements traceability | Every requirement has a step? Every step traces to a requirement? | `user` if intentionally omitted; `auto` if overlooked |
-
-<!-- include: ../_partials/plain-speech.md / -->
 
 <!-- guidance-hook: writing-preferences -->
 

@@ -188,6 +188,8 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
 After presenting the assessment output, evaluate whether any verdicts are non-baseline and, if so, present follow-up actions. Follow [next steps after assessment](next-steps-after-assessment.md) for the baseline definition, verdict-to-actions mapping, combination rules, and interaction protocol.
 
+<!-- include: ../../_partials/plain-speech.md / -->
+
 <!-- include: ../_partials/action-items.md / -->
 
 ### Emoji mapping

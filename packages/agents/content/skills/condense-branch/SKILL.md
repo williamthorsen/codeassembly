@@ -32,6 +32,8 @@ If branch exists, increment version number.
    git commit --message "{title}" --message "{body}" --no-gpg-sign --no-verify
    ```
 
+<!-- include: ../../_partials/plain-speech.md / -->
+
 ## Commit message creation
 
 ### If commits have detailed descriptions

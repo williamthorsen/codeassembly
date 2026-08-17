@@ -296,4 +296,6 @@ Before presenting the draft or the change list, verify:
 - **Portable** — this skill works in any repo that follows the repo-root `AGENTS.md` convention
 - **Honest about uncertainty** — if something might belong in general guidance, say so rather than silently including it
 
+<!-- include: ../../_partials/plain-speech.md / -->
+
 <!-- include: ../_partials/option-format.md / -->

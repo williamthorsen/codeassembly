@@ -93,6 +93,8 @@ For each finding, apply technical rigor:
 
 Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](#comment-discipline) as you write. The reviewer conversation must not leak into the source.
 
+<!-- include: ../../_partials/plain-speech.md / -->
+
 ## Worked examples
 
 ### Bad → Good: Hedged move with doctrinal conflict
@@ -150,8 +152,6 @@ The disposition conflates two decisions: whether the change belongs (substance),
 **Good: Substance check (ACCEPT), then separate timing decision:**
 
 > T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard ships in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not held as a maybe.
-
-<!-- include: ../../_partials/plain-speech.md / -->
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
