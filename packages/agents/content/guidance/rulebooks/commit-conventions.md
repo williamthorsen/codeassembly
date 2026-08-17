@@ -36,6 +36,8 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
 
+<!-- include: ../../_partials/plain-speech.md / -->
+
 - **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
 - **Use backticks for code identifiers.** Variable names, function names, class names, and file paths must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `src/lib/manifest.ts`.
 - **Break up large paragraphs.** Use a blank line between paragraphs. Prefer short, focused paragraphs over walls of text.

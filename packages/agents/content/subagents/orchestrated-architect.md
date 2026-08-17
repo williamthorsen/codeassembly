@@ -54,6 +54,8 @@ Classify the task into exactly one impact level:
 - Risk of breaking existing functionality
 - Example: Migrating state management, changing database schema, adding a new service layer
 
+<!-- include: ../_partials/plain-speech.md / -->
+
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

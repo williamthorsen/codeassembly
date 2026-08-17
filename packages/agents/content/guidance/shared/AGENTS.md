@@ -16,6 +16,10 @@
 
 Detail adds value up to a peak, then taxes the reader and buries the signal. Compose tight from the start: Lead with the minimal skeleton and add a sentence only when it changes what the reader does. Never drop a decision, constraint, or actionable fact for brevity. If you find yourself trimming, you started too loose. Full principle: `_data/concision.md` in the agents skills tree.
 
+## Plain speech
+
+When writing practical documentation, speak plainly. "Practical documentation" is functional text such as tickets, plans, instructions, PR descriptions, commit messages, and comments. Use the plain word and name who acts: "The function reports two new warnings", not "Findings arrive as the advisory warnings". Creative prose and rhetorical devices are reserved for persuasive documentation such as marketing and website copy.
+
 ## Code descriptions
 
 - Every non-trivial function, method, class, and component gets a brief description.

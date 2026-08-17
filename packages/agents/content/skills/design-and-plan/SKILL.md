@@ -110,6 +110,8 @@ When the ticket needs work, produce or update it to capture the proposed approac
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
 
+<!-- include: ../../_partials/plain-speech.md / -->
+
 <!-- include: ../_partials/ticket-placement.md / -->
 
 Here, _the implementation_ is the plan artifact (Phase 5): Mechanism the ticket omits is recorded there, not dropped.

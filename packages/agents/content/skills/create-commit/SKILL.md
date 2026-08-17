@@ -43,3 +43,5 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 ## Line breaks
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
+
+<!-- include: ../../_partials/plain-speech.md / -->
