@@ -171,7 +171,7 @@ export async function runSelect(input: {
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`, matching the degrade-with-warning pattern the sibling helpers use.
+ * `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

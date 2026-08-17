@@ -17,8 +17,8 @@ const FIXTURE_DECISIONS = [
 
 /**
  * Stands up a lede-decision corpus plus an isolated home registering it, then returns a `SmokeTestInvocation` that
- * selects two `feat` exemplars from it. Unlike the kb-retrieve-events smoke test this exercises the whole path:
- * selection scans the events directory itself, so nothing puts ripgrep on the build's critical path.
+ * selects two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
+ * without putting ripgrep on the build's critical path.
  *
  * The invocation passes no `--data-dir`, so the run resolves the work-type taxonomy the way an installed helper does —
  * through the `_data` directory of the `skills` sibling — and a bundle that resolved it wrongly fails here.

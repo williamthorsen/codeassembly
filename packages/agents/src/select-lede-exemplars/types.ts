@@ -1,9 +1,8 @@
 // Shapes for the select-lede-exemplars helper: the exemplars it emits, how far it reached to find them, and the
 // stdout payload carrying both.
 //
-// The payload is a discriminated union on `ok`, mirroring the sibling helpers. An exhausted corpus is a success
-// carrying a diagnostic rather than a failure: a drafter degrades to no exemplars, and is never blocked by their
-// absence.
+// The payload is a discriminated union on `ok`. An exhausted corpus is a success carrying a diagnostic rather than a
+// failure: a drafter degrades to no exemplars, and is never blocked by their absence.
 
 /** One author-approved lede, with the change identity a drafter calibrates a new lede against. */
 export interface LedeExemplar {
