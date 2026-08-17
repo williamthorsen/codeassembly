@@ -6,6 +6,7 @@ import path from 'node:path';
 import { readNoteContent } from '@williamthorsen/kb/note-io';
 
 import { extractString } from '../kb-shared/note-helpers.ts';
+import { extractSection } from '../lib/markdown-sections.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
@@ -100,33 +101,6 @@ export async function resolveEpisode(input: {
   };
 }
 
-/**
- * Reads a named `## ` section from Markdown: everything between the heading and the next `## ` heading or the end of
- * the document, trimmed. Yields `null` when the heading is absent or its section is empty.
- *
- * Matching is line-based and case-insensitive on the heading text. The artifacts this reads carry no frontmatter, so
- * their heading structure is the only handle on their content.
- */
-export function extractSection(input: { text: string; heading: string }): string | null {
-  const lines = input.text.split('\n');
-  const target = input.heading.trim().toLowerCase();
-  let start = -1;
-
-  for (const [index, line] of lines.entries()) {
-    if (start === -1) {
-      if (line.startsWith('## ') && line.slice(3).trim().toLowerCase() === target) {
-        start = index + 1;
-      }
-      continue;
-    }
-    if (line.startsWith('## ')) {
-      return joinSection(lines.slice(start, index));
-    }
-  }
-
-  return start === -1 ? null : joinSection(lines.slice(start));
-}
-
 // region | Helpers
 
 /**
@@ -174,12 +148,6 @@ async function isDirectory(dirPath: string): Promise<boolean> {
     }
     throw error;
   }
-}
-
-/** Joins section lines and trims them, yielding `null` for a section that holds no text. */
-function joinSection(lines: readonly string[]): string | null {
-  const section = lines.join('\n').trim();
-  return section.length > 0 ? section : null;
 }
 
 /** Collapses runs of whitespace so two ledes differing only by reflow compare equal. */
@@ -272,8 +240,8 @@ async function readLede(input: {
   overrideFile?: string;
 }): Promise<string | null> {
   if (input.overrideFile !== undefined) {
-    const override = await readFileSafely(input.overrideFile);
-    return override === null ? null : joinSection([override]);
+    const override = (await readFileSafely(input.overrideFile))?.trim();
+    return override === undefined || override.length === 0 ? null : override;
   }
 
   const artifactPath = await findNewestArtifact({ artifactDir: input.artifactDir, suffix: input.source.suffix });

@@ -1,6 +1,12 @@
 import { readNoteContent, renderNote } from '@williamthorsen/kb/note-io';
 import { type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/records';
 
+import {
+  AGENT_LEDE_HEADING,
+  COMMENT_HEADING,
+  LEDE_DECISION_TAG,
+  MERGED_LEDE_HEADING,
+} from '../lede-corpus/lede-sections.ts';
 import type { LedeEpisode, LedeVerdict } from './types.ts';
 
 /** A prepared decision ready to write: its ULID-keyed filename stem and the full rendered note content. */
@@ -61,7 +67,7 @@ export function prepareDecision(input: {
     ...(context.session !== undefined && { session: context.session }),
     cwd: context.cwd,
     summary: `Lede ${verdict} for ${identity.scope} #${identity.pr}`,
-    tags: ['lede-decision', `type:${identity.type}`, verdict],
+    tags: [LEDE_DECISION_TAG, `type:${identity.type}`, verdict],
     addressedBy: [],
     extra,
     body: composeBody({ episode, comment: input.comment }),
@@ -82,13 +88,13 @@ export function prepareDecision(input: {
 
 /** Renders the decision body: the agent's lede, the merged lede when it differs, and the comment when one was given. */
 function composeBody(input: { episode: LedeEpisode; comment: string }): string {
-  const sections = [`## Agent lede\n\n${input.episode.agentLede}`];
+  const sections = [`## ${AGENT_LEDE_HEADING}\n\n${input.episode.agentLede}`];
   if (input.episode.differ) {
-    sections.push(`## Merged lede\n\n${input.episode.mergedLede}`);
+    sections.push(`## ${MERGED_LEDE_HEADING}\n\n${input.episode.mergedLede}`);
   }
   const comment = input.comment.trim();
   if (comment.length > 0) {
-    sections.push(`## Comment\n\n${comment}`);
+    sections.push(`## ${COMMENT_HEADING}\n\n${comment}`);
   }
   return `${sections.join('\n\n')}\n`;
 }
