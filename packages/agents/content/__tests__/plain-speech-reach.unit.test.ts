@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -30,29 +31,19 @@ const RULE_PHRASES: ReadonlyArray<string> = [
   'reserved for persuasive documentation such as marketing and website copy',
 ];
 
-// Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
-// discovered list would move with the bug.
+/** Subagents that compose no prose for a reader, so the rule has nothing in them to govern. */
+const EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set([
+  // Exercises the declared-subagent deployment mechanism and is never invoked.
+  'canary.md',
+]);
+
+// Every subagent is a carrier, so the list is read from the directory rather than written out: a subagent added later
+// is covered on the day it lands, and one that drops its include still fails the assertions below. Writing it out would
+// guard only the second failure, and `subagent-content.unit.test.ts` reads the same directory for the same reason.
 //
-// A place here is earned by being unable to read the primary statement. Shared guidance reaches the interactive
-// session, so a skill invoked there already carries the rule and an include would be reinforcement; reinforcement is
-// added when the primary statement is observed to fail, not in anticipation of it. A subagent runs on its own system
-// prompt and never loads shared guidance at all, so every subagent that composes prose is a carrier and no skill is.
-//
-// `canary.md` is the one subagent absent, because it exercises the deployment mechanism and is never invoked.
-const CARRIERS: ReadonlyArray<string> = [
-  'subagents/aspect-code-reviewer.md',
-  'subagents/aspect-silent-failure-reviewer.md',
-  'subagents/aspect-test-reviewer.md',
-  'subagents/code-simplification-reviewer.md',
-  'subagents/orchestrated-architect.md',
-  'subagents/orchestrated-coder.md',
-  'subagents/orchestrated-planner.md',
-  'subagents/orchestrated-reviewer.md',
-  'subagents/plan-reviewer.md',
-  'subagents/plan-reviser.md',
-  'subagents/planner.md',
-  'subagents/savings-analyzer.md',
-];
+// A carrier is a body that cannot read the rule's primary statement. `guidance/shared/AGENTS.md` installs
+// unconditionally and reaches every interactive session; a subagent runs on its own system prompt and never loads it.
+const CARRIERS: ReadonlyArray<string> = listSubagentCarriers();
 
 describe('plain-speech reach', () => {
   describe.each(CARRIERS)('%s', (relativePath) => {
@@ -106,6 +97,14 @@ describe('plain-speech reach', () => {
 /** Returns a carrier's include-expanded body — what the install pipeline goes on to rewrite and write out. */
 async function expandCarrier(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+}
+
+/** Returns every subagent body the rule must reach, as content-root-relative paths. */
+function listSubagentCarriers(): ReadonlyArray<string> {
+  return readdirSync(path.join(CONTENT_ROOT, 'subagents'))
+    .filter((entry) => entry.endsWith('.md') && !EXEMPT_SUBAGENTS.has(entry))
+    .toSorted()
+    .map((entry) => `subagents/${entry}`);
 }
 
 /** Returns the partial's raw content. */
