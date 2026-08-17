@@ -26,7 +26,7 @@ State the code as it **is**, in the present tense — never as it was, as it mig
 
 **2. The deletion test — would a reader lose anything if the comment were gone?** Then cut it.
 
-A comment that paraphrases the line below it, restates the test's own name, or re-describes what a well-named function it calls already documents carries nothing. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
+A comment that paraphrases the line below it, restates the test's own name, or re-describes what a well-named function it calls already documents tells the reader nothing. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
 
 **3. The one-location test — is this fact already documented where it belongs?** Then cut it.
 

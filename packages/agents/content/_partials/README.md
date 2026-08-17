@@ -6,7 +6,7 @@ This README is the canonical reference for the partial system. The expander is i
 
 ## Choosing a bucket
 
-Shared Markdown lives in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is — and the choice decides whether the agent reliably sees it at all.
+Shared Markdown belongs in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is — and the choice decides whether the agent reliably sees it at all.
 
 - **`_partials/` — content the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists it works through, and the doctrine for an act it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
 - **`_data/` — content the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
