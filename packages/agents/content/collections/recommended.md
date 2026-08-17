@@ -15,7 +15,7 @@ The public collection. Membership claims an artifact was examined and found gene
 
 Membership is per-artifact and enumerated in full rather than by dependency root, so the closure check reads a set nobody's edges can quietly extend.
 
-The two skills belong here on different grounds. A rulebook of the personal collection names `capture-feedback` in a body token, and `capture-feedback` names `capture-event` in another; no collection can be closed over an artifact of lesser standing, so both were promoted. `capture-event`'s promotion was forced by that chain rather than chosen on its own merits, so it is the one member to re-examine first. `capture-feedback` qualifies on its own terms: It names no store, declares the registry a capture needs, and routes a record by a rule any registry can answer.
+The skills belong here on different grounds. A rulebook of the personal collection names `capture-feedback` in a body token, and `capture-feedback` names `capture-event` in another; no collection can be closed over an artifact of lesser standing, so both were promoted. `capture-event`'s promotion was forced by that chain rather than chosen on its own merits, so it is the one member to re-examine first. `capture-feedback` qualifies on its own terms: It names no store, declares the registry a capture needs, and routes a record by a rule any registry can answer.
 
 `understanding-codeassembly` qualifies on its own terms too: What it states is a mechanism every consumer meets, not a preference, and the guidance a reader needs beyond the trigger is in the reference it links rather than in the ambient body every session loads.
 

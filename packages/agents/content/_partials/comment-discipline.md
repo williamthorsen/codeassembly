@@ -34,7 +34,7 @@ The library's behavior belongs in the library's docs. A helper's contract belong
 
 ### Carve-outs
 
-These are exempt from the tests. They are permissions, not requirements.
+These pass the tests. They are permissions, not requirements.
 
 - **Test comments**: Non-obvious setup the test name does not convey; an indirect assertion, naming the reason for the indirection; the rationale for a skip.
 - **`eslint-disable` rationales**: Why _this_ rule is suppressed _here_, and nothing more: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.` The carve-out applies to the comment, not to the suppression; whether to suppress at all is an `anti-patterns` question.

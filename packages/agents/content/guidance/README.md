@@ -6,7 +6,7 @@ This README is for maintainers of this directory. It is not referenced by any `<
 
 ## `shared/AGENTS.md`
 
-Inlined verbatim into every rendered platform guidance file via the directive expander, which puts it in every agent invocation — subagents included — as ambient context.
+Inlined verbatim into every rendered platform guidance file via the directive expander, which puts it in every session that loads one of those files. A subagent never loads one, so doctrine a subagent needs is inlined from `_partials/` instead.
 
 ## Ambient delivery: Harness regions
 
