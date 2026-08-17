@@ -8,6 +8,7 @@ import { readNoteContent } from '@williamthorsen/kb/note-io';
 import { extractString } from '../kb-shared/note-helpers.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
+import { loadWorkTypes } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
 /** Artifact filename suffix holding the lede the agent published, and the heading that lede sits under. */
@@ -278,8 +279,9 @@ async function resolveIdentity(input: {
     return { ok: false, error: 'unresolved-identity', message: 'scope could not be resolved; pass --scope' };
   }
 
-  const tier = await resolveTier({ dataDir: input.dataDir, type });
-  if (tier === null) {
+  const workTypes = await loadWorkTypes(input.dataDir);
+  const tier = workTypes?.get(type)?.tier;
+  if (tier === undefined) {
     return {
       ok: false,
       error: 'unresolved-identity',
@@ -300,38 +302,6 @@ async function resolveIdentity(input: {
       ...(ticket !== null && { ticket }),
     },
   };
-}
-
-/**
- * Looks up a work type's tier in the installed taxonomy, matching the canonical key or any declared alias; `null` when
- * the taxonomy is unreadable or declares no such type.
- */
-async function resolveTier(input: { dataDir: string; type: string }): Promise<string | null> {
-  const content = await readFileSafely(path.join(input.dataDir, 'work-types.json'));
-  if (content === null) {
-    return null;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
-  if (!isRecord(parsed) || !Array.isArray(parsed.types)) {
-    return null;
-  }
-
-  for (const entry of parsed.types) {
-    if (!isRecord(entry) || typeof entry.tier !== 'string') {
-      continue;
-    }
-    const aliases = Array.isArray(entry.aliases) ? entry.aliases : [];
-    if (entry.key === input.type || aliases.includes(input.type)) {
-      return entry.tier;
-    }
-  }
-  return null;
 }
 
 // endregion | Helpers
