@@ -6,19 +6,11 @@ const AGENT_LEDE = 'Rulebooks can now address a file by linking to it.';
 const MERGED_LEDE = 'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
 describe(extractApprovedLede, () => {
-  it('reads the agent lede from an accepted decision, whose two texts matched', () => {
-    expect(extractApprovedLede(bodyWith({ merged: false }))).toBe(AGENT_LEDE);
-  });
-
-  it('reads the merged lede from an accepted decision whose texts nonetheless differed', () => {
+  it('reads the merged lede from a record carrying one, whichever verdict its author recorded', () => {
     expect(extractApprovedLede(bodyWith({ merged: true }))).toBe(MERGED_LEDE);
   });
 
-  it('reads the merged lede from a revised decision, whose two texts differed', () => {
-    expect(extractApprovedLede(bodyWith({ merged: true }))).toBe(MERGED_LEDE);
-  });
-
-  it('reads the agent lede from a revised decision whose texts differed only by whitespace', () => {
+  it('reads the agent lede from a record carrying no merged section, whichever verdict its author recorded', () => {
     expect(extractApprovedLede(bodyWith({ merged: false }))).toBe(AGENT_LEDE);
   });
 
