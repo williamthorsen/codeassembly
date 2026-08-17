@@ -27,10 +27,12 @@ export interface DecisionSpec {
   tags?: readonly string[];
 }
 
-/** A temporary corpus: an event store holding the planted records, and a `_data` directory holding the taxonomy. */
+/** A temporary corpus: the event store, the `_data` directory holding the taxonomy, and a home registering the store. */
 export interface CorpusFixture {
   storePath: string;
   dataDir: string;
+  /** Isolated home carrying a `kb.yaml` that registers the store, so no test reads the developer's own registry. */
+  home: string;
 }
 
 /** The agent lede a planted record carries, distinct per record so a test can tell which was selected. */
@@ -40,11 +42,16 @@ export function agentLedeFor(id: string): string {
 
 /**
  * Stands up a temporary event store holding one record per decision spec, plus a `_data` directory carrying the
- * fixture taxonomy. `files` plants raw content under `content/events/`, for a record whose own shape is the subject
- * of the test.
+ * fixture taxonomy and an isolated home registering the store. `files` plants raw content under `content/events/`, for
+ * a record whose own shape is the subject of the test; `storeName` registers the store under something other than the
+ * name the helper serves, which is how a test tells a resolved default from an unregistered one.
  */
 export async function createCorpusFixture(
-  input: { decisions?: readonly DecisionSpec[]; files?: Readonly<Record<string, string>> } = {},
+  input: {
+    decisions?: readonly DecisionSpec[];
+    files?: Readonly<Record<string, string>>;
+    storeName?: string;
+  } = {},
 ): Promise<CorpusFixture> {
   const storePath = await mkdtemp(join(tmpdir(), 'lede-corpus-'));
   const eventsDir = join(storePath, 'content', 'events');
@@ -64,7 +71,16 @@ export async function createCorpusFixture(
   await mkdir(dataDir, { recursive: true });
   await writeFile(join(dataDir, 'work-types.json'), JSON.stringify({ types: FIXTURE_WORK_TYPES }), 'utf8');
 
-  return { storePath, dataDir };
+  const home = await mkdtemp(join(tmpdir(), 'lede-corpus-home-'));
+  const storeName = input.storeName ?? 'codeassembly';
+  await mkdir(join(home, '.agents'), { recursive: true });
+  await writeFile(
+    join(home, '.agents', 'kb.yaml'),
+    `default_kb: ${storeName}\nkbs:\n  ${storeName}:\n    path: ${storePath}\n`,
+    'utf8',
+  );
+
+  return { storePath, dataDir, home };
 }
 
 /** Renders a decision record in the shape `capture-lede-decision` writes. */
