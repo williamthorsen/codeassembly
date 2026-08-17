@@ -1,6 +1,6 @@
 import { extractSection } from '../lib/markdown-sections.ts';
 
-// The body-section contract of a lede decision record. The writer that composes a decision and the reader that mines
+// The body-section contract of a lede decision record. The writer that composes a decision and the reader that parses
 // one share these headings and the tag that marks a decision out from the other events in the store, so neither side
 // can rename a section without the other.
 
