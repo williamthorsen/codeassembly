@@ -97,7 +97,7 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     'A criterion that is merely unbuilt contributes no line',
     // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation the review already
     // flagged gets the contract rewritten to match it, and the finding disappears along with the conflict.
-    'revising the contract to match it would bury the finding',
+    'revising the contract to match it',
   ],
 };
 
