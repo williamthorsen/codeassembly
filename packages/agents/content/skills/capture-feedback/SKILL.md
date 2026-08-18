@@ -8,7 +8,7 @@ user-invocable: true
 
 Record feedback on the agent's behavior as evidence for a future guidance refinement, applying the immediate fix when there is something concrete to change. The user describes a correction or a desired behavior, the agent applies it when applicable, and the agent appends a generalized record that a later recall-driven pass reads to refine guidance.
 
-The actual guidance refinement is **deferred** — this skill captures the candidate, it does not edit the skill, subagent, rulebook, general guidance, or helper. Refinement happens later, in bulk, by recalling the accumulated `feedback` records together, so a single data point never over-fits a rule.
+The actual guidance refinement is **deferred** — this skill captures the candidate, it does not edit the skill, subagent, rulebook, general guidance, or helper. A later pass refines the guidance in bulk, recalling the accumulated `feedback` records together, so a single data point never over-fits a rule.
 
 **Announce at start:** "Using capture-feedback to apply this and record it for guidance refinement."
 
@@ -50,7 +50,7 @@ If the feedback is purely behavioral — a standing rule with nothing to fix rig
 
 Invoke the `{skill:capture-event}` skill to append the record, composing its arguments and body as follows:
 
-- `--store <name|@default>` — the KB housing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: A lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent carries into every project goes to `@default`.
+- `--store <name|@default>` — the KB containing the guidance the record would refine. That subject is what makes `capture-event`'s project-versus-environment rule decidable here: A lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance the agent applies in every project goes to `@default`.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>` — when the refinement target is a skill.
 - `--impact <level>` — optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.

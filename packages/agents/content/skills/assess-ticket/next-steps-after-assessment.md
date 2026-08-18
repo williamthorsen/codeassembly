@@ -37,7 +37,7 @@ These collapse into a single "Update ticket" action regardless of how many dimen
 | ---------------------------- | ---------------------------------------------- |
 | Advisability: `questionable` | Revise ticket to address advisability concerns |
 
-This action shares the ♻️ icon with "Update ticket to match current codebase state" but is a distinct action — it covers content or scope rework prompted by an advisability concern, not factual sync with the codebase. When both fire, both appear as separate options.
+This action shares the ♻️ icon with "Update ticket to match current codebase state" but is a distinct action — it covers content or scope rework prompted by an advisability concern, not factual sync with the codebase. When both apply, both appear as separate options.
 
 ### 🏁 Close actions
 

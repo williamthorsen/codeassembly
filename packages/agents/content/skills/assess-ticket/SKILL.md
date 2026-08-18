@@ -85,14 +85,14 @@ Determine whether the ticket should be implemented as written. Synthesize the fo
 
 1. Apply each facet in turn — does the underlying observation hold? Is scope right at the appropriate class? Does the proposed solution treat the cause? Does the title accurately describe the work?
 2. Synthesize a verdict from the facet results.
-3. Emit one prose evidence bullet per concern surfaced. Bullets do not prefix facet names. Omit bullets entirely when the verdict is `advisable`.
+3. Emit one prose evidence bullet per concern the facets raise. Do not prefix a bullet with its facet name. Omit bullets entirely when the verdict is `advisable`.
 
-Bias toward `advisable` — for a recommendation dimension, false-positive concerns are noisier than false-negative passes. Default to `advisable` unless the codebase yields specific evidence of a facet concern.
+Bias toward `advisable` — for a recommendation dimension, false-positive concerns are noisier than false-negative passes. Default to `advisable` unless the codebase shows specific evidence of a facet concern.
 
 **Verdicts:**
 
 - 🟢 `advisable` — recommend implementing as written; all four facets pass scrutiny
-- 🟠 `questionable` — recommend with concerns; one or more facets surface issues warranting human review
+- 🟠 `questionable` — recommend with concerns; one or more facets raise issues warranting human review
 - 🔴 `inadvisable` — recommend against implementing as written; rework needed before proceeding
 
 #### Complexity
@@ -223,6 +223,6 @@ Complexity uses a **size scale** — emojis represent effort and scope, not conc
 
 - **Evidence over opinion** — every verdict must be supported by specific evidence (file paths, commit SHAs, code references)
 - **Prefer caution on relevance** — use `uncertain` when signals are ambiguous rather than committing to `superseded`
-- **Bias `advisable` absent evidence** — Advisability fires a next-steps prompt on every non-baseline verdict; default to `advisable` unless the codebase yields specific evidence of a facet concern
+- **Bias `advisable` absent evidence** — the skill prompts for next steps on every non-baseline advisability verdict; default to `advisable` unless the codebase shows specific evidence of a facet concern
 - **Assessment first, action on request** — lead with the assessment; offer follow-up actions but do not execute without user selection
 - **Scale to ticket complexity** — a simple ticket gets a brief assessment; a complex ticket with many acceptance criteria gets a thorough one

@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture a lede decision
 
-Record what the author decided about a lede: that the agent's `## What` shipped as written, or that it was rewritten before merge. A bundled helper does the mechanical work — it reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that governed the first, and writes one event record. You present the pair and relay the author's decision.
+Record what the author decided about a lede: that the agent's `## What` shipped as written, or that it was rewritten before merge. A bundled helper does the mechanical work — it reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present the pair and relay the author's decision.
 
 Every lede decision belongs to one corpus, the `codeassembly` event store, whichever repository the pull request merged in. The helper targets it without being told, so a caller never chooses a destination.
 
@@ -19,26 +19,26 @@ A record exists because the author looked at the lede and decided. There are exa
 - **`accepted`** — the author read the agent's lede and shipped it as written.
 - **`revised`** — the author rewrote it before merge.
 
-Declining to decide writes nothing. **The absence of a record carries no meaning, and in particular is not an acceptance**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give — a lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
+Declining to decide writes nothing. **The absence of a record means nothing, and in particular is not an acceptance**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give — a lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
 
-For the same reason, the corpus is outcome-selected: It holds only changes someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison's fixture draw must never read it.
+For the same reason, the corpus is outcome-selected: It contains only changes someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison's fixture draw must never read it.
 
 ## Arguments
 
-| Argument             | Description                                                                            | Required |
-| -------------------- | -------------------------------------------------------------------------------------- | -------- |
-| `--artifact-dir`     | The ticket's artifact directory, holding the pull-request and merge artifacts.         | Yes      |
-| `--pr`               | The pull-request number.                                                               | Yes      |
-| `--merge-commit`     | The merge commit's SHA.                                                                | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--verdict`.   | Mode     |
-| `--verdict`          | The author's decision: `accepted` or `revised`. Mutually exclusive with `--inspect`.   | Mode     |
-| `--store`            | Names a corpus registered under some other name; `@default` is refused.                | No       |
-| `--type`             | Work type. Falls back to the change summary's frontmatter.                             | No       |
-| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.              | No       |
-| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                             | No       |
-| `--merged-lede-file` | File holding the merged lede, for a pull request that wrote no merge artifact.         | No       |
-| `--agent-lede-file`  | File holding the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                  | Injected |
+| Argument             | Description                                                                               | Required |
+| -------------------- | ----------------------------------------------------------------------------------------- | -------- |
+| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.         | Yes      |
+| `--pr`               | The pull-request number.                                                                  | Yes      |
+| `--merge-commit`     | The merge commit's SHA.                                                                   | Yes      |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--verdict`.      | Mode     |
+| `--verdict`          | The author's decision: `accepted` or `revised`. Mutually exclusive with `--inspect`.      | Mode     |
+| `--store`            | Names a corpus registered under some other name; `@default` is refused.                   | No       |
+| `--type`             | Work type. Falls back to the change summary's frontmatter.                                | No       |
+| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.                 | No       |
+| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                | No       |
+| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.         | No       |
+| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                     | Injected |
 
 Exactly one of `--inspect` and `--verdict` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
@@ -64,7 +64,7 @@ The helper prints a JSON object to stdout: `ok: true` with `episode` and `store`
 
 On `ok: false`, report the `message` on one line and stop. The merge has already succeeded — do not present this as a merge failure, and do not retry.
 
-On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The corpus is out of reach, so no decision can be kept; asking for one would spend the author's attention on an answer this skill would then discard.
+On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it can record no decision; asking for one would spend the author's attention on an answer this skill would then discard.
 
 ### 2. Present the pair and ask
 
@@ -80,7 +80,7 @@ When `differ` is `false`, show the single lede and ask:
 1. ■■□ Record it as accepted — you read it and shipped it as written
 2. ■□□ Skip — you did not evaluate it
 
-Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than holding a decision the author did not make.
+Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a decision the author did not make.
 
 ### 3. Record the decision
 
@@ -106,7 +106,7 @@ Report the written `path` on success.
 
 ### Recording a pull request merged outside the merge flow
 
-Such a pull request wrote no merge artifact, so the merged lede has to be supplied. A lede file is read whole and recorded as the lede, with none of the heading extraction the artifact path applies: A file holding the entire pull-request body records the entire body as the lede. Extract the `## What` section as the file is written:
+Such a pull request wrote no merge artifact, so the caller supplies the merged lede. The helper reads a lede file whole and records it as the lede, applying none of the heading extraction it uses on the artifact path: Supply a file containing the entire pull-request body and the entire body becomes the lede. Extract the `## What` section as the file is written:
 
 ```bash
 gh pr view <number> --json body --jq '.body' \
@@ -133,13 +133,13 @@ One event per decision, in the corpus:
 
 Route by the `error` code:
 
-- `no-artifact-dir`, `no-agent-lede`, `no-merged-lede` — the ticket's artifacts do not carry both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
+- `no-artifact-dir`, `no-agent-lede`, `no-merged-lede` — the ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
 - `no-doctrine` — the installed doctrine file is unreadable. Report it as an install problem.
 - `unresolved-identity` — the work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
-- `invalid-args` — surface the message and propose a corrected invocation.
+- `invalid-args` — report the message and propose a corrected invocation.
 - `store-not-registered` — the corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.
-- `readonly-store` — the corpus is registered readonly. Report and stop; no destination is substituted for one the registry protects.
-- `schema-validation` — surface the `errors`.
+- `readonly-store` — the corpus is registered readonly. Report and stop; the skill substitutes no other destination for one the registry protects.
+- `schema-validation` — report the `errors`.
 
 ## Completion
 

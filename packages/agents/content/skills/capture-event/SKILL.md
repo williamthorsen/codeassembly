@@ -8,7 +8,7 @@ user-invocable: true
 
 Append an event record to the shared knowledge substrate, or amend an existing one. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the working directory, and a best-effort `session` and `repo`), validates the event record's required fields, and writes the record atomically. You supply the `summary` and the event body.
 
-This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cross-referencing, and no dedup. The point is to capture the event cheaply and move on; recall and triage happen later via `kb-retrieve`.
+This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cross-referencing, and no dedup. The point is to capture the event cheaply and move on; a later pass recalls and triages the record via `kb-retrieve`.
 
 **Announce at start:** "Using capture-event to record this event."
 
@@ -43,7 +43,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 
 ### Store selection
 
-`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture lands in the named store and never in a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`. Omitting `--store` is refused with an error that lists the registered stores rather than defaulting silently.
+`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture goes to the named store and never to a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`. Omitting `--store` is refused with an error that lists the registered stores rather than defaulting silently.
 
 Choose the destination deliberately. When the lesson is specific to a project, pass that project's KB with `--store <name>`. Only when the lesson is environment-level, meaning an observation or refinement that applies across every project in the current environment, route it to the registry's `default_kb` by passing `--store @default`. Reaching the default is an explicit act, not what happens when the flag is forgotten.
 
@@ -51,7 +51,7 @@ Choose the destination deliberately. When the lesson is specific to a project, p
 
 `--amend <id>` rewrites an existing capture in place — for example, an event a `capture-feedback` pass got wrong. Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
 
-Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so the correction lands as a new record rather than a change to history.
+Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so the correction becomes a new record rather than a change to history.
 
 ## Runtime dependencies
 
@@ -91,12 +91,12 @@ On `ok: true`, report the captured `id` and `path`.
 
 On `ok: false`, route by the `error` code:
 
-- `invalid-args` — surface the helper's message and propose a corrected invocation.
+- `invalid-args` — report the helper's message and propose a corrected invocation.
 - `missing-store` — `--store` was omitted. Re-run with `--store <name>` for the KB the user named, or `--store @default` for an environment-level lesson; the message lists the registered stores.
 - `store-not-registered` — the named store is not in `kb.yaml`. Confirm the store name or register it.
 - `readonly-store` — the store is marked readonly; captures are refused.
 - `no-default-store` — `--store @default` was given but no `default_kb` is configured. Name a store explicitly or configure a default with `kb set-default`.
-- `schema-validation` — surface the `errors`, then supply the missing field and retry.
+- `schema-validation` — report the `errors`, then supply the missing field and retry.
 - `amend-not-found` — `--amend` named an id with no event at it. Confirm the id and store.
 - `amend-parse` — the event to amend is not a valid event record. Inspect the file.
 
