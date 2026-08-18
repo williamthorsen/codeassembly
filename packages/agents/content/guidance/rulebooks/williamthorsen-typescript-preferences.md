@@ -15,11 +15,11 @@ Export by name. Never use a default export: Importers invent their own names, an
 
 ## Barrels
 
-A barrel (an `index.ts` that re-exports a directory's modules) is permitted only at a package's published entry point: a module named in the package's `exports` map, whether the root entry or a subpath. Everywhere else, an import reaches the defining module directly.
+A barrel (an `index.ts` that re-exports a directory's modules) is permitted only at a package's published entry point: a module named in the package's `exports` map, whether the root entry or a subpath. Everywhere else, an import names the defining module directly.
 
-Importing one symbol through a barrel loads every module it touches.
+Importing one symbol through a barrel loads every module the barrel re-exports.
 
-A barrel is also permitted at a vendor boundary that lint enforces: A directory holding the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary no lint rule protects admits no barrel.
+A barrel is also permitted at a vendor boundary that lint enforces: A directory containing the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary no lint rule protects gets no barrel.
 
 ## Import specifiers
 
@@ -47,9 +47,9 @@ function isConfig(value: unknown): value is Config {
 }
 ```
 
-Two exceptions, each carrying a comment saying why: a TypeScript limitation where the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.
+Two exceptions, each with a comment saying why: a TypeScript limitation where the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.
 
-Never use `any`, a non-null assertion (use a runtime assertion instead), or a generic parameter promising a guarantee the function cannot deliver. Model known variants as a union, and validate external data with a type guard or a schema library.
+Never use `any`, a non-null assertion (use a runtime assertion instead), or a generic parameter that claims a guarantee the function cannot deliver. Model known variants as a union, and validate external data with a type guard or a schema library.
 
 Prefer `undefined` to `null` unless serialization requires otherwise.
 

@@ -20,7 +20,7 @@ const DOCTRINE_HEADING = '## Comment discipline';
 
 /** Phrases that must survive an edit to the partial, so a gutted doctrine cannot still pass the heading check. */
 const DOCTRINE_RULES: ReadonlyArray<string> = [
-  "A comment drafted for someone else's file is a source comment and takes the same audit.",
+  "A comment drafted for someone else's file is a source comment",
   '**1. The stranger test',
   '**2. The deletion test',
   '**3. The one-location test',

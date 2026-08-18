@@ -14,11 +14,11 @@
 
 ## Concision
 
-Detail adds value up to a peak, then taxes the reader and buries the signal. Compose tight from the start: Lead with the minimal skeleton and add a sentence only when it changes what the reader does. Never drop a decision, constraint, or actionable fact for brevity. If you find yourself trimming, you started too loose. Full principle: `_data/concision.md` in the agents skills tree.
+Detail adds value up to a peak, then costs the reader attention and hides the signal. Compose tight from the start: Lead with the minimal skeleton and add a sentence only when it changes what the reader does. Never drop a decision, constraint, or actionable fact for brevity. If you find yourself trimming, you started too loose. Full principle: `_data/concision.md` in the agents skills tree.
 
 ## Plain speech
 
-When writing practical documentation, speak plainly. "Practical documentation" is functional text such as tickets, plans, instructions, PR descriptions, commit messages, and comments. Use the plain word and name the actor: "The function reports warnings", not "Findings arrive as warnings". Creative prose and rhetorical devices are reserved for persuasive documentation such as marketing and website copy.
+When writing practical documentation, speak plainly. "Practical documentation" is functional text such as tickets, plans, instructions, PR descriptions, commit messages, and comments. Use the clearest verb: A file **contains** a section (not "bears" or "carries"), a function **returns** a result (not "the function answers with the result"), a tool **reports** its findings (not "the findings arrive"). Reserve creative prose and rhetorical devices for persuasive documentation such as marketing and website copy.
 
 ## Code descriptions
 
@@ -57,10 +57,10 @@ Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code
 
 When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
-A saved artifact records a moment, not a running state. Once written it stands: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
+A saved artifact records a moment, not a running state, and once written it stays as written: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh. Update a saved artifact only where the next step in the flow reads it, or where a skill directs the write (stamping a PR URL into a change summary, for instance).
 
-The same restraint governs the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
+The same restraint applies to the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 
 ## Commits
 
-Invoke the `create-commit` skill to make a commit. It carries the procedure: what to stage, one commit per logical unit of work, and how the title is rendered. The `consult-commit-conventions` skill carries what the message is composed to -- the title and body conventions, the work-type taxonomy, and the branch-naming format -- and is worth consulting on its own before writing a message by hand.
+Invoke the `create-commit` skill to make a commit. It states the procedure: what to stage, one commit per logical unit of work, and how the title is rendered. The `consult-commit-conventions` skill states what the message is composed to -- the title and body conventions, the work-type taxonomy, and the branch-naming format -- and is worth consulting on its own before writing a message by hand.

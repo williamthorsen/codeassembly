@@ -7,7 +7,7 @@ version: 1
 
 # William Thorsen's comment preferences
 
-Grammatical register for comments written into source. What earns a comment and what a comment may say are governed by comment discipline; only form is set here.
+Grammatical register for comments written into source. Comment discipline decides what deserves a comment and what a comment may say; only form is set here.
 
 ## Doc descriptions
 

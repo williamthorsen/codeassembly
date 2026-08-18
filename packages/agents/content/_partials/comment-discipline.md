@@ -1,22 +1,22 @@
 ## Comment discipline
 
-Every comment you write **into source** is governed here: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment and takes the same audit.
+These rules apply to every comment you write **into source**: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment, and the same audit applies to it.
 
 The reader is an engineer six months from now with no transcript, no session, and no memory of the change. Write for that reader.
 
 ### The baseline
 
-Every function, method, class, and component **must** carry a description. One line is often enough. Exceed that length only when a reader would be substantially helped by a longer explanation (and don't include anything readily apparent from a quick glance at the code). If in doubt, be terse. 
+Every function, method, class, and component **must** have a description. One line is often enough. Exceed that length only when a reader would be substantially helped by a longer explanation (and don't include anything readily apparent from a quick glance at the code). If in doubt, be terse. 
 
 The description of a function or method describes what it **does** and leads with a verb; any other opening is nonstandard and should not be emulated. The verb's mood is a project preference and is not set here.
 
 The description of a class or component describes what it **is**.
 
-Add descriptions of constants only if a description meaningfully facilitates understanding of the code. Load-bearing constants are good candidates for description. Most other constants are not; rely on good variable names instead. Do not describe an interface or type unless its purpose is nonobvious. 
+Add descriptions of constants only if the description helps a reader understand the code. Load-bearing constants are good candidates for description. Most other constants are not; rely on good variable names instead. Do not describe an interface or type unless its purpose is nonobvious. 
 
 ### Three tests
 
-Apply all three to every comment you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Every line pays rent.
+Apply all three to every comment you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Each one must justify its place.
 
 **1. The stranger test — would this interest only someone who watched the change happen?** Then cut it.
 
@@ -26,7 +26,7 @@ State the code as it **is**, in the present tense — never as it was, as it mig
 
 **2. The deletion test — would a reader lose anything if the comment were gone?** Then cut it.
 
-A comment that paraphrases the line below it, restates the test's own name, or re-describes what a well-named function it calls already documents carries nothing. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
+A comment that paraphrases the line below it, restates the test's own name, or re-describes what a well-named function it calls already documents tells the reader nothing. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
 
 **3. The one-location test — is this fact already documented where it belongs?** Then cut it.
 
@@ -34,10 +34,10 @@ The library's behavior belongs in the library's docs. A helper's contract belong
 
 ### Carve-outs
 
-These survive the tests. They are permissions, not requirements.
+These pass the tests. They are permissions, not requirements.
 
 - **Test comments**: Non-obvious setup the test name does not convey; an indirect assertion, naming the reason for the indirection; the rationale for a skip.
-- **`eslint-disable` rationales**: Why _this_ rule is suppressed _here_, and nothing more: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.` The carve-out governs the comment, not the suppression; whether to suppress at all is an `anti-patterns` question.
+- **`eslint-disable` rationales**: Why _this_ rule is suppressed _here_, and nothing more: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.` The carve-out applies to the comment, not to the suppression; whether to suppress at all is an `anti-patterns` question.
 
 ### Before and after
 
