@@ -70,7 +70,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     'They are evidence to weigh, and none of them matches rule 1 on its own',
     // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
-    'line naming the specific unsettled decision the pass would surface',
+    '`➕` line naming the specific unsettled decision the pass would surface',
   ],
 };
 
