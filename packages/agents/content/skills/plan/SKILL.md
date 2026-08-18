@@ -20,11 +20,11 @@ Create an implementation plan from a ticket or task. `plan` is the standalone pl
 
 Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description. Once the source is resolved, emit `skill.started` (payload `{"skill":"plan"}`) per [Lifecycle events](#lifecycle-events).
 
-When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions carry no provenance.
+When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions have no provenance.
 
 ## Output format
 
-The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps live in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted: The plan is produced in an interactive, user-invoked session (the user supplies and vets the source ticket and approves the next step).
+The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps are in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted: The plan is produced in an interactive, user-invoked session (the user supplies and vets the source ticket and approves the next step).
 
 The body following the frontmatter uses the shared implementation-plan template, the same one `design-and-plan` Phase 5 inlines, so both skills emit an identical plan:
 
