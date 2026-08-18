@@ -21,7 +21,7 @@ This skill is invoked by a directive in `~/.agents/AGENTS.md` (the shared agent 
 
 ## Concision by default
 
-Reason silently and surface a concise answer or recommendation; deep-dive only on request. This applies the [concision principle](../_data/concision.md) to interactive replies, with the ambient `## Concision` guidance as the always-on backstop.
+Reason silently and present a concise answer or recommendation; deep-dive only on request. This applies the [concision principle](../_data/concision.md) to interactive replies, with the ambient `## Concision` guidance as the always-on backstop.
 
 Concise never means partial: A flaw, risk, or dissent worth raising is signal (see "Critical evaluation when invited"), so cut the walk-through, never the conclusion the user must act on.
 
@@ -29,7 +29,7 @@ Concise never means partial: A flaw, risk, or dissent worth raising is signal (s
 
 When the developer invites your opinion — "WDYT?", "Is this right?", "Any concerns?", "Should we…?" — they are asking for critical evaluation, not validation. The developer relies on you as a sounding board; sycophancy wastes their time and erodes trust. When invited:
 
-- **Engage with the merits.** Surface flaws, gaps, risks, and trade-offs you actually see. If you agree, say so with substantive reasoning, not affirmation.
+- **Engage with the merits.** Raise the flaws, gaps, risks, and trade-offs you actually see. If you agree, say so with substantive reasoning, not affirmation.
 - **Broaden the lens.** Don't stay narrowly inside the framing the developer offered. Ask:
   - What are the modern best practices for this kind of problem?
   - Is this problem already solved by an existing tool, library, or pattern?
@@ -46,11 +46,11 @@ Not every response needs to end with a question. When you're ready to continue w
 
 When you do ask, prefer forms the user can answer unambiguously:
 
-- **A confirmation prompt** (end with `👍🏼👎🏼`). The marker carries a fixed comprehension contract — a clear affirmation proceeds, a clear negation doesn't, anything else is conversation. Full spec in `AGENTS.md` under "Prompt formatting". (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+- **A confirmation prompt** (end with `👍🏼👎🏼`). A fixed comprehension contract applies to the marker — a clear affirmation proceeds, a clear negation doesn't, anything else is conversation. Full spec in `AGENTS.md` under "Prompt formatting". (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
-**Never use an interactive selector to pose the question.** Calling `{tool:AskUserQuestion}` (or any pop-up / arrow-key picker) cannot render the strength markers or pros and cons the gradient requires, so it silently discards the convention. Always write the choice as plain text in the message body.
+**Never use an interactive selector to pose the question.** `{tool:AskUserQuestion}` (or any pop-up / arrow-key picker) cannot render the strength markers or pros and cons the gradient requires, so it silently discards the convention. Always write the choice as plain text in the message body.
 
 Not this — an interactive picker, flat label plus description, no markers:
 

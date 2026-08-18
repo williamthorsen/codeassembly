@@ -27,7 +27,7 @@ Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comm
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
-- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). It feeds the step-4 inference and the step-6 guard; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
+- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
@@ -78,11 +78,11 @@ Three relationships are available, each stated from the new ticket's side:
 - **blocked-by** — the new ticket cannot proceed until an existing ticket lands.
 - **blocking** — an existing ticket cannot proceed until the new ticket lands.
 
-Decide which apply from the reason this ticket is being created, sharpened by `branch_ticket_id` (step 1): Work split out of the current branch's ticket stands in a relationship to it, and a backlog idea raised in passing stands in none. An argument supplied by the caller replaces the inference for its own relationship.
+Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 
-**Most tickets carry none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
+**Most tickets have none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
 
-Where one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so a wrong target is visible while it is still free to correct. Where the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to surface as a skip in step 7.
+Where one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so a wrong target is visible while it is still free to correct. Where the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -162,7 +162,7 @@ Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` 
 
 #### Jira path (stub)
 
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub holds no URL yet, so it persists nothing new — consistent with today.
+If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub has no URL yet, so it persists nothing new — consistent with today.
 
 ### 7. Apply relationships
 
@@ -174,7 +174,7 @@ Otherwise apply relationships after the ticket exists rather than as part of cre
 
 #### GitHub path
 
-One call carries every relationship decided:
+One call applies every relationship decided:
 
 ```bash
 gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
@@ -190,7 +190,7 @@ Use whatever the platform's own tooling offers for parent and blocking relations
 
 #### When a relationship does not land
 
-A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Carry every skipped relationship and its reason into the completion output — that report is how a platform's missing relationship surface becomes visible.
+A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Include every skipped relationship and its reason in the completion output — that report is how a platform's missing relationship surface becomes visible.
 
 ### 8. Save local artifacts
 
