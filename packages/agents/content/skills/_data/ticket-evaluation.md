@@ -10,4 +10,4 @@ The author may have framed it poorly, missed the actual problem, scoped it too n
 - **Is the title accurate?** "Flaky test in X" may be a hygiene anti-pattern that exists in three places. Reframe titles when the underlying truth is broader or different.
 - **Is the change worth making?** Synthesize the above: Doing nothing, or doing something narrower, may be the right call. Don't treat acceptance as the default.
 
-When evaluation surfaces a divergence from the ticket as written, raise the observation to the user before designing — but lead with the substantive finding, not the ticket. The ticket's job was to start the conversation; once it has started, the codebase reality and the user's judgment govern, not the original wording.
+When evaluation surfaces a divergence from the ticket as written, raise the observation to the user before designing — but lead with the substantive finding, not the ticket. The ticket's job was to start the conversation; once it has started, the codebase reality and the user's judgment decide, not the original wording.

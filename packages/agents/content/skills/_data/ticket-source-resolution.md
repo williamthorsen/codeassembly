@@ -21,7 +21,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 ### Steps
 
-1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON carries `ticket_id`, the persisted `ticket_url`, and `ticket_base_url` (the org-stable base mirrored from the `ticket.base_url` preference; see [Stored ticket URL](#stored-ticket-url)).
+1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON contains `ticket_id`, the persisted `ticket_url`, and `ticket_base_url` (the org-stable base mirrored from the `ticket.base_url` preference; see [Stored ticket URL](#stored-ticket-url)).
 
 2. **Prefer the stored URL.** If `ticket_url` is a non-null string, fetch the ticket directly from that URL — skip the platform/identifier reconstruction below. If the stored URL does not yield the expected ticket, invalidate it per [Stored ticket URL](#stored-ticket-url) and continue with reconstruction.
 

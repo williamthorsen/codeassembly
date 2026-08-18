@@ -4,7 +4,7 @@ Spike work is an investigation, not a build: Its artifacts answer questions and 
 
 Spike mode is entered explicitly (the invocation signals it) and is not auto-detected from ticket type, label, or title. Everything outside the two templates below (source resolution, staleness, Q&A, saving) is unchanged from the feature flow.
 
-The concision and content-placement doctrines that govern feature tickets and plans apply unchanged; only what differs for a spike is spelled out here.
+The concision and content-placement doctrines for feature tickets and plans apply unchanged; only what differs for a spike is stated here.
 
 ## Spike ticket template
 
@@ -40,7 +40,7 @@ The concision and content-placement doctrines that govern feature tickets and pl
 Deliverable: a findings & recommendation artifact.
 ```
 
-`Context` and `Scope` are opt-in: Include either only when it carries signal the reader must act on.
+`Context` and `Scope` are opt-in: Include either only when it adds signal the reader must act on.
 
 Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is a first-class section; acceptance criteria are questions-to-answer and decisions-to-enable rather than observable-behavior checkboxes; there is no test or documentation criterion; the deliverable is a findings artifact, saved via the standard `save-artifact` conventions (no dedicated artifact type).
 

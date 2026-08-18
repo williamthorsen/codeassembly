@@ -1,6 +1,6 @@
 # Concision
 
-Detail adds value up to a peak, then taxes the reader: Past the peak, added detail buries the signal it was meant to carry. Add detail only while it adds signal. Weigh each sentence by the signal it carries, not its length.
+Detail adds value up to a peak, then costs the reader attention: Past the peak, added detail hides the signal it was meant to convey. Add detail only while it adds signal. Weigh each sentence by the signal it adds, not its length.
 
 ## Compose tight the first time
 
@@ -8,7 +8,7 @@ Compose from a skeleton, not a full draft you trim later. Start with the one sen
 
 ## Proportionality
 
-A load-bearing decision earns elaboration; a routine one earns a clause. A decision is load-bearing if the reader could act differently depending on it.
+A load-bearing decision is worth elaborating; a routine one is worth a clause. A decision is load-bearing if the reader could act differently depending on it.
 
 ## What to cut
 
@@ -20,4 +20,4 @@ For each sentence, ask: Would removing it change what the reader does, or must k
 
 ## Cut noise, never signal
 
-This overrides the cut-list and self-test: Never drop a decision, constraint, or actionable fact for brevity, even when they would remove it. Detail is routed, not omitted: Each artifact's doctrine names where cut detail belongs.
+This overrides the cut-list and self-test: Never drop a decision, constraint, or actionable fact for brevity, even when applying them would remove it. Detail is routed, not omitted: Each artifact's doctrine names where cut detail belongs.

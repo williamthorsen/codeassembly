@@ -4,7 +4,7 @@ Standards for AI-generated artifact storage, naming, and lifecycle.
 
 ## Directory structure
 
-All artifacts live under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Invoke the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) to resolve `artifact_base_dir`:
+All artifacts are stored under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Invoke the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) to resolve `artifact_base_dir`:
 
 ```
 {base_dir}/
@@ -12,7 +12,7 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/a
     └── {project-slug}/
         ├── tickets/
         │   └── {ticket-id}/
-        │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts (devlogs land here when a ticket is in session)
+        │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts (devlogs are written here when a ticket is in session)
         │       └── {run-id}/                                 ← review run directory
         │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
@@ -51,7 +51,7 @@ projects/{project-slug}/tickets/{ticket-id}/{run-id}/
 
 Examples: `20260221-034100Z-interactive`, `20260221-090000Z-orchestrated`
 
-Multiple runs per ticket (restarts, separate review cycles) each get their own run directory. Created by the first artifact in a run.
+Multiple runs per ticket (restarts, separate review cycles) each get their own run directory, created when the run's first artifact is written.
 
 ### Persistent export destination
 
@@ -83,7 +83,7 @@ The reader does still hard-fail on malformed YAML, missing git state, and shape 
 {base_dir}/projects/{project-slug}/tickets/{ticket-id}/
 ```
 
-Ticket-level artifacts and run directories both live here. Invoke the bundled session-context deriver to obtain `ticket_id`.
+Ticket-level artifacts and run directories are both stored here. Invoke the bundled session-context deriver to obtain `ticket_id`.
 
 ### Run paths
 
@@ -102,7 +102,7 @@ Ticket-level artifacts and run directories both live here. Invoke the bundled se
 
 Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `deferred-findings` is hardcoded and cannot be overridden.
 
-Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
+Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of which directory they are written to.
 
 ## Naming conventions
 
@@ -226,7 +226,7 @@ These two sites read the script's JSON output, then write the YAML frontmatter t
 
 Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and shipped as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose toolbelt includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
-There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path; failure to find one becomes a recovery, not a hard stop.
+There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and a missing one starts a recovery rather than a hard stop.
 
 Invocation surface:
 
@@ -289,7 +289,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | `scope` | yes      | The scope segment for the commit/PR title (e.g., `agents`, `factory`, `root`).                   |
 | `type`  | yes      | The work type (see `work-types.json`) for the commit/PR title (e.g., `feat`, `fix`, `refactor`). |
 
-The unified frontmatter shape places `provenance:` first, then top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`), then the consumer extensions (`title`, `scope`, `type`). `commit:` and `ticket_id:` appear exactly once each and serve a dual role: canonical identity fields that downstream consumers may also read. This is the canonical example for any future skill that carries consumer-specific fields alongside canonical ones.
+The unified frontmatter shape places `provenance:` first, then top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`), then the consumer extensions (`title`, `scope`, `type`). `commit:` and `ticket_id:` appear exactly once each and serve a dual role: canonical identity fields that downstream consumers may also read. This is the canonical example for any future skill that adds consumer-specific fields alongside canonical ones.
 
 ## run-index.json
 
@@ -664,7 +664,7 @@ V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ## Artifact types
 
-Every type below is governed by [Mutability](#mutability): A saved artifact is a point-in-time record, never revised to match anything downstream of it, and revision writes a new artifact rather than editing one.
+The [Mutability](#mutability) rule applies to every type below: A saved artifact is a point-in-time record, never revised to match anything downstream of it, and revision writes a new artifact rather than editing one.
 
 ### Run artifacts (in run directories)
 
@@ -725,13 +725,13 @@ Run ends when no party has further actionable input. The last artifact can be fr
 
 ### Stacking
 
-Multiple reviews can arrive in the same iteration (e.g., `reviewer_review` + `overseer_review`). The next `coder_change-summary` addresses all of them.
+An iteration can contain multiple reviews (e.g., `reviewer_review` + `overseer_review`). The next `coder_change-summary` addresses all of them.
 
 ## Disposition rules
 
 ### Embedding
 
-Dispositions live in the document produced by the responding role. No separate disposition artifact.
+Dispositions are stated in the document produced by the responding role. No separate disposition artifact.
 
 ### Scope
 
@@ -760,11 +760,11 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 
 ### Actionability gate
 
-Every finding (F/W/T/R/S) must hand the author a concrete decision they can act on **in the change under review**: fix it, defer it with a ticket, or explicitly accept it. A finding that produces no decision is not a finding; drop it, don't soften it.
+Every finding (F/W/T/R/S) must give the author a concrete decision they can act on **in the change under review**: fix it, defer it with a ticket, or explicitly accept it. A finding that produces no decision is not a finding; drop it, don't soften it.
 
-A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as carrying a burden of proof, weighed against that full cost, never against its line length.
+A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as taking on a burden of proof, weighed against that full cost, never against its line length.
 
-This gate is the [concision principle](./concision.md) applied to findings: A finding, like any detail, taxes every reader once its cost outweighs the decision it enables.
+This gate is the [concision principle](./concision.md) applied to findings: A finding, like any detail, costs every reader attention once that cost outweighs the decision it enables.
 
 **Hedging language is a delete trigger, not a softening device.** If a finding's own body qualifies it out of relevance, it does not belong. Drop it. If the condition genuinely holds now, drop the qualifier instead and state the finding plainly. Disqualifying tells include:
 
@@ -836,7 +836,7 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 | W (no F)                | `medium`    | Real issues to address     |
 | F                       | `high`      | Must fix before merge      |
 
-Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` so that an unattended fix cycle stays out of pre-existing code, while a legacy-only review still renders the post-review findings menu with its full option pool, where a human can weigh a drive-by. The two axes differ on purpose.
+Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` so that an unattended fix cycle does not touch pre-existing code, while a legacy-only review still renders the post-review findings menu with its full option pool, where a human can weigh a drive-by. The two axes differ on purpose.
 
 ### Re-review severity escalation
 
@@ -844,7 +844,7 @@ Criticality classifies; it does not decide what a reviewer shows the user. Legac
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality and are never merge-blocking. They belong wherever knowledge is worth carrying forward — housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
+Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality and are never merge-blocking. They belong wherever knowledge is worth keeping — housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
@@ -854,13 +854,13 @@ Consumers that present insights (`wrap-up`, `summarize-chat`, review skills and 
 
 ### Insight gate
 
-An insight is the deliberate complement to a finding: A finding hands the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate) — "no severity, no action" is exactly the low bar that invites filler.
+An insight is the deliberate complement to a finding: A finding gives the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate) — "no severity, no action" is exactly the low bar that invites filler.
 
 Emit an insight only when it is **non-obvious knowledge a future reader is materially worse off without**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
 
 **Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change the author should weigh, it is an `S`, not an insight — and when in doubt with any action implied, classify it as `S`.
 
-Insights never carry criticality, never block a merge, and never count toward a review score or the [Overall criticality mapping](#overall-criticality-mapping).
+Insights never have criticality, never block a merge, and never count toward a review score or the [Overall criticality mapping](#overall-criticality-mapping).
 
 ## Artifact lifecycle
 
@@ -873,7 +873,7 @@ A saved artifact is a point-in-time record of what its author produced at the mo
 
 These mutations are sanctioned, and no others:
 
-- **Frontmatter a skill's own step directs**: `create-pr` backfills a `pr:` line into the change summary, and `plan-orchestrable-steps` prepends resolved frontmatter to the planner's markdown snapshot. A pointer added after the fact is provenance the artifact could not carry at write time, which is what separates it from a content rewrite.
+- **Frontmatter a skill's own step directs**: `create-pr` backfills a `pr:` line into the change summary, and `plan-orchestrable-steps` prepends resolved frontmatter to the planner's markdown snapshot. A pointer added after the fact is provenance the artifact could not include at write time, which is what separates it from a content rewrite.
 - **Artifacts declared mutable**: `orchestration-plan.json` is overwritten each planning iteration, while its `.md` counterparts are versioned snapshots.
 - **Working input forwarded to another agent**: The receiving agent acts on the contents, so staleness would misdirect real work.
 

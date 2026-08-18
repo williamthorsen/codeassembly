@@ -1,6 +1,6 @@
 # Scope and deferral decisions
 
-Governs one decision: When work surfaces that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change), does it fold into the current change, or spin off into a separate ticket?
+Covers one decision: When work surfaces that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change), does it fold into the current change, or spin off into a separate ticket?
 
 ## The default: Fold in
 
@@ -8,7 +8,7 @@ Work the problem requires, or that is cheap and serves the ticket's goal, folds 
 
 - a genuinely separable concern,
 - a materially different risk surface,
-- size that would swamp the current change, or
+- size that would overwhelm the current change, or
 - independent prioritization (the work can wait and competes with other backlog priorities on its own merits).
 
 "The ticket didn't mention it" is never such a reason, and must not be offered as one. When the discovered work addresses the same underlying problem, closing only the ticket-named part leaves the problem partially solved, so that work is required, not optional.
@@ -19,13 +19,13 @@ Work the problem requires, or that is cheap and serves the ticket's goal, folds 
 
 ## Why a separate ticket is expensive
 
-A new ticket is not free. Beyond the work itself, it commits the whole pipeline (creation, reading, evaluation, design, planning, implementation, review, checks, push, PR, approval, merge, and cleanup) and carries an opportunity cost against everything else in the backlog. Small, clean tickets yield small, clean PRs that are easy to approve; that value is real, but it must clear the pipeline-and-opportunity bar, weighed against the whole flow rather than any single step. For a one-line vocabulary fix or a two-line cleanup, the overhead can dwarf the underlying work by an order of magnitude; routing it into a separate ticket is not risk-management but unnecessary cost.
+A new ticket is not free. Beyond the work itself, it requires the whole pipeline (creation, reading, evaluation, design, planning, implementation, review, checks, push, PR, approval, merge, and cleanup) and has an opportunity cost against everything else in the backlog. Small, clean tickets yield small, clean PRs that are easy to approve; that value is real, but it must outweigh the pipeline and opportunity costs, judged against the whole flow rather than any single step. For a one-line vocabulary fix or a two-line cleanup, the overhead can exceed the underlying work by an order of magnitude; routing it into a separate ticket is not risk-management but unnecessary cost.
 
-Once work is judged genuinely separable, ticket it immediately rather than parking it in the conversation; a tracker moves that state out of the user's head. That governs _how_ to defer; the fold-in default governs _whether_. The two compose: Decide the disposition here, and execute create-immediately when the disposition is "separate ticket."
+Once work is judged genuinely separable, ticket it immediately rather than leaving it in the conversation; a tracker records that state so the user does not have to remember it. That rule decides _how_ to defer; the fold-in default decides _whether_. The two compose: Decide the disposition here, and execute create-immediately when the disposition is "separate ticket."
 
 ## Three-lane disposition model
 
-Every finding the agent surfaces gets dispositioned into one of three lanes. The agent never silently drops or buries findings on threshold grounds; the user retains full discretion to drop any finding, but the agent does not pre-filter on cost.
+Every finding the agent surfaces gets dispositioned into one of three lanes. The agent never silently drops or withholds findings on threshold grounds; the user retains full discretion to drop any finding, but the agent does not pre-filter on cost.
 
 ### Do now
 
@@ -57,7 +57,7 @@ A standalone ticket for a single finding.
 A trivial item is a good drive-by candidate when all of these hold:
 
 - **Branch is not already large or complicated.** A reviewer absorbing one extra small change is fine; a reviewer asked to absorb one more change on top of a sprawling diff is not.
-- **The drive-by doesn't blur concerns within a single file.** The standard "drive-by changes are bad" heuristic over-fires: The real cost is when concerns mix in one file. Counterintuitively, **changes in completely unrelated files are good drive-by candidates** — the reviewer can skim past them.
+- **The drive-by doesn't mix concerns within a single file.** The standard "drive-by changes are bad" heuristic triggers too often: The real cost is when concerns mix in one file. Counterintuitively, **changes in completely unrelated files are good drive-by candidates** — the reviewer can skim past them.
 - **The drive-bys aren't accumulating into a swarm.** Two or three drive-bys on a focused branch is fine; ten of them turns the branch into a junk drawer. Once a drive-by candidate would push the branch past the agent's judgment of "still readable as one change", route subsequent items to **batch later**.
 
 ### Agent-consultable signals
@@ -86,4 +86,4 @@ The wrap-up of ticket #466 surfaced six items. Under a reflexive "one ticket per
 
 Net under the model: Zero to one ticket instead of six. The trivial items ship as drive-bys; the recommendations and suggestion bundle into a single batch ticket if drive-bys are unavailable.
 
-Walk back through the list and apply the rule: Any item that fails drive-by suitability moves to batch; any item that doesn't fit a batch becomes a separate ticket. The agent never short-circuits the disposition by burying an item on cost grounds.
+Walk back through the list and apply the rule: Any item that fails drive-by suitability moves to batch; any item that doesn't fit a batch becomes a separate ticket. The agent never short-circuits the disposition by withholding an item on cost grounds.

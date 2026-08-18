@@ -21,11 +21,11 @@ Design options have two kinds of properties.
 - Consistency with existing code — matching pre-existing patterns to avoid divergence
 - Scope minimization — leaving adjacent issues unaddressed because they weren't in the ticket
 
-Correctness ranks options. Convenience is secondary — a tiebreaker among correctness-equivalent options at most. If one option is correctness-superior, recommend it even when it is more work, touches more files, or diverges from surrounding code.
+Rank options on correctness. Convenience is secondary — a tiebreaker among correctness-equivalent options at most. If one option is correctness-superior, recommend it even when it is more work, touches more files, or diverges from surrounding code.
 
 ## Why
 
-Correctness shapes what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience is paid once, at the moment of change.
+Correctness determines what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience is paid once, at the moment of change.
 
 ## Before / after
 
@@ -69,7 +69,7 @@ Three patterns signal a design that hasn't reached it:
 - **Carve-outs** — special cases or conditional branches that exist because the change couldn't be integrated cleanly, not because the cases are genuinely distinct.
 - **Bolt-ons** — new modules or extension points appended alongside existing structure when the existing structure should have evolved to absorb the change.
 
-A fresh codebase wouldn't have these shapes; their presence means the change is sitting next to the system rather than within it. Reaching the target may require touching code outside the ticket's literal frame — renaming, restructuring, generalizing. That cost is real but bounded; the cost of carrying a poorly integrated change forward compounds.
+A fresh codebase wouldn't have these shapes; their presence means the change was attached to the system rather than integrated into it. Reaching the target may require touching code outside the ticket's literal frame — renaming, restructuring, generalizing. That cost is real but bounded; the cost of keeping a poorly integrated change compounds.
 
 ## Reconciliation
 
