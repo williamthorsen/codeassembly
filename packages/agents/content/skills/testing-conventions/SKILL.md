@@ -31,7 +31,7 @@ Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Veri
 
 ### Loosen a test broken by a wording-only change
 
-When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior hangs on the text.
+When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior depends on the text.
 
 ## Naming of tests
 
@@ -74,7 +74,7 @@ Examples:
 
 ## Comments in test files
 
-Test files are governed the same as source. Test names already communicate intent and assertions communicate the check, so everything outside the test-comment carve-out is over-commenting.
+The same rules apply to test files as to source. Test names already communicate intent and assertions communicate the check, so everything outside the test-comment carve-out is over-commenting.
 
 ## Test structure
 
@@ -85,7 +85,7 @@ This is the same signal-buried-in-noise failure mode that [comment discipline](#
 ### Rules
 
 1. **Test bodies should be mostly variation and assertion, not setup.** Any prop, fixture, or boilerplate identical across N adjacent tests is noise. Factor it into a default-bearing helper, or collapse the tests into a single parameterized test where the variation reads as a table.
-2. **Use `it.each` when N adjacent tests differ only in a small set of inputs and the body is structurally identical.** Use a named helper when the variation is bigger, when shared setup should disappear into a helper signature, or when assertion shapes differ per case.
+2. **Use `it.each` when N adjacent tests differ only in a small set of inputs and the body is structurally identical.** Use a named helper when the variation is bigger, when shared setup should move into a helper signature, or when assertion shapes differ per case.
 3. **Test the rule, not the data.** Prefer counts, predicates, and structural assertions (`expect(getVisibleChipCount()).toBe(N)`, `expect(queryPillElement()).toBeInTheDocument()`) over enumerating specific fixture labels in every row. Assert specific data flow _once_, in a focused test, not per row of a table.
 
 ### Diagnostic
