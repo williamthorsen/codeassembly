@@ -67,7 +67,7 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
 ### Drivers
 
-- {What pushes the classification to this level}
+- {What places the classification at this level}
 - {Key factor}
 
 ### Risks

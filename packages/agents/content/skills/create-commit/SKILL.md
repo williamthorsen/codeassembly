@@ -8,11 +8,11 @@ user-invocable: true
 
 Record finished work as a commit: stage one logical unit, render its title, compose its body, and commit.
 
-The conventions the message is composed to -- title format, body voice and mechanics, the work-type taxonomy, and branch naming -- are carried by `{rulebook:commit-conventions}`. Consult it before composing; this skill carries the procedure alone.
+The conventions the message is composed to -- title format, body voice and mechanics, the work-type taxonomy, and branch naming -- are stated in `{rulebook:commit-conventions}`. Consult it before composing; this skill states the procedure alone.
 
-## What one commit holds
+## What one commit contains
 
-One logical unit of work, together with whatever that unit needs to stand on its own. Work that does not stand alone -- a scaffold a later change fills in -- rides with the change that completes it rather than landing as a commit of its own.
+One logical unit of work, together with whatever that unit needs to stand on its own. Work that does not stand alone -- a scaffold a later change fills in -- goes into the change that completes it rather than becoming a commit of its own.
 
 Record each unit as it is finished. Several single-concern commits read better than one that bundles them, and each can be reverted without taking the others with it.
 
@@ -26,7 +26,7 @@ Record each unit as it is finished. Several single-concern commits read better t
 
 4. **Render the title** per [Rendering the title](#rendering-the-title).
 
-5. **Compose the body.** The conventions carry its voice and its mechanics; [Line breaks](#line-breaks) below carries the one mechanic that binds only while the body is being written.
+5. **Compose the body.** The conventions state its voice and its mechanics; [Line breaks](#line-breaks) below states the one mechanic that binds only while the body is being written.
 
 6. **Commit**, passing the title and body as separate `--message` values so the blank line between them is git's rather than the shell's:
 

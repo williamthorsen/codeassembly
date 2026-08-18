@@ -27,7 +27,7 @@ Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comm
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
-- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). It feeds the step-4 inference and the step-6 guard; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
+- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
@@ -78,11 +78,11 @@ Three relationships are available, each stated from the new ticket's side:
 - **blocked-by** — the new ticket cannot proceed until an existing ticket lands.
 - **blocking** — an existing ticket cannot proceed until the new ticket lands.
 
-Decide which apply from the reason this ticket is being created, sharpened by `branch_ticket_id` (step 1): Work split out of the current branch's ticket stands in a relationship to it, and a backlog idea raised in passing stands in none. An argument supplied by the caller replaces the inference for its own relationship.
+Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 
-**Most tickets carry none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
+**Most tickets have none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
 
-Where one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so a wrong target is visible while it is still free to correct. Where the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to surface as a skip in step 7.
+Where one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so a wrong target is visible while it is still free to correct. Where the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -150,31 +150,31 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
 Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the bare issue `number` extracted above:
 
-- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch already owns this ticket), persist:
+- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch is already linked to this ticket), persist:
 
   ```bash
   node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
   ```
 
-- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch owning ticket {branch_ticket_id}; skipped branch-manifest association.`
+- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
 
 Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` (or empty) `ticket_ref_prefix`, for which `branch_ticket_id` is the bare issue number and compares directly against `number`. The Jira path persists nothing, so this guard applies only to the GitHub path.
 
 #### Jira path (stub)
 
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub holds no URL yet, so it persists nothing new — consistent with today.
+If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub has no URL yet, so it persists nothing new — consistent with today.
 
 ### 7. Apply relationships
 
 Skip this step when step 4 decided none.
 
-Where no remote ticket exists — the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform) — there is nothing to link. Skip every relationship step 4 decided, each carrying that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+Where no remote ticket exists — the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform) — there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
 
 Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
 
 #### GitHub path
 
-One call carries every relationship decided:
+One call applies every relationship decided:
 
 ```bash
 gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
@@ -188,9 +188,9 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 Use whatever the platform's own tooling offers for parent and blocking relationships.
 
-#### When a relationship does not land
+#### When a relationship cannot be established
 
-A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Carry every skipped relationship and its reason into the completion output — that report is how a platform's missing relationship surface becomes visible.
+A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Include every skipped relationship and its reason in the completion output — that report is how a platform's missing relationship surface becomes visible.
 
 ### 8. Save local artifacts
 
@@ -223,7 +223,7 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID" --override ticket_id="{ticket_id}" --override ticket_ref="{ticket_ref}"` via Bash, substituting the just-created ticket's `ticket_id` (step 6) and `ticket_ref` (computed above). Prepend the output verbatim to the artifact body.
 
-The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would carry the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
+The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
 
 ### 9. Save plan (if present)
 

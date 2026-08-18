@@ -37,7 +37,7 @@ These collapse into a single "Update ticket" action regardless of how many dimen
 | ---------------------------- | ---------------------------------------------- |
 | Advisability: `questionable` | Revise ticket to address advisability concerns |
 
-This action shares the ♻️ icon with "Update ticket to match current codebase state" but is a distinct action — it covers content or scope rework prompted by an advisability concern, not factual sync with the codebase. When both fire, both appear as separate options.
+This action shares the ♻️ icon with "Update ticket to match current codebase state" but is a distinct action — it covers content or scope rework prompted by an advisability concern, not factual sync with the codebase. When both apply, both appear as separate options.
 
 ### 🏁 Close actions
 
@@ -62,7 +62,7 @@ When multiple close actions apply, present each as a separate option — they di
 When multiple dimensions produce non-baseline verdicts, their actions are combined into a single numbered list:
 
 1. **Collect** actions grouped by type: ♻️ update → ♻️ revise → 🏁 close → 💬 comment.
-2. **Deduplicate** — each distinct action appears at most once. ♻️ "Update ticket to match current codebase state" and ♻️ "Revise ticket to address advisability concerns" are distinct actions and remain as separate options when both fire.
+2. **Deduplicate** — each distinct action appears at most once. ♻️ "Update ticket to match current codebase state" and ♻️ "Revise ticket to address advisability concerns" are distinct actions and remain as separate options when both apply.
 3. Number sequentially.
 
 ## Interaction protocol
