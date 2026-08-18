@@ -46,7 +46,7 @@ A template that omits `{title}` produces a title without the bare title text —
 
 ## Optional groups via `[...]`
 
-A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the entire group — literals included — drops. Groups are processed left-to-right and may not be nested.
+A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the renderer drops the entire group, literals included. Groups are processed left-to-right and may not be nested.
 
 After substitution, a final whitespace pass collapses runs of multiple spaces into a single space and trims leading and trailing whitespace.
 
@@ -96,4 +96,4 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 - Use `root` when the change touches only files at the monorepo root.
 - Use `*` when the change spans multiple workspaces, or root and one or more workspaces.
 
-Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) lives with the consuming skill — see `commit/SKILL.md` for the commit-side rules.
+Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill — see the `consult-commit-conventions` skill for the commit-side rules.
