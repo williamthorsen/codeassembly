@@ -40,7 +40,7 @@ The skeleton's `## Proposed solution` section is forward-looking by default; her
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
-**Criteria-only mode.** When the caller scopes the revision to acceptance criteria, revise `## Acceptance criteria` alone and reproduce `## Problem`, `## Context`, and `## Proposed solution` verbatim from the source ticket the caller names. A review names it in its `## Specification compliance` section, which records which of the two the review read, the remote issue or a local snapshot. The saved artifact is still a complete ticket; only its generation is partial. A caller that ratifies the whole ticket gets the default behavior.
+**Criteria-only mode.** When the caller scopes the revision to acceptance criteria, revise `## Acceptance criteria` alone and reproduce `## Problem`, `## Context`, and `## Proposed solution` verbatim from the source ticket the caller names. A review names it in its `## Specification compliance` section, which records the source the review measured against, the remote issue or the local snapshot. The saved artifact is still a complete ticket; only its generation is partial. A caller that ratifies the whole ticket gets the default behavior.
 
 **Ratified-delta mode.** When the caller supplies a delta it has already put to the user, such as a review's proposed-edit preview, the previewed delta is the whole of the revision. Apply exactly its lines and reproduce every other criterion and section verbatim. Seek no further divergence between the ticket and the implementation: What the caller's user consented to is those lines, not alignment as such. When applying a line reveals a change the delta does not contain, stop and report it rather than widening the edit.
 

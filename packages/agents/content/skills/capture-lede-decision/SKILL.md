@@ -106,7 +106,7 @@ Report the written `path` on success.
 
 ### Recording a pull request merged outside the merge flow
 
-Such a pull request wrote no merge artifact, so the caller supplies the merged lede. The helper reads a lede file whole and records it as the lede, applying none of the heading extraction it uses on the artifact path: Supply a file containing the entire pull-request body and the entire body becomes the lede. Extract the `## What` section as the file is written:
+Such a pull request wrote no merge artifact, so the caller supplies the merged lede. The helper reads a lede file whole and records it as the lede, applying none of the heading extraction it uses on the artifact path: Where the file contains the entire pull-request body, the helper records the entire body as the lede. Extract the `## What` section as the file is written:
 
 ```bash
 gh pr view <number> --json body --jq '.body' \

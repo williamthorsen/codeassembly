@@ -124,7 +124,7 @@ Then emit `pr.created` (payload `{"number":<n>,"url":"<url>"}`, taking `<n>` fro
 
 ## Important
 
-- The orchestrator makes all decisions (scope, type, title rendering, labels). Delegates only execute them (platform API calls).
+- The orchestrator makes all decisions (scope, type, title rendering, labels). Delegates only make the platform API calls.
 - Strip the remote prefix from `default_branch` (e.g., `origin/main` -> `main`) before passing to the delegate.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 

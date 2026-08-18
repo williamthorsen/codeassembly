@@ -150,13 +150,13 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
 Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the bare issue `number` extracted above:
 
-- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch already owns this ticket), persist:
+- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch is already linked to this ticket), persist:
 
   ```bash
   node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
   ```
 
-- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch owning ticket {branch_ticket_id}; skipped branch-manifest association.`
+- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
 
 Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` (or empty) `ticket_ref_prefix`, for which `branch_ticket_id` is the bare issue number and compares directly against `number`. The Jira path persists nothing, so this guard applies only to the GitHub path.
 
@@ -168,7 +168,7 @@ If `integrations.jira.enabled: true`, note that Jira creation needs additional c
 
 Skip this step when step 4 decided none.
 
-Where no remote ticket exists — the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform) — there is nothing to link. Skip every relationship step 4 decided, each carrying that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+Where no remote ticket exists — the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform) — there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
 
 Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
 
@@ -188,7 +188,7 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 Use whatever the platform's own tooling offers for parent and blocking relationships.
 
-#### When a relationship does not land
+#### When a relationship cannot be established
 
 A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Include every skipped relationship and its reason in the completion output — that report is how a platform's missing relationship surface becomes visible.
 
@@ -223,7 +223,7 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID" --override ticket_id="{ticket_id}" --override ticket_ref="{ticket_ref}"` via Bash, substituting the just-created ticket's `ticket_id` (step 6) and `ticket_ref` (computed above). Prepend the output verbatim to the artifact body.
 
-The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would carry the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
+The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
 
 ### 9. Save plan (if present)
 
