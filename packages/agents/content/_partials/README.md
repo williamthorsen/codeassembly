@@ -1,6 +1,6 @@
 # Partials
 
-Partials are reusable Markdown fragments shared across rulebooks, skills, subagents, and platform guidance. The install pipeline expands include directives at install time, before frontmatter merging, marker injection, and link rewriting. It never writes a partial as a standalone file, inlining the content into each consumer instead.
+Partials are reusable Markdown fragments shared across rulebooks, skills, subagents, and platform guidance. The install pipeline expands include directives at install time, before frontmatter merging, marker injection, and link rewriting. It never writes a partial as a standalone file; instead, it inlines the content into each consumer.
 
 This README is the canonical reference for the partial system. The expander is implemented in `packages/agents/src/lib/directive-expander.ts`.
 
