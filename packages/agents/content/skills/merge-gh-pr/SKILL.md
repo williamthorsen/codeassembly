@@ -37,7 +37,7 @@ Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`).
 
 ### 2. Run pre-merge checks
 
-Refuse the merge with a specific reason on any of the following. Each refusal exits non-zero and prints the reason on stderr:
+Refuse the merge with a specific reason on any of the following. On each refusal, exit non-zero and print the reason on stderr:
 
 | Field              | Failure condition                                            | Refusal reason                                                              |
 | ------------------ | ------------------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -93,7 +93,7 @@ Map `strategy` to the corresponding `gh pr merge` flag:
 
 For `squash`, pass `--subject "{title}"` so the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject` — GitHub composes its own subject for those strategies.
 
-For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase` — rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` may surface a CLI error depending on the `gh` version, so omit it defensively.
+For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase` — rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` can make `gh` report an error, depending on its version, so omit it defensively.
 
 For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none` — `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
 
@@ -107,13 +107,13 @@ gh pr merge {pr_number} \
   --delete-branch  # only when deletion_strategy == 'both'
 ```
 
-If `gh pr merge` exits non-zero, surface its stderr to the user and exit non-zero. Do not retry, do not bypass with `--admin`.
+If `gh pr merge` exits non-zero, print its stderr to the user and exit non-zero. Do not retry, do not bypass with `--admin`.
 
 ### 6. Delete remote branch (when deletion_strategy is `remote`)
 
 Skip this step entirely when `deletion_strategy` is not `remote` — `both` is handled by step 5's `--delete-branch`, and `none` requests no deletion.
 
-When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch — for same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it lives on the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
+When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch — for same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it is the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
 
 ```bash
 gh api -X DELETE "repos/{headRepositoryOwner.login}/{headRepository.name}/git/refs/heads/{headRefName}"

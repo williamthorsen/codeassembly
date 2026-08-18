@@ -43,7 +43,7 @@ gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
 
 If no PR can be resolved or discovered, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
 
-Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`, and `headRefName` (head branch) from the response. These feed the steps below.
+Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`, and `headRefName` (head branch) from the response. The steps below use them.
 
 ### 3. Resolve scope and type
 
@@ -122,7 +122,7 @@ git log {default_branch}..HEAD --format=%B
 git diff {default_branch}...HEAD --stat
 ```
 
-Report what the change did. The whole body is the lede, so the budget below governs it end to end.
+Report what the change did. The whole body is the lede, so the budget below applies to it end to end.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
@@ -187,11 +187,11 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate — all values are concrete by this point.
 
-If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it carries one, and continue.
+If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it includes one, and continue.
 
 ### 10. Record the lede decision
 
-Skip this step when the delegate's completion report carries no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+Skip this step when the delegate's completion report includes no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
 
 Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge — never present a failure at this step as a merge failure.
 
@@ -211,7 +211,7 @@ Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle even
 ## Important
 
 - The orchestrator owns all decisions (PR resolution, scope/type/strategy/deletion-strategy resolution, body composition, approval gate). Delegates own only execution (platform API calls + state validation).
-- Local state is intentionally untouched after the merge. Branch deletion happens on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows — `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
+- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows — `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
 

@@ -209,7 +209,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    - `refinedBy`: `refine-plan`
    - `timestamp`: Script's value
    - `baseSha`: Script's value (omit when absent)
-   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
+   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that has no prior provenance, the stamp itself is always produced inside that interactive session.
    - `iteration`: `2`
 4. Prepend the unified YAML frontmatter and write back:
 

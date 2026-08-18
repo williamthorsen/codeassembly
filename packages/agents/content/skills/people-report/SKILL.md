@@ -30,7 +30,7 @@ Generate HR analytics reports from employee data provided as CSV paste or file p
 
 If `--report-type` is provided, use the specified types. Skip the prompt.
 
-If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report the user wants is a taste call, so the options carry no strength markers:
+If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report the user wants is a taste call, so the options have no strength markers:
 
 > ---
 >

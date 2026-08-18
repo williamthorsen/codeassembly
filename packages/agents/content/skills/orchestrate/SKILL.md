@@ -57,7 +57,7 @@ The wrapper skill (e.g., `orchestrate-dev`) resolves effort presets and applies 
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
 2. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so those tiers still draw opportunistic fix cycles. `low` stays selectable for a project that wants the deferrable tiers to gate, through the argument or the preference file, and an explicit value always wins over the default.
+3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so those tiers still receive opportunistic fix cycles. `low` stays selectable for a project that wants the deferrable tiers to gate, through the argument or the preference file, and an explicit value always takes precedence over the default.
 
 ### Resolving models
 
@@ -196,11 +196,11 @@ Prefix the status line with a colored emoji for visual distinction:
    | Refinement-elevated | Unknown      | **medium** |
    | Refinement-elevated | Unverifiable | **low**    |
 
-   Note: Non-credible sources without `refinedBy: refine-plan` are already handled in sub-step b (set to `"low"` and skip). Refinement-elevated plans can reach `"medium"` but never `"high"`. Plans from credible sources are unaffected by the presence or absence of `refinedBy`.
+   Note: Non-credible sources without `refinedBy: refine-plan` are already handled in sub-step b (set to `"low"` and skip). Refinement-elevated plans can be `"medium"` at most, never `"high"`. Plans from credible sources are unaffected by the presence or absence of `refinedBy`.
 
    Store the result as `{planTrust}` (one of `"high"`, `"medium"`, `"low"`).
 
-   This detection and evaluation must happen before `init_run` so the flags are recorded correctly in the run header.
+   Do this detection and evaluation before `init_run`, so the flags are recorded correctly in the run header.
 
 4. **Initialize run via MCP**: Attempt to call MCP tool `init_run` with:
 
@@ -333,7 +333,7 @@ Store the full path as `{run-manifest-path}`; increment `{seq}`.
 
 ### MCP call policy
 
-When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. No per-call-site guards are needed — this one policy governs every call site in this file and in loaded modules. It governs MCP tool calls only: Lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
+When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. No per-call-site guards are needed — this one policy applies to every call site in this file and in loaded modules. It applies to MCP tool calls only: Lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
 
 `get_run_state` retains its existing conversation-tracked fallback (see "Error handling" and `review-cycle.md` fallback policy note).
 
@@ -467,7 +467,7 @@ When both a ticket and an external plan are available:
 2. **Plan** — proposes approach (how to build it)
 3. **Architectural guidance** — constrains implementation
 
-When a plan conflicts with the ticket, the ticket wins. Never override reviewer findings by asserting the plan is the source of truth. Tickets can become stale. Check the premises of the ticket against the actual condition of the codebase.
+When a plan conflicts with the ticket, the ticket takes precedence. Never override reviewer findings by asserting the plan is the source of truth. Tickets can become stale. Check the premises of the ticket against the actual condition of the codebase.
 
 ## Turn budgets
 
@@ -722,7 +722,7 @@ Include:
 
 ### Run-manifest and run-summary frontmatter resolution
 
-This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
+This section states the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
 

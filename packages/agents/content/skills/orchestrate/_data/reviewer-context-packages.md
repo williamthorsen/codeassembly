@@ -5,7 +5,7 @@ This file lists third-party packages whose API surfaces are known to surprise re
 ## Conventions
 
 - One `## <package-name>` heading per entry. The package name is the exact npm package identifier (for example, `@hyperjump/json-schema`).
-- Section bodies are free-form markdown written for the reviewer's eyes. Keep entries short — the goal is to shortcut investigation, not to document the package.
+- Section bodies are free-form markdown written for the reviewer. Keep entries short — the goal is to shortcut investigation, not to document the package.
 - Section bodies must not contain any line beginning with `## ` — the parser splits on that prefix. Use `###` or higher for sub-headings inside a body.
 - Entries are added as new packages cause reviewer failures. There is no schema beyond the heading convention above.
 

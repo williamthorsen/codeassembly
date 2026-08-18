@@ -37,7 +37,7 @@ Effort defines a ceiling on permitted investment. The orchestrator right-sizes t
 | architecture       | optional | optional           | optional |
 | planning           | optional | optional           | optional |
 
-The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, which is how high effort buys opportunistic work on those tiers. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
+The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
 
 ### Effort x findings
 
