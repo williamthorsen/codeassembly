@@ -21,7 +21,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 ### Steps
 
-1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON carries `ticket_id`, the persisted `ticket_url`, and `ticket_base_url` (the org-stable base mirrored from the `ticket.base_url` preference; see [Stored ticket URL](#stored-ticket-url)).
+1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON contains `ticket_id`, the persisted `ticket_url`, and `ticket_base_url` (the org-stable base mirrored from the `ticket.base_url` preference; see [Stored ticket URL](#stored-ticket-url)).
 
 2. **Prefer the stored URL.** If `ticket_url` is a non-null string, fetch the ticket directly from that URL — skip the platform/identifier reconstruction below. If the stored URL does not yield the expected ticket, invalidate it per [Stored ticket URL](#stored-ticket-url) and continue with reconstruction.
 
@@ -77,7 +77,7 @@ Skills may request a subset of these fields. The `updatedAt` field is needed by 
 
 ### Jira
 
-Jira Cloud is reached through Atlassian's `acli`, falling back to a connected Jira read tool. Detect the CLI with `command -v acli`, and treat a non-zero exit from the fetch itself as unavailable: An `acli` that is installed but unauthenticated exits non-zero with an error on stderr and nothing on stdout, and that error does not distinguish an authentication failure from a missing issue, so fall through on the exit status rather than on the message.
+Jira Cloud is read through Atlassian's `acli`, falling back to a connected Jira read tool. Detect the CLI with `command -v acli`, and treat a non-zero exit from the fetch itself as unavailable: An `acli` that is installed but unauthenticated exits non-zero with an error on stderr and nothing on stdout, and that error does not distinguish an authentication failure from a missing issue, so fall through on the exit status rather than on the message.
 
 **Preferred: `acli`.** Read the ticket body with the default view, which renders the description as text.
 
