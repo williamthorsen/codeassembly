@@ -10,16 +10,16 @@
 
 ### Output format
 
-Present all three options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation.
+Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation.
 
-**One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must carry a `➕` line naming the specific unsettled decision the pass would surface (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape this requirement exists to forbid. Selecting Refine plan without such a line is a defect — if the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
+**One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must include a `➕` line naming the specific unsettled decision the pass would surface (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape this requirement exists to forbid. Selecting Refine plan without such a line is a defect — if the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
 
-**Spike plans.** A spike plan carries `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, invoking no skill — the agent works the investigation steps directly. Options 1 and 2 render unchanged. In the recommendation rules below, rule 2 is the Investigate option: Its feature-shaped test — verification surface, review pass, `implement-plan`'s closing menu — is written for a diff and does not apply, so rule 2 matches whenever rule 1 does not, and rule 3 never fires, since there is no implementation for the development pipeline to run.
+**Spike plans.** A spike plan has `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, invoking no skill — the agent works the investigation steps directly. Options 1 and 2 render unchanged. In the recommendation rules below, rule 2 is the Investigate option: Its feature-shaped test — verification surface, review pass, `implement-plan`'s closing menu — is written for a diff and does not apply, so rule 2 matches whenever rule 1 does not, and rule 3 never fires, since there is no implementation for the development pipeline to run.
 
 Options that invoke a skill include context-clearing guidance:
 
 - **Refine plan** and **Orchestrate**: Prepend "Clear context and use..." because the plan artifact is self-contained and orchestration dispatches fresh subagents; prior conversation wastes tokens and can introduce bias.
-- **Implement**: No "Clear context" prefix; the conversation that produced the plan carries the design decisions behind it, and `implement-plan` uses them when they are there. The same line also pastes into a fresh session or the other harness, where the skill re-resolves the plan and ticket from the environment instead.
+- **Implement**: No "Clear context" prefix; the conversation that produced the plan contains the design decisions behind it, and `implement-plan` uses them when they are there. The same line also pastes into a fresh session or the other harness, where the skill re-resolves the plan and ticket from the environment instead.
 
 Example (rendered for the default case, where the recommendation rules below select Orchestrate):
 
@@ -45,13 +45,13 @@ Select the recommended option by checking these rules in order and stopping at t
 
 1. **Refine plan** — recommend only when you can name a load-bearing decision the plan leaves unsettled that a refine pass would surface.
 
-   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, carried in from prior design work, verified against source, or copied from an established pattern already in the codebase. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively carries settled decisions, and a plan produced with no design phase is likelier to carry unsettled ones.
+   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced with no design phase is likelier to have unsettled ones.
 
    Rule 1 also fails when the plan's residual unknowns are **empirical** — answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
 
    "The plan might have a flaw I missed" does not satisfy the test. That is a reassurance about work already done, not an unsettled decision.
 
-   The following make a plan _more likely_ to carry an unsettled decision. They are evidence to weigh, and none of them matches rule 1 on its own:
+   The following make a plan _more likely_ to have an unsettled decision. They are evidence to weigh, and none of them matches rule 1 on its own:
    - Changes to dependency boundaries (which libraries are used, which APIs are consumed, or how they're configured)
    - Changes to the shape or semantics of behavioral contracts or data structures
    - Far-reaching downstream consequences
@@ -69,8 +69,8 @@ Select the recommended option by checking these rules in order and stopping at t
 
 #### Marker strengths
 
-The selected option carries the ■■□ marker in the rendered output. The other two options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
+The selected option takes the ■■□ marker in the rendered output. The other two options take ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
 
-Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Rule 1's settled/unsettled test is where it acts.
+Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Rule 1's settled/unsettled test is where it applies.
 
-See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
+See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference decides whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.

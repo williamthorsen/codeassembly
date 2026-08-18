@@ -60,8 +60,9 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // one of them reintroduces the failure named beneath it.
     // Rule 1's test. Without it the rule states no condition at all.
     'recommend only when you can name a load-bearing decision the plan leaves unsettled',
-    // What "unsettled" means. Without it the term is undefined and the agent falls back to instinct.
-    'ratified interactively, carried in from prior design work, verified against source, or copied from an established pattern',
+    // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
+    'when it was ratified interactively',
+    'from prior design work, verified against source, or copied from an established pattern',
     // Why a refine pass cannot resolve an empirical unknown, which is what routes such plans to rule 2.
     'A refine pass re-reads the plan and structurally cannot answer those',
     // The demotion of the structural triggers. Without it they are sufficient again, and every substantive plan
@@ -69,7 +70,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     'They are evidence to weigh, and none of them matches rule 1 on its own',
     // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
-    'must carry a `➕` line naming the specific unsettled decision the pass would surface',
+    '`➕` line naming the specific unsettled decision the pass would surface',
   ],
 };
 
@@ -96,7 +97,7 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     'A criterion that is merely unbuilt contributes no line',
     // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation the review already
     // flagged gets the contract rewritten to match it, and the finding disappears along with the conflict.
-    'revising the contract to match it would bury the finding',
+    'revising the contract to match it',
   ],
 };
 

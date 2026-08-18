@@ -1,4 +1,4 @@
-**Place ticket content by kind, not by volume.** A ticket carries the change's _subject_ and the _outcomes_ it must produce; the _mechanism_ that achieves them belongs with the implementation, not the ticket. This is a separate axis from concision — a perfectly short ticket can still hold the wrong _kind_ of content.
+**Place ticket content by kind, not by volume.** A ticket states the change's _subject_ and the _outcomes_ it must produce; the _mechanism_ that achieves them belongs with the implementation, not the ticket. This is a separate axis from concision — a perfectly short ticket can still contain the wrong _kind_ of content.
 
 - **Ticket** — the change's **subject** (the defect being fixed, the current structure being changed, the target contract or behavior it exposes) and **key** non-obvious details that save the implementer real derivation (e.g. "reuse the sibling table's `getSortValue`").
 - **Implementation** — the **mechanism**: internal wiring, files as a diff-list, step sequences, deletion lists, and the internal props/config of a dependency the change consumes.

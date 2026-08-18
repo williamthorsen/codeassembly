@@ -54,11 +54,11 @@
 
 - Task decomposition with ordering and dependencies
 - File-level decisions (create, modify, test)
-- Key decisions that embody design choices
+- Key decisions that state design choices
 - Acceptance criteria per task
 - Risks and unknowns
 
-Code belongs in the plan only when it captures a decision that isn't obvious from prose — for example, an interface that constrains how components interact, or an algorithm whose shape isn't implied by the description.
+Code belongs in the plan only when it records a decision that isn't obvious from prose — for example, an interface that constrains how components interact, or an algorithm whose shape isn't implied by the description.
 
 #### What does NOT belong in the plan
 
