@@ -83,7 +83,7 @@ If the helper script exits non-zero, record a one-line warning in the run summar
 
 ### Re-computation policy
 
-The assembly is recomputed for each reviewer dispatch and re-dispatch — not cached. The script runs locally in well under a second, and recomputation ensures correctness when the changed-file set evolves between dispatches (e.g., after a coder fix cycle adds new files).
+The assembly is recomputed for each reviewer dispatch and re-dispatch — not cached. The script runs locally in well under a second, and recomputation ensures correctness when the changed-file set changes between dispatches (e.g., after a coder fix cycle adds new files).
 
 ## Constrained re-dispatch template
 
@@ -331,7 +331,7 @@ After: Update `{change-summary-path}` to the new file; increment `{seq}`. Parse 
 
 After the coder fix cycle, call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read per-reviewer criticality and determine which reviewers need re-review.
 
-Determine which reviewers' findings were addressed by examining the coder's change summary. Only re-dispatch reviewers whose findings the coder acted on — skip reviewers whose findings were already `none` or whose findings were deferred. Re-review is warranted whenever the coder acted on findings from one or more reviewers; the scope of re-review is limited to those reviewers.
+Examine the coder's change summary to determine which reviewers' findings the coder addressed. Only re-dispatch reviewers whose findings the coder acted on — skip reviewers whose findings were already `none` or whose findings were deferred. Re-review is warranted whenever the coder acted on findings from one or more reviewers; the scope of re-review is limited to those reviewers.
 
 Before dispatching re-review: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_dispatched", reviewers: ["{name}", ...] } }`.
 
@@ -351,7 +351,7 @@ After the parallel re-dispatch returns and before parsing usage, apply the "Retr
 
 After re-reviews complete: Parse usage from each re-reviewer's {tool:Task} result (see "Usage capture" in SKILL.md). Aggregate usage across all re-review {tool:Task} results by summing `tokens`, `toolUses`, and `durationMs` independently. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... }, tokens: {summed-tokens}, toolUses: {summed-toolUses}, durationMs: {summed-durationMs} } }`. Call `register_artifact` for each re-reviewer's artifact file.
 
-Aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: Run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
+Aggregate findings again using the same rules. If the re-review produces new actionable findings and review rounds remain (< N), loop back: Run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
 
 ### Loop termination
 
@@ -373,7 +373,7 @@ Call MCP tool emit_event with:
 
 After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplification-reviewer as a sequential final pass. The code-simplification-reviewer operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplification-reviewer failure should be recorded via `emit_event` but should NOT block progression to Phase 4b or fail the run.
 
-Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles). Then re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so the value carried from Phase 4 dispatch remains current.
+Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles). Then re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so the value from the Phase 4 dispatch remains current.
 
 Emit `phase_decision` for `codeSimplifier` before Phase 4a executes:
 
@@ -438,7 +438,7 @@ Call MCP tool emit_event with:
            reason: "{executed or skipped reason}" }
 ```
 
-If Phase 4b will run: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: Only the implementation phase coder supplies a sidecar, so the value carried from Phase 4 dispatch remains current.
+If Phase 4b will run: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: Only the implementation phase coder supplies a sidecar, so the value from the Phase 4 dispatch remains current.
 
 If Phase 4b is skipped: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
 
