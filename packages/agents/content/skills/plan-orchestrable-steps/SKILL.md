@@ -9,7 +9,7 @@ dependencies:
 
 # Plan
 
-Decompose a story or task into independently orchestrable implementation steps. Each step produces a self-contained task description suitable for `orchestrate-dev`. The planner refines the plan interactively from user feedback.
+Decompose a story or task into independently orchestrable implementation steps. Each step produces a self-contained task description suitable for `orchestrate-dev`. This skill refines the plan interactively, collecting user feedback and re-invoking the planner with it.
 
 ## Arguments
 

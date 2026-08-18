@@ -27,7 +27,7 @@ The split is deliberate: The helper is narrow and mechanical (it never classifie
 | `--auto`                | Skip the batch-review confirmation and execute the inferred routing. Dedup still runs.                   | No       |
 | `--memory-store <name>` | Scope the run to a single memory store, by directory name or project label. Omit to process every store. | No       |
 
-You act on the `--auto` flag, not the helper; it controls whether you present the routing plan before executing. `--memory-store <name>` passes through to the enumerator (both `--memory-store x` and `--memory-store=x` are accepted); use it to work one store per invocation on a machine with many memories, where a fresh, single-project context classifies more accurately than one run holding every store.
+You act on the `--auto` flag, which controls whether you present the routing plan before executing; the helper never receives it. `--memory-store <name>` passes through to the enumerator (both `--memory-store x` and `--memory-store=x` are accepted); use it to work one store per invocation on a machine with many memories, where a fresh, single-project context classifies more accurately than one run holding every store.
 
 ## Runtime dependencies
 
