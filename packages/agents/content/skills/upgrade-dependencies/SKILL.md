@@ -43,12 +43,12 @@ Before touching anything:
 | **Minor** (x.Y.0)            | Medium | Check changelog first, then batch with patches    |
 | **Major** (X.0.0)            | High   | Individual evaluation — research before upgrading |
 
-Check changelogs for ALL updates, not just majors. Behavioral changes hide in minor bumps.
+Check changelogs for ALL updates, not just majors. Minor bumps can contain behavioral changes.
 
 Three triage judgments go beyond the version-number table:
 
 - **Ceilings are policy, not just conflicts.** The target for each package is the highest version compatible with the project's support policy, not merely the highest that installs without a dependency-vs-dependency conflict. A pin can be forced by the Node floor, by a transitive peer cap, or by a single package's `engines`; each is a deliberate ceiling, and a ceiling that would move the project's own support policy (e.g. raising the Node floor) is a consumer-facing breaking change to decide, not a technicality to absorb.
-- **Identify cohorts.** Interdependent majors whose peer constraints reference each other (a linter major and its plugin majors, a framework and its adapter) cannot land separately: Any split leaves an uninstallable intermediate state. Treat such a cohort as a single unit through planning, execution, and commit.
+- **Identify cohorts.** Interdependent majors whose peer constraints reference each other (a linter major and its plugin majors, a framework and its adapter) cannot ship separately: Any split leaves an uninstallable intermediate state. Treat such a cohort as a single unit through planning, execution, and commit.
 - **Watch for abandoned-at-latest packages.** The outdated report cannot reveal a package that is simultaneously "latest" and broken under the new major of its host (it calls an API the host removed). Only running the target major surfaces these: After any major runtime, framework, or linter bump, run the tool and watch for removed-API errors, and expect the remedy to be migrating to a maintained fork rather than any version bump.
 
 ### 4. Plan
@@ -67,9 +67,9 @@ Three triage judgments go beyond the version-number table:
 4. Tooling (`eslint`, `prettier`, `vitest`)
 5. Leaf dependencies
 
-**Commit granularity:** One major per commit for bisectability — except a cohort, which lands as one atomic commit because no smaller step is installable.
+**Commit granularity:** One major per commit for bisectability — except a cohort, which ships as one atomic commit because no smaller step is installable.
 
-**Plan every pin twice.** A package held below latest carries two obligations: a recorded rationale (in the commit body or ticket, so a future maintainer can tell a deliberate ceiling from an oversight) and a matching cap in the update tooling (ncu filter, renovate/dependabot ignore rule) so the next automated bump does not silently revert it.
+**Plan every pin twice.** A package held below latest has two obligations: a recorded rationale (in the commit body or ticket, so a future maintainer can tell a deliberate ceiling from an oversight) and a matching cap in the update tooling (ncu filter, renovate/dependabot ignore rule) so the next automated bump does not silently revert it.
 
 ### 5. Execute
 
@@ -88,7 +88,7 @@ For each dependency or batch, install with the PM's add command at an explicit v
 
 **Fork and successor swaps preserve the public surface.** When an abandoned package is replaced by a maintained fork, the swap can rename what consumers reference (rule namespaces, export names). Keep the old surface working — remap old names to new via the project's config or an adapter — so downstream consumers' overrides and references survive the swap.
 
-**Curate new recommended rules per rule.** A linter or plugin major typically grows its recommended set, flagging existing code. Decide adopt (fix the code) versus disable (in config, with a note) for each new rule against the project's philosophy. Neither blanket adoption nor blanket suppression is a decision.
+**Curate new recommended rules per rule.** A linter or plugin major typically expands its recommended set, flagging existing code. Decide adopt (fix the code) versus disable (in config, with a note) for each new rule against the project's philosophy. Neither blanket adoption nor blanket suppression is a decision.
 
 ### 6. Verify
 
@@ -124,7 +124,7 @@ Ecosystem facts go stale; these channels do not. When guidance in this skill dis
 | --------------------------------------------- | ---------------------------------------------------------------------- |
 | Skip the vulnerability check when audit fails | A dead audit channel is a lookup problem — fall back, never skip       |
 | Truncate the outdated report                  | Read every row; hidden rows resurface at final verification            |
-| Skip changelogs for minors                    | Behavioral changes hide in minor bumps                                 |
+| Skip changelogs for minors                    | Minor bumps can contain behavioral changes                             |
 | Batch unrelated majors in one commit          | One major per commit for bisectability                                 |
 | Split a cohort to honor one-major-per-commit  | A cohort is one atomic commit; any split is uninstallable              |
 | Run the PM's blanket latest-update command    | Ignores semver ranges and pulls unplanned majors                       |

@@ -22,20 +22,20 @@ If both are available, prefer the `contentFormat` tool: The Markdown path is sim
 Use this branch when a `contentFormat`-based tool (e.g. `editJiraIssue`) is available.
 
 1. **Author Markdown.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. Pass it via `contentFormat: "markdown"`.
-2. **Prefer Markdown over ADF.** Reserve `contentFormat: "adf"` for content whose fidelity Markdown cannot express (panels, status lozenges, expand blocks, layout columns). ADF is full-fidelity JSON but verbose and harder to author, so reach for it only when Markdown genuinely falls short.
-3. **Write checklists as plain bullets.** Jira's Markdown converter does not map `- [ ]` / `- [x]` to ADF task items. It escapes the brackets, so the line persists as a bullet reading `\[ \] ...`. Convert task-list syntax to plain `-` bullets before submitting, including when the source is a local artefact that uses checkboxes, as ticket artefacts from `design-and-plan` and `create-ticket` do. Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, and `contentFormat` governs the whole field rather than a section of it, so a checklist never justifies authoring the entire description as ADF.
+2. **Prefer Markdown over ADF.** Reserve `contentFormat: "adf"` for content whose fidelity Markdown cannot express (panels, status lozenges, expand blocks, layout columns). ADF is full-fidelity JSON but verbose and harder to author, so use it only when Markdown genuinely falls short.
+3. **Write checklists as plain bullets.** Jira's Markdown converter does not map `- [ ]` / `- [x]` to ADF task items. It escapes the brackets, so the line persists as a bullet reading `\[ \] ...`. Convert task-list syntax to plain `-` bullets before submitting, including when the source is a local artefact that uses checkboxes, as ticket artefacts from `design-and-plan` and `create-ticket` do. Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, and `contentFormat` applies to the whole field rather than a section of it, so a checklist never justifies authoring the entire description as ADF.
 4. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`. Those rules exist solely to survive Jira's HTML→ADF conversion, and that converter is never invoked when you submit Markdown or ADF — so there is nothing for them to guard against. Rendering content to allowlist HTML and running the checker on this path is wasted work.
 
 That is the entire path. Everything under [HTML path](#html-path) is irrelevant when a `contentFormat` tool is available.
 
 ## HTML path
 
-Use this branch only when the available tool is the HTML-surface `update_jira_issue` / `create_jira_issue` (with `description_html` or `comment_html`). The MCP tool advertises a permissive HTML surface, but the payload is converted to Atlassian Document Format (ADF) before persistence and frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. This branch prescribes the one path that avoids the known triggers, backed by a deterministic pre-flight checker.
+Use this branch only when the available tool is the HTML-surface `update_jira_issue` / `create_jira_issue` (with `description_html` or `comment_html`). The MCP tool advertises a permissive HTML surface, but the payload is converted to Atlassian Document Format (ADF) before persistence, and that conversion frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. This branch prescribes the one path that avoids the known triggers, backed by a deterministic pre-flight checker.
 
 ### The correct path for the HTML tool
 
 1. **Source content as Markdown.** Prefer a local Markdown artefact when one exists. Otherwise, compose in Markdown first — never author HTML directly.
-2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten. Task-list syntax (`- [ ]` / `- [x]`) becomes a plain `<li>`; never carry the brackets through as literal text.
+2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten. Task-list syntax (`- [ ]` / `- [x]`) becomes a plain `<li>`; never pass the brackets through as literal text.
 3. **Run the pre-flight checker against the rendered HTML.** Fix everything it flags, then re-run until it returns `ok: true`. See [Pre-flight checker](#pre-flight-checker) for the contract.
 4. **Pass the HTML inline** to `description_html` or `comment_html`.
 5. **Never pass a file path** to `description_html` / `comment_html`. File-path mode is forbidden — it has been observed to fail with `INVALID_INPUT`.
@@ -71,7 +71,7 @@ EOF
 { "ok": true }
 ```
 
-`ok: false` carries a `findings` array. Each finding identifies the rule, the offending source snippet, the 1-based line (when derivable), and a suggested fix:
+`ok: false` includes a `findings` array. Each finding identifies the rule, the offending source snippet, the 1-based line (when derivable), and a suggested fix:
 
 ```json
 {
@@ -193,7 +193,7 @@ Required fields:
 
 #### Probe-ticket tagging contract
 
-When (and only when) a probe ticket is created in step 2a, it **must** carry all three markers:
+When (and only when) a probe ticket is created in step 2a, it **must** have all three markers:
 
 - **Label:** Include `mcp-probe` in the `labels` argument of the create call.
 - **Title:** `mcp-probe: {YYYY-MM-DD HH:MM} bisection probe`. Use UTC.
@@ -209,7 +209,7 @@ Probe tickets created via the recovery protocol are designed to be swept by a si
 project = <project> AND labels = mcp-probe AND created < -1d
 ```
 
-Run this query periodically and bulk-transition any matches to a closed/deleted state. Probe tickets created before this skill version went live will not carry the `mcp-probe` label and must be cleaned up by hand.
+Run this query periodically and bulk-transition any matches to a closed/deleted state. Probe tickets created before this skill version went live will not have the `mcp-probe` label and must be cleaned up by hand.
 
 ### Escalation criterion
 
@@ -222,7 +222,7 @@ If recorded failures distribute across truly **unknown classes** (no clear patte
 - Skipping the pre-flight check before invoking `update_jira_issue` / `create_jira_issue`.
 - Creating a probe ticket without the `mcp-probe` label, the deterministic title, and the description prefix.
 - Hand-authoring HTML containing constructs outside the allowlist.
-- Carrying `- [ ]` / `- [x]` brackets into `<li>` text instead of rendering a plain bullet.
+- Passing `- [ ]` / `- [x]` brackets into `<li>` text instead of rendering a plain bullet.
 - Combining `<code>` with other inline marks on the same text run.
 - Using named HTML entities other than `&amp;`, `&lt;`, `&gt;` in text content.
 - Passing a file path to `description_html` / `comment_html`.
