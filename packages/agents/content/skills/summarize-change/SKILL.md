@@ -30,7 +30,7 @@ Check commit messages for additional context.
 
 6. **Save** per the [Saving](#saving) section.
 
-**Audit before saving.** The `## What` composed in step 5 takes this audit before step 6 writes the artifact.
+**Audit before saving.** This audit applies to the `## What` composed in step 5, before step 6 writes the artifact.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
@@ -38,7 +38,7 @@ If expected information is missing, stop and ask the developer.
 
 ## Output format
 
-The artifact begins with a single YAML frontmatter block that unifies canonical fields from the canonical schema with change-summary-specific consumer fields; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the consumer-field extensions in [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter). Ordering: `provenance:` first, then top-level canonical fields, then consumer fields. `commit:` and `ticket_id:` appear exactly once each. Field-resolution steps live in the [Canonical-field resolution](#canonical-field-resolution) section below.
+The artifact begins with a single YAML frontmatter block that unifies canonical fields from the canonical schema with change-summary-specific consumer fields; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the consumer-field extensions in [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter). Ordering: `provenance:` first, then top-level canonical fields, then consumer fields. `commit:` and `ticket_id:` appear exactly once each. Field-resolution steps are stated in the [Canonical-field resolution](#canonical-field-resolution) section below.
 
 The body following the frontmatter has this structure:
 
@@ -95,7 +95,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ## Frontmatter inference
 
-The single YAML frontmatter block carries both canonical identity fields from the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) and change-summary-specific consumer fields read by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`). `commit:` and `ticket_id:` appear exactly once and serve a dual role: canonical identity fields that downstream consumers may also read.
+The single YAML frontmatter block contains both canonical identity fields from the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) and change-summary-specific consumer fields read by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`). `commit:` and `ticket_id:` appear exactly once and serve a dual role: canonical identity fields that downstream consumers may also read.
 
 The block is structured as:
 
