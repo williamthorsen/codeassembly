@@ -53,6 +53,30 @@ const OPTION_FORMAT: Spec = {
   ],
 };
 
+// The remote-issue offer stated in design-and-plan's own body. Not an include: Only this guard sees the block.
+const DESIGN_AND_PLAN_REMOTE_ISSUE: Spec = {
+  name: 'design-and-plan-remote-issue',
+  heading: '**Remote issue update**',
+  rules: [
+    // The marker rule for the offer. Without it the update option is pinned to ■■□ however stark the staleness.
+    "The recommended option's marker follows how stark that staleness is",
+  ],
+};
+
+// The next-steps menu stated in implement-plan's own body. Not an include: Only this guard sees the block.
+const IMPLEMENT_PLAN_MENU: Spec = {
+  name: 'implement-plan-menu',
+  heading: '## Next-steps options',
+  rules: [
+    // The marker rule. Without it the selected option is pinned to ■■□ whatever the diff turned out to be, so
+    // the marker varies with nothing and the reader has to investigate every menu to find the real forks.
+    "The selected option's marker follows how cleanly its rule matched",
+    // The fallthrough carve-out. Without it rule 3's default selection can claim ■■■, which is the
+    // over-correction the unpinning invites.
+    "Rule 3 is the cascade's fallthrough rather than a positive match",
+  ],
+};
+
 const NEXT_STEPS_AFTER_PLAN: Spec = {
   name: 'next-steps-after-plan',
   heading: '## Next-steps options',
@@ -116,6 +140,13 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation the review already
     // flagged gets the contract rewritten to match it, and the finding disappears along with the conflict.
     'revising the contract to match it',
+    // The marker rule for the Deviations cascade. Without it rules 1 and 2 re-pin their markers inline, and the
+    // marker varies with nothing.
+    "the recommended option's marker follows how cleanly the rule's test is met",
+    // The marker rule for the source-divergence cases, in that block's own wording so the near-duplicate rules
+    // above and below cannot mask its removal. Without it the recommended option re-pins to ■■□ however stark
+    // the divergence.
+    "the recommended option's marker follows how cleanly the case's own test is met",
     // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
     // findings turned out to be, so the marker carries no information about how clear the call was.
     "The selected option's marker follows how cleanly its rule matched",
@@ -124,8 +155,8 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
 
 const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: ReadonlyArray<Spec> }> = [
   { slug: 'collaborate', specs: [OPTION_FORMAT] },
-  { slug: 'design-and-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
-  { slug: 'implement-plan', specs: [OPTION_FORMAT] },
+  { slug: 'design-and-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE] },
+  { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
   { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
   { slug: 'plan-orchestrable-steps', specs: [OPTION_FORMAT] },
