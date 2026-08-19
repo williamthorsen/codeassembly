@@ -8,7 +8,7 @@ The reader is glancing through entries asking "what did this change do?" and dec
 
 A lede has two axes. One never varies; the other is set by the change's work type.
 
-**Altitude is constant, at the accomplishment level.** The lede says what the change accomplished, not how it works internally. A finding established during the work, a count of instances touched, an internal causal chain, and the before-and-after syntax of an edit are all one level below that altitude, however true each is and however much effort established it; their place is `## Details` or the diff. Serviceable test: Would the sentence mean anything to a reader who does not maintain this subsystem?
+**Altitude is constant, at the accomplishment level.** The lede says what the change accomplished, not how it works internally. A finding established during the work, a count of instances touched, an internal causal chain, and the before-and-after syntax of an edit belong in `## Details` or the diff. Test each clause: Would the reader's next move -- such as clicking into the details or using the product -- change if it were absent? A clause the decision does not turn on is padding.
 
 **Focus is keyed to tier.** A change appears in release notes when its work type is in the public tier of [work-types.json](./work-types.json); a change in any other tier goes no further than the changelog.
 
@@ -16,8 +16,6 @@ A lede has two axes. One never varies; the other is set by the change's work typ
 - **Internal and process tiers** -- the reader is a developer, and the lede answers what was done to the code.
 
 Where one text serves both, write at the register of the most external realistic reader.
-
-**The budget is three sentences.** A cap on this lede, not an observation about typical ones. It has one escape: A second concern or a migration note takes a paragraph of its own, held to the same three. The span the budget applies to is wherever the lede appears -- the whole `## What`, the whole merge-commit body, or a commit body's first paragraph, whose later paragraphs are elaboration rather than lede.
 
 ## Worked exemplars
 
@@ -73,7 +71,7 @@ On the gap:
 
 **Name things, up to the altitude.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule the change acted on, backticked. An identifier the reader never consumes -- an internal function, the lint rule that fired, a config key the change happens to read -- is mechanism with a name attached, and backticking it does not raise it to the altitude. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). At public focus, define any term the audience may not share.
 
-**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog, and craft is welcome. The craft is concreteness: A vivid concrete detail ("prints a rocket emoji in the terminal output") informs better than an abstraction, and a correct but flat recitation is itself a failure. The cure for a flat lede is a more specific noun, never a figurative verb.
+**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog. The lede is not reference documentation and not a migration guide. Options and their usage, output shape, config keys, version numbers, and the instances a sweep touched are what the reader finds after clicking through.
 
 **Claims match the diff.** A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
@@ -89,7 +87,7 @@ Opener discipline is positional. Each form has a place, and the places are not i
 ## Form
 
 - Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. Never address the reader as "you"; migration steps are third person ("Consumers import `defineConfig` from the `/config` subpath instead"), not imperatives.
-- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one ("Migration: ..."). These two are the budget's one escape. Three or more parallel items may be bulleted.
+- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one ("Migration: ..."). Three or more parallel items may be bulleted.
 - A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
 
 ## What each kind of change reports
@@ -127,12 +125,6 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
 - **Unearned assurance.** A guarantee against a harm nobody suspected creates the doubt it means to remove. State an invariant only when the change gives real grounds to fear it broke: "Published output is unchanged" belongs in the lede after a compiler-target bump. A "previously" sentence passes the same test when it does motivation or migration work, and fails it when it merely restates the change's negation.
 - **Talking around the name.** "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. If the reader would have to open the diff to learn what you mean, name it.
 - **Process narration.** Review mechanics, ticket numbers, finding IDs, test and CI runs, and roads not taken are not part of the change.
-
-## Comprehension is the floor
-
-The budget is the ceiling; comprehension is the floor. A lede can be cut past comprehension, and a too-abstract lede is worse than a longer concrete one. "Drops `jiti` from `release-kit`'s dependencies" passes every rule above -- change verb, named packages, an effect of the diff -- and still fails the reader, who cannot tell whether config loading survived. The shipped lede was two sentences, inside the budget: "`release-kit` now uses native Node with type-stripping to read its configs. `jiti` is no longer needed as a dependency." When a cut makes the entry harder to understand, the cut is wrong.
-
-Where both bounds bind at once, drop a fact rather than add a sentence.
 
 ## Titles
 
