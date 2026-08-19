@@ -48,7 +48,7 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
 Example (rendered for the recommendation case):
 
@@ -69,9 +69,13 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Recommendation rules
 
-1. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): The implementation's direction is deliberate and sound, so the criteria as written would lead a later reader to judge correct code wrong.
-2. **Recommend "Leave as-is"** (■■□ on it, ■□□ on Update the acceptance criteria): The review raised a finding on the conflicting behavior. The code is what is in question, and revising the contract to match it would hide the finding.
+1. **Recommend "Update the acceptance criteria"**: The implementation's direction is deliberate and sound, so the criteria as written would lead a later reader to judge correct code wrong.
+2. **Recommend "Leave as-is"**: The review raised a finding on the conflicting behavior. The code is what is in question, and revising the contract to match it would hide the finding.
 3. **No recommendation** (omit markers from both options): The reviewer cannot tell whether the criteria or the implementation is the wrong one. The user decides.
+
+#### Marker strengths
+
+For rules 1 and 2, the recommended option's marker follows how cleanly the rule's test is met: ■■■ where the evidence is unambiguous — the direction is plainly deliberate and sound (rule 1), or the finding plainly stands (rule 2) — and ■■□ where the reading is defensible but arguable. The other option takes ■□□. Rule 3 has no markers.
 
 ### Source divergence sub-block
 
@@ -264,7 +268,7 @@ Where the cascade's conditions leave two options genuinely in balance, prefer th
 
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. When both sub-blocks offer a ticket edit and the user selects both, run `align-ticket-with-implementation` once in whole-ticket mode, taking the union of the two previews as the contract. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. When both sub-blocks offer a ticket edit and the user selects both, run `align-ticket-with-implementation` once in whole-ticket mode, taking the union of the two previews as the contract. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
 
 ```
 Next steps:
