@@ -34,7 +34,7 @@ You will receive:
 4. **Read changed files**: Read both source and test files in full to understand context
 5. **Check relevance**: If the change contains no new or modified source files that require test coverage (e.g., only documentation, configuration, or formatting changes), finalize the artifact with `### Criticality: none` (replacing the `(pending)` sentinel) and a brief summary, then emit the return block
 6. **Map source to tests**: Identify which source files have corresponding test files, and which new source files lack tests entirely
-7. **Iterate analysis and append findings**: As each finding crystallizes (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
+7. **Iterate analysis and append findings**: As you settle each finding (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
 8. **Finalize**: In the reserved last 3 turns, replace `### Criticality: (pending)` with the aggregate enum (`none|low|medium|high`), fill in `### Summary`, then emit your structured return block.
 
 ### Efficiency
@@ -50,7 +50,7 @@ You will receive:
 The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts from a fresh empty scaffold.
 <!-- /include -->
 
-The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — interruption must never strand the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — an interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 

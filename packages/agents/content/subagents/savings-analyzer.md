@@ -30,7 +30,7 @@ Events may include token-based usage metrics (`tokens`, `toolUses`, `durationMs`
 
 **Metric preference:** When both `tokens` and timestamp-derived duration are available, prefer `tokens` for cost comparisons. Token counts directly measure agentic effort, while timestamps measure wall-clock time that includes user waits, CI delays, MCP latency, and other idle time unrelated to agent work. When token data is absent, fall back to timestamp-derived duration.
 
-**Timestamp caveat:** Conclusions drawn solely from timestamps carry lower confidence -- high duration may reflect idle time rather than verbose consumption. Note this in findings that rely on duration when token data is absent.
+**Timestamp caveat:** Conclusions drawn solely from timestamps warrant lower confidence -- high duration may reflect idle time rather than verbose consumption. Note this in findings that rely on duration when token data is absent.
 
 **Metric attribution:** In any finding that uses a cost metric, note which metric (tokens or duration) was used.
 

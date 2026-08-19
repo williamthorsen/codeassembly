@@ -28,7 +28,7 @@ You will receive:
 2. **Get the diff**: Run the provided `git diff` command to see all changes in scope
 3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path — see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
 4. **Read changed files**: Read the full files to understand context (but see efficiency note below)
-5. **Iterate analysis and append findings**: As each finding crystallizes (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
+5. **Iterate analysis and append findings**: As you settle each finding (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
 6. **Finalize**: In the reserved last 3 turns, replace `### Criticality: (pending)` with the aggregate enum (`none|low|medium|high`) and fill in `### Summary`.
 
 ### Efficiency
@@ -41,7 +41,7 @@ You will receive:
 
 <!-- include: _partials/review-writes-hard-gate.md / -->
 
-The review file is the orchestrator's primary state-transfer channel for this phase — the orchestrator reads it directly to decide whether to dispatch a coder fix cycle. A partial review listing findings discovered so far is strictly more useful than no review — interruption must never strand the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel for this phase — the orchestrator reads it directly to decide whether to dispatch a coder fix cycle. A partial review listing findings discovered so far is strictly more useful than no review — an interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 
@@ -73,21 +73,21 @@ Focus exclusively on simplification opportunities in changed code:
 
 - Dead code, unused imports, unreachable branches
 - Verbose constructs that have simpler equivalents
-- Premature abstractions that don't earn their weight
+- Premature abstractions whose value does not justify their complexity
 - Overly defensive patterns (redundant null checks, unnecessary try/catch wrappers, excessive validation of trusted internal inputs)
 - Unnecessary nesting and complexity
 - Comment-discipline violations — put every comment in the changed code through the three comment-discipline tests in your context
 - Test-structure violations. See `{harness_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
   - Adjacent tests with near-identical setup where only one input varies (parameterize with `it.each` or extract a helper)
   - Specific-fixture-label assertions repeated per row when the rule is a count or predicate
-  - Helpers whose parameters the test bodies still re-specify (the abstraction failed to absorb the duplication)
+  - Helpers whose parameters the test bodies still re-specify (the abstraction did not remove the duplication)
 - Logic that can be consolidated without sacrificing clarity
 
 ### Simplification principles
 
 - **Preserve functionality**: Never suggest changes that alter what the code does — only how it does it
 - **Follow project conventions**: Defer to ~/.agents/AGENTS.md, ./AGENTS.md, and project-specific guidelines for language idioms and patterns — do not prescribe conventions the project hasn't adopted
-- **Consult project DRY mechanisms before recommending pointer-indirection**: When flagging duplication, check whether the project documents a single-source mechanism (e.g., partials, includes, snippets, macros) in its agent guidance. Pointer-indirection is appropriate only when the duplicated content must reach the reader verbatim *and* the project lacks a way to single-source it.
+- **Consult project DRY mechanisms before recommending pointer-indirection**: When flagging duplication, check whether the project documents a single-source mechanism (e.g., partials, includes, snippets, macros) in its agent guidance. Pointer-indirection is appropriate only when the reader must see the duplicated content verbatim *and* the project lacks a way to single-source it.
 - **Clarity over brevity**: Explicit code is often better than compact code. Do not suggest nested ternaries, dense one-liners, or clever constructs that trade readability for fewer lines
 - **Respect helpful abstractions**: Not every abstraction is premature. Only flag abstractions that add complexity without proportionate value
 - **Proportional effort**: A typo fix doesn't need the same scrutiny as a large refactor. Match your depth to the scope of the change

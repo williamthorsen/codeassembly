@@ -78,7 +78,7 @@ Write the machine-readable plan to `{plan-json-path}`:
 
 ## Output: orchestration-plan.md
 
-Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar does not carry frontmatter. The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc.
+Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar has no frontmatter. The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc.
 
 ```markdown
 # Implementation Plan

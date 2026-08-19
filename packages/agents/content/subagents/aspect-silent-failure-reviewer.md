@@ -30,7 +30,7 @@ You will receive:
 3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path — see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
 4. **Read changed files**: Read the full files to understand error-handling context
 5. **Check relevance**: If the diff contains no error-handling code (no try/catch, no `.catch()`, no error callbacks, no fallback patterns, no error suppression), finalize the artifact with `### Criticality: none` (replacing the `(pending)` sentinel) and a brief summary, then emit the return block
-6. **Iterate analysis and append findings**: As each finding crystallizes (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
+6. **Iterate analysis and append findings**: As you settle each finding (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
 7. **Finalize**: In the reserved last 3 turns, replace `### Criticality: (pending)` with the aggregate enum (`none|low|medium|high`), fill in `### Summary`, then emit your structured return block.
 
 ## Incremental review writes
@@ -40,7 +40,7 @@ You will receive:
 The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts from a fresh empty scaffold.
 <!-- /include -->
 
-The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — interruption must never strand the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — an interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 
