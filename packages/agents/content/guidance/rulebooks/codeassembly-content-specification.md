@@ -1,6 +1,6 @@
 ---
 slug: codeassembly-content-specification
-description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
+description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
 version: 11
 ---
@@ -140,6 +140,12 @@ A `delivery: skill` rulebook ships as `consult-<slug>`.
 Skill names are verb-led. Order list members and frontmatter lists alphabetically unless there is a reason to group otherwise. _(Conventions; not enforced.)_
 
 A `codeassembly-` prefix marks guidance for working in the CodeAssembly repository itself, as this specification does. Its absence marks content that applies in any project, CodeAssembly's own behavior included where a consumer meets it. Prefix a new artifact only when a project that merely consumes the library would have no use for it. _(Convention; not enforced.)_
+
+## Adding guidance
+
+Correct a behavior at the fewest surfaces that plausibly account for it, ship that change, and observe. Extend to further surfaces only after the minimal change has been seen to fail. Changing every contributing surface at once means no single edit can be credited with the improvement, so the cheapest sufficient fix is never learned, and each surface touched is permanent token weight on every later invocation.
+
+Breadth is what a proposal justifies, not what it assumes. A contributing surface left unaddressed is recorded as an observation for a later pass rather than offered as an option to adopt now. Before adding exposition to a rulebook, check whether its existing examples already teach the point. _(Convention; not enforced.)_
 
 ## Skill-local reinforcement
 
