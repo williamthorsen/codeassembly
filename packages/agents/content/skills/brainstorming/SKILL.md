@@ -5,6 +5,8 @@ user-invocable: false
 supported-harnesses: [rovo]
 ---
 
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Brainstorming Ideas Into Designs
 
 ## Overview

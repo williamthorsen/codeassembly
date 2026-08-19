@@ -4,6 +4,8 @@ description: Use when encountering any bug, test failure, or unexpected behavior
 supported-harnesses: [rovo]
 ---
 
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Systematic Debugging
 
 ## Overview

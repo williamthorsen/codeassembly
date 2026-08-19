@@ -1,3 +1,5 @@
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Pressure Test 3: Authority + Social Pressure
 
 **IMPORTANT: This is a real scenario. You must choose and act. Don't ask hypothetical questions - make the actual decision.**

@@ -1,3 +1,5 @@
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Condition-Based Waiting
 
 ## Overview

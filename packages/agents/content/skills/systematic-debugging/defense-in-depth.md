@@ -1,3 +1,5 @@
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Defense-in-Depth Validation
 
 ## Overview

@@ -1,4 +1,5 @@
-// @ts-nocheck vendor file
+// Extracted verbatim from the superpowers plugin. Do not edit.
+// @ts-nocheck
 // Complete implementation of condition-based waiting utilities
 // From: Lace test infrastructure improvements (2025-10-03)
 // Context: Fixed 15 flaky tests by replacing arbitrary timeouts

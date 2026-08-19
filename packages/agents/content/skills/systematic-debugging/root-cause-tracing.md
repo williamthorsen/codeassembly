@@ -1,3 +1,5 @@
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Root Cause Tracing
 
 ## Overview
