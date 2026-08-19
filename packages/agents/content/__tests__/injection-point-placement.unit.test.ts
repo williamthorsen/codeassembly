@@ -107,10 +107,10 @@ async function listContentMarkdown(): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Yields the lines of a body that carry structure, skipping every line inside a fenced block. A `#` inside a fence is
- * content, so the fence is tracked rather than each line matched in isolation. A fenced directive is skipped for a
- * different reason: the expander tracks no fences and still expands it, but the fence turns the headings it injects
- * into literal text, which adopts nothing.
+ * Yields the lines of a body that contribute structure, skipping every line inside a fenced block. A `#` inside a
+ * fence is content, so the fence is tracked rather than each line matched in isolation. A fenced directive is skipped
+ * for a different reason: the expander tracks no fences and still expands it, but the fence turns the headings it
+ * injects into literal text, which adopts nothing.
  */
 function* readLiveLines(body: string): Generator<LiveLine> {
   let openFence: string | undefined;

@@ -53,7 +53,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
     // enough to turn away — the round trip the carve-out exists to prevent.
     'Render option 3 as 🔬 Investigate, invoking no skill',
-    // The rule a spike lands on. Without it the cascade's feature-shaped rule 2 fails on an investigation and falls
+    // The rule a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and falls
     // through to rule 3, recommending the development pipeline for work that produces no diff.
     'rule 2 matches whenever rule 1 does not',
     // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any

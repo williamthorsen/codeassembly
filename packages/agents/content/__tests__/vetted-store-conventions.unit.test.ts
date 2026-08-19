@@ -13,7 +13,7 @@ import { readDirEntries } from '../../src/lib/fs-helpers.ts';
 // The vetted collection claims its members name nothing specific to one author's environment, and a knowledge-store
 // name is the form that claim fails in most quietly: a reader copies the invocation, and the capture is refused
 // against a registry that has no such store. The scanned set is the collection's resolved closure, so a promotion
-// brings an artifact under the rule and a demotion releases it, and there is no exemption list to maintain.
+// brings an artifact under the rule and a demotion releases it, and there is no exemption list to go stale.
 //
 // What this cannot catch: a concrete store named in prose rather than in an argument position, and a value sitting
 // further from its flag than the neighboring table cell. The guard keeps the decidable position from regressing; it
