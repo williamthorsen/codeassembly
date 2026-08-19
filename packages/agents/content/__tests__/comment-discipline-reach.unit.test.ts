@@ -48,7 +48,7 @@ const COMMENT_AUTHORING_SUBAGENTS: ReadonlyArray<string> = [
   'orchestrated-reviewer',
 ];
 
-/** Paths no content file may name: a reference to one is a consumer pointing at the doctrine instead of carrying it. */
+/** Paths no content file may name: a reference to one is a consumer pointing at the doctrine instead of inlining it. */
 const RETIRED_REFERENCES: ReadonlyArray<string> = ['_data/comment-discipline.md', 'comment-audit-checklist'];
 
 describe('comment-discipline reach', () => {
@@ -67,12 +67,12 @@ describe('comment-discipline reach', () => {
     });
   });
 
-  it.each(COMMENT_AUTHORING_SUBAGENTS)('%s injects a skill carrying the doctrine', async (slug) => {
+  it.each(COMMENT_AUTHORING_SUBAGENTS)('%s injects a skill that inlines the doctrine', async (slug) => {
     const content = await readFile(path.join(SUBAGENTS_ROOT, `${slug}.md`), 'utf8');
     const injected = readInjectedSkills(content, `${slug}.md`);
     const carriers = injected.filter((skill) => CARRIER_SKILLS.includes(skill));
 
-    const message = `${slug} writes or judges comments but injects no skill carrying the doctrine; injected: [${injected.join(', ')}]`;
+    const message = `${slug} writes or judges comments but injects no skill that inlines the doctrine; injected: [${injected.join(', ')}]`;
     expect(carriers.length, message).toBeGreaterThan(0);
   });
 
@@ -87,7 +87,7 @@ describe('comment-discipline reach', () => {
         }
       }
     }
-    const message = `The doctrine is inlined now; these files must carry it or anchor to it, not point at it:\n  ${violations.join('\n  ')}`;
+    const message = `The doctrine is inlined now; these files must inline it or anchor to it, not point at it:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 });

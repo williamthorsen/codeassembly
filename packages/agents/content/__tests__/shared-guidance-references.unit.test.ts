@@ -10,11 +10,11 @@ import { readTargetHarnesses } from '../../src/lib/skill-deploy.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
-// path rewrites invocation tokens: a harness-neutral destination carries no sigil to render, so `{skill:<slug>}` is
+// path rewrites invocation tokens: a harness-neutral destination has no sigil to render, so `{skill:<slug>}` is
 // unavailable here and a skill must be named in prose. That leaves the name outside every parse gate the tokenized
-// trees enjoy, which is how the guidance went on naming `git-commit-conventions` for as long as it did after that
-// skill was renamed. A dead pointer is worse than none: an agent that follows one finds nothing, treats the lookup as
-// satisfied, and falls back to its own defaults.
+// trees pass through, which is how the guidance went on naming `git-commit-conventions` for as long as it did after
+// that skill was renamed. A dead pointer is worse than none: an agent that follows one finds nothing, treats the
+// lookup as satisfied, and falls back to its own defaults.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SHARED_GUIDANCE_ROOT = path.join(CONTENT_ROOT, 'guidance', 'shared');
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
@@ -47,7 +47,7 @@ describe('shared guidance references', () => {
     expect(violations, message).toEqual([]);
   });
 
-  // A `delivery: skill` rulebook deploys an invocable skill that lives in no `skills/` directory. The assertion above
+  // A `delivery: skill` rulebook deploys an invocable skill that no `skills/` directory contains. The assertion above
   // only ever reports names it fails to find, so a rulebook half that returned nothing would leave it green.
   it('accepts a skill that a rulebook deploys', async () => {
     expect(await listDeployedSkillNames()).toContain('consult-shell-conventions');
@@ -55,7 +55,7 @@ describe('shared guidance references', () => {
 
   // The harness filter is the whole of the "every harness" half of the contract, and every other assertion here would
   // pass without it. This pins an exclusion beside the inclusion above.
-  it('excludes a skill that narrows itself to one harness', async () => {
+  it('excludes a skill narrowed to one harness', async () => {
     expect(await listDeployedSkillNames()).not.toContain('review-permissions');
   });
 
@@ -103,7 +103,7 @@ async function listDeployedSkillNames(): Promise<ReadonlyArray<string>> {
 
 /**
  * Returns the names that `delivery: skill` rulebooks deploy their skills under, read off the deploy path rather than
- * recomputed here. Rulebook frontmatter carries no `supported-harnesses:` field, so every such skill reaches all of them.
+ * recomputed here. Rulebook frontmatter has no `supported-harnesses:` field, so every such skill reaches all of them.
  */
 async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
   const resolver = libraryResolver(CONTENT_ROOT);
