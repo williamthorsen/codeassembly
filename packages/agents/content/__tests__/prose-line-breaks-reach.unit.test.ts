@@ -7,8 +7,8 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// The rule binds only when it is already in context at the moment prose is composed, so each carrier inlines it rather
-// than linking to it. Two of the carriers held hand-written variants that drifted apart, which is what the
+// The rule applies only when it is already in context at the moment prose is composed, so each carrier inlines it
+// rather than linking to it. Two of the carriers had hand-written variants that drifted apart, which is what the
 // single-statement assertion below exists to prevent from recurring.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
@@ -28,10 +28,11 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// Delivery is narrower than governance. The partial governs any generated Markdown, saved artifacts included, but a
-// place here is earned by being in context as prose is composed for somewhere outside the repository: a commit body,
-// or a GitHub issue, pull request, or comment. A body that composes only into a local artifact is absent by decision,
-// not by oversight, and one that passes along prose someone else composed belongs with that composer instead.
+// Delivery is narrower than application. The partial applies to any generated Markdown, saved artifacts included,
+// but a place here goes to a body in context as prose is composed for somewhere outside the repository: a commit
+// body, or a GitHub issue, pull request, or comment. A body that composes only into a local artifact is absent by
+// decision, not by oversight, and one that passes along prose someone else composed belongs with that composer
+// instead.
 const CARRIERS: ReadonlyArray<string> = [
   'guidance/rulebooks/commit-conventions.md',
   'skills/create-commit/SKILL.md',

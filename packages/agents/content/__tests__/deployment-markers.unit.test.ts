@@ -28,7 +28,7 @@ const FIXTURE_SOURCE_URL = 'https://example.invalid/fixture.md';
 /** Stands in for a slug, so the lines a producer stamps can be found and rewritten into the placeholder the recipe uses. */
 const SENTINEL_SLUG = 'sentinel-artifact';
 
-/** The placeholder the recipe writes where a deployed marker carries an artifact's own slug. */
+/** The placeholder the recipe writes where a deployed marker contains an artifact's own slug. */
 const SLUG_PLACEHOLDER = '{slug}';
 
 describe('deployment markers', () => {
@@ -75,7 +75,7 @@ function buildOwnershipMarkerCases(): ReadonlyArray<{ label: string; marker: str
       markerCount: 1,
       rendered: renderSkillFile('fixture-skill', SENTINEL_SLUG, 'Fixture rulebook.', 'Body line.'),
     },
-    // `injectRulebook` opens and closes the block, so both lines carry the slug and the recipe quotes both.
+    // `injectRulebook` opens and closes the block, so both lines contain the slug and the recipe quotes both.
     { label: 'rulebook block', markerCount: 2, rendered: injectRulebook('', SENTINEL_SLUG, 'Body line.') },
   ];
 
@@ -113,9 +113,9 @@ function buildRegionDelimiterCases(): ReadonlyArray<{ label: string; delimiter: 
 }
 
 /**
- * Returns the rendered lines carrying the sentinel slug, each with the sentinel rewritten as the recipe's placeholder.
- * Throws unless the count matches, so a producer that stamps the slug somewhere new fails here rather than silently
- * comparing the wrong line.
+ * Returns the rendered lines containing the sentinel slug, each with the sentinel rewritten as the recipe's
+ * placeholder. Throws unless the count matches, so a producer that stamps the slug somewhere new fails here rather
+ * than silently comparing the wrong line.
  */
 function listDocumentedMarkers(rendered: string, expectedCount: number): ReadonlyArray<string> {
   const markers = rendered
@@ -123,7 +123,7 @@ function listDocumentedMarkers(rendered: string, expectedCount: number): Readonl
     .filter((line) => line.includes(SENTINEL_SLUG))
     .map((line) => line.replaceAll(SENTINEL_SLUG, () => SLUG_PLACEHOLDER));
   if (markers.length !== expectedCount) {
-    throw new Error(`Expected ${expectedCount} line(s) carrying "${SENTINEL_SLUG}", found ${markers.length}.`);
+    throw new Error(`Expected ${expectedCount} line(s) containing "${SENTINEL_SLUG}", found ${markers.length}.`);
   }
   return markers;
 }

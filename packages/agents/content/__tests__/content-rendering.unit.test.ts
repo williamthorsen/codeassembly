@@ -14,7 +14,7 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const NBSP = '\u{A0}';
 
 describe('content rendering', () => {
-  it('no Markdown under content/ carries a non-breaking space', async () => {
+  it('no Markdown under content/ contains a non-breaking space', async () => {
     const offenders: Array<string> = [];
     const relativePaths = await listContentMarkdown();
     for (const relativePath of relativePaths) {
@@ -25,7 +25,7 @@ describe('content rendering', () => {
     }
     expect(
       offenders,
-      `These files carry a non-breaking space:\n  ${offenders.join('\n  ')}\n` +
+      `These files contain a non-breaking space:\n  ${offenders.join('\n  ')}\n` +
         `A whitespace indent does not survive terminal rendering — the line collapses to the left margin and the ` +
         `reader cannot tell which option its reasoning belongs to. Nest the reasoning as a list item instead.`,
     ).toEqual([]);

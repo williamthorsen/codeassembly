@@ -12,20 +12,20 @@ import { readDirEntries } from '../../src/lib/fs-helpers.ts';
 
 // The vetted collection claims its members name nothing specific to one author's environment, and a knowledge-store
 // name is the form that claim fails in most quietly: a reader copies the invocation, and the capture is refused
-// against a registry that never held the store. The scanned set is the collection's resolved closure, so a promotion
-// brings an artifact under the rule and a demotion releases it, and no exemption list exists to rot.
+// against a registry that has no such store. The scanned set is the collection's resolved closure, so a promotion
+// brings an artifact under the rule and a demotion releases it, and there is no exemption list to go stale.
 //
 // What this cannot catch: a concrete store named in prose rather than in an argument position, and a value sitting
 // further from its flag than the neighboring table cell. The guard keeps the decidable position from regressing; it
 // does not prove the closure names no store at all.
 
-/** The collection whose closure the rule binds. */
+/** The collection whose closure the rule applies to. */
 const VETTED_COLLECTION = 'recommended';
 
 /** A flag and the value it takes, in either the spaced or the `=` form; a following flag is not a value. */
 const STORE_FLAG_PATTERN = /(?:--store|--kb)(?:=|[ \t]+)(?!-)(\S+)/g;
 
-/** A table cell holding a store flag and nothing else, the left half of the table form. */
+/** A table cell containing a store flag and nothing else, the left half of the table form. */
 const FLAG_CELL_PATTERN = /^`(?:--store|--kb)`$/;
 
 /** The code span a value cell opens with, whose content is the store the row assigns to the flag. */
@@ -52,7 +52,7 @@ describe('vetted store conventions', () => {
   });
 
   // An empty closure yields no violation and reads as a pass, so this pins the scanned set to the closure's members.
-  it('scans a Markdown file for every artifact the closure holds', async () => {
+  it('scans a Markdown file for every artifact in the closure', async () => {
     const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
     const members = [...closure.rulebooks, ...closure.skills, ...closure.subagents];
     const scannedFiles = await listClosureFiles(contentDir);
@@ -105,7 +105,7 @@ describe('vetted store conventions', () => {
 /**
  * Reports every concrete store one content line names in a `--store` or `--kb` argument position. Two positions
  * count: the value sharing a code span (or a fenced line) with the flag, and the value opening the cell beside a
- * table cell holding the flag alone. Prose outside a code span is not an argument position and is never read.
+ * table cell containing the flag alone. Prose outside a code span is not an argument position and is never read.
  */
 function findConcreteStores(line: string, isFenced: boolean): Array<string> {
   const values = isFenced ? readFlagValues(line) : listCodeSpans(line).flatMap(readFlagValues);
@@ -158,7 +158,7 @@ function isPermittedStoreValue(value: string): boolean {
 /**
  * Lists the Markdown files of the vetted collection's closure, relative to `contentDir`. A skill contributes every
  * Markdown file under its directory; the committed helper bundles beside them are minified to single lines, so a
- * line-based report would dump one, and a bundle's fix lives upstream in `src/` regardless.
+ * line-based report would dump one, and a bundle is fixed upstream in `src/` regardless.
  */
 async function listClosureFiles(contentDir: string): Promise<ReadonlyArray<string>> {
   const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
@@ -204,7 +204,7 @@ function readFlagValues(text: string): Array<string> {
 }
 
 /**
- * Reads the store a table row assigns to a flag: the row holds a cell that is the flag alone, and the cell beside it
+ * Reads the store a table row assigns to a flag: the row has a cell that is the flag alone, and the cell beside it
  * opens with a code span. A value cell opening with prose states no argument, so it yields nothing.
  */
 function readTableCellStore(line: string): string | undefined {

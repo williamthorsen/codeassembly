@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest';
 // Subagent definitions are installed to both Claude Code and Rovo Dev. Rovo Dev does not load
 // CLAUDE.md, so referencing it leaves Rovo Dev subagents pointing at a file that does not apply.
 // Reference harness-neutral guidance instead — typically ~/.agents/AGENTS.md and the repo-root AGENTS.md.
-// See issue #471.
 
 const SUBAGENTS_DIR = new URL('../subagents/', import.meta.url).pathname;
 const FORBIDDEN_SUBSTRING = 'CLAUDE.md';
@@ -25,7 +24,7 @@ describe('subagent content', () => {
 
 // region | Helpers
 
-/** Scan top-level .md files in the subagents directory for the forbidden substring. */
+/** Scans top-level .md files in the subagents directory for the forbidden substring. */
 async function findViolations(): Promise<ReadonlyArray<Violation>> {
   const entries = await readdir(SUBAGENTS_DIR);
   const violations: Array<Violation> = [];

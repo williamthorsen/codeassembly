@@ -5,9 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// The `describe-change.sh` invocation reached two skills as hand-maintained copies, which drifted in wording while
+// Two skills had hand-maintained copies of the `describe-change.sh` invocation, which drifted in wording while
 // agreeing in substance. One statement is what keeps a correction to the invocation contract -- the flags, the JSON
-// parse, the fallback -- from having a second home to reach.
+// parse, the fallback -- from having to be applied twice.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the invocation; every consumer reaches it through an include. */

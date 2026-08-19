@@ -40,7 +40,7 @@ interface HookGuard {
   readonly spliceProbe: SpliceProbe;
 }
 
-/** The body one hook's splice is asserted against, and injected text a fill must leave standing beside its own. */
+/** The body one hook's splice is asserted against, and injected text a fill must not displace. */
 interface SpliceProbe {
   readonly body: DeclaringBody;
   readonly coexisting: ReadonlyArray<string>;
@@ -115,7 +115,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   },
 ];
 
-/** The skill every reviewer subagent preloads, and so the one that carries the hooks it declares to all of them. */
+/** The skill every reviewer subagent preloads, and so the one that delivers the hooks it declares to all of them. */
 const REVIEWER_CARRIER = 'review-criteria';
 
 const REVIEWER_SUBAGENTS: ReadonlyArray<string> = [
@@ -161,7 +161,7 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
 });
 
 // The reviewer subagents reach a hook through a preloaded skill rather than a directive of their own, a route only
-// `implementation-preferences` takes. Kept beside the table rather than in it, so no other hook carries an empty field
+// `implementation-preferences` takes. Kept beside the table rather than in it, so no other hook has an empty field
 // for a route it does not use.
 describe('reviewer-subagent carrier', () => {
   it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {
@@ -178,7 +178,7 @@ describe('reviewer-subagent carrier', () => {
 /**
  * Builds the fills a declaration produces, keyed by hook, spanning every guard rather than one hook at a time: a body
  * can declare more than one, and an anchor collision only shows up once they fill together the way `sync` fills them.
- * Bound bodies arrive unrendered: link rewriting and invocation-token resolution belong to `sync` and are covered
+ * Bound bodies stay unrendered: link rewriting and invocation-token resolution belong to `sync` and are covered
  * there, and what these assertions cover is the splice into the real consumer bodies.
  */
 async function buildFills(): Promise<GuidanceHookFills> {

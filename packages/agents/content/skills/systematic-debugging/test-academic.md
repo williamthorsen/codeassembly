@@ -1,3 +1,5 @@
+<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->
+
 # Academic Test: Systematic Debugging Skill
 
 You have access to the systematic debugging skill at skills/debugging/systematic-debugging

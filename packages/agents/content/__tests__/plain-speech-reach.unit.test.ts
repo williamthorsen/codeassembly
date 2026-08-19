@@ -8,11 +8,11 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// `guidance/shared/AGENTS.md` is where this rule primarily lives: it installs unconditionally, so every user's
-// interactive session carries it. It reaches no subagent, which is the whole reason the partial exists and the whole
-// reason its carriers are subagents. The duplication between the two files is structural rather than chosen:
-// `installSharedGuidance` copies shared guidance verbatim and expands no includes, so the one file that cannot hold the
-// directive holds the text instead, and the assertion below is what keeps the two copies from drifting.
+// `guidance/shared/AGENTS.md` is where this rule primarily appears: it installs unconditionally, so every user's
+// interactive session receives it. It reaches no subagent, which is the whole reason the partial exists and the
+// whole reason its carriers are subagents. The duplication between the two files is structural rather than chosen:
+// `installSharedGuidance` copies shared guidance verbatim and expands no includes, so the one file that cannot take
+// the directive states the text instead, and the assertion below is what keeps the two copies from drifting.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the rule; every carrier reaches it through an include. */
@@ -32,14 +32,14 @@ const RULE_PHRASES: ReadonlyArray<string> = [
   'persuasive documentation such as marketing and website copy',
 ];
 
-/** Subagents that compose no prose for a reader, so the rule has nothing in them to govern. */
+/** Subagents that compose no prose for a reader, so the rule has nothing in them to apply to. */
 const EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set([
   // Exercises the declared-subagent deployment mechanism and is never invoked.
   'canary.md',
 ]);
 
 // Every subagent is a carrier, so the list is read from the directory rather than written out: a subagent added later
-// is covered on the day it lands, and one that drops its include still fails the assertions below. Writing it out would
+// is covered the day it appears, and one that drops its include still fails the assertions below. Writing it out would
 // guard only the second failure, and `subagent-content.unit.test.ts` reads the same directory for the same reason.
 //
 // A carrier is a body that cannot read the rule's primary statement. `guidance/shared/AGENTS.md` installs
@@ -67,7 +67,7 @@ describe('plain-speech reach', () => {
     const partial = await readPartial();
     const shared = await readFile(path.join(CONTENT_ROOT, SHARED_GUIDANCE), 'utf8');
 
-    const message = `${SHARED_GUIDANCE} holds its own copy because shared guidance expands no includes, and the two have drifted apart`;
+    const message = `${SHARED_GUIDANCE} contains its own copy because shared guidance expands no includes, and the two have drifted apart`;
     expect(shared, message).toContain(partial.trim());
   });
 
