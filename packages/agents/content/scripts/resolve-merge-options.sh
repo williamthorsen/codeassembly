@@ -26,7 +26,7 @@
 #      commit-derived candidates (deduplicated, alphabetically sorted).
 #
 # The breaking-change marker `!` is stripped from type candidates after
-# collection (it rides on a separate `breaking` label).
+# collection (a separate `breaking` label records it).
 #
 # Label-map handling:
 #   - Missing file: Silently skipped; resolution falls through to commit-majority.
@@ -144,8 +144,8 @@ json_escape() {
   echo "$s"
 }
 
-# Strip a single trailing `!` from the input. The breaking-change marker rides
-# on a separate `breaking` label and is not part of the type identity.
+# Strip a single trailing `!` from the input. A separate `breaking` label records
+# the breaking-change marker, which is not part of the type identity.
 strip_bang() {
   local s="$1"
   if [[ "${s: -1}" == "!" ]]; then
@@ -255,7 +255,7 @@ strict_majority() {
   fi
 }
 
-# Resolve a single dimension and emit its JSON fragment. The fragment carries
+# Resolve a single dimension and emit its JSON fragment. The fragment is
 # either `{"status":"resolved","value":"X"}` or
 # `{"status":"ambiguous","candidates":[...]}`.
 resolve_dimension() {

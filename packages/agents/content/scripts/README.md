@@ -2,12 +2,12 @@
 
 Shared helpers installed into every platform target. The install pipeline copies (or symlinks) each `.sh` and `.mjs` file in this directory into `~/<platform_home>/scripts/` (e.g., `~/.claude/scripts/`, `~/.codex/scripts/`).
 
-Two kinds of helper live here, distinguished by who invokes them:
+This directory holds two kinds of helper, distinguished by who invokes them:
 
 - **Agent-invoked.** Helpers a skill or subagent runs, via the `{harness_home_dir}/scripts/` prefix documented below.
 - **Harness-invoked.** Helpers wired into a harness's own configuration, with no agent in the loop.
 
-The extension says how a helper is written, not who runs it: a `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source lives under `src/`. The bundles are build output, generated here by `scripts/bundle-skill-helpers.ts` and git-ignored. Either kind serves either invoker.
+The extension says how a helper is written, not who runs it: a `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are build output, generated here by `scripts/bundle-skill-helpers.ts` and git-ignored. Either kind serves either invoker.
 
 Files of any other extension (such as this README) are not installed.
 

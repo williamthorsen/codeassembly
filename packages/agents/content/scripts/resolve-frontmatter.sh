@@ -165,7 +165,7 @@ main() {
   local scm ticket_id ticket_ref default_branch
   # Read `scm`, falling back to the legacy `platform` key so a pre-rename branch manifest still
   # resolves the right VCS host (this path validates only JSON well-formedness, so it would not
-  # otherwise trigger a recompose). The fallback is temporary; a separate ticket removes it.
+  # otherwise trigger a recompose). The fallback is temporary; a separate ticket covers its removal.
   scm=$(jq -r '.scm // .platform // "github"' <<<"$manifest")
   ticket_id=$(jq -r '.ticket_id // ""' <<<"$manifest")
   ticket_ref=$(jq -r '.ticket_ref // ""' <<<"$manifest")
@@ -253,7 +253,7 @@ apply_override() {
 }
 
 # Prints short SHA of `default_branch` (e.g., `origin/main`) or empty if unresolvable.
-# A shallow clone or missing remote silently degrades to empty.
+# Under a shallow clone or a missing remote, the output is silently empty.
 resolve_base_sha() {
   local ref="$1"
   git rev-parse --short "$ref" 2>/dev/null || true
@@ -321,10 +321,10 @@ derive_manifest() {
     echo "$PROG: 'node' command not found on PATH; cannot run bundled deriver at $bundle_path" >&2
     return 1
   fi
-  # Anchor the deriver's cwd at the repo root so its manifest write lands at the same path
+  # Anchor the deriver's cwd at the repo root so its manifest write goes to the same path
   # `read_manifest` looks at (`{repo_root}/.agents/{branch}.branch-manifest.json`). Without this,
   # a call from a subdirectory would write to `{subdir}/.agents/` while the reader looks at the
-  # repo root, causing every call to re-invoke the deriver and stranding stale manifests in
+  # repo root, causing every call to re-invoke the deriver and leaving stale manifests in
   # unintended subdirectories.
   local repo_root
   repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
@@ -522,7 +522,7 @@ needs_yaml_quoting() {
   [[ "$v" =~ :[[:space:]] ]] && return 0
   # Trailing colon is the value-end form of a key indicator.
   [[ "$v" == *: ]] && return 0
-  # Glyphs anywhere in the value that demand quoting.
+  # Glyphs anywhere in the value that require quoting.
   case "$v" in
   *'#'* | *'['* | *']'* | *'{'* | *'}'* | \
     *','* | *'&'* | *'*'* | *'!'* | *'|'* | *'>'* | *'<'* | \
