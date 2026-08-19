@@ -8,7 +8,7 @@ user-invocable: false
 
 Internal delegate that handles the GitHub-specific work for `review-pr`: Fetch PR metadata in a single `gh pr view` call, verify the local HEAD matches the PR's head commit, resolve the ticket from PR linked issues (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
 
-This skill does not run a review. The review logic lives in `review-branch`.
+This skill does not run a review. The review logic is implemented in `review-branch`.
 
 ## Delegate interface
 
@@ -87,7 +87,7 @@ merge_base_sha=$(git merge-base HEAD {diff_base})
 
 ### 5. Resolve the ticket
 
-Apply this cascade in order; the first match wins:
+Apply this cascade in order and use the first match:
 
 1. **`ticket_override`** — if non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
 2. **First entry in `closingIssuesReferences`** — if the array is non-empty, fetch the first entry's content via `gh issue view --json number,title,body,labels,updatedAt {number}` and use it.

@@ -8,7 +8,7 @@ user-invocable: true
 
 Review a pull request on the appropriate platform. Detects the platform, dispatches to a delegate (`{skill:review-gh-pr}` or `{skill:review-bb-pr}`) that fetches PR metadata, verifies HEAD matches the PR's head commit, and resolves specification sources, then invokes the shared review process from `{skill:review-branch}` with the resolved inputs.
 
-This is a thin entry skill: The shared review logic — diff analysis, finding generation, "Specification compliance" rendering, artifact saving — lives in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
+This is a thin entry skill: The shared review logic — diff analysis, finding generation, "Specification compliance" rendering, artifact saving — is implemented in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
 
 ## Arguments
 
@@ -22,7 +22,7 @@ This is a thin entry skill: The shared review logic — diff analysis, finding g
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, `scm`, and `pr_url` from it. These values are carried forward into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, `scm`, and `pr_url` from it. These values pass into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
 
 ### 2. Resolve the PR
 
@@ -82,7 +82,7 @@ Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting a
 
 ### 7. Save and present next steps
 
-`review-branch`'s saving and next-steps logic apply unchanged. The review artifact lands in the active run directory for the ticket (or a new `{timestamp}-interactive` run directory if none).
+`review-branch`'s saving and next-steps logic apply unchanged. The review artifact is saved into the active run directory for the ticket (or a new `{timestamp}-interactive` run directory if none).
 
 Because this review covers a pull request, the next-steps Findings sub-block renders its PR variant — "Post findings on the PR" rather than the local-branch options. The Source-divergence sub-block likewise appears here whenever the PR description and ticket diverge, since both spec sources are present.
 

@@ -8,7 +8,7 @@ user-invocable: false
 
 Internal delegate that handles the Bitbucket-specific work for `review-pr`: Fetch PR metadata via the Bitbucket REST API, verify the local HEAD matches the PR's head commit, resolve the ticket (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
 
-This skill does not run a review. The review logic lives in `review-branch`.
+This skill does not run a review. The review logic is implemented in `review-branch`.
 
 ## Delegate interface
 
@@ -122,7 +122,7 @@ merge_base_sha=$(git merge-base HEAD {diff_base})
 
 3. **No ticket** — proceed with the PR description as the only spec source.
 
-The divergence from `review-gh-pr` is intentional and documented here so future readers do not assume parity. If Bitbucket linked-issue parity is added later (via the Jira integration or a future Bitbucket API field), the cascade can grow a step 2 between override and body parse without breaking the delegate interface.
+The divergence from `review-gh-pr` is intentional and documented here so future readers do not assume parity. If Bitbucket linked-issue parity is added later (via the Jira integration or a future Bitbucket API field), a new step fits between override and body parse without breaking the delegate interface.
 
 ### 6. Build the spec-source list
 

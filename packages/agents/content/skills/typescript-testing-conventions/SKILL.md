@@ -88,7 +88,7 @@ expect(results[0]).toBe('expected');
 ## Type safety in tests
 
 - Import and use project-specific assertion utilities
-- Leverage TypeScript's type narrowing after assertions
+- Use TypeScript's type narrowing after assertions
 - Ensure tests fail clearly when type assumptions are violated
 
 ```typescript

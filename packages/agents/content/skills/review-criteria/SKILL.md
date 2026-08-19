@@ -42,7 +42,7 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 ## Actionability gate
 
-Before emitting any F/W/T/R/S finding, confirm it hands the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _Would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
+Before emitting any F/W/T/R/S finding, confirm it gives the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _Would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
 
 ## Insight gate
 
@@ -54,7 +54,7 @@ Compose each finding at the tight altitude ([concision principle](../_data/conci
 
 ## Comment findings
 
-Comment text you propose for a source file — a replacement doc comment, a suggested inline comment — is a source comment, and it takes the full [comment discipline](#comment-discipline) audit. Prefer a short `todo:` naming what is stale over a rewritten comment, and never carry an example value lifted from the source.
+Comment text you propose for a source file — a replacement doc comment, a suggested inline comment — is a source comment, and the full [comment discipline](#comment-discipline) audit applies to it. Prefer a short `todo:` naming what is stale over a rewritten comment, and never copy an example value out of the source.
 
 "Add a comment explaining X" is a finding only when X is a constraint the code cannot show. Do not request a comment the discipline would delete.
 

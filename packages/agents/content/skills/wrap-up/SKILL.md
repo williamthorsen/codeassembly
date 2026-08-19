@@ -100,7 +100,7 @@ Items at levels 1–2 (trivial or mechanical) are **drive-by candidates** — si
 
 Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
 
-The complexity assessment feeds into the cost-aware disposition flow described in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md): Trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
+The complexity assessment is an input to the cost-aware disposition flow described in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md): **Do now** (Phase 2a drive-bys) is preferred for trivial items; **batch later** (Phase 2b batch action) for items that cannot ship as drive-bys but share scope or source; and substantive items get a **separate ticket** (Phase 2b per-item ticketing).
 
 #### 1c. Collect insights
 
@@ -115,7 +115,7 @@ Either way, reviewers emit these under the insight gate, so they are vetted know
 
 **Conversation scanning** (heuristic — may produce false positives):
 
-Structured sources take precedence. When scanning conversation, skip any insight already captured from a structured source (the same observation) to avoid duplicates — a review-emitted insight and its conversation echo are one item, and the structured one wins.
+Structured sources take precedence. When scanning conversation, skip any insight already captured from a structured source (the same observation) to avoid duplicates — a review-emitted insight and its conversation echo are one item, and the structured one is kept.
 
 Scan the conversation for:
 
@@ -129,7 +129,7 @@ Look for language like: "interesting", "discovered", "realized", "turns out", "s
 
 For each insight (structured or conversation-scanned), assign an `I{n}` ID (sequentially: I1, I2, ...) and resolve a destination:
 
-- Honor a destination the source insight already carries — a reviewer may suggest `ticket comment` or `devlog`.
+- Honor a destination the source insight already states — a reviewer may suggest `ticket comment` or `devlog`.
 - Otherwise: `ticket comment` if the insight relates to the current ticket's work; `devlog` if it is general knowledge not specific to one ticket.
 
 If no ticket is available (from the session-context manifest), default all destinations to `devlog`.
@@ -200,7 +200,7 @@ Derive from session type:
 - **Review**: Summarize what was reviewed and the key outcomes (approved, changes requested, etc.)
 - **Research/exploration**: Summarize what was explored and key findings
 
-Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or carries a lesson for future runs — e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge — mention it briefly after the outcome summary.}
+Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or offers a lesson for future runs — e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge — mention it briefly after the outcome summary.}
 
 ### Findings
 
@@ -401,7 +401,7 @@ Insights, applied drive-by fixes, and devlog references do not appear in the bod
 - {prefix} {item-ID}: {description}
 ```
 
-Omit empty sections. The "Artifacts saved" section is omitted when no artifacts were written (Step 1 produced no deferred-findings artifact and no devlog was generated). Filename suffixes (`_devlog.md`, `_deferred-findings.md`) carry the artifact-type information; no separate sub-headings are needed. Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
+Omit empty sections. The "Artifacts saved" section is omitted when no artifacts were written (Step 1 produced no deferred-findings artifact and no devlog was generated). Filename suffixes (`_devlog.md`, `_deferred-findings.md`) state the artifact type; no separate sub-headings are needed. Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
 
 ### Phase 5: PR prompt
 
@@ -417,7 +417,7 @@ Create a pull request for this branch? I'll open it with `{skill:create-pr}`. �
 
 Skip this prompt if there are no commits on the branch (e.g., a research/exploration session with no code changes).
 
-The prompt closes the turn that carries the results report, so it goes in an action-items block of its own. It is not an entry in the Phase 2b action menu, and it never auto-executes.
+The prompt closes the turn that presents the results report, so it goes in an action-items block of its own. It is not an entry in the Phase 2b action menu, and it never auto-executes.
 
 ## Ticket title conventions
 
@@ -432,6 +432,6 @@ When creating tickets for deferred items, follow the conventions from the issue 
 - **Never auto-execute** — always present the inventory and action menu, wait for user confirmation
 - **Delegate, don't duplicate** — every action goes through an existing skill or a direct `gh` CLI call
 - **Idempotent-safe** — before creating a ticket, check if an issue with a similar title already exists
-- **Conversation is primary source** — deferred items and insights live in the dialogue, not just in git state
+- **Conversation is primary source** — deferred items and insights appear in the dialogue, not just in git state
 - **Graceful when empty** — if the assessment finds nothing actionable, say so and end: "No wrap-up items identified for this session."
-- **Fresh numbering** — always assign new sequential IDs within the wrap-up; never carry forward IDs from source artifacts
+- **Fresh numbering** — always assign new sequential IDs within the wrap-up; never reuse IDs from source artifacts

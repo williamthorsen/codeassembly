@@ -13,7 +13,7 @@ Evaluate code review findings with technical rigor and produce a change summary 
 
 ## Purpose
 
-This skill bridges the gap between receiving a code review and implementing fixes. The agent evaluates each finding against the actual codebase, decides what to accept or push back on, and documents that reasoning — all embedded in a `coder_change-summary` artifact alongside any code changes made.
+This skill runs between receiving a code review and implementing fixes. The agent evaluates each finding against the actual codebase, decides what to accept or push back on, and documents that reasoning — all embedded in a `coder_change-summary` artifact alongside any code changes made.
 
 ## Arguments
 
@@ -40,7 +40,7 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Resolve `$pr_url` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
 
-- If the review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
+- If the review's frontmatter has a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
 - Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, leave `$pr_url` empty.
 
 Run via Bash:
@@ -84,14 +84,14 @@ For each finding, apply technical rigor:
 
 1. **Verify before accepting.** Read the actual code referenced in each finding. Do not accept a finding at face value. "The reviewer may have a point" is not rigorous — either the finding is valid or it isn't.
 2. **Check correctness.** Is the reviewer's claim technically accurate for this specific codebase and context?
-3. **Treat hedging language as a signal.** When a recommendation grounds itself in "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
+3. **Treat hedging language as a signal.** When a recommendation relies on "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
 4. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
 5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits — not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem the original placement created.
 6. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
 7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. There is no `ACCEPT (follow-up)`: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
    </HARD-GATE>
 
-Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](#comment-discipline) as you write. The reviewer conversation must not leak into the source.
+Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](#comment-discipline) as you write. The reviewer conversation must not appear in the source.
 
 ## Worked examples
 
@@ -103,11 +103,11 @@ Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](
 
 > R1: ACCEPT. `validateSessionToken` is a small input-to-boolean function with no side effects; it composes naturally with the other helpers in `shared/utils.ts`. Moving it consolidates similar shape-based utilities.
 
-The acceptance reads the function's signature without reading the destination's doctrine.
+The agent read the function's signature and never read the destination's doctrine.
 
 **Good: Doctrine-grounded REJECT:**
 
-> R1: REJECT. The helpers already in `shared/utils.ts` (`debounce`, `formatBytes`, `clamp`) all share a no-domain-knowledge shape; the file header confirms the invariant with `// Pure, framework-agnostic helpers with no domain knowledge.`. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate that invariant, whether read from the surrounding code or from the header. The reviewer's "plausibly belongs" framing did not survive a read of the destination's actual doctrine. The function stays in `auth/validators.ts`.
+> R1: REJECT. The helpers already in `shared/utils.ts` (`debounce`, `formatBytes`, `clamp`) all share a no-domain-knowledge shape; the file header confirms the invariant with `// Pure, framework-agnostic helpers with no domain knowledge.`. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate that invariant, whether read from the surrounding code or from the header. A read of the destination's actual doctrine contradicts the reviewer's "plausibly belongs" framing. The function stays in `auth/validators.ts`.
 
 ### Bad → Good: Structural move with destination doctrine satisfied
 
@@ -117,7 +117,7 @@ The acceptance reads the function's signature without reading the destination's 
 
 > R1: REJECT. Pushback is the default for structural recommendations. The current placement works.
 
-The rejection invokes the default posture but never reads the destination's doctrine to check whether the affirmative-evidence bar is met.
+The agent invoked the default posture without reading the destination's doctrine to check whether the affirmative-evidence bar is met.
 
 **Good: Doctrine-grounded ACCEPT:**
 
@@ -131,7 +131,7 @@ The rejection invokes the default posture but never reads the destination's doct
 
 > S1: ACCEPT (follow-up). The reviewer is right that TTL is useful for some cases; we'll create a ticket and defer.
 
-The disposition was lifted from the reviewer's handling suggestion; no substance check occurred, and `ACCEPT (follow-up)` is not a valid disposition.
+The agent took the disposition from the reviewer's handling suggestion and never checked the substance; `ACCEPT (follow-up)` is not a valid disposition.
 
 **Good: Substance check, then REJECT:**
 
@@ -159,7 +159,7 @@ The disposition conflates two decisions: whether the change belongs (substance),
 
 ## Writing code after a review
 
-Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, and that is when the voice leaks. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
+Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, which is when that voice enters the comments. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
 
 **Before** (narrates the review, cites a finding and an acceptance criterion):
 
@@ -272,7 +272,7 @@ The body following the frontmatter has this structure:
 ## Section handling
 
 - Code changes summarized under `## Changes made` must themselves satisfy [Comment discipline](#comment-discipline): Comments in the edited code state the code's current contract, not the change history or the reviewer's concern.
-- `Action taken` and `## Changes made` report the diff, read back per [Diff audit](#diff-audit). A disposition asserting that something was left unchanged is a claim about the diff too, and takes the same evidence as one asserting that something changed.
+- `Action taken` and `## Changes made` report the diff, read back per [Diff audit](#diff-audit). A disposition asserting that something was left unchanged is a claim about the diff too, and requires the same evidence as one asserting that something changed.
 - Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
 - File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) — use repo-relative paths

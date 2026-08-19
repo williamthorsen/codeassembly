@@ -28,7 +28,7 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
 
 2. **Apply the audit per file.** Read each target file. Put every comment through the three tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
 
-3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing it replaced. Such a file sits outside the resolved target set, so [Safety](#safety) governs and the hit is reported to the user alongside the summary rather than repaired. `--dry-run` applies no edits, so the step is skipped there.
+3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing it replaced. Such a file is outside the resolved target set, so [Safety](#safety) applies and the hit is reported to the user alongside the summary rather than repaired. `--dry-run` applies no edits, so the step is skipped there.
 
 4. **Emit the summary.** After processing all targets, emit one table per file with non-trivial decisions.
 
@@ -38,9 +38,9 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
 
 ## File-level carve-outs
 
-The carve-outs above apply to comments. Two file-level rules govern which lines this skill may touch at all:
+The carve-outs above apply to comments. Two file-level rules decide which lines this skill may touch at all:
 
-- **Test files.** Path contains `__tests__/` or filename matches `*.spec.*` / `*.test.*`. The test-comment carve-out applies inside them; the three tests still govern everything else in the file.
+- **Test files.** Path contains `__tests__/` or filename matches `*.spec.*` / `*.test.*`. The test-comment carve-out applies inside them; the three tests still apply to everything else in the file.
 - **`eslint-disable` lines.** Lines beginning with `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, or the block forms `/* eslint-disable */` and `/* eslint-enable */`. Keep the rationale, tightened to name only why the rule is suppressed at that line. Strip surrounding context, ticket references, and design discussion.
 
 ## When to pause and ask
@@ -48,8 +48,8 @@ The carve-outs above apply to comments. Two file-level rules govern which lines 
 The default is to act. Pause and ask the user when one of these holds:
 
 - A test comment could plausibly be non-obvious setup, but the test name already conveys the setup intent.
-- An `eslint-disable` rationale sits at the boundary between tight and over-scoped.
-- A file header describes potentially load-bearing architecture (composition order, threading model, invariants across functions), so it may carry a constraint the code cannot show.
+- An `eslint-disable` rationale is at the boundary between tight and over-scoped.
+- A file header describes potentially load-bearing architecture (composition order, threading model, invariants across functions), so it may state a constraint the code cannot show.
 
 ## Summary format
 
@@ -67,7 +67,7 @@ src/lib/payload.ts
 | 6    | kept      | —            | why-inline                       |
 ```
 
-Line numbers anchor to the pre-edit file, so each row is checked against `git diff` output before the table is emitted: The `Action` column reports what the diff shows, not what was intended. A comment failing more than one test names the first it fails.
+Line numbers anchor to the pre-edit file, so each row is checked against `git diff` output before the table is emitted: The `Action` column reports what the diff shows, not what was intended. For a comment failing more than one test, report the first it fails.
 
 ## Safety
 

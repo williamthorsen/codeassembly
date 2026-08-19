@@ -16,11 +16,11 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 ## Arguments
 
-| Flag                          | Effect                                                                                                                                                         | Default                                           |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `--diff-base=<ref>`           | Reference to diff against. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                                                            | Project's default branch                          |
-| `--ticket=<source>`           | Ticket or requirements to check the implementation against. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md).                     | Auto-resolved (see below)                         |
-| `--spec-source=remote\|local` | When the ticket is auto-resolved (i.e. `--ticket` is omitted), force which candidate wins instead of the recency comparison. Ignored when `--ticket` is given. | Newest of the remote issue vs. the local snapshot |
+| Flag                          | Effect                                                                                                                                                                | Default                                           |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `--diff-base=<ref>`           | Reference to diff against. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                                                                   | Project's default branch                          |
+| `--ticket=<source>`           | Ticket or requirements to check the implementation against. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md).                            | Auto-resolved (see below)                         |
+| `--spec-source=remote\|local` | When the ticket is auto-resolved (i.e. `--ticket` is omitted), force which candidate is selected instead of the recency comparison. Ignored when `--ticket` is given. | Newest of the remote issue vs. the local snapshot |
 
 ## Process
 
@@ -37,7 +37,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
        - If `--spec-source=remote|local` is set, use that candidate. If the named candidate is unavailable (e.g. `--spec-source=local` with no snapshot, or `--spec-source=remote` with a failed/offline fetch or null `ticket_id`), stop and report the missing source rather than silently using the other side — an explicit instruction must not be redirected to the wrong contract. State the remedy (drop the flag to re-enable recency) in the message.
        - Otherwise use the candidate with the newer `last_updated`. Both values are ISO 8601 at the same precision, so they compare chronologically as plain strings — no per-format parsing. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
        - If only one candidate exists, use it. This single-candidate fallback also covers a failed/offline remote fetch and a null `ticket_id`.
-     - Append the chosen candidate as a `ticket` source carrying its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, hold that rejected candidate's `content` in-process for the divergence check. Hold raw content rather than extracted criteria: The comparison runs at render time under the extraction rule the compliance table states, so both candidates are read by one rule. It rides working memory, not the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout cannot fire on that branch.
+     - Append the chosen candidate as a `ticket` source with its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, hold that rejected candidate's `content` in-process for the divergence check. Hold raw content rather than extracted criteria: The comparison runs at render time under the extraction rule the compliance table states, so both candidates are read by one rule. It stays in working memory, not in the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout never appears on that branch.
    - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
@@ -212,7 +212,7 @@ Extract criteria from whatever structure the source uses (numbered lists, checkb
 
 ## Specification consistency
 
-{Omit this entire section when fewer than two spec sources are present. Otherwise assess semantic alignment across (ticket, PR description, implementation) and render the verdict line plus the per-aspect table below. Include the Details subsection only for rows whose Summary cell cannot carry the explanation.}
+{Omit this entire section when fewer than two spec sources are present. Otherwise assess semantic alignment across (ticket, PR description, implementation) and render the verdict line plus the per-aspect table below. Include the Details subsection only for rows whose Summary cell cannot fit the explanation.}
 
 🔗 **Consistency:** {emoji} `{verdict}`
 
