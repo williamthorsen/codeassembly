@@ -122,7 +122,7 @@ git log {default_branch}..HEAD --format=%B
 git diff {default_branch}...HEAD --stat
 ```
 
-Report what the change did. The whole body is the lede, so the budget below applies to it end to end.
+Report what the change did. The whole body is the lede, so the doctrine below applies to it end to end.
 
 <!-- include: ../../_partials/voice-checklist.md / -->
 
