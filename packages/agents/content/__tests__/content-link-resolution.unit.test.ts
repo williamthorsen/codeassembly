@@ -25,7 +25,7 @@ import { renderRulebookBody } from '../../src/lib/rulebook-transform.ts';
 // fragment is a dead locator repeated across every consumer.
 //
 // A host that leaves a code fence open is reported before either check runs. Everything below such a fence is read as
-// code, so the links and headings the host appears to carry are not the ones it carries, and a clean result over it
+// code, so the links and headings the host appears to contain are not the ones it does, and a clean result over it
 // would be indistinguishable from a checked one. The render gate throws on the same condition.
 //
 // The render pass rejects a same-body anchor on its own, over content from any source. This suite still covers it,
@@ -35,17 +35,17 @@ import { renderRulebookBody } from '../../src/lib/rulebook-transform.ts';
 // algorithm through `anchor-resolution`.
 //
 // Host roots only. A `_partials/` file is never installed standalone, and its links are authored against the host that
-// inlines it — checking one in isolation would misresolve every `../` it carries. Include expansion below reaches them
+// inlines it — checking one in isolation would misresolve every `../` in it. Include expansion below reaches them
 // through each host, which is the only context where they mean anything.
 //
 // `guidance/rulebooks/` is a host root because `sync` renders a rulebook body per harness and resolves its links the
 // same way this test does: against the file's own place in the content tree. The rest of `guidance/` stays out of
 // scope for the opposite reason. `_harnesses/` files are rewritten at install time, but anchored at the harness home
 // they install into rather than at their source directory, so resolving one here against the source tree would
-// misreport every link it carries. `shared/` installs verbatim to a harness-neutral location, which no rewritten path
+// misreport every link in it. `shared/` installs verbatim to a harness-neutral location, which no rewritten path
 // could name a harness in.
 //
-// A rulebook carries a second requirement the file-existence check cannot express: its target must be rooted in a tree
+// A rulebook has a second requirement the file-existence check cannot express: its target must be rooted in a tree
 // that deploys under a harness home. A link to `subagents/canary.md` names a file that exists, so it satisfies
 // everything above, and still fails every `sync`. The last suite below closes that gap over shipped rulebooks.
 const RULEBOOK_ROOT = 'guidance/rulebooks';
@@ -169,8 +169,8 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
     const expanded = await expandIncludes(hostFile, CONTENT_ROOT);
     const file = path.relative(CONTENT_ROOT, hostFile);
 
-    // Everything below an open fence is blanked, so the anchors and links this host appears to carry are not the ones
-    // it carries. Reporting the fence and moving on matches the order the render gate uses for the same reason.
+    // Everything below an open fence is blanked, so the anchors and links this host appears to contain are not the
+    // ones it does. Reporting the fence and moving on matches the order the render gate uses for the same reason.
     const unterminated = findUnterminatedFence(expanded);
     if (unterminated !== undefined) {
       violations.push({ file, target: unterminated, reason: 'unterminated-fence' });
@@ -198,7 +198,7 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
         continue;
       }
 
-      // Only Markdown carries headings; a fragment on any other target has nothing to resolve against.
+      // Only Markdown has headings; a fragment on any other target has nothing to resolve against.
       if (fragment === '' || !targetPath.endsWith('.md')) {
         continue;
       }
@@ -223,7 +223,7 @@ function formatFenceViolations(violations: ReadonlyArray<Violation>): string {
   }
   const header =
     `Found ${violations.length} unterminated code fence(s). Everything below an open fence reads as code, so no ` +
-    `anchor there is checked and a clean result over it carries no information. A closing fence repeats the opening ` +
+    `anchor there is checked and a clean result over it proves nothing. A closing fence repeats the opening ` +
     `character at least as many times.`;
   const lines = violations.map((v) => `  [${v.reason}] ${v.file}: opened with ${v.target}`);
   return [header, ...lines].join('\n');

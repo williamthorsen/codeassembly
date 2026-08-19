@@ -8,16 +8,16 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Output-shaping specs — the option-format contract and the next-steps menus — must reach the agent inlined, not
-// behind a runtime Markdown link. A link is an optional read at generation time, and the model will fill from its
-// prior rather than take the hop, producing a block that looks right and is wrong. These tests assert the specs are
-// present in each consumer's include-expanded body, which is what the install pipeline writes.
+// Output-shaping specs — the option-format contract and the next-steps menus — must be inlined into what the agent
+// reads, not left behind a runtime Markdown link. A link is an optional read at generation time, and the model will
+// fill from its prior rather than follow the link, producing a block that looks right and is wrong. These tests
+// assert the specs are present in each consumer's include-expanded body, which is what the install pipeline writes.
 //
 // The consumer lists are explicit rather than discovered from the include directives themselves: the failure this
 // guards against is a consumer being *dropped*, and a discovered list would move with the bug.
 //
 // A second guard runs beside them, over the diff-audit checklist. Its risk is the mirror image: a host that states
-// the checklist in its own prose carries no include directive and no anchor, so nothing in the deployment mechanism
+// the checklist in its own prose has no include directive and no anchor, so nothing in the deployment mechanism
 // can see the fork. Two carriers of `prose-line-breaks` drifted that way before it was guarded.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
@@ -155,7 +155,7 @@ describe('output-shaping spec inlining', () => {
     const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
     for (const entry of entries) {
       // `_`-prefixed entries are support directories; a directory with no `SKILL.md` (e.g. a bundled helper) is not
-      // a skill either. Neither can carry a spec link.
+      // a skill either. Neither can contain a spec link.
       if (!entry.isDirectory() || entry.name.startsWith('_')) {
         continue;
       }
