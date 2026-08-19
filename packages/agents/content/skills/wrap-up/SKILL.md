@@ -100,7 +100,7 @@ Items at levels 1–2 (trivial or mechanical) are **drive-by candidates** — si
 
 Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
 
-The complexity assessment is the input to the cost-aware disposition flow described in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md): **Do now** (Phase 2a drive-bys) is preferred for trivial items; **batch later** (Phase 2b batch action) for items that cannot ship as drive-bys but share scope or source; and a **separate ticket** (Phase 2b per-item ticketing) for substantive items.
+The complexity assessment is an input to the cost-aware disposition flow described in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md): **Do now** (Phase 2a drive-bys) is preferred for trivial items; **batch later** (Phase 2b batch action) for items that cannot ship as drive-bys but share scope or source; and substantive items get a **separate ticket** (Phase 2b per-item ticketing).
 
 #### 1c. Collect insights
 

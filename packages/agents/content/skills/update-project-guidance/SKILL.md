@@ -68,7 +68,7 @@ Where both legacy files have content, `.agents/PROJECT.md` is the baseline as th
 
 Resolve the baseline in memory. A legacy file is not moved here — its content becomes the baseline and moves to the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
 
-The path follows from what was found. A baseline selects the **refresh path**. No baseline — no guidance file, or nothing but stubs — selects the **authoring path**, where there is nothing to preserve and a bounded gap scan would produce almost nothing.
+The path follows from what was found. With a baseline, take the **refresh path**. With none — no guidance file, or nothing but stubs — take the **authoring path**, where there is nothing to preserve and a bounded gap scan would produce almost nothing.
 
 State which path was selected, and why, before proceeding.
 

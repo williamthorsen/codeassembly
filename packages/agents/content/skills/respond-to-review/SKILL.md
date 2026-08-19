@@ -40,7 +40,7 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Resolve `$pr_url` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
 
-- If the review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
+- If the review's frontmatter has a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
 - Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, leave `$pr_url` empty.
 
 Run via Bash:
