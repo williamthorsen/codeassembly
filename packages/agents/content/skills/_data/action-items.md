@@ -22,6 +22,8 @@ Soft offers are the hardest form to spot. Each phrases a question as a statement
 
 Each is an action item. Restate it in the block as the concrete action it proposes, and strike the offer from the prose. The observation that prompted it may stay — that is signal. The ask may not.
 
+The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence the agent already holds is a decision it declined to make, and it costs the user an evaluation to hand back what a clause would have carried. Strike it, state the decision in the prose with its reason, and leave the block to the items only the user can settle. A block emptied this way is a turn with no ask, which is a report rather than a failure.
+
 ## Items
 
 An item is a question, punctuated as one, naming the concrete action:
