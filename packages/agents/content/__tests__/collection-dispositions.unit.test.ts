@@ -13,7 +13,7 @@ import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
 
 // Declaring a collection is a claim about its members, so an artifact in none of them is deploying under a claim
 // nobody made. These two checks are what make the claim real rather than nominal: coverage catches the artifact that
-// slipped in with no disposition, and closure catches the unexamined artifact that a vetted collection reaches through
+// was added with no disposition, and closure catches the unexamined artifact that a vetted collection reaches through
 // an edge. Neither can be replaced by reading the collection files, because both defects are invisible there.
 
 /** An artifact addressed as `<type>:<slug>`, the form the resolver's own errors use. */
@@ -21,10 +21,10 @@ type ArtifactId = string;
 
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures', 'collection-dispositions');
 
-/** The pseudo-collection a standalone artifact carries, so one map answers "what claims does this hold?". */
+/** The pseudo-collection recorded for a standalone artifact, so a single map lists every claim on an artifact. */
 const STANDALONE_DISPOSITION = 'standalone';
 
-/** The collection holding what nobody has examined; its membership tolerates no vetted co-claim. */
+/** The collection for what nobody has examined; a member of it may not also be claimed by a vetted one. */
 const TRIAGE_DISPOSITION = 'triage';
 
 /**
@@ -33,12 +33,12 @@ const TRIAGE_DISPOSITION = 'triage';
  * check exists to catch.
  */
 const STANDALONE: Readonly<Record<ArtifactId, string>> = {
-  'rulebook:codeassembly-content-specification': 'governs this repository alone, which declares it directly',
-  'skill:migrate-feedback-memories': 'wanted once per machine, too rarely to repay a standing skill-index line',
-  'subagent:canary': 'proves the declared-subagent mechanism rather than doing work of its own',
+  'rulebook:codeassembly-content-specification': 'applies to this repository alone, which declares it directly',
+  'skill:migrate-feedback-memories': 'wanted once per machine, too rarely to justify a standing skill-index line',
+  'subagent:canary': 'exercises the declared-subagent mechanism rather than doing work of its own',
 };
 
-/** Each vetted collection and the dispositions its closure may reach. A collection absent here claims no vetting. */
+/** Each vetted collection and the dispositions its closure may reach. A collection absent here is not vetted. */
 const VETTED_CLOSURES: ReadonlyArray<{ collection: string; reaches: ReadonlyArray<string> }> = [
   { collection: 'recommended', reaches: ['recommended'] },
   { collection: 'williamthorsen', reaches: ['recommended', 'williamthorsen'] },
@@ -79,9 +79,9 @@ describe('collection dispositions', () => {
     expect(defects).toEqual([]);
   });
 
-  // What standalone buys is a skill-index line nobody pays for unless they ask, and that survives only while no
-  // collection's closure reaches the artifact. `triage` is the 71-member surface where a new edge is likeliest, and
-  // it is constrained by no vetted-closure rule.
+  // Standalone spares an artifact the skill-index line every collection member gets, and that is true only while
+  // no collection's closure reaches it. `triage` is the 71-member surface where a new edge is likeliest, and no
+  // vetted-closure rule constrains it.
   it('keeps every standalone artifact out of the collections’ combined closure', async () => {
     const collections = await readExplicitCollections(contentDir);
     const closure = await resolveClosure({ collection: collections.keys().toArray() }, libraryResolver(contentDir));
@@ -109,7 +109,7 @@ describe('collection dispositions', () => {
       ]);
 
       expect(findCoverageDefects(catalog, collections, [])).toEqual([
-        'skill:orphan carries no disposition; add it to a collection, or record it standalone with the reason.',
+        'skill:orphan has no disposition; add it to a collection, or record it standalone with the reason.',
       ]);
     });
 
@@ -135,7 +135,7 @@ describe('collection dispositions', () => {
       const collections = new Map([['bitbucket', { skill: ['unexamined'] }]]);
 
       expect(findCoverageDefects({ skill: ['unexamined'] }, collections, [])).toEqual([
-        'skill:unexamined carries no disposition; add it to a collection, or record it standalone with the reason.',
+        'skill:unexamined has no disposition; add it to a collection, or record it standalone with the reason.',
       ]);
     });
 
@@ -158,11 +158,11 @@ describe('collection dispositions', () => {
       ]);
     });
 
-    it('reports a claim on an artifact the library no longer holds', () => {
+    it('reports a claim on an artifact the library no longer contains', () => {
       const collections = new Map([['triage', { skill: ['retired'] }]]);
 
       expect(findCoverageDefects({ skill: [] }, collections, [])).toEqual([
-        'triage claims skill:retired, which the library does not hold.',
+        'triage claims skill:retired, which the library does not contain.',
       ]);
     });
   });
@@ -198,13 +198,13 @@ describe('collection dispositions', () => {
       ]);
     });
 
-    it('accepts a reached artifact holding a permitted disposition among others', () => {
+    it('accepts a reached artifact with a permitted disposition among others', () => {
       const claims = new Map([['skill:shared', new Set(['recommended', 'williamthorsen'])]]);
 
       expect(findClosureDefects('recommended', ['skill:shared'], ['recommended'], claims)).toEqual([]);
     });
 
-    it('names every disposition a reported artifact holds', () => {
+    it('names every disposition a reported artifact has', () => {
       const claims = new Map([['skill:shared', new Set(['recommended', 'williamthorsen'])]]);
 
       expect(findClosureDefects('teamx', ['skill:shared'], ['teamx'], claims)).toEqual([
@@ -212,9 +212,9 @@ describe('collection dispositions', () => {
       ]);
     });
 
-    it('reports a reached artifact carrying no claim at all', () => {
+    it('reports a reached artifact with no claim at all', () => {
       expect(findClosureDefects('recommended', ['skill:unclaimed'], ['recommended'], new Map())).toEqual([
-        "recommended's closure reaches skill:unclaimed, which carries no disposition; claim it or drop the edge.",
+        "recommended's closure reaches skill:unclaimed, which has no disposition; claim it or drop the edge.",
       ]);
     });
   });
@@ -222,7 +222,7 @@ describe('collection dispositions', () => {
 
 // region | Helpers
 
-/** Maps each artifact to every claim it carries: membership in each explicit collection, plus the standalone record. */
+/** Maps each artifact to every claim on it: membership in each explicit collection, plus the standalone record. */
 function buildClaimMap(
   byCollection: ReadonlyMap<string, ArtifactDependencies>,
   standalone: ReadonlyArray<ArtifactId>,
@@ -243,9 +243,9 @@ function buildClaimMap(
 }
 
 /**
- * Reports each artifact `collection`'s closure reaches that holds no permitted claim, naming the dispositions it does
- * hold. An artifact with no claim at all is reported too: the coverage check names it as well, but a closure that
- * leaks to an unclaimed artifact is the more urgent of the two readings.
+ * Reports each artifact `collection`'s closure reaches that has no permitted claim, naming the dispositions it does
+ * have. An artifact with no claim at all is reported too: the coverage check names it as well, but a closure that
+ * reaches an unclaimed artifact is the more urgent of the two readings.
  */
 function findClosureDefects(
   collection: string,
@@ -263,7 +263,7 @@ function findClosureDefects(
     const held = [...claims].filter((claim) => DISPOSITIONS.has(claim)).toSorted();
     const clause =
       held.length === 0
-        ? 'which carries no disposition; claim it or drop the edge'
+        ? 'which has no disposition; claim it or drop the edge'
         : `whose disposition${held.length === 1 ? ' is' : 's are'} ${held.join(', ')}; promote it or drop the edge`;
     defects.push(`${collection}'s closure reaches ${id}, ${clause}.`);
   }
@@ -271,10 +271,10 @@ function findClosureDefects(
 }
 
 /**
- * Reports every departure from the coverage rules: a catalog artifact carrying no disposition, a membership
- * contradicting an absence a disposition asserts (standalone tolerates no other claim, triage no vetted claim), and a
- * claim naming an artifact the catalog no longer holds. The third is what a deletion leaves behind, and no closure
- * resolution reaches it, since only the vetted collections are resolved.
+ * Reports every departure from the coverage rules: a catalog artifact with no disposition, a membership
+ * contradicting an absence a disposition asserts (standalone excludes every other claim, triage every vetted one),
+ * and a claim naming an artifact the catalog no longer contains. The third is what a deletion leaves behind, and no
+ * closure resolution reaches it, since only the vetted collections are resolved.
  */
 function findCoverageDefects(
   catalog: ArtifactDependencies,
@@ -300,7 +300,7 @@ function findCoverageDefects(
     const claimed = claimants.get(id) ?? [];
     const vetted = claimed.filter((claimant) => VETTED_COLLECTIONS.includes(claimant));
     if (claimed.every((claimant) => !DISPOSITIONS.has(claimant))) {
-      defects.push(`${id} carries no disposition; add it to a collection, or record it standalone with the reason.`);
+      defects.push(`${id} has no disposition; add it to a collection, or record it standalone with the reason.`);
     } else if (claimed.includes(STANDALONE_DISPOSITION) && claimed.length > 1) {
       const others = claimed.filter((claimant) => claimant !== STANDALONE_DISPOSITION);
       defects.push(
@@ -312,7 +312,7 @@ function findCoverageDefects(
   }
   for (const [id, claimed] of claimants) {
     if (!catalogIds.has(id)) {
-      defects.push(`${claimed.join(', ')} claims ${id}, which the library does not hold.`);
+      defects.push(`${claimed.join(', ')} claims ${id}, which the library does not contain.`);
     }
   }
   return defects.toSorted();
@@ -334,7 +334,7 @@ function listClosureIds(closure: ResolvedClosure): Array<ArtifactId> {
 
 /**
  * Reads every collection in `contentDir` that enumerates its members, keyed by slug. One computing its members from
- * the whole catalog is excluded: it carries no disposition, and counting it would put every artifact in two
+ * the whole catalog is excluded: it has no disposition, and counting it would put every artifact in two
  * collections at once.
  */
 async function readExplicitCollections(contentDir: string): Promise<ReadonlyMap<string, ArtifactDependencies>> {
