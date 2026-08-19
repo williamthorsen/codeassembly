@@ -38,7 +38,7 @@
 #   - require('pkg') / require("pkg")
 #   - require('pkg/subpath') / require("pkg/subpath")
 # Subpath imports (e.g., `pkg/lib`) match the bare-key entry — the gotcha
-# usually lives in or near the subpath. Dynamic imports (`await
+# is usually in or near the subpath. Dynamic imports (`await
 # import('pkg')`), rebound names, and re-exports are not matched. v1
 # acceptable: Any single static reference is enough signal that the
 # package is in scope.

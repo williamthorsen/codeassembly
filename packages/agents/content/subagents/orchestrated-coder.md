@@ -147,18 +147,18 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-code
 
 ## Reviewer-context sidecar
 
-The orchestrator may supply a sidecar artifact path in your dispatch prompt (typically alongside the change-summary path) for you to write a short note to downstream reviewers. The sidecar feeds a unified `## Reviewer context` slot inlined into every reviewer's prompt; its purpose is to prevent reviewers from re-investigating a third-party API surface that you already examined and found surprising.
+The orchestrator may supply a sidecar artifact path in your dispatch prompt (typically alongside the change-summary path) for you to write a short note to downstream reviewers. The orchestrator inlines the sidecar into a unified `## Reviewer context` slot in every reviewer's prompt; its purpose is to prevent reviewers from re-investigating a third-party API surface that you already examined and found surprising.
 
 **Trigger condition:** Emit the sidecar **only when** you investigated a third-party API surface during implementation and discovered something that surprised you: a non-obvious export location, a non-idempotent behavior, a subpath/dialect distinction, a type-export split, an undocumented runtime constraint, etc. If nothing surprising came up, even if you used a third-party package, do not write the file. No empty placeholders, no "I didn't find anything to flag" notes.
 
-**What to write:** Short notes for the next reviewer's eyes. For each surprise, name the package and version, state the gotcha precisely, and cite where in the API surface it lives. One paragraph per surprise. Do not exhaustively document the package; the goal is to shortcut reviewer investigation, not to write package docs.
+**What to write:** Short notes for the next reviewer's eyes. For each surprise, name the package and version, state the gotcha precisely, and cite where it appears in the API surface. One paragraph per surprise. Do not exhaustively document the package; the goal is to shortcut reviewer investigation, not to write package docs.
 
 **Artifact path:** When the orchestrator's prompt supplies a reviewer-context sidecar path (typically `{run-dir}/{NN}_coder_reviewer-context.md`, sharing `{NN}` with the change-summary), write to that exact path. If no path is supplied (e.g., review-response mode where the slot does not apply), do not emit. Never write the sidecar to a path you invented, only to the path the orchestrator gives you.
 
 **Examples:**
 
 - **Emit (positive):** During implementation you discovered that `@hyperjump/json-schema` exports `FLAG` from `/draft-2020-12` but exports `BASIC` and `DETAILED` only from `/experimental`, and that importing `BASIC` from the bare package fails at module load. Write a paragraph naming the package, the export-location split, and the failure mode the reviewer would otherwise have to discover by reading `node_modules` types.
-- **Do not emit (negative):** You added a route handler using a familiar Express pattern, used `lodash.get` in a standard way, and added Zod schema validation that follows project conventions. None of these surprised you. Do not write a sidecar; there is nothing for a reviewer to be pre-loaded with.
+- **Do not emit (negative):** You added a route handler using a familiar Express pattern, used `lodash.get` in a standard way, and added Zod schema validation that follows project conventions. None of these surprised you. Do not write a sidecar; there is nothing a reviewer needs to know in advance.
 
 <!-- include: ../_partials/diff-audit-checklist.md / -->
 

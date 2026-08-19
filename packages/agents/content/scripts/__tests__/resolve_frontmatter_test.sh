@@ -753,7 +753,7 @@ End
 It "derives the manifest at the repo root when invoked from a nested subdirectory"
 # Regression: `derive_manifest` previously omitted `--cwd`, so the deriver wrote to
 # the caller's working directory while `read_manifest` looked at the repo root. Every
-# call from a subdirectory re-ran the deriver and stranded manifests in nested `.agents/`
+# call from a subdirectory re-ran the deriver and left manifests in nested `.agents/`
 # folders. The fix anchors the deriver at `git rev-parse --show-toplevel`.
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p packages/nested/deep
@@ -768,7 +768,7 @@ When run subdir_run
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
-# Manifest must land at the repo root, not the subdirectory.
+# Manifest must appear at the repo root, not the subdirectory.
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.json" should not be exist
 End
@@ -785,7 +785,7 @@ The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
 # The deriver emits a stderr diagnostic when it overwrites the corrupt file so an operator can
-# distinguish a normal cache miss from recurring corruption. Assert that it surfaces.
+# distinguish a normal cache miss from recurring corruption. Assert that it appears.
 The stderr should include "manifest"
 The stderr should include "is corrupt"
 # After recovery, the manifest should now be valid JSON readable by jq.
@@ -866,7 +866,7 @@ The variable result should include "ticket_id: 537"
 End
 
 It "resolves a legacy manifest 'platform' key to 'scm' in json output"
-# The fixture manifest carries the legacy 'platform' key; the script's '.scm // .platform'
+# The fixture manifest has the legacy 'platform' key; the script's '.scm // .platform'
 # fallback should still emit it under the new 'scm' key.
 When run main --format json
 The status should be success
