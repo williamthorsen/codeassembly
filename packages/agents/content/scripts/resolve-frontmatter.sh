@@ -302,7 +302,7 @@ read_manifest() {
 
 # Invokes the bundled `derive-session-context` helper to compose the branch manifest on demand.
 # Echoes the JSON manifest emitted on the helper's stdout. On failure, the helper's stderr is
-# surfaced verbatim to the caller's stderr and the function returns non-zero.
+# passed through verbatim to the caller's stderr and the function returns non-zero.
 #
 # Bundle location: `../skills/derive-session-context/derive-session-context.mjs`, anchored relative
 # to this script's own install path (e.g., `~/.claude/scripts/resolve-frontmatter.sh` -> bundle at

@@ -183,7 +183,7 @@ render_title() {
   done
   # Warn on a stray `[` left in the residue: An unmatched opening bracket
   # cannot start a group, so it falls through verbatim. Visible in output,
-  # but easy to misread as intentional — surface it to stderr.
+  # but easy to misread as intentional — report it to stderr.
   if [[ "$remaining" == *'['* ]]; then
     echo "$PROG: Warning: Unmatched '[' in template: $template" >&2
   fi
