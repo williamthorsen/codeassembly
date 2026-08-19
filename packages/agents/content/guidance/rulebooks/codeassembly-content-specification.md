@@ -141,6 +141,12 @@ Skill names are verb-led. Order list members and frontmatter lists alphabeticall
 
 A `codeassembly-` prefix marks guidance for working in the CodeAssembly repository itself, as this specification does. Its absence marks content that applies in any project, CodeAssembly's own behavior included where a consumer meets it. Prefix a new artifact only when a project that merely consumes the library would have no use for it. _(Convention; not enforced.)_
 
+## Adding guidance
+
+Correct a behavior at the fewest surfaces that plausibly account for it, ship that change, and observe. Extend to further surfaces only after the minimal change has been seen to fail. Changing every contributing surface at once means no single edit can be credited with the improvement, so the cheapest sufficient fix is never learned, and each surface touched is permanent token weight on every later invocation.
+
+Breadth is what a proposal justifies, not what it assumes. A contributing surface left unaddressed is recorded as an observation for a later pass rather than offered as an option to adopt now. Before adding exposition to a rulebook, check whether its existing examples already teach the point. _(Convention; not enforced.)_
+
 ## Skill-local reinforcement
 
 Behavioural rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. Where the boundary below requires a restatement, put it at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when the rule appears next to the action it applies to than when the agent must follow a link to read it, and it imitates a nearby concrete example more reliably still than it follows a directive.
