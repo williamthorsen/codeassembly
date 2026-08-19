@@ -1,6 +1,6 @@
 ### Review-response-mode scaffold
 
-After reading the review, enumerate all finding IDs and write exactly this structure. The YAML frontmatter is part of the scaffold and appears from the first write — see [Frontmatter](#frontmatter) for field resolution.
+After reading the review, enumerate all finding IDs and write exactly this structure. The YAML frontmatter is part of the scaffold, so the first write includes it — see [Frontmatter](#frontmatter) for field resolution.
 
 ```markdown
 ---
