@@ -83,7 +83,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 ### Output format
 
-Present all three options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the realized diff presents a context-specific tradeoff bearing on which option fits (e.g., "the shared schema changed, so consumers outside this package are affected"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include the ticket path in each skill-invoking option line; omit it when no ticket governed the run.
+Present all three options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the realized diff presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the shared schema changed, so consumers outside this package are affected"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include the ticket path in each skill-invoking option line; omit it when no ticket governed the run.
 
 Options that invoke a review include context-clearing guidance:
 
@@ -118,7 +118,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
 #### Marker strengths
 
-The selected option carries the ■■□ marker in the rendered output. The other two options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
+The selected option's marker follows how cleanly its rule matched: ■■■ where the rule's test is met squarely and the alternatives are worse on the criteria that decided it, ■■□ where the fit is good but an alternative stays defensible, ■□□ where little separates the options. Rule 3 is the cascade's fallthrough rather than a positive match, so an option selected there rarely earns more than ■■□. The other two options carry ■□□ by default, and □□□ where one carries a clear drawback in the current context.
 
 <!-- include: ../_partials/option-format.md / -->
 

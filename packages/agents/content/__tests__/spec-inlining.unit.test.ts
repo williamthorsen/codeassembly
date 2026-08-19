@@ -38,6 +38,42 @@ const OPTION_FORMAT: Spec = {
     '| ■■■    | strongly recommended |',
     '   - ➕ minimal surface area',
     'Apply this even when an option has only one pro or con.',
+    // The gate that decides whether a menu exists at all. Without it the block reads as a formatting spec, and a
+    // settled call gets rendered as a fork the reader has to evaluate.
+    '**Earn the menu before rendering it.**',
+    // The gate's carve-out. Without it the gate reads as license to decide an authorization ask, trading a menu
+    // problem for an agent that acts where it should have asked.
+    'This gate governs judgment asks alone',
+    // The test that tells a real bullet from a manufactured one. Without it the rule states what a bullet must be
+    // and not how to tell, which is the wording four captured failures got through.
+    'must be false for at least one other option',
+    // The ban on padding. Without it an option with real pros and no real con gets a con invented for balance, and
+    // the invented con is what makes a settled call look like a fork.
+    'Never add a bullet to fill a slot',
+  ],
+};
+
+// The remote-issue offer stated in design-and-plan's own body. Not an include: Only this guard sees the block.
+const DESIGN_AND_PLAN_REMOTE_ISSUE: Spec = {
+  name: 'design-and-plan-remote-issue',
+  heading: '**Remote issue update**',
+  rules: [
+    // The marker rule for the offer. Without it the update option is pinned to ■■□ however stark the staleness.
+    "The recommended option's marker follows how stark that staleness is",
+  ],
+};
+
+// The next-steps menu stated in implement-plan's own body. Not an include: Only this guard sees the block.
+const IMPLEMENT_PLAN_MENU: Spec = {
+  name: 'implement-plan-menu',
+  heading: '## Next-steps options',
+  rules: [
+    // The marker rule. Without it the selected option is pinned to ■■□ whatever the diff turned out to be, so
+    // the marker varies with nothing and the reader has to investigate every menu to find the real forks.
+    "The selected option's marker follows how cleanly its rule matched",
+    // The fallthrough carve-out. Without it rule 3's default selection can claim ■■■, which is the
+    // over-correction the unpinning invites.
+    "Rule 3 is the cascade's fallthrough rather than a positive match",
   ],
 };
 
@@ -71,6 +107,12 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
     '`➕` line naming the specific unsettled decision the pass would surface',
+    // The marker rule. Without it the selected option is pinned to ■■□ whatever the analysis found, so the marker
+    // varies with nothing and the reader has to investigate every menu to find the real forks.
+    "The selected option's marker follows how cleanly its rule matched",
+    // The fallthrough carve-out. Without it rule 3's default selection can claim ■■■, which is the over-correction
+    // the unpinning invites.
+    "Rule 3 is the cascade's fallthrough rather than a positive match",
   ],
 };
 
@@ -98,13 +140,23 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation the review already
     // flagged gets the contract rewritten to match it, and the finding disappears along with the conflict.
     'revising the contract to match it',
+    // The marker rule for the Deviations cascade. Without it rules 1 and 2 re-pin their markers inline, and the
+    // marker varies with nothing.
+    "the recommended option's marker follows how cleanly the rule's test is met",
+    // The marker rule for the source-divergence cases, in that block's own wording so the near-duplicate rules
+    // above and below cannot mask its removal. Without it the recommended option re-pins to ■■□ however stark
+    // the divergence.
+    "the recommended option's marker follows how cleanly the case's own test is met",
+    // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
+    // findings turned out to be, so the marker carries no information about how clear the call was.
+    "The selected option's marker follows how cleanly its rule matched",
   ],
 };
 
 const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: ReadonlyArray<Spec> }> = [
   { slug: 'collaborate', specs: [OPTION_FORMAT] },
-  { slug: 'design-and-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
-  { slug: 'implement-plan', specs: [OPTION_FORMAT] },
+  { slug: 'design-and-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE] },
+  { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
   { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
   { slug: 'plan-orchestrable-steps', specs: [OPTION_FORMAT] },
