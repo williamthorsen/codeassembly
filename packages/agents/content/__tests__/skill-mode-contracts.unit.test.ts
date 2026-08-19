@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 // A skill can direct another skill into a named mode, and the two halves of that contract sit in different files with
 // no include tying them together. Deleting the definition leaves the directive naming a mode nothing defines, and the
 // callee falls back to its default behavior — the wider edit the directive exists to prevent — with every other test
-// still passing. The directive's own reach is checked in `spec-inlining.test.ts`; this file checks that what it names
-// is actually defined.
+// still passing. The directive's own reach is checked in `spec-inlining.unit.test.ts`; this file checks that what
+// it names is actually defined.
 const SKILLS_ROOT = new URL('../skills/', import.meta.url).pathname;
 
 interface ModeContract {
@@ -15,7 +15,7 @@ interface ModeContract {
   readonly mode: string;
   /** The file directing a caller into the mode, and the phrase that does the directing. */
   readonly caller: { readonly path: string; readonly phrase: string };
-  /** The file defining the mode, and the phrase carrying its contract. */
+  /** The file defining the mode, and the phrase that states its contract. */
   readonly callee: { readonly path: string; readonly phrase: string };
 }
 

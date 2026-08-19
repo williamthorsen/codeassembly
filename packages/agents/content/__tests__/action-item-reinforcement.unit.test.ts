@@ -31,9 +31,9 @@ const INCLUDE_DIRECTIVE = '<!-- include: ../_partials/action-items.md / -->';
 const SKILLS_ROOT = new URL('../skills/', import.meta.url).pathname;
 
 interface IncludeSites {
-  /** Directives that will expand into the skill's live instructions. */
+  /** Directives that expand into the skill's live instructions. */
   readonly live: number;
-  /** 1-based line numbers of directives sitting inside a fenced block. */
+  /** 1-based line numbers of directives inside a fenced block. */
   readonly fenced: ReadonlyArray<number>;
 }
 
@@ -77,9 +77,9 @@ describe('action-item reinforcement', () => {
     expect(
       fenced,
       `\`${slug}/SKILL.md\` puts the action-items directive inside a fenced block (line ${fenced.join(', ')}). ` +
-        `It will expand anyway, and the partial's own fence will close the enclosing one — presenting the ` +
-        `convention's prose as template content and spilling the rest of the template out of its fence. Move the ` +
-        `directive below the closing fence.`,
+        `It expands anyway, and the partial's own fence closes the enclosing one — presenting the convention's ` +
+        `prose as template content and leaving the rest of the template outside its fence. Move the directive ` +
+        `below the closing fence.`,
     ).toEqual([]);
   });
 

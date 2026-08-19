@@ -6,10 +6,10 @@ import { describe, expect, it } from 'vitest';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Two routes carry these rules, and each is asserted where it can be: the ambient route is a `delivery` value on the
+// Two routes deliver these rules, and each is asserted where it can be: the ambient route is a `delivery` value on the
 // rulebook, checked here, and the hook route is a row in `guidance-hook-reach.unit.test.ts`. Both rest on the rulebook
-// being the only place the rules are stated, which the last assertion holds. A second statement elsewhere in the
-// corpus is the drift that stranded these rules from their rulebook to begin with.
+// being the only place the rules are stated, which the last assertion checks. A second statement elsewhere in the
+// corpus is the drift that separated these rules from their rulebook to begin with.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const RULEBOOK = 'guidance/rulebooks/williamthorsen-writing-preferences.md';
 const SLUG = 'williamthorsen-writing-preferences';
@@ -34,7 +34,7 @@ describe('writing-preferences reach', () => {
   it('declares ambient delivery', async () => {
     const { rulebook } = parseRulebookFile(await readRulebook(), SLUG);
 
-    const message = `${SLUG} drops its ambient route, so an interactive session loses the rules the hook only reaches subagents with`;
+    const message = `${SLUG} drops its ambient route, so an interactive session loses these rules; the hook route reaches subagents alone`;
     expect(rulebook.delivery, message).toContain('ambient');
   });
 
