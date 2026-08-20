@@ -116,9 +116,9 @@ completed
 
 ## Quality gates
 
-- Typecheck: {pass/fail}
-- Lint: {pass/fail}
-- Tests: {pass/fail}
+- Typecheck (`{command run}`): {pass/fail}
+- Lint (`{command run}`): {pass/fail}
+- Tests (`{command run}`): {pass/fail}
 ```
 
 **Status definitions:**
