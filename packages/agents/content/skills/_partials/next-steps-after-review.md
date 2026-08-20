@@ -2,11 +2,11 @@
 
 The next-steps block has three independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header. When two or more sub-blocks appear, label each with its `A` identifier as a bold prefix (`**A1: Deviations from ticket**`, and so on) and keep each sub-block's own 1-based numbering, so the user answers `A1: 1, A2: 2`; a lone sub-block has no identifier.
 
-Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
+Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option (invocation guidance as much as a pro or con) is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
 
-**Naming a skill in the render.** Name a skill in the rendered option only when the user must carry the invocation across a session boundary — clearing context, handing off to another session, or waiting for someone else to act. When the agent runs the skill in the current session, the skill name appears in the sub-block's Options table and the rendered line is a bare action. This keeps each rendered line to the step the user performs.
+**Naming a skill in the render.** Name a skill in the rendered option only when the user must carry the invocation across a session boundary: clearing context, handing off to another session, or waiting for someone else to act. When the agent runs the skill in the current session, the skill name appears in the sub-block's Options table and the rendered line is a bare action. This keeps each rendered line to the step the user performs.
 
-**Reviewer and author roles.** A review surfaces findings; the author disposes of them. The options below route the reviewer's output to the author or record what the review found — they never ask the reviewer to re-design, re-plan, or orchestrate a workflow, none of which is the reviewer's job.
+**Reviewer and author roles.** A review surfaces findings; the author disposes of them. The options below route the reviewer's output to the author or record what the review found; they never ask the reviewer to re-design, re-plan, or orchestrate a workflow, none of which is the reviewer's job.
 
 ### Proposed-edit preview
 
@@ -19,7 +19,7 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
 - **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection and, for `Rewrite:` lines, from the divergent `D{n}` rows of `## Specification consistency` that ratifying the implementation would change in the ticket's narrative sections. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it yields no line.
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
-  - `Rewrite: {## Section} — {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
+  - `Rewrite: {## Section} -- {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
 - **Both targets** render both groups, each under its own label.
 
@@ -48,7 +48,7 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
 Example (rendered for the recommendation case):
 
@@ -75,11 +75,11 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Marker strengths
 
-For rules 1 and 2, the recommended option's marker follows how cleanly the rule's test is met: ■■■ where the evidence is unambiguous — the direction is plainly deliberate and sound (rule 1), or the finding plainly stands (rule 2) — and ■■□ where the reading is defensible but arguable. The other option takes ■□□. Rule 3 has no markers.
+For rules 1 and 2, the recommended option's marker follows how cleanly the rule's test is met: ■■■ where the evidence is unambiguous (the direction is plainly deliberate and sound for rule 1, or the finding plainly stands for rule 2), and ■■□ where the reading is defensible but arguable. The other option takes ■□□. Rule 3 has no markers.
 
 ### Source divergence sub-block
 
-Shown when the consistency section of the review reports a `partial` or `severe` verdict. The consistency section renders only when two spec sources are present (ticket and PR description), so this sub-block appears in PR reviews. The option set varies by case (which spec source the implementation matches, drawn from the consistency-section table — see `review-branch/SKILL.md` § Specification consistency).
+Shown when the consistency section of the review reports a `partial` or `severe` verdict. The consistency section renders only when two spec sources are present (ticket and PR description), so this sub-block appears in PR reviews. The option set varies by case (which spec source the implementation matches, drawn from the consistency-section table; see `review-branch/SKILL.md` § Specification consistency).
 
 #### Options
 
@@ -96,11 +96,11 @@ Each case renders two of these options; the specific options and their ordering 
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" has none. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a tradeoff that survives the option-format tests (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" has none. Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific divergence presents a tradeoff that survives the option-format tests (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
 Case 2 (implementation matches ticket; PR description is the stale source) mirrors case 3 with the PR description as the target: Its delta uses the `D{n}:` notation and option 1 reads "Update PR description".
 
-Case 3 — implementation matches PR description; ticket is the stale source:
+Case 3 (implementation matches PR description; ticket is the stale source):
 
 ```
 Source divergence:
@@ -108,20 +108,20 @@ Source divergence:
 Proposed edit to the ticket:
 - Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
 - ⚠️ W2 asks whether the cap belongs in configuration; accepting this reword settles it as a fixed value
-- Rewrite: ## Proposed solution — records the backoff schedule the branch implements
+- Rewrite: ## Proposed solution -- records the backoff schedule the branch implements
 
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
 ```
 
-Case 4 — implementation matches neither source (severe):
+Case 4 (implementation matches neither source, severe):
 
 ```
 Source divergence:
 
 Proposed edit to the ticket:
 - Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
-- Rewrite: ## Proposed solution — records the backoff schedule the branch implements
+- Rewrite: ## Proposed solution -- records the backoff schedule the branch implements
 
 Proposed edit to the PR description:
 - D2: "Retries use a fixed 200ms delay" → "Retries use exponential backoff from 200ms"
@@ -130,13 +130,13 @@ Proposed edit to the PR description:
 2. ⏭️ Leave as-is
 ```
 
-Case 4 renders marker-free: The reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here — the review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
+Case 4 renders marker-free: The reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here: The review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
 
 Source-divergence options preserve conversation context, and the preview each renders binds the reconciliation that follows, per [proposed-edit preview](#proposed-edit-preview).
 
 #### Recommendation rules
 
-In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one — update it to match reality. When the implementation matches neither (severe), the reviewer cannot attribute the fault, so the menu offers only ratification and leaves the code-is-wrong path to the findings.
+In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one; update it to match reality. When the implementation matches neither (severe), the reviewer cannot attribute the fault, so the menu offers only ratification and leaves the code-is-wrong path to the findings.
 
 Determine the case from the implementation column of the consistency-section table:
 
@@ -285,7 +285,7 @@ Proposed edit to the acceptance criteria:
 
 Proposed edit to the ticket:
 - Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
-- Rewrite: ## Proposed solution — records the fail-fast validation the branch implements
+- Rewrite: ## Proposed solution -- records the fail-fast validation the branch implements
 
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
