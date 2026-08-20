@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.1 — 2026-08-20
+
+### ⚙️ Tooling
+
+- Activate import/extensions so a .js specifier naming a .ts file fails lint (#1311)
+
+  Adds `eslint-import-resolver-typescript` and wires it into the repo-root ESLint config, so `import/extensions` now reports a relative `.js` specifier that names a `.ts` file, dynamic `import()` included. `packages/factory` is currently exempt.
+
+  Separately, every package's `eslint.config.ts` now extends the repo-root config instead of importing `@williamthorsen/eslint-config-typescript` directly. That inheritance is what carries the resolver into a per-workspace lint run, and a guard fails when a package config bypasses the root.
+
 ## 0.3.0 — 2026-08-13
 
 ### 🎉 Features

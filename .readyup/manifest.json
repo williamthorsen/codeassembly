@@ -5,12 +5,25 @@
       "checklists": [
         "default"
       ],
+      "esbuildVersion": "0.28.2",
+      "inputs": [
+        {
+          "hash": "19e3fc49",
+          "kind": "module",
+          "path": "kits/default.ts"
+        },
+        {
+          "hash": "9b2102b8",
+          "kind": "module",
+          "path": "lib/label-map-drift.ts"
+        }
+      ],
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.23.0",
+      "readyupVersion": "0.28.0",
       "source": "kits/default.ts",
       "sourceHash": "19e3fc49",
-      "targetHash": "aec02ba4"
+      "targetHash": "3e784545"
     }
   ]
 }

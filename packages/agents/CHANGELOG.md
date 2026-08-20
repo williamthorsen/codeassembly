@@ -2,6 +2,160 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.0 — 2026-08-20
+
+### 🎉 Features
+
+- Rule out re-pinning wording after a wording-only change (#1317)
+
+  Adds a rule to the `testing-conventions` skill to help avoid churn resulting from minor wording changes. When a test breaks due to a wording change, agents are instructed to test only the wording that matters, and not to insist on an exact match.
+
+- Add an umbrella criterion convention to ticket guidance (#1319)
+
+  Adds a convention to `ticket-criteria-conventions.md` requiring an umbrella ticket to state explicitly that "Every child is closed" must be one of the acceptance criteria. The conventions are included into `create-ticket`, `design-and-plan`, and `align-ticket-with-implementation`.
+
+- Let a rulebook inline partials and be reachable from a skill or subagent (#1329)
+
+  Gives a rulebook the standing a skill already had in the `agents` content pipeline:
+
+  - A rulebook inlines `_partials/` content through the same include directives a skill or subagent uses, resolved against its own source's root. A token inside an inlined partial becomes a dependency edge for the rulebook that inlines it.
+  - A `{rulebook:<slug>}` token renders in a skill or subagent body, resolving to the target's deployed skill name, and pulls that target into the deploy closure with no `dependencies:` entry declaring it.
+  - A subagent declares `rulebooks:` beside `skills:`. `sync` merges each target's deploy name into the deployed `skills:` frontmatter and drops the source key, so a spent instruction does not reach generated output where it would read as a live one.
+
+- 🚨 **Breaking:** Replace the commit skill with a conventions rulebook and create-commit (#1337)
+
+  Adds a `create-commit` skill carrying the procedure for making a commit: what one commit holds, what to stage, how the title renders through `describe-change.sh`, and how the body is composed. The conventions the message is composed to now ship as the `commit-conventions` rulebook, which deploys as the `consult-commit-conventions` skill.
+
+  Migration: The `commit` skill no longer resolves. A declaration naming it names `create-commit` for the procedure, `commit-conventions` for the conventions, or both.
+
+- Replace the Jira ask-the-user rule with an acli-first fetch cascade (#1344)
+
+  Replaces `ticket-source-resolution.md`'s rule that Jira has no automated fetch with a three-tier cascade: Atlassian's `acli`, then a connected Jira read tool identified by its parameter shape, then asking for pasted content. `acli` leads because its invocation is identical on every machine and it is reachable from a subagent's `Bash` tool, which is not true for any MCP tool.
+
+  Separately, `design-and-plan` now routes a consented Jira remote-issue update to `update-jira-ticket` rather than reporting that automated update is unsupported.
+
+- Restructure the lede doctrine and reframe the voice checklist (#1345)
+
+  Restructures `lede-voice.md` around a stated two-axis principle: A lede's altitude is constant at the accomplishment level, and its focus is keyed to the work type's tier. A lede's length is now limited to three sentences.
+
+  The `voice-checklist.md` partial now instructs the agent to take the reader's perspective and stick to the budget. The instruction to mention highlights is replaced by a deletion test to help the agent cut lengthy lists.
+
+- Add a plain-speech rule for practical documentation (#1353)
+
+  Adds a plain-speech rule to the agent guidance library, requiring the plain word and a named actor in practical documentation such as tickets, plans, PR descriptions, commit messages, and comments, and reserving creative prose for persuasive documentation. The rule is stated once in `_partials/plain-speech.md` and reaches interactive sessions through `guidance/shared/AGENTS.md` and every subagent through an inlined copy. Narrows `lede-voice.md`'s craft licence to concreteness, so it no longer licenses a figurative verb.
+
+- Amend the em-dash rule and repunctuate the doctrine, partials, and collections (#1388)
+
+  Amends the em-dash rule in `williamthorsen-writing-preferences.md` to settle the one case it left open: A dash separating an identifier from its label is a delimiter rather than punctuation, and takes a colon.
+
+  Applies that convention across the whole content library, and repunctuates the guidance rulebooks, the collection manifests, and the shared prose the skills inline.
+
+### 🐛 Bug fixes
+
+- Gate the review divergence callout on criteria, not timestamps (#1305)
+
+  Revises the guidance in `review-branch` to correct the issue that agents treated any difference in timestamps between remote and local versions of a ticket as worthy of a warning. The new guidance surfaces a divergence only when the local snapshot guided the review, and only when their acceptance criteria differ enough to change a verdict.
+
+- Move the writing rules into their rulebook and align the corpus (#1326)
+
+  Moves sentence-case and colon-capitalization rules out of `guidance/shared/AGENTS.md` into `williamthorsen-writing-preferences.md` and routes them to the 12 prose-composing subagents through a new `writing-preferences` guidance hook. Separately, the content corpus has been swept to align with the rules.
+
+  A `HookGuard` row and a new `writing-preferences-reach.unit.test.ts` pin the hook's reach set, the rulebook's `ambient` delivery, and the single-statement rule.
+
+- Add a diff-audit step between making a change and reporting it (#1333)
+
+  Fixes a gap in agent guidance by instructing agents to check the consequences of their changes before declaring them done. This addresses the problem that findings fixed by an agent in response to a review frequently triggered new findings. The new guidance reaches the `implement-plan`, `respond-to-review`, and `revise-comments` skills and both modes of the `orchestrated-coder` subagent.
+
+- Stop warning of double delivery when only subagents declare the hook (#1338)
+
+  Fixes an issue where `codeassembly sync` could falsely warn that a rulebook would reach an agent twice. The warning fired whenever a rulebook bound to a guidance hook also delivered `ambient`. It now fires only where a deployed skill declares that hook, and names the skills responsible.
+
+  Separately, `sync` now reports when a binding is mapped to a hook not declared by any deployed skill or subagent.
+
+- Amend the plain-speech rule and plainify the partials, rulebooks, and collections (#1362)
+
+  Restates the plain-speech rule to prefer the clearest verb; the language requiring a "named actor" has been discarded. Rewrites the partials, rulebooks, and collection bodies under `packages/agents/content/` to align with the rule. The skills and subagents follow in later changes.
+
+- Gate option menus on whose call it is and recalibrate the marker (#1377)
+
+  Revises the option-menu guidance to reserve menus for decisions that are genuinely the developer's: those turning on a preference, priority, or budget that only they hold. A call the evidence already settles is stated as a decision with its reason, and an ask that authorizes a consequential or hard-to-reverse action stays the developer's regardless of confidence. Recommendation strength now tracks the confidence actually held rather than a fixed default, and pros and cons are listed only where real, never invented to make a settled call look like an open choice.
+
+### 🏗️ Internal features
+
+- Add select-lede-exemplars, which selects author-approved ledes by work type (#1349)
+
+  Adds `select-lede-exemplars`, a bundled helper in the harness scripts tree that reads author-approved ledes of a requested work type out of the `codeassembly` knowledge store and emits them as JSON, newest first. A type too scarce to fill the request widens to its tier-mates and then to any type, and the result names which widening it took.
+
+  Separately, the lede-decision body headings and the `work-types.json` reader move into shared modules, so `capture-lede-decision`, which writes a decision record, and the new helper, which reads one, share a single definition of each.
+
+- Add authoring doctrine on how broad a guidance change goes (#1378)
+
+  Adds an `Adding guidance` section to the `codeassembly-content-specification` rulebook: A guidance fix should touch the fewest surfaces that plausibly account for the behavior, and extend further only after the minimal change has been seen to fail.
+
+### ♻️ Refactoring
+
+- Split the multi-concern test-helper modules and move each to its importers' tier (#1315)
+
+  Reorganizes the test helpers across `agents`, `factory`, `kb`, and `mcp` into `test-utils/` directories, one concern per file named for its subject and placed at the nearest common ancestor of the tests importing it.
+
+  Separately, the unused `normalizeFindings` function is deleted.
+
+- Plainify the skill reference data (#1365)
+
+  Rewrites the shared reference files under `skills/_data/` to follow the plain-speech rule.
+
+  Separately, `title-templates.md` pointed at `commit/SKILL.md` for the commit-side scope rules. That skill no longer exists, so the pointer now names `consult-commit-conventions`, which states them.
+
+- Plainify the skill partials (#1366)
+
+  Rewrites the skill partials under `packages/agents/content/skills/_partials/` in the plain-speech register. `option-format.md` and `action-items.md` now read in a single register with the `_data` documents that wrap them.
+
+- Plainify the skill bodies from add-test-ids through create-ticket (#1368)
+
+  Rewrites the skill bodies from `add-test-ids` through `create-ticket` in the plain-speech register. `collaborate`, `create-commit`, and `create-ticket` now read in a single register with the partials they inline. The remaining skill bodies follow in later changes.
+
+- Plainify the skill bodies from merge-bb-pr through refine-plan (#1370)
+
+  Rewrites the skill bodies from `merge-bb-pr` through `refine-plan` in the plain-speech register, `orchestrate/SKILL.md` and its `review-cycle` module among them.
+
+- Plainify the skill bodies from respond-to-review through wrap-up (#1373)
+
+  Rewrites the skill bodies from `respond-to-review` through `wrap-up` in the plain-speech register.
+
+- Plainify the subagent and script prose (#1374)
+
+  Rewrites the subagent prompts and the helper scripts' comments in the plain-speech register.
+
+- Plainify the TypeScript prose and mark the extracted content (#1376)
+
+  Rewrites the comments, doc descriptions, assertion messages, and test titles in `packages/agents/content`'s TypeScript in the plain-speech register.
+
+  Separately, marks the eleven files copied from the superpowers plugin as extracted content.
+
+### 🧪 Tests
+
+- Enforce the barrels rule and anchor the invalid-fixture globs (#1320)
+
+  Adds a guard to enforce the rule against barrel files: An `index.ts` that exists only to re-export its neighbors is permitted at a package's published entry points, and now also at a lint-enforced vendor boundary, but nowhere else.
+
+  Separately, narrows the lint and format exemption for deliberately-broken test fixtures to the ones that need it, and renames files so that only malformed fixtures match the pattern.
+
+### ⚙️ Tooling
+
+- Activate import/extensions so a .js specifier naming a .ts file fails lint (#1311)
+
+  Adds `eslint-import-resolver-typescript` and wires it into the repo-root ESLint config, so `import/extensions` now reports a relative `.js` specifier that names a `.ts` file, dynamic `import()` included. `packages/factory` is currently exempt.
+
+  Separately, every package's `eslint.config.ts` now extends the repo-root config instead of importing `@williamthorsen/eslint-config-typescript` directly. That inheritance is what carries the resolver into a per-workspace lint run, and a guard fails when a package config bypasses the root.
+
+### 🤖 Agentic support
+
+- Bound the lede by relevance instead of length (#1379)
+
+  Replaces the lede doctrine's altitude test in `lede-voice.md` and `voice-checklist.md`: A clause earns its place in the lede by changing the reader's next move.
+
+  Removes the three-sentence budget with no length rule in its place, deletes `Comprehension is the floor`, and cuts the invitation to craft from `Emphasize the highlights`, which now states that reference documentation and migration detail are what the reader finds after clicking through.
+
 ## 0.9.0 — 2026-08-13
 
 ### 🎉 Features

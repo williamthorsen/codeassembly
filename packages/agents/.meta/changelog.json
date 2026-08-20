@@ -1,5 +1,189 @@
 [
   {
+    "version": "0.10.0",
+    "date": "2026-08-20",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Rule out re-pinning wording after a wording-only change (#1317)",
+            "body": "Adds a rule to the `testing-conventions` skill to help avoid churn resulting from minor wording changes. When a test breaks due to a wording change, agents are instructed to test only the wording that matters, and not to insist on an exact match.",
+            "hash": "3e8d95928d15888a31e54352a99ef52b058b0b27"
+          },
+          {
+            "description": "Add an umbrella criterion convention to ticket guidance (#1319)",
+            "body": "Adds a convention to `ticket-criteria-conventions.md` requiring an umbrella ticket to state explicitly that \"Every child is closed\" must be one of the acceptance criteria. The conventions are included into `create-ticket`, `design-and-plan`, and `align-ticket-with-implementation`.",
+            "hash": "503cd4f45b9c3d71951cf419741068d6b0776a76"
+          },
+          {
+            "description": "Let a rulebook inline partials and be reachable from a skill or subagent (#1329)",
+            "body": "Gives a rulebook the standing a skill already had in the `agents` content pipeline:\n\n- A rulebook inlines `_partials/` content through the same include directives a skill or subagent uses, resolved against its own source's root. A token inside an inlined partial becomes a dependency edge for the rulebook that inlines it.\n- A `{rulebook:<slug>}` token renders in a skill or subagent body, resolving to the target's deployed skill name, and pulls that target into the deploy closure with no `dependencies:` entry declaring it.\n- A subagent declares `rulebooks:` beside `skills:`. `sync` merges each target's deploy name into the deployed `skills:` frontmatter and drops the source key, so a spent instruction does not reach generated output where it would read as a live one.",
+            "hash": "cdfb671d81569e195c3c82b04a698e9858351a1e"
+          },
+          {
+            "description": "Replace the commit skill with a conventions rulebook and create-commit (#1337)",
+            "body": "Adds a `create-commit` skill carrying the procedure for making a commit: what one commit holds, what to stage, how the title renders through `describe-change.sh`, and how the body is composed. The conventions the message is composed to now ship as the `commit-conventions` rulebook, which deploys as the `consult-commit-conventions` skill.\n\nMigration: The `commit` skill no longer resolves. A declaration naming it names `create-commit` for the procedure, `commit-conventions` for the conventions, or both.",
+            "breaking": true,
+            "hash": "0cdf907fdeaa6d313351754997aa771ef533c0ed"
+          },
+          {
+            "description": "Replace the Jira ask-the-user rule with an acli-first fetch cascade (#1344)",
+            "body": "Replaces `ticket-source-resolution.md`'s rule that Jira has no automated fetch with a three-tier cascade: Atlassian's `acli`, then a connected Jira read tool identified by its parameter shape, then asking for pasted content. `acli` leads because its invocation is identical on every machine and it is reachable from a subagent's `Bash` tool, which is not true for any MCP tool.\n\nSeparately, `design-and-plan` now routes a consented Jira remote-issue update to `update-jira-ticket` rather than reporting that automated update is unsupported.",
+            "hash": "91694ca68e91a36bea448df691e0045971d62503"
+          },
+          {
+            "description": "Restructure the lede doctrine and reframe the voice checklist (#1345)",
+            "body": "Restructures `lede-voice.md` around a stated two-axis principle: A lede's altitude is constant at the accomplishment level, and its focus is keyed to the work type's tier. A lede's length is now limited to three sentences.\n\nThe `voice-checklist.md` partial now instructs the agent to take the reader's perspective and stick to the budget. The instruction to mention highlights is replaced by a deletion test to help the agent cut lengthy lists.",
+            "hash": "250addf4081412a138c1999db46b933d72f4cc6e"
+          },
+          {
+            "description": "Add a plain-speech rule for practical documentation (#1353)",
+            "body": "Adds a plain-speech rule to the agent guidance library, requiring the plain word and a named actor in practical documentation such as tickets, plans, PR descriptions, commit messages, and comments, and reserving creative prose for persuasive documentation. The rule is stated once in `_partials/plain-speech.md` and reaches interactive sessions through `guidance/shared/AGENTS.md` and every subagent through an inlined copy. Narrows `lede-voice.md`'s craft licence to concreteness, so it no longer licenses a figurative verb.",
+            "hash": "c7c5c0182c213a6594f77013d80caf51ed6fd201"
+          },
+          {
+            "description": "Amend the em-dash rule and repunctuate the doctrine, partials, and collections (#1388)",
+            "body": "Amends the em-dash rule in `williamthorsen-writing-preferences.md` to settle the one case it left open: A dash separating an identifier from its label is a delimiter rather than punctuation, and takes a colon.\n\nApplies that convention across the whole content library, and repunctuates the guidance rulebooks, the collection manifests, and the shared prose the skills inline.",
+            "hash": "c384ef7af31ec4586535fe31607bae4bdcb6389c"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Gate the review divergence callout on criteria, not timestamps (#1305)",
+            "body": "Revises the guidance in `review-branch` to correct the issue that agents treated any difference in timestamps between remote and local versions of a ticket as worthy of a warning. The new guidance surfaces a divergence only when the local snapshot guided the review, and only when their acceptance criteria differ enough to change a verdict.",
+            "hash": "1ad82424b175052fde68ac95411bd774ca90ff6f"
+          },
+          {
+            "description": "Move the writing rules into their rulebook and align the corpus (#1326)",
+            "body": "Moves sentence-case and colon-capitalization rules out of `guidance/shared/AGENTS.md` into `williamthorsen-writing-preferences.md` and routes them to the 12 prose-composing subagents through a new `writing-preferences` guidance hook. Separately, the content corpus has been swept to align with the rules.\n\nA `HookGuard` row and a new `writing-preferences-reach.unit.test.ts` pin the hook's reach set, the rulebook's `ambient` delivery, and the single-statement rule.",
+            "hash": "2af245c513a1b021b6c613332ef12cf5c049df20"
+          },
+          {
+            "description": "Add a diff-audit step between making a change and reporting it (#1333)",
+            "body": "Fixes a gap in agent guidance by instructing agents to check the consequences of their changes before declaring them done. This addresses the problem that findings fixed by an agent in response to a review frequently triggered new findings. The new guidance reaches the `implement-plan`, `respond-to-review`, and `revise-comments` skills and both modes of the `orchestrated-coder` subagent.",
+            "hash": "7352697f3327f992190dbbffc9d5b26217c4b144"
+          },
+          {
+            "description": "Stop warning of double delivery when only subagents declare the hook (#1338)",
+            "body": "Fixes an issue where `codeassembly sync` could falsely warn that a rulebook would reach an agent twice. The warning fired whenever a rulebook bound to a guidance hook also delivered `ambient`. It now fires only where a deployed skill declares that hook, and names the skills responsible.\n\nSeparately, `sync` now reports when a binding is mapped to a hook not declared by any deployed skill or subagent.",
+            "hash": "92ae090754019bf1d58f3228bda46fd164e4e283"
+          },
+          {
+            "description": "Amend the plain-speech rule and plainify the partials, rulebooks, and collections (#1362)",
+            "body": "Restates the plain-speech rule to prefer the clearest verb; the language requiring a \"named actor\" has been discarded. Rewrites the partials, rulebooks, and collection bodies under `packages/agents/content/` to align with the rule. The skills and subagents follow in later changes.",
+            "hash": "185a3e58e1ace5ea4e5cb51b7cbad5b9a932b73a"
+          },
+          {
+            "description": "Gate option menus on whose call it is and recalibrate the marker (#1377)",
+            "body": "Revises the option-menu guidance to reserve menus for decisions that are genuinely the developer's: those turning on a preference, priority, or budget that only they hold. A call the evidence already settles is stated as a decision with its reason, and an ask that authorizes a consequential or hard-to-reverse action stays the developer's regardless of confidence. Recommendation strength now tracks the confidence actually held rather than a fixed default, and pros and cons are listed only where real, never invented to make a settled call look like an open choice.",
+            "hash": "931b6f2efc8d8a4614d146f0515ab65b1791e426"
+          }
+        ]
+      },
+      {
+        "title": "🏗️ Internal features",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Add select-lede-exemplars, which selects author-approved ledes by work type (#1349)",
+            "body": "Adds `select-lede-exemplars`, a bundled helper in the harness scripts tree that reads author-approved ledes of a requested work type out of the `codeassembly` knowledge store and emits them as JSON, newest first. A type too scarce to fill the request widens to its tier-mates and then to any type, and the result names which widening it took.\n\nSeparately, the lede-decision body headings and the `work-types.json` reader move into shared modules, so `capture-lede-decision`, which writes a decision record, and the new helper, which reads one, share a single definition of each.",
+            "hash": "83b94389745ad39881400e73432bbc4c1455048f"
+          },
+          {
+            "description": "Add authoring doctrine on how broad a guidance change goes (#1378)",
+            "body": "Adds an `Adding guidance` section to the `codeassembly-content-specification` rulebook: A guidance fix should touch the fewest surfaces that plausibly account for the behavior, and extend further only after the minimal change has been seen to fail.",
+            "hash": "3ca0e8505def06dfb075e0899286bd3a908e0b6f"
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Split the multi-concern test-helper modules and move each to its importers' tier (#1315)",
+            "body": "Reorganizes the test helpers across `agents`, `factory`, `kb`, and `mcp` into `test-utils/` directories, one concern per file named for its subject and placed at the nearest common ancestor of the tests importing it.\n\nSeparately, the unused `normalizeFindings` function is deleted.",
+            "hash": "7db1183a62c8a574a8f668ac309cc72a2c719950"
+          },
+          {
+            "description": "Plainify the skill reference data (#1365)",
+            "body": "Rewrites the shared reference files under `skills/_data/` to follow the plain-speech rule.\n\nSeparately, `title-templates.md` pointed at `commit/SKILL.md` for the commit-side scope rules. That skill no longer exists, so the pointer now names `consult-commit-conventions`, which states them.",
+            "hash": "b6172402fc7edc7d3cf083c85336ffd7cf313a47"
+          },
+          {
+            "description": "Plainify the skill partials (#1366)",
+            "body": "Rewrites the skill partials under `packages/agents/content/skills/_partials/` in the plain-speech register. `option-format.md` and `action-items.md` now read in a single register with the `_data` documents that wrap them.",
+            "hash": "e2633b59ec2dcdf3f16192125b246d49b607e895"
+          },
+          {
+            "description": "Plainify the skill bodies from add-test-ids through create-ticket (#1368)",
+            "body": "Rewrites the skill bodies from `add-test-ids` through `create-ticket` in the plain-speech register. `collaborate`, `create-commit`, and `create-ticket` now read in a single register with the partials they inline. The remaining skill bodies follow in later changes.",
+            "hash": "e33099229ec8ffd0816b2a5e23a65f51093016b0"
+          },
+          {
+            "description": "Plainify the skill bodies from merge-bb-pr through refine-plan (#1370)",
+            "body": "Rewrites the skill bodies from `merge-bb-pr` through `refine-plan` in the plain-speech register, `orchestrate/SKILL.md` and its `review-cycle` module among them.",
+            "hash": "2fa7eb2aa209aeddfc16d6767fecc488cd203fac"
+          },
+          {
+            "description": "Plainify the skill bodies from respond-to-review through wrap-up (#1373)",
+            "body": "Rewrites the skill bodies from `respond-to-review` through `wrap-up` in the plain-speech register.",
+            "hash": "1128dbbdae4f129c179a187f0ded6daa0ac84404"
+          },
+          {
+            "description": "Plainify the subagent and script prose (#1374)",
+            "body": "Rewrites the subagent prompts and the helper scripts' comments in the plain-speech register.",
+            "hash": "15da14fb1323ad3570a491ad9753a510422e771f"
+          },
+          {
+            "description": "Plainify the TypeScript prose and mark the extracted content (#1376)",
+            "body": "Rewrites the comments, doc descriptions, assertion messages, and test titles in `packages/agents/content`'s TypeScript in the plain-speech register.\n\nSeparately, marks the eleven files copied from the superpowers plugin as extracted content.",
+            "hash": "32c9c18bb3bd3df0c30cdf08fb3b0d61ae536629"
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Enforce the barrels rule and anchor the invalid-fixture globs (#1320)",
+            "body": "Adds a guard to enforce the rule against barrel files: An `index.ts` that exists only to re-export its neighbors is permitted at a package's published entry points, and now also at a lint-enforced vendor boundary, but nowhere else.\n\nSeparately, narrows the lint and format exemption for deliberately-broken test fixtures to the ones that need it, and renames files so that only malformed fixtures match the pattern.",
+            "hash": "3f39c19e63ecafed4316a178da309bc5ae4b55ed"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Activate import/extensions so a .js specifier naming a .ts file fails lint (#1311)",
+            "body": "Adds `eslint-import-resolver-typescript` and wires it into the repo-root ESLint config, so `import/extensions` now reports a relative `.js` specifier that names a `.ts` file, dynamic `import()` included. `packages/factory` is currently exempt.\n\nSeparately, every package's `eslint.config.ts` now extends the repo-root config instead of importing `@williamthorsen/eslint-config-typescript` directly. That inheritance is what carries the resolver into a per-workspace lint run, and a guard fails when a package config bypasses the root.",
+            "hash": "46afb2f7305fadda7a731eb7ef061943d9e8cfcc"
+          }
+        ]
+      },
+      {
+        "title": "🤖 Agentic support",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Bound the lede by relevance instead of length (#1379)",
+            "body": "Replaces the lede doctrine's altitude test in `lede-voice.md` and `voice-checklist.md`: A clause earns its place in the lede by changing the reader's next move.\n\nRemoves the three-sentence budget with no length rule in its place, deletes `Comprehension is the floor`, and cuts the invitation to craft from `Emphasize the highlights`, which now states that reference documentation and migration detail are what the reader finds after clicking through.",
+            "hash": "3222409715dfae6c9313b10a6f28ecd8a5d15da2"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.9.0",
     "date": "2026-08-13",
     "sections": [

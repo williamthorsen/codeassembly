@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.1 — 2026-08-20
+
+### ♻️ Refactoring
+
+- Extract the duplicated atomic-write sequence into one helper (#1306)
+
+  Extracts duplicated code into a shared `writeAtomic` function that atomically writes content to a temp file and then renames it. Also fixes an issue where a temporary file could be left on disk after a failed write.
+
+- Split the multi-concern test-helper modules and move each to its importers' tier (#1315)
+
+  Reorganizes the test helpers across `agents`, `factory`, `kb`, and `mcp` into `test-utils/` directories, one concern per file named for its subject and placed at the nearest common ancestor of the tests importing it.
+
+  Separately, the unused `normalizeFindings` function is deleted.
+
+### 🧪 Tests
+
+- Enforce the barrels rule and anchor the invalid-fixture globs (#1320)
+
+  Adds a guard to enforce the rule against barrel files: An `index.ts` that exists only to re-export its neighbors is permitted at a package's published entry points, and now also at a lint-enforced vendor boundary, but nowhere else.
+
+  Separately, narrows the lint and format exemption for deliberately-broken test fixtures to the ones that need it, and renames files so that only malformed fixtures match the pattern.
+
+### ⚙️ Tooling
+
+- Activate import/extensions so a .js specifier naming a .ts file fails lint (#1311)
+
+  Adds `eslint-import-resolver-typescript` and wires it into the repo-root ESLint config, so `import/extensions` now reports a relative `.js` specifier that names a `.ts` file, dynamic `import()` included. `packages/factory` is currently exempt.
+
+  Separately, every package's `eslint.config.ts` now extends the repo-root config instead of importing `@williamthorsen/eslint-config-typescript` directly. That inheritance is what carries the resolver into a per-workspace lint run, and a guard fails when a package config bypasses the root.
+
 ## 0.6.0 — 2026-08-13
 
 ### 🎉 Features

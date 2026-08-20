@@ -1,6 +1,6 @@
 {
   "name": "codeassembly-mcp",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "description": "MCP server for orchestrated run management",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",

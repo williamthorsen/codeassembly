@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.7 — 2026-08-20
+
+### ♻️ Refactoring
+
+- Split the multi-concern test-helper modules and move each to its importers' tier (#1315)
+
+  Reorganizes the test helpers across `agents`, `factory`, `kb`, and `mcp` into `test-utils/` directories, one concern per file named for its subject and placed at the nearest common ancestor of the tests importing it.
+
+  Separately, the unused `normalizeFindings` function is deleted.
+
+### ⚙️ Tooling
+
+- Activate import/extensions so a .js specifier naming a .ts file fails lint (#1311)
+
+  Adds `eslint-import-resolver-typescript` and wires it into the repo-root ESLint config, so `import/extensions` now reports a relative `.js` specifier that names a `.ts` file, dynamic `import()` included. `packages/factory` is currently exempt.
+
+  Separately, every package's `eslint.config.ts` now extends the repo-root config instead of importing `@williamthorsen/eslint-config-typescript` directly. That inheritance is what carries the resolver into a per-workspace lint run, and a guard fails when a package config bypasses the root.
+
 ## 0.2.6 — 2026-08-13
 
 ### ♻️ Refactoring
