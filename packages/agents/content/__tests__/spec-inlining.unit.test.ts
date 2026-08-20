@@ -95,7 +95,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
     // one of them reintroduces the failure named beneath it.
     // Rule 1's test. Without it the rule states no condition at all.
-    'recommend only when you can name a load-bearing decision the plan leaves unsettled',
+    'Recommend only when you can name a load-bearing decision the plan leaves unsettled',
     // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
     'when it was ratified interactively',
     'from prior design work, verified against source, or copied from an established pattern',
