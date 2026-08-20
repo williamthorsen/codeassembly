@@ -127,7 +127,7 @@ A consequence: Avoid placing blank lines on both sides of a `<!-- children -->` 
 
 ## Common patterns
 
-### Bare self-close: no slot
+### Bare self-close: No slot
 
 Use when the partial has no `<!-- children -->` placeholder, or when the caller wants the partial's empty-slot rendering:
 
