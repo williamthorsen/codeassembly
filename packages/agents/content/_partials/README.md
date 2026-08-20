@@ -6,22 +6,22 @@ This README is the canonical reference for the partial system. The expander is i
 
 ## Choosing a bucket
 
-Shared Markdown belongs in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is — and the choice decides whether the agent reliably sees it at all.
+Shared Markdown belongs in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is; the choice decides whether the agent reliably sees it at all.
 
-- **`_partials/` — content the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists it works through, and the doctrine for an act it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
-- **`_data/` — content the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
+- **`_partials/`: Content the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists it works through, and the doctrine for an act it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
+- **`_data/`: Content the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
 
-A runtime link is an optional read. Where the model already holds a strong prior for what the content looks like — and it does, for anything resembling a standard option menu or output block — it generates from that prior instead of following the link. Emphasis is not a remedy: A `<HARD-GATE>` reading "follow its options and output format exactly; do not improvise" preceded one such link, and the agent improvised the block anyway. Never put must-reproduce content behind a runtime link.
+A runtime link is an optional read. Where the model already holds a strong prior for what the content looks like (and it does, for anything resembling a standard option menu or output block), it generates from that prior instead of following the link. Emphasis is not a remedy: A `<HARD-GATE>` reading "follow its options and output format exactly; do not improvise" preceded one such link, and the agent improvised the block anyway. Never put must-reproduce content behind a runtime link.
 
-Doctrine is not automatically reference material. A doctrine the agent applies every time it performs the act — comment discipline, whenever it writes a comment — binds only when it is already in context, and behind a link it does not bind at all, however well written. A doctrine consulted only when a decision arises stays in `_data/`.
+Doctrine is not automatically reference material. A doctrine the agent applies every time it performs the act (comment discipline, whenever it writes a comment) binds only when it is already in context, and behind a link it does not bind at all, however well written. A doctrine consulted only when a decision arises stays in `_data/`.
 
-Inlining is not free — a partial's cost is paid by every consumer — so content the agent needs only sometimes stays in `_data/`. A spec that is partly apply-time and partly reference splits along that seam: The binding contract becomes a partial, and the reference material stays in `_data/` and includes the partial, so there is still one source of truth. Where a doctrine has no reference-only residue, it is a partial outright and no `_data/` doc remains.
+Inlining is not free (a partial's cost is paid by every consumer), so content the agent needs only sometimes stays in `_data/`. A spec that is partly apply-time and partly reference splits along that seam: The binding contract becomes a partial, and the reference material stays in `_data/` and includes the partial, so there is still one source of truth. Where a doctrine has no reference-only residue, it is a partial outright and no `_data/` doc remains.
 
-Inline a spec **once per skill, as a section**, and point every use site at it with an in-file anchor (`[option format](#option-format)`). Anchor-only links pass through the link rewriter untouched. A skill with two use sites would otherwise contain the block twice, and a reference from inside a numbered procedure cannot contain a long block inline. An in-file anchor costs nothing, because the content is already in context — the filesystem lookup is the defect, not the pointer.
+Inline a spec **once per skill, as a section**, and point every use site at it with an in-file anchor (`[option format](#option-format)`). Anchor-only links pass through the link rewriter untouched. A skill with two use sites would otherwise contain the block twice, and a reference from inside a numbered procedure cannot contain a long block inline. An in-file anchor costs nothing, because the content is already in context; the filesystem lookup is the defect, not the pointer.
 
 ### Skill-local pointers are load-bearing
 
-Several skill bodies — `collaborate`, `design-and-plan`, and `refine-plan` among them — contain a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional, and a DRY-driven refactor must not strip it. The rule and its rationale are stated in the `codeassembly-content-specification` rulebook, under "Skill-local reinforcement".
+Several skill bodies (`collaborate`, `design-and-plan`, and `refine-plan` among them) contain a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional, and a DRY-driven refactor must not strip it. The rule and its rationale are stated in the `codeassembly-content-specification` rulebook, under "Skill-local reinforcement".
 
 ## Directive grammar
 
@@ -63,8 +63,8 @@ A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support ent
 
 Installable content is rewritten at install time. Author cross-references in one of three forms, depending on intent:
 
-- **Runtime references** — paths the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, and bare `sync` adds one exception: A link naming a skill the same run deploys is anchored under the project root rather than the harness home. `sync --global` deploys into the harness home, so it has no such exception.
-- **Source-tree citations** — prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
+- **Runtime references**: Paths the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, and bare `sync` adds one exception: A link naming a skill the same run deploys is anchored under the project root rather than the harness home. `sync --global` deploys into the harness home, so it has no such exception.
+- **Source-tree citations**: Prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
 - **Self-referential prose** about the source tree itself (e.g., this paragraph) is treated as a source-tree citation.
 
 The `content-path-conventions` regression test flags any raw `packages/agents/content/` string in installable Markdown outside the allowlist.
@@ -73,10 +73,10 @@ The `content-path-conventions` regression test flags any raw `packages/agents/co
 
 Partials are stored in `_partials/` directories. The directory is recognized at any depth and is excluded from the install copy:
 
-- `content/_partials/` — cross-cutting partials shared across skills, subagents, and platform guidance.
-- `content/subagents/_partials/` — partials shared across subagents.
-- `content/skills/_partials/` — partials shared across skills.
-- `content/skills/{name}/_partials/` — partials internal to a single skill.
+- `content/_partials/`: Cross-cutting partials shared across skills, subagents, and platform guidance.
+- `content/subagents/_partials/`: Partials shared across subagents.
+- `content/skills/_partials/`: Partials shared across skills.
+- `content/skills/{name}/_partials/`: Partials internal to a single skill.
 
 The `_partials` directory itself never appears in installed output.
 
@@ -110,7 +110,7 @@ _tools:
   Write: create_file
 ```
 
-When a placeholder names a tool not present in the overlay's `_tools:` mapping, the rewriter aborts install with a fatal error anchored to the source file and line. There is no identity pass-through — every match must resolve through the mapping. This catches typos (e.g., `{tool:Reed}`) and out-of-date placeholders at install time rather than at agent runtime.
+When a placeholder names a tool not present in the overlay's `_tools:` mapping, the rewriter aborts install with a fatal error anchored to the source file and line. There is no identity pass-through; every match must resolve through the mapping. This catches typos (e.g., `{tool:Reed}`) and out-of-date placeholders at install time rather than at agent runtime.
 
 **Authoring guidance:**
 
@@ -121,13 +121,13 @@ When a placeholder names a tool not present in the overlay's `_tools:` mapping, 
 
 ## Verbatim slot substitution
 
-When a partial contains `<!-- children -->`, expansion removes that line and inserts the caller's slot lines verbatim — no leading-trim, no trailing-trim, no blank-line collapsing. Partial authors control the spacing on their side; caller authors control the spacing on theirs.
+When a partial contains `<!-- children -->`, expansion removes that line and inserts the caller's slot lines verbatim: no leading-trim, no trailing-trim, no blank-line collapsing. Partial authors control the spacing on their side; caller authors control the spacing on theirs.
 
 A consequence: Avoid placing blank lines on both sides of a `<!-- children -->` boundary. If the partial has a blank line above `<!-- children -->` and the caller's slot content begins with a blank line, the result is two consecutive blank lines.
 
 ## Common patterns
 
-### Bare self-close — No slot
+### Bare self-close: No slot
 
 Use when the partial has no `<!-- children -->` placeholder, or when the caller wants the partial's empty-slot rendering:
 
@@ -159,9 +159,9 @@ Functionally equivalent to bare self-close. Useful when the surrounding text rea
 
 The grammar reserves additional tokens for future use. Partial authors must not emit them in source content:
 
-- `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->` — reserved for future named-slot support.
-- `<!-- children -->` — the canonical default-slot placeholder. Use exactly this token; do not invent variants.
-- `<!-- guidance-hook: name -->` — the guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line that resembles the directive but misses its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+- `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->`: Reserved for future named-slot support.
+- `<!-- children -->`: The canonical default-slot placeholder. Use exactly this token; do not invent variants.
+- `<!-- guidance-hook: name -->`: The guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line that resembles the directive but misses its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
 
 ### Partial or guidance hook
 
@@ -169,7 +169,7 @@ Both put shared prose into a body, and they differ in who chooses the prose.
 
 A **partial** resolves by path. The author writes `<!-- include: _partials/x.md / -->` and every consumer of the library gets that file, inlined at install time to byte-identical output. Use one for doctrine the library asserts for everyone: comment discipline, the artifact conventions, anything whose content is not a matter of local taste.
 
-A **guidance hook** resolves by binding. The author writes `<!-- guidance-hook: name -->` and leaves the slot empty; a `codeassembly.yaml` names which rulebooks fill it, per project or per machine. Use one where the right content differs by who is running — personal code-style preferences, a project's own glossary — which is exactly what a path fixed at authoring time cannot express.
+A **guidance hook** resolves by binding. The author writes `<!-- guidance-hook: name -->` and leaves the slot empty; a `codeassembly.yaml` names which rulebooks fill it, per project or per machine. Use one where the right content differs by who is running (personal code-style preferences, a project's own glossary), which is exactly what a path fixed at authoring time cannot express.
 
 A hook only fills in a declared skill or subagent, the artifacts a declaration covers. A directive in a rulebook body, a `skills/_data/` support entry, or a harness guidance file is always stripped, and so is every hook under `install`, which resolves no declaration. Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it. `packages/agents/README.md` documents the binding syntax and the naming rules.
 
@@ -177,7 +177,7 @@ The expander rejects unrecognized parameters following `include:` with an `unrec
 
 ## Frontmatter constraint
 
-Partials must not contain YAML frontmatter (a leading `---` block). Subagent install merges frontmatter from a platform overlay file with frontmatter in the source `.md`; if a partial contained its own `---` block, the merge would conflict. The expander does not enforce this constraint at runtime — partial authors must avoid frontmatter explicitly.
+Partials must not contain YAML frontmatter (a leading `---` block). Subagent install merges frontmatter from a platform overlay file with frontmatter in the source `.md`; if a partial contained its own `---` block, the merge would conflict. The expander does not enforce this constraint at runtime; partial authors must avoid frontmatter explicitly.
 
 ## Errors
 

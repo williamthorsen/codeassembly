@@ -18,17 +18,17 @@ Add descriptions of constants only if the description helps a reader understand 
 
 Apply all three to every comment you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Each one must justify its place.
 
-**1. The stranger test — would this interest only someone who watched the change happen?** Then cut it.
+**1. The stranger test: Would this interest only someone who watched the change happen?** Then cut it.
 
 Tells: _rather than_, _instead of_, _deliberately_, _used to_, _previously_, _replaces_, _we discussed_, _as agreed_, _see PR #N_, _added by TICKET-123_, _matches the X precedent_, _future readers should note_. So is any defense of the edit, any counterfactual whose other branch was never possible, and any narration of how or where the code is run.
 
-State the code as it **is**, in the present tense — never as it was, as it might have been, or as it is not.
+State the code as it **is**, in the present tense; never as it was, as it might have been, or as it is not.
 
-**2. The deletion test — would a reader lose anything if the comment were gone?** Then cut it.
+**2. The deletion test: Would a reader lose anything if the comment were gone?** Then cut it.
 
 A comment that paraphrases the line below it, restates the test's own name, or re-describes what a well-named function it calls already documents tells the reader nothing. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
 
-**3. The one-location test — is this fact already documented where it belongs?** Then cut it.
+**3. The one-location test: Is this fact already documented where it belongs?** Then cut it.
 
 The library's behavior belongs in the library's docs. A helper's contract belongs on the helper. A consumer's name belongs nowhere near the shared code it consumes. An invariant belongs in a type or an assertion, not in prose about a case that cannot happen.
 
@@ -80,4 +80,4 @@ Before:
 
 After:
 
-> todo: Update stale doc comment — the header still describes the lookup as "via the `employees` search query", which this change replaces.
+> todo: Update stale doc comment; the header still describes the lookup as "via the `employees` search query", which this change replaces.

@@ -10,11 +10,11 @@
 
 ### Output format
 
-Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation.
+Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific plan presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option (invocation guidance as much as a pro or con) is a nested list item, never a whitespace-indented continuation.
 
-**One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must include a `➕` line naming the specific unsettled decision the pass would surface (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape this requirement exists to forbid. Selecting Refine plan without such a line is a defect — if the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
+**One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must include a `➕` line naming the specific unsettled decision the pass would surface (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape this requirement exists to forbid. Selecting Refine plan without such a line is a defect: If the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
 
-**Spike plans.** A spike plan has `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, invoking no skill — the agent works the investigation steps directly. Options 1 and 2 render unchanged. In the recommendation rules below, rule 2 is the Investigate option: Its feature-shaped test — verification surface, review pass, `implement-plan`'s closing menu — is written for a diff and does not apply, so rule 2 matches whenever rule 1 does not, and rule 3 never fires, since there is no implementation for the development pipeline to run.
+**Spike plans.** A spike plan has `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, invoking no skill; the agent works the investigation steps directly. Options 1 and 2 render unchanged. In the recommendation rules below, rule 2 is the Investigate option: Its feature-shaped test (verification surface, review pass, `implement-plan`'s closing menu) is written for a diff and does not apply, so rule 2 matches whenever rule 1 does not, and rule 3 never fires, since there is no implementation for the development pipeline to run.
 
 Options that invoke a skill include context-clearing guidance:
 
@@ -43,11 +43,11 @@ Skill names for each option:
 
 Select the recommended option by checking these rules in order and stopping at the first match.
 
-1. **Refine plan** — recommend only when you can name a load-bearing decision the plan leaves unsettled that a refine pass would surface.
+1. **Refine plan**: Recommend only when you can name a load-bearing decision the plan leaves unsettled that a refine pass would surface.
 
    A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced with no design phase is likelier to have unsettled ones.
 
-   Rule 1 also fails when the plan's residual unknowns are **empirical** — answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
+   Rule 1 also fails when the plan's residual unknowns are **empirical**, answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
 
    "The plan might have a flaw I missed" does not satisfy the test. That is a reassurance about work already done, not an unsettled decision.
 
@@ -61,11 +61,11 @@ Select the recommended option by checking these rules in order and stopping at t
 
    When rule 1 matches, the rendered option must name that decision on a `➕` line. Being unable to write the line means rule 1 did not match.
 
-2. **Implement** — recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. The default for bounded work, trivial and non-trivial alike.
+2. **Implement**: Recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. The default for bounded work, trivial and non-trivial alike.
 
-   When the work is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md) — a typo fix, an unused-import removal, a single-file mechanical rename), this option still applies; add a `➕` line noting that the follow-up review can be skipped at `implement-plan`'s closing menu. That menu decides the review from the diff the implementation actually produced, so a plan-time triviality read is a hint to it rather than a commitment.
+   When the work is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md): a typo fix, an unused-import removal, a single-file mechanical rename), this option still applies; add a `➕` line noting that the follow-up review can be skipped at `implement-plan`'s closing menu. That menu decides the review from the diff the implementation actually produced, so a plan-time triviality read is a hint to it rather than a commitment.
 
-3. **Orchestrate** — all other cases (default). Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall here.
+3. **Orchestrate**: All other cases (default). Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall here.
 
 #### Marker strengths
 

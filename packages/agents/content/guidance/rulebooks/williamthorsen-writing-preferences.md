@@ -18,7 +18,7 @@ Read what appears left of the colon. A label (such as a short tag naming a field
 
 ## Em-dashes
 
-Don't use em-dashes; use appropriate punctuation instead. Where an em-dash is genuinely best, write it as `--`.
+Don't use em-dashes; use appropriate punctuation instead. A dash separating an identifier from its label is a delimiter rather than punctuation: Use a colon. Where an em-dash is genuinely best, write it as `--`.
 
 ## Sentence case
 

@@ -11,13 +11,13 @@ Conventions for writing production-quality bash scripts in this repository. Thes
 
 ## Script anatomy
 
-Bash does not support forward function references — a function must be defined before it is called during execution. To keep primary logic visually prominent while ensuring all functions are defined before use, wrap the main flow in a `main()` function and call `main "$@"` at the bottom.
+Bash does not support forward function references: A function must be defined before it is called during execution. To keep primary logic visually prominent while ensuring all functions are defined before use, wrap the main flow in a `main()` function and call `main "$@"` at the bottom.
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# script-name.sh — One-line purpose.
+# script-name.sh: One-line purpose.
 #
 # Extended description: What the script does, behavioral notes,
 # composability characteristics.
@@ -30,7 +30,7 @@ readonly PROG="$(basename "$0")"
 
 # Main flow
 main() {
-  # Show help (manual check — getopts cannot parse long options)
+  # Show help (manual check: getopts cannot parse long options)
   if [[ "${1:-}" == "--help" ]]; then
     show_usage 0
   fi
@@ -95,7 +95,7 @@ main "$@"
 - **Header docblock**: Purpose, behavior notes, usage synopsis. Written as comments at the top of the file, before any code.
 - **`readonly PROG`**: Use `$PROG` in all user-facing messages for consistency.
 - **`main()` wrapper**: Wrap the main flow in a `main()` function. Call `main "$@"` at the bottom of the file, after all function definitions.
-- **Main flow first**: Option parsing, validation, dependencies, core logic — inside `main()`.
+- **Main flow first**: Option parsing, validation, dependencies, and core logic go inside `main()`.
 - **Helpers at end**: Place helper functions after `main()`, before the `main "$@"` call.
 
 ## Help and exit codes
@@ -235,8 +235,8 @@ Agent-specific modules belong in `agents/functions/`:
 
 | Mistake                                | Fix                                                                                                          |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `set -e` alone                         | Use `set -euo pipefail` — `-u` catches typos in variable names, `pipefail` catches mid-pipeline failures     |
-| `usage()` as function name             | Use `show_usage()` — functions start with verbs                                                              |
+| `set -e` alone                         | Use `set -euo pipefail`: `-u` catches typos in variable names, `pipefail` catches mid-pipeline failures      |
+| `usage()` as function name             | Use `show_usage()`: Functions start with verbs                                                               |
 | `show_usage` always exits 1            | Accept exit code parameter: `exit "${1:-1}"`                                                                 |
 | `which cmd` to check availability      | Use `command -v cmd` (POSIX-portable)                                                                        |
 | Error messages to stdout               | Always `>&2`                                                                                                 |

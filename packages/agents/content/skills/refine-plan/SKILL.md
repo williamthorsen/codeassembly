@@ -100,7 +100,7 @@ Evaluate the finding counts:
   ```
   The plan review identified {UserQuestions} question(s) that need your input:
 
-  **C1 — {title}**
+  **C1: {title}**
   {question text}
   1. ■■■ {recommended option}:
      - ➕ {strongest argument}
@@ -109,7 +109,7 @@ Evaluate the finding counts:
      - ➕ {pro}
      - ➖ {con}
 
-  **X2 — {title}**
+  **X2: {title}**
   {open-ended question text — describe what you want in free-form text}
 
   Please answer using the finding ID (e.g., "C1: Option 2; X2: ..."), or respond in free-form text.

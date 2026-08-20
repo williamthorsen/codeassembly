@@ -23,13 +23,13 @@ When writing practical documentation, speak plainly. "Practical documentation" i
 ## Code descriptions
 
 - Every non-trivial function, method, class, and component gets a brief description.
-- Do not repeat information the signature already provides (parameter names, types, return types). In languages with doc-tag conventions (`@param`, `@returns`, `:param`, `Args:`, etc.), omit them — the description alone is sufficient.
+- Do not repeat information the signature already provides (parameter names, types, return types). In languages with doc-tag conventions (`@param`, `@returns`, `:param`, `Args:`, etc.), omit them: The description alone is sufficient.
 - Trivial code (simple getters, one-line helpers whose name fully describes their behavior) may omit the description.
 
 ## File access
 
 - When given an exact file path, use the read tool directly. Do not search for the file first.
-- If the read attempt returns "file does not exist", STOP and ask the user for help — do not attempt to find the file by searching. A missing file at an exact path usually indicates a configuration or environment problem, not a wrong filename.
+- If the read attempt returns "file does not exist", STOP and ask the user for help; do not attempt to find the file by searching. A missing file at an exact path usually indicates a configuration or environment problem, not a wrong filename.
 
 ## Shell commands
 
@@ -37,21 +37,21 @@ When writing practical documentation, speak plainly. "Practical documentation" i
 
 ## Don't test write operations against a live repo
 
-Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment — a temp directory (`mktemp -d`), a fresh `git init` with minimal fixtures, or a container.
+Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment: a temp directory (`mktemp -d`), a fresh `git init` with minimal fixtures, or a container.
 
 Why it matters:
 
 - Other sessions, file watchers, CI, release tooling, or IDE extensions on the user's machine can observe in-progress mutations, even if you intend to clean up after.
-- Some projects treat new tags/commits as release signals. Once the artifact exists, downstream effects may fire before you can undo it — and some release configurations are immutable (published tags produce permanent artifacts).
+- Some projects treat new tags/commits as release signals. Once the artifact exists, downstream effects may fire before you can undo it; some release configurations are immutable (published tags produce permanent artifacts).
 - "I can just clean up afterward" is not a substitute for never creating the artifact: Between create and cleanup, anything else on the machine can act on it.
 
-Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code checks on pure-read commands) are safe in the working repo. Anything that writes — even "just for a second" — is not.
+Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code checks on pure-read commands) are safe in the working repo. Anything that writes, even "just for a second", is not.
 
 ## Technical recommendations
 
-- Default to current best practices. Before recommending an approach, verify it reflects the current state of the ecosystem — not a pattern that was standard two years ago.
+- Default to current best practices. Before recommending an approach, verify it reflects the current state of the ecosystem, not a pattern that was standard two years ago.
 - When unsure whether your knowledge is current, say so and look it up rather than presenting a possibly outdated approach as the answer.
-- Prefer CLI tools over web UI instructions. When a task can be done via a CLI command (e.g., `npm trust`, `gh repo edit`, `gh secret set`), recommend the command — not manual steps in a browser. When multiple commands need to be run, offer to write a script in the most suitable language (other things being equal, prefer bash and TypeScript), following the relevant coding conventions.
+- Prefer CLI tools over web UI instructions. When a task can be done via a CLI command (e.g., `npm trust`, `gh repo edit`, `gh secret set`), recommend the command, not manual steps in a browser. When multiple commands need to be run, offer to write a script in the most suitable language (other things being equal, prefer bash and TypeScript), following the relevant coding conventions.
 
 ## Artifacts
 

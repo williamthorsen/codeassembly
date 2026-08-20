@@ -1,6 +1,6 @@
 ---
 name: triage
-description: The not-yet-examined set — the default home for library content awaiting a disposition.
+description: The not-yet-examined set, the default home for library content awaiting a disposition.
 members:
   rulebooks:
     - commit-conventions
