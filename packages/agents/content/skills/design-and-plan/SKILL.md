@@ -167,16 +167,16 @@ Design and plan complete:
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference) and the refined ticket differs from the remote body. Phase 4 may adopt a good source ticket unchanged and the sweep may find nothing to fold in; the remote is then already current, and no offer is made. This is a shared-state action — do not update without explicit consent, and never open a turn of its own for the ask.
 
-Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each carries its `A`/`Q` identifier as a bold prefix (`**A1 — Remote issue:**`, `**A2 — Next action:**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent stays orthogonal to the single-select next-step choice, and the next-action options keep their order. Recommend the update: The offer appears only when the remote body is stale against the refined ticket. The recommended option's marker follows how stark that staleness is — ■■■ where the refined ticket plainly supersedes the remote body, ■■□ where the delta is real but arguable — and Leave as-is takes ■□□.
+Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each carries its `A`/`Q` identifier as a bold prefix (`**A1: Remote issue**`, `**A2: Next action**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent stays orthogonal to the single-select next-step choice, and the next-action options keep their order. Recommend the update: The offer appears only when the remote body is stale against the refined ticket. The recommended option's marker follows how stark that staleness is — ■■■ where the refined ticket plainly supersedes the remote body, ■■□ where the delta is real but arguable — and Leave as-is takes ■□□.
 
 ```
 Next steps:
 
-**A1 — Remote issue:**
+**A1: Remote issue**
 1. 📝 ■■□ Update {ticket_ref} with the refined ticket
 2. ⏭️ ■□□ Leave as-is
 
-**A2 — Next action:**
+**A2: Next action**
 1. 🧠 ■□□ Refine plan:
    - Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
 ...
@@ -189,7 +189,7 @@ On consent:
 - Other platforms: Note that automated update is not yet supported; suggest manual update
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1 — Remote issue:**` and `**A2 — Next action:**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1: Remote issue**` and `**A2: Next action**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
 **STOP.** Beyond the remote-issue update above, do not invoke any skill. Do not begin implementation.

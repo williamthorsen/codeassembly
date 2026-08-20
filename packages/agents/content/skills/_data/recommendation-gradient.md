@@ -72,13 +72,13 @@ Want me to:
 Multiple questions in one response (Q1/Q2 identifiers):
 
 ```
-**Q1 — Naming convention?**
+**Q1: Naming convention?**
 1. Use camelCase:
    - ➕ matches the host file's local style
 2. Use kebab-case:
    - ➕ matches the package's public API style
 
-**Q2 — File location?**
+**Q2: File location?**
 1. ■■□ Co-locate with consumer:
    - ➕ keeps related code close
 2. ■□□ Place in shared utility module:

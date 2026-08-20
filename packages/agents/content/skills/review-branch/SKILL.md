@@ -240,7 +240,7 @@ Only rows where at least two of (ticket, PR description, implementation) differ 
 
 ### Details
 
-**D{n} — {aspect label}.** {Free-form prose elaborating aspects the Summary cell cannot fit. Each entry keys to a `D{n}` ID for cross-reference.}
+**D{n}: {aspect label}.** {Free-form prose elaborating aspects the Summary cell cannot fit. Each entry keys to a `D{n}` ID for cross-reference.}
 
 Paraphrasing is not divergence — evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to surface through the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
 ```

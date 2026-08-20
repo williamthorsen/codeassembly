@@ -7,9 +7,9 @@ Prefix with `A` an action you propose to take (a "yes" makes you act) and with `
 
 **Action items**
 
-**A1** — Add the packaging note to #977? 👍🏼👎🏼
+**A1:** Add the packaging note to #977? 👍🏼👎🏼
 
-**A2** — The fixture helper now has three call sites. Extract, or leave inline?
+**A2:** The fixture helper now has three call sites. Extract, or leave inline?
 
 1. ■■□ Extract it into `__tests__/helpers/`:
    - ➕ the third call site copy-pasted a stale variant, which is how the leak got in
@@ -17,7 +17,7 @@ Prefix with `A` an action you propose to take (a "yes" makes you act) and with `
 2. ■□□ Leave it inline:
    - ➕ no new surface today
 
-**Q1** — Which package owns the shared fixture once it moves? 🤔
+**Q1:** Which package owns the shared fixture once it moves? 🤔
 ```
 
-When the block presents more than one independently-numbered list — a next-steps menu with two or more selects — put each list's identifier as a bold prefix on its header (`**A1 — Remote issue:**`) and keep each list's own 1-based numbering, so a bare numeral always names an option and `A1: 1, A2: 3` answers the block. A single-list block needs no such prefix.
+When the block presents more than one independently-numbered list — a next-steps menu with two or more selects — put each list's identifier as a bold prefix on its header (`**A1: Remote issue**`) and keep each list's own 1-based numbering, so a bare numeral always names an option and `A1: 1, A2: 3` answers the block. A single-list block needs no such prefix.
