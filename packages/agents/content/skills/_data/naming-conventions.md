@@ -41,6 +41,6 @@ Prefix a boolean with `is`, `has`, `should`, or `does` (with conjugations: `was`
 A finite verb takes the prefix for a second reason: This file reserves verb-led names for functions, so bare `exists` reads as a call. A past participle raises no such collision.
 
 - ✅ `visible`, `processed`, `passed`, `quiet`, `verbose`, `empty`
-- ❌ `children`, `default`, `retry`, `exists` — a collection, a value, a policy, a function; take `hasChildren`, `isDefault`, `shouldRetry`, `doesExist`
+- ❌ `children`, `default`, `retry`, `exists`: A collection, a value, a policy, a function; take `hasChildren`, `isDefault`, `shouldRetry`, `doesExist`
 
 Public and wire surfaces use the bare form where it passes: `ok`, `passed`.

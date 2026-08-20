@@ -8,11 +8,11 @@ The render contract comes first; the doctrine behind it follows. Skills that ask
 
 ## Why the gate comes first
 
-Asking is not a neutral act. It is cheap for the agent — it discharges responsibility for the call, forecloses being wrong, and costs one paragraph — and expensive for the developer, who must load the context, evaluate the options, and answer. A menu the agent could have resolved itself transfers cost from the cheap side to the expensive one, and it looks like diligence while it happens, which is why it goes unnoticed and recurs. That asymmetry, rather than politeness or thoroughness, governs whether a question is asked at all.
+Asking is not a neutral act. It is cheap for the agent (it discharges responsibility for the call, forecloses being wrong, and costs one paragraph) and expensive for the developer, who must load the context, evaluate the options, and answer. A menu the agent could have resolved itself transfers cost from the cheap side to the expensive one, and it looks like diligence while it happens, which is why it goes unnoticed and recurs. That asymmetry, rather than politeness or thoroughness, governs whether a question is asked at all.
 
 A wrong-but-stated recommendation is cheaper to correct than a decision handed back: Correcting one costs a word, answering one costs an evaluation. "When in doubt, ask" is therefore the expensive default, not the safe one.
 
-The gate and the marker are one rule seen twice. A menu that survives the gate is one the developer's values or authorization decide, and the agent may still hold a strong evidence-based ranking inside it — which is exactly where ■■■ is honest. A marker held below the strength actually available tells the developer nothing, and leaves them investigating every menu to find the few that are real forks.
+The gate and the marker are one rule seen twice. A menu that survives the gate is one the developer's values or authorization decide, and the agent may still hold a strong evidence-based ranking inside it, which is exactly where ■■■ is honest. A marker held below the strength actually available tells the developer nothing, and leaves them investigating every menu to find the few that are real forks.
 
 ## Why a manufactured bullet costs more than none
 
@@ -51,11 +51,11 @@ Both "yes" (extract) and "no" (inline) are concrete agent actions with their own
 
 ## Ranking criteria
 
-Rank options on correctness — behavior, API quality, architectural soundness, testability, maintainability — and treat convenience considerations (effort, blast radius, consistency with existing code) as secondary. See [design priorities](./design-priorities.md) for the full rule and a before/after example.
+Rank options on correctness (behavior, API quality, architectural soundness, testability, maintainability) and treat convenience considerations (effort, blast radius, consistency with existing code) as secondary. See [design priorities](./design-priorities.md) for the full rule and a before/after example.
 
 ## Where these lists appear
 
-An option-style question is rendered inside an [action-items block](./action-items.md) — the terminal block that ends every response with an ask.
+An option-style question is rendered inside an [action-items block](./action-items.md), the terminal block that ends every response with an ask.
 
 ## Further examples
 

@@ -23,9 +23,9 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON contains `ticket_id`, the persisted `ticket_url`, and `ticket_base_url` (the org-stable base mirrored from the `ticket.base_url` preference; see [Stored ticket URL](#stored-ticket-url)).
 
-2. **Prefer the stored URL.** If `ticket_url` is a non-null string, fetch the ticket directly from that URL — skip the platform/identifier reconstruction below. If the stored URL does not yield the expected ticket, invalidate it per [Stored ticket URL](#stored-ticket-url) and continue with reconstruction.
+2. **Prefer the stored URL.** If `ticket_url` is a non-null string, fetch the ticket directly from that URL; skip the platform/identifier reconstruction below. If the stored URL does not yield the expected ticket, invalidate it per [Stored ticket URL](#stored-ticket-url) and continue with reconstruction.
 
-3. **Otherwise reconstruct from `ticket_id`.** If `ticket_id` is `null`, auto-resolve fails — ask the user for a ticket source.
+3. **Otherwise reconstruct from `ticket_id`.** If `ticket_id` is `null`, auto-resolve fails; ask the user for a ticket source.
 
 4. **Determine the platform and construct the fetch identifier:**
 
@@ -43,7 +43,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 5. **Fetch the ticket** per [platform-specific fetch](#platform-specific-fetch).
 
-6. **Persist the resolved URL.** Once a ticket URL is in hand — whether reconstructed here, supplied by the user, or fetched — store it for future sessions per [Stored ticket URL](#stored-ticket-url).
+6. **Persist the resolved URL.** Once a ticket URL is in hand (whether reconstructed here, supplied by the user, or fetched), store it for future sessions per [Stored ticket URL](#stored-ticket-url).
 
 ### When auto-resolve fails
 
@@ -104,17 +104,17 @@ The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolve
 
 The manifest also surfaces `ticket_base_url`, mirroring the `ticket.base_url` preference. When a base and a `ticket_id` are both known, the deriver seeds `ticket_url` by joining them, so a bare Jira-style reference resolves to a URL without a supplied one. An explicitly stored URL always overrides that constructed default.
 
-- **Prefer** — auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
-- **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: Run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
-- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-fetches through `acli` or a connected read tool, and re-prompts the user only where neither is available.
+- **Prefer**: Auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
+- **Persist**: After a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it by running `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
+- **Invalidate**: When the stored URL does not yield the expected ticket (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-fetches through `acli` or a connected read tool, and re-prompts the user only where neither is available.
 
 ## Resolved metadata
 
 After resolution, store the following metadata for use by the calling skill:
 
-- **Platform** — which platform the ticket was resolved from (e.g., GitHub, Jira, file, plain text)
-- **Repository** — the repository identifier (e.g., `owner/repo`), if applicable
-- **Issue number** — the numeric identifier, if applicable
-- **Last-updated date** — the ticket's last-modified timestamp, if available from the platform
-- **Ticket content** — the title, body, labels, and any other retrieved fields
-- **Ticket URL** — persisted across sessions in the branch manifest's `ticket_url` field, written through the deriver's mutation flags; see [Stored ticket URL](#stored-ticket-url)
+- **Platform**: Which platform the ticket was resolved from (e.g., GitHub, Jira, file, plain text)
+- **Repository**: The repository identifier (e.g., `owner/repo`), if applicable
+- **Issue number**: The numeric identifier, if applicable
+- **Last-updated date**: The ticket's last-modified timestamp, if available from the platform
+- **Ticket content**: The title, body, labels, and any other retrieved fields
+- **Ticket URL**: Persisted across sessions in the branch manifest's `ticket_url` field, written through the deriver's mutation flags; see [Stored ticket URL](#stored-ticket-url)

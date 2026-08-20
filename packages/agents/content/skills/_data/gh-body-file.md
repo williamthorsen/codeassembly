@@ -14,7 +14,7 @@ Any `gh` invocation that takes a Markdown body: `gh issue create`, `gh issue edi
    path: $TMPDIR/gh-body-{timestamp}.md
    ```
 
-   Use `{timestamp}` in `YYYYMMDD-HHMMSSZ` format. When a skill writes bodies in a loop (e.g., one per insight), append an index or sub-second suffix — `gh-body-{timestamp}-{index}.md` — to keep paths unique within the same second.
+   Use `{timestamp}` in `YYYYMMDD-HHMMSSZ` format. When a skill writes bodies in a loop (e.g., one per insight), append an index or sub-second suffix (`gh-body-{timestamp}-{index}.md`) to keep paths unique within the same second.
 
 2. Pass the path to `gh` via `--body-file`:
 
@@ -26,7 +26,7 @@ Any `gh` invocation that takes a Markdown body: `gh issue create`, `gh issue edi
 
    Name the variable `body_path` so retries and follow-on calls reuse the same file unambiguously.
 
-No cleanup is required — `$TMPDIR` is OS-managed.
+No cleanup is required: `$TMPDIR` is OS-managed.
 
 ## Why
 
@@ -39,6 +39,6 @@ EOF
 )"
 ```
 
-Although a `<<'EOF'` heredoc performs no expansion and backticks need no escaping, agents reflexively inserted `\` before every backtick — a habit brought over from double-quoted strings. GitHub rendered the backslashes literally, producing broken code spans (`` \`foo\` ``) and fences (``\`\`\`ts``). The bug recurred across creation flows in multiple repositories.
+Although a `<<'EOF'` heredoc performs no expansion and backticks need no escaping, agents reflexively inserted `\` before every backtick, a habit brought over from double-quoted strings. GitHub rendered the backslashes literally, producing broken code spans (`` \`foo\` ``) and fences (``\`\`\`ts``). The bug recurred across creation flows in multiple repositories.
 
 Writing the body through the `Write` tool removes bash from the path entirely. There is no shell context in which escaping could feel necessary, so the class of bug cannot arise. See codeassembly#442 for the originating incident.
