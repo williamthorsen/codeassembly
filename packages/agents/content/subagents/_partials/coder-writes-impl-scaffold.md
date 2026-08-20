@@ -1,6 +1,6 @@
 ### Implementation-mode scaffold
 
-After reading the plan, extract each task's title and write exactly this structure. The YAML frontmatter is part of the scaffold, so the first write includes it — see [Frontmatter](#frontmatter) for field resolution.
+After reading the plan, extract each task's title and write exactly this structure. The YAML frontmatter is part of the scaffold, so the first write includes it; see [Frontmatter](#frontmatter) for field resolution.
 
 ```markdown
 ---
@@ -18,17 +18,17 @@ pr: '{full PR URL, omit if not resolved}'
 run_id: '{run id}'
 ---
 
-# Change summary — ticket #{N}
+# Change summary: Ticket #{N}
 
 ## Status
 
-In progress — task 0 of {K}
+In progress: Task 0 of {K}
 
 ## Per-task summary
 
-### Task 0: {title} — pending
+### Task 0: {title} (pending)
 
-### Task 1: {title} — pending
+### Task 1: {title} (pending)
 
 ...
 
@@ -47,12 +47,12 @@ In progress — task 0 of {K}
 
 After completing each plan task, overwrite the file:
 
-- Update that task's section heading to `— completed|skipped|deferred`, followed by files changed, outcome, and notes.
-- Bump `## Status` to `In progress — task {N+1} of {K}`.
+- Update that task's section heading to `(completed|skipped|deferred)`, followed by files changed, outcome, and notes.
+- Bump `## Status` to `In progress: Task {N+1} of {K}`.
 
 Before your final structured return block, finalize:
 
-- `## Files changed` — aggregate list of all modified files.
-- `## Quality gates` — typecheck, lint, tests results.
-- `## Deferred items` — any intentional omissions or deviations from the plan.
-- `## Status` — `completed`.
+- `## Files changed`: Aggregate list of all modified files.
+- `## Quality gates`: Typecheck, lint, tests results.
+- `## Deferred items`: Any intentional omissions or deviations from the plan.
+- `## Status`: `completed`.

@@ -46,7 +46,7 @@ You operate in one of two modes based on your input:
 **Final artifact shape:**
 
 ```markdown
-# Change summary — ticket #{N}
+# Change summary: Ticket #{N}
 
 ## Status
 
@@ -54,11 +54,11 @@ completed
 
 ## Per-task summary
 
-### Task 0: {title} — completed
+### Task 0: {title} (completed)
 
 {files changed, outcome, notes}
 
-### Task 1: {title} — completed
+### Task 1: {title} (completed)
 
 {files changed, outcome, notes}
 
@@ -69,9 +69,9 @@ completed
 
 ## Quality gates
 
-- Typecheck: {pass/fail} — {command run}
-- Lint: {pass/fail} — {command run}
-- Tests: {pass/fail} — {command run}
+- Typecheck (`{command run}`): {pass/fail}
+- Lint (`{command run}`): {pass/fail}
+- Tests (`{command run}`): {pass/fail}
 
 ## Deferred items
 
@@ -96,7 +96,7 @@ completed
 **Final artifact shape:**
 
 ```markdown
-# Change summary — round {R}
+# Change summary: Round {R}
 
 ## Status
 
