@@ -28,7 +28,7 @@ The script reads `commit.title_format`, `ticket.title_format`, `pr.title_format`
 }
 ```
 
-Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title` for pull-request titles, and `merge_title` for the squash-merge title shown in the merge UI. Each value is the fully rendered title — do not concatenate it with the bare `title`.
+Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title` for pull-request titles, and `merge_title` for the squash-merge title shown in the merge UI. Each value is the fully rendered title; do not concatenate it with the bare `title`.
 
 If the script is not found, fall back to the bare `--title` value.
 
@@ -42,7 +42,7 @@ If the script is not found, fall back to the bare `--title` value.
 | `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated. |
 | `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.         |
 
-A template that omits `{title}` produces a title without the bare title text — `describe-change.sh` does not insert it implicitly. Unknown tokens (e.g., a typo like `{titel}`) are left as-is so the mistake is visible in the rendered output.
+A template that omits `{title}` produces a title without the bare title text: `describe-change.sh` does not insert it implicitly. Unknown tokens (e.g., a typo like `{titel}`) are left as-is so the mistake is visible in the rendered output.
 
 ## Optional groups via `[...]`
 
@@ -77,7 +77,7 @@ merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
 
-Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules. In an unquoted value a bare `#` (e.g., `#{pr_number}`) is preserved, but YAML's inline-comment convention — a space immediately followed by `#` — silently truncates the rest of the template. `title_format: {title} # legacy` becomes `{title}` with no warning. When in doubt, quote. The parser does not understand YAML's escape forms for embedded quote characters (`''` inside a single-quoted string, `""` inside a double-quoted string) — if a template needs a literal apostrophe, wrap it in double quotes (or vice versa).
+Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules. In an unquoted value a bare `#` (e.g., `#{pr_number}`) is preserved, but YAML's inline-comment convention (a space immediately followed by `#`) silently truncates the rest of the template. `title_format: {title} # legacy` becomes `{title}` with no warning. When in doubt, quote. The parser does not understand YAML's escape forms for embedded quote characters (`''` inside a single-quoted string, `""` inside a double-quoted string); if a template needs a literal apostrophe, wrap it in double quotes (or vice versa).
 
 | Template                       | Sample output                        |
 | ------------------------------ | ------------------------------------ |
@@ -96,4 +96,4 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 - Use `root` when the change touches only files at the monorepo root.
 - Use `*` when the change spans multiple workspaces, or root and one or more workspaces.
 
-Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill — see the `consult-commit-conventions` skill for the commit-side rules.
+Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill; see the `consult-commit-conventions` skill for the commit-side rules.

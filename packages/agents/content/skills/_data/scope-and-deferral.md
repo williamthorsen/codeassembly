@@ -32,7 +32,7 @@ Every finding the agent surfaces gets dispositioned into one of three lanes. The
 Apply the change on the current branch in the current session.
 
 - **Preferred default for trivial items** ([complexity levels 1–2](complexity-classification.md)) when branch state and code overlap permit (see [drive-by suitability](#drive-by-suitability) below).
-- The change goes in as a drive-by — a small adjacent commit that ships with the branch's main work.
+- The change goes in as a drive-by: a small adjacent commit that ships with the branch's main work.
 - Zero ticket overhead. The fix exists in code by the end of the session.
 
 ### Batch later
@@ -57,17 +57,17 @@ A standalone ticket for a single finding.
 A trivial item is a good drive-by candidate when all of these hold:
 
 - **Branch is not already large or complicated.** A reviewer absorbing one extra small change is fine; a reviewer asked to absorb one more change on top of a sprawling diff is not.
-- **The drive-by doesn't mix concerns within a single file.** The standard "drive-by changes are bad" heuristic triggers too often: The real cost is when concerns mix in one file. Counterintuitively, **changes in completely unrelated files are good drive-by candidates** — the reviewer can skim past them.
+- **The drive-by doesn't mix concerns within a single file.** The standard "drive-by changes are bad" heuristic triggers too often: The real cost is when concerns mix in one file. Counterintuitively, **changes in completely unrelated files are good drive-by candidates**: The reviewer can skim past them.
 - **The drive-bys aren't accumulating into a swarm.** Two or three drive-bys on a focused branch is fine; ten of them turns the branch into a junk drawer. Once a drive-by candidate would push the branch past the agent's judgment of "still readable as one change", route subsequent items to **batch later**.
 
 ### Agent-consultable signals
 
 These are starting points for agent judgment, not rigid gates. Agents should override them when context warrants.
 
-- **Branch size** — `git diff --stat {default_branch}..HEAD`. Above ~10 files or ~500 lines of diff, treat the branch as already large; new drive-bys should clear a higher bar.
-- **Code overlap** — Is the target file present in `git diff --name-only {default_branch}..HEAD`?
-  - **Same-file overlap** — Caution: The reviewer must disentangle concerns within one diff. Prefer batch or separate ticket unless the change is genuinely related to the branch's main work.
-  - **Different-file** — Fine: The reviewer can skim past unrelated additions.
+- **Branch size**: `git diff --stat {default_branch}..HEAD`. Above ~10 files or ~500 lines of diff, treat the branch as already large; new drive-bys should clear a higher bar.
+- **Code overlap**: Is the target file present in `git diff --name-only {default_branch}..HEAD`?
+  - **Same-file overlap.** Caution: The reviewer must disentangle concerns within one diff. Prefer batch or separate ticket unless the change is genuinely related to the branch's main work.
+  - **Different-file.** Fine: The reviewer can skim past unrelated additions.
 
 When a heuristic flags caution but the agent's judgment disagrees (e.g., the "large" branch is just a generated-file refresh), the agent should make the call and note the reasoning briefly.
 

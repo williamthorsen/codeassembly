@@ -46,8 +46,8 @@ projects/{project-slug}/tickets/{ticket-id}/{run-id}/
 
 **Run ID format:** `{timestamp}-{mode}`
 
-- **timestamp:** UTC, `YYYYMMDD-HHMMSSZ` — from the first artifact in the run
-- **mode:** `interactive` or `orchestrated` — reflects how the run was _initiated_ (immutable at creation)
+- **timestamp:** UTC, `YYYYMMDD-HHMMSSZ` (from the first artifact in the run)
+- **mode:** `interactive` or `orchestrated`, reflecting how the run was _initiated_ (immutable at creation)
 
 Examples: `20260221-034100Z-interactive`, `20260221-090000Z-orchestrated`
 
@@ -71,7 +71,7 @@ For contexts where neither the deriver nor a cached manifest is available (e.g.,
 
 ### Reader tolerance and authoring-time validation
 
-The session-context deriver reads only the fields it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `scm`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated — this file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
+The session-context deriver reads only the fields it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `scm`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated: This file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
 
 Schema validation against `schemas/preferences.json` is an authoring-time concern, surfaced by the `$schema` reference at the top of the YAML (for editor LSPs) and by `preferences-schema.unit.test.ts` against the project-checked-in `.agents/preferences.yaml`. The reader does not validate against the schema at runtime; doing so would fail on legitimate keys owned by other tools.
 
@@ -113,7 +113,7 @@ Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in sess
 ```
 
 - **timestamp**: UTC, `YYYYMMDD-HHMMSSZ` format (e.g., `20260219-143000Z`)
-- **slug**: Kebab-case descriptor drawn from work context — e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
+- **slug**: Kebab-case descriptor drawn from work context, e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
 - **artifact-type**: One of the registered types (see below)
 
 ### Run artifacts (review workflow)
@@ -123,8 +123,8 @@ Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in sess
 ```
 
 - **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`)
-- **role**: `architect`, `coder`, `code-reviewer`, `code-simplification-reviewer`, `orchestrator`, `planner`, `reviewer`, `silent-failure-reviewer`, `test-reviewer` (extensible — this is a common roles list, not exhaustive)
-- **artifact**: What the document is — `architecture`, `change-summary`, `code-review`, `code-simplification-review`, `orchestration-plan`, `plan`, `review`, `run-manifest`, `run-summary`, `silent-failure-review`, `test-review`
+- **role**: `architect`, `coder`, `code-reviewer`, `code-simplification-reviewer`, `orchestrator`, `planner`, `reviewer`, `silent-failure-reviewer`, `test-reviewer` (extensible; this is a common roles list, not exhaustive)
+- **artifact**: What the document is -- `architecture`, `change-summary`, `code-review`, `code-simplification-review`, `orchestration-plan`, `plan`, `review`, `run-manifest`, `run-summary`, `silent-failure-review`, `test-review`
 
 Underscore separates all structural parts. Hyphens are free for use within any part (role names, artifact names, slugs).
 
@@ -141,7 +141,7 @@ Example run directory (full orchestrated run with iterative review):
   02_orchestrator_ticket-requirements.md                # Initialization (optional)
   03_architect_architecture.md                          # Phase 1 (optional)
   04_planner_orchestration-plan.md                      # Phase 2 (optional)
-  04_planner_orchestration-plan.json                    # Phase 2 (same seq — same artifact, two formats)
+  04_planner_orchestration-plan.json                    # Phase 2 (same seq: same artifact, two formats)
   05_coder_change-summary.md                            # Phase 3
   06_reviewer_review.md                                 # Phase 4: Iteration 1
   07_silent-failure-reviewer_silent-failure-review.md   # Phase 4: Iteration 1
@@ -163,20 +163,20 @@ All skill- and subagent-authored artifacts begin with a YAML frontmatter block c
 ```yaml
 ---
 provenance:
-  skill: <skill-name> # required — the skill or subagent that wrote this artifact
-  timestamp: <ISO 8601 UTC> # required — write time
-  baseSha: <short SHA> # optional — short SHA of origin/main; omit if unresolvable
-  isInteractive: true|false # required — true for interactive flows, false for orchestrated dispatch
-  refinedBy: <skill-name> # optional — the skill that last processed/refined the artifact
-  model: <model id> # optional — present when an AI model authored the body
-ticket_id: <id> # optional — omit when no ticket is in session
-ticket_ref: <display ref> # optional — omit when ticket_id is null
-branch: <branch name> # required — raw branch_name from session context
-commit: <short SHA of HEAD> # required — short HEAD SHA at write time
-pr: <full URL> # optional — set only by PR-aware skills; omitted elsewhere
-author: <name(s)> # optional — used by review artifacts
-commits: [<sha>, ...] # optional — used by devlogs
-run_id: <run id> # optional — present in orchestrated runs
+  skill: <skill-name> # required: the skill or subagent that wrote this artifact
+  timestamp: <ISO 8601 UTC> # required: write time
+  baseSha: <short SHA> # optional: short SHA of origin/main; omit if unresolvable
+  isInteractive: true|false # required: true for interactive flows, false for orchestrated dispatch
+  refinedBy: <skill-name> # optional: the skill that last processed/refined the artifact
+  model: <model id> # optional: present when an AI model authored the body
+ticket_id: <id> # optional: omit when no ticket is in session
+ticket_ref: <display ref> # optional: omit when ticket_id is null
+branch: <branch name> # required: raw branch_name from session context
+commit: <short SHA of HEAD> # required: short HEAD SHA at write time
+pr: <full URL> # optional: set only by PR-aware skills; omitted elsewhere
+author: <name(s)> # optional: used by review artifacts
+commits: [<sha>, ...] # optional: used by devlogs
+run_id: <run id> # optional: present in orchestrated runs
 ---
 ```
 
@@ -188,22 +188,22 @@ Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInter
 
 The table below lists only the universal fields. Artifact-specific extensions (`provenance.iteration`, `session_type`, `tickets_created`, `title`, `scope`, `type`, `responding_to`, etc.) are documented in the per-artifact sections below.
 
-| Field                      | Required | Description                                                                                                                                                                               |
-| -------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                                                           |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                  |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                             |
-| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                          |
-| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                             |
-| `provenance.model`         | no       | The model identifier authoring the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                                   |
-| `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                                                     |
-| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                            |
-| `branch`                   | yes      | Current branch name from session context. Written as-is — no sanitization.                                                                                                                |
-| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                           |
-| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that hold the URL; omitted by every other artifact — see [PR resolution](pr-resolution.md). |
-| `author`                   | no       | Human author of the work. Used by review artifacts where the reviewing surface records the code author.                                                                                   |
-| `commits`                  | no       | List of short SHAs the artifact summarizes. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                     |
-| `run_id`                   | no       | Orchestrated run ID. Present in orchestrated runs and in artifacts that link back to one.                                                                                                 |
+| Field                      | Required | Description                                                                                                                                                                              |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                                                          |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                 |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                            |
+| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                         |
+| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                            |
+| `provenance.model`         | no       | The model identifier authoring the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                                  |
+| `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                                                    |
+| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                           |
+| `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                |
+| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                          |
+| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that hold the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md). |
+| `author`                   | no       | Human author of the work. Used by review artifacts where the reviewing surface records the code author.                                                                                  |
+| `commits`                  | no       | List of short SHAs the artifact summarizes. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                    |
+| `run_id`                   | no       | Orchestrated run ID. Present in orchestrated runs and in artifacts that link back to one.                                                                                                |
 
 ### `commit` vs. `commits`
 
@@ -211,16 +211,16 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 ### PR resolution
 
-`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL — `review-branch` and `respond-to-review` pass it via `--override pr=<url>`, and `create-pr` backfills it into the change summary after the PR exists. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
+`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`, and `create-pr` backfills it into the change summary after the PR exists. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
 
 ### Bespoke frontmatter composition
 
 Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Two sites are deliberate exceptions and opt into `--format json` to compose the YAML block themselves:
 
-- `refine-plan` — the `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input has no provenance). The shell flag surface cannot express this conditional logic cleanly.
-- `wrap-up` (deferred-findings artifact) — `tickets_created` is a list of `{id, items}` objects, a structure that has no clean CLI expression and is best composed in the skill's own logic.
+- `refine-plan`: The `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input has no provenance). The shell flag surface cannot express this conditional logic cleanly.
+- `wrap-up` (deferred-findings artifact): `tickets_created` is a list of `{id, items}` objects, a structure that has no clean CLI expression and is best composed in the skill's own logic.
 
-These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround — keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
+These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
 ## Manifest creation
 
@@ -236,7 +236,7 @@ node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 
 The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
 
-When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first — the deriver is the single derivation surface and is safe to call from any context.
+When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first: The deriver is the single derivation surface and is safe to call from any context.
 
 ## Plan provenance
 
@@ -263,7 +263,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 `provenance.skill` is `wrap-up`; `provenance.isInteractive` is `true`.
 
-**Single-finding case** — a ticket addressing one finding:
+**Single-finding case**, a ticket addressing one finding:
 
 ```yaml
 tickets_created:
@@ -271,7 +271,7 @@ tickets_created:
     items: [F1]
 ```
 
-**Batch case** — a single ticket addressing multiple findings uses the same shape with additional IDs in `items`:
+**Batch case**, a single ticket addressing multiple findings, uses the same shape with additional IDs in `items`:
 
 ```yaml
 tickets_created:
@@ -590,14 +590,14 @@ Each role maps to one of five workflow-function types:
 
 Phase values use camelCase and match the keys in the `phases` object:
 
-- `initialization` — run setup and manifest creation
-- `architecture` — architectural impact assessment
-- `planning` — implementation planning
-- `implementation` — code authoring
-- `parallelReview` — parallel review and fix cycles
-- `codeSimplifier` — code simplification pass
-- `holisticReview` — final comprehensive review
-- `summary` — run summary generation
+- `initialization`: Run setup and manifest creation
+- `architecture`: Architectural impact assessment
+- `planning`: Implementation planning
+- `implementation`: Code authoring
+- `parallelReview`: Parallel review and fix cycles
+- `codeSimplifier`: Code simplification pass
+- `holisticReview`: Final comprehensive review
+- `summary`: Run summary generation
 
 ### Version field
 
@@ -609,7 +609,7 @@ V3 separates static run metadata from dynamic state. The `run-index.json` file c
 
 ### V3 header schema
 
-`run-index.json` with `version: 3` contains only the header — no `phases`, `phaseDecisions`, `status`, or `completedAt` fields in `context`. `completedAt` is stamped at the top level by `complete_run`.
+`run-index.json` with `version: 3` contains only the header: no `phases`, `phaseDecisions`, `status`, or `completedAt` fields in `context`. `completedAt` is stamped at the top level by `complete_run`.
 
 Context fields: `runId`, `projectSlug`, `ticketId?`, `projectRoot`, `branch`, `task`, `startedAt`.
 
@@ -621,7 +621,7 @@ Companion file in the same run directory. Each line is a JSON object (JSONL form
 
 ### Event types
 
-All 13 valid event types and their required fields. Fields suffixed with `?` are optional — usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs where the orchestrator captures {tool:Task} result metrics; older runs omit them:
+All 13 valid event types and their required fields. Fields suffixed with `?` are optional. Usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs where the orchestrator captures {tool:Task} result metrics; older runs omit them:
 
 | Event type             | Key fields                                                                                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -687,21 +687,21 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 
 ### Ticket-level artifacts
 
-- `change-summary` — Branch change summary for PRs
-- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
-- `devlog` — Development log entry (falls back to non-ticket path when no ticket is in session)
-- `merge` — Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
-- `orchestration-plan` — Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
-- `plan` — Implementation plan document
-- `plan-review` — Plan review findings (completeness and correctness analysis)
-- `plan-v2` — Refined implementation plan after review and revision
-- `pull-request` — PR description file; `capture-lede-decision` reads its `## What` as the agent's side of a lede episode
-- `review` — Code review (ticket-level, commit scope)
-- `ticket` — Issue ticket
+- `change-summary`: Branch change summary for PRs
+- `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
+- `devlog`: Development log entry (falls back to non-ticket path when no ticket is in session)
+- `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
+- `orchestration-plan`: Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
+- `plan`: Implementation plan document
+- `plan-review`: Plan review findings (completeness and correctness analysis)
+- `plan-v2`: Refined implementation plan after review and revision
+- `pull-request`: PR description file; `capture-lede-decision` reads its `## What` as the agent's side of a lede episode
+- `review`: Code review (ticket-level, commit scope)
+- `ticket`: Issue ticket
 
 ### Non-ticket artifacts
 
-- `chat-summary` — Conversation summary
+- `chat-summary`: Conversation summary
 
 ## Run lifecycle
 
@@ -717,7 +717,7 @@ Orchestrated runs begin with `orchestrator_run-manifest` as the first artifact, 
 
 1. `reviewer_review` contains findings
 2. `coder_change-summary` contains fixes + dispositions on prior findings
-3. `reviewer_review` reads all prior artifacts chronologically — dispositions are embedded in the documents that contain them
+3. `reviewer_review` reads all prior artifacts chronologically: Dispositions are embedded in the documents that contain them
 
 ### Termination
 
@@ -741,7 +741,7 @@ A role can only disposition findings directed at it or its own prior findings. T
 | -------- | ------------------------------------------------------------ | -------------------------------------------------------- |
 | Coder    | Reviewer/overseer findings on the code                       | Own changes (self-review)                                |
 | Reviewer | Own prior findings (revise/withdraw in light of new context) | Coder rejections (re-raise as escalated finding instead) |
-| Overseer | Any finding (arbiter authority)                              | —                                                        |
+| Overseer | Any finding (arbiter authority)                              | n/a                                                      |
 
 ## Finding scheme (F/W/T/R/S + legacy suffix)
 
@@ -783,47 +783,47 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 
 ### Category criteria
 
-**Authored-choice gate (W/T/R/S):** A proposed change must be a genuine improvement, not merely an alternative — a valid authored choice is not a defect. The per-category criteria set the evidence bar.
+**Authored-choice gate (W/T/R/S):** A proposed change must be a genuine improvement, not merely an alternative: A valid authored choice is not a defect. The per-category criteria set the evidence bar.
 
-**FIXME (F)** — must fix before merge:
+**FIXME (F).** Must fix before merge:
 
 - Bugs: Incorrect logic, unhandled error paths, data loss risks
 - Security: Injection, auth bypass, exposed secrets
 - Contract violations: Breaking API changes, type unsafety
 - Test failures: Tests that don't pass or don't test what they claim
 
-**Warning (W)** — questionable, may block merge:
+**Warning (W).** Questionable, may block merge:
 
 - Missing edge case handling that could cause runtime errors
 - Convention violations that affect maintainability
 - Decisions that seem wrong but may be intentional (require justification)
-- **Gate:** A warning must reflect a judgment call by the author about a defensible risk of functional or maintainability harm, not a mechanical oversight or a cosmetic issue. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning — classify as Suggestion at most. If the issue has no defensible risk of functional or maintainability harm (e.g., a typo in a comment), do not raise it at any tier.
+- **Gate:** A warning must reflect a judgment call by the author about a defensible risk of functional or maintainability harm, not a mechanical oversight or a cosmetic issue. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning; classify as Suggestion at most. If the issue has no defensible risk of functional or maintainability harm (e.g., a typo in a comment), do not raise it at any tier.
 
-**TODO (T)** — should fix, not in this PR:
+**TODO (T).** Should fix, not in this PR:
 
 - Missing or inadequate tests for new functionality
 - Performance issues with measurable impact
 - Incomplete error handling that won't cause immediate failures
 
-**Recommendation (R)** — advisable but discretionary:
+**Recommendation (R).** Advisable but discretionary:
 
 - Better patterns available in the codebase
 - Opportunities to reduce complexity
 - Architectural improvements worth considering
-- **Gate:** Raise only when the change is plausibly better — improved clarity, reduced complexity, better-aligned pattern. "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
+- **Gate:** Raise only when the change is plausibly better: improved clarity, reduced complexity, better-aligned pattern. "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
 
-**Suggestion (S)** — optional improvement:
+**Suggestion (S).** Optional improvement:
 
 - Better naming or code organization
 - Additional test cases for edge cases
 - Documentation improvements
 - **Gate:** Raise only when the change aligns with a codebase convention the code violates, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
 
-**Legacy (`-L` suffix)** — pre-existing code observation:
+**Legacy (`-L` suffix).** Pre-existing code observation:
 
-- Issues in code not authored in this branch — use the same severity letter as the equivalent author finding.
-- The `-L` is a marker, not part of the ID — the ID is the number in front of it. Assign that number from the shared per-letter sequence as if this were an author finding, then append `-L`. Example: After author findings `F1`, `F2`, the first legacy FIXME is `F3-L`.
-- Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
+- Issues in code not authored in this branch. Use the same severity letter as the equivalent author finding.
+- The `-L` is a marker, not part of the ID: The ID is the number in front of it. Assign that number from the shared per-letter sequence as if this were an author finding, then append `-L`. Example: After author findings `F1`, `F2`, the first legacy FIXME is `F3-L`.
+- Set the `**Severity:**` field to `{severity} (legacy)`, e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
 - Frame as future opportunities, not current defects
 - Never count against the review score
 
@@ -844,7 +844,7 @@ Criticality classifies; it does not decide what a reviewer shows the user. Legac
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality and are never merge-blocking. They belong wherever knowledge is worth keeping — housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
+Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality and are never merge-blocking. They belong wherever knowledge is worth keeping: housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
@@ -854,11 +854,11 @@ Consumers that present insights (`wrap-up`, `summarize-chat`, review skills and 
 
 ### Insight gate
 
-An insight is the deliberate complement to a finding: A finding gives the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate) — "no severity, no action" is exactly the low bar that invites filler.
+An insight is the deliberate complement to a finding: A finding gives the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate): "no severity, no action" is exactly the low bar that invites filler.
 
 Emit an insight only when it is **non-obvious knowledge a future reader is materially worse off without**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
 
-**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change the author should weigh, it is an `S`, not an insight — and when in doubt with any action implied, classify it as `S`.
+**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change the author should weigh, it is an `S`, not an insight. When in doubt with any action implied, classify it as `S`.
 
 Insights never have criticality, never block a merge, and never count toward a review score or the [Overall criticality mapping](#overall-criticality-mapping).
 
@@ -933,10 +933,10 @@ All timestamps (run IDs and artifact filenames): `YYYYMMDD-HHMMZ` → `YYYYMMDD-
 
 The following codeassembly files reference the run metadata schema and will need updates:
 
-- `project-scanner.ts` — filename patterns for artifact discovery
-- `status-adapter.ts` — schema parsing and normalization
-- `runs.ts` — artifact filtering and run enumeration
-- `canonical.ts` — type definitions
+- `project-scanner.ts`: Filename patterns for artifact discovery
+- `status-adapter.ts`: Schema parsing and normalization
+- `runs.ts`: Artifact filtering and run enumeration
+- `canonical.ts`: Type definitions
 
 ### Backward compatibility
 
