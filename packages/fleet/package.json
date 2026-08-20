@@ -19,7 +19,7 @@
     "@hono/node-server": "2.1.0",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
-    "hono": "4.13.1"
+    "hono": "4.13.2"
   },
   "engines": {
     "node": ">=24"
