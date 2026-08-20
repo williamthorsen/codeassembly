@@ -8,8 +8,8 @@ This README is the canonical reference for the partial system. The expander is i
 
 Shared Markdown belongs in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is; the choice decides whether the agent reliably sees it at all.
 
-- **`_partials/`: content the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists it works through, and the doctrine for an act it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
-- **`_data/`: content the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
+- **`_partials/`: Content the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists it works through, and the doctrine for an act it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
+- **`_data/`: Content the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
 
 A runtime link is an optional read. Where the model already holds a strong prior for what the content looks like (and it does, for anything resembling a standard option menu or output block), it generates from that prior instead of following the link. Emphasis is not a remedy: A `<HARD-GATE>` reading "follow its options and output format exactly; do not improvise" preceded one such link, and the agent improvised the block anyway. Never put must-reproduce content behind a runtime link.
 
@@ -63,8 +63,8 @@ A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support ent
 
 Installable content is rewritten at install time. Author cross-references in one of three forms, depending on intent:
 
-- **Runtime references**: paths the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, and bare `sync` adds one exception: A link naming a skill the same run deploys is anchored under the project root rather than the harness home. `sync --global` deploys into the harness home, so it has no such exception.
-- **Source-tree citations**: prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
+- **Runtime references**: Paths the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, and bare `sync` adds one exception: A link naming a skill the same run deploys is anchored under the project root rather than the harness home. `sync --global` deploys into the harness home, so it has no such exception.
+- **Source-tree citations**: Prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
 - **Self-referential prose** about the source tree itself (e.g., this paragraph) is treated as a source-tree citation.
 
 The `content-path-conventions` regression test flags any raw `packages/agents/content/` string in installable Markdown outside the allowlist.
@@ -73,10 +73,10 @@ The `content-path-conventions` regression test flags any raw `packages/agents/co
 
 Partials are stored in `_partials/` directories. The directory is recognized at any depth and is excluded from the install copy:
 
-- `content/_partials/`: cross-cutting partials shared across skills, subagents, and platform guidance.
-- `content/subagents/_partials/`: partials shared across subagents.
-- `content/skills/_partials/`: partials shared across skills.
-- `content/skills/{name}/_partials/`: partials internal to a single skill.
+- `content/_partials/`: Cross-cutting partials shared across skills, subagents, and platform guidance.
+- `content/subagents/_partials/`: Partials shared across subagents.
+- `content/skills/_partials/`: Partials shared across skills.
+- `content/skills/{name}/_partials/`: Partials internal to a single skill.
 
 The `_partials` directory itself never appears in installed output.
 
@@ -159,9 +159,9 @@ Functionally equivalent to bare self-close. Useful when the surrounding text rea
 
 The grammar reserves additional tokens for future use. Partial authors must not emit them in source content:
 
-- `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->`: reserved for future named-slot support.
-- `<!-- children -->`: the canonical default-slot placeholder. Use exactly this token; do not invent variants.
-- `<!-- guidance-hook: name -->`: the guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line that resembles the directive but misses its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+- `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->`: Reserved for future named-slot support.
+- `<!-- children -->`: The canonical default-slot placeholder. Use exactly this token; do not invent variants.
+- `<!-- guidance-hook: name -->`: The guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line that resembles the directive but misses its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
 
 ### Partial or guidance hook
 

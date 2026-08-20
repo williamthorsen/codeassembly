@@ -54,9 +54,9 @@ Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as
 
 See [`work-types.json`](../../skills/_data/work-types.json) for the canonical taxonomy. Each type belongs to one of three tiers:
 
-- **Public**: consumer-facing.
-- **Internal**: not consumer-facing.
-- **Process**: tooling and supporting work.
+- **Public**: Consumer-facing.
+- **Internal**: Not consumer-facing.
+- **Process**: Tooling and supporting work.
 
 ### Precedence
 
