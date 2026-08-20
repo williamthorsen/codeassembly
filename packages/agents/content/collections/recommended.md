@@ -1,6 +1,6 @@
 ---
 name: recommended
-description: The vetted, generally applicable set — artifacts any project can declare.
+description: The vetted, generally applicable set (artifacts any project can declare).
 members:
   rulebooks:
     - understanding-codeassembly
