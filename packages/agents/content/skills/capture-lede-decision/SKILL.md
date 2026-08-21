@@ -73,12 +73,12 @@ Read `episode.differ`. Present the ledes and ask, following [option format](#opt
 When `differ` is `true`, show the agent's lede and the merged lede, then ask:
 
 1. ■■□ Record it as a revision (add a comment to explain what was wrong, if you want)
-2. ■□□ Skip: this was a content change, or not a decision worth recording
+2. ■□□ Skip (this was a content change, or not a decision worth recording)
 
 When `differ` is `false`, show the single lede and ask:
 
-1. ■■□ Record it as accepted: you read it and shipped it as written
-2. ■□□ Skip: you did not evaluate it
+1. ■■□ Record it as accepted (you read it and shipped it as written)
+2. ■□□ Skip (you did not evaluate it)
 
 Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a decision the author did not make.
 
