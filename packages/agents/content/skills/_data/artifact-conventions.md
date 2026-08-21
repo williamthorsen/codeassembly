@@ -180,6 +180,10 @@ run_id: <run id> # optional: present in orchestrated runs
 ---
 ```
 
+Directly below the closing `---` comes the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode. An artifact carrying no frontmatter, such as the `pull-request` and `merge` records, opens with the marker instead:
+
+<!-- include: ../../_partials/seal-marker.md / -->
+
 ### Field naming convention
 
 Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInteractive`, `refinedBy`). All other top-level keys use **snake_case** (e.g., `ticket_id`, `ticket_ref`, `run_id`). This split preserves the existing convention used by 544+ historical artifacts and the consumers (`refine-plan`, orchestrator trust evaluation) that read them, while keeping the rest of the schema consistent with the surrounding snake_case YAML.
@@ -211,16 +215,17 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 ### PR resolution
 
-`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`, and `create-pr` backfills it into the change summary after the PR exists. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
+`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL while composing frontmatter: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
 
 ### Bespoke frontmatter composition
 
-Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Two sites are deliberate exceptions and opt into `--format json` to compose the YAML block themselves:
+Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Three sites are deliberate exceptions and compose the YAML block themselves:
 
 - `refine-plan`: The `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input has no provenance). The shell flag surface cannot express this conditional logic cleanly.
 - `wrap-up` (deferred-findings artifact): `tickets_created` is a list of `{id, items}` objects, a structure that has no clean CLI expression and is best composed in the skill's own logic.
+- `savings-analyzer`: The subagent has no `{tool:Bash}` in its tool set, so it cannot run the script at all and takes every field from its dispatch prompt.
 
-These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
+The first two read the script's JSON output and write the YAML frontmatter themselves; `savings-analyzer` composes it from its dispatch prompt. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
 ## Manifest creation
 
@@ -246,7 +251,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `provenance.iteration` | no       | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements. |
 
-Plan-specific `provenance.skill` values include `design-and-plan`, `plan`, `plan-mode`, `plan-orchestrable-steps`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
+Plan-specific `provenance.skill` values include `design-and-plan`, `plan`, `plan-mode`, `plan-orchestrable-steps`, `planner`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
 
 ## Devlog frontmatter
 
@@ -871,15 +876,11 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-These mutations are sanctioned, and no others:
-
-- **Frontmatter a skill's own step directs**: `create-pr` backfills a `pr:` line into the change summary, and `plan-orchestrable-steps` prepends resolved frontmatter to the planner's markdown snapshot. A pointer added after the fact is provenance the artifact could not include at write time, which is what separates it from a content rewrite.
-- **Artifacts declared mutable**: `orchestration-plan.json` is overwritten each planning iteration, while its `.md` counterparts are versioned snapshots.
-- **Working input forwarded to another agent**: The receiving agent acts on the contents, so staleness would misdirect real work.
+The seal marker each artifact carries puts this in the file rather than only in standing guidance. What it forbids is editing a record to match something downstream of it, which a flow still composing its own artifact has not reached: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` carries no marker at all, being the planning loop's working state.
 
 Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
 
-Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text.
+Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text. Where a lede is genuinely needed and the artifacts do not carry it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
 
 ## Portability
 

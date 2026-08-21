@@ -68,6 +68,8 @@ Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_i
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
+`capture-lede-decision` reads this artifact later to recover the `## What` lede this pull request published, and it is the only record of that text once the description is revised. Where the lede is needed and the artifact does not carry it, that skill takes `--agent-lede-file`; the artifact is not edited to supply it.
+
 Filename format:
 
 ```
@@ -77,6 +79,8 @@ Filename format:
 Artifact content:
 
 ```markdown
+<!-- include: ../../_partials/seal-marker.md / -->
+
 # {title}
 
 URL: {PR URL returned by gh}
@@ -87,7 +91,7 @@ Labels skipped: {comma-separated list, or "none"}
 
 ## Body
 
-{PR body as submitted}
+{PR body as submitted, not as the pull request later reads}
 ```
 
 ## Completion

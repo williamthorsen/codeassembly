@@ -353,6 +353,10 @@ This site uses `--format json` because `tickets_created` is a list-of-objects ex
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
 
+The seal marker follows the closing `---`, as it does in every artifact:
+
+<!-- include: ../../_partials/seal-marker.md / -->
+
 Set these skill-specific values inline (not in the script's output):
 
 - `provenance.skill`: always `wrap-up`.

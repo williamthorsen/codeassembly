@@ -87,20 +87,12 @@ If the user provides feedback (not approval):
 
 ### 5. Finalization
 
-When the user approves the plan:
+When the user approves the plan, output confirmation:
 
-1. Resolve frontmatter fields. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
-
-   Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan-orchestrable-steps --interactive true` via Bash. Prepend the output verbatim to the artifact body.
-
-2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step — the planner did not produce a markdown snapshot. Read the file, prepend the resolved frontmatter, and write back.
-
-3. Output confirmation:
-
-   ```
-   Plan finalized: {artifact-dir}/orchestration-plan.json
-   {step count} steps ready for orchestration.
-   ```
+```
+Plan finalized: {artifact-dir}/orchestration-plan.json
+{step count} steps ready for orchestration.
+```
 
 ## Artifact layout
 
