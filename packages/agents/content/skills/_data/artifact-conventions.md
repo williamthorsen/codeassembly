@@ -180,6 +180,10 @@ run_id: <run id> # optional: present in orchestrated runs
 ---
 ```
 
+Directly below the closing `---`, every artifact carries the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode:
+
+<!-- include: ../../_partials/seal-marker.md / -->
+
 ### Field naming convention
 
 Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInteractive`, `refinedBy`). All other top-level keys use **snake_case** (e.g., `ticket_id`, `ticket_ref`, `run_id`). This split preserves the existing convention used by 544+ historical artifacts and the consumers (`refine-plan`, orchestrator trust evaluation) that read them, while keeping the rest of the schema consistent with the surrounding snake_case YAML.
@@ -215,12 +219,13 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 ### Bespoke frontmatter composition
 
-Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Two sites are deliberate exceptions and opt into `--format json` to compose the YAML block themselves:
+Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Three sites are deliberate exceptions and compose the YAML block themselves:
 
 - `refine-plan`: The `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input has no provenance). The shell flag surface cannot express this conditional logic cleanly.
 - `wrap-up` (deferred-findings artifact): `tickets_created` is a list of `{id, items}` objects, a structure that has no clean CLI expression and is best composed in the skill's own logic.
+- `savings-analyzer`: The subagent has no `{tool:Bash}` in its tool set, so it cannot run the script at all and takes every field from its dispatch prompt.
 
-These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
+The first two read the script's JSON output and write the YAML frontmatter themselves; `savings-analyzer` composes it from its dispatch prompt. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
 ## Manifest creation
 
@@ -870,6 +875,8 @@ Insights never have criticality, never block a merge, and never count toward a r
 ### Mutability
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
+
+The seal marker below each artifact's frontmatter puts this in the file rather than only in standing guidance. It forbids editing a record to match something downstream of it, which a flow still composing its own artifact has not reached: `orchestration-plan.json` rewritten on each planning iteration and a coder's change-summary scaffold overwritten as its dispatch proceeds are both a flow finishing its record, not revising a finished one.
 
 Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
 

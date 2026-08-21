@@ -152,6 +152,8 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 Artifact content:
 
 ```markdown
+<!-- include: ../../_partials/seal-marker.md / -->
+
 # {title}
 
 PR: {url}

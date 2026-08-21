@@ -77,6 +77,8 @@ Filename format:
 Artifact content:
 
 ```markdown
+<!-- include: ../../_partials/seal-marker.md / -->
+
 # {title}
 
 URL: {PR URL returned by gh}

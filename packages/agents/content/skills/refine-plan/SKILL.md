@@ -158,7 +158,11 @@ Emit `skill.completed` (payload `{"outcome":"stopped: revision failed"}`) per [L
 
 Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
 
-The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
+The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The seal marker follows the closing `---`, as it does in every artifact:
+
+<!-- include: ../../_partials/seal-marker.md / -->
+
+The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
 
 This site uses `--format json` because the `provenance:` block is case-branched on the input artifact's existing provenance — see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
@@ -179,7 +183,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    - `baseSha`: The script's value (or preserved original)
    - `isInteractive`: Preserve from `{input-provenance}` if present
    - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If absent, set to `2`.
-4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
+4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script), then the seal marker, to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
 
    ```yaml
    ---
@@ -211,7 +215,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    - `baseSha`: Script's value (omit when absent)
    - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that has no prior provenance, the stamp itself is always produced inside that interactive session.
    - `iteration`: `2`
-4. Prepend the unified YAML frontmatter and write back:
+4. Prepend the unified YAML frontmatter, then the seal marker, and write back:
 
    ```yaml
    ---

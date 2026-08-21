@@ -113,6 +113,11 @@ When call emit_json "main" "abc1234" "" "" "" "" "github" "2026-05-16T00:00:00Z"
 The output should not include "baseSha"
 End
 
+It "omits the seal marker, which belongs to yaml mode"
+When call emit_json "main" "abc1234" "" "" "" "" "github" "2026-05-16T00:00:00Z" ""
+The output should not include "Sealed record"
+End
+
 It "emits baseSha when present"
 When call emit_json "main" "abc1234" "deadbee" "" "" "" "github" "2026-05-16T00:00:00Z" ""
 The output should include '"baseSha": "deadbee"'
@@ -490,13 +495,14 @@ emit_yaml_setup() {
 
 BeforeEach "emit_yaml_setup"
 
-It "wraps the output in --- delimiters"
+It "wraps the frontmatter in --- delimiters and seals it"
 When call emit_yaml \
   "create-devlog" "2026-05-16T00:00:00Z" "deadbee" "true" "" \
   "" "" "main" "abc1234" "" "" \
   yaml_keys yaml_values yaml_kinds
 The line 1 of output should equal "---"
-The output should end with "---"
+The output should include "---"
+The output should end with "$SEAL_MARKER"
 End
 
 It "emits provenance block in canonical order"

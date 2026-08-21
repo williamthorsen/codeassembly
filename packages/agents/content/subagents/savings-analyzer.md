@@ -112,6 +112,10 @@ Resolve fields before writing the artifact:
 - `pr`: Passed in via your dispatch prompt when the dispatcher resolved it via the `pr-resolution` shared data doc. Omit when not provided.
 - `run_id`: The orchestrated run ID, passed in via your dispatch prompt.
 
+The seal marker follows the closing `---`, as it does in every artifact:
+
+<!-- include: ../_partials/seal-marker.md / -->
+
 Because `savings-analyzer` does not have the {tool:Bash} tool in its default tool set, fields that normally require {tool:Bash} (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
 
 ## ARTIFACT-WRITE SAFEGUARD
