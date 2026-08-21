@@ -19,7 +19,7 @@ When all assessed verdicts are baseline, do not show a next-steps prompt.
 
 ## Verdict-to-actions mapping
 
-Each non-baseline verdict maps to one or more follow-up actions. Actions describe intent — the agent decides how to execute them based on the ticket platform and available tools.
+Each non-baseline verdict maps to one or more follow-up actions. Actions describe intent; the agent decides how to execute them based on the ticket platform and available tools.
 
 ### ♻️ Update actions
 
@@ -37,7 +37,7 @@ These collapse into a single "Update ticket" action regardless of how many dimen
 | ---------------------------- | ---------------------------------------------- |
 | Advisability: `questionable` | Revise ticket to address advisability concerns |
 
-This action shares the ♻️ icon with "Update ticket to match current codebase state" but is a distinct action — it covers content or scope rework prompted by an advisability concern, not factual sync with the codebase. When both apply, both appear as separate options.
+This action shares the ♻️ icon with "Update ticket to match current codebase state" but is a distinct action: It covers content or scope rework prompted by an advisability concern, not factual sync with the codebase. When both apply, both appear as separate options.
 
 ### 🏁 Close actions
 
@@ -49,7 +49,7 @@ This action shares the ♻️ icon with "Update ticket to match current codebase
 | Progress: `complete`        | Close with comment summarizing completed work          |
 | Advisability: `inadvisable` | Close as inadvisable                                   |
 
-When multiple close actions apply, present each as a separate option — they differ in intent and outcome.
+When multiple close actions apply, present each as a separate option; they differ in intent and outcome.
 
 ### 💬 Comment actions
 
@@ -62,7 +62,7 @@ When multiple close actions apply, present each as a separate option — they di
 When multiple dimensions produce non-baseline verdicts, their actions are combined into a single numbered list:
 
 1. **Collect** actions grouped by type: ♻️ update → ♻️ revise → 🏁 close → 💬 comment.
-2. **Deduplicate** — each distinct action appears at most once. ♻️ "Update ticket to match current codebase state" and ♻️ "Revise ticket to address advisability concerns" are distinct actions and remain as separate options when both apply.
+2. **Deduplicate**: Each distinct action appears at most once. ♻️ "Update ticket to match current codebase state" and ♻️ "Revise ticket to address advisability concerns" are distinct actions and remain as separate options when both apply.
 3. Number sequentially.
 
 ## Interaction protocol
@@ -102,4 +102,4 @@ Next steps:
   2. ♻️ Revise ticket to address advisability concerns
 ```
 
-Both actions share the ♻️ icon but represent distinct intents — factual sync with the codebase versus content/scope rework — so they appear as separate numbered options rather than collapsing under the dedupe rule.
+Both actions share the ♻️ icon but represent distinct intents (factual sync with the codebase versus content/scope rework), so they appear as separate numbered options rather than collapsing under the dedupe rule.

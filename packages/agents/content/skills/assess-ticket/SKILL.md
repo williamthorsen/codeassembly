@@ -23,7 +23,7 @@ Resolve the ticket source using the [ticket source resolution](../_data/ticket-s
 
 ### 2. Investigate
 
-Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, advisability is investigated after progress (synthesizing the prior dimensions' context), and complexity is investigated last so it benefits from context gathered during drift, relevance, progress, and advisability analysis. **Skip both advisability and complexity when progress is `complete`** — neither has value for finished work.
+Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, advisability is investigated after progress (synthesizing the prior dimensions' context), and complexity is investigated last so it benefits from context gathered during drift, relevance, progress, and advisability analysis. **Skip both advisability and complexity when progress is `complete`**; neither has value for finished work.
 
 #### Drift
 
@@ -37,25 +37,25 @@ Determine whether the ticket's factual assumptions still match the codebase.
 
 **Verdicts:**
 
-- 🟢 `none` — all factual assumptions hold; referenced files, APIs, and structures match the ticket's description
-- 🟠 `partial` — some assumptions are wrong but the ticket is salvageable; the core approach still applies with adjustments
-- 🔴 `severe` — the ticket's factual premise no longer applies; referenced modules have been restructured, removed, or fundamentally changed
+- 🟢 `none`: All factual assumptions hold; referenced files, APIs, and structures match the ticket's description
+- 🟠 `partial`: Some assumptions are wrong but the ticket is salvageable; the core approach still applies with adjustments
+- 🔴 `severe`: The ticket's factual premise no longer applies; referenced modules have been restructured, removed, or fundamentally changed
 
 #### Relevance
 
 Determine whether the motivation for the ticket still applies.
 
 1. Identify the problem or need the ticket was created to address.
-2. Look at broader codebase changes (not limited to paths mentioned in the ticket) — was the problem solved by a different approach? Was the feature or system the ticket targets removed or replaced?
+2. Look at broader codebase changes (not limited to paths mentioned in the ticket). Was the problem solved by a different approach? Was the feature or system the ticket targets removed or replaced?
 3. Check whether the conditions that motivated the ticket still exist.
 
 This mode requires understanding intent, not just facts. When signals are ambiguous, prefer `uncertain` over a stronger verdict.
 
 **Verdicts:**
 
-- 🟢 `relevant` — the motivation still applies; the problem or need described in the ticket still exists
-- 🟠 `uncertain` — signals suggest the need may have changed but human judgment is required to confirm
-- 🔴 `superseded` — the need has been addressed by other means or the target system no longer exists
+- 🟢 `relevant`: The motivation still applies; the problem or need described in the ticket still exists
+- 🟠 `uncertain`: Signals suggest the need may have changed but human judgment is required to confirm
+- 🔴 `superseded`: The need has been addressed by other means or the target system no longer exists
 
 #### Progress
 
@@ -69,51 +69,51 @@ Determine whether the described work has been implemented. The output format ada
 
 **When the ticket has no acceptance criteria:**
 
-1. Identify what the ticket's solution describes — new files, modified APIs, added tests, changed behavior.
+1. Identify what the ticket's solution describes: new files, modified APIs, added tests, changed behavior.
 2. Search the codebase for evidence of these artifacts.
 3. Present the verdict followed by evidence bullets describing what has and hasn't been done.
 
 **Verdicts:**
 
-- 🟢 `complete` — all described work (or all acceptance criteria) has been done
-- 🟠 `partial` — some of the described work has been done but significant portions remain
-- 🔴 `none` — none of the described work is present in the codebase
+- 🟢 `complete`: All described work (or all acceptance criteria) has been done
+- 🟠 `partial`: Some of the described work has been done but significant portions remain
+- 🔴 `none`: None of the described work is present in the codebase
 
 #### Advisability
 
 Determine whether the ticket should be implemented as written. Synthesize the four facets defined in [ticket evaluation](../_data/ticket-evaluation.md) (problem reality, scope correctness, solution soundness, title accuracy) against the codebase and ticket text.
 
-1. Apply each facet in turn — does the underlying observation hold? Is scope right at the appropriate class? Does the proposed solution treat the cause? Does the title accurately describe the work?
+1. Apply each facet in turn. Does the underlying observation hold? Is scope right at the appropriate class? Does the proposed solution treat the cause? Does the title accurately describe the work?
 2. Synthesize a verdict from the facet results.
 3. Emit one prose evidence bullet per concern the facets raise. Do not prefix a bullet with its facet name. Omit bullets entirely when the verdict is `advisable`.
 
-Bias toward `advisable` — for a recommendation dimension, false-positive concerns are noisier than false-negative passes. Default to `advisable` unless the codebase shows specific evidence of a facet concern.
+Bias toward `advisable`: For a recommendation dimension, false-positive concerns are noisier than false-negative passes. Default to `advisable` unless the codebase shows specific evidence of a facet concern.
 
 **Verdicts:**
 
-- 🟢 `advisable` — recommend implementing as written; all four facets pass scrutiny
-- 🟠 `questionable` — recommend with concerns; one or more facets raise issues warranting human review
-- 🔴 `inadvisable` — recommend against implementing as written; rework needed before proceeding
+- 🟢 `advisable`: Recommend implementing as written; all four facets pass scrutiny
+- 🟠 `questionable`: Recommend with concerns; one or more facets raise issues warranting human review
+- 🔴 `inadvisable`: Recommend against implementing as written; rework needed before proceeding
 
 #### Complexity
 
 Classify how complex the described work is relative to the current codebase. Reference the [complexity classification](../_data/complexity-classification.md) rubric for level definitions.
 
-1. Identify the work surface — files, modules, packages, APIs, interfaces, and dependencies that the ticket describes changing or creating. Verify against the codebase.
-2. Assess cross-cutting extent — how many modules or packages are touched, whether changes cross package boundaries, and whether shared interfaces or data structures are affected.
-3. Assess decision density — whether the work follows established patterns or requires new ones, and whether design choices could go multiple ways.
+1. Identify the work surface: files, modules, packages, APIs, interfaces, and dependencies that the ticket describes changing or creating. Verify against the codebase.
+2. Assess cross-cutting extent: how many modules or packages are touched, whether changes cross package boundaries, and whether shared interfaces or data structures are affected.
+3. Assess decision density: whether the work follows established patterns or requires new ones, and whether design choices could go multiple ways.
 4. Classify against the rubric. When characteristics span two levels, prefer the higher level.
 
 **Verdicts:**
 
-- ⚪ `trivial` — single-line or purely mechanical; no judgment needed
-- 🟢 `mechanical` — follows an obvious pattern; single module, no API or behavioral changes
-- 🟠 `involved` — requires understanding context; touches multiple files or modules; may involve design decisions
-- 🔴 `architectural` — cross-cutting concerns, new patterns, dependency boundary changes, or far-reaching consequences
+- ⚪ `trivial`: Single-line or purely mechanical; no judgment needed
+- 🟢 `mechanical`: Follows an obvious pattern; single module, no API or behavioral changes
+- 🟠 `involved`: Requires understanding context; touches multiple files or modules; may involve design decisions
+- 🔴 `architectural`: Cross-cutting concerns, new patterns, dependency boundary changes, or far-reaching consequences
 
 ### 3. Output
 
-Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all dimensions in order — omitting both advisability and complexity when progress is `complete`.
+Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all dimensions in order, omitting both advisability and complexity when progress is `complete`.
 
 Obtain the base SHA via `git rev-parse --short HEAD`.
 
@@ -192,7 +192,7 @@ After presenting the assessment output, evaluate whether any verdicts are non-ba
 
 ### Emoji mapping
 
-Drift, relevance, progress, and advisability use a **concern scale** — green means no concern, red means high concern:
+Drift, relevance, progress, and advisability use a **concern scale**, where green means no concern and red means high concern:
 
 | Verdict position | Emoji |
 | ---------------- | ----- |
@@ -200,7 +200,7 @@ Drift, relevance, progress, and advisability use a **concern scale** — green m
 | Mixed / unclear  | 🟠    |
 | High concern     | 🔴    |
 
-Complexity uses a **size scale** — emojis represent effort and scope, not concern:
+Complexity uses a **size scale**, where emojis represent effort and scope, not concern:
 
 | Level | Emoji |
 | ----- | ----- |
@@ -213,16 +213,16 @@ Complexity uses a **size scale** — emojis represent effort and scope, not conc
 
 | Dimension        | ⚪        | 🟢           | 🟠             | 🔴              |
 | ---------------- | --------- | ------------ | -------------- | --------------- |
-| **Drift**        | —         | `none`       | `partial`      | `severe`        |
-| **Relevance**    | —         | `relevant`   | `uncertain`    | `superseded`    |
-| **Progress**     | —         | `complete`   | `partial`      | `none`          |
-| **Advisability** | —         | `advisable`  | `questionable` | `inadvisable`   |
+| **Drift**        | n/a       | `none`       | `partial`      | `severe`        |
+| **Relevance**    | n/a       | `relevant`   | `uncertain`    | `superseded`    |
+| **Progress**     | n/a       | `complete`   | `partial`      | `none`          |
+| **Advisability** | n/a       | `advisable`  | `questionable` | `inadvisable`   |
 | **Complexity**   | `trivial` | `mechanical` | `involved`     | `architectural` |
 
 ## Key principles
 
-- **Evidence over opinion** — every verdict must be supported by specific evidence (file paths, commit SHAs, code references)
-- **Prefer caution on relevance** — use `uncertain` when signals are ambiguous rather than committing to `superseded`
-- **Bias `advisable` absent evidence** — the skill prompts for next steps on every non-baseline advisability verdict; default to `advisable` unless the codebase shows specific evidence of a facet concern
-- **Assessment first, action on request** — lead with the assessment; offer follow-up actions but do not execute without user selection
-- **Scale to ticket complexity** — a simple ticket gets a brief assessment; a complex ticket with many acceptance criteria gets a thorough one
+- **Evidence over opinion**: Every verdict must be supported by specific evidence (file paths, commit SHAs, code references)
+- **Prefer caution on relevance**: Use `uncertain` when signals are ambiguous rather than committing to `superseded`
+- **Bias `advisable` absent evidence**: The skill prompts for next steps on every non-baseline advisability verdict; default to `advisable` unless the codebase shows specific evidence of a facet concern
+- **Assessment first, action on request**: Lead with the assessment; offer follow-up actions but do not execute without user selection
+- **Scale to ticket complexity**: A simple ticket gets a brief assessment; a complex ticket with many acceptance criteria gets a thorough one
