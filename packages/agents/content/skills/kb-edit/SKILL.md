@@ -10,7 +10,7 @@ Apply a single mutation to a note that already exists in a knowledge base. A bun
 
 The split is deliberate: The helper is narrow and mechanical; the operation choice is wide and judgment-driven. Treat the helper as a guardrail. It refuses to write into a KB marked `readonly: true`, refuses a note that does not parse as an assertion, and refuses to leave a half-finished supersede chain.
 
-For new notes, use `kb-add`. For finding notes, use `kb-retrieve`. For periodic vault hygiene (broken wikilinks, stale verifications, tag drift), use `kb-curate` once it ships.
+For new notes, use `kb-add`. For finding notes, use `kb-retrieve`. For periodic vault hygiene (broken wikilinks, stale verifications, tag drift), use `kb-curate`.
 
 **Announce at start:** "Using kb-edit to {short description of the change}."
 
