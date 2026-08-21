@@ -2,7 +2,7 @@ You have `{tool:Write}` but not `{tool:Edit}`. Each update is a full overwrite o
 
 ### Scaffold (first write)
 
-Write exactly this structure. The YAML frontmatter is part of the scaffold so partial writes are parseable too — see [Frontmatter](#frontmatter) for field resolution.
+Write exactly this structure. The YAML frontmatter is part of the scaffold so partial writes are parseable too; see [Frontmatter](#frontmatter) for field resolution.
 
 ```markdown
 ---

@@ -29,10 +29,10 @@ You will receive:
 
 1. **Read project guidelines**: Read ~/.agents/AGENTS.md, ./AGENTS.md, and any relevant project-specific conventions
 2. **Get the diff**: Run `git diff <merge-base-sha>..HEAD` to see all changes in scope, using the merge-base SHA provided in your task prompt.
-3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path — see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
+3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path; see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
 4. **Read changed files**: Read the full files, not just diffs, to understand context
 5. **Evaluate against criteria**: Apply review-criteria skill
-6. **Verify acceptance criteria**: If ticket requirements or plan acceptance criteria were provided, verify that the implementation satisfies them. Unmet acceptance criteria are findings — classify by severity like any other issue. For test-related acceptance criteria specifically, unmet criteria are F-severity (contract violation), consistent with the calibration in `aspect-test-reviewer`.
+6. **Verify acceptance criteria**: If ticket requirements or plan acceptance criteria were provided, verify that the implementation satisfies them. Unmet acceptance criteria are findings; classify by severity like any other issue. For test-related acceptance criteria specifically, unmet criteria are F-severity (contract violation), consistent with the calibration in `aspect-test-reviewer`.
 7. **Iterate analysis and append findings**: As you settle each finding (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
 8. **Finalize**: In the reserved last 3 turns, replace `### Criticality: (pending)` with the aggregate enum (`none|low|medium|high`), fill in `### Summary`, then emit your structured return block.
 
@@ -49,7 +49,7 @@ You will receive:
 The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts from a fresh empty scaffold.
 <!-- /include -->
 
-The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — an interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 
@@ -65,7 +65,7 @@ The review file is the orchestrator's primary state-transfer channel. A partial 
 <!-- include: _partials/review-writes-finalize.md -->
 Then emit your structured return block.
 
-If the review concluded with no findings, the finalized form omits the `### Findings` block entirely — see the "If no findings" example in [Output format](#output-format).
+If the review concluded with no findings, the finalized form omits the `### Findings` block entirely; see the "If no findings" example in [Output format](#output-format).
 <!-- /include -->
 
 ## Frontmatter
@@ -80,7 +80,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-revi
 
 Each finding must include:
 
-- **ID**: Sequential within category (F/W/T/R/S, with `-L` suffix for legacy — see `review-criteria` skill for the full finding scheme)
+- **ID**: Sequential within category (F/W/T/R/S, with `-L` suffix for legacy; see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
 - **Severity**: One of `critical`, `warning`, `todo`, `recommendation`, `suggestion` (legacy variants append `(legacy)`)
 - **Description**: What the issue is
@@ -98,7 +98,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 
 ## Output format
 
-The finalized form of the review file. See [Incremental review writes](#incremental-review-writes) for the scaffold and interim-write shapes — this section shows only the post-finalize structure.
+The finalized form of the review file. See [Incremental review writes](#incremental-review-writes) for the scaffold and interim-write shapes; this section shows only the post-finalize structure.
 
 ```markdown
 ### Criticality: {none|low|medium|high}
@@ -192,14 +192,14 @@ When reviewing after a coder has responded to previous findings:
 You have **30 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
 
 <HARD-GATE>
-**Reserve your last 3 turns for finalizing your artifact and writing your return block.** Your review is built incrementally throughout the dispatch (see [Incremental review writes](#incremental-review-writes)) — the reserved turns are for replacing `### Criticality: (pending)` with the aggregate enum, replacing `### Summary`'s `(pending)` placeholder with the assessment, and emitting the structured return block. Not for writing the artifact from scratch. If you are approaching your turn limit, stop analysis, finalize what you have, and emit the return block.
+**Reserve your last 3 turns for finalizing your artifact and writing your return block.** Your review is built incrementally throughout the dispatch (see [Incremental review writes](#incremental-review-writes)). The reserved turns are for replacing `### Criticality: (pending)` with the aggregate enum, replacing `### Summary`'s `(pending)` placeholder with the assessment, and emitting the structured return block. Not for writing the artifact from scratch. If you are approaching your turn limit, stop analysis, finalize what you have, and emit the return block.
 </HARD-GATE>
 
 ## Orchestrator return protocol
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
-You MUST include all fields in the return block. The orchestrator enforces strict parsing — omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
 
 ```
 Phase: {parallelReview|holisticReview}

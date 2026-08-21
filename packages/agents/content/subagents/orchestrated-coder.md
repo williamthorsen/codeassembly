@@ -46,7 +46,7 @@ You operate in one of two modes based on your input:
 **Final artifact shape:**
 
 ```markdown
-# Change summary — ticket #{N}
+# Change summary: Ticket #{N}
 
 ## Status
 
@@ -54,11 +54,11 @@ completed
 
 ## Per-task summary
 
-### Task 0: {title} — completed
+### Task 0: {title} (completed)
 
 {files changed, outcome, notes}
 
-### Task 1: {title} — completed
+### Task 1: {title} (completed)
 
 {files changed, outcome, notes}
 
@@ -69,9 +69,9 @@ completed
 
 ## Quality gates
 
-- Typecheck: {pass/fail} — {command run}
-- Lint: {pass/fail} — {command run}
-- Tests: {pass/fail} — {command run}
+- Typecheck (`{command run}`): {pass/fail}
+- Lint (`{command run}`): {pass/fail}
+- Tests (`{command run}`): {pass/fail}
 
 ## Deferred items
 
@@ -96,7 +96,7 @@ completed
 **Final artifact shape:**
 
 ```markdown
-# Change summary — round {R}
+# Change summary: Round {R}
 
 ## Status
 
@@ -116,9 +116,9 @@ completed
 
 ## Quality gates
 
-- Typecheck: {pass/fail}
-- Lint: {pass/fail}
-- Tests: {pass/fail}
+- Typecheck (`{command run}`): {pass/fail}
+- Lint (`{command run}`): {pass/fail}
+- Tests (`{command run}`): {pass/fail}
 ```
 
 **Status definitions:**
@@ -218,7 +218,7 @@ You have **150 turns** (API round-trips) to complete your work. Each time you ca
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
-You MUST include all fields in the return block. The orchestrator enforces strict parsing; omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
 
 ```
 Phase: {implementation|parallelReview|codeSimplifier|holisticReview}

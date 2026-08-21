@@ -103,14 +103,14 @@ Resolve fields before writing the artifact:
 
 - `provenance.skill`: Always `savings-analyzer`.
 - `provenance.timestamp`: Current UTC time in ISO 8601 format.
-- `provenance.baseSha`: Passed in via your dispatch prompt — the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
+- `provenance.baseSha`: Passed in via your dispatch prompt; the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
 - `provenance.isInteractive`: Always `false`.
 - `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block: Look for the line `model named ... model ID is ...` and use the model ID value.
 - `ticket_id`, `ticket_ref`: Passed in via your dispatch prompt. Omit when absent.
 - `branch`: Passed in via your dispatch prompt.
-- `commit`: Passed in via your dispatch prompt — the short HEAD SHA at run time.
+- `commit`: The short HEAD SHA at run time, passed in via your dispatch prompt.
 - `pr`: Passed in via your dispatch prompt when the dispatcher resolved it via the `pr-resolution` shared data doc. Omit when not provided.
-- `run_id`: Passed in via your dispatch prompt — the orchestrated run ID.
+- `run_id`: The orchestrated run ID, passed in via your dispatch prompt.
 
 Because `savings-analyzer` does not have the {tool:Bash} tool in its default tool set, fields that normally require {tool:Bash} (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
 
