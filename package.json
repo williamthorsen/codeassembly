@@ -20,9 +20,6 @@
   "license": "ISC",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "agents:install": "tsx packages/agents/src/cli.ts install",
     "agents:install-launchers": "bash packages/agents/scripts/install-launchers.sh",

@@ -16,7 +16,7 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@hono/node-server": "2.1.0",
+    "@hono/node-server": "2.1.1",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
     "hono": "4.13.2"
