@@ -871,15 +871,9 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-These mutations are sanctioned, and no others:
-
-- **Frontmatter a skill's own step directs**: `create-pr` backfills a `pr:` line into the change summary, and `plan-orchestrable-steps` prepends resolved frontmatter to the planner's markdown snapshot. A pointer added after the fact is provenance the artifact could not include at write time, which is what separates it from a content rewrite.
-- **Artifacts declared mutable**: `orchestration-plan.json` is overwritten each planning iteration, while its `.md` counterparts are versioned snapshots.
-- **Working input forwarded to another agent**: The receiving agent acts on the contents, so staleness would misdirect real work.
-
 Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
 
-Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text.
+Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, inviting an `accepted` verdict the author never gave. The corruption raises no error and is undetectable in any session that no longer holds the original text. Where a lede is genuinely needed and the artifacts do not carry it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
 
 ## Portability
 
