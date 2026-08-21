@@ -50,7 +50,7 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 1. Retrieve the ticket's last-updated date from the resolved metadata (e.g., GitHub's `updatedAt` field).
 2. Count commits since that date: `git rev-list --count --after="{last-updated date}" HEAD`
-3. If the ticket was updated within the last 3 days _or_ fewer than 5 commits have landed since the last update, skip the relevancy check.
+3. If the ticket was updated within the last 3 days _or_ fewer than 5 commits have been made since the last update, skip the relevancy check.
 4. Otherwise, prompt the user: "This ticket may be out of date ({N} commits since the last update on {date}). Would you like me to check for staleness and relevancy?" If the user declines, continue into Phase 2.
 
 If the task source is plain text or a file (no remote metadata), skip the relevancy check unless `--check-staleness` was explicitly passed.
@@ -96,7 +96,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately — and brainstorming didn't surface changes — confirm with the user and adopt it as-is. Skip the rewrite. Only add or revise sections where the Q&A revealed gaps or shifts in understanding.
 
-When the ticket needs work, produce or update it to capture the proposed approach:
+When the ticket needs work, produce or update it to state the proposed approach:
 
 ```markdown
 # {Title}
@@ -167,7 +167,7 @@ Design and plan complete:
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference) and the refined ticket differs from the remote body. Phase 4 may adopt a good source ticket unchanged and the sweep may find nothing to fold in; the remote is then already current, and no offer is made. This is a shared-state action — do not update without explicit consent, and never open a turn of its own for the ask.
 
-Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each carries its `A`/`Q` identifier as a bold prefix (`**A1: Remote issue**`, `**A2: Next action**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent stays orthogonal to the single-select next-step choice, and the next-action options keep their order. Recommend the update: The offer appears only when the remote body is stale against the refined ticket. The recommended option's marker follows how stark that staleness is — ■■■ where the refined ticket plainly supersedes the remote body, ■■□ where the delta is real but arguable — and Leave as-is takes ■□□.
+Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each shows its `A`/`Q` identifier as a bold prefix (`**A1: Remote issue**`, `**A2: Next action**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent is independent of the single-select next-step choice, and the next-action options keep their order. Recommend the update: The offer appears only when the remote body is stale against the refined ticket. The recommended option's marker follows how stark that staleness is — ■■■ where the refined ticket plainly supersedes the remote body, ■■□ where the delta is real but arguable — and Leave as-is takes ■□□.
 
 ```
 Next steps:
@@ -185,7 +185,7 @@ Next steps:
 On consent:
 
 - GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
-- Jira: Update through {skill:update-jira-ticket}, which carries the tool-shape branch and the pre-flight checker its HTML surface needs.
+- Jira: Update through {skill:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
 - Other platforms: Note that automated update is not yet supported; suggest manual update
 
 <HARD-GATE>
