@@ -1,12 +1,12 @@
 ---
 name: capture-lede-decision
-description: Record the author's decision about a merged pull request's lede — accepted as the agent wrote it, or revised — into the lede-decision corpus. Use after a merge, or to record a pull request merged outside the merge flow.
+description: Record the author's decision about a merged pull request's lede (accepted as the agent wrote it, or revised) into the lede-decision corpus. Use after a merge, or to record a pull request merged outside the merge flow.
 user-invocable: true
 ---
 
 # Capture a lede decision
 
-Record what the author decided about a lede: that the agent's `## What` shipped as written, or that it was rewritten before merge. A bundled helper does the mechanical work — it reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present the pair and relay the author's decision.
+Record what the author decided about a lede: that the agent's `## What` shipped as written, or that it was rewritten before merge. A bundled helper does the mechanical work: It reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present the pair and relay the author's decision.
 
 Every lede decision belongs to one corpus, the `codeassembly` event store, whichever repository the pull request merged in. The helper targets it without being told, so a caller never chooses a destination.
 
@@ -16,10 +16,10 @@ Every lede decision belongs to one corpus, the `codeassembly` event store, which
 
 A record exists because the author looked at the lede and decided. There are exactly two decisions, and no third:
 
-- **`accepted`** — the author read the agent's lede and shipped it as written.
-- **`revised`** — the author rewrote it before merge.
+- **`accepted`**: The author read the agent's lede and shipped it as written.
+- **`revised`**: The author rewrote it before merge.
 
-Declining to decide writes nothing. **The absence of a record means nothing, and in particular is not an acceptance**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give — a lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
+Declining to decide writes nothing. **The absence of a record means nothing, and in particular is not an acceptance**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give: A lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
 
 For the same reason, the corpus is outcome-selected: It contains only changes someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison's fixture draw must never read it.
 
@@ -38,14 +38,14 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 | `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                | No       |
 | `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.         | No       |
 | `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                     | Injected |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                      | Injected |
 
 Exactly one of `--inspect` and `--verdict` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
-- **A `kb.yaml` registering the `codeassembly` store** — the corpus every lede decision is written to. Where no registry declares it, the skill says so and records nothing, rather than filing the decision somewhere else.
+- **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
+- **A `kb.yaml` registering the `codeassembly` store**: the corpus every lede decision is written to. Where no registry declares it, the skill says so and records nothing, rather than filing the decision somewhere else.
 
 ## Process
 
@@ -62,7 +62,7 @@ node {harness_home_dir}/skills/capture-lede-decision/capture-lede-decision.mjs \
 
 The helper prints a JSON object to stdout: `ok: true` with `episode` and `store` on success, or `ok: false` with `error` and `message`. Inspecting writes nothing, so it can never block or alter a merge that already happened.
 
-On `ok: false`, report the `message` on one line and stop. The merge has already succeeded — do not present this as a merge failure, and do not retry.
+On `ok: false`, report the `message` on one line and stop. The merge has already succeeded; do not present this as a merge failure, and do not retry.
 
 On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it can record no decision; asking for one would spend the author's attention on an answer this skill would then discard.
 
@@ -73,12 +73,12 @@ Read `episode.differ`. Present the ledes and ask, following [option format](#opt
 When `differ` is `true`, show the agent's lede and the merged lede, then ask:
 
 1. ■■□ Record it as a revision (add a comment to explain what was wrong, if you want)
-2. ■□□ Skip — this was a content change, or not a decision worth recording
+2. ■□□ Skip: this was a content change, or not a decision worth recording
 
 When `differ` is `false`, show the single lede and ask:
 
-1. ■■□ Record it as accepted — you read it and shipped it as written
-2. ■□□ Skip — you did not evaluate it
+1. ■■□ Record it as accepted: you read it and shipped it as written
+2. ■□□ Skip: you did not evaluate it
 
 Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a decision the author did not make.
 
@@ -123,9 +123,9 @@ Pass that file to `--merged-lede-file` and continue from step 2. Everything else
 
 One event per decision, in the corpus:
 
-- **Tags** — `lede-decision`, `type:{work type}`, and the verdict. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, and by work type with `--tag type:feat`.
-- **Frontmatter** — the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the install manifest supplies one.
-- **Body** — `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
+- **Tags**: `lede-decision`, `type:{work type}`, and the verdict. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, and by work type with `--tag type:feat`.
+- **Frontmatter**: the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the install manifest supplies one.
+- **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
 `doctrine-hash` is what groups records by doctrine generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the doctrine file's own history.
 
@@ -133,13 +133,13 @@ One event per decision, in the corpus:
 
 Route by the `error` code:
 
-- `no-artifact-dir`, `no-agent-lede`, `no-merged-lede` — the ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
-- `no-doctrine` — the installed doctrine file is unreadable. Report it as an install problem.
-- `unresolved-identity` — the work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
-- `invalid-args` — report the message and propose a corrected invocation.
-- `store-not-registered` — the corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.
-- `readonly-store` — the corpus is registered readonly. Report and stop; the skill substitutes no other destination for one the registry protects.
-- `schema-validation` — report the `errors`.
+- `no-artifact-dir`, `no-agent-lede`, `no-merged-lede`: The ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
+- `no-doctrine`: The installed doctrine file is unreadable. Report it as an install problem.
+- `unresolved-identity`: The work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
+- `invalid-args`: Report the message and propose a corrected invocation.
+- `store-not-registered`: The corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.
+- `readonly-store`: The corpus is registered readonly. Report and stop; the skill substitutes no other destination for one the registry protects.
+- `schema-validation`: Report the `errors`.
 
 ## Completion
 
