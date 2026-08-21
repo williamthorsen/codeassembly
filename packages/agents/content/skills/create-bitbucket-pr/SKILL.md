@@ -6,7 +6,7 @@ user-invocable: false
 
 # Create Bitbucket pull request
 
-Internal delegate that creates a pull request on Bitbucket. Called by `create-pr` with fully prepared inputs — this skill does not resolve prefixes, labels, or scope/type.
+Internal delegate that creates a pull request on Bitbucket. Called by `create-pr` with fully prepared inputs; this skill does not resolve prefixes, labels, or scope/type.
 
 ## Delegate interface
 
@@ -38,7 +38,7 @@ Use whatever Bitbucket tooling is available (MCP server, REST API, CLI) to creat
 If `labels` is non-empty, apply labels using whatever mechanism Bitbucket provides (e.g., labels API, metadata). If label application fails:
 
 1. Record which labels failed.
-2. Continue without the failing labels — the PR itself must still be created.
+2. Continue without the failing labels; the PR itself must still be created.
 3. Report skipped labels in the completion output.
 
 If Bitbucket does not support labels in the current context, skip label application silently.

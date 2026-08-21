@@ -47,7 +47,7 @@ If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type
 
 ### 6. Render PR title
 
-Call `describe-change.sh` to render the PR title from the configured `pr.title_format` template. Pass every input that is available — the template controls which tokens are required:
+Call `describe-change.sh` to render the PR title from the configured `pr.title_format` template. Pass every input that is available; the template controls which tokens are required:
 
 ```bash
 json=$({harness_home_dir}/scripts/describe-change.sh \
@@ -65,7 +65,7 @@ pr_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sy
 
 Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Use `pr_title` directly as the final PR title. Do not concatenate with `title` separately — the rendered output already includes it.
+Use `pr_title` directly as the final PR title. Do not concatenate with `title` separately; the rendered output already includes it.
 
 If the script is not found, fall back to the bare `title` from the change summary.
 
@@ -75,7 +75,7 @@ See [title-templates.md](../_data/title-templates.md) for the title-format model
 
 Resolve labels following the same pattern as `create-ticket`:
 
-1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip — labels = [].
+1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip: labels = [].
 2. **Type label** (if `type` is present): Strip any trailing `!` from the type. Look up the stripped type in `label_map.types`. If found, add the mapped label name.
 3. **Breaking label** (if `type` is present): If the original type had a `!` suffix, add `breaking` as an additional label.
 4. **Scope label** (if `scope` is present): Look up the scope in `label_map.scopes`. If found, add the mapped label name.
@@ -94,7 +94,7 @@ Read `scm` from the session context manifest:
 
 If `ticket_ref` is non-null, append `\n\nCloses {ticket_ref}` to the body. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when no auto-close integration is wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
 
-If `ticket_ref` is null, skip — no closing line.
+If `ticket_ref` is null, skip: no closing line.
 
 ### 10. Call delegate
 

@@ -65,7 +65,7 @@ Resolve session context and the artifact directory before writing.
 
    Filename uses the ticket-level shape: `{YYYYMMDD-HHMMSSZ}_{slug}_devlog.md`.
 
-3. Else (no ticket — research/exploration sessions): Save to the project-scoped fallback at:
+3. Else (no ticket; research/exploration sessions): Save to the project-scoped fallback at:
 
    ```
    {artifact_base_dir}/projects/{project_slug}/{artifact_paths.devlogs}/{filename}
@@ -75,7 +75,7 @@ Resolve session context and the artifact directory before writing.
 
 4. `mkdir -p` the target directory before writing.
 
-The bundled session-context deriver returns `ticket_id: null` for branches without a recognizable ticket prefix (e.g., `experiment/foo`). Treat null as "no ticket" — never produce a path containing `tickets/null/`.
+The bundled session-context deriver returns `ticket_id: null` for branches without a recognizable ticket prefix (e.g., `experiment/foo`). Treat null as "no ticket"; never produce a path containing `tickets/null/`.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
