@@ -29,7 +29,7 @@ Extract from the ticket what needs to change:
 - APIs, interfaces, or data structures that are added or modified
 - Dependencies that are added, removed, or changed
 
-Verify against the codebase — the ticket may reference things that have moved or no longer exist.
+Verify against the codebase; the ticket may reference things that have moved or no longer exist.
 
 ### 3. Assess cross-cutting extent
 
@@ -86,7 +86,7 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
 ## Key principles
 
-- **Evidence over opinion** — every classification must cite specific codebase evidence (file paths, module counts, dependency references)
-- **Prefer the higher level** — when characteristics span two levels, classify at the higher one
-- **No action, just assessment** — this skill produces output; it does not modify tickets, save artifacts, or post comments
-- **Scale to ticket complexity** — a simple ticket gets a brief assessment; a complex ticket with many moving parts gets a thorough one
+- **Evidence over opinion**: Every classification must cite specific codebase evidence (file paths, module counts, dependency references)
+- **Prefer the higher level**: When characteristics span two levels, classify at the higher one
+- **No action, just assessment**: This skill produces output; it does not modify tickets, save artifacts, or post comments
+- **Scale to ticket complexity**: A simple ticket gets a brief assessment; a complex ticket with many moving parts gets a thorough one

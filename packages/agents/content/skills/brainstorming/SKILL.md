@@ -21,18 +21,18 @@ Do NOT use any implementation skill, write any code, scaffold any project, or ta
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
-Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+Every project goes through this process. A todo list, a single-function utility, a config change: all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
 
 ## Checklist
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-3. **Propose 2-3 approaches** — with trade-offs and your recommendation
-4. **Present design** — in sections scaled to their complexity, get user approval after each section
-5. **Write design doc** — save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
-6. **Transition to implementation** — use writing-plans skill to create implementation plan
+1. **Explore project context**: Check files, docs, recent commits
+2. **Ask clarifying questions**: One at a time, understand purpose/constraints/success criteria
+3. **Propose 2-3 approaches**: with trade-offs and your recommendation
+4. **Present design**: In sections scaled to their complexity, get user approval after each section
+5. **Write design doc**: Save to `docs/plans/YYYY-MM-DD-<topic>-design.md` and commit
+6. **Transition to implementation**: Use writing-plans skill to create implementation plan
 
 ## Process Flow
 
