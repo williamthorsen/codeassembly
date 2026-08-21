@@ -180,7 +180,7 @@ run_id: <run id> # optional: present in orchestrated runs
 ---
 ```
 
-Directly below the closing `---`, every artifact carries the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode:
+Directly below the closing `---` comes the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode. An artifact carrying no frontmatter, such as the `pull-request` and `merge` records, opens with the marker instead:
 
 <!-- include: ../../_partials/seal-marker.md / -->
 
@@ -876,7 +876,7 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-The seal marker below each artifact's frontmatter puts this in the file rather than only in standing guidance. It forbids editing a record to match something downstream of it, which a flow still composing its own artifact has not reached: `orchestration-plan.json` rewritten on each planning iteration and a coder's change-summary scaffold overwritten as its dispatch proceeds are both a flow finishing its record, not revising a finished one.
+The seal marker each artifact carries puts this in the file rather than only in standing guidance. What it forbids is editing a record to match something downstream of it, which a flow still composing its own artifact has not reached: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` carries no marker at all, being the planning loop's working state.
 
 Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
 
