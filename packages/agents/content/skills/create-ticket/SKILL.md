@@ -10,11 +10,11 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 
 ## Arguments
 
-| Argument              | Effect                                                                                         |
-| --------------------- | ---------------------------------------------------------------------------------------------- |
-| `--parent <ref>`      | Make the new ticket a child of the referenced ticket. One reference — a ticket has one parent. |
-| `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                      |
-| `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                        |
+| Argument              | Effect                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| `--parent <ref>`      | Make the new ticket a child of the referenced ticket. One reference; a ticket has one parent. |
+| `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                     |
+| `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                       |
 
 Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comma-separated where more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
 
@@ -32,7 +32,7 @@ Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_i
 
 ### 2. Write ticket content
 
-Create the ticket body describing WHAT needs to be done — problem, context, and acceptance criteria. Do NOT include the plan inline. Do NOT include the ticket ID in the heading yet (it's not known until step 6).
+Create the ticket body describing WHAT needs to be done: problem, context, and acceptance criteria. Do NOT include the plan inline. Do NOT include the ticket ID in the heading yet (it's not known until step 6).
 
 ```markdown
 <!-- include: ../_partials/ticket-skeleton.md / -->
@@ -48,7 +48,7 @@ Create the ticket body describing WHAT needs to be done — problem, context, an
 
 <!-- include: ../_partials/ticket-placement.md / -->
 
-`create-ticket` produces no plan, so _the implementation_ is derived when the work is later planned — state the subject and outcomes, and leave mechanism for that step.
+`create-ticket` produces no plan, so _the implementation_ is derived when the work is later planned; state the subject and outcomes, and leave mechanism for that step.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
@@ -58,25 +58,25 @@ Also draft a short title (without the `ticket_ref` prefix) for use in step 6.
 
 Determine where to create the remote ticket:
 
-1. **Preferences** — check `.agents/preferences.yaml` → `integrations`:
+1. **Preferences**: Check `.agents/preferences.yaml` → `integrations`:
 
 - If exactly one integration is enabled → use it
 - If multiple enabled → ask
 
-2. **Git remote** — if no integration is explicitly enabled:
+2. **Git remote**: if no integration is explicitly enabled:
 
 - `git remote get-url origin` pointing to `github.com` → GitHub
 - Other hosts → ask
 
-3. **Ask** — if platform cannot be determined
+3. **Ask**: if platform cannot be determined
 
 ### 4. Decide relationships
 
 Three relationships are available, each stated from the new ticket's side:
 
-- **parent** — the new ticket is a child of an existing ticket.
-- **blocked-by** — the new ticket cannot proceed until an existing ticket lands.
-- **blocking** — an existing ticket cannot proceed until the new ticket lands.
+- **parent**: The new ticket is a child of an existing ticket.
+- **blocked-by**: The new ticket cannot proceed until an existing ticket lands.
+- **blocking**: An existing ticket cannot proceed until the new ticket lands.
 
 Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 
@@ -88,7 +88,7 @@ Where one or more apply, state each relationship and its target in the project's
 
 ### 5. Resolve labels (GitHub only)
 
-If the platform resolved in step 3 is GitHub, attempt to read `.meta/label-map.json` using the Read tool. If the file does not exist, skip label resolution — no labels will be applied.
+If the platform resolved in step 3 is GitHub, attempt to read `.meta/label-map.json` using the Read tool. If the file does not exist, skip label resolution; no labels will be applied.
 
 The label map has this shape:
 
@@ -105,7 +105,7 @@ If the file exists, resolve labels from the scope and type established in the co
 2. **Breaking label:** If the original type had a `!` suffix, add `breaking` as an additional label.
 3. **Scope label:** Look up the scope in `label_map.scopes`. If found, add the mapped label name.
 
-Missing entries are silently skipped — if a type or scope is not in the map, no label is added for that dimension.
+Missing entries are silently skipped: If a type or scope is not in the map, no label is added for that dimension.
 
 Construct `--label` flags for each resolved label:
 
@@ -119,7 +119,7 @@ label_flags+=" --label \"{label_name}\""
 
 #### GitHub path
 
-Render the ticket title using `describe-change.sh`. Note that ticket creation does **not** pass `--ticket-ref` — the new ticket has no ref yet (that's what this step assigns).
+Render the ticket title using `describe-change.sh`. Note that ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
 json=$({harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
@@ -128,9 +128,9 @@ ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.loa
 
 Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Use `ticket_title` directly as the issue title — it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+Use `ticket_title` directly as the issue title; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
 
-Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
+Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
 
 ```bash
 url=$(gh issue create --title "${ticket_title}" --body-file "$body_path"${label_flags})
@@ -162,13 +162,13 @@ Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` 
 
 #### Jira path (stub)
 
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub has no URL yet, so it persists nothing new — consistent with today.
+If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub has no URL yet, so it persists nothing new, consistent with today.
 
 ### 7. Apply relationships
 
 Skip this step when step 4 decided none.
 
-Where no remote ticket exists — the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform) — there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+Where no remote ticket exists (the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
 
 Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
 
@@ -182,7 +182,7 @@ gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --
 
 Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
 
-These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number — reaching for that endpoint is the detour this note exists to prevent.
+These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; reaching for that endpoint is the detour this note exists to prevent.
 
 #### Other platforms
 
@@ -190,7 +190,7 @@ Use whatever the platform's own tooling offers for parent and blocking relations
 
 #### When a relationship cannot be established
 
-A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Include every skipped relationship and its reason in the completion output — that report is how a platform's missing relationship surface becomes visible.
+A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Include every skipped relationship and its reason in the completion output; that report is how a platform's missing relationship surface becomes visible.
 
 ### 8. Save local artifacts
 
@@ -233,7 +233,7 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 {YYYYMMDD-HHMMSSZ}_{slug}_plan.md
 ```
 
-Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the comment into the shell command:
+Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
 
 ```bash
 gh issue comment {number} --body-file "$body_path"

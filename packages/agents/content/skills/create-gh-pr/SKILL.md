@@ -6,7 +6,7 @@ user-invocable: false
 
 # Create GitHub pull request
 
-Internal delegate that creates a pull request on GitHub. Called by `create-pr` with fully prepared inputs — this skill does not resolve prefixes, labels, or scope/type.
+Internal delegate that creates a pull request on GitHub. Called by `create-pr` with fully prepared inputs; this skill does not resolve prefixes, labels, or scope/type.
 
 ## Delegate interface
 
@@ -26,7 +26,7 @@ This skill receives the following inputs from the orchestrator:
 
 ### 1. Construct label flags
 
-If `labels` is empty, skip this step — no `--label` flags are needed.
+If `labels` is empty, skip this step; no `--label` flags are needed.
 
 For each label in the `labels` list, construct a `--label` flag:
 
@@ -38,7 +38,7 @@ label_flags+=" --label \"{label_name}\""
 
 ### 2. Create the pull request
 
-Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Store the path so the retry step in step 3 can reuse it.
+Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Store the path so the retry step in step 3 can reuse it.
 
 ```bash
 url=$(gh pr create \
@@ -55,7 +55,7 @@ If `gh pr create` fails and the error indicates one or more labels are invalid:
 
 1. Identify the failing label(s) from the error message.
 2. Remove the failing labels from the `--label` flags.
-3. Retry `gh pr create` without the failing labels, reusing the same `$body_path` — do not rewrite the body or inline it.
+3. Retry `gh pr create` without the failing labels, reusing the same `$body_path`; do not rewrite the body or inline it.
 4. Record which labels were skipped.
 
 If the failure is unrelated to labels, report the error and stop.

@@ -34,7 +34,7 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 <!-- include: ../_partials/ticket-placement.md / -->
 
-When aligning to an existing implementation, _the implementation_ is the code on the branch — describe what the code now does, and resist transcribing its mechanism back into the ticket.
+When aligning to an existing implementation, _the implementation_ is the code on the branch; describe what the code now does, and resist transcribing its mechanism back into the ticket.
 
 The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach the branch actually took, not a proposal still under consideration.
 
