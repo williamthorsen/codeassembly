@@ -4,18 +4,20 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
-import { countOccurrences } from '../test-utils/count-occurrences.ts';
 
 // Every saved artifact carries the seal marker, which puts the prohibition in the file an agent has open rather than
 // only in the standing guidance it may not have loaded. `resolve-frontmatter.sh` emits it for the callers that prepend
 // its YAML output; the carriers below write their own frontmatter or their own template, so each inlines the partial.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
-/** The one Markdown file permitted to state the marker; every carrier reaches it through an include. */
+/** The marker's source of truth; every other statement of it must match this one byte for byte. */
 const PARTIAL = '_partials/seal-marker.md';
 
 /** The shell constant the script emits, which must not drift from the partial. */
 const SCRIPT = 'scripts/resolve-frontmatter.sh';
+
+/** Identifies a marker line wherever it appears, so a drifted copy is found rather than missed. */
+const MARKER_KEY = 'Sealed record';
 
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
@@ -34,10 +36,18 @@ const CARRIERS: ReadonlyArray<string> = [
 
 describe('sealed-artifact marker reach', () => {
   describe.each(CARRIERS)('%s', (relativePath) => {
-    it('inlines the marker exactly once', async () => {
+    it('carries the marker, and every copy of it matches the partial', async () => {
       const marker = await readMarker();
       const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
-      expect(countOccurrences(expanded, marker)).toBe(1);
+      const lines = expanded.split('\n').filter((line) => line.includes(MARKER_KEY));
+
+      expect(lines.length, `${relativePath} states no seal marker`).toBeGreaterThanOrEqual(1);
+
+      // A carrier may state the marker more than once: `refine-plan` inlines it from the partial and shows it again
+      // inside two example outputs, which sit in list items where an include directive cannot be placed.
+      const drifted = lines.filter((line) => line.trim() !== marker);
+      const message = `every seal marker must match ${PARTIAL} exactly:\n  ${drifted.join('\n  ')}`;
+      expect(drifted, message).toEqual([]);
     });
   });
 

@@ -501,7 +501,7 @@ When call emit_yaml \
   "" "" "main" "abc1234" "" "" \
   yaml_keys yaml_values yaml_kinds
 The line 1 of output should equal "---"
-The output should include "---"
+The output should include "$(printf -- '---\n%s' "$SEAL_MARKER")"
 The output should end with "$SEAL_MARKER"
 End
 
