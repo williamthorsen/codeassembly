@@ -211,7 +211,7 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 ### PR resolution
 
-`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`, and `create-pr` backfills it into the change summary after the PR exists. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
+`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL while composing frontmatter: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
 
 ### Bespoke frontmatter composition
 
