@@ -14,16 +14,16 @@ The split is deliberate: The helper is narrow and mechanical; the classification
 
 ## Arguments
 
-| Argument               | Description                                                                                                                                                                   | Required |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `--auto`               | Skip the proposal step and route any domain the write declares to `provisional:`. See [Modes](#modes).                                                                        | No       |
-| `--diataxis`           | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).                                                                                                 | No       |
-| `--domain-description` | One-line description for a domain the write declares. Carries prose, not a path — the path comes from `--folder`. Without it the domain is declared bare.                     | No       |
-| `--folder`             | Topic subpath beneath the assertions root (`content/assertions/`). The helper owns the `assertions/` segment — pass the topic only. Defaults to `content/assertions/` itself. | No       |
-| `--kb`                 | Knowledge base name, or `@default` for the registry default. Overrides `.kb/` discovery; the registry default is reachable only via `--kb @default`.                          | No       |
-| `--survey`             | Report the destination's shape and exit. Takes `--kb` alone; writes nothing and reads no stdin. See [step 2](#2-survey-the-destination-kb).                                   | No       |
-| `--tags`               | Comma-separated tag list. Known aliases are canonicalized at write time.                                                                                                      | No       |
-| `--title`              | The note title; also doubles as the filename.                                                                                                                                 | Yes      |
+| Argument               | Description                                                                                                                                                                       | Required |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `--auto`               | Skip the proposal step and route any domain the write declares to `provisional:`. See [Modes](#modes).                                                                            | No       |
+| `--diataxis`           | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).                                                                                                     | No       |
+| `--domain-description` | One-line description for a domain the write declares. Takes prose, not a path — the path comes from `--folder`. Without it the domain is declared bare.                           | No       |
+| `--folder`             | Topic subpath beneath the assertions root (`content/assertions/`). The helper supplies the `assertions/` segment — pass the topic only. Defaults to `content/assertions/` itself. | No       |
+| `--kb`                 | Knowledge base name, or `@default` for the registry default. Overrides `.kb/` discovery; the registry default is reachable only via `--kb @default`.                              | No       |
+| `--survey`             | Report the destination's shape and exit. Takes `--kb` alone; writes nothing and reads no stdin. See [step 2](#2-survey-the-destination-kb).                                       | No       |
+| `--tags`               | Comma-separated tag list. Known aliases are canonicalized at write time.                                                                                                          | No       |
+| `--title`              | The note title; also doubles as the filename.                                                                                                                                     | Yes      |
 
 A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The note body is read from stdin to EOF; an empty body is allowed when a stub note is appropriate.
 
@@ -44,11 +44,11 @@ By default the helper writes to the knowledge base discovered by walking up from
 
 ## Placement
 
-The declared taxonomy is the primary placement signal; the folders the survey found on disk corroborate it. A folder holding notes that no domain declares is drift: Surface it rather than quietly writing another note into it.
+The declared taxonomy is the primary placement signal; the folders the survey found on disk corroborate it. A folder containing notes that no domain declares is drift: Surface it rather than quietly writing another note into it.
 
-Treat the taxonomy as a strong prior, not a hard constraint. When a note's topic sits in the long tail, let the tags carry it and place the note in the nearest domain that genuinely fits — do not force it into an ill-fitting folder to avoid proposing a new one, and do not mint a domain per note.
+Treat the taxonomy as a strong prior, not a hard constraint. When a note's topic is in the long tail, rely on the tags for retrieval and place the note in the nearest domain that genuinely fits — do not force it into an ill-fitting folder to avoid proposing a new one, and do not create a domain per note.
 
-A new domain is warranted by intent, not by note count: Propose one when the user means to keep that shelf, however few notes will sit on it. Name it to match the form of the domains the survey reported, since the name is durable structure that later captures inherit. In auto mode, do not mint a top-level domain — a new top-level shelf reshapes the base and deserves confirmation.
+A new domain is warranted by intent, not by note count: Propose one when the user means to keep that shelf, however few notes will sit on it. Name it to match the form of the domains the survey reported, since the name is durable structure that later captures reuse. In auto mode, do not create a top-level domain — a new top-level shelf reshapes the base and needs confirmation.
 
 Folders serve human browsing and tags serve machine retrieval, so a folder name that restates a tag is expected rather than redundant. Do not contort either list to keep them orthogonal.
 
@@ -73,7 +73,7 @@ It reports:
 - `kb` — the knowledge base the write will resolve to, by the same rules.
 - `taxonomyPath` — the `.kb/taxonomy.yaml` the domains came from.
 - `domains` — each declared domain with its `description`, its `provisional` flag, and the `noteCount` at or beneath it.
-- `undeclaredFolders` — folders holding notes that no domain declares.
+- `undeclaredFolders` — folders containing notes that no domain declares.
 
 Then read a representative sample of notes from the folder most likely to fit the new note's topic. The survey reads no note bodies, so the sample is what reveals the title conventions and the live tag vocabulary already in use.
 
@@ -102,7 +102,7 @@ In default mode, present the proposed KB, folder, Diátaxis label, title, tags, 
 
 ### 7. Invoke the helper
 
-Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies legible without the quoting and escaping gymnastics that `echo "$BODY"` invites once the note contains backticks, blank lines, or shell metacharacters:
+Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies legible without the quoting and escaping that `echo "$BODY"` requires once the note contains backticks, blank lines, or shell metacharacters:
 
 ```bash
 cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
@@ -135,12 +135,12 @@ On `ok: true`, report the written path and the canonicalization audit trail. Whe
 
 Then report the placement:
 
-- `placement.domain` names the domain the note sits in. A `null` value means the note landed at the assertions root, under no domain and outside anything the taxonomy rules can see — say so, and offer to move it under a domain.
-- `placement.added` lists the domains this capture declared, each carrying the block it landed in. Name them, and flag every one with `provisional: true` as awaiting review.
-- `placement.warning` means the note was written but its folder could not be declared. Surface the message; the folder will surface as `taxonomy.undeclared` on the next `kb check`.
+- `placement.domain` names the domain the note sits in. A `null` value means the note was written to the assertions root, under no domain and outside anything the taxonomy rules can see — say so, and offer to move it under a domain.
+- `placement.added` lists the domains this capture declared, each with the block it was declared in. Name them, and flag every one with `provisional: true` as awaiting review.
+- `placement.warning` means the note was written but its folder could not be declared. Surface the message; `kb check` will report the folder as `taxonomy.undeclared` on its next run.
 - An absent `placement` means the store has no `.kb/taxonomy.yaml` and so has not adopted a taxonomy. Nothing was declared, and nothing is wrong.
 
-In auto mode, the completion report is where an undeclared folder the survey found reaches the user; include it there.
+In auto mode, the completion report is where the user learns of an undeclared folder the survey found; include it there.
 
 On `ok: false`, route by the `error` code:
 
@@ -148,7 +148,7 @@ On `ok: false`, route by the `error` code:
 - `missing-destination` — no `.kb/` was discovered and no `--kb` was given. Ask the user where the note should go, passing `--kb <name>` for a specific KB or `--kb @default` for the registry default (or, in auto mode, fail visibly with the categorical reason).
 - `no-default` — `--kb @default` was given but no `default_kb` is configured. Surface the message; have the user name a KB explicitly or configure a default.
 - `invalid-args` / `invalid-title` — Surface the helper's message and propose a corrected invocation.
-- `invalid-config` — a survey hit a malformed `.kb/config.yaml` or `.kb/taxonomy.yaml`. The message names the file; surface it and have the user repair it before capturing.
+- `invalid-config` — a survey found a malformed `.kb/config.yaml` or `.kb/taxonomy.yaml`. The message names the file; surface it and have the user repair it before capturing.
 - `collision` — A note already exists at the target path. Decide whether to re-title, append the new material to the existing note (read it first, then write a follow-up edit), or abort.
 
 ## Completion

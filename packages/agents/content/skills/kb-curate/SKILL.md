@@ -26,9 +26,9 @@ A value-bearing flag accepts both `--kb coding` and `--kb=coding`. With no flags
 
 ### KB selection
 
-The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` beats a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Curating spans a single KB per run — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
+The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
-Which notes are curated is governed by the store's `.kb/config.yaml`: By default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `tag-aliases.yaml`, or `taxonomy.yaml` fails the run with `invalid-config` rather than being silently ignored.
+The store's `.kb/config.yaml` decides which notes are curated: By default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `tag-aliases.yaml`, or `taxonomy.yaml` fails the run with `invalid-config` rather than being silently ignored.
 
 ## Runtime dependencies
 
@@ -37,7 +37,7 @@ Which notes are curated is governed by the store's `.kb/config.yaml`: By default
 
 ## Detection categories
 
-The helper reports findings across six categories. Each finding carries a rule code and a severity.
+The helper reports findings across six categories. Each finding has a rule code and a severity.
 
 | Rule code               | Severity | Meaning                                                                                |
 | ----------------------- | -------- | -------------------------------------------------------------------------------------- |
@@ -45,25 +45,25 @@ The helper reports findings across six categories. Each finding carries a rule c
 | `wikilinks.basename`    | warning  | Two or more notes share a basename (reported once for the vault).                      |
 | `paths.user-home`       | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                   |
 | `tag-alias`             | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
-| `taxonomy.undeclared`   | warning  | A folder holds notes but `.kb/taxonomy.yaml` declares no domain for it.                |
+| `taxonomy.undeclared`   | warning  | A folder contains notes but `.kb/taxonomy.yaml` declares no domain for it.             |
 | `taxonomy.unused`       | warning  | A declared domain has no note at or beneath it.                                        |
 | `taxonomy.orphan`       | warning  | A declared domain's parent is undeclared.                                              |
 | `verification.unmarked` | warning  | The note has no `last-verified` field; reported only when the vault uses verification. |
 | `verification.stale`    | warning  | `last-verified` is older than `--stale-after` days.                                    |
 | `supersede.dangling`    | error    | A `superseded-by`/`supersedes` target is not a vault note.                             |
-| `supersede.cycle`       | error    | The note participates in a `superseded-by` loop.                                       |
+| `supersede.cycle`       | error    | The note is in a `superseded-by` loop.                                                 |
 | `supersede.asymmetric`  | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.                         |
 
-The three `taxonomy.*` rules describe the vault rather than a note, so each is reported once against `.kb/taxonomy.yaml` with the domain named in the message. They are self-configuring in the same way `verification.unmarked` is: A vault whose `.kb/taxonomy.yaml` is absent, or present but declaring nothing, reports none of them.
+The three `taxonomy.*` rules describe the vault rather than a note, so each is reported once against `.kb/taxonomy.yaml` with the domain named in the message. They are self-configuring in the same way `verification.unmarked` is: The helper reports none of them for a vault whose `.kb/taxonomy.yaml` is absent, or present but declaring nothing.
 
-`verification.unmarked` is self-configuring: It is reported only when the vault actually uses verification — that is, when at least one note carries a well-formed `last-verified` value. In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so a vault whose only verification-ish value is unparseable reports no unmarked findings. `verification.stale` is unaffected: A note with a stale `last-verified` is always flagged.
+`verification.unmarked` is self-configuring: It is reported only when the vault actually uses verification — that is, when at least one note has a well-formed `last-verified` value. In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so the helper reports no unmarked findings for a vault whose only verification-ish value is unparseable. `verification.stale` is unaffected: A note with a stale `last-verified` is always flagged.
 
 ## Remediation under `--apply`
 
 Only two fixes are applied; everything else stays report-only.
 
 - **Tag canonicalization** — for each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
-- **Path-only wikilink rewrites** — a cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, carries no finding, and is left untouched, so remediation never flips a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
+- **Path-only wikilink rewrites** — a cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, produces no finding, and is left untouched, so remediation never changes a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
 
 Each fix returns a per-finding result reporting `ok: true/false` and the operation invoked. A single fix failure does not abort the run.
 
@@ -73,7 +73,7 @@ The remaining findings name the operator's next step:
 
 - **Stale or unmarked verification** → re-confirm the note, then `kb-edit <path> --verify`.
 - **Supersede defects** → repair with `kb-edit <old> --supersede-with <new>`, or correct the offending frontmatter field.
-- **Taxonomy drift** → declare the folder in `.kb/taxonomy.yaml`, or move the notes to a declared domain. On a vault adopting a taxonomy for the first time, `kb taxonomy init` declares every folder that already holds notes in one pass.
+- **Taxonomy drift** → declare the folder in `.kb/taxonomy.yaml`, or move the notes to a declared domain. On a vault adopting a taxonomy for the first time, `kb taxonomy init` declares every folder that already contains notes in one pass.
 - **Unresolved wikilinks, basename collisions, hardcoded paths** → resolve manually; these are too context-dependent to auto-fix.
 
 ## Process
@@ -95,7 +95,7 @@ node "$(dirname "$SKILL_PATH")/kb-curate.mjs" --kb coding --apply
 
 ### 3. Handle the result
 
-The helper prints a JSON object to stdout. On success the payload carries `ok: true`, the run `mode` (`report` or `apply`), the resolved `kb`, the `findings` array, a severity `summary`, and (under `--apply`) an `applied` array of per-fix results. Under `--apply`, the reported `findings` are the residual findings after the fixes ran.
+The helper prints a JSON object to stdout. On success the payload contains `ok: true`, the run `mode` (`report` or `apply`), the resolved `kb`, the `findings` array, a severity `summary`, and (under `--apply`) an `applied` array of per-fix results. Under `--apply`, the reported `findings` are the residual findings after the fixes ran.
 
 On failure, `ok: false` plus a categorical `error` code:
 
