@@ -24,7 +24,7 @@ This skill implements a feature plan — the `## Tasks` / `## Verification` shap
 
 ## The contract
 
-The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts on the ground disagree, the acceptance criteria decide — a plan step that no longer serves them is the one to change.
+The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts on the ground disagree, the acceptance criteria decide — a plan step that no longer serves them is the one to abandon.
 
 The plan artifact is read-only. It is a record of what was decided at plan time, and a later reader compares it against the diff to see how implementation departed from it. Never edit it to match what was built: Lifecycle events and the commits themselves record progress.
 
@@ -113,7 +113,7 @@ Skill names for each option:
 Select the recommended option by checking these rules in order and stopping at the first match. Judge the diff you actually produced, not the work the plan's author predicted: A plan-time estimate of how much review the work would need was made before anyone knew what the code would look like, and this menu is where that estimate is corrected.
 
 1. **Create PR without review** — the realized diff is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md)): a mechanical rename, a typo fix, a single-file change with no behavioral surface.
-2. **Orchestrated review** — the realized diff turned out cross-cutting ([complexity level 4](../_data/complexity-classification.md)): It spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites. Parallel aspect reviewers cover a surface that a single pass would cover only thinly.
+2. **Orchestrated review** — the realized diff turned out cross-cutting ([complexity level 4](../_data/complexity-classification.md)): It spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites. Parallel aspect reviewers reach a surface that a single pass would cover only thinly.
 3. **Review branch** — all other cases (default).
 
 #### Marker strengths

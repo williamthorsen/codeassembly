@@ -58,7 +58,7 @@ node {harness_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of assertion candidates, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate also has `addressedBy` — the references from its `addressed-by` list (what was done about the problem it notes) — when the note declares one. The helper returns a note that matches but declares no recordType as a degraded candidate with a `diagnostic`, so a note broken in that way is not hidden from recall.
+- `candidates` — an array of assertion candidates, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate also has `addressedBy` — the references from its `addressed-by` list (what was done about the problem it notes) — when the note declares one. A note that matches but declares no recordType is returned as a degraded candidate with a `diagnostic`, so a note broken in that way is not hidden from recall.
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
