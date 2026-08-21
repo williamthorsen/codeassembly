@@ -20,7 +20,7 @@ For assertion recall — the canonical knowledge-base notes — use `kb-retrieve
 | `--all-kbs`    | Widen the search to every registered knowledge base, not just the default scope.  | No       |
 | `--min-impact` | Keep only events rated at or above the given level; unrated events are dropped.   | No       |
 | `--store`      | Scope the search to a single registered knowledge base by name (alias: `--kb`).   | No       |
-| `--tag`        | Keep only events carrying this tag (canonical or alias form), case-insensitively. | No       |
+| `--tag`        | Keep only events with this tag (canonical or alias form), case-insensitively.     | No       |
 
 A value-bearing flag accepts both `--tag fix` and `--tag=fix`. `--min-impact` takes one of the impact levels, ordered `low` < `medium` < `high` < `critical`; an absent or out-of-range value is rejected with a usage message.
 
@@ -30,7 +30,7 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 
 `--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone — no `.kb/` discovery walk runs. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
 
-Within each knowledge base, recall is limited to the notes the store declares — the files matching its configured `targets`/`exclude` (the same note set `kb check` enforces). Events live under `content/events/`.
+Within each knowledge base, recall is limited to the notes the store declares — the files matching its configured `targets`/`exclude` (the same note set `kb check` enforces). Events are stored under `content/events/`.
 
 ## Runtime dependencies
 
@@ -53,7 +53,7 @@ Or, when the skill directory is known:
 node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store <name>
 ```
 
-Triage the most consequential events by floor on impact:
+Triage the most consequential events with an impact floor:
 
 ```bash
 node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store <name> --min-impact high
@@ -61,7 +61,7 @@ node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky 
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also carries `occurrences` — a coarse recurrence count of how many query-matched events share its `repo` — and, when present, `repo` (its `owner/name` repository), `addressedBy` (references recording what was done about the problem it notes), and `impact` (the author's rating, one of `low` < `medium` < `high` < `critical`; absent when the event is unrated).
+- `candidates` — an array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also has `occurrences` — a coarse recurrence count of how many query-matched events share its `repo` — and, when present, `repo` (its `owner/name` repository), `addressedBy` (references recording what was done about the problem it notes), and `impact` (the author's rating, one of `low` < `medium` < `high` < `critical`; absent when the event is unrated).
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no events matched.
@@ -76,9 +76,9 @@ Do not rank by `impact`. It is the author's subjective rating, orthogonal to a q
 
 ### 3. Present a ranked list
 
-Present the ranked events, each showing `summary`, `path`, `capturedAt`, and `snippet`, plus `impact` when the event carries one. Apply this annotation:
+Present the ranked events, each showing `summary`, `path`, `capturedAt`, and `snippet`, plus `impact` when the event has one. Apply this annotation:
 
-- **Addressed problems** — when a candidate carries `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: It records what was done about the problem, not that the problem is verifiably resolved. The event remains a true observation worth keeping.
+- **Addressed problems** — when a candidate has `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: It records what was done about the problem, not that the problem is verifiably resolved. The event remains a true observation worth keeping.
 
 ### 4. Report empty results plainly
 

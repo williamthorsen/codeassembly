@@ -20,7 +20,7 @@ Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more 
 
 Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract — branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
 
-Note: `PR-<n>` (e.g., `PR-123`) is a sanctioned identifier for a pull request that has no backing ticket. It matches the pattern like any two-letter prefix, so it resolves to `PR-123` and supplies a branch name and artifact directory. Downstream URL derivation treats it as a non-ticket and builds no ticket URL for it.
+Note: `PR-<n>` (e.g., `PR-123`) is a sanctioned identifier for a pull request that has no backing ticket. It matches the pattern like any two-letter prefix, so it resolves to `PR-123` and supplies a branch name and artifact directory. The session-context deriver treats it as a non-ticket and builds no ticket URL for it.
 
 ## Implementation
 
@@ -32,7 +32,7 @@ In branch names, `_` and `/` are interchangeable separators (see `branch-format.
 
 When no Jira-style ID matches, the script falls back to a **bare issue number** anchored to the start of the branch name (terminated by `/`, `_`, `-`, or end-of-string). The anchor on the fallback prevents false matches against digits embedded in slugs that lack a Jira-style match.
 
-When the bare-numeric fallback fires, the script reads `project.ticket_ref_prefix` from `.agents/preferences.yaml` to format the result:
+When the bare-numeric fallback applies, the script reads `project.ticket_ref_prefix` from `.agents/preferences.yaml` to format the result:
 
 - If `ticket_ref_prefix` is `#`: Return the **bare number only**. The `#` is a GitHub display convention and must not appear in file paths or returned values.
 - If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): Return `{prefix}{number}` (e.g., `MAC-147`).
