@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Post-session housekeeping — create tickets for deferred items, post insights, and generate devlogs
+description: 'Post-session housekeeping: create tickets for deferred items, post insights, and generate devlogs'
 user-invocable: true
 dependencies:
   skills:
@@ -15,23 +15,23 @@ This skill is context-adaptive: It detects the session type and adjusts its reco
 
 ## Item vocabulary
 
-Items in the wrap-up output use spelled-out prefixes followed by a short ID. The prefix tells the developer the nature of the work at a glance. The ID provides a handle for referencing the item in instructions. Each item also renders with an icon drawn from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) and [knowledge items](../_data/artifact-conventions.md#knowledge-items) tables — render the icon before the prefix so the reader gets an at-a-glance severity cue.
+Items in the wrap-up output use spelled-out prefixes followed by a short ID. The prefix tells the developer the nature of the work at a glance. The ID provides a handle for referencing the item in instructions. Each item also renders with an icon drawn from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) and [knowledge items](../_data/artifact-conventions.md#knowledge-items) tables. Render the icon before the prefix so the reader gets an at-a-glance severity cue.
 
-| Prefix           | ID pattern         | Icon | Meaning                                        |
-| ---------------- | ------------------ | ---- | ---------------------------------------------- |
-| `fixme`          | `F{n}`             | 🚨   | Must fix — bugs, security issues, breakage     |
-| `warning`        | `W{n}`             | ⚠️   | Questionable — may need action, needs judgment |
-| `todo`           | `T{n}`             | 📋   | Should do — not urgent, can wait               |
-| `recommendation` | `R{n}`             | 🧠   | Advisable — discretionary improvement          |
-| `suggestion`     | `S{n}`             | ☝️   | Optional — nice-to-have                        |
-| `legacy`         | `{F,W,T,R,S}{n}-L` | 🔍   | Pre-existing — noticed in old code             |
-| `insight`        | `I{n}`             | 💡   | Knowledge — pattern, gotcha, or learning       |
+| Prefix           | ID pattern         | Icon | Meaning                                       |
+| ---------------- | ------------------ | ---- | --------------------------------------------- |
+| `fixme`          | `F{n}`             | 🚨   | Must fix: bugs, security issues, breakage     |
+| `warning`        | `W{n}`             | ⚠️   | Questionable: may need action, needs judgment |
+| `todo`           | `T{n}`             | 📋   | Should do: not urgent, can wait               |
+| `recommendation` | `R{n}`             | 🧠   | Advisable: discretionary improvement          |
+| `suggestion`     | `S{n}`             | ☝️   | Optional: nice-to-have                        |
+| `legacy`         | `{F,W,T,R,S}{n}-L` | 🔍   | Pre-existing: noticed in old code             |
+| `insight`        | `I{n}`             | 💡   | Knowledge: pattern, gotcha, or learning       |
 
 This vocabulary is consistent with the F/W/T/R/S classification (with `-L` suffix for legacy) used by review agents. The `insight` prefix extends it for knowledge items that aren't defects.
 
 ### Numbering rules
 
-- **Fresh numbering per wrap-up.** IDs are assigned sequentially within each prefix, regardless of what IDs existed in source artifacts. `F1` in the wrap-up may correspond to `F3` in a review — the wrap-up is its own namespace.
+- **Fresh numbering per wrap-up.** IDs are assigned sequentially within each prefix, regardless of what IDs existed in source artifacts. `F1` in the wrap-up may correspond to `F3` in a review; the wrap-up is its own namespace.
 - Items may originate from orchestration runs, conversation, review artifacts, or casual observation. Fresh numbering unifies all sources.
 
 ## Process
@@ -53,7 +53,7 @@ Check these signals in order to classify the session:
 
 Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
 
-When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename — that is the latest run. Phase 3 passes this `run_id` through to `{skill:create-devlog}` as `--run-id`, and Phase 4 records it in the deferred-findings artifact frontmatter, so both artifacts can link back to the run that produced the work.
+When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename; that is the latest run. Phase 3 passes this `run_id` through to `{skill:create-devlog}` as `--run-id`, and Phase 4 records it in the deferred-findings artifact frontmatter, so both artifacts can link back to the run that produced the work.
 
 #### 1b. Scan for deferred items
 
@@ -64,9 +64,9 @@ Deferred items are things that were identified during the session but intentiona
 - **Run-summary artifact**: If an orchestrated run was detected, read the most recent `*_orchestrator_run-summary.md` in the run directory. Extract items from the `## Deferred items` section. Each item becomes an inventory entry.
 - **Review artifacts**: Extract unresolved T (TODO) and R (Recommendation) findings from review artifacts that were not addressed in subsequent coder responses.
 
-**Conversation scanning** (heuristic — may produce false positives):
+**Conversation scanning** (heuristic: may produce false positives):
 
-Structured sources take precedence. When scanning conversation, skip items already captured from structured sources (run-summary, review artifacts) to avoid duplicates. In Phase 6 context (invoked by the orchestrator after an orchestrated run), the conversation contains the full orchestration log — focus heuristic scanning on items not already present in the run-summary's deferred items section.
+Structured sources take precedence. When scanning conversation, skip items already captured from structured sources (run-summary, review artifacts) to avoid duplicates. In Phase 6 context (invoked by the orchestrator after an orchestrated run), the conversation contains the full orchestration log. Focus heuristic scanning on items not already present in the run-summary's deferred items section.
 
 Scan the conversation for items that were explicitly deferred. Look for phrases indicating deferral:
 
@@ -96,7 +96,7 @@ Record the source attribution for each item (e.g., "run-summary", "holistic revi
 
 For each finding (not legacy items or insights), assess its complexity using the [complexity classification](../_data/complexity-classification.md) rubric. Assign a level (1–4) based on the characteristics described in the rubric.
 
-Items at levels 1–2 (trivial or mechanical) are **drive-by candidates** — simple enough for the agent to apply immediately on the current branch without review. Tag these items for the drive-by pass in Phase 2a, where branch-state and code-overlap guardrails determine whether they actually ship as drive-bys.
+Items at levels 1–2 (trivial or mechanical) are **drive-by candidates**: simple enough for the agent to apply immediately on the current branch without review. Tag these items for the drive-by pass in Phase 2a, where branch-state and code-overlap guardrails determine whether they actually ship as drive-bys.
 
 Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
 
@@ -104,18 +104,18 @@ The complexity assessment is an input to the cost-aware disposition flow describ
 
 #### 1c. Collect insights
 
-Insights are notable observations worth preserving — patterns learned, surprising findings, or knowledge that would benefit future work.
+Insights are notable observations worth preserving: patterns learned, surprising findings, or knowledge that would benefit future work.
 
-**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a — the two never both apply, so there is no structured-vs-structured overlap to dedup:
+**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a; the two never both apply, so there is no structured-vs-structured overlap to dedup:
 
-- **Orchestrated run → run-summary**: Read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory. It already aggregates and dedups the `I{n}` insights from every reviewer-subagent artifact in the run, so reading it — rather than the per-reviewer artifacts — captures each insight exactly once.
+- **Orchestrated run → run-summary**: Read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory. It already aggregates and dedups the `I{n}` insights from every reviewer-subagent artifact in the run, so reading it (rather than the per-reviewer artifacts) captures each insight exactly once.
 - **Non-orchestrated run → review artifact**: Read the `## Insights` section of the standalone review artifact (`*_reviewer_review.md`). Reviewer-subagent artifacts exist only in orchestrated runs, so outside orchestration this is the sole structured insight source.
 
 Either way, reviewers emit these under the insight gate, so they are vetted knowledge, not heuristic guesses.
 
-**Conversation scanning** (heuristic — may produce false positives):
+**Conversation scanning** (heuristic: may produce false positives):
 
-Structured sources take precedence. When scanning conversation, skip any insight already captured from a structured source (the same observation) to avoid duplicates — a review-emitted insight and its conversation echo are one item, and the structured one is kept.
+Structured sources take precedence. When scanning conversation, skip any insight already captured from a structured source (the same observation) to avoid duplicates: A review-emitted insight and its conversation echo are one item, and the structured one is kept.
 
 Scan the conversation for:
 
@@ -129,7 +129,7 @@ Look for language like: "interesting", "discovered", "realized", "turns out", "s
 
 For each insight (structured or conversation-scanned), assign an `I{n}` ID (sequentially: I1, I2, ...) and resolve a destination:
 
-- Honor a destination the source insight already states — a reviewer may suggest `ticket comment` or `devlog`.
+- Honor a destination the source insight already states: A reviewer may suggest `ticket comment` or `devlog`.
 - Otherwise: `ticket comment` if the insight relates to the current ticket's work; `devlog` if it is general knowledge not specific to one ticket.
 
 If no ticket is available (from the session-context manifest), default all destinations to `devlog`.
@@ -144,7 +144,7 @@ Run `git status` and `git log --oneline {default_branch}..HEAD` to understand:
 
 ### Phase 2a: Drive-by fixes
 
-If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model — see [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) for the principle. Skip this phase entirely if no items qualify — do not show an empty section.
+If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model; see [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) for the principle. Skip this phase entirely if no items qualify; do not show an empty section.
 
 #### Suitability check
 
@@ -175,7 +175,7 @@ Apply drive-by fixes? Reply "all", numbers, or "skip"
 
 #### Response handling
 
-- **Applied items**: Make the changes and commit them with a message summarizing the fixes. Stage only the drive-by changes — if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
+- **Applied items**: Make the changes and commit them with a message summarizing the fixes. Stage only the drive-by changes; if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
 - **Skipped items**: Demote back into the Findings section. They become eligible for the batch-ticket and per-item ticket actions in Phase 2b.
 - **Partial selection** (e.g., `"1, 3"`): Apply selected items, demote the rest.
 
@@ -185,14 +185,14 @@ Apply drive-by fixes? Reply "all", numbers, or "skip"
 
 Present the user with an inventory of remaining addressable items and a numbered action menu. Only include sections that have at least one item. Items applied as drive-by fixes in Phase 2a do not appear here.
 
-The action menu offers two distinct ticket-creation actions ("Batch tickets for findings" and "Create tickets for findings"); their conditions and recommendation rules — drawn from the cost-aware disposition model in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) — are documented under [standard actions](#standard-actions) below.
+The action menu offers two distinct ticket-creation actions ("Batch tickets for findings" and "Create tickets for findings"); their conditions and recommendation rules (drawn from the cost-aware disposition model in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md)) are documented under [standard actions](#standard-actions) below.
 
 #### Output format
 
 ```
 ## Session wrap-up
 
-{Summary of what was built or changed — the outcome, not the process.
+{Summary of what was built or changed: the outcome, not the process.
 
 Derive from session type:
 - **Orchestrated**: Paraphrase the "What was built" section of the run-summary
@@ -200,7 +200,7 @@ Derive from session type:
 - **Review**: Summarize what was reviewed and the key outcomes (approved, changes requested, etc.)
 - **Research/exploration**: Summarize what was explored and key findings
 
-Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or offers a lesson for future runs — e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge — mention it briefly after the outcome summary.}
+Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or offers a lesson for future runs (e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge), mention it briefly after the outcome summary.}
 
 ### Findings
 
@@ -229,7 +229,7 @@ What would you like to do? Reply with numbers, or 'all'.
 #### Formatting rules
 
 - Each item's description may wrap across multiple lines, indented to align with the first line of the description (not the prefix).
-- The `*source:*` and `*destination:*` lines are italicized — this visual separation makes items easier to parse.
+- The `*source:*` and `*destination:*` lines are italicized; this visual separation makes items easier to parse.
 - Items within a section are separated by a blank line for readability.
 
 #### Standard actions
@@ -244,11 +244,11 @@ The actions menu is built dynamically based on which sections are populated:
 | Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment`      |
 | Save session devlog             | Always (unless trivial)                    | `{skill:create-devlog}` |
 
-**Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives — only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. The "Batch tickets for findings" action implements the **batch later** lane; "Create tickets for findings" implements the **separate ticket** lane from [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md).
+**Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives: Only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. The "Batch tickets for findings" action implements the **batch later** lane; "Create tickets for findings" implements the **separate ticket** lane from [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md).
 
-**Dropping findings.** Findings the user does not select for a ticket-creation action are implicitly dropped — menu omission is the close-without-tracking signal. The agent does not prompt to confirm; the user's selection is taken at face value. Dropped findings are still recorded in the report's `### Dropped` section and the deferred-findings artifact's `## Dropped` section so they remain discoverable.
+**Dropping findings.** Findings the user does not select for a ticket-creation action are implicitly dropped: Menu omission is the close-without-tracking signal. The agent does not prompt to confirm; the user's selection is taken at face value. Dropped findings are still recorded in the report's `### Dropped` section and the deferred-findings artifact's `## Dropped` section so they remain discoverable.
 
-**Insight routing.** Each insight's destination determines where it appears in the action menu. Insights destined for `ticket comment` become part of the "Post insights to ticket" action — this action is independent and posts directly via `gh issue comment`. Insights destined for `devlog` are folded into the "Save session devlog" action and included automatically in the devlog content. This means devlog-bound insights only appear if the devlog action is selected, which is the correct dependency.
+**Insight routing.** Each insight's destination determines where it appears in the action menu. Insights destined for `ticket comment` become part of the "Post insights to ticket" action; this action is independent and posts directly via `gh issue comment`. Insights destined for `devlog` are folded into the "Save session devlog" action and included automatically in the devlog content. This means devlog-bound insights only appear if the devlog action is selected, which is the correct dependency.
 
 **Rendering the action menu.** Actions are numbered sequentially starting from 1. Only include actions that apply. The numbered list rendered to the user must include every applicable row from the Standard actions table. When both "Batch tickets for findings" and "Create tickets for findings" appear, annotate them as mutually exclusive alternatives so the user cannot accidentally select both. Use the convention `1a` / `1b` for the batch and per-item entries (sharing the same primary number) and continue numbering subsequent actions from `2`. Any other action keeps a plain integer.
 
@@ -275,11 +275,11 @@ Parse the user's response to the Phase 2b action menu and execute confirmed acti
 
 The user may respond with:
 
-- **Numbers only:** `"1, 3"` or `"all"` — execute the referenced actions as-is
-- **Per-item adjustments:** `"1 but combine F1+F2"` — execute the action with modifications
-- **Multiple action selections:** `"1a with F1+F2; 3"` — apply action 1a to F1 and F2, then execute action 3
-- **Exclusions:** `"all except I2"` — execute everything, omitting specific items
-- **Custom instructions:** Free-form text — interpret and confirm before executing
+- **Numbers only:** `"1, 3"` or `"all"`; execute the referenced actions as-is
+- **Per-item adjustments:** `"1 but combine F1+F2"`; execute the action with modifications
+- **Multiple action selections:** `"1a with F1+F2; 3"`; apply action 1a to F1 and F2, then execute action 3
+- **Exclusions:** `"all except I2"`; execute everything, omitting specific items
+- **Custom instructions:** Free-form text; interpret and confirm before executing
 
 Any finding not selected for a ticket-creation action is implicitly dropped.
 
@@ -289,11 +289,11 @@ If the response is ambiguous, ask for clarification before executing.
 
 Process confirmed actions in this order:
 
-1. **Batch tickets for findings** — invoke `{skill:create-ticket}` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives — execute whichever the user selected, not both.
-2. **Tickets for findings** — invoke `{skill:create-ticket}` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
-3. **Tickets for legacy items** — invoke `{skill:create-ticket}` once per item. Label as technical debt or the appropriate category.
-4. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from the session-context manifest). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
-5. **Save session devlog** — invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
+1. **Batch tickets for findings**: Invoke `{skill:create-ticket}` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives: Execute whichever the user selected, not both.
+2. **Tickets for findings**: Invoke `{skill:create-ticket}` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
+3. **Tickets for legacy items**: Invoke `{skill:create-ticket}` once per item. Label as technical debt or the appropriate category.
+4. **Post insights to ticket**: For each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from the session-context manifest). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
+5. **Save session devlog**: Invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 After all actions complete, identify which findings were _not_ selected by any action (implicitly dropped) and pass that set forward to Phase 4 for inclusion in the report's `### Dropped` section and the artifact's `## Dropped` section.
 
@@ -317,7 +317,7 @@ Write a `deferred-findings` artifact capturing items that remain to be done. The
 
 Write the artifact when at least one finding became a created ticket in Phase 3 **or** at least one finding was dropped (by being unselected for any ticket-creation action).
 
-Drive-by fixes that were applied in Phase 2a do not count toward the trigger — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded.
+Drive-by fixes that were applied in Phase 2a do not count toward the trigger; they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count; they have already been recorded.
 
 If no tickets were created and no findings were dropped (e.g., a research session with only insights), skip writing entirely. Do not produce an empty artifact.
 
@@ -347,11 +347,11 @@ Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_deferred-findings.md` (standard ticket-leve
 
 Prepend YAML frontmatter, then the markdown body.
 
-**Frontmatter** — see [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) for the canonical schema and [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the artifact-specific extensions.
+**Frontmatter**: See [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) for the canonical schema and [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the artifact-specific extensions.
 
 This site uses `--format json` because `tickets_created` is a list-of-objects extension that has no clean CLI expression; see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too; do not emit `null` or empty strings.
 
 The seal marker follows the closing `---`, as it does in every artifact:
 
@@ -361,19 +361,19 @@ Set these skill-specific values inline (not in the script's output):
 
 - `provenance.skill`: always `wrap-up`.
 - `provenance.isInteractive`: always `true`.
-- `run_id`: **Override** the script's value — reuse the run ID Phase 1a captured (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
+- `run_id`: **Override** the script's value; reuse the run ID Phase 1a captured (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
 - `session_type` (deferred-findings extension): the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
 - `tickets_created` (deferred-findings extension): list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list. Omit when empty.
 
-**Body** — Emit the tickets-created cross-reference and the dropped-findings record:
+**Body**: Emit the tickets-created cross-reference and the dropped-findings record:
 
 ```markdown
 # Deferred findings: {Concise session description}
 
 ## Tickets created
 
-- #{number}: Addresses {prefix} {item-ID} — {ticket title}
-- #{number}: Addresses {prefix} {item-ID} — {ticket title}
+- #{number}: Addresses {prefix} {item-ID} -- {ticket title}
+- #{number}: Addresses {prefix} {item-ID} -- {ticket title}
 
 ## Dropped
 
@@ -381,7 +381,7 @@ Set these skill-specific values inline (not in the script's output):
 - {prefix} {item-ID}: {description}
 ```
 
-Render both sections from the same in-memory inventory the conversation report uses (Step 2 below) — do not re-derive from conversation, so the artifact and the report cannot drift. Omit either section when it has no entries (e.g., omit `## Dropped` when every finding was ticketed).
+Render both sections from the same in-memory inventory the conversation report uses (Step 2 below); do not re-derive from conversation, so the artifact and the report cannot drift. Omit either section when it has no entries (e.g., omit `## Dropped` when every finding was ticketed).
 
 Insights, applied drive-by fixes, and devlog references do not appear in the body.
 
@@ -391,7 +391,7 @@ Insights, applied drive-by fixes, and devlog references do not appear in the bod
 ## Wrap-up complete
 
 ### Tickets created
-- {ticket-id}: {prefix} {item-ID} "{title}" — {URL or file path}
+- {ticket-id}: {prefix} {item-ID} "{title}" -- {URL or file path}
 
 ### Insights recorded
 - {prefix} {item-ID}: Posted to #{number}
@@ -409,7 +409,7 @@ Omit empty sections. The "Artifacts saved" section is omitted when no artifacts 
 
 ### Phase 5: PR prompt
 
-After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits — whether from the session's earlier work, drive-by fixes applied in Phase 2a, or both — prompt the user to create a PR:
+After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits (whether from the session's earlier work, drive-by fixes applied in Phase 2a, or both), prompt the user to create a PR:
 
 ```
 ---
@@ -433,9 +433,9 @@ When creating tickets for deferred items, follow the conventions from the issue 
 
 ## Constraints
 
-- **Never auto-execute** — always present the inventory and action menu, wait for user confirmation
-- **Delegate, don't duplicate** — every action goes through an existing skill or a direct `gh` CLI call
-- **Idempotent-safe** — before creating a ticket, check if an issue with a similar title already exists
-- **Conversation is primary source** — deferred items and insights appear in the dialogue, not just in git state
-- **Graceful when empty** — if the assessment finds nothing actionable, say so and end: "No wrap-up items identified for this session."
-- **Fresh numbering** — always assign new sequential IDs within the wrap-up; never reuse IDs from source artifacts
+- **Never auto-execute**: Always present the inventory and action menu, wait for user confirmation
+- **Delegate, don't duplicate**: Every action goes through an existing skill or a direct `gh` CLI call
+- **Idempotent-safe**: Before creating a ticket, check if an issue with a similar title already exists
+- **Conversation is primary source**: Deferred items and insights appear in the dialogue, not just in git state
+- **Graceful when empty**: If the assessment finds nothing actionable, say so and end: "No wrap-up items identified for this session."
+- **Fresh numbering**: Always assign new sequential IDs within the wrap-up; never reuse IDs from source artifacts

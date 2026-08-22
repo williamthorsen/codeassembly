@@ -51,7 +51,7 @@ The body following the frontmatter has this structure:
 
 ## Why
 
-{1-3 sentences describing the _motivation_ — what was wrong, what was missing, or what new capability is needed. Frame in terms of consequences (for users, the codebase, future work), not mechanism. Mechanism belongs in `## Details`.
+{1-3 sentences describing the _motivation_: what was wrong, what was missing, or what new capability is needed. Frame in terms of consequences (for users, the codebase, future work), not mechanism. Mechanism belongs in `## Details`.
 
 Bad: "The retry helper used a fixed backoff schedule with no shared state, so concurrent requests stacked up against the upstream rate limiter."
 Good: "Heavy-upload sessions were intermittently failing as users hit the upstream API's rate limit."}
@@ -82,12 +82,12 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 ## Guidance
 
 - When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so they read naturally without it.
-- The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
+- The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
 - Subsection headings use `{emoji} {label}` from the matching [work-types.json](../_data/work-types.json) `types[]` entry. For any subsection not enumerated in the example template above, look up the entry by work-type key and use its `emoji` and `label`.
 - Order Details subsections per `work-types.json` tier order: public → internal → process.
-- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: A commit with the `!` breaking marker (e.g., `feat!`) or a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection — the prefix tags it inline rather than relocating it to a separate section.
+- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: A commit with the `!` breaking marker (e.g., `feat!`) or a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection: The prefix tags it inline rather than relocating it to a separate section.
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 
@@ -126,11 +126,11 @@ Prepend the script's output verbatim to the artifact body.
 ### Consumer-field inference
 
 - **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.
-- **`scope`** and **`type`**: Infer from the commit message prefixes on the branch. Examine commits between the default branch and HEAD. If all (or the dominant majority of) commits share the same scope and type prefix (e.g., `agents|feat:`), use those values. If commits use mixed scopes or types with no clear dominant value, omit the ambiguous field entirely from the frontmatter. Omission is safe — downstream consumers treat missing fields as absent and skip the corresponding resolution step.
+- **`scope`** and **`type`**: Infer from the commit message prefixes on the branch. Examine commits between the default branch and HEAD. If all (or the dominant majority of) commits share the same scope and type prefix (e.g., `agents|feat:`), use those values. If commits use mixed scopes or types with no clear dominant value, omit the ambiguous field entirely from the frontmatter. Omission is safe: Downstream consumers treat missing fields as absent and skip the corresponding resolution step.
 
 ## As a PR description
 
-When used as a PR description, include **from `## What` onward only** — omit the H1 title and metadata block.
+When used as a PR description, include **from `## What` onward only**; omit the H1 title and metadata block.
 
 ## Saving
 
