@@ -8,7 +8,7 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Output-shaping specs — the option-format contract and the next-steps menus — must be inlined into what the agent
+// Output-shaping specs (the option-format contract and the next-steps menus) must be inlined into what the agent
 // reads, not left behind a runtime Markdown link. A link is an optional read at generation time, and the model will
 // fill from its prior rather than follow the link, producing a block that looks right and is wrong. These tests
 // assert the specs are present in each consumer's include-expanded body, which is what the install pipeline writes.
@@ -87,7 +87,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // ungoverned path this option exists to replace.
     '🚀 **Implement** -> `implement-plan`',
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
-    // enough to turn away — the round trip the carve-out exists to prevent.
+    // enough to turn away, the round trip the carve-out exists to prevent.
     'Render option 3 as 🔬 Investigate, invoking no skill',
     // The rule a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and falls
     // through to rule 3, recommending the development pipeline for work that produces no diff.
@@ -250,7 +250,7 @@ describe('diff-audit checklist inlining', () => {
 
 // region | Helpers
 
-/** Returns a skill's include-expanded `SKILL.md` — the body the install pipeline goes on to rewrite and write out. */
+/** Returns a skill's include-expanded `SKILL.md`, the body the install pipeline goes on to rewrite and write out. */
 async function expandSkill(slug: string): Promise<string> {
   return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
 }

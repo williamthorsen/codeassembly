@@ -154,7 +154,7 @@ async function readPartialLevel(partialPath: string): Promise<number | undefined
 /**
  * Reads one body's headings and injection points in source order. Lines between an open include directive and its
  * `<!-- /include -->` are slot content bound for the partial's `<!-- children -->`, not structure of this body, and a
- * partial that places that placeholder inside a fence turns them into example text — so they contribute no token.
+ * partial that places that placeholder inside a fence turns them into example text, so they contribute no token.
  */
 async function readStructure(relativePath: string): Promise<ReadonlyArray<Token>> {
   const filePath = path.join(CONTENT_ROOT, relativePath);

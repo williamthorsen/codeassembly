@@ -10,7 +10,7 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Two mechanisms put the doctrine into an agent's context, and both are checked here: a skill inlines it at install
 // time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent needs no body
-// edit, only an injected carrier — and that injection list is a frontmatter array an edit can trim with no other test
+// edit, only an injected carrier; that injection list is a frontmatter array an edit can trim with no other test
 // failing.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
@@ -92,7 +92,7 @@ describe('comment-discipline reach', () => {
   });
 });
 
-/** Returns a skill's include-expanded `SKILL.md` — the body the install pipeline goes on to rewrite and write out. */
+/** Returns a skill's include-expanded `SKILL.md`, the body the install pipeline goes on to rewrite and write out. */
 async function expandSkill(slug: string): Promise<string> {
   return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
 }

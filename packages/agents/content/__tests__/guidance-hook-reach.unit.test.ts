@@ -193,7 +193,7 @@ async function buildFills(): Promise<GuidanceHookFills> {
   return new Map(entries);
 }
 
-/** Returns a skill or subagent body with its includes expanded — the body the deploy pipeline goes on to fill. */
+/** Returns a skill or subagent body with its includes expanded, the body the deploy pipeline goes on to fill. */
 async function expandBody(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
 }

@@ -39,7 +39,7 @@ interface IncludeSites {
 
 /**
  * Locates the skill's action-items directives, separating those inside a fenced block from those outside it. The
- * include expander is line-anchored and tracks no fence state, so a directive inside a fence still expands — the
+ * include expander is line-anchored and tracks no fence state, so a directive inside a fence still expands; the
  * partial's own fence then closes the enclosing one and the rest of the template renders as prose.
  */
 async function findIncludeSites(slug: string): Promise<IncludeSites> {
@@ -77,7 +77,7 @@ describe('action-item reinforcement', () => {
     expect(
       fenced,
       `\`${slug}/SKILL.md\` puts the action-items directive inside a fenced block (line ${fenced.join(', ')}). ` +
-        `It expands anyway, and the partial's own fence closes the enclosing one — presenting the convention's ` +
+        `It expands anyway, and the partial's own fence closes the enclosing one, presenting the convention's ` +
         `prose as template content and leaving the rest of the template outside its fence. Move the directive ` +
         `below the closing fence.`,
     ).toEqual([]);
