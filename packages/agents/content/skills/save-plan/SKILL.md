@@ -47,7 +47,7 @@ Would you like to create or update a ticket for this work? If so, use the `{skil
 ```
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed in conversation with user participation — use this as recommendation context. Omit the ticket path from option lines — no ticket path is available at completion time.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed in conversation with user participation; use this as recommendation context. Omit the ticket path from option lines: No ticket path is available at completion time.
 </HARD-GATE>
 
 <!-- include: ../_partials/next-steps-after-plan.md / -->

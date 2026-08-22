@@ -10,14 +10,14 @@ user-invocable: false
 
 **Default rule:** Every code change that creates or modifies testable behavior must include tests that cover that behavior. The burden is on justifying the exception, not the rule.
 
-**Carve-outs** — the following categories are exempt from the test requirement:
+**Carve-outs**: The following categories are exempt from the test requirement:
 
-- **Generated CSS classes and pure visual styling** — output is non-deterministic or meaningful only visually
-- **Static configuration files** — JSON/YAML/TOML files with no runtime logic
-- **Type-only changes** — type definitions, interfaces, and type aliases that produce no runtime code
-- **Markdown and documentation content** — prose files with no executable behavior
-- **Build scripts and tooling** — scripts whose correctness is verified by the build or lint pipeline rather than unit tests, and that expose no independently testable API surface
-- **Removal-only changes** — a change that only deletes code, text, or behavior introduces no new positive behavior to cover, so it needs no new test.
+- **Generated CSS classes and pure visual styling**: Output is non-deterministic or meaningful only visually
+- **Static configuration files**: JSON/YAML/TOML files with no runtime logic
+- **Type-only changes**: type definitions, interfaces, and type aliases that produce no runtime code
+- **Markdown and documentation content**: prose files with no executable behavior
+- **Build scripts and tooling**: scripts whose correctness is verified by the build or lint pipeline rather than unit tests, and that expose no independently testable API surface
+- **Removal-only changes**: A change that only deletes code, text, or behavior introduces no new positive behavior to cover, so it needs no new test.
 
 If a change does not fall into one of these categories, it requires tests. When in doubt, write the test.
 

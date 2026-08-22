@@ -17,7 +17,7 @@ Save AI-generated files with standardized naming conventions.
 ```
 
 - **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
-- **slug**: Kebab-case descriptor drawn from work context — e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
+- **slug**: Kebab-case descriptor drawn from work context, e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
 - **artifact-type**: Type of artifact. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the artifact type list.
 
 ### Run artifacts (review workflow)
@@ -36,7 +36,7 @@ Save AI-generated files with standardized naming conventions.
 {NN}_{role}_{artifact}.md
 ```
 
-- **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`). The sequence counter is managed exclusively by the orchestrate engine — individual skills do not manage sequence numbers in orchestrated runs.
+- **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`). The sequence counter is managed exclusively by the orchestrate engine; individual skills do not manage sequence numbers in orchestrated runs.
 
 **Common fields (both formats):**
 
@@ -45,7 +45,7 @@ Save AI-generated files with standardized naming conventions.
 
 Run artifacts are saved by the skills that produce them (`review-branch`, `respond-to-review`). They handle run directory discovery and creation.
 
-> **Note:** In orchestrated runs, the orchestrator is responsible for maintaining `run-index.json` — individual skills do not write to it directly.
+> **Note:** In orchestrated runs, the orchestrator is responsible for maintaining `run-index.json`; individual skills do not write to it directly.
 
 ## Path resolution
 
@@ -63,7 +63,7 @@ Create the directory if needed.
 
 Read `artifact_paths` from the session-context manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
-Devlogs and deferred-findings artifacts use their non-ticket category paths only as a fallback — when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule. For frontmatter shapes, see `create-devlog/SKILL.md` (devlogs) and the deferred-findings step in `wrap-up/SKILL.md` (deferred-findings).
+Devlogs and deferred-findings artifacts use their non-ticket category paths only as a fallback: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule. For frontmatter shapes, see `create-devlog/SKILL.md` (devlogs) and the deferred-findings step in `wrap-up/SKILL.md` (deferred-findings).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

@@ -57,7 +57,7 @@ Use these to mark significant sections:
 
 - ❌ failure
 - ✅ success
-- 💡 important learning — the canonical Insight icon defined in [knowledge items](../_data/artifact-conventions.md#knowledge-items)
+- 💡 important learning: the canonical Insight icon defined in [knowledge items](../_data/artifact-conventions.md#knowledge-items)
 - 🐞 buggy behavior
 - 🚀 performance gain
 
