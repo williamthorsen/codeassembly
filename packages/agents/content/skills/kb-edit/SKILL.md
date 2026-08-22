@@ -1,12 +1,12 @@
 ---
 name: kb-edit
-description: Mutate an existing knowledge-base note via a single mechanical operation — bump updated, mark verified, replace tags, append a section, or supersede with another note
+description: 'Mutate an existing knowledge-base note via a single mechanical operation: bump updated, mark verified, replace tags, append a section, or supersede with another note'
 user-invocable: true
 ---
 
 # Edit an existing knowledge-base note
 
-Apply a single mutation to a note that already exists in a knowledge base. A bundled helper does the mechanical work — it resolves the writable KB the note belongs to, loads the note as a typed assertion record, runs alias canonicalization where relevant, applies the change, and writes atomically. You do the judgment work — pick which operation fits the change, supply the new tags or body content, and decide when supersession is the right move.
+Apply a single mutation to a note that already exists in a knowledge base. A bundled helper does the mechanical work: It resolves the writable KB the note belongs to, loads the note as a typed assertion record, runs alias canonicalization where relevant, applies the change, and writes atomically. You do the judgment work: pick which operation fits the change, supply the new tags or body content, and decide when supersession is the right move.
 
 The split is deliberate: The helper is narrow and mechanical; the operation choice is wide and judgment-driven. Treat the helper as a guardrail. It refuses to write into a KB marked `readonly: true`, refuses a note that does not parse as an assertion, and refuses to leave a half-finished supersede chain.
 
@@ -36,7 +36,7 @@ The destination knowledge base is inferred by walking up from the note's directo
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
+- **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
 
 ## Modes
 
@@ -47,16 +47,16 @@ The `--auto` flag is for you, not for the bundled helper; it controls whether yo
 
 ## Operations: When to use each
 
-- **`--bump-updated`** — A non-empirical edit to the note (rewording, restructuring, fact correction) where the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
-- **`--verify`** — You reran the note's instructions or re-confirmed its claims and they still hold. Use this for the "I just checked; still good" path. Does not bump `updated:` because nothing about the content changed.
-- **`--append`** — Add a section to an existing note. The helper writes the new content after the existing body with a separating blank line. Use for accumulating findings or extending a list.
-- **`--retag`** — Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`. Curatorial: It changes how a record is found, not what it asserts, so it leaves `updated:` unchanged.
-- **`--add-addressed-by`** — Record what addressed a problem: Append references to a record's recall-facing `addressed-by` list so the response appears when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
-- **`--supersede-with`** — Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): The old note gets `superseded-by` and the `deprecated` tag; the new note gets `supersedes`. Use when a note is no longer canonical but should remain discoverable.
+- **`--bump-updated`**: A non-empirical edit to the note (rewording, restructuring, fact correction) where the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
+- **`--verify`**: You reran the note's instructions or re-confirmed its claims and they still hold. Use this for the "I just checked; still good" path. Does not bump `updated:` because nothing about the content changed.
+- **`--append`**: Add a section to an existing note. The helper writes the new content after the existing body with a separating blank line. Use for accumulating findings or extending a list.
+- **`--retag`**: Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`. Curatorial: It changes how a record is found, not what it asserts, so it leaves `updated:` unchanged.
+- **`--add-addressed-by`**: Record what addressed a problem by appending references to a record's recall-facing `addressed-by` list so the response appears when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
+- **`--supersede-with`**: Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): The old note gets `superseded-by` and the `deprecated` tag; the new note gets `supersedes`. Use when a note is no longer canonical but should remain discoverable.
 
 ## Update semantics: Which operations bump `updated:`
 
-`updated:` records the last _substantive_ change to a record — what it asserts, its body, or its lifecycle state. Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
+`updated:` records the last _substantive_ change to a record (what it asserts, its body, or its lifecycle state). Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
 
 - **Bump `updated:`** (substantive change): `--append` (body change), `--add-addressed-by` (records a response relation), and `--supersede-with` (lifecycle-state change). `--bump-updated` is the explicit escape hatch for an out-of-band edit made elsewhere.
 - **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: reorganizes findability only) and `--verify` (re-confirmation: Content is unchanged).
@@ -65,7 +65,7 @@ The `--auto` flag is for you, not for the bundled helper; it controls whether yo
 
 ### 1. Pick the operation
 
-Identify which single operation fits the change. If you have several distinct changes in mind (retag and append, say), they become two separate invocations — the helper rejects combined flags.
+Identify which single operation fits the change. If you have several distinct changes in mind (retag and append, say), they become two separate invocations: The helper rejects combined flags.
 
 ### 2. Survey context with kb-retrieve when warranted
 
@@ -86,7 +86,7 @@ node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --retag "tag1,tag2"
 node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <old-path> --supersede-with <new-path>
 ```
 
-`--add-addressed-by` appends to one or more notes — comma-separate multiple references, space-separate multiple target notes:
+`--add-addressed-by` appends to one or more notes; comma-separate multiple references, space-separate multiple target notes:
 
 ```bash
 node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --add-addressed-by "[[how-to-avoid-x]]"
@@ -112,7 +112,7 @@ node {harness_home_dir}/skills/kb-edit/kb-edit.mjs Tools/tmux/tmux-insights.md -
 
 The helper prints a JSON object to stdout. On success the payload contains `ok: true`, the resolved `kb`, the written `record`, and (for `--retag`) the `originalTags` / `canonicalTags` audit trail. `--supersede-with` returns `oldRecord` and `newRecord` for both files.
 
-`--add-addressed-by` returns a `results` array — one entry per target note, in the order supplied — instead of a single-note payload. Each entry has its own `ok`: A success entry has the written `record`, a failure entry has an `error` code and `message`. Its top-level `ok: true` means the batch ran (no usage or system error), not that every record succeeded; inspect each `results[]` entry to see which notes were written and which failed, then re-run for the failures (the append de-duplicates, so re-running is safe).
+`--add-addressed-by` returns a `results` array (one entry per target note, in the order supplied) instead of a single-note payload. Each entry has its own `ok`: A success entry has the written `record`, a failure entry has an `error` code and `message`. Its top-level `ok: true` means the batch ran (no usage or system error), not that every record succeeded; inspect each `results[]` entry to see which notes were written and which failed, then re-run for the failures (the append de-duplicates, so re-running is safe).
 
 On failure, `ok: false` plus a categorical `error` code:
 

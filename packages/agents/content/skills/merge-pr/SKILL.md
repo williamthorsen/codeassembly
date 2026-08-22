@@ -23,7 +23,7 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ## Reserved preference keys
 
-`merge.strategy` and `merge.deletion_strategy` are **reserved keys** in `.agents/preferences.yaml` and `~/.agents/preferences.yaml`. They are not yet honored — this iteration uses the hard-coded defaults above. Setting them in preferences has no effect; CLI overrides are the only way to change the values today. The keys are reserved so that adding preference-file lookup later is a localized, additive change that does not require renaming or re-shaping the configuration surface.
+`merge.strategy` and `merge.deletion_strategy` are **reserved keys** in `.agents/preferences.yaml` and `~/.agents/preferences.yaml`. They are not yet honored: This iteration uses the hard-coded defaults above. Setting them in preferences has no effect; CLI overrides are the only way to change the values today. The keys are reserved so that adding preference-file lookup later is a localized, additive change that does not require renaming or re-shaping the configuration surface.
 
 ## Process
 
@@ -99,7 +99,7 @@ json=$({harness_home_dir}/scripts/describe-change.sh \
 merge_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('merge_title',''))")
 ```
 
-Omit any flag whose value is empty or null. For dimensions whose `status` from step 3 is `ambiguous`, omit the flag too — those are resolved at the gate, and this initial render is provisional.
+Omit any flag whose value is empty or null. For dimensions whose `status` from step 3 is `ambiguous`, omit the flag too: Those are resolved at the gate, and this initial render is provisional.
 
 Use a JSON parser (python3 above; `jq -r '.merge_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes.
 
@@ -113,7 +113,7 @@ Extract from the PR body (already in scope from step 2):
 2. Take everything from the line after the heading to the next `## ` heading (or end of body).
 3. Trim leading/trailing blank lines from the captured content. The captured content is the merge-commit body candidate.
 
-A captured body is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic — proceed with a shorter `## What` if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
+A captured body is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter `## What` if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
 
 If the `## What` heading is missing or the captured body is thin, compose fresh content from commit messages and the diff:
 
@@ -131,7 +131,7 @@ Report what the change did. The whole body is the lede, so the doctrine below ap
 If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:
 
 - For each ambiguous dimension, present a numbered list of the dimension's `candidates` array, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
-  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 - After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
 
 Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
@@ -150,9 +150,9 @@ Proposed merge for PR #{pr_number}:
 {confirmation}
 ```
 
-The triangle delimiters wrap the title and body — the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
+The triangle delimiters wrap the title and body, the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
 
-Render `{confirmation}` so the ask itself names every destructive side effect the approval authorizes. The permission auto-classifier grants only what the ask text names, so a branch deletion shown only in the `Delete:` line above is not authorized — the ask must name it too:
+Render `{confirmation}` so the ask itself names every destructive side effect the approval authorizes. The permission auto-classifier grants only what the ask text names, so a branch deletion shown only in the `Delete:` line above is not authorized; the ask must name it too:
 
 - `none` → `Merge PR #{pr_number}? 👍🏼👎🏼`
 - `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
@@ -185,7 +185,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 | `project_slug`      | From session context                                                   |
 | `artifact_base_dir` | From session context                                                   |
 
-The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate — all values are concrete by this point.
+The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate: All values are concrete by this point.
 
 If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it includes one, and continue.
 
@@ -193,7 +193,7 @@ If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"
 
 Skip this step when the delegate's completion report includes no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
 
-Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge — never present a failure at this step as a merge failure.
+Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge; never present a failure at this step as a merge failure.
 
 Invoke `{skill:capture-lede-decision}` with:
 
@@ -204,14 +204,14 @@ Invoke `{skill:capture-lede-decision}` with:
 | `--merge-commit`    | The merge commit SHA from the delegate's completion report         |
 | `--type`, `--scope` | The values resolved in step 3, as settled at the approval gate     |
 
-That skill owns the prompt and the record: It asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ — a lede that shipped unchanged under time pressure is not an accepted lede.
+That skill owns the prompt and the record: It asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ: A lede that shipped unchanged under time pressure is not an accepted lede.
 
 Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle events](#lifecycle-events).
 
 ## Important
 
 - The orchestrator owns all decisions (PR resolution, scope/type/strategy/deletion-strategy resolution, body composition, approval gate). Delegates own only execution (platform API calls + state validation).
-- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows — `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
+- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
 

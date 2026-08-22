@@ -20,11 +20,11 @@ Implement the work a feature plan describes. This skill is the canonical path fo
 
 ## Scope
 
-This skill implements a feature plan — the `## Tasks` / `## Verification` shape the plan template defines. A spike plan has `## Investigation steps` and a `## Deliverable` instead (see [spike conventions](../_data/spike-conventions.md)): It is carried out to produce findings rather than implemented to produce a diff, and none of the steps below read its shape. Step 4 turns one away.
+This skill implements a feature plan, the `## Tasks` / `## Verification` shape the plan template defines. A spike plan has `## Investigation steps` and a `## Deliverable` instead (see [spike conventions](../_data/spike-conventions.md)): It is carried out to produce findings rather than implemented to produce a diff, and none of the steps below read its shape. Step 4 turns one away.
 
 ## The contract
 
-The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts on the ground disagree, the acceptance criteria decide — a plan step that no longer serves them is the one to abandon.
+The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts on the ground disagree, the acceptance criteria decide: A plan step that no longer serves them is the one to abandon.
 
 The plan artifact is read-only. It is a record of what was decided at plan time, and a later reader compares it against the diff to see how implementation departed from it. Never edit it to match what was built: Lifecycle events and the commits themselves record progress.
 
@@ -32,28 +32,28 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `ticket_url`, `scm`, `project_slug`, and `artifact_base_dir` from it. Then emit `skill.started` (payload `{"skill":"implement-plan"}`) per [Lifecycle events](#lifecycle-events).
 
-2. **Resolve the plan** — stop at the first source that yields one:
+2. **Resolve the plan**: Stop at the first source that yields one:
    - **Explicit `--plan=<path>`**: Read it.
    - **Already in context**: This session produced or read the plan. Use it as-is; do not re-read the file.
    - **Newest plan for the ticket**: The newest of `*_plan.md` and `*_plan-v*.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` (run subdirectories included), by the greatest `YYYYMMDD-HHMMSSZ` filename prefix. Both forms have that prefix, so they sort chronologically together and the lexicographically greatest is the newest across the two. `refine-plan` writes its revision as `_plan-v2.md` under a later prefix than the plan it revises, so matching both forms is what lets a refined plan take precedence over the original it supersedes. Do not widen to `*_plan*.md`, which also matches the `_plan-review.md` artifact written beside the revision.
-   - **Ask**: No plan is resolvable. Ask the user for a path rather than implementing from the ticket alone — a caller who invoked this skill has a plan in mind.
+   - **Ask**: No plan is resolvable. Ask the user for a path rather than implementing from the ticket alone: A caller who invoked this skill has a plan in mind.
 
    Announce the resolved path and its timestamp before executing anything. Several plans can exist for one ticket, and the newest is not always the intended one: This announcement is how the user catches a superseded plan while the choice is still free. It is not ceremony, and it is not skippable when the resolution was unambiguous.
 
-3. **Resolve the ticket** — stop at the first source that yields one:
+3. **Resolve the ticket**: Stop at the first source that yields one:
    - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md).
    - **Already in context**: This session already resolved the ticket. Use it as-is.
    - **Stored URL**: `ticket_url` from step 1, fetched per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url).
    - **Plan provenance**: The plan's frontmatter `ticket_ref` / `ticket_id`, resolved per [auto-resolve](../_data/ticket-source-resolution.md#auto-resolve).
-   - **No ticket**: Every source failed — the plan was produced from a free-form description, or the ticket is unreachable. Announce that no ticket governs the run and execute against the plan as the sole contract. Do not stall on a missing ticket; do not silently substitute the plan for one without saying so.
+   - **No ticket**: Every source failed; the plan was produced from a free-form description, or the ticket is unreachable. Announce that no ticket governs the run and execute against the plan as the sole contract. Do not stall on a missing ticket; do not silently substitute the plan for one without saying so.
 
-4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section — it names where the author expected the work to need adaptation.
+4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section: It names where the author expected the work to need adaptation.
 
    Check the shape as you read: A plan with `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Emit `skill.completed` (payload `{"outcome":"stopped: spike plan"}`) per [Lifecycle events](#lifecycle-events), then stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
 5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments you write along the way per [Comment discipline](#comment-discipline).
 
-   Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation — carry on and note it in the closing summary.
+   Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation; carry on and note it in the closing summary.
 
    Commit each task's work as its own commit with the `{skill:create-commit}` skill. Everything the closing menu offers reads committed history, so work left uncommitted is work the next step cannot see.
 
@@ -83,11 +83,11 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 ### Output format
 
-Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the realized diff presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the shared schema changed, so consumers outside this package are affected"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include the ticket path in each skill-invoking option line; omit it when no ticket governed the run.
+Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default; add a `➕` or `➖` line only when the realized diff presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the shared schema changed, so consumers outside this package are affected"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include the ticket path in each skill-invoking option line; omit it when no ticket governed the run.
 
 Options that invoke a review include context-clearing guidance:
 
-- **Review branch** and **Orchestrated review**: Prepend "Clear context and use..." — a reviewer that watched the code being written inherits the author's blind spots, and orchestration dispatches fresh subagents regardless.
+- **Review branch** and **Orchestrated review**: Prepend "Clear context and use..."; a reviewer that watched the code being written inherits the author's blind spots, and orchestration dispatches fresh subagents regardless.
 - **Create PR without review**: No "Clear context" prefix; the PR description is composed from this session's work. `create-pr` requires the branch to be in sync with its remote and stops when it is not, so note on the option that it needs the branch pushed first.
 
 Example (rendered for the default case, where the recommendation rules below select Review branch):
@@ -112,9 +112,9 @@ Skill names for each option:
 
 Select the recommended option by checking these rules in order and stopping at the first match. Judge the diff you actually produced, not the work the plan's author predicted: A plan-time estimate of how much review the work would need was made before anyone knew what the code would look like, and this menu is where that estimate is corrected.
 
-1. **Create PR without review** — the realized diff is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md)): a mechanical rename, a typo fix, a single-file change with no behavioral surface.
-2. **Orchestrated review** — the realized diff turned out cross-cutting ([complexity level 4](../_data/complexity-classification.md)): It spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites. Parallel aspect reviewers reach a surface that a single pass would cover only thinly.
-3. **Review branch** — all other cases (default).
+1. **Create PR without review**: The realized diff is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md)): a mechanical rename, a typo fix, a single-file change with no behavioral surface.
+2. **Orchestrated review**: The realized diff turned out cross-cutting ([complexity level 4](../_data/complexity-classification.md)): It spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites. Parallel aspect reviewers reach a surface that a single pass would cover only thinly.
+3. **Review branch**: All other cases (default).
 
 #### Marker strengths
 

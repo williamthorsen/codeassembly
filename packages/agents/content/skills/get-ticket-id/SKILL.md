@@ -16,9 +16,9 @@ Extract a Jira-style ticket ID from the current context.
 
 ## Pattern
 
-Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more letters, hyphen, digits — uppercased on output. Examples: `ABC-123`, `PT-1234`, `mac-130 → MAC-130`. Trailing `.N` sub-ticket and `-description` suffixes are tolerated in input but not part of the ID. See [`_data/ticket-id-extraction.md`](../_data/ticket-id-extraction.md) for the full contract and behavior table — it is the single source of truth shared with the `derive-session-context` TypeScript implementation.
+Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more letters, hyphen, digits; uppercased on output. Examples: `ABC-123`, `PT-1234`, `mac-130 → MAC-130`. Trailing `.N` sub-ticket and `-description` suffixes are tolerated in input but not part of the ID. See [`_data/ticket-id-extraction.md`](../_data/ticket-id-extraction.md) for the full contract and behavior table; it is the single source of truth shared with the `derive-session-context` TypeScript implementation.
 
-Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract — branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
+Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract; branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
 
 Note: `PR-<n>` (e.g., `PR-123`) is a sanctioned identifier for a pull request that has no backing ticket. It matches the pattern like any two-letter prefix, so it resolves to `PR-123` and supplies a branch name and artifact directory. The session-context deriver treats it as a non-ticket and builds no ticket URL for it.
 
