@@ -10,9 +10,9 @@ Apply the comment-discipline audit to a target file set, editing comments in pla
 
 ## Invocation
 
-- `{skill:revise-comments}` — default target is files committed on the current branch relative to the default branch. To audit uncommitted work, pass explicit paths (`{skill:revise-comments} .` covers the working tree).
-- `{skill:revise-comments} <path> [<path>...]` — explicit file or directory targets. Directories are processed recursively.
-- `{skill:revise-comments} --dry-run [...]` — produce the summary without applying edits. Triage and dry-run are unified under this flag.
+- `{skill:revise-comments}`: Default target is files committed on the current branch relative to the default branch. To audit uncommitted work, pass explicit paths (`{skill:revise-comments} .` covers the working tree).
+- `{skill:revise-comments} <path> [<path>...]`: Explicit file or directory targets. Directories are processed recursively.
+- `{skill:revise-comments} --dry-run [...]`: Produce the summary without applying edits. Triage and dry-run are unified under this flag.
 
 ## Process
 
@@ -64,7 +64,7 @@ src/lib/payload.ts
 | 1    | deleted   | one-location | duplicates the per-function docs |
 | 2    | deleted   | stranger     | PR reference                     |
 | 4    | rewritten | stranger     | "we discussed"                   |
-| 6    | kept      | —            | why-inline                       |
+| 6    | kept      | n/a          | why-inline                       |
 ```
 
 Line numbers anchor to the pre-edit file, so each row is checked against `git diff` output before the table is emitted: The `Action` column reports what the diff shows, not what was intended. For a comment failing more than one test, report the first it fails.
@@ -115,5 +115,5 @@ src/lib/payload.ts
 | 1    | deleted   | one-location | duplicates the per-function docs |
 | 2    | deleted   | stranger     | PR reference                     |
 | 4    | rewritten | stranger     | "we discussed"                   |
-| 6    | kept      | —            | why-inline                       |
+| 6    | kept      | n/a          | why-inline                       |
 ```

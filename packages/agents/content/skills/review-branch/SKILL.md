@@ -24,18 +24,18 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 ## Process
 
-> **When invoked by `review-pr`:** Steps 1–3 are already complete — `review-pr` already invoked the bundled session-context deriver and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope. On this path, emit `skill.started` (payload `{"skill":"review-pr"}`) per [Lifecycle events](#lifecycle-events) in place of step 1's cue.
+> **When invoked by `review-pr`:** Steps 1–3 are already complete: `review-pr` already invoked the bundled session-context deriver and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope. On this path, emit `skill.started` (payload `{"skill":"review-pr"}`) per [Lifecycle events](#lifecycle-events) in place of step 1's cue.
 
 1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `scm`, `project_slug`, and `artifact_base_dir` from it. Then emit `skill.started` (payload `{"skill":"review-branch"}`) per [Lifecycle events](#lifecycle-events).
-2. **Resolve diff base** — If `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
-3. **Resolve specification sources** — Produce a list of spec sources (each a `{ source_type, label, content, criteria?, provenance, last_updated }` record). `provenance` is `remote` (a live platform fetch, never stale) or `local_snapshot` (a frozen plan-time artifact that can lag the contract); `last_updated` is the source's last-modified timestamp (ISO 8601), or null when the platform does not expose one.
+2. **Resolve diff base**: If `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
+3. **Resolve specification sources**: Produce a list of spec sources (each a `{ source_type, label, content, criteria?, provenance, last_updated }` record). `provenance` is `remote` (a live platform fetch, never stale) or `local_snapshot` (a frozen plan-time artifact that can lag the contract); `last_updated` is the source's last-modified timestamp (ISO 8601), or null when the platform does not expose one.
    - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source. A fetched platform issue is `remote` with its `updatedAt` as `last_updated`; a file or plain-text source is `local_snapshot` with `last_updated` null when unknown. When the source resolves to a URL, persist it per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url). `--spec-source` does not apply on this path.
    - **Auto-resolve** (when `--ticket` is omitted): Resolve up to two candidates and choose between them.
-     - _Remote candidate_: When `ticket_id` is non-null and resolves to a platform ticket (use `scm` from step 1), fetch the remote issue per [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve) — but substitute the local fallback below for that section's "ask the user" terminal step. Its `last_updated` is the issue's `updatedAt`.
+     - _Remote candidate_: When `ticket_id` is non-null and resolves to a platform ticket (use `scm` from step 1), fetch the remote issue per [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve), but substitute the local fallback below for that section's "ask the user" terminal step. Its `last_updated` is the issue's `updatedAt`.
      - _Local candidate_: The most recent `*_ticket.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. Its `last_updated` is the filename's `YYYYMMDD-HHMMSSZ` prefix converted to ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`), so it shares the remote candidate's format; treat an unparseable prefix as no local candidate. (The artifact filename keeps the compact form per `artifact-conventions.md`; only the recorded `last_updated` is normalized.)
      - _Selection_:
-       - If `--spec-source=remote|local` is set, use that candidate. If the named candidate is unavailable (e.g. `--spec-source=local` with no snapshot, or `--spec-source=remote` with a failed/offline fetch or null `ticket_id`), stop and report the missing source rather than silently using the other side — an explicit instruction must not be redirected to the wrong contract. State the remedy (drop the flag to re-enable recency) in the message.
-       - Otherwise use the candidate with the newer `last_updated`. Both values are ISO 8601 at the same precision, so they compare chronologically as plain strings — no per-format parsing. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
+       - If `--spec-source=remote|local` is set, use that candidate. If the named candidate is unavailable (e.g. `--spec-source=local` with no snapshot, or `--spec-source=remote` with a failed/offline fetch or null `ticket_id`), stop and report the missing source rather than silently using the other side: An explicit instruction must not be redirected to the wrong contract. State the remedy (drop the flag to re-enable recency) in the message.
+       - Otherwise use the candidate with the newer `last_updated`. Both values are ISO 8601 at the same precision, so they compare chronologically as plain strings: no per-format parsing. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
        - If only one candidate exists, use it. This single-candidate fallback also covers a failed/offline remote fetch and a null `ticket_id`.
      - Append the chosen candidate as a `ticket` source with its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, hold that rejected candidate's `content` in-process for the divergence check. Hold raw content rather than extracted criteria: The comparison runs at render time under the extraction rule the compliance table states, so both candidates are read by one rule. It stays in working memory, not in the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout never appears on that branch.
    - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
@@ -74,7 +74,7 @@ Prepend the script's output verbatim to the artifact body. The `pr:` field is po
 
 A no-findings review is a complete, valid outcome and the expected default for a clean change: merge-ready, not lazy or unfinished. Raise a finding only when it genuinely warrants the author's action; finding none is success, not a gap to fill.
 
-Comprehensive review — trace logic, verify edge cases, assess architectural impact.
+Comprehensive review: Trace logic, verify edge cases, assess architectural impact.
 
 ### Criteria
 
@@ -90,19 +90,19 @@ Read and apply the `review-criteria` skill (`../review-criteria/SKILL.md`). Addi
 
 Uniquely number all issues for easy reference. See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for full category criteria and criticality mapping.
 
-- FIXMEs: `F{n}` — critical, must fix before merge
-- Warnings: `W{n}` — questionable decisions, may block merge
-- TODOs: `T{n}` — should fix, can wait for next PR
-- Recommendations: `R{n}` — advisable but discretionary
-- Suggestions: `S{n}` — optional improvement
-- Legacy: `{F,W,T,R,S}{n}-L` — observation in pre-existing code, not authored in this change. Same severity letter as the equivalent author finding; number it from that letter's shared sequence first, then append `-L` as a marker (e.g., after `F1`, `F2`, the first legacy FIXME is `F3-L`)
-- Insights: `I{n}` — knowledge worth preserving, gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score
+- FIXMEs: `F{n}`. Critical, must fix before merge
+- Warnings: `W{n}`. Questionable decisions, may block merge
+- TODOs: `T{n}`. Should fix, can wait for next PR
+- Recommendations: `R{n}`. Advisable but discretionary
+- Suggestions: `S{n}`. Optional improvement
+- Legacy: `{F,W,T,R,S}{n}-L`. Observation in pre-existing code, not authored in this change. Same severity letter as the equivalent author finding; number it from that letter's shared sequence first, then append `-L` as a marker (e.g., after `F1`, `F2`, the first legacy FIXME is `F3-L`)
+- Insights: `I{n}`. Knowledge worth preserving, gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score
 
 ## Output format
 
-Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix), and the 💡 insights icon from [knowledge items](../_data/artifact-conventions.md#knowledge-items); render them as shown. Each finding under "Action required" and "Areas for improvement" follows the canonical per-finding template shown below — see [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) for the rules governing the `Location:` field.
+Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix), and the 💡 insights icon from [knowledge items](../_data/artifact-conventions.md#knowledge-items); render them as shown. Each finding under "Action required" and "Areas for improvement" follows the canonical per-finding template shown below; see [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) for the rules governing the `Location:` field.
 
-When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it — e.g., `# Code review: {description}`.
+When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it, e.g., `# Code review: {description}`.
 
 The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author=$author"` to the script to populate the review-artifact `author` field.
 
@@ -134,7 +134,7 @@ The body following the frontmatter has this structure:
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 
-(The same shape applies to every finding in the sections below — only the prefix letter, the `Severity:` value, and the section bucket change. Legacy findings use `-L` suffix IDs and `(legacy)` severity values.)
+(The same shape applies to every finding in the sections below: Only the prefix letter, the `Severity:` value, and the section bucket change. Legacy findings use `-L` suffix IDs and `(legacy)` severity values.)
 
 ### Warnings ⚠️
 
@@ -160,7 +160,7 @@ The body following the frontmatter has this structure:
 
 ## Insights
 
-{Knowledge worth preserving that is not a finding — a pattern, gotcha, or architectural learning surfaced during review. Gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score. Omit this section entirely when there are none.}
+{Knowledge worth preserving that is not a finding (a pattern, gotcha, or architectural learning surfaced during review). Gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score. Omit this section entirely when there are none.}
 
 ### I1: {title}
 
@@ -179,9 +179,9 @@ Score: X/10
 
 ### {source.label}
 
-{The label is `{source_type}: {short identifier}` — for example, `ticket: #553` or `pr_description: PR #1024`. Use the source's natural identifier so a reader can tell at a glance which specification a row evaluates against.}
+{The label is `{source_type}: {short identifier}`, for example, `ticket: #553` or `pr_description: PR #1024`. Use the source's natural identifier so a reader can tell at a glance which specification a row evaluates against.}
 
-**Source:** {Render the source's `provenance` and `last_updated` (echoed verbatim — `last_updated` is already ISO 8601) so the reader knows what contract this section measured against — e.g. `remote issue (last updated 2026-06-07T01:56:34Z)`, ``local snapshot `20260606-090337Z_..._ticket.md` (last updated 2026-06-06T09:03:37Z)``, or `local source (last updated …)` for an explicit file/plain-text `--ticket` that has no snapshot filename. Omit the "last updated" clause when `last_updated` is null.}
+**Source:** {Render the source's `provenance` and `last_updated` (echoed verbatim; `last_updated` is already ISO 8601) so the reader knows what contract this section measured against, e.g. `remote issue (last updated 2026-06-07T01:56:34Z)`, ``local snapshot `20260606-090337Z_..._ticket.md` (last updated 2026-06-06T09:03:37Z)``, or `local source (last updated …)` for an explicit file/plain-text `--ticket` that has no snapshot filename. Omit the "last updated" clause when `last_updated` is null.}
 
 {When the chosen source is the local snapshot and a remote candidate existed, compare their acceptance criteria by the same extraction rule the table below uses. Add a callout only when they differ materially: a criterion on one side with no counterpart on the other (absence on either side counts), or worded so the verdict could differ. Rewording that cannot change a verdict is not material. The callout names the difference with a ⚠️, states that this review measured against the snapshot rather than the published ticket, and points to `--spec-source=remote` to re-resolve against the remote. Say nothing when the criteria agree, whatever the timestamps. Omit entirely when the chosen source is the remote candidate, when there was no competing candidate (single source or explicit `--ticket`), or for a `pr_description` source.}
 
@@ -220,7 +220,7 @@ Extract criteria from whatever structure the source uses (numbered lists, checkb
 | --- | -------------- | ------- | -------------- | -------------------------- | ----------------------------------------- |
 | D1  | {aspect label} | {state} | {state}        | {ticket-state}, {PR-state} | {one-line synthesis with concrete values} |
 
-Verdict scale (max across all rows): 🟢 `none` (all three aligned — section omitted entirely) / 🟠 `partial` (implementation aligns with one spec source but not the other) / 🔴 `severe` (implementation aligns with neither, or sources contradict each other on a central claim).
+Verdict scale (max across all rows): 🟢 `none` (all three aligned; section omitted entirely) / 🟠 `partial` (implementation aligns with one spec source but not the other) / 🔴 `severe` (implementation aligns with neither, or sources contradict each other on a central claim).
 
 Cell encoding:
 
@@ -242,7 +242,7 @@ Only rows where at least two of (ticket, PR description, implementation) differ 
 
 **D{n}: {aspect label}.** {Free-form prose elaborating aspects the Summary cell cannot fit. Each entry keys to a `D{n}` ID for cross-reference.}
 
-Paraphrasing is not divergence — evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to surface through the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
+Paraphrasing is not divergence: Evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to surface through the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
 ```
 
 ### Clean reviews
@@ -290,13 +290,13 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
-1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id) — never construct a path with a literal `null` segment.
+1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id); never construct a path with a literal `null` segment.
 2. Find or create a run directory:
    - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): Save into it
    - **If no active run exists**: Create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
 3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
 
-Each review is a separate artifact in the run directory. Do not append to existing files — the chronological sequence of files is the history.
+Each review is a separate artifact in the run directory. Do not append to existing files: The chronological sequence of files is the history.
 
 Once the review is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"review"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"review-saved"}`) on the same turn, before the next-steps prompt below. Emitting completion at the save point folds an abandoned session to a finished state.
 

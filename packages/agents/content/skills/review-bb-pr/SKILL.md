@@ -32,7 +32,7 @@ On success, return a record with the same shape as `review-gh-pr`'s output. `rev
 | `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source. Every source is `provenance: "remote"` (this path fetches live and never reads a local snapshot), so the review never renders a divergence note for it; `last_updated` is null when the platform does not expose it (e.g. Jira) |
 | `pr_metadata`    | object                                                                          | `{ number, url, head_oid, base_ref, title }`                                                                                                                                                                                                                                  |
 
-On HEAD mismatch, do not return — exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
+On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
 
 ## Bitbucket access
 
@@ -91,7 +91,7 @@ If `local_head` does not equal `source.commit.hash`, exit non-zero with:
 PR #{number}'s head commit is {short(source_commit_hash)} but HEAD is at {short(local_head)}. Check out the PR branch first (e.g., "git fetch origin pull-requests/{number}/from:pr-{number} && git checkout pr-{number}") or pull the latest commits on {source_branch_name}.
 ```
 
-Use the first 7 characters for short SHAs. **Fail closed** — never proceed with mismatched state.
+Use the first 7 characters for short SHAs. **Fail closed**: Never proceed with mismatched state.
 
 ### 4. Resolve the diff base
 
@@ -110,8 +110,8 @@ merge_base_sha=$(git merge-base HEAD {diff_base})
 
 **Bitbucket linked-issues divergence from GitHub.** Bitbucket Cloud's PR API does not expose a structured `closingIssuesReferences` field equivalent to GitHub's. (Bitbucket has a separate Issues product with linked-issue support, but its surface differs and is not always enabled per workspace.) Rather than introducing a partial linked-issues mechanism here, this delegate uses a simpler cascade:
 
-1. **`ticket_override`** — if non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
-2. **Parse PR body for issue references** — scan `description` for the first match of any of these patterns (case-insensitive):
+1. **`ticket_override`**: If non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
+2. **Parse PR body for issue references**: Scan `description` for the first match of any of these patterns (case-insensitive):
    - `closes #{n}`, `closes: #{n}`
    - `fixes #{n}`, `fixes: #{n}`
    - `resolves #{n}`, `resolves: #{n}`
@@ -120,7 +120,7 @@ merge_base_sha=$(git merge-base HEAD {diff_base})
 
    Fetch the matched issue per [ticket source resolution](../_data/ticket-source-resolution.md).
 
-3. **No ticket** — proceed with the PR description as the only spec source.
+3. **No ticket**: Proceed with the PR description as the only spec source.
 
 The divergence from `review-gh-pr` is intentional and documented here so future readers do not assume parity. If Bitbucket linked-issue parity is added later (via the Jira integration or a future Bitbucket API field), a new step fits between override and body parse without breaking the delegate interface.
 
@@ -133,7 +133,7 @@ Always include the PR description as a source:
   source_type: "pr_description",
   label: "pr_description: PR #{number}",
   content: <description>,
-  criteria: <optional — extracted from `## What`, `## Summary`, or an explicit acceptance-criteria heading>,
+  criteria: <optional: extracted from `## What`, `## Summary`, or an explicit acceptance-criteria heading>,
   provenance: "remote",
   last_updated: <PR `updated_on`>
 }
@@ -146,13 +146,13 @@ If a ticket was resolved in step 5, prepend it:
   source_type: "ticket",
   label: "ticket: {ticket_ref or short identifier}",
   content: <ticket body>,
-  criteria: <optional — extracted from the ticket structure>,
+  criteria: <optional: extracted from the ticket structure>,
   provenance: "remote",
   last_updated: <ticket last-updated when the platform exposes it (GitHub `updatedAt`); null when it does not (e.g. Jira)>
 }
 ```
 
-The list order is `[ticket?, pr_description]` — same as `review-gh-pr`.
+The list order is `[ticket?, pr_description]`, same as `review-gh-pr`.
 
 ### 7. Return the resolved-output record
 

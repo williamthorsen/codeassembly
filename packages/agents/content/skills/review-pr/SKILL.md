@@ -8,7 +8,7 @@ user-invocable: true
 
 Review a pull request on the appropriate platform. Detects the platform, dispatches to a delegate (`{skill:review-gh-pr}` or `{skill:review-bb-pr}`) that fetches PR metadata, verifies HEAD matches the PR's head commit, and resolves specification sources, then invokes the shared review process from `{skill:review-branch}` with the resolved inputs.
 
-This is a thin entry skill: The shared review logic — diff analysis, finding generation, "Specification compliance" rendering, artifact saving — is implemented in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
+This is a thin entry skill: The shared review logic (diff analysis, finding generation, "Specification compliance" rendering, artifact saving) is implemented in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
 
 ## Arguments
 
@@ -36,7 +36,7 @@ Apply the [platform resolution cascade](../_data/ticket-source-resolution.md#pla
 2. Check `git remote get-url origin` (`github.com` → GitHub; `bitbucket.org` → Bitbucket).
 3. Ask the user.
 
-If `<pr_id>` is a full URL, the URL host overrides the cascade — a `https://github.com/...` URL is GitHub regardless of preferences. Numeric `<pr_id>` inputs use the cascade-resolved platform.
+If `<pr_id>` is a full URL, the URL host overrides the cascade: A `https://github.com/...` URL is GitHub regardless of preferences. Numeric `<pr_id>` inputs use the cascade-resolved platform.
 
 ### 4. Select delegate
 
@@ -84,7 +84,7 @@ Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting a
 
 `review-branch`'s saving and next-steps logic apply unchanged. The review artifact is saved into the active run directory for the ticket (or a new `{timestamp}-interactive` run directory if none).
 
-Because this review covers a pull request, the next-steps Findings sub-block renders its PR variant — "Post findings on the PR" rather than the local-branch options. The Source-divergence sub-block likewise appears here whenever the PR description and ticket diverge, since both spec sources are present.
+Because this review covers a pull request, the next-steps Findings sub-block renders its PR variant: "Post findings on the PR" rather than the local-branch options. The Source-divergence sub-block likewise appears here whenever the PR description and ticket diverge, since both spec sources are present.
 
 ## Examples
 

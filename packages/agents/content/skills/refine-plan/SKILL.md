@@ -90,12 +90,12 @@ Evaluate the finding counts:
   ```
 
   <HARD-GATE>
-  Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed with no issues — use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}` — no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
+  Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed with no issues; use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}`; no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
   </HARD-GATE>
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): Skip user interaction. Proceed to step 5 with empty user answers.
 
-- **User questions present** (UserQuestions > 0): Emit `input.requested` (payload `{"prompt":"plan-review questions"}`) per [Lifecycle events](#lifecycle-events) before presenting the questions. Read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+- **User questions present** (UserQuestions > 0): Emit `input.requested` (payload `{"prompt":"plan-review questions"}`) per [Lifecycle events](#lifecycle-events) before presenting the questions. Read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
   ```
   The plan review identified {UserQuestions} question(s) that need your input:
@@ -110,7 +110,7 @@ Evaluate the finding counts:
      - ➖ {con}
 
   **X2: {title}**
-  {open-ended question text — describe what you want in free-form text}
+  {open-ended question text: describe what you want in free-form text}
 
   Please answer using the finding ID (e.g., "C1: Option 2; X2: ..."), or respond in free-form text.
   ```
@@ -156,7 +156,7 @@ Plan revision failed -- the plan-reviser did not complete successfully.
 
 Emit `skill.completed` (payload `{"outcome":"stopped: revision failed"}`) per [Lifecycle events](#lifecycle-events). Stop here. Do not attempt provenance update or report completion.
 
-Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
+Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter: `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
 
 The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The seal marker follows the closing `---`, as it does in every artifact:
 
@@ -164,9 +164,9 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
 
 The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
 
-This site uses `--format json` because the `provenance:` block is case-branched on the input artifact's existing provenance — see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
+This site uses `--format json` because the `provenance:` block is case-branched on the input artifact's existing provenance; see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too; do not emit `null` or empty strings.
 
 The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
 
@@ -214,7 +214,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    - `refinedBy`: `refine-plan`
    - `timestamp`: Script's value
    - `baseSha`: Script's value (omit when absent)
-   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that has no prior provenance, the stamp itself is always produced inside that interactive session.
+   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill: When it stamps a plan that has no prior provenance, the stamp itself is always produced inside that interactive session.
    - `iteration`: `2`
 4. Prepend the unified YAML frontmatter, then the seal marker, and write back:
 

@@ -1,6 +1,6 @@
 ---
 name: orchestrate-review
-description: Review-only workflow — run the full review cycle on existing branch changes
+description: 'Review-only workflow: run the full review cycle on existing branch changes'
 user-invocable: true
 ---
 
@@ -42,6 +42,6 @@ review-cycle (required)
 ## Process
 
 1. **Validate prerequisites**: Run `git diff --name-only {merge-base-sha}..HEAD` (where `{merge-base-sha}` is resolved from `--diff-base` or the project's default branch) and confirm output is non-empty. If empty, exit with error: "No changes to review on this branch relative to the diff base." Verify a task description is provided and non-empty.
-2. **Invoke the engine**: Invoke the `{skill:orchestrate}` skill with the pipeline specification above and pass through all arguments unchanged. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table above **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute. No additional structured format is needed beyond this table.
+2. **Invoke the engine**: Invoke the `{skill:orchestrate}` skill with the pipeline specification above and pass through all arguments unchanged. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table above **is** the pipeline specification: The engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute. No additional structured format is needed beyond this table.
 
 Phases absent from the pipeline are handled by the engine's standard disposition logic. The `{change-summary-path}` is resolved from the most recent `coder_change-summary.md` in the artifact directory if one exists from a prior run, or empty if this is the first run for this ticket (see the engine's context preparation section for resolution logic).
