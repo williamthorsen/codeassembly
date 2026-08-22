@@ -6,7 +6,7 @@ user-invocable: false
 
 # Merge GitHub pull request
 
-Internal delegate that merges a pull request on GitHub. Called by `merge-pr` with fully-resolved inputs — this skill does not resolve scope, type, strategy, or body; it only validates platform state and executes the merge.
+Internal delegate that merges a pull request on GitHub. Called by `merge-pr` with fully-resolved inputs: This skill does not resolve scope, type, strategy, or body; it only validates platform state and executes the merge.
 
 ## Delegate interface
 
@@ -47,7 +47,7 @@ Refuse the merge with a specific reason on any of the following. On each refusal
 | `mergeStateStatus` | `"BLOCKED"`                                                  | "PR #{n} is blocked (failing required checks or missing required reviews)." |
 | `reviewDecision`   | `"CHANGES_REQUESTED"` or `"REVIEW_REQUIRED"` (when required) | "PR #{n} has unresolved review requirements."                               |
 
-**Failure-mode policy:** When a required field is missing or null in the JSON response (older `gh` versions, repository configurations that don't expose the field), **fail closed**: Refuse with "Cannot determine merge state for PR #{n} — verify and merge manually." Never proceed when state is inconclusive.
+**Failure-mode policy:** When a required field is missing or null in the JSON response (older `gh` versions, repository configurations that don't expose the field), **fail closed**: Refuse with "Cannot determine merge state for PR #{n}; verify and merge manually." Never proceed when state is inconclusive.
 
 ### 3. Verify branch sync
 
@@ -61,7 +61,7 @@ local_branch=$(git rev-parse --abbrev-ref HEAD)
 
 Skip the sync check entirely when **either** of these is true:
 
-- `isCrossRepository` is `true` (PR is from a fork — `gh pr view --json isCrossRepository` returns `true` when the head repo differs from the base repo).
+- `isCrossRepository` is `true` (PR is from a fork: `gh pr view --json isCrossRepository` returns `true` when the head repo differs from the base repo).
 - `local_branch` does not equal `headRefName`.
 
 When neither skip condition applies, run the sync check:
@@ -75,7 +75,7 @@ If the counts differ from `0\t0`, refuse: "Local branch is out of sync with `ori
 
 ### 4. Write merge-commit body to scratch file
 
-Write `body` to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command.
+Write `body` to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command.
 
 ```
 path: $TMPDIR/gh-body-{timestamp}.md
@@ -91,13 +91,13 @@ Map `strategy` to the corresponding `gh pr merge` flag:
 | `merge`    | `--merge`  |
 | `rebase`   | `--rebase` |
 
-For `squash`, pass `--subject "{title}"` so the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject` — GitHub composes its own subject for those strategies.
+For `squash`, pass `--subject "{title}"` so the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject`; GitHub composes its own subject for those strategies.
 
-For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase` — rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` can make `gh` report an error, depending on its version, so omit it defensively.
+For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase`: Rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` can make `gh` report an error, depending on its version, so omit it defensively.
 
-For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none` — `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
+For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none`: `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
 
-Example invocation (shown for `strategy=squash`, `deletion_strategy=both` — `--delete-branch` is included **only** when `deletion_strategy == 'both'`):
+Example invocation (shown for `strategy=squash`, `deletion_strategy=both`; `--delete-branch` is included **only** when `deletion_strategy == 'both'`):
 
 ```bash
 gh pr merge {pr_number} \
@@ -111,9 +111,9 @@ If `gh pr merge` exits non-zero, print its stderr to the user and exit non-zero.
 
 ### 6. Delete remote branch (when deletion_strategy is `remote`)
 
-Skip this step entirely when `deletion_strategy` is not `remote` — `both` is handled by step 5's `--delete-branch`, and `none` requests no deletion.
+Skip this step entirely when `deletion_strategy` is not `remote`: `both` is handled by step 5's `--delete-branch`, and `none` requests no deletion.
 
-When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch — for same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it is the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
+When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch: For same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it is the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
 
 ```bash
 gh api -X DELETE "repos/{headRepositoryOwner.login}/{headRepository.name}/git/refs/heads/{headRefName}"

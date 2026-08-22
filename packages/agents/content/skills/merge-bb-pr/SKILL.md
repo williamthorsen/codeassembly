@@ -8,7 +8,7 @@ user-invocable: false
 
 Internal delegate that would merge a pull request on Bitbucket. Called by `merge-pr` with fully-resolved inputs.
 
-**Bitbucket merge execution is not yet implemented.** This skill is a stub — the delegate interface is declared so the orchestrator can dispatch consistently across platforms, but the actual merge is left to the user.
+**Bitbucket merge execution is not yet implemented.** This skill is a stub: The delegate interface is declared so the orchestrator can dispatch consistently across platforms, but the actual merge is left to the user.
 
 ## Delegate interface
 
@@ -42,7 +42,7 @@ Bitbucket merge is not yet implemented. Resolved values:
 Merge manually via the Bitbucket UI, then re-run with `merge-pr` if you want a merge artifact saved locally.
 ```
 
-Do not save a merge artifact — no merge has occurred. Exit with success.
+Do not save a merge artifact; no merge has occurred. Exit with success.
 
 ## Completion
 

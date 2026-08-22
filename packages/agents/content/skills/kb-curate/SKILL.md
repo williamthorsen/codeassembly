@@ -1,12 +1,12 @@
 ---
 name: kb-curate
-description: Audit a knowledge base for vault-wide hygiene — broken wikilinks, hardcoded paths, tag drift, stale verification, and supersede-chain defects — and optionally apply a curated safe set of fixes
+description: Audit a knowledge base for vault-wide hygiene (broken wikilinks, hardcoded paths, tag drift, stale verification, and supersede-chain defects) and optionally apply a curated safe set of fixes
 user-invocable: true
 ---
 
 # Curate a knowledge base
 
-Report vault-wide hygiene findings for a single knowledge base and, with `--apply`, perform only the two mechanically safe fixes. A bundled helper does the mechanical work — it resolves the KB, walks every note, runs the detection rules, and (under `--apply`) delegates tag canonicalization to `kb-edit` and rewrites stale path-qualified wikilinks inline. You do the judgment work — read the findings, decide which report-only items to act on, and run the named follow-up commands.
+Report vault-wide hygiene findings for a single knowledge base and, with `--apply`, perform only the two mechanically safe fixes. A bundled helper does the mechanical work: It resolves the KB, walks every note, runs the detection rules, and (under `--apply`) delegates tag canonicalization to `kb-edit` and rewrites stale path-qualified wikilinks inline. You do the judgment work: read the findings, decide which report-only items to act on, and run the named follow-up commands.
 
 The split is deliberate: Detection is exhaustive and mechanical; remediation is conservative. The helper auto-fixes only what is mechanically safe and leaves everything else as a report-only finding that names the operator's next step.
 
@@ -26,14 +26,14 @@ A value-bearing flag accepts both `--kb coding` and `--kb=coding`. With no flags
 
 ### KB selection
 
-The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
+The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB: Wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
 The store's `.kb/config.yaml` decides which notes are curated: By default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `tag-aliases.yaml`, or `taxonomy.yaml` fails the run with `invalid-config` rather than being silently ignored.
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
-- **Sibling `kb-edit.mjs`** — required only for `--apply` tag canonicalization. The helper resolves it next to its own bundle; if the skills are deployed without co-location, tag fixes fail with a clear message while the read-only report and the wikilink sweep are unaffected.
+- **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
+- **Sibling `kb-edit.mjs`**: Required only for `--apply` tag canonicalization. The helper resolves it next to its own bundle; if the skills are deployed without co-location, tag fixes fail with a clear message while the read-only report and the wikilink sweep are unaffected.
 
 ## Detection categories
 
@@ -56,14 +56,14 @@ The helper reports findings across six categories. Each finding has a rule code 
 
 The three `taxonomy.*` rules describe the vault rather than a note, so each is reported once against `.kb/taxonomy.yaml` with the domain named in the message. They are self-configuring in the same way `verification.unmarked` is: The helper reports none of them for a vault whose `.kb/taxonomy.yaml` is absent, or present but declaring nothing.
 
-`verification.unmarked` is self-configuring: It is reported only when the vault actually uses verification — that is, when at least one note has a well-formed `last-verified` value. In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so the helper reports no unmarked findings for a vault whose only verification-ish value is unparseable. `verification.stale` is unaffected: A note with a stale `last-verified` is always flagged.
+`verification.unmarked` is self-configuring: It is reported only when the vault actually uses verification (that is, when at least one note has a well-formed `last-verified` value). In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so the helper reports no unmarked findings for a vault whose only verification-ish value is unparseable. `verification.stale` is unaffected: A note with a stale `last-verified` is always flagged.
 
 ## Remediation under `--apply`
 
 Only two fixes are applied; everything else stays report-only.
 
-- **Tag canonicalization** — for each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
-- **Path-only wikilink rewrites** — a cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, produces no finding, and is left untouched, so remediation never changes a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
+- **Tag canonicalization**: For each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
+- **Path-only wikilink rewrites**: A cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, produces no finding, and is left untouched, so remediation never changes a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
 
 Each fix returns a per-finding result reporting `ok: true/false` and the operation invoked. A single fix failure does not abort the run.
 
