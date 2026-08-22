@@ -6,13 +6,13 @@ user-invocable: true
 
 # Update project guidance
 
-Generate or refresh the repository-root `AGENTS.md` — the repo-specific guidance file that gives AI agents the context they need to work effectively in the project. It is at the root because that is the project slot both harnesses load: Rovo Dev reads it unaided, and Claude Code loads it through one include.
+Generate or refresh the repository-root `AGENTS.md`, the repo-specific guidance file that gives AI agents the context they need to work effectively in the project. It is at the root because that is the project slot both harnesses load: Rovo Dev reads it unaided, and Claude Code loads it through one include.
 
 **Announce at start:** "Using update-project-guidance to author or refresh AGENTS.md."
 
 ## Overview
 
-Explore the codebase, classify each finding by scope and tier, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project — and nothing more.
+Explore the codebase, classify each finding by scope and tier, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project, and nothing more.
 
 **Two paths.** Where no guidance content exists yet, the **authoring path** drafts a file from the skeleton. Where it does, the **refresh path** reconciles against what is already there: It audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
 
@@ -26,49 +26,49 @@ Gather project information from these sources (skip any that don't exist).
 
 **General baseline:**
 
-- `~/.agents/AGENTS.md` (global, not in the repo) — read first; this defines what's already covered and must not be duplicated
+- `~/.agents/AGENTS.md` (global, not in the repo): Read first; this defines what's already covered and must not be duplicated
 
 **Existing guidance (current state):**
 
-- `AGENTS.md` (repo root) — read it in full; it is the refresh path's baseline, not background reading
+- `AGENTS.md` (repo root): Read it in full; it is the refresh path's baseline, not background reading
 
 **Legacy guidance files (migrate or flag):**
 
-- `.agents/PROJECT.md` — the previous location for this file; content should migrate to the repo-root `AGENTS.md`
-- `.agents/AGENTS.md` (repo, not the global `~/.agents/AGENTS.md`) — an earlier convention still; content should migrate the same way
+- `.agents/PROJECT.md`: the previous location for this file; content should migrate to the repo-root `AGENTS.md`
+- `.agents/AGENTS.md` (repo, not the global `~/.agents/AGENTS.md`): an earlier convention still; content should migrate the same way
 
 **Project metadata:**
 
-- `package.json` (root) — name, workspaces, scripts, engines, type
-- `package.json` (each workspace package) — name, description, key dependencies
-- `pnpm-workspace.yaml` / `lerna.json` / similar — monorepo structure
+- `package.json` (root): name, workspaces, scripts, engines, type
+- `package.json` (each workspace package): name, description, key dependencies
+- `pnpm-workspace.yaml` / `lerna.json` / similar: monorepo structure
 
 **Configuration:**
 
-- `tsconfig.json` — compiler strictness, module system, paths, target
-- Build configs — Vite, esbuild, webpack, Rollup, etc.
-- Test configs — Vitest, Jest, Playwright, etc.
-- `.editorconfig`, `.prettierrc*`, `eslint.config*` — formatting and quality rules
-- CI configs — `.github/workflows/`, `.gitlab-ci.yml`, etc.
+- `tsconfig.json`: compiler strictness, module system, paths, target
+- Build configs: Vite, esbuild, webpack, Rollup, etc.
+- Test configs: Vitest, Jest, Playwright, etc.
+- `.editorconfig`, `.prettierrc*`, `eslint.config*`: formatting and quality rules
+- CI configs: `.github/workflows/`, `.gitlab-ci.yml`, etc.
 
 **Documentation:**
 
-- `README.md` — project description, setup instructions
-- `docs/` — architecture docs, conventions, guides
+- `README.md`: project description, setup instructions
+- `docs/`: architecture docs, conventions, guides
 
-**Discovery should be pragmatic, not exhaustive.** Read root metadata, workspace config, and package-level `package.json` files for names and descriptions. Don't deep-dive into every package's internals. For monorepos, a concise description of each package (name, purpose, key technology) is enough — package-specific details belong at the package level.
+**Discovery should be pragmatic, not exhaustive.** Read root metadata, workspace config, and package-level `package.json` files for names and descriptions. Don't deep-dive into every package's internals. For monorepos, a concise description of each package (name, purpose, key technology) is enough; package-specific details belong at the package level.
 
 Collect findings as a flat list before moving to classification.
 
 #### Resolve the baseline and select the path
 
-The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: Take the repo-root `AGENTS.md` when it states substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root — a title and a pointer — does not take precedence over a mature legacy file, because a pointer is not a claim.
+The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: Take the repo-root `AGENTS.md` when it states substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root (a title and a pointer) does not take precedence over a mature legacy file, because a pointer is not a claim.
 
 Where both legacy files have content, `.agents/PROJECT.md` is the baseline as the later convention, and the other is added to the gap-scan sources so its content appears in the change list rather than being archived unread.
 
-Resolve the baseline in memory. A legacy file is not moved here — its content becomes the baseline and moves to the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
+Resolve the baseline in memory. A legacy file is not moved here; its content becomes the baseline and moves to the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
 
-The path follows from what was found. With a baseline, take the **refresh path**. With none — no guidance file, or nothing but stubs — take the **authoring path**, where there is nothing to preserve and a bounded gap scan would produce almost nothing.
+The path follows from what was found. With a baseline, take the **refresh path**. With none (no guidance file, or nothing but stubs), take the **authoring path**, where there is nothing to preserve and a bounded gap scan would produce almost nothing.
 
 State which path was selected, and why, before proceeding.
 
@@ -82,15 +82,15 @@ For each finding, assign one of these classes:
 | **Reference**       | The owning package's README, or `docs/` | Applies only to this repo, but an agent needs it occasionally           |
 | **Already covered** | Omit                                    | Already stated in `~/.agents/AGENTS.md`, or printed by the tool itself  |
 | **General**         | Recommend for `~/.agents/AGENTS.md`     | Applies across repos but not yet in general guidance                    |
-| **Ambiguous**       | Ask the user                            | Could go either way — ask one question at a time                        |
+| **Ambiguous**       | Ask the user                            | Could go either way; ask one question at a time                         |
 
 **Rules:**
 
 - Two axes decide the destination. **Scope** (general vs project-specific) separates `~/.agents/AGENTS.md` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` states from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
 - A finding belongs in the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch goes stale silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
-- When unsure about scope, ask the user — one question at a time, prefer multiple choice.
-  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+- When unsure about scope, ask the user: one question at a time, prefer multiple choice.
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 - Content that is obvious from reading the code (e.g., "this project uses TypeScript") adds no value. Include only what would save an agent from a wrong assumption or a slow discovery.
 
 <!-- include: ../_partials/action-items.md / -->
@@ -99,7 +99,7 @@ For each finding, assign one of these classes:
 
 Two constraints apply to the repo-root `AGENTS.md`, whichever path produced it:
 
-- **No path into a harness-owned directory**, home-anchored or repository-local. One body of text serves every harness — Rovo Dev reads the file directly, Claude Code through an include — so wiring belonging to one of them is a wrong turn for every other reader. State the fact without the harness path, or record it in that harness's own guidance file.
+- **No path into a harness-owned directory**, home-anchored or repository-local. One body of text serves every harness (Rovo Dev reads the file directly, Claude Code through an include), so wiring belonging to one of them is a wrong turn for every other reader. State the fact without the harness path, or record it in that harness's own guidance file.
 - **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file, so a region introduced by hand disappears on the next run with no warning. The sweep matches complete open/close pairs, which leaves an unpaired marker to linger instead, so the rule covers the marker rather than the region.
 
 #### 3a. Ensure prerequisites
@@ -126,7 +126,7 @@ Generate `AGENTS.md` using the standard structure below. Include only sections t
 
 ## Project structure
 
-{One clause per package: what it owns, plus a pointer to its own README. Never a directory tree — `ls` prints that, and a transcribed one goes stale.}
+{One clause per package: what it owns, plus a pointer to its own README. Never a directory tree; `ls` prints that, and a transcribed one goes stale.}
 
 ## Commands
 
@@ -161,16 +161,16 @@ Scan the baseline for a harness-scoped path and for any `<!-- rulebook:` marker.
 
 Two tiers, because a mature file holds more claims than one exhaustive pass can cover. A 35-line file decomposes into dozens of independently checkable assertions, and one at the line budget into several hundred.
 
-- **Tier 1 — every checkable token, exhaustively.** Paths, filenames, command strings, counts, package and symbol names. This is where drift appears: a directory listing that has gained an entry, a count off by two, a tool named one hop from what runs.
-- **Tier 2 — narrative claims, in the sections the gap-scan window touched.** Unquantified prose is audited where the repo has moved under it, not everywhere.
+- **Tier 1: every checkable token, exhaustively.** Paths, filenames, command strings, counts, package and symbol names. This is where drift appears: a directory listing that has gained an entry, a count off by two, a tool named one hop from what runs.
+- **Tier 2: narrative claims, in the sections the gap-scan window touched.** Unquantified prose is audited where the repo has moved under it, not everywhere.
 
 Check the claim, not the section. A stale listing looks entirely plausible and is wrong only once the directory is listed, so recognizing a section's shape is the signal to slow down rather than to move on.
 
-Record every audited claim as a ledger row — claim, verdict, evidence:
+Record every audited claim as a ledger row (claim, verdict, evidence):
 
-- `holds` — confirmed. **Requires an evidence token**: the command run, or the `path:line` read.
-- `drifted` — no longer true, stating what is true now.
-- `unchecked` — not verified, stating why.
+- `holds`: confirmed. **Requires an evidence token**: the command run, or the `path:line` read.
+- `drifted`: no longer true, stating what is true now.
+- `unchecked`: not verified, stating why.
 
 A `holds` row without an evidence token is not a permitted state. The audit is otherwise unfalsifiable: A claim that holds produces no edit, so a run that checked nothing emits the same change list as one that checked everything.
 
@@ -182,11 +182,11 @@ Re-run the Phase 2 classification only on the sections the window touched, plus 
 
 Bounded, because an unbounded "what else should this file say?" is a redraft in disguise.
 
-**The window extends back to whichever is earlier**: the last commit touching `AGENTS.md`, or twenty commits. Twenty is a floor, never a ceiling — a drive-by edit that touched the file two commits ago leaves the window at twenty, not at two. Add `git status --porcelain`, since the common case is an author invoking this mid-session with uncommitted work.
+**The window extends back to whichever is earlier**: the last commit touching `AGENTS.md`, or twenty commits. Twenty is a floor, never a ceiling: A drive-by edit that touched the file two commits ago leaves the window at twenty, not at two. Add `git status --porcelain`, since the common case is an author invoking this mid-session with uncommitted work.
 
 Every `git log` here names its own `--format`. A global or repository `format.pretty` rewrites the output, and a naive parse then reads mangled text with no sign that anything went wrong.
 
-Where git cannot answer — no repository, or the file untracked — state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
+Where git cannot answer (no repository, or the file untracked), state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
 
 Then one unbounded check against the skeleton: Is an ambient category missing altogether, such as a required bootstrap, a dependency ordering, or a tool that behaves surprisingly? It is the only check for a fact that was always worth stating and never captured.
 
@@ -218,7 +218,7 @@ Ledger
 
 | Claim                                      | Verdict   | Evidence                                            |
 | ------------------------------------------ | --------- | --------------------------------------------------- |
-| `.config/` holds `vitest/` and `eslint/`   | drifted   | `ls .config/` — also holds `readyup.config.ts`      |
+| `.config/` holds `vitest/` and `eslint/`   | drifted   | `ls .config/`: also holds `readyup.config.ts`       |
 | The MCP server exposes five tools          | holds     | `rg -c registerTool packages/mcp/src/server.ts` → 5 |
 | `pnpm run bootstrap` builds every package  | holds     | `package.json:14`                                   |
 | The compile cache is keyed on inputs alone | unchecked | upstream behavior, not verifiable from this repo    |
@@ -227,11 +227,11 @@ Not audited: the Code style section, which the window did not touch.
 
 Change list
 
-1. repair — the `.config/` listing
+1. repair: the `.config/` listing
    old: Configuration lives in `.config/vitest/` and `.config/eslint/`.
    new: Configuration lives in `.config/`, holding `vitest/`, `eslint/`, and `readyup.config.ts`.
-2. relocate — Commands moves to `packages/agents/README.md` behind a pointer; the addition below puts the file two lines over budget.
-3. add — Gotchas: `rdy compile` regenerates `kits/default.js`, so an edit to the `.js` is lost on the next build.
+2. relocate: Commands moves to `packages/agents/README.md` behind a pointer; the addition below puts the file two lines over budget.
+3. add: Gotchas: `rdy compile` regenerates `kits/default.js`, so an edit to the `.js` is lost on the next build.
 ```
 
 <HARD-GATE>
@@ -246,7 +246,7 @@ After the user approves:
 2. Ensure `.claude/CLAUDE.md` points to it through a raw include. Claude Code resolves a relative include against the directory holding the file that contains it, not against the repository root, so an include written in `.claude/CLAUDE.md` must point up out of `.claude/` to the root: `@../AGENTS.md`. Derive the include from where the importing file is rather than copying a literal, and confirm the path it resolves to is the guidance file you just wrote.
    - If `.claude/CLAUDE.md` does not exist, create it with that include as its content.
    - If it exists and contains a prose instruction referencing the guidance file (e.g., `Read @../AGENTS.md, which provides...`), replace it with the raw include.
-   - If it exists with an include that resolves anywhere else — a stale `@.agents/PROJECT.md`, or any path that does not point up out of `.claude/` — repoint it.
+   - If it exists with an include that resolves anywhere else (a stale `@.agents/PROJECT.md`, or any path that does not point up out of `.claude/`), repoint it.
    - If it exists with other content that points to no guidance file, add the include on its own line.
    - If it exists with content that has special instructions beyond a simple include, present a recommendation to the user and wait for their decision before modifying.
 
@@ -264,7 +264,7 @@ If any findings were classified as **general** (cross-repo) in Phase 2:
 
 1. Present them as a bulleted list after the main file is written.
 2. Ask the user whether to integrate them into `~/.agents/AGENTS.md`.
-3. If approved, read `~/.agents/AGENTS.md`, identify the appropriate existing section for each recommendation, and integrate the new content in the right place — do not blindly append. If no suitable section exists, propose a new section name before adding it.
+3. If approved, read `~/.agents/AGENTS.md`, identify the appropriate existing section for each recommendation, and integrate the new content in the right place; do not blindly append. If no suitable section exists, propose a new section name before adding it.
 
 #### 3g. Run the guidance checklist
 
@@ -284,16 +284,16 @@ Before presenting the draft or the change list, verify:
 - [ ] No line duplicates content from `~/.agents/AGENTS.md`
 - [ ] No section merely restates what's obvious from the code
 - [ ] Commands listed are ones an agent would actually need (not exhaustive npm script listings)
-- [ ] Each command group states where to run it (repo root, package directory, etc.) — don't assume the agent knows
+- [ ] Each command group states where to run it (repo root, package directory, etc.); don't assume the agent knows
 - [ ] Architecture section focuses on decisions that affect how to make changes, not documentation for its own sake
-- [ ] Gotchas are genuinely non-obvious — not things an agent would discover from a type error or linter warning
+- [ ] Gotchas are genuinely non-obvious, not things an agent would discover from a type error or linter warning
 
 ## Key principles
 
-- **Conciseness over completeness** — a shorter file that covers the essentials is better than a comprehensive one that wastes context window
-- **Scope-aware** — read general guidance first, never duplicate it
-- **Interactive** — ask when classification is unclear, but don't overwhelm with questions
-- **Portable** — this skill works in any repo that follows the repo-root `AGENTS.md` convention
-- **Honest about uncertainty** — if something might belong in general guidance, say so rather than silently including it
+- **Conciseness over completeness**: A shorter file that covers the essentials is better than a comprehensive one that wastes context window
+- **Scope-aware**: Read general guidance first, never duplicate it
+- **Interactive**: Ask when classification is unclear, but don't overwhelm with questions
+- **Portable**: This skill works in any repo that follows the repo-root `AGENTS.md` convention
+- **Honest about uncertainty**: If something might belong in general guidance, say so rather than silently including it
 
 <!-- include: ../_partials/option-format.md / -->
