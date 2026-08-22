@@ -8,7 +8,7 @@ user-invocable: true
 
 Route every `feedback`-type agent memory on this machine to its proper home. A bundled helper does the mechanical work: It enumerates feedback memories across every memory store, and executes deletions with `MEMORY.md` reconciliation. You do the judgment work: Classify each memory, dedup capture candidates against the knowledge base, and compose each capture.
 
-A **memory store** is one project's memory directory under `~/.claude/projects/`. It is not a **KB store**, the `~/.agents/kb.yaml` registry entry that `capture-event` and the `kb-*` skills select with `--store`. This procedure uses both: The helper's `--memory-store` names the origin (step 1), and `capture-event`'s `--store` names the destination (step 5).
+A **memory store** is one project's memory directory under `~/.claude/projects/`. It is not a **KB store** (the `~/.agents/kb.yaml` registry entry that `capture-event` and the `kb-*` skills select with `--store`). This procedure uses both: The helper's `--memory-store` names the origin (step 1), and `capture-event`'s `--store` names the destination (step 5).
 
 The three destinations:
 
