@@ -13,7 +13,7 @@ Evaluate code review findings with technical rigor and produce a change summary 
 
 ## Purpose
 
-This skill runs between receiving a code review and implementing fixes. The agent evaluates each finding against the actual codebase, decides what to accept or push back on, and documents that reasoning — all embedded in a `coder_change-summary` artifact alongside any code changes made.
+This skill runs between receiving a code review and implementing fixes. The agent evaluates each finding against the actual codebase, decides what to accept or push back on, and documents that reasoning (all embedded in a `coder_change-summary` artifact alongside any code changes made).
 
 ## Arguments
 
@@ -82,11 +82,11 @@ For each finding, apply technical rigor:
 <HARD-GATE>
 **Anti-sycophancy rules for review response:**
 
-1. **Verify before accepting.** Read the actual code referenced in each finding. Do not accept a finding at face value. "The reviewer may have a point" is not rigorous — either the finding is valid or it isn't.
+1. **Verify before accepting.** Read the actual code referenced in each finding. Do not accept a finding at face value. "The reviewer may have a point" is not rigorous: Either the finding is valid or it isn't.
 2. **Check correctness.** Is the reviewer's claim technically accurate for this specific codebase and context?
 3. **Treat hedging language as a signal.** When a recommendation relies on "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
 4. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
-5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits — not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem the original placement created.
+5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits, not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem the original placement created.
 6. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
 7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. There is no `ACCEPT (follow-up)`: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
    </HARD-GATE>
@@ -97,7 +97,7 @@ Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](
 
 ### Bad → Good: Hedged move with doctrinal conflict
 
-**Review recommendation:** "Move `validateSessionToken` from `auth/validators.ts` into `shared/utils.ts`. It plausibly belongs in a general utility module — there's no current evidence the function needs auth-specific context."
+**Review recommendation:** "Move `validateSessionToken` from `auth/validators.ts` into `shared/utils.ts`. It plausibly belongs in a general utility module; there's no current evidence the function needs auth-specific context."
 
 **Bad: Uncritical acceptance:**
 
@@ -107,7 +107,7 @@ The agent read the function's signature and never read the destination's doctrin
 
 **Good: Doctrine-grounded REJECT:**
 
-> R1: REJECT. The helpers already in `shared/utils.ts` (`debounce`, `formatBytes`, `clamp`) all share a no-domain-knowledge shape; the file header confirms the invariant with `// Pure, framework-agnostic helpers with no domain knowledge.`. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate that invariant, whether read from the surrounding code or from the header. A read of the destination's actual doctrine contradicts the reviewer's "plausibly belongs" framing. The function stays in `auth/validators.ts`.
+> R1: REJECT. The helpers already in `shared/utils.ts` (`debounce`, `formatBytes`, `clamp`) all share a no-domain-knowledge shape; the file header confirms the invariant with `// Pure, framework-agnostic helpers with no domain knowledge.`. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema; both violate that invariant, whether read from the surrounding code or from the header. A read of the destination's actual doctrine contradicts the reviewer's "plausibly belongs" framing. The function stays in `auth/validators.ts`.
 
 ### Bad → Good: Structural move with destination doctrine satisfied
 
@@ -121,7 +121,7 @@ The agent invoked the default posture without reading the destination's doctrine
 
 **Good: Doctrine-grounded ACCEPT:**
 
-> R1: ACCEPT. `config/limits.ts` is the documented home for numeric operational ceilings; its existing members (`MAX_REQUEST_BYTES`, `MAX_CONNECTION_POOL_SIZE`) confirm the category, and `MAX_RETRY_COUNT` shares that exact shape. The constant is currently referenced from three modules that each re-import it from `network/http-client.ts` — a location problem the original placement created. The destination's stated doctrine accommodates the rule, and the move resolves the duplication; both conditions for the carve-out are met.
+> R1: ACCEPT. `config/limits.ts` is the documented home for numeric operational ceilings; its existing members (`MAX_REQUEST_BYTES`, `MAX_CONNECTION_POOL_SIZE`) confirm the category, and `MAX_RETRY_COUNT` shares that exact shape. The constant is currently referenced from three modules that each re-import it from `network/http-client.ts`, a location problem the original placement created. The destination's stated doctrine accommodates the rule, and the move resolves the duplication; both conditions for the carve-out are met.
 
 ### Bad → Good: Deferral-framed recommendation, change does not belong
 
@@ -139,7 +139,7 @@ The agent took the disposition from the reviewer's handling suggestion and never
 
 ### Bad → Good: Deferral-framed recommendation, change belongs (timing decided separately)
 
-**Review recommendation:** "T1: `createApiKey` doesn't validate that `scopes` is a non-empty array. Consider a follow-up to add a guard. No action this PR — out of scope for the storage refactor."
+**Review recommendation:** "T1: `createApiKey` doesn't validate that `scopes` is a non-empty array. Consider a follow-up to add a guard. No action this PR, out of scope for the storage refactor."
 
 **Bad: Collapses substance and timing:**
 
@@ -165,7 +165,7 @@ Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, wh
 
 ```ts
 // Per F3, the reviewer worried a future refactor could move the toggle to a parent that
-// always renders, silently violating acceptance criterion 4 — so pin it here.
+// always renders, silently violating acceptance criterion 4, so pin it here.
 expect(query).not.toHaveProperty('directReportsOnly', true);
 ```
 
@@ -180,9 +180,9 @@ expect(query).not.toHaveProperty('directReportsOnly', true);
 
 These dispositions express **pre-implementation intent**:
 
-- **ACCEPT** — finding is valid, will implement as recommended
-- **REJECT** — technically incorrect or intentional choice (must include justification)
-- **PARTIAL** — some aspects accepted, others pushed back (must specify which)
+- **ACCEPT**: Finding is valid, will implement as recommended
+- **REJECT**: Technically incorrect or intentional choice (must include justification)
+- **PARTIAL**: Some aspects accepted, others pushed back (must specify which)
 
 This is distinct from the **post-implementation** vocabulary used by the orchestrated-coder (`FIXED`/`NOT_FIXED`/`ALREADY_RESOLVED`), which reports outcomes after changes are made.
 
@@ -194,7 +194,7 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 | -------- | ------------------------------------------------------------ | -------------------------------------------------------- |
 | Coder    | Reviewer/overseer findings on the code                       | Own changes (self-review)                                |
 | Reviewer | Own prior findings (revise/withdraw in light of new context) | Coder rejections (re-raise as escalated finding instead) |
-| Overseer | Any finding (arbiter authority)                              | —                                                        |
+| Overseer | Any finding (arbiter authority)                              | n/a                                                      |
 
 ## Output format
 
@@ -275,10 +275,10 @@ The body following the frontmatter has this structure:
 - `Action taken` and `## Changes made` report the diff, read back per [Diff audit](#diff-audit). A disposition asserting that something was left unchanged is a claim about the diff too, and requires the same evidence as one asserting that something changed.
 - Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
-- File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) — use repo-relative paths
-- Legacy findings (IDs with `-L` suffix) use only ACCEPT (acknowledge the observation) or REJECT (disagree with the observation) — PARTIAL does not apply
+- File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references); use repo-relative paths
+- Legacy findings (IDs with `-L` suffix) use only ACCEPT (acknowledge the observation) or REJECT (disagree with the observation); PARTIAL does not apply
 - If the review contains no findings, produce a change summary noting that no findings require disposition and omit the Dispositions section
-- A change summary with dispositions only (no code changes) is valid — this is how the coder can close a run by dispositioning all remaining findings
+- A change summary with dispositions only (no code changes) is valid: This is how the coder can close a run by dispositioning all remaining findings
 
 ## Saving
 
@@ -295,7 +295,7 @@ The response is saved as a run artifact: `{timestamp}_coder_change-summary.md`
 1. Save into the same run directory where the review was found
 2. The timestamp should reflect when this response was produced
 
-Dispositions are embedded in this document — no separate disposition artifact.
+Dispositions are embedded in this document: no separate disposition artifact.
 
 Once the change summary is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"change-summary"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"response-saved"}`).
 

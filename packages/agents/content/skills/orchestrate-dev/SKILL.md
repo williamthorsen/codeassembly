@@ -1,6 +1,6 @@
 ---
 name: orchestrate-dev
-description: Full development workflow — architecture, planning, implementation, and review
+description: 'Full development workflow: architecture, planning, implementation, and review'
 user-invocable: true
 ---
 
@@ -37,7 +37,7 @@ Effort defines a ceiling on permitted investment. The orchestrator right-sizes t
 | architecture       | optional | optional           | optional |
 | planning           | optional | optional           | optional |
 
-The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
+The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion: Even at high effort, a one-line fix does not need architectural review.
 
 ### Effort x findings
 
@@ -90,10 +90,10 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 ## Process
 
 1. **Resolve effort**: If `--effort` is provided, look up the effort preset from the table above. If `--mode` is provided without `--effort`, map to effort level (`vibe` → `low`, `lite` → `medium`, `strict` → `high`). Default: `medium`.
-2. **Apply overrides**: For each setting, apply the resolution cascade — explicit CLI arguments override effort presets, which override preferences, which override engine defaults.
+2. **Apply overrides**: For each setting, apply the resolution cascade. Explicit CLI arguments override effort presets, which override preferences, which override engine defaults.
 3. **Resolve aspect reviewers**: Based on the effort preset's `aspect-reviewers` setting (`disabled`, `auto`, or `always`), set the `orchestration.aspect_reviewers` configuration. `disabled` sets all aspects to `false`. `always` sets all aspects to `true`. `auto` omits the configuration (engine uses default file-pattern activation).
 4. **Build pipeline**: Apply any `--architecture` or `--planning` overrides to the pipeline table. If not overridden, use `optional` for both.
-5. **Invoke the engine**: Invoke the `{skill:orchestrate}` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) directly.
+5. **Invoke the engine**: Invoke the `{skill:orchestrate}` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification: The engine reads the table entries (phase name + requirement level) directly.
 
 ## After the run
 

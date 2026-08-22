@@ -6,7 +6,7 @@ user-invocable: false
 
 # Review criteria
 
-Evaluation criteria for code review. Apply proportionally — match depth to risk.
+Evaluation criteria for code review. Apply proportionally: Match depth to risk.
 
 ## Examine
 
@@ -21,7 +21,7 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Skip
 
-- Lint or formatting issues (automated tools handle these) — e.g., unused imports, missing semicolons, import order, whitespace. Do not create findings for issues that CI linters will catch; at most mention them in passing prose.
+- Lint or formatting issues (automated tools handle these), e.g., unused imports, missing semicolons, import order, whitespace. Do not create findings for issues that CI linters will catch; at most mention them in passing prose.
 - Author-introduced suppression directives are in scope. A new lint/type suppression added in this change defaults to a Warning (⚠️) unless its rationale demonstrates a legitimate carve-out (see `anti-patterns`). Pre-existing suppressions in unchanged code remain Legacy.
 - Pre-existing issues in unchanged code (categorize as Legacy if noted)
 
@@ -34,11 +34,11 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Distinguish author work from legacy
 
-Focus findings (F/W/T) only on code authored in the current change — observations in pre-existing code belong in Legacy (suffix `-L`).
+Focus findings (F/W/T) only on code authored in the current change; observations in pre-existing code belong in Legacy (suffix `-L`).
 
 ## Finding scheme
 
-Findings use the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) — see that section for the table, category criteria, criticality mapping, and re-review escalation chain.
+Findings use the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix); see that section for the table, category criteria, criticality mapping, and re-review escalation chain.
 
 ## Actionability gate
 
@@ -46,7 +46,7 @@ Before emitting any F/W/T/R/S finding, confirm it gives the author a concrete de
 
 ## Insight gate
 
-Reviewers may emit insights (`I{n}`) — knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge a future reader is materially worse off without, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
+Reviewers may emit insights (`I{n}`), knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge a future reader is materially worse off without, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
 
 ## Finding concision
 
@@ -54,7 +54,7 @@ Compose each finding at the tight altitude ([concision principle](../_data/conci
 
 ## Comment findings
 
-Comment text you propose for a source file — a replacement doc comment, a suggested inline comment — is a source comment, and the full [comment discipline](#comment-discipline) audit applies to it. Prefer a short `todo:` naming what is stale over a rewritten comment, and never copy an example value out of the source.
+Comment text you propose for a source file (a replacement doc comment, a suggested inline comment) is a source comment, and the full [comment discipline](#comment-discipline) audit applies to it. Prefer a short `todo:` naming what is stale over a rewritten comment, and never copy an example value out of the source.
 
 "Add a comment explaining X" is a finding only when X is a constraint the code cannot show. Do not request a comment the discipline would delete.
 

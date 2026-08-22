@@ -19,9 +19,9 @@ Generate HR analytics reports from employee data provided as CSV paste or file p
 
 ## Report types
 
-- **Headcount:** Current org snapshot — by team, location, level, tenure
-- **Attrition:** Turnover analysis — voluntary/involuntary, by team, trends over time
-- **Diversity:** Representation metrics — by level, team, pipeline, promotion rates
+- **Headcount:** Current org snapshot (by team, location, level, tenure)
+- **Attrition:** Turnover analysis (voluntary/involuntary, by team, trends over time)
+- **Diversity:** Representation metrics (by level, team, pipeline, promotion rates)
 - **Org health:** Span of control, management layers, team sizes, flight risk indicators
 
 ## Process
@@ -38,10 +38,10 @@ If `--report-type` is omitted, present the four report types and ask the user to
 >
 > Which report type(s) would you like? Select one or more.
 >
-> 1. Headcount — org snapshot by team, location, level, tenure
-> 2. Attrition — turnover analysis by team, trends
-> 3. Diversity — representation metrics by level, team, pipeline
-> 4. Org health — span of control, layers, team sizes, flight risk
+> 1. Headcount: Org snapshot by team, location, level, tenure
+> 2. Attrition: Turnover analysis by team, trends
+> 3. Diversity: Representation metrics by level, team, pipeline
+> 4. Org health: Span of control, layers, team sizes, flight risk
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -146,7 +146,7 @@ For each requested report type, check which analyses are possible given the avai
 After assessing coverage, inform the user what will and won't be included:
 
 - **Available analyses:** Headcount by department, by level, by tenure
-- **Not available (missing fields):** Headcount by location — add a `location` column to enable this
+- **Not available (missing fields):** Headcount by location; add a `location` column to enable this
 
 ### 6. Analyze and generate report
 
@@ -157,7 +157,7 @@ For each requested report type, compute the relevant metrics from the available 
 1. Understand the underlying business question the report type addresses
 2. Compute counts, rates, distributions, and trends as appropriate
 3. Flag outliers and notable patterns
-4. Provide context — a 15% attrition rate means different things in different industries
+4. Provide context: A 15% attrition rate means different things in different industries
 
 **Handling limitations:**
 
@@ -167,10 +167,10 @@ For each requested report type, compute the relevant metrics from the available 
 
 ### 7. Present output
 
-Use the following template for each report type. If multiple report types are requested, use a top-level `# People report — {Date}` header with each type as a `##` section beneath it. For a single report type, use the `##` header directly.
+Use the following template for each report type. If multiple report types are requested, use a top-level `# People report ({Date})` header with each type as a `##` section beneath it. For a single report type, use the `##` header directly.
 
 ```markdown
-## People report: {Type} — {Date}
+## People report: {Type} ({Date})
 
 ### Executive summary
 
@@ -201,8 +201,8 @@ Use the following template for each report type. If multiple report types are re
 
 ## Key principles
 
-- **Adaptive, not rigid** — work with whatever data is available; never refuse to run because of missing optional fields
-- **Confirm ambiguity** — when column mappings are unclear, ask rather than assume
-- **Context over numbers** — raw metrics without interpretation are not useful; always explain what the numbers mean
-- **Note limitations** — be transparent about what the data can and cannot support
-- **No external calls** — all analysis is performed on user-provided data; there are no HRIS or messaging integrations
+- **Adaptive, not rigid**: Work with whatever data is available; never refuse to run because of missing optional fields
+- **Confirm ambiguity**: When column mappings are unclear, ask rather than assume
+- **Context over numbers**: Raw metrics without interpretation are not useful; always explain what the numbers mean
+- **Note limitations**: Be transparent about what the data can and cannot support
+- **No external calls**: All analysis is performed on user-provided data; there are no HRIS or messaging integrations

@@ -32,7 +32,7 @@ On success, return a record with the following fields. `review-pr` passes this d
 | `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source (PR description always present; ticket if resolved). Every source is `provenance: "remote"` (this path fetches live and never reads a local snapshot), so the review never renders a divergence note for it |
 | `pr_metadata`    | object                                                                          | `{ number, url, head_oid, base_ref, title }`                                                                                                                                                                                                             |
 
-On HEAD mismatch, do not return — exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
+On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
 
 ## Process
 
@@ -70,7 +70,7 @@ If `local_head` does not equal `headRefOid`, exit non-zero with:
 PR #{number}'s head commit is {short(headRefOid)} but HEAD is at {short(local_head)}. Run "gh pr checkout {number}" first.
 ```
 
-Use the first 7 characters of each SHA for the short form. **Fail closed** — never proceed with mismatched state. Compilation, dependency installation, and test execution all require the working tree to match the commit being reviewed.
+Use the first 7 characters of each SHA for the short form. **Fail closed**: Never proceed with mismatched state. Compilation, dependency installation, and test execution all require the working tree to match the commit being reviewed.
 
 ### 4. Resolve the diff base
 
@@ -89,9 +89,9 @@ merge_base_sha=$(git merge-base HEAD {diff_base})
 
 Apply this cascade in order and use the first match:
 
-1. **`ticket_override`** — if non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
-2. **First entry in `closingIssuesReferences`** — if the array is non-empty, fetch the first entry's content via `gh issue view --json number,title,body,labels,updatedAt {number}` and use it.
-3. **Parse PR body for issue references** — scan `body` for the first match of any of these patterns (case-insensitive for keywords):
+1. **`ticket_override`**: If non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
+2. **First entry in `closingIssuesReferences`**: If the array is non-empty, fetch the first entry's content via `gh issue view --json number,title,body,labels,updatedAt {number}` and use it.
+3. **Parse PR body for issue references**: Scan `body` for the first match of any of these patterns (case-insensitive for keywords):
    - `closes #{n}`, `closes: #{n}`
    - `fixes #{n}`, `fixes: #{n}`
    - `resolves #{n}`, `resolves: #{n}`
@@ -99,7 +99,7 @@ Apply this cascade in order and use the first match:
 
    Take the first match's number and fetch the issue via `gh issue view --json number,title,body,labels,updatedAt {number}`.
 
-4. **No ticket** — proceed with the PR description as the only spec source.
+4. **No ticket**: Proceed with the PR description as the only spec source.
 
 ### 6. Build the spec-source list
 
@@ -110,7 +110,7 @@ Always include the PR description as a source:
   source_type: "pr_description",
   label: "pr_description: PR #{number}",
   content: <body>,
-  criteria: <optional — extracted bullets from `## What`, `## Summary`, or an explicit acceptance-criteria heading; null when no list is present>,
+  criteria: <optional: extracted bullets from `## What`, `## Summary`, or an explicit acceptance-criteria heading; null when no list is present>,
   provenance: "remote",
   last_updated: <PR `updatedAt`>
 }
@@ -123,13 +123,13 @@ If a ticket was resolved in step 5, prepend it:
   source_type: "ticket",
   label: "ticket: {ticket_ref or short identifier}",
   content: <ticket body>,
-  criteria: <optional — extracted from the ticket structure>,
+  criteria: <optional: extracted from the ticket structure>,
   provenance: "remote",
   last_updated: <issue `updatedAt`>
 }
 ```
 
-The list order is `[ticket?, pr_description]` — when both are present, the ticket is listed first because the ticket is the higher-authority source (PR description is a presentation of what the implementation delivers; the ticket states what was asked).
+The list order is `[ticket?, pr_description]`: When both are present, the ticket is listed first because the ticket is the higher-authority source (PR description is a presentation of what the implementation delivers; the ticket states what was asked).
 
 ### 7. Return the resolved-output record
 
@@ -148,7 +148,7 @@ Return:
 
 ## Important
 
-- **Single `gh pr view` call.** All fields are fetched at once. Do not split into multiple calls — repeated `gh` invocations are slow and add failure modes.
+- **Single `gh pr view` call.** All fields are fetched at once. Do not split into multiple calls: Repeated `gh` invocations are slow and add failure modes.
 - **HEAD mismatch is a hard stop.** The error message must include the literal `gh pr checkout {number}` suggestion so the user has a one-line copy-pasteable fix.
 - **Ticket-resolution cascade order is fixed.** `ticket_override` → `closingIssuesReferences[0]` → body parse → none. Document this order in any future change so future readers do not silently rearrange it.
-- **No review logic here.** This delegate prepares inputs only. The review process — diff analysis, finding generation, "Specification compliance" rendering — runs inside `review-branch` after `review-pr` invokes it with the resolved inputs.
+- **No review logic here.** This delegate prepares inputs only. The review process (diff analysis, finding generation, "Specification compliance" rendering) runs inside `review-branch` after `review-pr` invokes it with the resolved inputs.

@@ -55,7 +55,7 @@ Read `{artifact-dir}/orchestration-plan.json`. Present to the user:
 - **Dependency graph**: Which steps can run in parallel vs. which are sequential
 - **Risks**: Items that need user attention
 - **Questions**: Items the planner could not resolve from codebase analysis
-  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -104,14 +104,14 @@ Plan finalized: {artifact-dir}/orchestration-plan.json
 └── {run-id}/                              <- orchestration run directories (created later by orchestrate-dev)
 ```
 
-- `orchestration-plan.json` is a **ticket-level mutable artifact** — it is overwritten on each planning iteration, not timestamped
-- `{timestamp}_planner_orchestration-plan.md` files are versioned snapshots — each planning iteration produces a new timestamped file
+- `orchestration-plan.json` is a **ticket-level mutable artifact**: It is overwritten on each planning iteration, not timestamped
+- `{timestamp}_planner_orchestration-plan.md` files are versioned snapshots: Each planning iteration produces a new timestamped file
 - The artifact directory is at the ticket level because `orchestration-plan.json` is shared across orchestration runs
 
 ## Constraints
 
-- All codebase exploration and plan generation is delegated to the planner agent — do not analyze code directly
-- The feedback loop is interactive — always wait for user input before resuming the planner
-- Do not proceed to orchestration — the user invokes `orchestrate-dev` separately when ready
+- All codebase exploration and plan generation is delegated to the planner agent; do not analyze code directly
+- The feedback loop is interactive; always wait for user input before resuming the planner
+- Do not proceed to orchestration; the user invokes `orchestrate-dev` separately when ready
 
 <!-- include: ../_partials/option-format.md / -->
