@@ -82,7 +82,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 ## Guidance
 
 - When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so they read naturally without it.
-- The change summary follows **newspaper style**: progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
+- The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
 - Subsection headings use `{emoji} {label}` from the matching [work-types.json](../_data/work-types.json) `types[]` entry. For any subsection not enumerated in the example template above, look up the entry by work-type key and use its `emoji` and `label`.

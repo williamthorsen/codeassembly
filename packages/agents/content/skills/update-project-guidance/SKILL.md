@@ -231,7 +231,7 @@ Change list
    old: Configuration lives in `.config/vitest/` and `.config/eslint/`.
    new: Configuration lives in `.config/`, holding `vitest/`, `eslint/`, and `readyup.config.ts`.
 2. relocate: Commands moves to `packages/agents/README.md` behind a pointer; the addition below puts the file two lines over budget.
-3. add: Gotchas: `rdy compile` regenerates `kits/default.js`, so an edit to the `.js` is lost on the next build.
+3. add to Gotchas: `rdy compile` regenerates `kits/default.js`, so an edit to the `.js` is lost on the next build.
 ```
 
 <HARD-GATE>

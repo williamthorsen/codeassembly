@@ -12,7 +12,7 @@ Two different MCP tool shapes update Jira issues, and they need opposite handlin
 
 Inspect your available MCP tools and match the shape:
 
-- **`contentFormat`-based tool**: e.g. `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
+- **`contentFormat`-based tool**, e.g. `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
 - **`description_html`-based tool**: `update_jira_issue` / `create_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
 
 If both are available, prefer the `contentFormat` tool: The Markdown path is simpler and cannot trigger the HTML→ADF failure classes.

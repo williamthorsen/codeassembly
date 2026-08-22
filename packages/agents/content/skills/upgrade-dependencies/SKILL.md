@@ -18,9 +18,9 @@ The skill is package-manager-agnostic. Commands are named by role ("the PM's out
 
 Identify the environment before assessing:
 
-- **Package manager**: from the lockfile: `pnpm-lock.yaml` → pnpm, `package-lock.json` → npm, `yarn.lock` → yarn, `bun.lock`/`bun.lockb` → bun. Use that PM's commands for every query, install, and audit below.
+- **Package manager**, from the lockfile: `pnpm-lock.yaml` → pnpm, `package-lock.json` → npm, `yarn.lock` → yarn, `bun.lock`/`bun.lockb` → bun. Use that PM's commands for every query, install, and audit below.
 - **Workspace layout**: single package or monorepo (workspace globs in `package.json`, `pnpm-workspace.yaml`, or the PM's equivalent). In a monorepo, every step fans out across all workspaces, never the root alone.
-- **Support policy**: the project's own commitments: Node floor (`engines`, `.nvmrc`, CI matrix), published peer ranges, runtime targets. These bound every upgrade; changing one is a consumer-facing decision, not a side effect.
+- **Support policy**, the project's own commitments: Node floor (`engines`, `.nvmrc`, CI matrix), published peer ranges, runtime targets. These bound every upgrade; changing one is a consumer-facing decision, not a side effect.
 - **Project scripts**: Read `package.json` for the actual build/test/lint script names. Never assume generic names.
 - **Update tooling**: Note any update-automation config (ncu/`.ncurc`, renovate, dependabot). Any pin made later must be mirrored there.
 
@@ -112,7 +112,7 @@ If a knowledge store is registered, invoke `{skill:capture-event}` for each ecos
 
 Ecosystem facts go stale; these channels do not. When guidance in this skill disagrees with what a channel reports, trust the channel.
 
-- **Registry metadata**: `<pm> view <pkg> peerDependencies engines peerDependenciesMeta versions`: the authoritative source for ceilings, peer ranges, and optionality.
+- **Registry metadata**, `<pm> view <pkg> peerDependencies engines peerDependenciesMeta versions`: the authoritative source for ceilings, peer ranges, and optionality.
 - **Changelogs, release notes, and migration guides**: Fetch via available web tools; the package's repository and documentation site are the sources for behavioral changes and codemods.
 - **The package manager's documentation**: The sanctioned mechanism for peer allowances, workspace fan-out flags, and audit alternatives is PM-specific and changes across PM majors; look it up rather than assuming.
 - **Official codemods**: Check the framework or tool's migration guide for a codemod before planning manual edits.
