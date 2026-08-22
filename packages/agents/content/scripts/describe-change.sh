@@ -12,8 +12,8 @@
 # Output: JSON object with `commit_title`, `ticket_title`, `pr_title`, and
 # `merge_title`.
 #
-# Templates support five tokens — `{scope}`, `{type}`, `{title}`,
-# `{ticket_ref}`, `{pr_number}` — and optional groups via `[...]`. A `[...]`
+# Templates support five tokens (`{scope}`, `{type}`, `{title}`,
+# `{ticket_ref}`, `{pr_number}`) and optional groups via `[...]`. A `[...]`
 # group renders verbatim if every token inside resolves non-empty; otherwise
 # the entire group (literals included) drops. After substitution, runs of
 # multiple spaces are collapsed and leading/trailing whitespace is trimmed.
@@ -183,7 +183,7 @@ render_title() {
   done
   # Warn on a stray `[` left in the residue: An unmatched opening bracket
   # cannot start a group, so it falls through verbatim. Visible in output,
-  # but easy to misread as intentional — report it to stderr.
+  # but easy to misread as intentional; report it to stderr.
   if [[ "$remaining" == *'['* ]]; then
     echo "$PROG: Warning: Unmatched '[' in template: $template" >&2
   fi
@@ -255,7 +255,7 @@ group_has_empty_token() {
 # (newline, carriage return, tab, backspace, form feed) for safe JSON
 # interpolation. Backslash must be escaped first so subsequent backslash
 # escapes (e.g., `\n`) are not double-escaped. This is a title-grade
-# escaper — it does not handle the rest of U+0000–U+001F (e.g., ESC,
+# escaper; it does not handle the rest of U+0000–U+001F (e.g., ESC,
 # BEL). For arbitrary content (commit bodies, etc.) use a real JSON
 # encoder such as `python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'`.
 json_escape() {

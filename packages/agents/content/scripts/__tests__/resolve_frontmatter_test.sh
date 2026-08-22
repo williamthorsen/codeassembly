@@ -726,7 +726,7 @@ setup_missing_manifest() {
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
-  # Deliberately do NOT create .agents/main.branch-manifest.json — the deriver should write one.
+  # Deliberately do NOT create .agents/main.branch-manifest.json; the deriver should write one.
   # Point the bundle resolver at the on-disk bundle. shellspec sources this script via `Include`,
   # so the script's own `BASH_SOURCE[0]`-based path computation resolves to the shellspec runner
   # rather than the agents content tree.
@@ -780,7 +780,7 @@ The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.jso
 End
 
 It "recovers when the cached manifest contains corrupt JSON"
-# Seed a corrupt `.branch-manifest.json` — `read_manifest`'s `jq empty` guard treats it
+# Seed a corrupt `.branch-manifest.json`; `read_manifest`'s `jq empty` guard treats it
 # as a cache miss and falls through to `derive_manifest`, which recomposes the manifest
 # from preferences + git state. Mirrors the TS-side `tryReadManifest` recovery contract.
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)

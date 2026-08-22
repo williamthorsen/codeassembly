@@ -4,7 +4,7 @@
 # Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced on demand by the bundled `derive-session-context`
 # helper) for session-level fields and runs git for the rest. Skills consume the
 # output to populate the universal portion of their artifact frontmatter without repeating the underlying shell
-# logic. When the manifest is absent, the script invokes the bundled deriver to create it — no precondition
+# logic. When the manifest is absent, the script invokes the bundled deriver to create it; no precondition
 # applies to callers (main agents, subagents, and bash scripts can all rely on the same fast path).
 #
 # Usage:
@@ -34,7 +34,7 @@
 #   ticket_id, ticket_ref, branch, commit, pr, run_id     (snake_case)
 #   {--extra / --extra-list extensions in insertion order}
 #
-# Output (json mode, stdout): a single JSON object — backward-compatible
+# Output (json mode, stdout): a single JSON object, backward-compatible
 # with prior `--format json` (default) callers. Keys: branch, commit,
 # baseSha, pr, ticket_id, ticket_ref, scm, timestamp, run_id.
 #
@@ -281,7 +281,7 @@ current_branch() {
 
 # Resolves the absolute path to the branch manifest for the given branch.
 # Anchors at the repo root via `git rev-parse --show-toplevel`, so the lookup is independent of the caller's cwd.
-# Inside a git worktree, this returns the worktree's `.agents/` path — matching where the bundled
+# Inside a git worktree, this returns the worktree's `.agents/` path, matching where the bundled
 # `derive-session-context` helper writes the manifest. Returns non-zero outside a git repository.
 resolve_manifest_path() {
   local branch="$1"
@@ -294,7 +294,7 @@ resolve_manifest_path() {
 # Reads the branch manifest for the given branch. Echoes the JSON content.
 # Returns non-zero when the manifest is missing, the path cannot be resolved, or the file content
 # is not valid JSON. Treating corrupt content as a cache miss lets the caller fall through to
-# `derive_manifest`, which recomposes from scratch — matching the recovery behavior on the TS side.
+# `derive_manifest`, which recomposes from scratch, matching the recovery behavior on the TS side.
 read_manifest() {
   local branch="$1"
   local path content
@@ -422,7 +422,7 @@ emit_yaml() {
   emit_yaml_indented_scalar "skill" "$skill"
   emit_yaml_indented_scalar "timestamp" "$timestamp"
   [[ -n "$base_sha" ]] && emit_yaml_indented_scalar "baseSha" "$base_sha"
-  # isInteractive is a boolean — emit unquoted true|false.
+  # isInteractive is a boolean; emit unquoted true|false.
   printf '  %s: %s\n' "isInteractive" "$interactive"
   [[ -n "$model" ]] && emit_yaml_indented_scalar "model" "$model"
 
