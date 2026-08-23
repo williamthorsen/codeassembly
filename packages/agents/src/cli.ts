@@ -77,11 +77,7 @@ async function main(): Promise<void> {
         process.exit(1);
     }
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-    } else {
-      console.error('An unexpected error occurred');
-    }
+    console.error(`Error: ${describeError(error)}`);
     process.exit(1);
   }
 }
