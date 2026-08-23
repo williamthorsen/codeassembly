@@ -175,6 +175,21 @@ describe(useRunPlayback, () => {
     expect(result.current.isActive).toBe(false);
   });
 
+  it('reports the thrown value when the rejection is not an Error', async () => {
+    using _silent = silencedConsole(['error']);
+    mockedFetchRunEvents.mockRejectedValueOnce('connection refused');
+
+    const { result } = renderHook(() => useRunPlayback('proj', 'run-1'));
+
+    act(() => {
+      result.current.startReplay();
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('connection refused');
+    });
+  });
+
   it('clears error on subsequent successful startReplay', async () => {
     using _silent = silencedConsole(['error']);
     mockedFetchRunEvents.mockRejectedValueOnce(new Error('Network error'));

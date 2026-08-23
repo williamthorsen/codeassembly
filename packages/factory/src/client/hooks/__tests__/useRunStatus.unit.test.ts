@@ -54,6 +54,18 @@ describe('useRunStatus', () => {
     expect(result.current.error).toBe('Network error');
   });
 
+  it('reports the thrown value when the rejection is not an Error', async () => {
+    mockedFetchRunStatus.mockRejectedValue('connection refused');
+
+    const { result } = renderHook(() => useRunStatus('test', 'test-run'));
+
+    await waitFor(() => {
+      expect(result.current.error).not.toBeNull();
+    });
+
+    expect(result.current.error).toBe('connection refused');
+  });
+
   it('starts polling when status is in_progress', async () => {
     const inProgressStatus = createMockRunStatus({ status: 'in_progress' });
     mockedFetchRunStatus.mockResolvedValue(inProgressStatus);
