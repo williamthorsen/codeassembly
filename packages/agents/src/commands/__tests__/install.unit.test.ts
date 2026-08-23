@@ -142,7 +142,7 @@ describe(installCommand, () => {
     const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
     await writeFile(guidancePath, `${await readFile(guidancePath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
 
-    using silent = silenceConsole(['warn', 'info']);
+    using silent = silenceConsole(['info', 'warn']);
     await installCommand(makeOptions(), tempDir, contentDir);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
     const infoLines = silent.info.mock.calls.map((call) => String(call[0]));
@@ -155,7 +155,7 @@ describe(installCommand, () => {
     await setupClaudeHome();
     await rm(path.join(contentDir, 'skills'), { recursive: true, force: true });
 
-    using silent = silenceConsole(['warn', 'info']);
+    using silent = silenceConsole(['info', 'warn']);
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
