@@ -3,7 +3,8 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
 import { computeContentHash, getManifestPath, readManifest } from '../../lib/manifest.ts';
@@ -283,13 +284,11 @@ describe('guidance installation', () => {
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       await fillAmbientRegion(claudeMd);
 
-      const infoSpy = vi.spyOn(console, 'info');
+      using silent = silenceConsole(['info']);
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).not.toContain('modified: CLAUDE.md');
-
-      infoSpy.mockRestore();
     });
 
     it('still reports a hand edit outside the region as drift', async () => {
@@ -392,14 +391,12 @@ describe('guidance installation', () => {
 
       await installCommand(makeOptions(), tempDir, contentDir);
 
-      const infoSpy = vi.spyOn(console, 'info');
+      using silent = silenceConsole(['info']);
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('shared (~/.agents/)');
       expect(output).toContain('current');
-
-      infoSpy.mockRestore();
     });
 
     it('reports missing shared guidance when file is deleted from disk', async () => {
@@ -408,14 +405,12 @@ describe('guidance installation', () => {
       await installCommand(makeOptions(), tempDir, contentDir);
       await rm(path.join(tempDir, '.agents', 'AGENTS.md'));
 
-      const infoSpy = vi.spyOn(console, 'info');
+      using silent = silenceConsole(['info']);
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('missing:');
       expect(output).toContain('AGENTS.md');
-
-      infoSpy.mockRestore();
     });
 
     it('reports harness guidance state', async () => {
@@ -423,14 +418,12 @@ describe('guidance installation', () => {
 
       await installCommand(makeOptions(), tempDir, contentDir);
 
-      const infoSpy = vi.spyOn(console, 'info');
+      using silent = silenceConsole(['info']);
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('claude:');
       expect(output).toMatch(/\d+ current/);
-
-      infoSpy.mockRestore();
     });
 
     it('reports modified shared guidance', async () => {
@@ -444,13 +437,11 @@ describe('guidance installation', () => {
         'utf8',
       );
 
-      const infoSpy = vi.spyOn(console, 'info');
+      using silent = silenceConsole(['info']);
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('modified: AGENTS.md');
-
-      infoSpy.mockRestore();
     });
   });
 

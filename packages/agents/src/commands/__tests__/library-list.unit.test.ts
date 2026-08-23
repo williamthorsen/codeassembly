@@ -2,7 +2,8 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { libraryListCommand, type LibraryRow, printLibraryUsage, renderLibraryTable } from '../library-list.ts';
 
@@ -94,14 +95,12 @@ describe(libraryListCommand, () => {
 
 describe(printLibraryUsage, () => {
   it('outputs the available subcommands', () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    using silent = silenceConsole(['info']);
 
     printLibraryUsage();
 
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('list'));
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('library'));
-
-    infoSpy.mockRestore();
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('list'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('library'));
   });
 });
 
@@ -162,14 +161,12 @@ describe(renderLibraryTable, () => {
 
 /** Runs the command against a fixture content dir, returning its captured stdout table and stderr warnings. */
 async function captureList(contentDir: string): Promise<{ output: string; warnings: Array<string> }> {
-  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  using silent = silenceConsole(['info', 'warn']);
   await libraryListCommand(contentDir);
-  const output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-  const warnings = warnSpy.mock.calls.map((call) => String(call[0]));
-  infoSpy.mockRestore();
-  warnSpy.mockRestore();
-  return { output, warnings };
+  return {
+    output: silent.info.mock.calls.map((call) => String(call[0])).join('\n'),
+    warnings: silent.warn.mock.calls.map((call) => String(call[0])),
+  };
 }
 
 /** Builds a `LibraryRow` with sensible defaults, overriding only the fields a test cares about. */

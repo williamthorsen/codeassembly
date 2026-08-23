@@ -2,6 +2,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { disposeOnTestFinished, silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { validateCommand } from '../validate.ts';
@@ -14,12 +15,10 @@ describe(validateCommand, () => {
     // in-tree fixture would sit below a declaration and could not show that the command consults none.
     projectDir = path.join(tmpdir(), `agents-test-validate-cmd-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(projectDir, { recursive: true });
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    disposeOnTestFinished(silenceConsole(['error', 'info']));
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
     await rm(projectDir, { recursive: true, force: true });
   });
 

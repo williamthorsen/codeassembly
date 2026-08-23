@@ -2,7 +2,8 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { computeContentHash, createEmptyManifest, detectDrift, readManifest, writeManifest } from '../manifest.ts';
 import type { AgentsManifest, ManifestEntry } from '../types.ts';
@@ -30,13 +31,11 @@ describe('manifest', () => {
       const manifestPath = path.join(tempDir, 'bad-schema.json');
       await writeFile(manifestPath, JSON.stringify({ wrong: 'shape' }), 'utf8');
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      using silent = silenceConsole(['warn']);
       const result = await readManifest(manifestPath);
 
       expect(result).toEqual(createEmptyManifest());
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('existing manifest is invalid or incompatible'));
-
-      warnSpy.mockRestore();
+      expect(silent.warn).toHaveBeenCalledWith(expect.stringContaining('existing manifest is invalid or incompatible'));
     });
 
     it('should reset a pre-rename manifest carrying the legacy `platforms` key', async () => {
@@ -54,13 +53,11 @@ describe('manifest', () => {
       };
       await writeFile(manifestPath, JSON.stringify(legacyManifest), 'utf8');
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      using silent = silenceConsole(['warn']);
       const result = await readManifest(manifestPath);
 
       expect(result).toEqual(createEmptyManifest());
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('existing manifest is invalid or incompatible'));
-
-      warnSpy.mockRestore();
+      expect(silent.warn).toHaveBeenCalledWith(expect.stringContaining('existing manifest is invalid or incompatible'));
     });
 
     it('should throw when file contains malformed JSON', async () => {

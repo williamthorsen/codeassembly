@@ -2,6 +2,7 @@ import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockedReaddir, mockedStat } = vi.hoisted(() => {
@@ -39,13 +40,11 @@ describe('generateLabelMap error paths', () => {
 
     mockedReaddir.mockRejectedValueOnce(eaccesError);
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    using _silent = silenceConsole(['info']);
 
     const { generateLabelMap } = await import('../generate-label-map.ts');
 
     await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('permission denied');
-
-    infoSpy.mockRestore();
   });
 
   it('propagates non-ENOENT errors from stat in overwrite guard', async () => {
@@ -53,12 +52,10 @@ describe('generateLabelMap error paths', () => {
 
     mockedStat.mockRejectedValueOnce(eaccesError);
 
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    using _silent = silenceConsole(['info']);
 
     const { generateLabelMap } = await import('../generate-label-map.ts');
 
     await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('permission denied');
-
-    infoSpy.mockRestore();
   });
 });

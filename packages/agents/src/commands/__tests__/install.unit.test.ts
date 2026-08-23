@@ -3,7 +3,8 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
@@ -141,18 +142,10 @@ describe(installCommand, () => {
     const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
     await writeFile(guidancePath, `${await readFile(guidancePath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let warnLines: ReadonlyArray<string>;
-    let infoLines: ReadonlyArray<string>;
-    try {
-      await installCommand(makeOptions(), tempDir, contentDir);
-      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
-      infoLines = infoSpy.mock.calls.map((call) => String(call[0]));
-    } finally {
-      warnSpy.mockRestore();
-      infoSpy.mockRestore();
-    }
+    using silent = silenceConsole(['warn', 'info']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+    const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
+    const infoLines = silent.info.mock.calls.map((call) => String(call[0]));
 
     expect(warnLines.some((line) => line.includes('⚠️ Skipping modified'))).toBe(true);
     expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
@@ -162,16 +155,9 @@ describe(installCommand, () => {
     await setupClaudeHome();
     await rm(path.join(contentDir, 'skills'), { recursive: true, force: true });
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    let warnLines: ReadonlyArray<string>;
-    try {
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
-    } finally {
-      warnSpy.mockRestore();
-      infoSpy.mockRestore();
-    }
+    using silent = silenceConsole(['warn', 'info']);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
     expect(warnLines.some((line) => line.includes('no skills directory found'))).toBe(true);
   });
@@ -347,14 +333,9 @@ describe(installCommand, () => {
       const settingsPath = path.join(claudeHome, 'settings.json');
       await writeFile(settingsPath, '{ not json', 'utf8');
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      let warnLines: ReadonlyArray<string>;
-      try {
-        await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-        warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
-      } finally {
-        warnSpy.mockRestore();
-      }
+      using silent = silenceConsole(['warn']);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+      const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
       // The broken config is left alone, and the rest of the install still lands and is tracked.

@@ -4,7 +4,8 @@ import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
@@ -73,14 +74,9 @@ describe('uninstallCommand', () => {
     const settingsPath = path.join(claudeHome, 'settings.json');
     await writeFile(settingsPath, '{ not json', 'utf8');
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    let warnLines: ReadonlyArray<string>;
-    try {
-      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
-      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
-    } finally {
-      warnSpy.mockRestore();
-    }
+    using silent = silenceConsole(['warn']);
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+    const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
     expect(warnLines.some((line) => line.includes('Skipping hook-entry removal'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));

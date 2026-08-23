@@ -3,7 +3,8 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import type { InstallOptions } from '../../lib/types.ts';
@@ -62,14 +63,10 @@ describe('install (designated-writer guard)', () => {
 
   it('proceeds from a mismatched installation under --override-writer', async () => {
     await designateWriter(path.join(tempDir, 'designated'));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    using silent = silenceConsole(['warn']);
 
-    try {
-      await installCommand(makeOptions({ shouldOverrideWriter: true }), tempDir, contentDir);
-      expect(warn.mock.calls.flat().join('\n')).toContain('--override-writer');
-    } finally {
-      warn.mockRestore();
-    }
+    await installCommand(makeOptions({ shouldOverrideWriter: true }), tempDir, contentDir);
+    expect(silent.warn.mock.calls.flat().join('\n')).toContain('--override-writer');
     expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
   });
 });
