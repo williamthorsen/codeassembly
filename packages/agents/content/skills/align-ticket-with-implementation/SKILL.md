@@ -10,13 +10,15 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 
 ## Process
 
-1. **Analyze branch changes**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout, then run:
+1. **Resolve the source ticket**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_url`, and `ticket_id` from the manifest JSON it emits on stdout. Resolve the ticket the caller names, or failing that the manifest's, per [ticket source resolution](../_data/ticket-source-resolution.md). Whether a source ticket resolves is what selects the branch in [Two branches](#two-branches). Where resolution is ambiguous or fails, take the alignment branch and ask: A lookup that fell through must not be read as licence to author a proposal over one that already exists.
+
+2. **Analyze branch changes**:
 
 ```bash
 git diff $DEFAULT_BRANCH...HEAD
 ```
 
-2. **Write ticket** describing issues that were addressed
+3. **Write the ticket** on the branch step 1 selected, describing issues that were addressed
 
 ## Output structure
 
@@ -36,15 +38,23 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 When aligning to an existing implementation, _the implementation_ is the code on the branch; describe what the code now does, and resist transcribing its mechanism back into the ticket.
 
-The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach the branch actually took, not a proposal still under consideration.
+### Two branches
+
+What the skill does turns on whether a prior ticket exists, not on how the caller scoped the call.
+
+**Generation, where no prior ticket exists.** The work reached the branch without a ticket, so every section is authored now from the implementation and nothing is overwritten. The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach the branch actually took, not a proposal still under consideration.
+
+**Alignment, where a prior ticket exists.** `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when the ticket was written. Reproduce all three verbatim from the source ticket and revise `## Acceptance criteria` alone, because the criteria alone are the contract an implementation can falsify. A proposal does not become wrong because the implementer did something else, and revising it destroys the only record of what was foreseen. A section the source ticket omits stays omitted: Alignment revises the record and adds nothing to it. The saved artifact is still a complete ticket; only its revision is partial.
+
+Where the implementation diverges from what was proposed, report that divergence in the pull-request description, whose job is to describe the change under review. Do not raise it as a ticket edit, and do not offer it as an option. A reviewer reads the diff to learn what the code does, so an implementation outgrowing its proposal is an ordinary finding rather than a defect in the ticket.
+
+The source ticket is the one the caller names. A review names it in its `## Specification compliance` section, which records the source the review measured against, the remote issue or the local snapshot.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
-**Criteria-only mode.** When the caller scopes the revision to acceptance criteria, revise `## Acceptance criteria` alone and reproduce `## Problem`, `## Context`, and `## Proposed solution` verbatim from the source ticket the caller names. A review names it in its `## Specification compliance` section, which records the source the review measured against, the remote issue or the local snapshot. The saved artifact is still a complete ticket; only its generation is partial. A caller that ratifies the whole ticket gets the default behavior.
-
 **Ratified-delta mode.** When the caller supplies a delta it has already put to the user, such as a review's proposed-edit preview, the previewed delta is the whole of the revision. Apply exactly its lines and reproduce every other criterion and section verbatim. Seek no further divergence between the ticket and the implementation: What the caller's user consented to is those lines, not alignment as such. When applying a line reveals a change the delta does not contain, stop and report it rather than widening the edit.
 
-Invoked with no delta, the skill aligns to the implementation as described above. The two modes are orthogonal and compose: Criteria-only mode limits which sections change, ratified-delta mode limits how much changes within them.
+Invoked with no delta, alignment revises whichever criteria the implementation falsifies. The mode bounds how much of `## Acceptance criteria` changes; it never widens what alignment may touch.
 
 **Spike mode.** If the branch implements a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md), reconciling whether the investigation answered its questions rather than whether the branch met acceptance criteria.
 
