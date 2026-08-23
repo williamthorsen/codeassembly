@@ -149,7 +149,7 @@ describe('App', () => {
     mockUseRunStatus.mockReturnValue({
       data: null,
       isLoading: false,
-      error: new Error('Network failure'),
+      error: 'Network failure',
     });
 
     const { container } = render(<App />);

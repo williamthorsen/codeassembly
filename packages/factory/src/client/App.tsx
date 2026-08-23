@@ -379,7 +379,7 @@ export function App(): React.JSX.Element {
         )}
         {activeStatus && <StatusBar status={activeStatus} />}
         {isLoading && <p>Loading...</p>}
-        {error && <p>Error: {error.message}</p>}
+        {error && <p>Error: {error}</p>}
         {activeStatus && VisComponent !== undefined && <VisComponent status={activeStatus} />}
       </main>
     </div>

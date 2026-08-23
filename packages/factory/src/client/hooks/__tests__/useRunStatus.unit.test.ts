@@ -51,7 +51,7 @@ describe('useRunStatus', () => {
       expect(result.current.error).not.toBeNull();
     });
 
-    expect(result.current.error?.message).toBe('Network error');
+    expect(result.current.error).toBe('Network error');
   });
 
   it('starts polling when status is in_progress', async () => {
@@ -184,7 +184,7 @@ describe('useRunStatus', () => {
       expect(result.current.error).not.toBeNull();
     });
 
-    expect(result.current.error?.message).toBe('First run error');
+    expect(result.current.error).toBe('First run error');
 
     // Switch to run-b with a successful response
     const statusB = createMockRunStatus({ runId: 'run-b', status: 'completed' });
@@ -219,7 +219,7 @@ describe('useRunStatus', () => {
       expect(result.current.error).not.toBeNull();
     });
 
-    expect(result.current.error?.message).toBe('Transient failure');
+    expect(result.current.error).toBe('Transient failure');
 
     // Stale data is intentionally preserved during transient errors (no setData(null) in catch)
     expect(result.current.data).not.toBeNull();
