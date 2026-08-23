@@ -11,7 +11,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import { describeError } from '@williamthorsen/toolbelt.errors';
+import { describeError, isError } from '@williamthorsen/toolbelt.errors';
 
 import { getOrCreate, retainKeys } from '../common/maps.ts';
 import type {
@@ -316,7 +316,7 @@ function readErrorText(error: unknown): string {
   if (isRecord(error) && typeof error.stderr === 'string') {
     parts.push(error.stderr);
   }
-  if (error instanceof Error) {
+  if (isError(error)) {
     parts.push(error.message);
   }
   return parts.length > 0 ? parts.join('\n') : describeError(error);

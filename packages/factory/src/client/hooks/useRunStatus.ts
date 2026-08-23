@@ -1,3 +1,4 @@
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { useEffect, useRef, useState } from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
@@ -6,7 +7,7 @@ import { fetchRunStatus } from '../api/client.js';
 interface UseRunStatusResult {
   data: CanonicalRunStatus | null;
   isLoading: boolean;
-  error: Error | null;
+  error: string | null;
 }
 
 const POLL_INTERVAL_MS = 2_000;
@@ -14,7 +15,7 @@ const POLL_INTERVAL_MS = 2_000;
 export function useRunStatus(projectSlug: string | null, runId: string | null): UseRunStatusResult {
   const [data, setData] = useState<CanonicalRunStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
         }
       } catch (error_) {
         if (mounted) {
-          setError(error_ instanceof Error ? error_ : new Error('Unknown error'));
+          setError(describeError(error_));
           if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;

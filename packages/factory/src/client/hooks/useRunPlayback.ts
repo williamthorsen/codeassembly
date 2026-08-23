@@ -1,3 +1,4 @@
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { fetchRunEvents } from '../api/client.js';
@@ -66,9 +67,8 @@ export function useRunPlayback(projectSlug: string | null, runId: string | null)
         setActiveSource(source);
       } catch (fetchError: unknown) {
         if (generationRef.current !== thisGeneration) return;
-        const message = fetchError instanceof Error ? fetchError.message : 'Failed to load replay';
         console.error('Failed to fetch run events for replay:', fetchError);
-        setError(message);
+        setError(describeError(fetchError));
       }
     })();
   }, [projectSlug, runId, playback.playbackState]);

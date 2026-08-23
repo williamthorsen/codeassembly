@@ -149,7 +149,7 @@ describe('App', () => {
     mockUseRunStatus.mockReturnValue({
       data: null,
       isLoading: false,
-      error: new Error('Network failure'),
+      error: 'Network failure',
     });
 
     const { container } = render(<App />);
@@ -330,7 +330,7 @@ describe('App', () => {
     const view = within(container);
 
     await waitFor(() => {
-      expect(view.getByText('Failed to load projects')).toBeInTheDocument();
+      expect(view.getByText('connection refused')).toBeInTheDocument();
     });
   });
 
