@@ -5,7 +5,7 @@ import {
   createInProgressReviewPhases,
   createMockRunStatus,
   emptyPhases,
-} from '../../../../__test-helpers__/fixtures.js';
+} from '../../../../test-utils/fixtures.js';
 import { deriveAgentRoster } from '../derive-agent-roster.js';
 
 // -- deriveAgentRoster --

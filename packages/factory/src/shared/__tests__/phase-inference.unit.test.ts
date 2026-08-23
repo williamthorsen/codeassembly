@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createInProgressReviewPhases, emptyPhases } from '../../__test-helpers__/fixtures.js';
+import { createInProgressReviewPhases, emptyPhases } from '../../test-utils/fixtures.js';
 import { findCurrentPhase, findPhaseDecision, isPhaseEvaluated, isPhasePresentInData } from '../phase-inference.js';
 import type { PhaseDecision, Phases } from '../types/canonical.js';
 

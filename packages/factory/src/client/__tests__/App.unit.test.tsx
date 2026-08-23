@@ -2,9 +2,9 @@ import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/re
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../__test-helpers__/fixtures.js';
 import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.js';
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
+import { createMockRunStatus } from '../../test-utils/fixtures.js';
 
 const {
   mockUseRunStatus,

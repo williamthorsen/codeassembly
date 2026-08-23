@@ -4,7 +4,7 @@ import {
   createCompletedRunPhases,
   createInProgressReviewPhases,
   createMockRunStatus,
-} from '../../../../../__test-helpers__/fixtures.js';
+} from '../../../../../test-utils/fixtures.js';
 import { mapRunToFactoryFloor } from '../run-to-factory-floor.js';
 
 describe(mapRunToFactoryFloor, () => {

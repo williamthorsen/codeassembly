@@ -1,11 +1,7 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createCompletedRunPhases,
-  createMockRunStatus,
-  emptyPhases,
-} from '../../../../../__test-helpers__/fixtures.js';
+import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../../test-utils/fixtures.js';
 
 const { mockLoadAllCatwalkSprites } = vi.hoisted(() => ({
   mockLoadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),

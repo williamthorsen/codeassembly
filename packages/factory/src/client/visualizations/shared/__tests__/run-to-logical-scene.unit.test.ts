@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Phases } from '../../../../shared/types/canonical.js';
 import {
   createCompletedRunPhases,
   createInProgressReviewPhases,
   createMockRunStatus,
   emptyPhases,
-} from '../../../../__test-helpers__/fixtures.js';
-import type { Phases } from '../../../../shared/types/canonical.js';
+} from '../../../../test-utils/fixtures.js';
 import { mapRunToLogicalScene } from '../run-to-logical-scene.js';
 import type { LogicalSceneState } from '../types.js';
 
