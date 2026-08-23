@@ -1,3 +1,4 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RunDataParseError } from '../../run-data-parse-error.ts';
@@ -1086,7 +1087,7 @@ describe('parseRunData', () => {
     });
 
     it('logs corrupt JSON lines at error level', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      using silent = silenceConsole(['error']);
 
       const lines = [
         JSON.stringify({ t: '2026-01-01T00:00:00Z', event: 'run_started' }),
@@ -1101,17 +1102,15 @@ describe('parseRunData', () => {
 
       await parseRunData('/runs/test-run');
 
-      expect(errorSpy).toHaveBeenCalledOnce();
-      expect(errorSpy).toHaveBeenCalledWith(
+      expect(silent.error).toHaveBeenCalledOnce();
+      expect(silent.error).toHaveBeenCalledWith(
         expect.stringContaining('[run-data-parser] corrupt JSON at line index 1'),
         expect.any(SyntaxError),
       );
-
-      errorSpy.mockRestore();
     });
 
     it('logs unrecognized event types at warn level', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      using silent = silenceConsole(['warn']);
 
       const logContent = jsonlLines(
         { t: '2026-01-01T00:00:00Z', event: 'run_started' },
@@ -1126,13 +1125,11 @@ describe('parseRunData', () => {
 
       await parseRunData('/runs/test-run');
 
-      expect(warnSpy).toHaveBeenCalledOnce();
-      expect(warnSpy).toHaveBeenCalledWith(
+      expect(silent.warn).toHaveBeenCalledOnce();
+      expect(silent.warn).toHaveBeenCalledWith(
         expect.stringContaining('[run-data-parser] skipped unrecognized event at line index 1'),
         expect.anything(),
       );
-
-      warnSpy.mockRestore();
     });
 
     it('includes file path in error for corrupt run-index.json JSON', async () => {
