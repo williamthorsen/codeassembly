@@ -40,10 +40,10 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Options
 
-| #   | Emoji | Option                         | Description                                                                                                                                           |
-| --- | ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria via `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta |
-| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                                      |
+| #   | Emoji | Option                         | Description                                                                                                   |
+| --- | ----- | ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Run `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                              |
 
 #### Output format
 
@@ -93,7 +93,7 @@ The base option pool is:
 
 Each case renders two of these options; the specific options and their ordering are shown in the Output format section.
 
-**Empty ticket delta.** A ticket target's delta comes from in-conflict criteria rows alone, so a divergence resting on a narrative section yields no ticket line. Withdraw every option that would edit the ticket, and select the case's remaining pair from the pool: Case 3 has nothing left to offer and does not render, and case 4 renders "Update PR description" against "Leave as-is". Never render a lone option; a one-option menu is a statement, and the statement to make is that nothing is proposed.
+**Empty ticket delta.** A ticket target's delta comes from in-conflict criteria rows alone, so a divergence resting on a narrative section yields no ticket line. Withdraw every option that would edit the ticket, and select the case's remaining pair from the pool: Case 3 has nothing left to offer and does not render, and case 4 renders "Update PR description" against "Leave as-is". Never render a lone option; a one-option menu is a statement, and the statement to make is that nothing is proposed. Case 4 stays marker-free either way: Withdrawing the ticket half tells the reviewer nothing about which of the PR description and the code is the wrong one.
 
 #### Output format
 
