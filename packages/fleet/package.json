@@ -21,6 +21,9 @@
     "codeassembly-lifecycle": "workspace:*",
     "hono": "4.13.2"
   },
+  "devDependencies": {
+    "vitest": "catalog:"
+  },
   "engines": {
     "node": ">=24"
   }
