@@ -18,6 +18,9 @@
     "codeassembly-run-core": "workspace:*",
     "zod": "4.4.3"
   },
+  "devDependencies": {
+    "vitest": "catalog:"
+  },
   "engines": {
     "node": ">=24"
   }

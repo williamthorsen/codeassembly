@@ -1,3 +1,4 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { discoverRunDirectories } from '../run-directory-scanner.ts';
@@ -145,7 +146,7 @@ describe('discoverRunDirectories', () => {
   });
 
   it('returns empty array and warns when base directory does not exist', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    using silent = silenceConsole(['warn']);
     const error = new Error('ENOENT');
     Object.assign(error, { code: 'ENOENT' });
     mockedReaddir.mockRejectedValueOnce(error);
@@ -153,15 +154,14 @@ describe('discoverRunDirectories', () => {
     const result = await discoverRunDirectories('/nonexistent');
 
     expect(result).toEqual([]);
-    expect(warnSpy).toHaveBeenCalledWith(
+    expect(silent.warn).toHaveBeenCalledWith(
       expect.stringContaining('Could not read base path'),
       expect.stringContaining('ENOENT'),
     );
-    warnSpy.mockRestore();
   });
 
   it('warns and skips when a project directory cannot be read', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    using silent = silenceConsole(['warn']);
     mockReaddirResult(['proj']);
     mockStatDirectory();
     // readdir for /base/proj fails
@@ -170,15 +170,14 @@ describe('discoverRunDirectories', () => {
     const result = await discoverRunDirectories('/base');
 
     expect(result).toEqual([]);
-    expect(warnSpy).toHaveBeenCalledWith(
+    expect(silent.warn).toHaveBeenCalledWith(
       expect.stringContaining('Could not read directory'),
       expect.stringContaining('EACCES'),
     );
-    warnSpy.mockRestore();
   });
 
   it('warns when stat fails with non-ENOENT error', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    using silent = silenceConsole(['warn']);
     mockReaddirResult(['proj']);
     // stat for /base/proj fails with EACCES
     const error = new Error('Permission denied');
@@ -188,15 +187,14 @@ describe('discoverRunDirectories', () => {
     const result = await discoverRunDirectories('/base');
 
     expect(result).toEqual([]);
-    expect(warnSpy).toHaveBeenCalledWith(
+    expect(silent.warn).toHaveBeenCalledWith(
       expect.stringContaining('Could not stat'),
       expect.stringContaining('Permission denied'),
     );
-    warnSpy.mockRestore();
   });
 
   it('does not warn when stat fails with ENOENT', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    using silent = silenceConsole(['warn']);
     mockReaddirResult(['proj']);
     // stat for /base/proj fails with ENOENT (path vanished between readdir and stat)
     const error = new Error('ENOENT');
@@ -206,8 +204,7 @@ describe('discoverRunDirectories', () => {
     const result = await discoverRunDirectories('/base');
 
     expect(result).toEqual([]);
-    expect(warnSpy).not.toHaveBeenCalled();
-    warnSpy.mockRestore();
+    expect(silent.warn).not.toHaveBeenCalled();
   });
 
   it('discovers multiple runs across multiple projects and tickets', async () => {

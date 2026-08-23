@@ -2,7 +2,8 @@ import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { assertDesignatedWriter } from '../home-writer-guard.ts';
 
@@ -123,15 +124,11 @@ describe(assertDesignatedWriter, () => {
   it('proceeds under --override-writer and reports the override', async () => {
     const designated = path.join(path.dirname(homeDir), 'designated');
     await writeDeclaration(`home-writer: ${designated}\n`);
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    using silent = silenceConsole(['warn']);
 
-    try {
-      await expect(
-        assertDesignatedWriter({ command: 'install', homeDir, packageRoot, shouldOverrideWriter: true }),
-      ).resolves.toBeUndefined();
-      expect(warn.mock.calls.flat().join('\n')).toContain(designated);
-    } finally {
-      warn.mockRestore();
-    }
+    await expect(
+      assertDesignatedWriter({ command: 'install', homeDir, packageRoot, shouldOverrideWriter: true }),
+    ).resolves.toBeUndefined();
+    expect(silent.warn.mock.calls.flat().join('\n')).toContain(designated);
   });
 });

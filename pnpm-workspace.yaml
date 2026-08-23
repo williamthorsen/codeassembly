@@ -5,6 +5,7 @@ catalog:
   '@williamthorsen/toolbelt.errors': '0.6.0'
   '@williamthorsen/toolbelt.testing': '0.3.0'
   '@williamthorsen/toolbelt.vitest': '0.5.0'
+  vitest: '4.1.10'
 
 allowBuilds:
   '@tailwindcss/oxide': true

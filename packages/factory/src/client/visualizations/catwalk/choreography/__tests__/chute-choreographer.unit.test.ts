@@ -1,3 +1,4 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { CatwalkLayoutResult, ChuteEndpoints, Position } from '../../layout/catwalk-layout.js';
@@ -575,7 +576,7 @@ describe('choreograph', () => {
 
   describe('animation error handling', () => {
     it('silently swallows known killed-actor rejections', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      using silent = silenceConsole(['error']);
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
@@ -597,12 +598,11 @@ describe('choreograph', () => {
 
       await choreograph(diff, mockLayout(), refs);
 
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(silent.error).not.toHaveBeenCalled();
     });
 
     it('logs unexpected rejections via console.error', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      using silent = silenceConsole(['error']);
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
@@ -624,8 +624,7 @@ describe('choreograph', () => {
 
       await choreograph(diff, mockLayout(), refs);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Unexpected animation error:', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(silent.error).toHaveBeenCalledWith('Unexpected animation error:', expect.any(Error));
     });
   });
 });

@@ -2,9 +2,9 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { SettingsStore } from '../settings-store.js';
 
 describe('SettingsStore', () => {
@@ -69,7 +69,7 @@ describe('SettingsStore', () => {
     });
 
     it('returns defaults for invalid JSON', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const store = new SettingsStore(tempDir);
       // Write valid first to create the directory, then overwrite with invalid JSON
       await store.save({ dismissedRuns: {} });
@@ -81,7 +81,7 @@ describe('SettingsStore', () => {
     });
 
     it('returns defaults for invalid schema', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const store = new SettingsStore(tempDir);
       await store.save({ dismissedRuns: {} });
       const { writeFile: write } = await import('node:fs/promises');

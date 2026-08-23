@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { HOOK_SENTINEL } from '../../lib/hook-entry-catalog.ts';
 import {
@@ -57,14 +58,9 @@ describe('configure-hooks', () => {
     });
 
     it('prints snippets for every harness when no harness home exists', async () => {
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await configureHooksCommand({ harness: 'all', print: true }, tempDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      using silent = silenceConsole(['info']);
+      await configureHooksCommand({ harness: 'all', print: true }, tempDir);
+      const output = silent.info.mock.calls.map((call) => String(call[0])).join('\n');
 
       expect(output).toContain('"SessionStart"');
       expect(output).toContain('on_session_start');
@@ -81,14 +77,9 @@ describe('configure-hooks', () => {
     });
 
     it('writes nothing in print mode', async () => {
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-      let output: string;
-      try {
-        await configureHooksCommand({ harness: 'claude', print: true }, tempDir);
-        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
-      } finally {
-        infoSpy.mockRestore();
-      }
+      using silent = silenceConsole(['info']);
+      await configureHooksCommand({ harness: 'claude', print: true }, tempDir);
+      const output = silent.info.mock.calls.map((call) => String(call[0])).join('\n');
 
       expect(existsSync(path.join(tempDir, '.claude', 'settings.json'))).toBe(false);
       expect(output).toContain('"SessionStart"');

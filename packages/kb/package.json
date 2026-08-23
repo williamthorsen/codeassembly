@@ -106,7 +106,8 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/picomatch": "4.0.3"
+    "@types/picomatch": "4.0.3",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=24"

@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
+import { createMockRunStatus } from '../../../test-utils/fixtures.js';
 import { useRunStatus } from '../useRunStatus.js';
 
 vi.mock('../../api/client.js', () => ({

@@ -1,7 +1,7 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
+import { createMockRunStatus } from '../../../test-utils/fixtures.js';
 
 const {
   mockEngineConstructor,

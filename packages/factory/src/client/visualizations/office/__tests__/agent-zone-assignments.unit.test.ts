@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { describe, expect, it } from 'vitest';
 
 import type { LogicalAgentState, LogicalArtifactState, LogicalOrchestratorState } from '../../shared/types.js';
 import { GOVERNOR_ZONE, ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
@@ -274,26 +275,24 @@ describe(computeReviewerIndices, () => {
   });
 
   it('logs a warning when reviewer count exceeds available slots', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    using silent = silenceConsole(['warn']);
     const agents: LogicalAgentState[] = Array.from({ length: 7 }, (_, i) =>
       agent({ id: `rev-${String(i).padStart(2, '0')}`, phase: 'review', roleType: 'reviewer' }),
     );
     computeReviewerIndices(agents);
 
-    expect(warnSpy).toHaveBeenCalledOnce();
-    expect(warnSpy.mock.calls[0]?.[0]).toContain('2 reviewer(s) exceed available slots');
-    warnSpy.mockRestore();
+    expect(silent.warn).toHaveBeenCalledOnce();
+    expect(silent.warn.mock.calls[0]?.[0]).toContain('2 reviewer(s) exceed available slots');
   });
 
   it('does not warn when reviewer count fits available slots', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    using silent = silenceConsole(['warn']);
     const agents: LogicalAgentState[] = Array.from({ length: 5 }, (_, i) =>
       agent({ id: `rev-${String(i).padStart(2, '0')}`, phase: 'review', roleType: 'reviewer' }),
     );
     computeReviewerIndices(agents);
 
-    expect(warnSpy).not.toHaveBeenCalled();
-    warnSpy.mockRestore();
+    expect(silent.warn).not.toHaveBeenCalled();
   });
 });
 
