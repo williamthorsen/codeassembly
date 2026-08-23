@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
-import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { useRunPlayback } from '../useRunPlayback.js';
 
 const { mockedFetchRunEvents } = vi.hoisted(() => ({
@@ -159,7 +159,7 @@ describe(useRunPlayback, () => {
   });
 
   it('sets error on fetch failure', async () => {
-    using _silent = silencedConsole(['error']);
+    using _silent = silenceConsole(['error']);
     mockedFetchRunEvents.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useRunPlayback('proj', 'run-1'));
@@ -176,7 +176,7 @@ describe(useRunPlayback, () => {
   });
 
   it('reports the thrown value when the rejection is not an Error', async () => {
-    using _silent = silencedConsole(['error']);
+    using _silent = silenceConsole(['error']);
     mockedFetchRunEvents.mockRejectedValueOnce('connection refused');
 
     const { result } = renderHook(() => useRunPlayback('proj', 'run-1'));
@@ -191,7 +191,7 @@ describe(useRunPlayback, () => {
   });
 
   it('clears error on subsequent successful startReplay', async () => {
-    using _silent = silencedConsole(['error']);
+    using _silent = silenceConsole(['error']);
     mockedFetchRunEvents.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useRunPlayback('proj', 'run-1'));
@@ -218,7 +218,7 @@ describe(useRunPlayback, () => {
   });
 
   it('clears error on stopReplay', async () => {
-    using _silent = silencedConsole(['error']);
+    using _silent = silenceConsole(['error']);
     mockedFetchRunEvents.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useRunPlayback('proj', 'run-1'));

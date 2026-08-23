@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '../../../shared/types/settings.js';
-import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { useDismissedRuns } from '../useDismissedRuns.js';
 
 vi.mock('../../api/client.js', () => ({
@@ -40,7 +40,7 @@ describe('useDismissedRuns', () => {
   });
 
   it('leaves dismissed as empty on fetchSettings failure', async () => {
-    using _silent = silencedConsole(['error']);
+    using _silent = silenceConsole(['error']);
     mockedFetchSettings.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useDismissedRuns());
@@ -166,7 +166,7 @@ describe('useDismissedRuns', () => {
   });
 
   it('dismiss keeps the optimistic update and warns when patchSettings rejects', async () => {
-    using silent = silencedConsole(['warn']);
+    using silent = silenceConsole(['warn']);
     mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
     mockedPatchSettings.mockRejectedValue(new Error('Network error'));
 
@@ -188,7 +188,7 @@ describe('useDismissedRuns', () => {
   });
 
   it('dismissAll keeps the optimistic update and warns when patchSettings rejects', async () => {
-    using silent = silencedConsole(['warn']);
+    using silent = silenceConsole(['warn']);
     mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
     mockedPatchSettings.mockRejectedValue(new Error('Network error'));
 

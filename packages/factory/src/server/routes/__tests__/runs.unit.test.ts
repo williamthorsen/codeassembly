@@ -1,10 +1,10 @@
 import { join } from 'node:path';
 
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { RunDataParseError } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProjectIndex } from '../../../shared/types/api.js';
-import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { createRunsRouter } from '../runs.js';
 import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
@@ -118,7 +118,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 on non-ENOENT errors', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId');
@@ -186,7 +186,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 on generic errors', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/events');
@@ -233,7 +233,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 when readdir fails', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
@@ -247,7 +247,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 when readdir fails with ENOENT (directory removed after index lookup)', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
@@ -303,7 +303,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 on non-ENOENT read errors', async () => {
-      using _silent = silencedConsole(['error']);
+      using _silent = silenceConsole(['error']);
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');

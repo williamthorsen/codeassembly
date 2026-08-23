@@ -1,7 +1,7 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
-import { silencedConsole } from '../../../test-utils/silenced-console.ts';
 import { ProjectScanner } from '../project-scanner.js';
 
 const { mockedDiscover, mockedValidate } = vi.hoisted(() => ({
@@ -119,7 +119,7 @@ describe('ProjectScanner', () => {
   });
 
   it('suppresses invalid-run warnings by default', async () => {
-    using silent = silencedConsole(['error', 'warn']);
+    using silent = silenceConsole(['error', 'warn']);
     const scanner = new ProjectScanner('/test/projects');
 
     mockedDiscover.mockResolvedValue([{ projectSlug: 'proj', ticketId: 'T-1', runId: 'bad', runPath: '/p/bad' }]);
@@ -132,7 +132,7 @@ describe('ProjectScanner', () => {
   });
 
   it('logs invalid-run warnings when FACTORY_LOG_INVALID_RUNS is enabled', async () => {
-    using silent = silencedConsole(['error', 'warn']);
+    using silent = silenceConsole(['error', 'warn']);
     process.env.FACTORY_LOG_INVALID_RUNS = 'true';
     const scanner = new ProjectScanner('/test/projects');
 
@@ -149,7 +149,7 @@ describe('ProjectScanner', () => {
   });
 
   it('always logs unexpected errors regardless of config', async () => {
-    using silent = silencedConsole(['error']);
+    using silent = silenceConsole(['error']);
     const scanner = new ProjectScanner('/test/projects');
 
     mockedDiscover.mockResolvedValue([{ projectSlug: 'proj', ticketId: 'T-1', runId: 'bad', runPath: '/p/bad' }]);
