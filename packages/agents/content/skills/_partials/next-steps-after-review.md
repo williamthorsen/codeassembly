@@ -16,10 +16,9 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
 
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
-- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection and, for `Rewrite:` lines, from the divergent `D{n}` rows of `## Specification consistency` that ratifying the implementation would change in the ticket's narrative sections. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it yields no line.
+- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection, and from nothing else. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it yields no line. A ticket's `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when it was written, so no edit this menu offers reaches them; a divergence between one of them and the implementation is reported in the PR description instead.
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
-  - `Rewrite: {## Section} -- {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
 - **Both targets** render both groups, each under its own label.
 
@@ -29,7 +28,7 @@ Render no exclusions line. A criterion genuinely arguable as in conflict belongs
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). A source divergence always leaves a claim to reconcile, so its delta is never empty.
+**Empty delta.** When no line survives the judgment, the sub-block has nothing to propose for that target. The Deviations sub-block then does not render at all; see its [trigger](#deviations-sub-block). A source divergence leaves a PR-description delta that is never empty, but its ticket delta is empty whenever the divergence rests on a narrative section alone; see [its own empty-ticket-delta rule](#source-divergence-sub-block).
 
 ### Deviations sub-block
 
@@ -41,10 +40,10 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Options
 
-| #   | Emoji | Option                         | Description                                                                                                                        |
-| --- | ----- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria via `align-ticket-with-implementation` in criteria-only mode, bound to the previewed delta |
-| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                   |
+| #   | Emoji | Option                         | Description                                                                                                                                           |
+| --- | ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria via `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                                      |
 
 #### Output format
 
@@ -88,11 +87,13 @@ The base option pool is:
 | Emoji | Option                           | Action                                                                                                         |
 | ----- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | 📝    | Update PR description            | Edit the PR description to match the implementation                                                            |
-| 📝    | Update the stale ticket          | Ratify the implementation in the ticket, via `align-ticket-with-implementation`                                |
-| 📝    | Update ticket and PR description | Ratify the implementation in the ticket (via `align-ticket-with-implementation`), then edit the PR description |
+| 📝    | Update the stale ticket          | Revise the ticket's acceptance criteria, via `align-ticket-with-implementation`                                |
+| 📝    | Update ticket and PR description | Revise the ticket's acceptance criteria (via `align-ticket-with-implementation`), then edit the PR description |
 | ⏭️    | Leave as-is                      | Accept the divergence                                                                                          |
 
 Each case renders two of these options; the specific options and their ordering are shown in the Output format section.
+
+**Empty ticket delta.** A ticket target's delta comes from in-conflict criteria rows alone, so a divergence resting on a narrative section yields no ticket line. Withdraw every option that would edit the ticket, and select the case's remaining pair from the pool: Case 3 has nothing left to offer and does not render, and case 4 renders "Update PR description" against "Leave as-is". Never render a lone option; a one-option menu is a statement, and the statement to make is that nothing is proposed.
 
 #### Output format
 
@@ -108,7 +109,6 @@ Source divergence:
 Proposed edit to the ticket:
 - Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
 - ⚠️ W2 asks whether the cap belongs in configuration; accepting this reword settles it as a fixed value
-- Rewrite: ## Proposed solution -- records the backoff schedule the branch implements
 
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
@@ -121,7 +121,6 @@ Source divergence:
 
 Proposed edit to the ticket:
 - Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
-- Rewrite: ## Proposed solution -- records the backoff schedule the branch implements
 
 Proposed edit to the PR description:
 - D2: "Retries use a fixed 200ms delay" → "Retries use exponential backoff from 200ms"
@@ -268,7 +267,7 @@ Where the cascade's conditions leave two options genuinely in balance, prefer th
 
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. When both sub-blocks offer a ticket edit and the user selects both, run `align-ticket-with-implementation` once in whole-ticket mode, taking the union of the two previews as the contract. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. When both sub-blocks offer a ticket edit and the user selects both, run `align-ticket-with-implementation` once, taking the union of the two criteria previews as the contract. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
 
 ```
 Next steps:
@@ -285,7 +284,6 @@ Proposed edit to the acceptance criteria:
 
 Proposed edit to the ticket:
 - Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
-- Rewrite: ## Proposed solution -- records the fail-fast validation the branch implements
 
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
