@@ -1,3 +1,4 @@
+import { describeError } from '@williamthorsen/toolbelt.errors';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
@@ -231,7 +232,7 @@ export function App(): React.JSX.Element {
         setIndex(await fetchProjects());
       } catch (error_: unknown) {
         console.error('Failed to fetch projects:', error_);
-        setFetchError(error_ instanceof Error ? error_.message : 'Failed to load projects');
+        setFetchError(`Failed to load projects: ${describeError(error_)}`);
       }
     }
 
