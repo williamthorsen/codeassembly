@@ -2,6 +2,8 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
+import { ProcessExitError, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.ts';
@@ -108,16 +110,14 @@ describe(generateLabelMap, () => {
     await mkdir(metaDir, { recursive: true });
     await writeFile(path.join(metaDir, 'label-map.json'), '{}', 'utf8');
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit called');
-    });
+    using _exit = throwOnProcessExit();
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('process.exit called');
+    const error = await captureError(ProcessExitError, () => generateLabelMap({ force: false }, tempDir));
 
+    expect(error.code).toBe(1);
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('already exists'));
 
-    exitSpy.mockRestore();
     errorSpy.mockRestore();
   });
 
