@@ -1,3 +1,4 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -993,7 +994,7 @@ describe('CatwalkScene', () => {
     });
 
     it('applies the buffered diff after a choreography rejects', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      using silent = silenceConsole(['error']);
 
       const scene = new CatwalkScene(buildStatusAtStation('none'));
       scene.onInitialize();
@@ -1010,14 +1011,12 @@ describe('CatwalkScene', () => {
       scene.updateStatus(buildStatusAtStation('planning'));
 
       await vi.waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Choreography error:', expect.any(Error));
+        expect(silent.error).toHaveBeenCalledWith('Choreography error:', expect.any(Error));
       });
       // The buffered diff still reaches the orchestrator despite the failed choreography.
       await vi.waitFor(() => {
         expect(orch.animateMoveTo).toHaveBeenCalledTimes(2);
       });
-
-      consoleSpy.mockRestore();
     });
   });
 });

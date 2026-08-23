@@ -1,3 +1,4 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ValidationResult } from '../validate-run-index.js';
@@ -162,7 +163,7 @@ describe('findRunIndexFiles', () => {
   });
 
   it('logs warning and continues when readdir fails for a subdirectory', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    using silent = silenceConsole(['error']);
 
     mockedReaddir
       .mockResolvedValueOnce([makeDirent('accessible', true), makeDirent('denied', true)])
@@ -172,7 +173,7 @@ describe('findRunIndexFiles', () => {
     const result = await findRunIndexFiles('/root');
 
     expect(result).toEqual(['/root/accessible/run-index.json']);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('cannot read directory /root/denied'));
+    expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('cannot read directory /root/denied'));
   });
 });
 
@@ -180,30 +181,30 @@ describe('findRunIndexFiles', () => {
 
 describe('reportResults', () => {
   it('handles empty results array', () => {
-    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using silent = silenceConsole(['info']);
 
     const results: ValidationResult[] = [];
 
     const failCount = reportResults(results);
 
     expect(failCount).toBe(0);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('0 passed, 0 failed out of 0'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('0 passed, 0 failed out of 0'));
   });
 
   it('reports passing files', () => {
-    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using silent = silenceConsole(['info']);
 
     const results: ValidationResult[] = [{ filePath: '/a/run-index.json', valid: true, errors: [] }];
 
     const failCount = reportResults(results);
 
     expect(failCount).toBe(0);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('PASS'));
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('1 passed, 0 failed'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('PASS'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('1 passed, 0 failed'));
   });
 
   it('reports failing files with errors', () => {
-    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using silent = silenceConsole(['info']);
 
     const results: ValidationResult[] = [
       { filePath: '/a/run-index.json', valid: false, errors: ['  context.status: bad'] },
@@ -212,12 +213,12 @@ describe('reportResults', () => {
     const failCount = reportResults(results);
 
     expect(failCount).toBe(1);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('FAIL'));
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('0 passed, 1 failed'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('FAIL'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('0 passed, 1 failed'));
   });
 
   it('reports correct summary for mixed results', () => {
-    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using silent = silenceConsole(['info']);
 
     const results: ValidationResult[] = [
       { filePath: '/a/run-index.json', valid: true, errors: [] },
@@ -228,7 +229,7 @@ describe('reportResults', () => {
     const failCount = reportResults(results);
 
     expect(failCount).toBe(1);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('2 passed, 1 failed out of 3'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('2 passed, 1 failed out of 3'));
   });
 });
 
@@ -250,41 +251,41 @@ describe('main', () => {
   it('sets exitCode=1 and prints usage when no argument provided', async () => {
     originalArgv = process.argv;
     process.argv = ['node', 'validate-run-index.ts'];
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    using silent = silenceConsole(['error']);
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Usage'));
+    expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('Usage'));
   });
 
   it('sets exitCode=1 when path does not exist', async () => {
     setArgs('/nonexistent');
     mockedStat.mockRejectedValue(new Error('ENOENT: no such file'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    using silent = silenceConsole(['error']);
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Cannot access path /nonexistent'));
+    expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('Cannot access path /nonexistent'));
   });
 
   it('includes error message when stat fails with permission error', async () => {
     setArgs('/restricted');
     mockedStat.mockRejectedValue(new Error('EACCES: permission denied'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    using silent = silenceConsole(['error']);
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('EACCES'));
+    expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('EACCES'));
   });
 
   it('exits 0 for directory with no run-index.json files', async () => {
     setArgs('/empty-dir');
     mockedStat.mockResolvedValue(makeStats(true));
     mockedReaddir.mockResolvedValue([]);
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using _silent = silenceConsole(['info']);
 
     await main();
 
@@ -296,7 +297,7 @@ describe('main', () => {
     mockedStat.mockResolvedValue(makeStats(true));
     mockedReaddir.mockResolvedValue([makeDirent('run-index.json', false)]);
     mockedReadFile.mockResolvedValue(JSON.stringify(minimalValid()));
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using _silent = silenceConsole(['info']);
 
     await main();
 
@@ -308,7 +309,7 @@ describe('main', () => {
     mockedStat.mockResolvedValue(makeStats(true));
     mockedReaddir.mockResolvedValue([makeDirent('run-index.json', false)]);
     mockedReadFile.mockResolvedValue(JSON.stringify({ version: 1 }));
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using _silent = silenceConsole(['info']);
 
     await main();
 
@@ -319,7 +320,7 @@ describe('main', () => {
     setArgs('/path/run-index.json');
     mockedStat.mockResolvedValue(makeStats(false));
     mockedReadFile.mockResolvedValue(JSON.stringify(minimalValid()));
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using _silent = silenceConsole(['info']);
 
     await main();
 
@@ -330,7 +331,7 @@ describe('main', () => {
     setArgs('/path/run-index.json');
     mockedStat.mockResolvedValue(makeStats(false));
     mockedReadFile.mockResolvedValue(JSON.stringify({ version: 1 }));
-    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using _silent = silenceConsole(['info']);
 
     await main();
 
@@ -341,12 +342,12 @@ describe('main', () => {
     setArgs('/path/run-index.json');
     mockedStat.mockResolvedValue(makeStats(false));
     mockedReadFile.mockResolvedValue('not valid json');
-    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using silent = silenceConsole(['info']);
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    const allCalls = consoleSpy.mock.calls.flat().join(' ');
+    const allCalls = silent.info.mock.calls.flat().join(' ');
     expect(allCalls).toContain('Invalid JSON');
   });
 
@@ -354,12 +355,12 @@ describe('main', () => {
     setArgs('/path/run-index.json');
     mockedStat.mockResolvedValue(makeStats(false));
     mockedReadFile.mockRejectedValue(new Error('EACCES: permission denied'));
-    const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    using silent = silenceConsole(['info']);
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    const allCalls = consoleSpy.mock.calls.flat().join(' ');
+    const allCalls = silent.info.mock.calls.flat().join(' ');
     expect(allCalls).toContain('Read error');
   });
 });

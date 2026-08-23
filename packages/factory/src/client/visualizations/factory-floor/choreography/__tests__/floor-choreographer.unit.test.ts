@@ -1,3 +1,4 @@
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ChuteEndpoints, FactoryFloorLayoutResult, Position } from '../../layout/factory-floor-layout.js';
@@ -577,7 +578,7 @@ describe(choreographFloor, () => {
 
   describe('animation error handling', () => {
     it('silently swallows known killed-actor rejections', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      using silent = silenceConsole(['error']);
 
       const diff = floorDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 3 } }),
@@ -599,12 +600,11 @@ describe(choreographFloor, () => {
 
       await choreographFloor(diff, mockLayout(), refs);
 
-      expect(consoleSpy).not.toHaveBeenCalled();
-      consoleSpy.mockRestore();
+      expect(silent.error).not.toHaveBeenCalled();
     });
 
     it('logs unexpected rejections via console.error', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      using silent = silenceConsole(['error']);
 
       const diff = floorDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 3 } }),
@@ -626,8 +626,7 @@ describe(choreographFloor, () => {
 
       await choreographFloor(diff, mockLayout(), refs);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Unexpected animation error:', expect.any(Error));
-      consoleSpy.mockRestore();
+      expect(silent.error).toHaveBeenCalledWith('Unexpected animation error:', expect.any(Error));
     });
   });
 });
