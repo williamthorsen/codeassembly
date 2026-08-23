@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
-import { ProcessExitError, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.ts';
 
@@ -111,14 +111,12 @@ describe(generateLabelMap, () => {
     await writeFile(path.join(metaDir, 'label-map.json'), '{}', 'utf8');
 
     using _exit = throwOnProcessExit();
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    using silent = silenceConsole(['error']);
 
     const error = await captureError(ProcessExitError, () => generateLabelMap({ force: false }, tempDir));
 
     expect(error.code).toBe(1);
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('already exists'));
-
-    errorSpy.mockRestore();
+    expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('already exists'));
   });
 
   it('overwrites existing file when --force is set', async () => {
@@ -134,34 +132,29 @@ describe(generateLabelMap, () => {
   });
 
   it('prints the output path on success', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    using silent = silenceConsole(['info']);
 
     await generateLabelMap({ force: false }, tempDir);
 
     const expectedPath = path.join(tempDir, '.meta', 'label-map.json');
-    expect(infoSpy).toHaveBeenCalledWith(expectedPath);
-
-    infoSpy.mockRestore();
+    expect(silent.info).toHaveBeenCalledWith(expectedPath);
   });
 });
 
 describe(printGenerateUsage, () => {
   it('outputs available targets and options', () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    using silent = silenceConsole(['info']);
 
     printGenerateUsage();
 
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('label-map'));
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('--force'));
-
-    infoSpy.mockRestore();
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('label-map'));
+    expect(silent.info).toHaveBeenCalledWith(expect.stringContaining('--force'));
   });
 });
 
 /** Runs the generator and returns the file contents. */
 async function readGeneratedFile(options: { force: boolean }, workingDir: string): Promise<string> {
-  const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+  using _silent = silenceConsole(['info']);
   await generateLabelMap(options, workingDir);
-  infoSpy.mockRestore();
-  return readFile(path.join(workingDir, '.meta', 'label-map.json'), 'utf8');
+  return await readFile(path.join(workingDir, '.meta', 'label-map.json'), 'utf8');
 }
