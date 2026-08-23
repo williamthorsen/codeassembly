@@ -15,8 +15,8 @@ import { resolveSkillName } from '../../src/lib/rulebook-skill.ts';
 import { renderRulebookBody } from '../../src/lib/rulebook-transform.ts';
 
 // A Markdown link in installable content is rewritten at install time by `rewriteMarkdownPaths`, which resolves a
-// relative target against the *host* file's directory — the skill or subagent the link renders into, not the partial
-// it may have been authored in — and leaves an anchor-only target untouched. A link whose target has moved or been
+// relative target against the *host* file's directory (the skill or subagent the link renders into, not the partial
+// it may have been authored in) and leaves an anchor-only target untouched. A link whose target has moved or been
 // deleted still installs cleanly, leaving the agent to follow a link to nothing. Resolving every link the way the
 // installer does turns that into a build failure.
 //
@@ -35,7 +35,7 @@ import { renderRulebookBody } from '../../src/lib/rulebook-transform.ts';
 // algorithm through `anchor-resolution`.
 //
 // Host roots only. A `_partials/` file is never installed standalone, and its links are authored against the host that
-// inlines it — checking one in isolation would misresolve every `../` in it. Include expansion below reaches them
+// inlines it; checking one in isolation would misresolve every `../` in it. Include expansion below reaches them
 // through each host, which is the only context where they mean anything.
 //
 // `guidance/rulebooks/` is a host root because `sync` renders a rulebook body per harness and resolves its links the

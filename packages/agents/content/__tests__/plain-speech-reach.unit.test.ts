@@ -95,7 +95,7 @@ describe('plain-speech reach', () => {
 
 // region | Helpers
 
-/** Returns a carrier's include-expanded body — what the install pipeline goes on to rewrite and write out. */
+/** Returns a carrier's include-expanded body, what the install pipeline goes on to rewrite and write out. */
 async function expandCarrier(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
 }

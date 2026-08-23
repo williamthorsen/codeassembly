@@ -8,7 +8,7 @@ import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
 // Installable Markdown content is rewritten at install time. Runtime cross-references to other installable files must
 // use the `{harness_home_dir}/...` template (expanded by the install pipeline) or a relative Markdown link (rewritten
 // by `rewriteMarkdownPaths`). Raw `packages/agents/content/...` paths resolve only inside this monorepo and break in
-// every installed context, so they are forbidden in installable Markdown — except in the small set of files below,
+// every installed context, so they are forbidden in installable Markdown, except in the small set of files below,
 // whose references are intentional source-tree citations (documentation naming where the canonical source is).
 const ALLOWLIST: ReadonlyArray<string> = [
   '_partials/README.md',

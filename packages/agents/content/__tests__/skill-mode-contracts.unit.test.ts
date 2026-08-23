@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 // A skill can direct another skill into a named mode, and the two halves of that contract sit in different files with
 // no include tying them together. Deleting the definition leaves the directive naming a mode nothing defines, and the
-// callee falls back to its default behavior — the wider edit the directive exists to prevent — with every other test
+// callee falls back to its default behavior (the wider edit the directive exists to prevent), with every other test
 // still passing. The directive's own reach is checked in `spec-inlining.unit.test.ts`; this file checks that what
 // it names is actually defined.
 const SKILLS_ROOT = new URL('../skills/', import.meta.url).pathname;

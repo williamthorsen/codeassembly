@@ -34,7 +34,7 @@
 #   - Syntactically invalid JSON: Exits 1 with an error on stderr.
 #
 # Exit codes:
-#   0  Normal — JSON produced (regardless of resolved/ambiguous status).
+#   0  Normal: JSON produced (regardless of resolved/ambiguous status).
 #   1  Usage error (missing/unknown flag) or runtime error (base-ref not found,
 #      label-map malformed).
 
@@ -131,7 +131,7 @@ USAGE
   exit "${1:-1}"
 }
 
-# JSON-escape a string for embedding in JSON output. Title-grade — covers
+# JSON-escape a string for embedding in JSON output. Title-grade: covers
 # backslash, double quote, and the C-style control characters (newline, CR,
 # tab). For arbitrary content use a real JSON encoder.
 json_escape() {

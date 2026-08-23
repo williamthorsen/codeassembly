@@ -18,7 +18,7 @@
 # Output (stdout): Markdown block ready to inline directly under the
 # reviewer prompt's `## Reviewer context` heading. Empty when neither
 # source produces content. The script never emits the `## Reviewer
-# context` heading itself — the orchestrator wraps the output and skips
+# context` heading itself; the orchestrator wraps the output and skips
 # the wrapping when the output is empty.
 #
 # Logic:
@@ -32,19 +32,19 @@
 # `--changed-files` that no longer exist in the working tree (e.g.,
 # deleted) are silently skipped.
 #
-# Match patterns (intentionally narrow — static imports/requires only):
+# Match patterns (intentionally narrow: static imports/requires only):
 #   - import ... from 'pkg' / "pkg"
 #   - import ... from 'pkg/subpath' / "pkg/subpath"
 #   - require('pkg') / require("pkg")
 #   - require('pkg/subpath') / require("pkg/subpath")
-# Subpath imports (e.g., `pkg/lib`) match the bare-key entry — the gotcha
+# Subpath imports (e.g., `pkg/lib`) match the bare-key entry; the gotcha
 # is usually in or near the subpath. Dynamic imports (`await
 # import('pkg')`), rebound names, and re-exports are not matched. v1
 # acceptable: Any single static reference is enough signal that the
 # package is in scope.
 #
 # Exit codes:
-#   0  Normal — content emitted (or empty stdout when nothing matched).
+#   0  Normal: content emitted (or empty stdout when nothing matched).
 #   1  Usage error (missing/unknown flag) or unreadable required input.
 
 set -euo pipefail
@@ -201,7 +201,7 @@ file_matches_key() {
     fi
     if [[ ! -f "$file" ]]; then
       # File is absent (deleted, moved, or never existed) or unreadable
-      # (permission denied) — silently skip. The downstream `grep` also
+      # (permission denied). Silently skip. The downstream `grep` also
       # suppresses stderr to cover the rare case where `[[ -f ]]` succeeds
       # but the file becomes unreadable between the check and the grep.
       continue
