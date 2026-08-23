@@ -232,7 +232,7 @@ export function App(): React.JSX.Element {
         setIndex(await fetchProjects());
       } catch (error_: unknown) {
         console.error('Failed to fetch projects:', error_);
-        setFetchError(`Failed to load projects: ${describeError(error_)}`);
+        setFetchError(describeError(error_));
       }
     }
 

@@ -301,7 +301,7 @@ describe('App', () => {
     const view = within(container);
 
     await waitFor(() => {
-      expect(view.getByText('Failed to load projects: Server down')).toBeInTheDocument();
+      expect(view.getByText('Server down')).toBeInTheDocument();
     });
   });
 
@@ -330,7 +330,7 @@ describe('App', () => {
     const view = within(container);
 
     await waitFor(() => {
-      expect(view.getByText('Failed to load projects: connection refused')).toBeInTheDocument();
+      expect(view.getByText('connection refused')).toBeInTheDocument();
     });
   });
 
