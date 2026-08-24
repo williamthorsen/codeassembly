@@ -147,6 +147,9 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // above and below cannot mask its removal. Without it the recommended option re-pins to ■■□ however stark
     // the divergence.
     "the recommended option's marker follows how cleanly the case's own test is met",
+    // The rule that puts the ticket edit's destination in the rendered line. Without it the option renders as a bare
+    // label again, and selecting it is consent to a write whose target the user was never shown.
+    '**Name the artifact the edit writes.**',
     // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
     // findings turned out to be, so the marker carries no information about how clear the call was.
     "The selected option's marker follows how cleanly its rule matched",

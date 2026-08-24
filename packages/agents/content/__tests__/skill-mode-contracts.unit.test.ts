@@ -42,6 +42,17 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
     },
     mode: 'ratified-delta mode',
   },
+  {
+    caller: {
+      path: '_partials/next-steps-after-review.md',
+      phrase: 'and writes the ticket of record',
+    },
+    callee: {
+      path: 'align-ticket-with-implementation/SKILL.md',
+      phrase: "carries the user's consent to the remote write",
+    },
+    mode: 'the remote write a ratified preview authorizes',
+  },
 ];
 
 describe('skill mode contracts', () => {
