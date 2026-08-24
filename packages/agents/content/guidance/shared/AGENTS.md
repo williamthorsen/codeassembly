@@ -59,7 +59,11 @@ When creating an artifact (plan, devlog, review, change summary, chat summary, e
 
 A saved artifact records a moment, not a running state, and once written it stays as written: Never rewrite one to match a later human edit, a rebase, or any other event downstream of it, and never raise its divergence from current state as a defect or as a repair for the user to weigh.
 
-The same restraint applies to the remote ticket. Align its acceptance criteria to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
+The same restraint applies to the remote ticket, from the point its work is handed to implementation. Design comes before that point: `design-and-plan` is where a raw ticket is refined, and it may rewrite any section or the whole ticket. What design settles is the authored record the seal then protects.
+
+From that point on, the ticket's `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when the work began, so they are never revised toward the outcome: A proposal does not become wrong because the implementer did something else, and revising it destroys the only record of what was foreseen. Report a divergence between one of those sections and the implementation in the pull-request description, whose job is to describe the change under review.
+
+Acceptance criteria are the one revisable part, because they alone are the contract an implementation can falsify. Align them to the implementation only where the two conflict, or where the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 
 ## Commits
 

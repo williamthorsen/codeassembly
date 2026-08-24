@@ -128,9 +128,9 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // The carve-out that exempts the preview from the sub-blocks' terseness default. Without it that default
     // suppresses the preview again, which is the consent-blind render this spec exists to prevent.
     'It never suppresses the proposed-edit preview, which is required content',
-    // The mode that keeps the Deviations edit inside the criteria it previews. Without it the option invokes
-    // the default whole-ticket regeneration and the preview under-describes the edit again.
-    'in criteria-only mode',
+    // The directive that keeps the Deviations edit inside the criteria it previews. Without it the option names no
+    // bound, and the delegate's own scope is the only thing holding the edit to what the preview showed.
+    'which revises acceptance criteria alone',
     // The trigger's computation order. Without it the sub-block renders off the compliance status rows again,
     // prompting for a ticket edit wherever a criterion's wording merely differs from what was built.
     'Compute the delta first: An empty delta renders no sub-block',
