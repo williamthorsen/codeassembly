@@ -49,9 +49,9 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
     },
     callee: {
       path: 'align-ticket-with-implementation/SKILL.md',
-      phrase: "carries the user's consent to the remote write",
+      phrase: "apply the criteria revision to the remote's current body",
     },
-    mode: 'the remote write a ratified preview authorizes',
+    mode: 'the remote write the ticket edit performs',
   },
 ];
 

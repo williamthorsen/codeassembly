@@ -100,7 +100,7 @@ The stored URL applies throughout: A Jira ticket URL resolved once is reused on 
 
 ## Platform-specific write
 
-Write a revision back to the ticket it came from. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) where the manifest carries none. A ticket that resolved from a file is written back to that file; one that resolved from plain text has no write target.
+Write a revision back to the ticket of record, which the caller names; where a caller names none, it is the ticket the revision's source came from. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) where the manifest carries none. Under that default, a ticket that resolved from a file is written back to that file, and one that resolved from plain text has no write target.
 
 **A partial revision composes from the platform's current body.** Where a skill revises one section of a ticket, it fetches the current body per [platform-specific fetch](#platform-specific-fetch) and applies the revision to that, so every section it does not revise is carried over from the platform rather than from a local copy. Pushing a locally composed body in place of those sections overwrites whatever reached the platform after that copy was taken. A whole-ticket body the user approved replaces the body outright.
 
