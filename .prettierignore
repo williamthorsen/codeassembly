@@ -11,9 +11,9 @@ packages/agents/content/skills/**/*.mjs
 # deployed skill directory. The exclusion above covers the source path only.
 .claude/agents/
 .claude/skills/
-.rovodev/prompts.yml
-.rovodev/skills/
-.rovodev/subagents/
+.rovo/prompts.yml
+.rovo/skills/
+.rovo/subagents/
 
 # Subagent partials and the files that consume them must preserve exact whitespace around
 # `<!-- include: ... -->` open/close directives and

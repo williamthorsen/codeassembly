@@ -9,7 +9,7 @@ const config = defineConfig([
     '**/*.sh',
     '**/.claude/**',
     '**/.readyup/**/*.js',
-    '**/.rovodev/**',
+    '**/.rovo/**',
     '**.playwright-mcp/**',
     '**/coverage/**',
     '**/dist/**',
