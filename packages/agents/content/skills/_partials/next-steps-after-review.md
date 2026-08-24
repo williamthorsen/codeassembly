@@ -57,6 +57,7 @@ Deviations from ticket:
 
 Proposed edit to the acceptance criteria:
 - Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
+- ⚠️ W2 asks whether an unknown directive should fail the run at all; accepting this reword settles it as the contract
 - Drop: A `--strict` flag gates the new validation
 
 1. 📝 ■■□ Update the acceptance criteria
@@ -103,7 +104,6 @@ Source divergence:
 
 Proposed edit to the PR description:
 - D2: "Retries use a fixed 200ms delay" → "Retries use exponential backoff from 200ms"
-- ⚠️ W2 asks whether the backoff schedule belongs in configuration; accepting this claim settles it as fixed
 
 1. 📝 ■■□ Update PR description
 2. ⏭️ ■□□ Leave as-is
