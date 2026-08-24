@@ -150,6 +150,9 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // The rule that puts the ticket edit's destination in the rendered line. Without it the option renders as a bare
     // label again, and selecting it is consent to a write whose target the user was never shown.
     '**Name the artifact the edit writes.**',
+    // The rule that offers the local-only form where the snapshot may be the working contract. Without it a ticket the
+    // user cannot edit has no path but a remote write that fails or lands on a ticket that is not theirs.
+    '**Offer the local-only form where the snapshot may be the contract.**',
     // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
     // findings turned out to be, so the marker carries no information about how clear the call was.
     "The selected option's marker follows how cleanly its rule matched",
