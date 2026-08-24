@@ -39,16 +39,26 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Options
 
-| #   | Emoji | Option                         | Description                                                                                                                                                       |
-| --- | ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📝    | Update the acceptance criteria | Run `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta, and writes the ticket of record where one resolves |
-| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                                                  |
+| #   | Emoji | Option                         | Description                                                                                                                                                                                                                            |
+| --- | ----- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Run `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta, and writes the ticket of record where one resolves, or the local snapshot alone when the selection is qualified `local` |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                                                                                                                       |
 
 #### Output format
 
 Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
 **Name the artifact the edit writes.** Option 1's rendered line ends with its target: `on {ticket_ref}` where the ticket resolves to a platform issue, `in the local ticket snapshot` where none resolves. The form turns on whether a ticket of record resolves, which is the rule the delegate applies: the manifest's `ticket_url`, or `ticket_id` with `scm`. Where auto-resolve passed over a remote candidate on recency, it already holds one. Which artifact supplied the spec source decides nothing here: A review measured against a local snapshot while a remote issue exists would otherwise name the snapshot and land the edit on the remote. Selecting the option is consent to that write, and a bare label leaves the user consenting to an edit whose destination they were never told.
+
+**Offer the local-only form where the snapshot may be the contract.** Where the review measured against the local snapshot while a remote candidate existed, nest one invocation line under option 1:
+
+```
+1. 📝 ■■□ Update the acceptance criteria on {ticket_ref}
+   - or `1 local`: update the local snapshot alone, leaving {ticket_ref} as it stands
+2. ⏭️ ■□□ Leave as-is
+```
+
+A snapshot newer than the remote is the shape of two cases the review cannot tell apart: a remote left stale by an earlier local-only edit, which the default write repairs, and a ticket the user cannot or must not edit, whose refinements had nowhere else to go. The line gives the second its path. A selection qualified `local` runs the delegate with `--write-target=local`. Where the review measured against the remote, or no remote candidate existed, omit the line: The default already writes the only target there is.
 
 Example (rendered for the recommendation case):
 

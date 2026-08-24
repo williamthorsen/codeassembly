@@ -11,6 +11,12 @@ dependencies:
 
 Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe what the current branch's implementation accomplishes.
 
+## Arguments
+
+| Flag                           | Effect                                                                                                                                                                                                                                       | Default                                                                |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `--write-target=remote\|local` | Which artifact alignment writes, per [Write targets](#write-targets). `local` saves the local ticket artifact alone and leaves the ticket of record as it stands; `remote` requires a ticket of record to resolve and stops where none does. | The ticket of record where one resolves, else the local artifact alone |
+
 ## Process
 
 1. **Resolve the source ticket**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_url`, and `ticket_id` from the manifest JSON it emits on stdout. Resolve the ticket the caller names, or failing that the manifest's, per [ticket source resolution](../_data/ticket-source-resolution.md). Whether a source ticket resolves is what selects the branch in [Two branches](#two-branches). Where resolution is ambiguous or fails, take the alignment branch and ask: A lookup that fell through must not be read as licence to author a proposal over one that already exists.
@@ -86,7 +92,9 @@ The skill writes two artifacts: the ticket of record on its platform, and a loca
 
 **Consent comes from the caller.** Ratified-delta mode carries the user's consent to the remote write: The caller put the delta to the user and the user selected it, so no further ask precedes the write. Invoked with no delta, render the criteria revision as a delta and confirm before writing.
 
-**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; where no remote resolved, report that the remote was not updated. Never report the criteria as updated on the strength of the local artifact alone.
+**`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. This is the form for a ticket the user implements but does not own: one the platform will not let them edit, or one they must not edit, where the local snapshot is the working contract. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly, and where no ticket of record resolves it stops and reports the missing target rather than falling back to the local artifact: An explicit instruction is not redirected to the other target.
+
+**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; where no remote resolved, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason. Never report the criteria as updated on the strength of the local artifact alone.
 
 ### Path resolution
 
