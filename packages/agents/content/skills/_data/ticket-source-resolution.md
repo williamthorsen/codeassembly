@@ -118,6 +118,8 @@ gh issue edit {number} --body-file "$body_path"
 
 Update through {skill:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
 
+The composition rule above holds here up to a re-rendering. `acli`'s default view renders the description as text rather than Markdown, and the write converts the whole description, task-list syntax included, so the sections a partial revision leaves alone are re-rendered rather than carried over byte for byte. Report a partial revision to a Jira ticket as a re-rendering of the whole description, not as an edit confined to the revised section.
+
 ### Other platforms
 
 No automated write is available. Report that the ticket was not updated and present the composed body for the user to apply, rather than passing over the write in silence.
