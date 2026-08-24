@@ -13,7 +13,14 @@ const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
 const FRONTMATTER_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_-]*\s*:(\s|$)/;
 
 /** The ATX heading grammar this module derives anchors from. No content file uses the setext form. */
-const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
+const HEADING_REGEX = /^(#{1,6})\s+(.+?)\s*$/gm;
+
+/** A heading's anchor slug, its ATX level, and the index in the body where its line begins. */
+export interface HeadingPosition {
+  readonly slug: string;
+  readonly level: number;
+  readonly index: number;
+}
 
 /** A body's lines with its frontmatter and fenced blocks blanked, plus the opening run of any fence left unclosed. */
 interface FenceScan {
@@ -77,14 +84,28 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
 }
 
 /**
+ * Lists every heading in `normalized` in document order, each with the index where its line begins. Expects the
+ * output of `normalizeForAnchorScan`, for the reason `collectHeadingSlugs` gives.
+ *
+ * The index and level are what let a caller attribute a passage to the section holding it, and to that section's
+ * ancestors: a slug count answers whether an anchor resolves, never what lies under it.
+ */
+export function collectHeadingPositions(normalized: string): ReadonlyArray<HeadingPosition> {
+  return Array.from(normalized.matchAll(HEADING_REGEX), (match) => ({
+    slug: slugifyHeading(match[2] ?? ''),
+    level: (match[1] ?? '').length,
+    index: match.index,
+  }));
+}
+
+/**
  * Counts each heading slug in `normalized`, so a fragment matching two headings is rejected rather than resolved
  * against whichever came first. Expects the output of `normalizeForAnchorScan`: an unnormalized body would offer a
  * fenced sample heading as a live target.
  */
 export function collectHeadingSlugs(normalized: string): ReadonlyMap<string, number> {
   const counts = new Map<string, number>();
-  for (const match of normalized.matchAll(HEADING_REGEX)) {
-    const slug = slugifyHeading(match[1] ?? '');
+  for (const { slug } of collectHeadingPositions(normalized)) {
     counts.set(slug, (counts.get(slug) ?? 0) + 1);
   }
   return counts;
