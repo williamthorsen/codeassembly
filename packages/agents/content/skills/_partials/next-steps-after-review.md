@@ -10,7 +10,7 @@ Use `~/`-relative paths where possible and absolute paths otherwise. Every line 
 
 ### Proposed-edit preview
 
-Two of the sub-blocks below offer options that rewrite an artifact: the ticket's acceptance criteria, the PR description, or both. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which criteria are genuinely in conflict with the implementation is a judgment the reviewer makes, and the preview is where that judgment becomes reviewable instead of silent.
+Two of the sub-blocks below offer options that rewrite an artifact, one each: the Deviations sub-block rewrites the ticket's acceptance criteria, and the source-divergence sub-block rewrites the PR description. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which criteria are genuinely in conflict with the implementation is a judgment the reviewer makes, and the preview is where that judgment becomes reviewable instead of silent.
 
 **Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", has no preview.
 
@@ -20,7 +20,6 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
-- **Both targets** render both groups, each under its own label.
 
 Render no exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out over-triggers into noise and hides the proposal it was meant to qualify.
 
@@ -28,13 +27,13 @@ Render no exclusions line. A criterion genuinely arguable as in conflict belongs
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, the sub-block has nothing to propose for that target. The Deviations sub-block then does not render at all; see its [trigger](#deviations-sub-block). A source divergence leaves a PR-description delta that is never empty, but its ticket delta is empty whenever the divergence rests on a narrative section alone; see [its own empty-ticket-delta rule](#source-divergence-sub-block).
+**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). Where a source divergence proposes a PR-description edit, that delta is never empty, because a divergence the implementation resolves in the ticket's favor always leaves a claim to reconcile.
 
 ### Deviations sub-block
 
 Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta contains at least one line. Compute the delta first: An empty delta renders no sub-block.
 
-A criterion from another spec source never fires this sub-block, whose only edit rewrites the ticket. A PR description at odds with the implementation is the [source divergence sub-block](#source-divergence-sub-block)'s case 2.
+A criterion from another spec source never fires this sub-block, whose only edit rewrites the ticket. Every ticket edit a review offers is this sub-block's, and a PR description at odds with the implementation is the [source divergence sub-block](#source-divergence-sub-block)'s.
 
 A criterion that is merely unbuilt contributes no line. The work is unfinished, not redirected, and a contract is not revised to match a moving target. Implementation that exceeds the criteria contributes none either.
 
@@ -78,76 +77,59 @@ For rules 1 and 2, the recommended option's marker follows how cleanly the rule'
 
 ### Source divergence sub-block
 
-Shown when the consistency section of the review reports a `partial` or `severe` verdict. The consistency section renders only when two spec sources are present (ticket and PR description), so this sub-block appears in PR reviews. The option set varies by case (which spec source the implementation matches, drawn from the consistency-section table; see `review-branch/SKILL.md` § Specification consistency).
+Shown when the consistency section of the review reports a `partial` or `severe` verdict, and the divergence leaves a PR-description claim to reconcile. The consistency section renders only when two spec sources are present (ticket and PR description), so this sub-block appears in PR reviews. The case (which spec source the implementation matches) is drawn from the consistency-section table; see `review-branch/SKILL.md` § Specification consistency.
+
+This sub-block edits the PR description alone. A ticket delta derives from in-conflict criteria rows, which are the [Deviations sub-block](#deviations-sub-block)'s trigger, so a ticket edit offered here would duplicate that sub-block's preview and menu for one decision. Case 3 (the ticket is the stale source) therefore renders nothing of its own: Where its divergence rests on a criterion, Deviations proposes the edit, and where it rests on a narrative section, the ticket's authoring-time record stands and nothing is proposed.
 
 #### Options
 
-The base option pool is:
+The options are:
 
-| Emoji | Option                           | Action                                                                                                         |
-| ----- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 📝    | Update PR description            | Edit the PR description to match the implementation                                                            |
-| 📝    | Update the stale ticket          | Revise the ticket's acceptance criteria, via `align-ticket-with-implementation`                                |
-| 📝    | Update ticket and PR description | Revise the ticket's acceptance criteria (via `align-ticket-with-implementation`), then edit the PR description |
-| ⏭️    | Leave as-is                      | Accept the divergence                                                                                          |
+| Emoji | Option                | Action                                              |
+| ----- | --------------------- | --------------------------------------------------- |
+| 📝    | Update PR description | Edit the PR description to match the implementation |
+| ⏭️    | Leave as-is           | Accept the divergence                               |
 
-Each case renders two of these options; the specific options and their ordering are shown in the Output format section.
-
-**Empty ticket delta.** A ticket target's delta comes from in-conflict criteria rows alone, so a divergence resting on a narrative section yields no ticket line. Withdraw every option that would edit the ticket, and select the case's remaining pair from the pool: Case 3 has nothing left to offer and does not render, and case 4 renders "Update PR description" against "Leave as-is". Never render a lone option; a one-option menu is a statement, and the statement to make is that nothing is proposed. Case 4 stays marker-free either way: Withdrawing the ticket half tells the reviewer nothing about which of the PR description and the code is the wrong one.
+Every case that renders offers both, so the pair is fixed; what varies by case is which marker each takes.
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" has none. Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific divergence presents a tradeoff that survives the option-format tests (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker per case. Option 1 renders its PR-description delta above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" has none. Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific divergence presents a tradeoff that survives the option-format tests (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
-Case 2 (implementation matches ticket; PR description is the stale source) mirrors case 3 with the PR description as the target: Its delta uses the `D{n}:` notation and option 1 reads "Update PR description".
-
-Case 3 (implementation matches PR description; ticket is the stale source):
+Case 2 (implementation matches ticket; PR description is the stale source):
 
 ```
 Source divergence:
-
-Proposed edit to the ticket:
-- Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
-- ⚠️ W2 asks whether the cap belongs in configuration; accepting this reword settles it as a fixed value
-
-1. 📝 ■■□ Update the stale ticket
-2. ⏭️ ■□□ Leave as-is
-```
-
-Case 4 (implementation matches neither source, severe):
-
-```
-Source divergence:
-
-Proposed edit to the ticket:
-- Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
 
 Proposed edit to the PR description:
 - D2: "Retries use a fixed 200ms delay" → "Retries use exponential backoff from 200ms"
+- ⚠️ W2 asks whether the backoff schedule belongs in configuration; accepting this claim settles it as fixed
 
-1. 📝 Update ticket and PR description
-2. ⏭️ Leave as-is
+1. 📝 ■■□ Update PR description
+2. ⏭️ ■□□ Leave as-is
 ```
 
-Case 4 renders marker-free: The reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here: The review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
+Case 3 (implementation matches PR description; ticket is the stale source) renders nothing; see [the sub-block's own scope](#source-divergence-sub-block).
+
+Case 4 (implementation matches neither source, severe) renders the same pair as case 2, marker-free: The reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here: The review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
 
 Source-divergence options preserve conversation context, and the preview each renders binds the reconciliation that follows, per [proposed-edit preview](#proposed-edit-preview).
 
 #### Recommendation rules
 
-In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one; update it to match reality. When the implementation matches neither (severe), the reviewer cannot attribute the fault, so the menu offers only ratification and leaves the code-is-wrong path to the findings.
+In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one; update it to match reality. When the implementation matches neither (severe), the reviewer cannot attribute the fault, so the menu offers only ratification of the PR description and leaves the code-is-wrong path to the findings.
 
 Determine the case from the implementation column of the consistency-section table:
 
-| Implementation column shows                   | Verdict      | Case | Recommended option      |
-| --------------------------------------------- | ------------ | ---- | ----------------------- |
-| `🟢 ticket, 🟠/🔴 PR` on every divergent row  | 🟠 `partial` | 2    | Update PR description   |
-| `🟠/🔴 ticket, 🟢 PR` on every divergent row  | 🟠 `partial` | 3    | Update the stale ticket |
-| `🟠/🔴 ticket, 🟠/🔴 PR` on any divergent row | 🔴 `severe`  | 4    | None (marker-free)      |
+| Implementation column shows                   | Verdict      | Case | Recommended option     |
+| --------------------------------------------- | ------------ | ---- | ---------------------- |
+| `🟢 ticket, 🟠/🔴 PR` on every divergent row  | 🟠 `partial` | 2    | Update PR description  |
+| `🟠/🔴 ticket, 🟢 PR` on every divergent row  | 🟠 `partial` | 3    | None (does not render) |
+| `🟠/🔴 ticket, 🟠/🔴 PR` on any divergent row | 🔴 `severe`  | 4    | None (marker-free)     |
 
 #### Marker strengths
 
-For cases 2 and 3, the recommended option's marker follows how cleanly the case's own test is met: ■■■ where the divergence is unambiguous and one target is plainly the stale one, ■■□ where which source leads is arguable. The other option takes ■□□. Case 4 has no markers.
+For case 2, the recommended option's marker follows how cleanly the case's own test is met: ■■■ where the divergence is unambiguous and the PR description is plainly the stale source, ■■□ where which source leads is arguable. The other option takes ■□□. Case 4 has no markers.
 
 ### Findings sub-block
 
@@ -267,7 +249,7 @@ Where the cascade's conditions leave two options genuinely in balance, prefer th
 
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. When both sub-blocks offer a ticket edit and the user selects both, run `align-ticket-with-implementation` once, taking the union of the two criteria previews as the contract. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. The two sub-blocks edit different artifacts, so selecting both runs each edit against its own preview. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
 
 ```
 Next steps:
@@ -282,10 +264,10 @@ Proposed edit to the acceptance criteria:
 
 **A2: Source divergence**
 
-Proposed edit to the ticket:
-- Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
+Proposed edit to the PR description:
+- D2: "Unknown directives are warned on" → "Unknown directives fail the run"
 
-1. 📝 ■■□ Update the stale ticket
+1. 📝 ■■□ Update PR description
 2. ⏭️ ■□□ Leave as-is
 
 **A3: Actionable findings**
