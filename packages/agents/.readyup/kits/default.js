@@ -9,7 +9,7 @@ import { defineRdyKit } from "readyup";
 import { fileExists, readFile } from "readyup/check-utils";
 
 // .readyup/lib/guidance-constraints.ts
-var HARNESS_PATH_REGEX = /(?:~\/)?\.(?:claude|rovodev)\//;
+var HARNESS_PATH_REGEX = /(?:~\/)?\.(?:claude|rovo)\//;
 var RULEBOOK_MARKER_REGEX = /<!--\s*\/?\s*rulebook:/;
 function describeViolations(violations) {
   return violations.map((violation) => `line ${violation.lineNumber}: ${violation.text.trim()}`).join("; ");

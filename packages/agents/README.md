@@ -121,23 +121,23 @@ Keep the whole invocation in `command` rather than splitting the flags into an `
 
 ### Rovo Dev
 
-In `~/.rovodev/config.yml`, under `eventHooks`:
+In `~/.rovo/config.yml`, under `eventHooks`:
 
 ```yaml
 eventHooks:
   events:
     - name: on_session_start
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_session_start --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_session_start --sentinel codeassembly-agents
     - name: on_session_end
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_session_end --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_session_end --sentinel codeassembly-agents
     - name: on_user_prompt
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_user_prompt --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_user_prompt --sentinel codeassembly-agents
     - name: on_complete
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_complete --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_complete --sentinel codeassembly-agents
 ```
 
 Write your home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes your machine's absolute path here, matching the entries Rovo's own tooling generates.
