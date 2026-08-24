@@ -13,9 +13,9 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { uninstallCommand } from '../uninstall.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
-import { uninstallCommand } from '../uninstall.ts';
 
 describe('guidance installation', () => {
   let tempDir: string;
