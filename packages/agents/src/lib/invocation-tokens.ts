@@ -10,6 +10,9 @@
  */
 const INVOCATION_TOKEN_RE = /\{(rulebook|skill|subagent):([a-z][a-z0-9-]*)\}/g;
 
+/** The kinds the pattern above can capture, typed as plain strings so the guard below can test an uncertain one. */
+const TOKEN_KINDS: ReadonlySet<string> = new Set(['rulebook', 'skill', 'subagent']);
+
 /** How a rulebook is addressed by an invocation token: the skill name it deploys under, and whether it deploys as one. */
 export interface RulebookInvocationTarget {
   readonly skillName: string;
@@ -36,6 +39,13 @@ export interface InvocationSigils {
   readonly subagentSigil: string;
 }
 
+/** One invocation token in a body: what it invokes, the slug it names, and the index where the token begins. */
+export interface InvocationToken {
+  readonly kind: 'rulebook' | 'skill' | 'subagent';
+  readonly slug: string;
+  readonly index: number;
+}
+
 /** Invocation slugs extracted from a body, grouped by token kind. Each list preserves source order and may repeat. */
 export interface InvocationEdges {
   readonly rulebooks: ReadonlyArray<string>;
@@ -52,12 +62,7 @@ export function extractInvocationEdges(content: string): InvocationEdges {
   const rulebooks: Array<string> = [];
   const skills: Array<string> = [];
   const subagents: Array<string> = [];
-  for (const [, kind, slug] of content.matchAll(INVOCATION_TOKEN_RE)) {
-    // Both capture groups always participate when the overall match succeeds; the guard keeps the type honest
-    // (under noUncheckedIndexedAccess the destructured elements are string | undefined) without a type assertion.
-    if (slug === undefined) {
-      continue;
-    }
+  for (const { kind, slug } of locateInvocationTokens(content)) {
     if (kind === 'rulebook') {
       rulebooks.push(slug);
     } else if (kind === 'skill') {
@@ -67,6 +72,26 @@ export function extractInvocationEdges(content: string): InvocationEdges {
     }
   }
   return { rulebooks, skills, subagents };
+}
+
+/**
+ * Lists every invocation token in `content` in source order, each with the index where it begins. `extractInvocationEdges`
+ * answers what a body invokes; this answers where, which is what a caller attributing a token to the passage holding it
+ * needs. Slugs repeat, for the reason that function gives.
+ */
+export function locateInvocationTokens(content: string): ReadonlyArray<InvocationToken> {
+  const tokens: Array<InvocationToken> = [];
+  for (const match of content.matchAll(INVOCATION_TOKEN_RE)) {
+    const [, kind, slug] = match;
+    // Both capture groups always participate when the overall match succeeds. The guards keep the type honest (under
+    // noUncheckedIndexedAccess the destructured elements are string | undefined) and narrow the kind to the union the
+    // token declares, both without a type assertion.
+    if (slug === undefined || !isTokenKind(kind)) {
+      continue;
+    }
+    tokens.push({ kind, slug, index: match.index });
+  }
+  return tokens;
 }
 
 /**
@@ -129,3 +154,12 @@ export function rewriteInvocationTokens(
     return `${sigil}${slug}`;
   });
 }
+
+// region | Helpers
+
+/** Narrows a captured token kind to the union `InvocationToken` declares. */
+function isTokenKind(value: string | undefined): value is InvocationToken['kind'] {
+  return value !== undefined && TOKEN_KINDS.has(value);
+}
+
+// endregion | Helpers

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extractInvocationEdges,
   type InvocationSigils,
+  locateInvocationTokens,
   resolveRulebookToken,
   rewriteInvocationTokens,
   type RulebookInvocationCatalog,
@@ -46,6 +47,27 @@ describe(extractInvocationEdges, () => {
   it('returns slugs in source order without deduping repeats', () => {
     const content = '{skill:commit} then {skill:commit} again.';
     expect(extractInvocationEdges(content)).toEqual({ rulebooks: [], skills: ['commit', 'commit'], subagents: [] });
+  });
+});
+
+describe(locateInvocationTokens, () => {
+  it('reports each token in source order with the index where it begins', () => {
+    const content = 'Run {skill:create-commit}, then {subagent:canary}.';
+
+    expect(locateInvocationTokens(content)).toEqual([
+      { kind: 'skill', slug: 'create-commit', index: content.indexOf('{skill:') },
+      { kind: 'subagent', slug: 'canary', index: content.indexOf('{subagent:') },
+    ]);
+  });
+
+  it('reports a rulebook token, which the edge surface groups separately', () => {
+    expect(locateInvocationTokens('{rulebook:shell-conventions}')).toEqual([
+      { kind: 'rulebook', slug: 'shell-conventions', index: 0 },
+    ]);
+  });
+
+  it('ignores a malformed token, so the locator and the edge surface read the same grammar', () => {
+    expect(locateInvocationTokens('{skill:Not-Kebab} {tool:Read} {skill:}')).toEqual([]);
   });
 });
 

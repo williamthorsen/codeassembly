@@ -2,11 +2,20 @@
 name: align-ticket-with-implementation
 description: Align an issue ticket with the current branch's implementation
 user-invocable: true
+dependencies:
+  skills:
+    - update-jira-ticket
 ---
 
 # Align ticket with implementation
 
 Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe what the current branch's implementation accomplishes.
+
+## Arguments
+
+| Flag                           | Effect                                                                                                                                                                                                                                                                                      | Default                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `--write-target=remote\|local` | Which artifact alignment writes, per [Write targets](#write-targets). `local` saves the local ticket artifact alone and leaves the ticket of record as it stands, for a ticket the user cannot or must not edit; `remote` requires a ticket of record to resolve and stops where none does. | The ticket of record where one resolves, else the local artifact alone |
 
 ## Process
 
@@ -18,7 +27,7 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 git diff $DEFAULT_BRANCH...HEAD
 ```
 
-3. **Write the ticket** on the branch step 1 selected, describing issues that were addressed
+3. **Write the ticket** on the branch step 1 selected, describing issues that were addressed, then write it to the targets [Saving](#saving) names
 
 ## Output structure
 
@@ -72,6 +81,20 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with-implementation --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Saving
+
+### Write targets
+
+The skill writes two artifacts: the ticket of record on its platform, and a local ticket artifact at the path [Path resolution](#path-resolution) derives. The frontmatter belongs to the local artifact alone; the body written to the platform carries none.
+
+**The ticket of record** resolves from the session-context manifest, from `ticket_url` or from `ticket_id` with `scm`, whichever artifact supplied the source content in step 1: A caller can name a local snapshot while a remote issue exists.
+
+**Alignment writes it; generation does not.** On the alignment branch, apply the criteria revision to the remote's current body and write it per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write). Generation has no ticket of record to write.
+
+**Consent comes from the caller.** Ratified-delta mode carries the user's consent to the remote write, so no further ask precedes it. Invoked with no delta, render the criteria revision as a delta and confirm before writing.
+
+**`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly and, where no ticket of record resolves, stops and reports the missing target rather than falling back to the local artifact.
+
+**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; where no remote resolved, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason.
 
 ### Path resolution
 

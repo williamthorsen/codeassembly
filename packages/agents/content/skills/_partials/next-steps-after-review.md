@@ -39,14 +39,26 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 #### Options
 
-| #   | Emoji | Option                         | Description                                                                                                   |
-| --- | ----- | ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| 1   | 📝    | Update the acceptance criteria | Run `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta |
-| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                              |
+| #   | Emoji | Option                         | Description                                                                                                                                                       |
+| --- | ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Run `align-ticket-with-implementation`, which revises acceptance criteria alone, bound to the previewed delta, and writes the ticket of record where one resolves |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                                                  |
 
 #### Output format
 
 Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+
+**Name the artifact the edit writes.** Option 1's rendered line ends with its target: `on {ticket_ref}` where a ticket of record resolves, whichever artifact supplied the spec source, and `in the local ticket snapshot` where none does. A ticket of record is the manifest's `ticket_url`, or `ticket_id` with `scm`; where auto-resolve passed over a remote candidate on recency, it already holds one.
+
+**Offer the local-only form where the snapshot may be the contract.** Where the review measured against the local snapshot while a remote candidate existed, nest one invocation line under option 1; omit it otherwise:
+
+```
+1. 📝 ■■□ Update the acceptance criteria on {ticket_ref}
+   - or `1 local`: update the local snapshot alone, leaving {ticket_ref} as it stands
+2. ⏭️ ■□□ Leave as-is
+```
+
+A selection qualified `local` runs the delegate with `--write-target=local`.
 
 Example (rendered for the recommendation case):
 
@@ -60,7 +72,7 @@ Proposed edit to the acceptance criteria:
 - ⚠️ W2 asks whether an unknown directive should fail the run at all; accepting this reword settles it as the contract
 - Drop: A `--strict` flag gates the new validation
 
-1. 📝 ■■□ Update the acceptance criteria
+1. 📝 ■■□ Update the acceptance criteria on {ticket_ref}
 2. ⏭️ ■□□ Leave as-is
 ```
 
@@ -259,7 +271,7 @@ Next steps:
 Proposed edit to the acceptance criteria:
 - Drop: A `--strict` flag gates the new validation
 
-1. 📝 ■■□ Update the acceptance criteria
+1. 📝 ■■□ Update the acceptance criteria on {ticket_ref}
 2. ⏭️ ■□□ Leave as-is
 
 **A2: Source divergence**

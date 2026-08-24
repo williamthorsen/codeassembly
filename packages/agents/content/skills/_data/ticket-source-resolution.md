@@ -98,6 +98,32 @@ Where a skill needs structured metadata, such as the `updated` timestamp for a s
 
 The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
 
+## Platform-specific write
+
+Write a revision back to the ticket of record, which the caller names; where a caller names none, it is the ticket the revision's source came from. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) where the manifest carries none. Under that default, a ticket that resolved from a file is written back to that file, and one that resolved from plain text has no write target.
+
+**A partial revision composes from the platform's current body.** Where a skill revises one section of a ticket, it fetches the current body per [platform-specific fetch](#platform-specific-fetch) and applies the revision to that, so every section it does not revise is carried over from the platform rather than from a local copy. A whole-ticket body the user approved replaces the body outright.
+
+**Nothing is reported as updated until the write lands.** A write that fails is reported as a failure, naming the manual step that remains.
+
+### GitHub
+
+Write the body to a scratch file using the [gh body file](gh-body-file.md) pattern, then:
+
+```
+gh issue edit {number} --body-file "$body_path"
+```
+
+### Jira
+
+Update through {skill:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
+
+`acli`'s default view is text rather than Markdown and the write converts the whole description, so a partial revision re-renders the sections it leaves alone; report it as a re-rendering of the whole description rather than an edit confined to the revised section.
+
+### Other platforms
+
+No automated write is available. Report that the ticket was not updated and present the composed body for the user to apply, rather than passing over the write in silence.
+
 ## Stored ticket URL
 
 The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `ticket_url` so it is reused across sessions instead of being reconstructed or re-pasted each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags, never by hand-editing the JSON.

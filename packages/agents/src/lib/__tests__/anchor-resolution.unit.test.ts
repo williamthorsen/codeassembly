@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { assertAnchorsResolve, collectHeadingSlugs, normalizeForAnchorScan } from '../anchor-resolution.ts';
+import {
+  assertAnchorsResolve,
+  collectHeadingPositions,
+  collectHeadingSlugs,
+  normalizeForAnchorScan,
+} from '../anchor-resolution.ts';
 
 const LABEL = 'skills/a-skill/SKILL.md';
 
@@ -135,6 +140,25 @@ describe(assertAnchorsResolve, () => {
     ])('ignores $name', ({ target }) => {
       expect(() => assertAnchorsResolve(`[x](${target})\n`, LABEL)).not.toThrow();
     });
+  });
+});
+
+describe(collectHeadingPositions, () => {
+  it('reports each heading in document order with its level and start index', () => {
+    const body = '# Top\n\n## Middle\n\n### Leaf\n';
+    expect(collectHeadingPositions(body)).toEqual([
+      { slug: 'top', level: 1, index: 0 },
+      { slug: 'middle', level: 2, index: 7 },
+      { slug: 'leaf', level: 3, index: 18 },
+    ]);
+  });
+
+  it('gives an index a caller can compare against a passage, so a section can be told from its successor', () => {
+    const body = '## First\n\ntoken here\n\n## Second\n';
+    const [first, second] = collectHeadingPositions(body);
+
+    expect(first?.index).toBeLessThan(body.indexOf('token here'));
+    expect(second?.index).toBeGreaterThan(body.indexOf('token here'));
   });
 });
 

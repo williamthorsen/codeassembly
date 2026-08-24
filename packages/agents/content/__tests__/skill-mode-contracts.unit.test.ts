@@ -42,6 +42,28 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
     },
     mode: 'ratified-delta mode',
   },
+  {
+    caller: {
+      path: '_partials/next-steps-after-review.md',
+      phrase: 'and writes the ticket of record',
+    },
+    callee: {
+      path: 'align-ticket-with-implementation/SKILL.md',
+      phrase: "apply the criteria revision to the remote's current body",
+    },
+    mode: 'the remote write the ticket edit performs',
+  },
+  {
+    caller: {
+      path: '_partials/next-steps-after-review.md',
+      phrase: 'runs the delegate with `--write-target=local`',
+    },
+    callee: {
+      path: 'align-ticket-with-implementation/SKILL.md',
+      phrase: '`--write-target=local` writes the local artifact alone',
+    },
+    mode: 'the local-only write target',
+  },
 ];
 
 describe('skill mode contracts', () => {
