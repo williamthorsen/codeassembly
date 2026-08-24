@@ -54,7 +54,7 @@ export interface HarnessManifest {
 /**
  * A home-domain-writing command the designated-writer guard and provenance stamp govern, spelled as the user invokes
  * it. These are the two commands that deploy catalog content into the home domain (`~/.agents/`, `~/.claude/`,
- * `~/.rovodev/`); `uninstall` and `configure-hooks` also write home files but deploy none, so they sit outside the
+ * `~/.rovo/`); `uninstall` and `configure-hooks` also write home files but deploy none, so they sit outside the
  * guard's scope, and bare `sync` writes project trees and refuses to run from the home directory.
  */
 export type HomeWriteCommand = 'install' | 'sync --global';
