@@ -11,8 +11,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../../lib/content-resolver.ts';
-import { getHomeProvenancePath, readHomeProvenance } from '../../../lib/home-provenance.ts';
 import { HARNESSES } from '../../../lib/harness.ts';
+import { getHomeProvenancePath, readHomeProvenance } from '../../../lib/home-provenance.ts';
 import { resolveRunningPackageRoot } from '../../../lib/running-package.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
