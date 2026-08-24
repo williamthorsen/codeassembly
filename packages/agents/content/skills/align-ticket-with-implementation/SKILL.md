@@ -13,9 +13,9 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 
 ## Arguments
 
-| Flag                           | Effect                                                                                                                                                                                                                                       | Default                                                                |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `--write-target=remote\|local` | Which artifact alignment writes, per [Write targets](#write-targets). `local` saves the local ticket artifact alone and leaves the ticket of record as it stands; `remote` requires a ticket of record to resolve and stops where none does. | The ticket of record where one resolves, else the local artifact alone |
+| Flag                           | Effect                                                                                                                                                                                                                                                                                      | Default                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `--write-target=remote\|local` | Which artifact alignment writes, per [Write targets](#write-targets). `local` saves the local ticket artifact alone and leaves the ticket of record as it stands, for a ticket the user cannot or must not edit; `remote` requires a ticket of record to resolve and stops where none does. | The ticket of record where one resolves, else the local artifact alone |
 
 ## Process
 
@@ -63,7 +63,7 @@ The source ticket is the one the caller names. A review names it in its `## Spec
 
 **Ratified-delta mode.** When the caller supplies a delta it has already put to the user, such as a review's proposed-edit preview, the previewed delta is the whole of the revision. Apply exactly its lines and reproduce every other criterion and section verbatim. Seek no further divergence between the ticket and the implementation: What the caller's user consented to is those lines, not alignment as such. When applying a line reveals a change the delta does not contain, stop and report it rather than widening the edit.
 
-Invoked with no delta, alignment revises whichever criteria the implementation falsifies. The mode bounds how much of `## Acceptance criteria` changes; it never widens what alignment may touch. It also decides whether the remote write is confirmed first, per [Write targets](#write-targets).
+Invoked with no delta, alignment revises whichever criteria the implementation falsifies. The mode bounds how much of `## Acceptance criteria` changes; it never widens what alignment may touch.
 
 **Spike mode.** If the branch implements a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md), reconciling whether the investigation answered its questions rather than whether the branch met acceptance criteria.
 
@@ -86,15 +86,15 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with
 
 The skill writes two artifacts: the ticket of record on its platform, and a local ticket artifact at the path [Path resolution](#path-resolution) derives. The frontmatter belongs to the local artifact alone; the body written to the platform carries none.
 
-**The ticket of record** resolves from the session-context manifest, from `ticket_url` or from `ticket_id` with `scm`. Which artifact supplied the source content in step 1 does not decide it: A caller can name a local snapshot while a remote issue exists, so a source that resolved locally still writes the remote the branch belongs to.
+**The ticket of record** resolves from the session-context manifest, from `ticket_url` or from `ticket_id` with `scm`, whichever artifact supplied the source content in step 1: A caller can name a local snapshot while a remote issue exists.
 
-**Alignment writes it; generation does not.** On the alignment branch, apply the criteria revision to the remote's current body and write it per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write), which is what leaves `## Problem`, `## Context`, and `## Proposed solution` as the platform holds them. The generation branch reached the branch with no prior ticket, so no ticket of record exists to write.
+**Alignment writes it; generation does not.** On the alignment branch, apply the criteria revision to the remote's current body and write it per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write). Generation has no ticket of record to write.
 
-**Consent comes from the caller.** Ratified-delta mode carries the user's consent to the remote write: The caller put the delta to the user and the user selected it, so no further ask precedes the write. Invoked with no delta, render the criteria revision as a delta and confirm before writing.
+**Consent comes from the caller.** Ratified-delta mode carries the user's consent to the remote write, so no further ask precedes it. Invoked with no delta, render the criteria revision as a delta and confirm before writing.
 
-**`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. This is the form for a ticket the user implements but does not own: one the platform will not let them edit, or one they must not edit, where the local snapshot is the working contract. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly, and where no ticket of record resolves it stops and reports the missing target rather than falling back to the local artifact: An explicit instruction is not redirected to the other target.
+**`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly and, where no ticket of record resolves, stops and reports the missing target rather than falling back to the local artifact.
 
-**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; where no remote resolved, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason. Never report the criteria as updated on the strength of the local artifact alone.
+**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; where no remote resolved, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason.
 
 ### Path resolution
 

@@ -102,9 +102,9 @@ The stored URL applies throughout: A Jira ticket URL resolved once is reused on 
 
 Write a revision back to the ticket of record, which the caller names; where a caller names none, it is the ticket the revision's source came from. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) where the manifest carries none. Under that default, a ticket that resolved from a file is written back to that file, and one that resolved from plain text has no write target.
 
-**A partial revision composes from the platform's current body.** Where a skill revises one section of a ticket, it fetches the current body per [platform-specific fetch](#platform-specific-fetch) and applies the revision to that, so every section it does not revise is carried over from the platform rather than from a local copy. Pushing a locally composed body in place of those sections overwrites whatever reached the platform after that copy was taken. A whole-ticket body the user approved replaces the body outright.
+**A partial revision composes from the platform's current body.** Where a skill revises one section of a ticket, it fetches the current body per [platform-specific fetch](#platform-specific-fetch) and applies the revision to that, so every section it does not revise is carried over from the platform rather than from a local copy. A whole-ticket body the user approved replaces the body outright.
 
-**Nothing is reported as updated until the write lands.** A write that fails is reported as a failure, naming the manual step that remains. A local artifact saved beside the write is not an update to the ticket, and describing it as one is the misreport this rule exists to prevent.
+**Nothing is reported as updated until the write lands.** A write that fails is reported as a failure, naming the manual step that remains.
 
 ### GitHub
 
@@ -118,7 +118,7 @@ gh issue edit {number} --body-file "$body_path"
 
 Update through {skill:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
 
-The composition rule above holds here up to a re-rendering. `acli`'s default view renders the description as text rather than Markdown, and the write converts the whole description, task-list syntax included, so the sections a partial revision leaves alone are re-rendered rather than carried over byte for byte. Report a partial revision to a Jira ticket as a re-rendering of the whole description, not as an edit confined to the revised section.
+`acli`'s default view is text rather than Markdown and the write converts the whole description, so a partial revision re-renders the sections it leaves alone; report it as a re-rendering of the whole description rather than an edit confined to the revised section.
 
 ### Other platforms
 
