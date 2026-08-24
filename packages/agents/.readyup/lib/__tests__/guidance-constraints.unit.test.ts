@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { HARNESSES } from '../../../src/lib/harness.ts';
 import { describeViolations, findHarnessScopedPaths, findRulebookMarkers } from '../guidance-constraints.ts';
 
+const ROVO_HOME = HARNESSES.rovo.homeDir;
+
 describe(findHarnessScopedPaths, () => {
   it('finds a home-anchored harness path', () => {
     expect(findHarnessScopedPaths('See ~/.claude/skills/foo.md for details.')).toEqual([
@@ -15,11 +17,11 @@ describe(findHarnessScopedPaths, () => {
   });
 
   it('finds a path belonging to a harness other than Claude', () => {
-    expect(findHarnessScopedPaths('Rovo reads .rovodev/config.yml.')).toHaveLength(1);
+    expect(findHarnessScopedPaths(`Rovo reads ${ROVO_HOME}/config.yml.`)).toHaveLength(1);
   });
 
   it('reports the 1-based line number of each offending line', () => {
-    const content = 'first\n~/.claude/a\nthird\n.rovodev/b\n';
+    const content = `first\n~/.claude/a\nthird\n${ROVO_HOME}/b\n`;
     expect(findHarnessScopedPaths(content).map((violation) => violation.lineNumber)).toEqual([2, 4]);
   });
 

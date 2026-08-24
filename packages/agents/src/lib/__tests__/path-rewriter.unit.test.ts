@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../harness.ts';
 import {
   homeAnchor,
   isRewritableLinkTarget,
@@ -12,6 +13,8 @@ import {
   rewritePathsInFile,
   rewriteTemplateVariables,
 } from '../path-rewriter.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 describe(isRewritableLinkTarget, () => {
   it.each(['../_data/concision.md', './modules/review-cycle.md', 'SKILL.md', 'scripts/run.sh'])(
@@ -150,7 +153,7 @@ describe(rewriteTemplateVariables, () => {
 
   it('resolves to the correct path for different harnesses', () => {
     const content = '{harness_home_dir}/scripts/describe-change.sh';
-    expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe('~/.rovodev/scripts/describe-change.sh');
+    expect(rewriteTemplateVariables(content, ROVO_HOME, 'rovo')).toBe(`~/${ROVO_HOME}/scripts/describe-change.sh`);
   });
 
   it('inserts a substitution value carrying a replacement pattern verbatim', () => {
@@ -164,8 +167,8 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
       'node ~/.claude/skills/capture-event/capture-event.mjs --harness claude',
     );
-    expect(rewriteTemplateVariables(content, '.rovodev', 'rovo')).toBe(
-      'node ~/.rovodev/skills/capture-event/capture-event.mjs --harness rovo',
+    expect(rewriteTemplateVariables(content, ROVO_HOME, 'rovo')).toBe(
+      `node ~/${ROVO_HOME}/skills/capture-event/capture-event.mjs --harness rovo`,
     );
   });
 });

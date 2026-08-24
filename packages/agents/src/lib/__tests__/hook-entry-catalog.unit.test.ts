@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { listRelayHooks } from '../../relay-hook-event/hook-mappings.ts';
+import { HARNESSES } from '../harness.ts';
 import { buildClaudeHookEntries, buildRovoHookEntries, HOOK_SENTINEL, isSentinelOwned } from '../hook-entry-catalog.ts';
 import { isRecord } from '../type-guards.ts';
+
+const ROVO_SCRIPTS_DIR = `/home/user/${HARNESSES.rovo.homeDir}/scripts`;
 
 /** Reads the single command string out of a Claude matcher group, asserting the group's expected shape. */
 function readClaudeCommand(group: Record<string, unknown>): string {
@@ -43,16 +46,16 @@ describe(buildClaudeHookEntries, () => {
 
 describe(buildRovoHookEntries, () => {
   it('builds one entry per relayed Rovo hook, named by the hook, in relay order', () => {
-    const entries = buildRovoHookEntries('/home/user/.rovodev/scripts');
+    const entries = buildRovoHookEntries(ROVO_SCRIPTS_DIR);
 
     expect(entries.map((entry) => entry.name)).toEqual([...listRelayHooks('rovo')]);
   });
 
   it('bakes the hook identity, the absolute relay path, and the sentinel into each command', () => {
-    for (const entry of buildRovoHookEntries('/home/user/.rovodev/scripts')) {
+    for (const entry of buildRovoHookEntries(ROVO_SCRIPTS_DIR)) {
       expect(entry.commands).toHaveLength(1);
       const command = entry.commands[0] ?? '';
-      expect(command).toContain('node /home/user/.rovodev/scripts/relay-hook-event.mjs');
+      expect(command).toContain(`node ${ROVO_SCRIPTS_DIR}/relay-hook-event.mjs`);
       expect(command).toContain('--harness rovo');
       expect(command).toContain(`--hook ${entry.name}`);
       expect(command).toContain(HOOK_SENTINEL);
@@ -60,7 +63,7 @@ describe(buildRovoHookEntries, () => {
   });
 
   it('produces entries the sentinel matcher claims', () => {
-    for (const entry of buildRovoHookEntries('/home/user/.rovodev/scripts')) {
+    for (const entry of buildRovoHookEntries(ROVO_SCRIPTS_DIR)) {
       expect(isSentinelOwned(entry)).toBe(true);
     }
   });

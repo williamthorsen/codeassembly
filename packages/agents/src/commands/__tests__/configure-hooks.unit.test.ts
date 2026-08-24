@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../../lib/harness.ts';
 import { HOOK_SENTINEL } from '../../lib/hook-entry-catalog.ts';
 import {
   checkHarnessHookEntries,
@@ -16,6 +17,8 @@ import {
   renderClaudeHookSnippet,
   renderRovoHookSnippet,
 } from '../configure-hooks.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 /** The package README, whose manual-adoption snippets must be exactly what the render functions emit. */
 const README_PATH = fileURLToPath(new URL('../../../README.md', import.meta.url));
@@ -45,12 +48,12 @@ describe('configure-hooks', () => {
   describe(configureHooksCommand, () => {
     it('writes the hook entries into both harness configs', async () => {
       await mkdir(path.join(tempDir, '.claude'), { recursive: true });
-      await mkdir(path.join(tempDir, '.rovodev'), { recursive: true });
+      await mkdir(path.join(tempDir, ROVO_HOME), { recursive: true });
 
       await configureHooksCommand({ harness: 'all' }, tempDir);
 
       const settings = await readFile(path.join(tempDir, '.claude', 'settings.json'), 'utf8');
-      const config = await readFile(path.join(tempDir, '.rovodev', 'config.yml'), 'utf8');
+      const config = await readFile(path.join(tempDir, ROVO_HOME, 'config.yml'), 'utf8');
       expect(settings).toContain(HOOK_SENTINEL);
       expect(settings).toContain('SessionStart');
       expect(config).toContain(HOOK_SENTINEL);
@@ -65,7 +68,7 @@ describe('configure-hooks', () => {
       expect(output).toContain('"SessionStart"');
       expect(output).toContain('on_session_start');
       expect(existsSync(path.join(tempDir, '.claude'))).toBe(false);
-      expect(existsSync(path.join(tempDir, '.rovodev'))).toBe(false);
+      expect(existsSync(path.join(tempDir, ROVO_HOME))).toBe(false);
     });
 
     it('fails loudly when run standalone against an unparseable config', async () => {
@@ -134,7 +137,7 @@ describe('configure-hooks', () => {
 
   describe(removeHarnessHookEntries, () => {
     it('removes only sentinel-marked entries, leaving foreign content intact', async () => {
-      const configPath = path.join(tempDir, '.rovodev', 'config.yml');
+      const configPath = path.join(tempDir, ROVO_HOME, 'config.yml');
       await mkdir(path.dirname(configPath), { recursive: true });
       await writeFile(
         configPath,
@@ -168,7 +171,7 @@ describe('configure-hooks', () => {
     it('documents the Rovo snippet exactly as rendered for the placeholder home', async () => {
       const snippet = await readReadmeSnippet('### Rovo Dev', 'yaml');
 
-      expect(snippet.trimEnd()).toBe(renderRovoHookSnippet('/Users/you/.rovodev/scripts').trimEnd());
+      expect(snippet.trimEnd()).toBe(renderRovoHookSnippet(`/Users/you/${ROVO_HOME}/scripts`).trimEnd());
     });
   });
 });

@@ -46,8 +46,9 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
     // (directories without a `SKILL.md`) count toward the install delivery.
     const contentDir = resolveContentDir();
     const supportEntries = await listInstalledSupportEntries(path.join(contentDir, 'skills'));
-    for (const home of ['.claude', '.rovodev']) {
-      const installedSkills = await readdir(path.join(tempDir, home, 'skills'));
+    for (const harnessId of ALL_HARNESS_IDS) {
+      const { homeDir } = HARNESSES[harnessId];
+      const installedSkills = await readdir(path.join(tempDir, homeDir, 'skills'));
       expect(installedSkills.length).toBe(supportEntries.length);
     }
 
@@ -83,7 +84,9 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
   it('does not install any subagent into any harness', async () => {
     await installCommand(makeOptions(), tempDir);
 
-    for (const subagentsDir of [path.join(tempDir, '.claude', 'agents'), path.join(tempDir, '.rovodev', 'subagents')]) {
+    for (const harnessId of ALL_HARNESS_IDS) {
+      const { homeDir, subagentsDirName } = HARNESSES[harnessId];
+      const subagentsDir = path.join(tempDir, homeDir, subagentsDirName);
       const mdFiles = existsSync(subagentsDir)
         ? (await readdir(subagentsDir)).filter((entry) => entry.endsWith('.md'))
         : [];
@@ -92,7 +95,10 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
   });
 });
 
-const INSTALLED_TIERS: ReadonlyArray<string> = ['.claude', '.rovodev', '.agents'];
+const INSTALLED_TIERS: ReadonlyArray<string> = [
+  ...ALL_HARNESS_IDS.map((harnessId) => HARNESSES[harnessId].homeDir),
+  '.agents',
+];
 
 /**
  * Returns the visible entries under `content/skills/` that install delivers as support directories: those without a

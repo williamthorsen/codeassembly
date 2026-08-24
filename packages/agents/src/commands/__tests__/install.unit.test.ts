@@ -6,10 +6,13 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../../lib/harness.ts';
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 describe(installCommand, () => {
   let tempDir: string;
@@ -38,7 +41,7 @@ describe(installCommand, () => {
   }
 
   async function setupRovoHome(): Promise<string> {
-    const rovoHome = path.join(tempDir, '.rovodev');
+    const rovoHome = path.join(tempDir, ROVO_HOME);
     await mkdir(path.join(rovoHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovoHome, 'subagents'), { recursive: true });
     return rovoHome;
