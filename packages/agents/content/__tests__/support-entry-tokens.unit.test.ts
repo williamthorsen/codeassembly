@@ -20,11 +20,12 @@ const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 describe('support entry invocation tokens', () => {
   it('name artifacts the library contains', async () => {
     const catalog = await enumerateCatalogSlugs(CONTENT_ROOT);
-    const skills = new Set(catalog.skill ?? []);
-    const subagents = new Set(catalog.subagent ?? []);
+    const skills = new Set(catalog.skill);
+    const subagents = new Set(catalog.subagent);
     const violations: Array<string> = [];
 
-    for (const file of await listSupportEntryFiles()) {
+    const files = await listSupportEntryFiles();
+    for (const file of files) {
       const edges = extractInvocationEdges(await readFile(file, 'utf8'));
       const relative = path.relative(CONTENT_ROOT, file);
       for (const slug of edges.skills) {
@@ -59,7 +60,8 @@ describe('support entry invocation tokens', () => {
 /** Lists every Markdown file under `skills/` that ships as a support entry rather than as part of a skill. */
 async function listSupportEntryFiles(): Promise<ReadonlyArray<string>> {
   const files: Array<string> = [];
-  for (const entry of await listSupportEntries(SKILLS_ROOT)) {
+  const entries = await listSupportEntries(SKILLS_ROOT);
+  for (const entry of entries) {
     const target = path.join(SKILLS_ROOT, entry);
     files.push(...(target.endsWith('.md') ? [target] : await listMarkdownFiles(target)));
   }
