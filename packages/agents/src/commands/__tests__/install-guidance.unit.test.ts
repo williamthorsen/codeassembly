@@ -7,12 +7,15 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
+import { HARNESSES } from '../../lib/harness.ts';
 import { computeContentHash, getManifestPath, readManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { uninstallCommand } from '../uninstall.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 describe('guidance installation', () => {
   let tempDir: string;
@@ -41,7 +44,7 @@ describe('guidance installation', () => {
   }
 
   async function setupRovoHome(): Promise<string> {
-    const rovoHome = path.join(tempDir, '.rovodev');
+    const rovoHome = path.join(tempDir, ROVO_HOME);
     await mkdir(path.join(rovoHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovoHome, 'subagents'), { recursive: true });
     return rovoHome;
@@ -137,7 +140,7 @@ describe('guidance installation', () => {
       expect(content).not.toContain('<!-- include:');
     });
 
-    it('installs AGENTS.md and standalone guidance to ~/.rovodev/ for rovo harness', async () => {
+    it('installs AGENTS.md and standalone guidance to the rovo home', async () => {
       const rovoHome = await setupRovoHome();
 
       await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);

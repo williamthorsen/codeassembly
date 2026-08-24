@@ -22,7 +22,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
   rovo: {
     id: 'rovo',
     // Atlassian's path, which renames on its own schedule; the id above is CodeAssembly's own vocabulary.
-    homeDir: '.rovodev',
+    homeDir: '.rovo',
     skillsDirName: 'skills',
     subagentsDirName: 'subagents',
     scriptsDirName: 'scripts',

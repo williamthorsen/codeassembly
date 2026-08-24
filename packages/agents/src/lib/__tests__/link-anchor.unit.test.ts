@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../harness.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor, type LinkAnchorContext } from '../link-anchor.ts';
 
 const PROJECT_BASE = '/repo/project';
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 function buildContext(overrides: Partial<LinkAnchorContext> = {}): LinkAnchorContext {
   return {
@@ -82,8 +84,8 @@ describe(createSkillLinkAnchor, () => {
   });
 
   it('renders the harness its context names', () => {
-    const anchor = createSkillLinkAnchor(buildContext({ domainBase: PROJECT_BASE, homeDir: '.rovodev' }));
-    expect(anchor('commit/SKILL.md')).toBe('/repo/project/.rovodev/skills/commit/SKILL.md');
+    const anchor = createSkillLinkAnchor(buildContext({ domainBase: PROJECT_BASE, homeDir: ROVO_HOME }));
+    expect(anchor('commit/SKILL.md')).toBe(`${PROJECT_BASE}/${ROVO_HOME}/skills/commit/SKILL.md`);
   });
 });
 

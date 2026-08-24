@@ -5,8 +5,11 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../harness.ts';
 import type { HookEntry, HookSentinelMatcher } from '../rovo-config-hooks.ts';
 import { checkRovoHookEntries, ensureRovoHookEntries, removeRovoHookEntries } from '../rovo-config-settings.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 /** A test sentinel: ownership is marked by a `--ca` token in any command. */
 const isOwned: HookSentinelMatcher = (entry) => entry.commands.some((command) => command.includes('--ca'));
@@ -23,7 +26,7 @@ describe('rovo-config-settings', () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `rovo-config-settings-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
-    configPath = path.join(tempDir, '.rovodev', 'config.yml');
+    configPath = path.join(tempDir, ROVO_HOME, 'config.yml');
   });
 
   afterEach(async () => {
@@ -53,7 +56,7 @@ describe('rovo-config-settings', () => {
       '# my config',
       'otherKey: 42',
       'eventHooks:',
-      '  logFile: "~/.rovodev/event_hooks.log"',
+      `  logFile: "~/${ROVO_HOME}/event_hooks.log"`,
       '  events:',
       '    - name: on_complete # foreign',
       '      commands:',

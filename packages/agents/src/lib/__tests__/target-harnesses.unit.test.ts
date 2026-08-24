@@ -4,7 +4,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../harness.ts';
 import { resolveTargetHarnesses } from '../target-harnesses.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 describe(resolveTargetHarnesses, () => {
   let cwd: string;
@@ -44,7 +47,7 @@ describe(resolveTargetHarnesses, () => {
 
   it('ignores harness directories the repository happens to contain', async () => {
     await mkdir(path.join(cwd, '.claude'), { recursive: true });
-    await mkdir(path.join(cwd, '.rovodev'), { recursive: true });
+    await mkdir(path.join(cwd, ROVO_HOME), { recursive: true });
     await installHarness('rovo');
 
     expect(await resolveTargetHarnesses({ harness: 'all', cwd, homeDir })).toEqual({
@@ -166,7 +169,7 @@ describe(resolveTargetHarnesses, () => {
 
   /** Creates a harness's home directory, which is what marks it installed for this user. */
   async function installHarness(harnessId: 'claude' | 'rovo'): Promise<void> {
-    await mkdir(path.join(homeDir, harnessId === 'claude' ? '.claude' : '.rovodev'), { recursive: true });
+    await mkdir(path.join(homeDir, HARNESSES[harnessId].homeDir), { recursive: true });
   }
 
   /** Writes the user-global `~/.agents/codeassembly.yaml`. */

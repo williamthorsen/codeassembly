@@ -53,7 +53,7 @@ Skills report the work they do, but they cannot report a session opening, exitin
 | `turn.started`    | `UserPromptSubmit` | `on_user_prompt`   |
 | `turn.completed`  | `Stop`             | `on_complete`      |
 
-`install` places the relay in each harness's `scripts/` directory and then wires the entries below into the harness config (`~/.claude/settings.json`, `~/.rovodev/config.yml`) by default. The wiring is its own step, shared across the CLI:
+`install` places the relay in each harness's `scripts/` directory and then wires the entries below into the harness config (`~/.claude/settings.json`, `~/.rovo/config.yml`) by default. The wiring is its own step, shared across the CLI:
 
 - `install --skip-hooks` installs everything else and leaves the configs untouched.
 - `codeassembly configure-hooks` runs just the wiring, for re-applying it later.
@@ -121,23 +121,23 @@ Keep the whole invocation in `command` rather than splitting the flags into an `
 
 ### Rovo Dev
 
-In `~/.rovodev/config.yml`, under `eventHooks`:
+In `~/.rovo/config.yml`, under `eventHooks`:
 
 ```yaml
 eventHooks:
   events:
     - name: on_session_start
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_session_start --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_session_start --sentinel codeassembly-agents
     - name: on_session_end
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_session_end --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_session_end --sentinel codeassembly-agents
     - name: on_user_prompt
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_user_prompt --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_user_prompt --sentinel codeassembly-agents
     - name: on_complete
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovo --hook on_complete --sentinel codeassembly-agents
+        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_complete --sentinel codeassembly-agents
 ```
 
 Write your home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes your machine's absolute path here, matching the entries Rovo's own tooling generates.
@@ -199,7 +199,7 @@ A run resolves its targets in this order, stopping at the first that answers:
 
 1. The `--harness <id>` flag. (`--harness all` is the not-specified default and falls through.)
 2. The `harnesses` declaration, if any file in the chain carries one. A declaration that resolves to an empty set is honored: the run targets nothing and says so.
-3. The harnesses installed for this user, detected by the presence of their home directories (`~/.claude`, `~/.rovodev`). A harness home is created by that harness's own installer, so its presence is evidence the harness is installed; a repository's own `.claude/` directory is not, which is why the repository is never probed.
+3. The harnesses installed for this user, detected by the presence of their home directories (`~/.claude`, `~/.rovo`). A harness home is created by that harness's own installer, so its presence is evidence the harness is installed; a repository's own `.claude/` directory is not, which is why the repository is never probed.
 
 **`harnesses` resolves on a chain of its own.** Which harnesses a developer runs is a fact about the developer, so the key resolves across the user-global and project tiers together — the one key that crosses the domains defined under [Scopes](#scopes). Artifact keys deliberately do not: a user-global `collections: use: [all]` would otherwise deploy the whole catalog into every repository's harness directories.
 
@@ -429,12 +429,12 @@ The declaration resolves in two independent **domains**, each with its own base 
 1. **Project** — `.agents/codeassembly.yaml`, committed and shared with the team.
 2. **Project-local** — `.agents/codeassembly.local.yaml`, gitignored, for personal overrides.
 
-**Home domain** — `codeassembly sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovodev`) and `~/.agents/`:
+**Home domain** — `codeassembly sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovo`) and `~/.agents/`:
 
 1. **User-global** — `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
 2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
 
-A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain, so guidance the developer bound globally goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovodev/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovodev/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
+A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain, so guidance the developer bound globally goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovo/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovo/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
 
 When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: The new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
 

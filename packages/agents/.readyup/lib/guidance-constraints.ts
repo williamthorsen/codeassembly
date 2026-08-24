@@ -12,7 +12,7 @@
  */
 
 /** A directory belonging to one harness, in either the home-anchored or the repository-local spelling. */
-const HARNESS_PATH_REGEX = /(?:~\/)?\.(?:claude|rovodev)\//;
+const HARNESS_PATH_REGEX = /(?:~\/)?\.(?:claude|rovo)\//;
 
 /** A rulebook marker's token, matched whether it opens or closes a region and whether or not it is paired. */
 const RULEBOOK_MARKER_REGEX = /<!--\s*\/?\s*rulebook:/;

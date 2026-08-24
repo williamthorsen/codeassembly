@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { detectHarnesses, HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../harness.ts';
 
+const ROVO_HOME = HARNESSES.rovo.homeDir;
+
 describe('harness', () => {
   let tempDir: string;
 
@@ -31,8 +33,8 @@ describe('harness', () => {
       expect(result).toEqual(['claude']);
     });
 
-    it('should detect only rovo when .rovodev directory exists', async () => {
-      await mkdir(path.join(tempDir, '.rovodev'), { recursive: true });
+    it('should detect only rovo when the rovo home directory exists', async () => {
+      await mkdir(path.join(tempDir, ROVO_HOME), { recursive: true });
 
       const result = detectHarnesses(tempDir);
       expect(result).toEqual(['rovo']);
@@ -40,7 +42,7 @@ describe('harness', () => {
 
     it('should detect both harnesses when both directories exist', async () => {
       await mkdir(path.join(tempDir, '.claude'), { recursive: true });
-      await mkdir(path.join(tempDir, '.rovodev'), { recursive: true });
+      await mkdir(path.join(tempDir, ROVO_HOME), { recursive: true });
 
       const result = detectHarnesses(tempDir);
       expect(result).toEqual(['claude', 'rovo']);
@@ -52,7 +54,7 @@ describe('harness', () => {
       expect(resolveAmbientHostPath('claude', 'harness-home', tempDir)).toBe(
         path.join(tempDir, '.claude', 'CLAUDE.md'),
       );
-      expect(resolveAmbientHostPath('rovo', 'harness-home', tempDir)).toBe(path.join(tempDir, '.rovodev', 'AGENTS.md'));
+      expect(resolveAmbientHostPath('rovo', 'harness-home', tempDir)).toBe(path.join(tempDir, ROVO_HOME, 'AGENTS.md'));
     });
 
     it('should resolve the project-local host to the machine-local file at the base, not under the harness home', () => {

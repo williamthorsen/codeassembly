@@ -2,10 +2,13 @@ import { dedent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
+import { HARNESSES } from '../harness.ts';
 import { rewriteInvocationTokens, type RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 /** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
@@ -75,8 +78,8 @@ describe(renderSubagentForHarness, () => {
       toolMapping: loadToolMapping(ROVO_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      anchor: homeAnchor('.rovodev'),
-      homeDir: '.rovodev',
+      anchor: homeAnchor(ROVO_HOME),
+      homeDir: ROVO_HOME,
       harnessId: 'rovo',
       skillSigil: '!',
       subagentSigil: '',
@@ -85,7 +88,7 @@ describe(renderSubagentForHarness, () => {
 
     expect(output).toContain('tools: [bash, open_files]');
     expect(output).toContain('Use the open_files tool');
-    expect(output).toContain('~/.rovodev/scripts/demo.sh');
+    expect(output).toContain(`~/${ROVO_HOME}/scripts/demo.sh`);
   });
 
   it('rewrites skill and subagent invocation tokens to their harness-rendered form', () => {
@@ -120,8 +123,8 @@ describe(renderSubagentForHarness, () => {
       toolMapping: loadToolMapping(ROVO_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      anchor: homeAnchor('.rovodev'),
-      homeDir: '.rovodev',
+      anchor: homeAnchor(ROVO_HOME),
+      homeDir: ROVO_HOME,
       harnessId: 'rovo',
       skillSigil: '!',
       subagentSigil: '',
@@ -323,7 +326,7 @@ describe(renderSubagentForHarness, () => {
 
   it.each([
     { harnessId: 'claude', overlayYaml: CLAUDE_OVERLAY, homeDir: '.claude', skillSigil: '/', subagentSigil: '' },
-    { harnessId: 'rovo', overlayYaml: ROVO_OVERLAY, homeDir: '.rovodev', skillSigil: '!', subagentSigil: '' },
+    { harnessId: 'rovo', overlayYaml: ROVO_OVERLAY, homeDir: ROVO_HOME, skillSigil: '!', subagentSigil: '' },
   ])(
     'produces the same $harnessId output as the standalone merge → tools → invocations → markdown-path → template steps',
     ({ harnessId, overlayYaml, homeDir, skillSigil, subagentSigil }) => {

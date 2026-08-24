@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type Document, isSeq, parseDocument } from 'yaml';
 
+import { HARNESSES } from '../harness.ts';
 import {
   checkHookEntries,
   ensureHookEntries,
@@ -10,13 +11,15 @@ import {
   RovoConfigParseError,
 } from '../rovo-config-hooks.ts';
 
+const ROVO_LOG_FILE_SETTING = `logFile: "~/${HARNESSES.rovo.homeDir}/event_hooks.log"`;
+
 /** A test sentinel: ownership is marked by a `--ca` token in any command. Encoding is the caller's choice. */
 const isOwned: HookSentinelMatcher = (entry) => entry.commands.some((command) => command.includes('--ca'));
 
 /** The shape the vendor documents and real configs use: a list of `{name, commands: [{command}]}` items. */
 const VENDOR_SHAPED_CONFIG = [
   'eventHooks:',
-  '  logFile: "~/.rovodev/event_hooks.log"',
+  `  ${ROVO_LOG_FILE_SETTING}`,
   '  events:',
   '    - name: on_complete',
   '      commands:',
@@ -115,7 +118,7 @@ describe(ensureHookEntries, () => {
 
     expect(result.changed).toBe(true);
     expect(eventsLength(document)).toBe(3);
-    expect(out).toContain('logFile: "~/.rovodev/event_hooks.log"');
+    expect(out).toContain(ROVO_LOG_FILE_SETTING);
     expect(out).toContain("echo 'Agent run finished'");
     expect(out).toContain("echo 'Session ended'");
     expect(out).toContain('run on_session_start --ca');
@@ -281,7 +284,7 @@ describe(removeHookEntries, () => {
   });
 
   it('keeps eventHooks when other keys remain after the events list empties', () => {
-    const document = parseConfig('eventHooks:\n  logFile: "~/.rovodev/event_hooks.log"\n');
+    const document = parseConfig(`eventHooks:\n  ${ROVO_LOG_FILE_SETTING}\n`);
     ensureHookEntries(document, [buildOwnedEntry('on_session_start')], isOwned);
 
     const result = removeHookEntries(document, isOwned);

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../harness.ts';
 import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor } from '../path-rewriter.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../rulebook-transform.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 // `shell-conventions` carries a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it deploys no skill.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
@@ -21,8 +24,8 @@ const CLAUDE_CONTEXT: RulebookRenderContext = {
   rulebooks: RULEBOOKS,
 };
 const ROVO_CONTEXT: RulebookRenderContext = {
-  anchor: homeAnchor('.rovodev'),
-  homeDir: '.rovodev',
+  anchor: homeAnchor(ROVO_HOME),
+  homeDir: ROVO_HOME,
   harnessId: 'rovo',
   skillSigil: '!',
   subagentSigil: '',
@@ -144,7 +147,9 @@ describe(renderRulebookBody, () => {
     it('yields each harness its own absolute path for one authored target', () => {
       const body = 'Full principle: [concision](../../skills/_data/concision.md).';
       expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toContain('~/.claude/skills/_data/concision.md');
-      expect(renderRulebookBody(body, 'a-rulebook', ROVO_CONTEXT)).toContain('~/.rovodev/skills/_data/concision.md');
+      expect(renderRulebookBody(body, 'a-rulebook', ROVO_CONTEXT)).toContain(
+        `~/${ROVO_HOME}/skills/_data/concision.md`,
+      );
     });
   });
 
