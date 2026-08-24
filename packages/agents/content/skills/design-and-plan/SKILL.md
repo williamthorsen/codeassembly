@@ -6,6 +6,7 @@ dependencies:
   skills:
     - emit-event
     - save-artifact
+    - update-jira-ticket
 ---
 
 # Design and plan
@@ -182,11 +183,7 @@ Next steps:
 ...
 ```
 
-On consent:
-
-- GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
-- Jira: Update through {skill:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
-- Other platforms: Note that automated update is not yet supported; suggest manual update
+On consent, write the refined ticket per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write). The refined ticket is the whole body the user approved, so it replaces the remote body outright.
 
 <HARD-GATE>
 Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1: Remote issue**` and `**A2: Next action**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage; use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
