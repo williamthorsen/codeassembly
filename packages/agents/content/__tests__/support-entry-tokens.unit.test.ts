@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -208,13 +208,22 @@ async function listLinkingHosts(): Promise<ReadonlyArray<LinkingHost>> {
   return hosts;
 }
 
-/** Lists every Markdown file under `skills/` that ships as a support entry rather than as part of a skill. */
+/**
+ * Lists every Markdown file under `skills/` that ships as a support entry rather than as part of a skill.
+ *
+ * A support entry is a directory or a plain file, so the walk decides on what the entry is rather than on its name: a
+ * `notes.json` beside `_data/` contributes no Markdown, where reading its suffix would send `readdir` at a file.
+ */
 async function listSupportEntryFiles(): Promise<ReadonlyArray<string>> {
   const files: Array<string> = [];
   const entries = await listSupportEntries(SKILLS_ROOT);
   for (const entry of entries) {
     const target = path.join(SKILLS_ROOT, entry);
-    files.push(...(target.endsWith('.md') ? [target] : await listMarkdownFiles(target)));
+    if ((await stat(target)).isDirectory()) {
+      files.push(...(await listMarkdownFiles(target)));
+    } else if (target.endsWith('.md')) {
+      files.push(target);
+    }
   }
   return files;
 }
