@@ -21,10 +21,6 @@ user-invocable: false
 
 If a change does not fall into one of these categories, it requires tests, and each of those tests must earn its place by the bar in [whether a test earns its place](#whether-a-test-earns-its-place).
 
-### Loosen a test broken by a wording-only change
-
-When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior depends on the text.
-
 ## Whether a test earns its place
 
 Needing coverage does not make any particular test worth writing. The two questions are separate: The default rule above says a change needs tests, and this bar says whether the test in front of you is one of them. Put every test through these filters before writing or recommending it.
@@ -44,6 +40,10 @@ This is the commonest way a test fails the last filter. When a change removes co
 Diagnostic: Would this test exist if the deleted code had never existed? If no, don't write it.
 
 Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Verification step), not a standing test. This applies to any change that removes something, not only removal-only changes.
+
+## Loosen a test broken by a wording-only change
+
+When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior depends on the text.
 
 ## Naming of tests
 
