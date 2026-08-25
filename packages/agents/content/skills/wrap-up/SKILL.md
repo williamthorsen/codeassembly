@@ -425,11 +425,7 @@ The prompt closes the turn that presents the results report, so it goes in an ac
 
 ## Ticket title conventions
 
-When creating tickets for deferred items, follow the conventions from the issue description:
-
-- Use the imperative mood: "Enable playback at different speeds", not "Different playback speeds"
-- Be concise but informative: "Disambiguate phase name mismatch between agents and factory layers", not "Phase name disambiguation"
-- For bugs, describe the bug, not the fix: "Playback stutters at speeds higher than 32x", not "Fix playback speed at 32x and higher"
+Compose the title of a deferred-item ticket per [`title-voice.md`](../_data/title-voice.md), which governs voice, length, content discipline, and the framing that gives a bug ticket the problem rather than the fix.
 
 ## Constraints
 
