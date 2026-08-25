@@ -2,7 +2,7 @@
 slug: williamthorsen-workflow-preferences
 description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, and guidance capture.
 delivery: ambient
-version: 2
+version: 3
 ---
 
 # William Thorsen's workflow preferences
@@ -20,3 +20,11 @@ version: 2
 Never create a branch or worktree without explicit authorization. Never switch a worktree to another branch; one ticket's work happens entirely in one worktree, and work on another ticket starts a new session in that ticket's own worktree.
 
 After a merge, say nothing about worktree or branch state and never offer to manage it. The worktree stays as long as its branch does, so there is nothing to clean up and nothing to ask about.
+
+## Cross-repo sequencing
+
+Where the work would be better done upstream, in a package or repository this one depends on, the default order is upstream first: Land the upstream change, publish it, upgrade the dependency here, then make the downstream change against the upgraded version. Propose that order, and do not propose shipping a downstream workaround ahead of it.
+
+Downstream first reads as faster because it lands something sooner, but it costs two downstream changes rather than one: the workaround, then its removal once upstream lands. It also commits the upstream decision to being made without the downstream requirement in hand, so upstream cannot weigh that requirement against its own constraints, and may land a shape the consumer keeps working around.
+
+The order remains the developer's call, and a condition can displace the default: an upstream that is unowned, unresponsive, or on a release cadence that will not accommodate the work. Name the condition and let them decide, rather than resolving it by reverting to downstream first.
