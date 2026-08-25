@@ -37,6 +37,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "vitest": "catalog:"
   },

@@ -11,8 +11,8 @@
     "allowUnusedLabels": false,
     // "alwaysStrict": true, // implied by "strict"
     // Match the `source` export condition, so workspace dependencies resolve to their TypeScript source rather than
-    // their built declarations. This mirrors vitest's `conditions: ['source']` and lets in-repo typechecking run
-    // without a prior build. External consumers don't set this condition and fall through to `types`.
+    // their built declarations. This mirrors the `source` condition nmr's Vitest factory resolves, and lets in-repo
+    // typechecking run without a prior build. External consumers don't set this condition and fall through to `types`.
     "customConditions": ["source"],
     "declaration": true,
     "emitDecoratorMetadata": true,
@@ -61,6 +61,9 @@
     // "strictPropertyInitialization": true, // implied by "strict"
 
     "target": "ES2025",
+    // TypeScript no longer includes ambient `@types` packages automatically, so a package that imports a
+    // `node:` builtin sees no declaration for it unless "node" is named here.
+    "types": ["node"],
     // "useDefineForClassFields": true, // implied by target >= ES2022 (including ESNext)
   },
   "exclude": ["node_modules"],
