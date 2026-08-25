@@ -319,8 +319,8 @@ describe('sync with a declared package', () => {
 
     const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
-    expect(renderReportText(outcome, { level: 'warn' })).toMatch(
-      /Declared source "@ca-fixture\/empty" \(.*missing-dir\) does not exist/,
-    );
+    const warning = renderReportText(outcome, { level: 'warn' });
+    expect(warning).toMatch(/Declared source "@ca-fixture\/empty" \(.*missing-dir\) does not exist/);
+    expect(warning).toContain('Report it upstream');
   });
 });

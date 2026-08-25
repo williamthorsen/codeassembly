@@ -83,8 +83,8 @@ export async function findUndeclaredGuidancePackages(
  * symlinked layout and under `workspace:*` links — which is what lets a producing repo consume its own guidance
  * through the same declaration a third party writes. Throws when a declared name is a filesystem path rather than a
  * package name, when a declared package is not installed, or when it declares no content directory; whether that
- * directory exists is left to the caller's source validation, so a package source and a hand-declared one fail through
- * one path.
+ * directory exists is left to the caller's source validation, so a package source and a hand-declared one are checked
+ * through one path.
  */
 export async function resolvePackageSources(
   names: ReadonlyArray<string>,

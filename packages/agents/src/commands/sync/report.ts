@@ -7,6 +7,7 @@ import type { ResolvedHarnessTargets } from '../../lib/target-harnesses.ts';
 import type {
   AmbientHostPlan,
   AmbientSkipReason,
+  DeclaredSource,
   GuidanceHookAdvisory,
   MissingDeclaration,
   ResolutionEntry,
@@ -249,13 +250,20 @@ function describeMissingDeclaration(outcome: MissingDeclaration): string {
  * The advisory naming a declared source whose directory does not exist. Reported rather than thrown because the
  * absence may be a not-yet state, and named because the alternative is a run that silently resolves from the library
  * where the source was meant to override it.
+ *
+ * The remedy is keyed to the declaration form, because only one of the two is the reader's to perform: a `sources:`
+ * entry names a path they wrote, while a package's content directory is named by the dependency's own manifest and
+ * lives under `node_modules`, where creating it would not survive the next install.
  */
-function describeMissingSource(source: { name: string; dir: string }): ReportLine {
+function describeMissingSource(source: DeclaredSource): ReportLine {
+  const remedy =
+    source.declaredAs === 'package'
+      ? `Package "${source.name}" declares this directory under \`codeassembly.content\` but does not ship it. ` +
+        'Report it upstream, or drop the package from `packages`.'
+      : "Create the directory, or correct the source's `path` in the declaration that names it.";
   return {
     level: 'warn',
-    text:
-      `⚠️ Declared source "${source.name}" (${source.dir}) does not exist, so it contributed nothing. Create the ` +
-      'directory, or correct its path in .agents/codeassembly.yaml.',
+    text: `⚠️ Declared source "${source.name}" (${source.dir}) does not exist, so it contributed nothing. ${remedy}`,
   };
 }
 

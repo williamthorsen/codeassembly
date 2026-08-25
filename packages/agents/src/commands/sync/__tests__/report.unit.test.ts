@@ -96,7 +96,7 @@ describe('unignored hosts', () => {
 
 describe('missing sources', () => {
   it('warns on both paths, naming the source and its declared path', () => {
-    const outcome = reconciled({ missingSources: [{ name: 'org', dir: '/repo/guidance' }] });
+    const outcome = reconciled({ missingSources: [{ name: 'org', dir: '/repo/guidance', declaredAs: 'path' }] });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
       const warning = lines.find((line) => line.text.includes('does not exist, so it contributed nothing'));
@@ -110,14 +110,37 @@ describe('missing sources', () => {
   it('warns once per missing source', () => {
     const outcome = reconciled({
       missingSources: [
-        { name: 'org', dir: '/repo/guidance' },
-        { name: 'team', dir: '/repo/team' },
+        { name: 'org', dir: '/repo/guidance', declaredAs: 'path' },
+        { name: 'team', dir: '/repo/team', declaredAs: 'path' },
       ],
     });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
       expect(lines.filter((line) => line.text.includes('does not exist, so it contributed nothing'))).toHaveLength(2);
     }
+  });
+
+  it('offers a path-entry source the remedies its declaration allows', () => {
+    const outcome = reconciled({ missingSources: [{ name: 'org', dir: '/repo/guidance', declaredAs: 'path' }] });
+
+    const warning = renderSyncReport(outcome).find((line) => line.text.includes('"org"'));
+
+    expect(warning?.text).toContain('Create the directory');
+    expect(warning?.text).toContain('correct the source');
+  });
+
+  it('sends a package source upstream rather than offering remedies it does not have', () => {
+    const outcome = reconciled({
+      missingSources: [
+        { name: '@acme/guidance', dir: '/repo/node_modules/@acme/guidance/content', declaredAs: 'package' },
+      ],
+    });
+
+    const warning = renderSyncReport(outcome).find((line) => line.text.includes('@acme/guidance'));
+
+    expect(warning?.text).toContain('does not ship it');
+    expect(warning?.text).toContain('Report it upstream');
+    expect(warning?.text).not.toContain('Create the directory');
   });
 });
 

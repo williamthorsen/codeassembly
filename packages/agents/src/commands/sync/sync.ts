@@ -133,6 +133,17 @@ export interface HarnessSkillTarget {
   readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
 }
 
+/**
+ * A resolved content source, and which declaration form introduced it. The form is carried because it decides what a
+ * reader can do about the source: a `sources:` entry names a path they wrote, while a `packages:` entry names a
+ * directory the dependency's own manifest declares.
+ */
+export interface DeclaredSource {
+  readonly name: string;
+  readonly dir: string;
+  readonly declaredAs: 'package' | 'path';
+}
+
 /** A scope carrying no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
 export interface MissingDeclaration {
   readonly kind: 'no-declaration';
@@ -170,7 +181,7 @@ export interface SyncPlan {
   readonly sourceSupportRetractions: ReadonlyArray<string>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
   /** Declared sources whose directory does not exist, and so contribute nothing to resolution. */
-  readonly missingSources: ReadonlyArray<{ name: string; dir: string }>;
+  readonly missingSources: ReadonlyArray<DeclaredSource>;
   /** Dependencies shipping guidance the project has not declared. */
   readonly undeclaredPackages: ReadonlyArray<string>;
   /** Disagreements between the declaration's guidance-hook bindings and what those bindings reach. */
@@ -324,12 +335,15 @@ async function reconcileDomain(
   // hand-declared sources, so a hand-pointed local directory outranks a dependency, and everything it ships seeds the
   // closure — which is what makes naming the package the whole declaration.
   const packageSources = await resolvePackageSources(declaration.packages, domain.baseDir);
-  const sources = [...declaration.sources, ...packageSources];
+  const sources: ReadonlyArray<DeclaredSource> = [
+    ...declaration.sources.map((source): DeclaredSource => ({ ...source, declaredAs: 'path' })),
+    ...packageSources.map((source): DeclaredSource => ({ ...source, declaredAs: 'package' })),
+  ];
 
   // Resolution searches declared sources (highest precedence first) then the built-in library. Validate each declared
   // source up front so a non-directory or unreadable one fails the whole run — dry-run included — before any write.
   const resolver = createSourceResolver(sources, contentDir);
-  const missingSources = await assertValidSources(sources);
+  const missingSources = await checkDeclaredSources(sources);
   assertUsableSourceNames(sources);
   assertDistinctSourceNames(sources);
 
@@ -613,18 +627,17 @@ async function reconcileDomain(
 // region | Helpers
 
 /**
- * Throws when any declared source path is a non-directory or unreadable, so a misconfigured source fails the whole run
- * (dry-run included) before any file is touched. The error names each offending source and what is wrong with it.
+ * Reports the declared sources whose directory does not exist, and throws when any other source path is a
+ * non-directory or unreadable, so a misconfigured source fails the whole run (dry-run included) before any file is
+ * touched. The error names each offending source and what is wrong with it.
  *
- * A source whose directory is missing is returned rather than thrown, because absence is the one problem that can be a
- * not-yet state: a source declared under version control before anything populates it. Such a source resolves as
- * contributing nothing, so the run proceeds and the report warns, which keeps the diagnostic a mistyped `path:` needs
- * without making the declaration itself illegal.
+ * Absence is returned rather than thrown, because it is the one problem that can be a not-yet state: a source declared
+ * under version control before anything populates it. Such a source resolves as contributing nothing, so the run
+ * proceeds and the report warns, which keeps the diagnostic a mistyped `path:` needs without making the declaration
+ * itself illegal.
  */
-async function assertValidSources(
-  sources: ReadonlyArray<{ name: string; dir: string }>,
-): Promise<ReadonlyArray<{ name: string; dir: string }>> {
-  const missing: Array<{ name: string; dir: string }> = [];
+async function checkDeclaredSources(sources: ReadonlyArray<DeclaredSource>): Promise<ReadonlyArray<DeclaredSource>> {
+  const missing: Array<DeclaredSource> = [];
   const invalid: Array<string> = [];
   for (const source of sources) {
     const problem = await findSourceProblem(source.dir);
