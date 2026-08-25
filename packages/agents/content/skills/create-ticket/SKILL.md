@@ -2,6 +2,9 @@
 name: create-ticket
 description: Create a ticket on the appropriate platform from conversation context
 user-invocable: true
+dependencies:
+  skills:
+    - testing-conventions
 ---
 
 # Create ticket

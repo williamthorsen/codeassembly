@@ -2,6 +2,10 @@
 name: review-criteria
 description: Evaluation criteria and finding classification for code review
 user-invocable: false
+dependencies:
+  skills:
+    - anti-patterns
+    - testing-conventions
 ---
 
 # Review criteria

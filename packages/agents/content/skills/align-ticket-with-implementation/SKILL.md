@@ -4,6 +4,7 @@ description: Align an issue ticket with the current branch's implementation
 user-invocable: true
 dependencies:
   skills:
+    - testing-conventions
     - update-jira-ticket
 ---
 
