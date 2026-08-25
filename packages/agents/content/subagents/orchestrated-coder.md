@@ -90,7 +90,7 @@ completed
 4. For each finding, address it (fix or justify). **After addressing each finding, overwrite the change-summary file** with that finding's `Status` and `Action`, and bump the `## Status` line.
 5. After addressing every finding, **audit the diff** per [Diff audit](#diff-audit), over the round's fixes at once.
 6. Run quality gates, so a repair the audit forced is covered by them.
-7. Commit fixes. The commit title MUST describe the code change, not the review process; e.g., "Fix null check in layout resolver", not "Address review findings".
+7. Commit fixes, composing each message per [Commit formatting](#commit-formatting).
 8. **Finalize the change-summary**: Fill in `## Quality gates` and set `## Status` to `completed`. Reconcile each finding's `Action` against the audit as you go: The per-finding writes are progress state, and this is where the settled record is written. Then write your final structured return block.
 
 **Final artifact shape:**
@@ -183,10 +183,9 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 <HARD-GATE>
 Every commit message MUST satisfy every rule below. Violations are treated as quality gate failures.
 
-1. **Render the commit title.** Run `{harness_home_dir}/scripts/describe-change.sh --title "<title>" --scope "<scope>" --type "<type>"` via Bash and read `commit_title` from the JSON output.
-2. **Title describes the code change, not the process.** Ask "what does the diff do?", never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: Describe the actual change; e.g., "Fix null check in layout resolver," "Remove unused layout fields."
-3. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
-4. **Use backtick formatting for code identifiers.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks; e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
+1. **Compose the title's text per `{harness_home_dir}/skills/_data/title-voice.md`.** Read it before composing; it states the voice, the length bound, the content discipline, and the markup a title carries.
+2. **Render the commit title.** Run `{harness_home_dir}/scripts/describe-change.sh --title "<title>" --scope "<scope>" --type "<type>"` via Bash and read `commit_title` from the JSON output.
+3. **Use backtick formatting for code identifiers in the body.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks; e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

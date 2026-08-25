@@ -55,7 +55,7 @@ Create the ticket body describing WHAT needs to be done: problem, context, and a
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
-Also draft a short title (without the `ticket_ref` prefix) for use in step 6.
+Also draft the ticket string, per [`title-voice.md`](../_data/title-voice.md), for use in step 6.
 
 ### 3. Resolve platform
 

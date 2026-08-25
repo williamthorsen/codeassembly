@@ -22,7 +22,7 @@ Record each unit as it is finished. Several single-concern commits read better t
 
 2. **Stage the unit.** Stage the paths this commit records, then confirm the staged set is the set the message will describe.
 
-3. **Resolve the title's fields.** The scope, the work type, and the title text, each per the conventions.
+3. **Resolve the title's fields.** The scope and the work type per the conventions; the title text per [`title-voice.md`](../_data/title-voice.md).
 
 4. **Render the title** per [Rendering the title](#rendering-the-title).
 

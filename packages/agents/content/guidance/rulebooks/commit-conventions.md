@@ -15,16 +15,14 @@ Commit titles and bodies are extracted into the changelog and, for release-notes
 
 ## Commit title
 
-Render via `describe-change.sh`; see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
+Voice, length, content discipline, and the ticket-reference rule are stated in [`title-voice.md`](../../skills/_data/title-voice.md), which governs the authored string across every surface it is rendered into. Two rules are commit-specific:
 
-- **72 characters max** (hard limit).
-- **Imperative, task-oriented voice.** "Add…", "Fix…", "Prevent…", "Enable…" (describing what the coder did). The title appears next to the PR number in release notes; it reads as the task. Distinct from the lede voice, which is declarative ("Adds…", "Fixes…").
-- For content discipline (the code change rather than what prompted it, no ephemeral references, only what's in the diff), see [Titles](../../skills/_data/lede-voice.md#titles).
+- Render via `describe-change.sh`; see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
 - Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
 
 ## Ticket ID
 
-Do not include the ticket ID in the commit title. The branch name records it. Include it at the end of the commit body only if the branch covers more than one ticket (rare).
+The branch name records the ticket. Include the ID at the end of the commit body only if the branch covers more than one ticket (rare).
 
 ## Commit body
 

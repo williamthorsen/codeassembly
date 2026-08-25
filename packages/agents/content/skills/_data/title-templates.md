@@ -2,6 +2,8 @@
 
 Commit titles, ticket titles, PR titles, and squash-merge titles are produced from declarative templates. Each surface has its own template, configured per repository and per user, and rendered by `describe-change.sh` from a small set of named tokens.
 
+This file states how a title is rendered; [`title-voice.md`](./title-voice.md) states how the `{title}` text fed to these templates is composed.
+
 ## Rendering the title
 
 Run the `describe-change.sh` script with every input that is available; templates control which tokens are required:
