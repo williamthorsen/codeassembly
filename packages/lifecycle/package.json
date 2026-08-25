@@ -38,6 +38,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "esbuild": "0.28.2",
+    "eslint": "catalog:",
     "vitest": "catalog:"
   },
   "engines": {

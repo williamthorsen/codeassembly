@@ -3,9 +3,12 @@ packages:
 
 catalog:
   '@types/node': '24.13.3'
+  '@williamthorsen/nmr': '0.34.0'
   '@williamthorsen/toolbelt.errors': '0.6.1'
   '@williamthorsen/toolbelt.testing': '0.4.0'
   '@williamthorsen/toolbelt.vitest': '0.6.0'
+  eslint: '10.8.1'
+  vite: '8.2.1'
   vitest: '4.1.10'
 
 allowBuilds:
