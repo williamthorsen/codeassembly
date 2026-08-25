@@ -11,8 +11,8 @@
     "allowUnusedLabels": false,
     // "alwaysStrict": true, // implied by "strict"
     // Match the `source` export condition, so workspace dependencies resolve to their TypeScript source rather than
-    // their built declarations. This mirrors vitest's `conditions: ['source']` and lets in-repo typechecking run
-    // without a prior build. External consumers don't set this condition and fall through to `types`.
+    // their built declarations. This mirrors the `source` condition nmr's Vitest factory resolves, and lets in-repo
+    // typechecking run without a prior build. External consumers don't set this condition and fall through to `types`.
     "customConditions": ["source"],
     "declaration": true,
     "emitDecoratorMetadata": true,
