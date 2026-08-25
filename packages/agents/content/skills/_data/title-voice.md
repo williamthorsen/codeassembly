@@ -17,7 +17,7 @@ A change's three renderings are one authored string rendered three ways. Composi
 
 **72 characters, hard.** Both strings are bound by it.
 
-A title gets one line while the reader scans, and the bound is what keeps it there. Past it the line is truncated, and truncation falls on the end of the sentence, where the specifics are.
+A title gets one line while the reader scans, and the bound is what keeps it there. Past it the line wraps or is cut, and what goes is the end of the sentence, where the specifics are.
 
 The bound measures the authored string rather than any rendering. Each template adds its own prefix and suffix -- a ticket reference, a scope and work type, a pull-request number -- so the same string measures differently on every surface, and the digit count of an issue number moves the line. One bound on the string all four surfaces share is what keeps the rule from depending on which rendering is counted.
 
@@ -25,7 +25,7 @@ The bound measures the authored string rather than any rendering. Each template 
 
 **Imperative, task-oriented.** "Add…", "Fix…", "Prevent…", "Enable…", describing what the author did. The title appears next to the pull-request number in release notes; it reads as the task. Distinct from the lede voice, which is declarative ("Adds…", "Fixes…"); see [`lede-voice.md`](./lede-voice.md).
 
-The mood is what separates a title from a label. "Enable playback at different speeds" is a title; "Different playback speeds" is a heading for one.
+The mood is what separates a title from a label. "Enable playback at different speeds" states the task; "Different playback speeds" only names the topic.
 
 ## Content discipline
 
