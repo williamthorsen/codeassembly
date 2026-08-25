@@ -2,10 +2,12 @@
 
 **Earn the menu before rendering it.** A menu is for a call you cannot make. Before composing options, settle whose call it is:
 
-- **Yours**: The ranking follows from evidence you already hold: correctness, a codebase convention, or a governing document that already decided it. State the decision in one line with its reason and proceed. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
+- **Yours**: The ranking follows from evidence you hold: correctness, a codebase convention, a governing document that already decided it, or a consequence you can read in the code, such as coupling, review coherence, or total effort. State the decision in one line with its reason and proceed. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
 - **The user's**: The ranking turns on a preference, a priority, a risk appetite, or a budget only they hold. Render the menu.
 
-Sequencing and scheduling rank that way without exception: when to do queued work, whether a finished change ships now or rides with a later one, whether to hold work pending a change in another repository. Measuring an option's cost does not move the call to your side, because elapsed time and round trips are priced on your ledger, where the user's context switch and review cycles cost nothing. A more accurate number on the wrong ledger still cannot rank the options. Present the cost, render the options unmarked, and let the user choose.
+**Your own cost never ranks the options.** Elapsed time, round trips, and your own effort are priced on your ledger, where the user's context switch and review cycles cost nothing. Measuring one does not move the call to your side, and a more accurate number on that ledger still cannot rank the options.
+
+Ordering follows from those two rules. Where the order changes the code or the total effort -- upstream before downstream, a refactor before the feature that would otherwise be written twice -- recommend it and mark it, naming the delay it costs and saying nothing about delay where none is involved. Where the outcomes are identical and only the timing differs, such as when queued work is picked up, present the cost, render the options unmarked, and let the user choose.
 
 This gate governs judgment asks alone. An ask that authorizes a consequential or hard-to-reverse action (creating a branch, pushing, editing a ticket, advancing a pipeline) belongs to the user however confident you are, and is never collapsed into a stated decision. Templated next-steps menus survive the gate for the same reason: What to do next is the user's call about their own time.
 
