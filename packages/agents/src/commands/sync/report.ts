@@ -251,19 +251,19 @@ function describeMissingDeclaration(outcome: MissingDeclaration): string {
  * absence may be a not-yet state, and named because the alternative is a run that silently resolves from the library
  * where the source was meant to override it.
  *
- * The remedy is keyed to the declaration form, because only one of the two is the reader's to perform: a `sources:`
- * entry names a path they wrote, while a package's content directory is named by the dependency's own manifest and
- * lives under `node_modules`, where creating it would not survive the next install.
+ * The remedy is keyed to the declaration form: a `sources:` entry names a path the reader wrote, while a package's
+ * content directory is named by the package's own manifest. The package branch names two actions because a
+ * `workspace:*` link resolves into a tree the reader maintains, while an installed dependency's is not theirs to edit.
  */
 function describeMissingSource(source: DeclaredSource): ReportLine {
   const remedy =
     source.declaredAs === 'package'
-      ? `Package "${source.name}" declares this directory under \`codeassembly.content\` but does not ship it. ` +
-        'Report it upstream, or drop the package from `packages`.'
+      ? "The package's own `codeassembly.content` names that path, so create the directory if you maintain the " +
+        'package, otherwise report the omission upstream or drop the package from `packages`.'
       : "Create the directory, or correct the source's `path` in the declaration that names it.";
   return {
     level: 'warn',
-    text: `⚠️ Declared source "${source.name}" (${source.dir}) does not exist, so it contributed nothing. ${remedy}`,
+    text: `⚠️ Declared source "${source.name}" (${source.dir}) does not exist. ${remedy}`,
   };
 }
 

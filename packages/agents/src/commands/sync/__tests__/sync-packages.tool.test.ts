@@ -321,6 +321,6 @@ describe('sync with a declared package', () => {
 
     const warning = renderReportText(outcome, { level: 'warn' });
     expect(warning).toMatch(/Declared source "@ca-fixture\/empty" \(.*missing-dir\) does not exist/);
-    expect(warning).toContain('Report it upstream');
+    expect(warning).toContain('report the omission upstream');
   });
 });

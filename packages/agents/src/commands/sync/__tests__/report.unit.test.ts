@@ -99,7 +99,7 @@ describe('missing sources', () => {
     const outcome = reconciled({ missingSources: [{ name: 'org', dir: '/repo/guidance', declaredAs: 'path' }] });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
-      const warning = lines.find((line) => line.text.includes('does not exist, so it contributed nothing'));
+      const warning = lines.find((line) => line.text.includes('does not exist'));
 
       expect(warning?.level).toBe('warn');
       expect(warning?.text).toContain('"org"');
@@ -116,7 +116,7 @@ describe('missing sources', () => {
     });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
-      expect(lines.filter((line) => line.text.includes('does not exist, so it contributed nothing'))).toHaveLength(2);
+      expect(lines.filter((line) => line.text.includes('does not exist'))).toHaveLength(2);
     }
   });
 
@@ -129,7 +129,7 @@ describe('missing sources', () => {
     expect(warning?.text).toContain('correct the source');
   });
 
-  it('sends a package source upstream rather than offering remedies it does not have', () => {
+  it("conditions a package source's remedy on who maintains the package", () => {
     const outcome = reconciled({
       missingSources: [
         { name: '@acme/guidance', dir: '/repo/node_modules/@acme/guidance/content', declaredAs: 'package' },
@@ -138,9 +138,9 @@ describe('missing sources', () => {
 
     const warning = renderSyncReport(outcome).find((line) => line.text.includes('@acme/guidance'));
 
-    expect(warning?.text).toContain('does not ship it');
-    expect(warning?.text).toContain('Report it upstream');
-    expect(warning?.text).not.toContain('Create the directory');
+    expect(warning?.text).toContain('names that path');
+    expect(warning?.text).toContain('if you maintain the package');
+    expect(warning?.text).toContain('report the omission upstream');
   });
 });
 
