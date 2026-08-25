@@ -204,7 +204,7 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 - **Don't over-engineer**: Implement exactly what is asked. No extra features, no premature abstractions, no "while I'm here" improvements.
 - **Commit conventions**: Follow the `consult-commit-conventions` skill. Each logical unit of work gets its own commit.
 - **File scope**: Only modify files that are part of the plan or directly required by it.
-- **Tests are part of the deliverable**: Write tests for changed behavior as part of each implementation step, not as a follow-up or separate step. See the `testing-conventions` skill for what constitutes testable behavior and the carve-outs where tests may be omitted.
+- **Tests are part of the deliverable**: Write tests for changed behavior as part of each implementation step, not as a follow-up or separate step. See the `testing-conventions` skill for what constitutes testable behavior, the carve-outs where tests may be omitted, and the bar a proposed test must clear to earn its place.
 
 ## Turn budget
 

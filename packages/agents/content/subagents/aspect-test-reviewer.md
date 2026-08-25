@@ -90,7 +90,7 @@ Focus exclusively on:
 - Conditional expects or assertions that can silently pass
 - Tests that are tightly coupled to implementation and will break on any refactor
 - **Untested branch-authored behavior**: Classification depends on authorship context, signaled via the dispatch prompt:
-  - **Pipeline-authored code** (`authored-by-pipeline: true`): Untested branch-authored behavior is F. The pipeline wrote this code; shipping it without tests is a defect, not a deferral. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
+  - **Pipeline-authored code** (`authored-by-pipeline: true`): Untested branch-authored behavior is F where a test that clears the bar would cover it. The pipeline wrote this code; shipping it without that test is a defect, not a deferral. See the `testing-conventions` skill for what constitutes testable behavior, the carve-outs where tests may be omitted, and the bar a proposed test must clear to earn its place.
   - **Non-pipeline-authored code** (no authorship signal, or `authored-by-pipeline: false`): Untested branch-authored behavior is T. Test coverage is the original author's responsibility; flag the gap, but don't block the merge.
   - This rule overrides the general T-level guidance for test gaps in `review-criteria`. The override is intentional: The shared scheme provides defaults; this reviewer specializes them based on authorship context.
 
@@ -100,6 +100,7 @@ Do NOT flag:
 - General code quality (handled by code reviewer)
 - Style or naming in production code
 - Test coverage for pre-existing untested code (unless the change modifies that code)
+- Coverage gaps that only a test failing the `testing-conventions` bar could close
 
 ## Finding format
 
