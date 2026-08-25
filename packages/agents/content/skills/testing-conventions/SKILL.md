@@ -35,7 +35,7 @@ Needing coverage does not make any particular test worth writing. The two questi
 4. **Its expectation comes from somewhere other than the implementation.** Diagnostic: Could this assertion be satisfied by pasting in the new value? An expected constant copied from the code under test, or an assertion that today's file set, settings, or wording stays as it is, is a change-detector with no independent oracle. The tell is unboundedness: The same reasoning would justify unlimited similar tests anywhere.
 5. **It can fail in future for a reason that matters.** A check with no future failure mode is a one-time verification wearing a test's clothes. An absence assertion qualifies where it encodes a live invariant a realistic future change could violate (no route registers without an auth guard), and fails where it only re-confirms a completed migration.
 
-Absence of a test is not by itself a gap to fill. A test that clears every filter and a test that clears none both look like diligence; only the first one is.
+Absence of a test is not by itself a gap to fill. Where a change needs coverage and no candidate test clears the bar, it ships without one; say which filter ruled the candidate out. A test that clears every filter and a test that clears none both look like diligence; only the first one is.
 
 ### Do not test that removed things stay removed
 
