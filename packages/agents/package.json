@@ -53,11 +53,11 @@
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.8",
     "@types/node": "24.13.3",
-    "@williamthorsen/toolbelt.strings": "6.0.1",
+    "@williamthorsen/toolbelt.strings": "6.0.3",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "0.28.2",
-    "readyup": "0.30.0",
+    "readyup": "0.32.1",
     "vitest": "catalog:"
   },
   "engines": {
