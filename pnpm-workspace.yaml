@@ -2,14 +2,29 @@ packages:
   - packages/*
 
 catalog:
+  '@testing-library/dom': '10.4.1'
+  '@testing-library/jest-dom': '7.0.1'
+  '@testing-library/react': '16.3.2'
   '@types/node': '24.13.3'
+  '@types/react': '19.2.18'
+  '@types/react-dom': '19.2.4'
+  '@vitejs/plugin-react': '6.0.5'
   '@williamthorsen/nmr': '0.34.0'
   '@williamthorsen/toolbelt.errors': '0.6.1'
   '@williamthorsen/toolbelt.testing': '0.4.0'
   '@williamthorsen/toolbelt.vitest': '0.6.0'
+  esbuild: '0.28.2'
   eslint: '10.8.1'
+  eslint-plugin-react: '7.37.5'
+  hono: '4.13.2'
+  jsdom: '30.0.1'
+  react: '19.2.8'
+  react-dom: '19.2.8'
+  readyup: '0.32.1'
   vite: '8.2.1'
   vitest: '4.1.10'
+  yaml: '2.9.0'
+  zod: '4.4.3'
 
 allowBuilds:
   '@tailwindcss/oxide': true

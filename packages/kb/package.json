@@ -102,8 +102,8 @@
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
     "picomatch": "4.0.5",
-    "yaml": "2.9.0",
-    "zod": "4.4.3"
+    "yaml": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
