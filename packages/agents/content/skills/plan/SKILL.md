@@ -5,6 +5,7 @@ user-invocable: true
 dependencies:
   skills:
     - emit-event
+    - testing-conventions
 ---
 
 # Plan

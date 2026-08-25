@@ -19,17 +19,29 @@ user-invocable: false
 - **Build scripts and tooling**: scripts whose correctness is verified by the build or lint pipeline rather than unit tests, and that expose no independently testable API surface
 - **Removal-only changes**: A change that only deletes code, text, or behavior introduces no new positive behavior to cover, so it needs no new test.
 
-If a change does not fall into one of these categories, it requires tests. When in doubt, write the test.
+If a change does not fall into one of these categories, it requires tests, and each of those tests must earn its place by the bar in [whether a test earns its place](#whether-a-test-earns-its-place).
+
+## Whether a test earns its place
+
+Needing coverage does not make any particular test worth writing. The two questions are separate: The default rule above says a change needs tests, and this bar says whether the test in front of you is one of them. Put every test through these filters before writing or recommending it.
+
+1. **It can fail on code this repo authored.** The behavior asserted is ours, not a framework's, a dependency's, or the language's own contract. Diagnostic: If the test can fail only when a dependency changes, and not when our code changes, don't write it.
+2. **Nothing else fails first.** Diagnostic: If this behavior regressed, what would fail first? Where the answer is the compiler, the linter, or a gate that already manufactures the failure condition on every run, that gate is the guard, and a narrower test is a weaker and more brittle duplicate. A gate that merely exercises the same area does not qualify; it has to reproduce the condition.
+3. **It would catch the failure it guards.** A test aimed at a cause it cannot reach guards nothing. Where reaching that cause means replicating a dependency's private shape, the test breaks or silently stops testing at the next upgrade.
+4. **Its expectation comes from somewhere other than the implementation.** Diagnostic: Could this assertion be satisfied by pasting in the new value? An expected constant copied from the code under test, or an assertion that today's file set, settings, or wording stays as it is, is a change-detector with no independent oracle. The tell is unboundedness: The same reasoning would justify unlimited similar tests anywhere.
+5. **It can fail in future for a reason that matters.** A check with no future failure mode is a one-time verification wearing a test's clothes. An absence assertion qualifies where it encodes a live invariant a realistic future change could violate (no route registers without an auth guard), and fails where it only re-confirms a completed migration.
+
+Absence of a test is not by itself a gap to fill. Where a change needs coverage and no candidate test clears the bar, it ships without one; say which filter ruled the candidate out. A test that clears every filter and a test that clears none both look like diligence; only the first one is.
 
 ### Do not test that removed things stay removed
 
-When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
+This is the commonest way a test fails the last filter. When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
 
 Diagnostic: Would this test exist if the deleted code had never existed? If no, don't write it.
 
 Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Verification step), not a standing test. This applies to any change that removes something, not only removal-only changes.
 
-### Loosen a test broken by a wording-only change
+## Loosen a test broken by a wording-only change
 
 When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior depends on the text.
 
