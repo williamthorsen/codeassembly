@@ -13,7 +13,7 @@ Evaluation criteria for code review. Apply proportionally: Match depth to risk.
 - **Correctness**: Logic errors, unhandled error paths, data loss risks
 - **Conventions**: Adherence to codebase patterns and project standards
 - **Edge cases**: Boundary conditions, empty collections, zero values, undefined states
-- **Test coverage**: Adequate tests for new functionality; tests that verify behavior, not just coverage
+- **Test coverage**: Adequate tests for new functionality; tests that verify behavior and earn their place, not just coverage
 - **Clarity**: Naming, documentation, and instructions convey unambiguous intent
 - **Contracts**: Documented behaviors match implementations; implicit assumptions are explicit
 - **Type safety**: Type issues that affect correctness or maintainability
@@ -58,9 +58,11 @@ Comment text you propose for a source file (a replacement doc comment, a suggest
 
 "Add a comment explaining X" is a finding only when X is a constraint the code cannot show. Do not request a comment the discipline would delete.
 
-## Do not recommend tests that assert removed things stay removed
+## Do not recommend a test that does not earn its place
 
-Do not raise a finding recommending a test that asserts deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: It encodes history, fails only on a verbatim revert, and accretes without bound. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions; see the `testing-conventions` skill for the authoring-side rule.
+Every test you recommend clears the bar in the `testing-conventions` skill, which states the filters and the authoring-side rule. A recommendation that fails a filter is withdrawn rather than reworded, and absence of a test is not by itself a finding.
+
+The commonest instance is a test asserting that deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: It encodes history, fails only on a verbatim revert, and accretes without bound. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions.
 
 ## Finding references
 
