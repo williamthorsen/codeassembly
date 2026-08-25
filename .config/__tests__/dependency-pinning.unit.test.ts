@@ -33,12 +33,65 @@ describe('dependency pinning', () => {
     );
   });
 
+  // The scan walks `packages/` directly, so a second package root would go unscanned with every test still green.
+  it('scans every package root the workspace declares', () => {
+    expect(readWorkspaceConfig()['packages']).toEqual(['packages/*']);
+  });
+
   it('permits no dependency pinned literally in two or more manifests', () => {
     expect(listDuplicateLiteralPins(pins)).toEqual([]);
   });
 
   it('permits no literal pin of a cataloged dependency', () => {
     expect(listCatalogedLiteralPins(pins, catalog)).toEqual([]);
+  });
+});
+
+describe(listDuplicateLiteralPins, () => {
+  it('reports a dependency two manifests pin literally', () => {
+    const pins = [
+      { dependency: 'zod', manifest: 'kb', specifier: '4.4.3' },
+      { dependency: 'zod', manifest: 'mcp', specifier: '4.4.3' },
+    ];
+
+    expect(listDuplicateLiteralPins(pins)).toEqual(['zod: kb, mcp']);
+  });
+
+  it('reports nothing for a dependency one manifest alone pins literally', () => {
+    const pins = [{ dependency: 'picomatch', manifest: 'kb', specifier: '4.0.5' }];
+
+    expect(listDuplicateLiteralPins(pins)).toEqual([]);
+  });
+
+  it('counts neither a catalog nor a workspace specifier as a literal pin', () => {
+    const pins = [
+      { dependency: 'zod', manifest: 'kb', specifier: 'catalog:' },
+      { dependency: 'zod', manifest: 'mcp', specifier: 'catalog:' },
+      { dependency: 'codeassembly-lifecycle', manifest: 'agents', specifier: 'workspace:*' },
+      { dependency: 'codeassembly-lifecycle', manifest: 'fleet', specifier: 'workspace:*' },
+    ];
+
+    expect(listDuplicateLiteralPins(pins)).toEqual([]);
+  });
+});
+
+describe(listCatalogedLiteralPins, () => {
+  it('reports a literal pin of a cataloged dependency', () => {
+    const pins = [{ dependency: 'zod', manifest: 'kb', specifier: '4.4.3' }];
+
+    expect(listCatalogedLiteralPins(pins, ['zod'])).toEqual(['zod: kb']);
+  });
+
+  it('reports nothing for a literal pin of an uncataloged dependency', () => {
+    const pins = [{ dependency: 'picomatch', manifest: 'kb', specifier: '4.0.5' }];
+
+    expect(listCatalogedLiteralPins(pins, ['zod'])).toEqual([]);
+  });
+
+  it('reports nothing for a cataloged dependency a manifest defers to the catalog', () => {
+    const pins = [{ dependency: 'zod', manifest: 'kb', specifier: 'catalog:' }];
+
+    expect(listCatalogedLiteralPins(pins, ['zod'])).toEqual([]);
   });
 });
 
@@ -81,8 +134,7 @@ function nameManifest(manifestPath: string): string {
 
 /** Names every dependency the workspace catalog pins. */
 function readCatalogedDependencies(): string[] {
-  const config: unknown = parse(readFileSync(WORKSPACE_CONFIG_PATH, 'utf8'));
-  const catalog = isRecord(config) ? config['catalog'] : undefined;
+  const catalog = readWorkspaceConfig()['catalog'];
 
   return isRecord(catalog) ? Object.keys(catalog).toSorted() : [];
 }
@@ -104,6 +156,13 @@ function readDependencyPins(): DependencyPin[] {
       );
     });
   });
+}
+
+/** Reads the workspace config, whose keys carry the catalog and the package roots. */
+function readWorkspaceConfig(): Record<string, unknown> {
+  const config: unknown = parse(readFileSync(WORKSPACE_CONFIG_PATH, 'utf8'));
+
+  return isRecord(config) ? config : {};
 }
 
 // endregion | Helpers
