@@ -50,11 +50,14 @@ const OPTION_FORMAT: Spec = {
     // The ban on padding. Without it an option with real pros and no real con gets a con invented for balance, and
     // the invented con is what makes a settled call look like a fork.
     'Never add a bullet to fill a slot',
-    // The one class the gate names outright. Without it the gate stays abstract and the agent re-decides which
-    // rankings are the user's, which is how a scheduling call got a recommendation attached to it.
-    'Sequencing and scheduling rank that way without exception',
-    // What the gate requires of the menu it produces for that class. Without it a menu satisfies the gate while
-    // carrying the agent's lean, which the marker table's ■■□ row licenses.
+    // The gate's one observed blind spot. Without it the agent prices each option on its own ledger, where elapsed
+    // time and round trips are scarce, and treats having measured one as license to rank.
+    '**Your own cost never ranks the options.**',
+    // What sorts an ordering question, stated as a test rather than a list of cases. An enumeration here contradicts
+    // the gate it is appended to, which is how a combine-or-split call lost its recommendation.
+    'Where the order changes the code or the total effort',
+    // What the gate requires of the menu it produces for a timing-only ordering. Without it a menu satisfies the gate
+    // while carrying the agent's lean, which the marker table's ■■□ row licenses.
     'render the options unmarked',
   ],
 };
