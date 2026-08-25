@@ -39,6 +39,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
+    "eslint": "catalog:",
     "vitest": "catalog:"
   },
   "engines": {

@@ -57,6 +57,7 @@
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "0.28.2",
+    "eslint": "catalog:",
     "readyup": "0.32.1",
     "vitest": "catalog:"
   },

@@ -38,9 +38,10 @@ const config = defineConfig([
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {
-      'n/no-extraneous-import': 'off',
+      // The rule resolves specifiers itself rather than through the `import/resolver` settings above, so
+      // factory's `.js` specifiers naming `.ts` files and fleet's `source`-only export condition all report
+      // as missing.
       'n/no-missing-import': 'off',
-      'n/no-unpublished-import': 'off',
     },
   },
   {
