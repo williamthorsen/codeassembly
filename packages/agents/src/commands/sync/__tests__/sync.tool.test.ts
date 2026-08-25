@@ -968,13 +968,46 @@ describe(syncCommand, () => {
       expect(await readFile(localHostPath(), 'utf8')).toContain('Source body.');
     });
 
-    it('fails the run when a declared source directory does not exist, writing nothing', async () => {
-      await declareWithSource('rulebooks:\n  use: []\n', path.join(sourceDir, 'missing'));
+    it('warns and resolves from the library when a declared source directory does not exist', async () => {
+      const missingDir = path.join(sourceDir, 'missing');
+      await writeLibraryRulebook('unpopulated', 'delivery: ambient', 'Library body.');
+      await declareWithSource('rulebooks:\n  use:\n    - unpopulated\n', missingDir);
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /Invalid declared source/,
+      const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+      expect(renderReportText(outcome, { level: 'warn' })).toContain(
+        `Declared source "org" (${missingDir}) does not exist`,
       );
-      expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+      expect(await readFile(localHostPath(), 'utf8')).toContain('Library body.');
+    });
+
+    it('warns once per missing source, naming each declared path', async () => {
+      const firstDir = path.join(sourceDir, 'first-missing');
+      const secondDir = path.join(sourceDir, 'second-missing');
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: org\n    path: ${firstDir}\n  - name: team\n    path: ${secondDir}\nrulebooks:\n  use: []\n`,
+        'utf8',
+      );
+
+      const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+      const warnings = renderReportLines(outcome, { level: 'warn' }).filter((line) => line.includes('does not exist'));
+      expect(warnings).toHaveLength(2);
+      expect(warnings.join('\n')).toContain(firstDir);
+      expect(warnings.join('\n')).toContain(secondDir);
+    });
+
+    it('warns about a missing declared source under --dry-run', async () => {
+      const missingDir = path.join(sourceDir, 'missing');
+      await declareWithSource('rulebooks:\n  use: []\n', missingDir);
+
+      const outcome = await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
+
+      expect(renderReportText(outcome, { dryRun: true, level: 'warn' })).toContain(
+        `Declared source "org" (${missingDir}) does not exist`,
+      );
     });
 
     it('fails the run when a declared source path is a file, not a directory', async () => {
@@ -1278,7 +1311,9 @@ describe(syncCommand, () => {
     });
 
     it('rejects an invalid source in dry-run, before previewing any write', async () => {
-      await declareWithSource('rulebooks:\n  use: []\n', path.join(sourceDir, 'missing'));
+      const filePath = path.join(sourceDir, 'a-file');
+      await writeFile(filePath, 'not a dir\n', 'utf8');
+      await declareWithSource('rulebooks:\n  use: []\n', filePath);
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
         /Invalid declared source/,

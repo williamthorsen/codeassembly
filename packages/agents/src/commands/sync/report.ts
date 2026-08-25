@@ -58,7 +58,10 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
   }
   // Reported here as well as on a live run: each names a property of the declaration rather than of the writes, and a
   // dry run is where a declaration gets checked before it is committed to.
-  lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory));
+  lines.push(
+    ...plan.missingSources.map(describeMissingSource),
+    ...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory),
+  );
   return lines;
 }
 
@@ -86,7 +89,7 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
-  lines.push({ level: 'info', text: describeDeliveries(plan) });
+  lines.push(...plan.missingSources.map(describeMissingSource), { level: 'info', text: describeDeliveries(plan) });
 
   const shadows = plan.resolutionReport.filter((entry) => entry.shadowsLibrary);
   if (shadows.length > 0) {
@@ -240,6 +243,20 @@ function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
     : 'No .agents/codeassembly.yaml found. Nothing to sync.';
+}
+
+/**
+ * The advisory naming a declared source whose directory does not exist. Reported rather than thrown because the
+ * absence may be a not-yet state, and named because the alternative is a run that silently resolves from the library
+ * where the source was meant to override it.
+ */
+function describeMissingSource(source: { name: string; dir: string }): ReportLine {
+  return {
+    level: 'warn',
+    text:
+      `⚠️ Declared source "${source.name}" (${source.dir}) does not exist, so it contributed nothing. Create the ` +
+      'directory, or correct its path in .agents/codeassembly.yaml.',
+  };
 }
 
 /** The dry-run lines for every retraction a run would perform, across the three delivery namespaces. */

@@ -45,7 +45,7 @@ import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../../lib/skill-transform.ts';
-import { describeSourceNameProblem, describeSourceProblem } from '../../lib/source-validation.ts';
+import { describeSourceNameProblem, findSourceProblem } from '../../lib/source-validation.ts';
 import {
   deploySubagent,
   renderSubagent,
@@ -169,6 +169,8 @@ export interface SyncPlan {
   /** Namespace paths under each target's support root that no declared source claims. */
   readonly sourceSupportRetractions: ReadonlyArray<string>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
+  /** Declared sources whose directory does not exist, and so contribute nothing to resolution. */
+  readonly missingSources: ReadonlyArray<{ name: string; dir: string }>;
   /** Dependencies shipping guidance the project has not declared. */
   readonly undeclaredPackages: ReadonlyArray<string>;
   /** Disagreements between the declaration's guidance-hook bindings and what those bindings reach. */
@@ -325,13 +327,14 @@ async function reconcileDomain(
   const sources = [...declaration.sources, ...packageSources];
 
   // Resolution searches declared sources (highest precedence first) then the built-in library. Validate each declared
-  // source up front so a missing or non-directory source fails the whole run — dry-run included — before any write.
+  // source up front so a non-directory or unreadable one fails the whole run — dry-run included — before any write.
   const resolver = createSourceResolver(sources, contentDir);
-  await assertValidSources(sources);
+  const missingSources = await assertValidSources(sources);
   assertUsableSourceNames(sources);
   assertDistinctSourceNames(sources);
 
-  // Enumerated after validation, so a package whose content dir is missing has already failed the run.
+  // A package whose content dir is missing enumerates nothing: the walk reads through a directory listing that
+  // answers an absent directory with no entries.
   const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
@@ -543,6 +546,7 @@ async function reconcileDomain(
     sourceSupportPlans,
     sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sourceSupportPlans),
     promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
+    missingSources,
     // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This
     // is advice, not action: Nothing is deployed until the project declares the package.
     undeclaredPackages: await findUndeclaredGuidancePackages(
@@ -609,22 +613,36 @@ async function reconcileDomain(
 // region | Helpers
 
 /**
- * Throws when any declared source path is missing, not a directory, or unreadable, so a bad source fails the whole
- * run (dry-run included) before any file is touched. The error names each offending source and what is wrong with it.
+ * Throws when any declared source path is a non-directory or unreadable, so a misconfigured source fails the whole run
+ * (dry-run included) before any file is touched. The error names each offending source and what is wrong with it.
+ *
+ * A source whose directory is missing is returned rather than thrown, because absence is the one problem that can be a
+ * not-yet state: a source declared under version control before anything populates it. Such a source resolves as
+ * contributing nothing, so the run proceeds and the report warns, which keeps the diagnostic a mistyped `path:` needs
+ * without making the declaration itself illegal.
  */
-async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: string }>): Promise<void> {
+async function assertValidSources(
+  sources: ReadonlyArray<{ name: string; dir: string }>,
+): Promise<ReadonlyArray<{ name: string; dir: string }>> {
+  const missing: Array<{ name: string; dir: string }> = [];
   const invalid: Array<string> = [];
   for (const source of sources) {
-    const problem = await describeSourceProblem(source.dir);
-    if (problem !== undefined) {
-      invalid.push(`"${source.name}" (${source.dir}): ${problem}`);
+    const problem = await findSourceProblem(source.dir);
+    if (problem === undefined) {
+      continue;
     }
+    if (problem.kind === 'missing') {
+      missing.push(source);
+      continue;
+    }
+    invalid.push(`"${source.name}" (${source.dir}): ${problem.detail}`);
   }
   if (invalid.length > 0) {
     throw new Error(
-      `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing, readable directory.`,
+      `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be a readable directory.`,
     );
   }
+  return missing;
 }
 
 /**

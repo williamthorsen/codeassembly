@@ -94,6 +94,33 @@ describe('unignored hosts', () => {
   });
 });
 
+describe('missing sources', () => {
+  it('warns on both paths, naming the source and its declared path', () => {
+    const outcome = reconciled({ missingSources: [{ name: 'org', dir: '/repo/guidance' }] });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      const warning = lines.find((line) => line.text.includes('does not exist, so it contributed nothing'));
+
+      expect(warning?.level).toBe('warn');
+      expect(warning?.text).toContain('"org"');
+      expect(warning?.text).toContain('/repo/guidance');
+    }
+  });
+
+  it('warns once per missing source', () => {
+    const outcome = reconciled({
+      missingSources: [
+        { name: 'org', dir: '/repo/guidance' },
+        { name: 'team', dir: '/repo/team' },
+      ],
+    });
+
+    for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
+      expect(lines.filter((line) => line.text.includes('does not exist, so it contributed nothing'))).toHaveLength(2);
+    }
+  });
+});
+
 describe('guidance-hook advisories', () => {
   it('warns on both paths that a bound rulebook does not claim the hook route', () => {
     const outcome = reconciled({
