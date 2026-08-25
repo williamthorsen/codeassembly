@@ -50,6 +50,12 @@ const OPTION_FORMAT: Spec = {
     // The ban on padding. Without it an option with real pros and no real con gets a con invented for balance, and
     // the invented con is what makes a settled call look like a fork.
     'Never add a bullet to fill a slot',
+    // The one class the gate names outright. Without it the gate stays abstract and the agent re-decides which
+    // rankings are the user's, which is how a scheduling call got a recommendation attached to it.
+    'Sequencing and scheduling rank that way without exception',
+    // What the gate requires of the menu it produces for that class. Without it a menu satisfies the gate while
+    // carrying the agent's lean, which the marker table's ■■□ row licenses.
+    'render the options unmarked',
   ],
 };
 
