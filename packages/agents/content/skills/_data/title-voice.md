@@ -19,7 +19,7 @@ A change's three renderings are one authored string rendered three ways. Composi
 
 A title gets one line while the reader scans, and the bound is what keeps it there. Past it the line wraps or is cut, and what goes is the end of the sentence, where the specifics are.
 
-The bound measures the authored string rather than any rendering. Each template adds its own prefix and suffix -- a ticket reference, a scope and work type, a pull-request number -- so the same string measures differently on every surface, and the digit count of an issue number moves the line. One bound on the string all four surfaces share is what keeps the rule from depending on which rendering is counted.
+The bound measures the authored string rather than any rendering. The templates add prefixes and suffixes of their own -- a ticket reference, a scope and work type, a pull-request number -- so the same string measures differently on each surface that carries them, and the digit count of an issue number moves the line. One bound on the authored string, whatever surface renders it, keeps the rule from depending on which rendering is counted.
 
 ## Voice
 
@@ -27,9 +27,11 @@ The bound measures the authored string rather than any rendering. Each template 
 
 The mood is what separates a title from a label. "Enable playback at different speeds" states the task; "Different playback speeds" only names the topic.
 
+A bug ticket's title is the one exception. It states the symptom rather than a task, so it reads declaratively; [Per-surface framing](#per-surface-framing) below gives the pairing.
+
 ## Content discipline
 
-- **The subject, not the occasion.** A change string names what the diff does; a ticket string names the problem. Neither names the review, the meeting, or the conversation that raised it: Never "Address review findings" or "Apply feedback".
+- **The subject, not the occasion.** A change string names what the diff does; a ticket string names the work wanted, or the symptom where the ticket is a bug. Neither names the review, the meeting, or the conversation that raised it: Never "Address review findings" or "Apply feedback".
 - **No ephemeral references.** The title must make sense to a reader who has only a `git log`. A ticket ID, a pull-request number, a review-finding ID, and a run identifier are each a reference that reader cannot resolve.
 - **Only what the artifact carries.** External actions -- a ticket updated, a notification sent -- belong to neither string.
 - **Specific over categorical.** "Disambiguate phase name mismatch between agents and factory layers", not "Phase name disambiguation". The bound above is a ceiling, not a target.
@@ -38,7 +40,7 @@ The mood is what separates a title from a label. "Enable playback at different s
 
 A title carries no backticks. `git log` renders no Markdown, so the markup arrives as literal punctuation around the word the reader most needs to see, and a squash-merge title carries whatever its pull-request title was authored with into the default branch's log unchanged.
 
-Naming the identifier is still the point, and it is often the most informative word in the line. Write it bare: "Add listConsoleLines to toolbelt.vitest" names both the function and the package and reads the same on every surface. Bodies are unaffected -- a commit body, a pull-request description, and a lede each backtick identifiers as usual.
+Naming the identifier is still the point, and it is often the most informative word in the line. Write it bare: "Add listConsoleLines to toolbelt.vitest" names both the function and the package and reads the same wherever it is rendered. Bodies are unaffected -- a commit body, a pull-request description, and a lede each backtick identifiers as usual.
 
 ## The ticket reference
 
