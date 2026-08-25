@@ -6,9 +6,27 @@ settings:
 
 catalogs:
   default:
+    '@testing-library/dom':
+      specifier: 10.4.1
+      version: 10.4.1
+    '@testing-library/jest-dom':
+      specifier: 7.0.1
+      version: 7.0.1
+    '@testing-library/react':
+      specifier: 16.3.2
+      version: 16.3.2
     '@types/node':
       specifier: 24.13.3
       version: 24.13.3
+    '@types/react':
+      specifier: 19.2.18
+      version: 19.2.18
+    '@types/react-dom':
+      specifier: 19.2.4
+      version: 19.2.4
+    '@vitejs/plugin-react':
+      specifier: 6.0.5
+      version: 6.0.5
     '@williamthorsen/nmr':
       specifier: 0.34.0
       version: 0.34.0
@@ -21,22 +39,49 @@ catalogs:
     '@williamthorsen/toolbelt.vitest':
       specifier: 0.6.0
       version: 0.6.0
+    esbuild:
+      specifier: 0.28.2
+      version: 0.28.2
     eslint:
       specifier: 10.8.1
       version: 10.8.1
+    eslint-plugin-react:
+      specifier: 7.37.5
+      version: 7.37.5
+    hono:
+      specifier: 4.13.2
+      version: 4.13.2
+    jsdom:
+      specifier: 30.0.1
+      version: 30.0.1
+    react:
+      specifier: 19.2.8
+      version: 19.2.8
+    react-dom:
+      specifier: 19.2.8
+      version: 19.2.8
+    readyup:
+      specifier: 0.32.1
+      version: 0.32.1
     vite:
       specifier: 8.2.1
       version: 8.2.1
     vitest:
       specifier: 4.1.10
       version: 4.1.10
+    yaml:
+      specifier: 2.9.0
+      version: 2.9.0
+    zod:
+      specifier: 4.4.3
+      version: 4.4.3
 
 importers:
 
   .:
     devDependencies:
       '@testing-library/dom':
-        specifier: 10.4.1
+        specifier: 'catalog:'
         version: 10.4.1
       '@types/node':
         specifier: 'catalog:'
@@ -45,7 +90,7 @@ importers:
         specifier: 7.0.0-dev.20260707.2
         version: 7.0.0-dev.20260707.2
       '@vitejs/plugin-react':
-        specifier: 6.0.5
+        specifier: 'catalog:'
         version: 6.0.5(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.26))(tsx@4.23.12)(yaml@2.9.0))
       '@vitest/coverage-v8':
         specifier: 4.1.10
@@ -111,7 +156,7 @@ importers:
         specifier: 3.9.6
         version: 3.9.6
       readyup:
-        specifier: 0.32.1
+        specifier: 'catalog:'
         version: 0.32.1(esbuild@0.28.2)
       tsx:
         specifier: 4.23.12
@@ -131,6 +176,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.26))(tsx@4.23.12)(yaml@2.9.0))
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
 
   packages/agents:
     dependencies:
@@ -147,10 +195,10 @@ importers:
         specifier: 3.0.2
         version: 3.0.2
       yaml:
-        specifier: 2.9.0
+        specifier: 'catalog:'
         version: 2.9.0
       zod:
-        specifier: 4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
       '@hyperjump/json-schema':
@@ -169,13 +217,13 @@ importers:
         specifier: 'catalog:'
         version: 0.6.0(vitest@4.1.10)
       esbuild:
-        specifier: 0.28.2
+        specifier: 'catalog:'
         version: 0.28.2
       eslint:
         specifier: 'catalog:'
         version: 10.8.1(jiti@2.7.0)(supports-color@7.2.0)
       readyup:
-        specifier: 0.32.1
+        specifier: 'catalog:'
         version: 0.32.1(esbuild@0.28.2)
       vitest:
         specifier: 'catalog:'
@@ -205,23 +253,23 @@ importers:
         specifier: 18.0.9
         version: 18.0.9
       react:
-        specifier: 19.2.8
+        specifier: 'catalog:'
         version: 19.2.8
       react-dom:
-        specifier: 19.2.8
+        specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
       zod:
-        specifier: 4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
       '@testing-library/dom':
-        specifier: 10.4.1
+        specifier: 'catalog:'
         version: 10.4.1
       '@testing-library/jest-dom':
-        specifier: 7.0.1
+        specifier: 'catalog:'
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.10)
       '@testing-library/react':
-        specifier: 16.3.2
+        specifier: 'catalog:'
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/cors':
         specifier: 2.8.19
@@ -233,13 +281,13 @@ importers:
         specifier: 'catalog:'
         version: 24.13.3
       '@types/react':
-        specifier: 19.2.18
+        specifier: 'catalog:'
         version: 19.2.18
       '@types/react-dom':
-        specifier: 19.2.4
+        specifier: 'catalog:'
         version: 19.2.4(@types/react@19.2.18)
       '@vitejs/plugin-react':
-        specifier: 6.0.5
+        specifier: 'catalog:'
         version: 6.0.5(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.26))(tsx@4.23.12)(yaml@2.9.0))
       '@williamthorsen/nmr':
         specifier: 'catalog:'
@@ -251,10 +299,10 @@ importers:
         specifier: 'catalog:'
         version: 10.8.1(jiti@2.7.0)(supports-color@7.2.0)
       eslint-plugin-react:
-        specifier: 7.37.5
+        specifier: 'catalog:'
         version: 7.37.5(eslint@10.8.1(jiti@2.7.0)(supports-color@7.2.0))
       jsdom:
-        specifier: 30.0.1
+        specifier: 'catalog:'
         version: 30.0.1
       vite:
         specifier: 'catalog:'
@@ -275,7 +323,7 @@ importers:
         specifier: workspace:*
         version: link:../lifecycle
       hono:
-        specifier: 4.13.2
+        specifier: 'catalog:'
         version: 4.13.2
     devDependencies:
       '@types/node':
@@ -300,35 +348,35 @@ importers:
         specifier: workspace:*
         version: link:../fleet
       hono:
-        specifier: 4.13.2
+        specifier: 'catalog:'
         version: 4.13.2
       react:
-        specifier: 19.2.8
+        specifier: 'catalog:'
         version: 19.2.8
       react-dom:
-        specifier: 19.2.8
+        specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
     devDependencies:
       '@testing-library/dom':
-        specifier: 10.4.1
+        specifier: 'catalog:'
         version: 10.4.1
       '@testing-library/jest-dom':
-        specifier: 7.0.1
+        specifier: 'catalog:'
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.10)
       '@testing-library/react':
-        specifier: 16.3.2
+        specifier: 'catalog:'
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.3
       '@types/react':
-        specifier: 19.2.18
+        specifier: 'catalog:'
         version: 19.2.18
       '@types/react-dom':
-        specifier: 19.2.4
+        specifier: 'catalog:'
         version: 19.2.4(@types/react@19.2.18)
       '@vitejs/plugin-react':
-        specifier: 6.0.5
+        specifier: 'catalog:'
         version: 6.0.5(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.26))(tsx@4.23.12)(yaml@2.9.0))
       '@williamthorsen/nmr':
         specifier: 'catalog:'
@@ -337,10 +385,10 @@ importers:
         specifier: 'catalog:'
         version: 10.8.1(jiti@2.7.0)(supports-color@7.2.0)
       eslint-plugin-react:
-        specifier: 7.37.5
+        specifier: 'catalog:'
         version: 7.37.5(eslint@10.8.1(jiti@2.7.0)(supports-color@7.2.0))
       jsdom:
-        specifier: 30.0.1
+        specifier: 'catalog:'
         version: 30.0.1
       postcss-preset-mantine:
         specifier: 1.18.0
@@ -364,10 +412,10 @@ importers:
         specifier: 4.0.5
         version: 4.0.5
       yaml:
-        specifier: 2.9.0
+        specifier: 'catalog:'
         version: 2.9.0
       zod:
-        specifier: 4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
       '@types/node':
@@ -389,7 +437,7 @@ importers:
         specifier: 'catalog:'
         version: 24.13.3
       esbuild:
-        specifier: 0.28.2
+        specifier: 'catalog:'
         version: 0.28.2
       eslint:
         specifier: 'catalog:'
@@ -410,7 +458,7 @@ importers:
         specifier: workspace:*
         version: link:../run-core
       zod:
-        specifier: 4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
       '@types/node':
@@ -429,10 +477,10 @@ importers:
         specifier: 'catalog:'
         version: 0.6.1
       yaml:
-        specifier: 2.9.0
+        specifier: 'catalog:'
         version: 2.9.0
       zod:
-        specifier: 4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
       '@types/node':

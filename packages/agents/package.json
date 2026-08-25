@@ -47,8 +47,8 @@
     "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
     "ulid": "3.0.2",
-    "yaml": "2.9.0",
-    "zod": "4.4.3"
+    "yaml": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.8",
@@ -56,9 +56,9 @@
     "@williamthorsen/toolbelt.strings": "6.0.3",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
-    "esbuild": "0.28.2",
+    "esbuild": "catalog:",
     "eslint": "catalog:",
-    "readyup": "0.32.1",
+    "readyup": "catalog:",
     "vitest": "catalog:"
   },
   "engines": {

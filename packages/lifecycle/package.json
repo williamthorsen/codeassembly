@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "esbuild": "0.28.2",
+    "esbuild": "catalog:",
     "eslint": "catalog:",
     "vitest": "catalog:"
   },
