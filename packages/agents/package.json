@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.8",
-    "@types/node": "24.13.3",
+    "@types/node": "catalog:",
     "@williamthorsen/toolbelt.strings": "6.0.3",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",

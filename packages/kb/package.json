@@ -106,6 +106,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@types/picomatch": "4.0.3",
     "vitest": "catalog:"
   },

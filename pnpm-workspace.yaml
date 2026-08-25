@@ -2,6 +2,7 @@ packages:
   - packages/*
 
 catalog:
+  '@types/node': '24.13.3'
   '@williamthorsen/toolbelt.errors': '0.6.1'
   '@williamthorsen/toolbelt.testing': '0.4.0'
   '@williamthorsen/toolbelt.vitest': '0.6.0'
