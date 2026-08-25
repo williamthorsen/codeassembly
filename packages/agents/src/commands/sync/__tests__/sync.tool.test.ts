@@ -978,6 +978,7 @@ describe(syncCommand, () => {
       const warning = renderReportText(outcome, { level: 'warn' });
       expect(warning).toContain(`Declared source "org" (${missingDir}) does not exist`);
       expect(warning).toContain('Create the directory');
+      expect(warning).toContain('correct the source');
       expect(await readFile(localHostPath(), 'utf8')).toContain('Library body.');
     });
 

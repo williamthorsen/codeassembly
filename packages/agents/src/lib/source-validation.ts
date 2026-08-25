@@ -3,7 +3,7 @@ import { access, stat } from 'node:fs/promises';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isMissingFile } from './type-guards.ts';
+import { isEnoent, isErrorCode } from './type-guards.ts';
 
 /** What disqualifies a directory as a content source: which condition holds, and the phrase describing it. */
 export interface SourceProblem {
@@ -62,8 +62,12 @@ export async function findSourceProblem(dir: string): Promise<SourceProblem | un
     await access(dir, constants.R_OK | constants.X_OK);
     return undefined;
   } catch (error: unknown) {
-    if (isMissingFile(error)) {
+    if (isEnoent(error)) {
       return { kind: 'missing', detail: 'does not exist' };
+    }
+    // `stat` raises ENOTDIR when a non-final path segment is a regular file, which the `isDirectory` check never sees.
+    if (isErrorCode(error, 'ENOTDIR')) {
+      return { kind: 'not-a-directory', detail: 'not a directory' };
     }
     return { kind: 'unreadable', detail: `unreadable — ${describeError(error)}` };
   }
