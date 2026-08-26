@@ -9,6 +9,7 @@ import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
 import type { GuidanceHookFill, GuidanceHookFills } from '../../src/lib/guidance-hooks.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
+import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.
@@ -52,14 +53,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
     hook: 'comment-preferences',
     role: 'writes or judges source comments',
-    declaringBodies: [
-      { label: 'aspect-code-reviewer', relativePath: 'subagents/aspect-code-reviewer.md' },
-      { label: 'aspect-silent-failure-reviewer', relativePath: 'subagents/aspect-silent-failure-reviewer.md' },
-      { label: 'aspect-test-reviewer', relativePath: 'subagents/aspect-test-reviewer.md' },
-      { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
-      { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
-      { label: 'orchestrated-reviewer', relativePath: 'subagents/orchestrated-reviewer.md' },
-    ],
+    declaringBodies: COMMENT_AUTHORING_SUBAGENTS.map(toSubagentBody),
     boundRulebooks: [
       {
         slug: 'williamthorsen-comment-preferences',
@@ -230,6 +224,11 @@ async function expandBody(relativePath: string): Promise<string> {
 async function readRulebookBody(slug: string): Promise<string> {
   const content = await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8');
   return parseFrontmatter(content).body;
+}
+
+/** Returns the declaring-body entry for a subagent named by its slug. */
+function toSubagentBody(slug: string): DeclaringBody {
+  return { label: slug, relativePath: `subagents/${slug}.md` };
 }
 
 // endregion | Helpers
