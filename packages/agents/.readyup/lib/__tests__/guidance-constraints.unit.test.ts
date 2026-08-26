@@ -26,9 +26,9 @@ describe(findHarnessScopedPaths, () => {
   });
 
   it('leaves the harness-neutral agents directory alone', () => {
-    expect(findHarnessScopedPaths('Slug is set in .agents/preferences.yaml, mirroring ~/.agents/AGENTS.md.')).toEqual(
-      [],
-    );
+    expect(
+      findHarnessScopedPaths('Slug is set in .agents/preferences.yaml, mirroring ~/.agents/preferences.yaml.'),
+    ).toEqual([]);
   });
 
   it('leaves a dotted directory that merely resembles a harness home alone', () => {
