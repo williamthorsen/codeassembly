@@ -5,21 +5,20 @@ import { expandIncludes } from './directive-expander.ts';
 import { isTestDirectory } from './fs-helpers.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
 import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
-import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import {
+  type ResolveLinkAnchor,
+  rewriteMarkdownPaths,
+  rewriteTemplateVariables,
+  type TemplateVariables,
+} from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The per-harness inputs a declared-skill render depends on, resolved once per harness by the caller. */
-export interface SkillDeployContext {
+export interface SkillDeployContext extends TemplateVariables {
   /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
   readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the harness skills dir, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
-  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
-  readonly guidanceFileName: string;
-  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
-  readonly homeDir: string;
-  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
-  readonly harnessId: string;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */

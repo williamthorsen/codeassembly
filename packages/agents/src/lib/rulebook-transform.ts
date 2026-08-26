@@ -13,18 +13,13 @@ import {
   type ResolveLinkAnchor,
   rewriteMarkdownPaths,
   rewriteTemplateVariables,
+  type TemplateVariables,
 } from './path-rewriter.ts';
 
 /** The per-harness inputs a rulebook body render depends on, resolved once per harness by the caller. */
-export interface RulebookRenderContext {
+export interface RulebookRenderContext extends TemplateVariables {
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
-  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
-  readonly guidanceFileName: string;
-  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
-  readonly homeDir: string;
-  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
-  readonly harnessId: string;
   /** Sigil prefixed to a rendered `{skill:<slug>}` or `{rulebook:<slug>}` token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` token (empty on both current harnesses). */

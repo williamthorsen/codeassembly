@@ -1,12 +1,17 @@
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
 import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
-import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import {
+  type ResolveLinkAnchor,
+  rewriteMarkdownPaths,
+  rewriteTemplateVariables,
+  type TemplateVariables,
+} from './path-rewriter.ts';
 import { injectDeclaredRulebooks } from './subagent-rulebook-injection.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The harness-specific inputs a subagent render depends on, resolved once per harness by the caller. */
-export interface SubagentRenderContext {
+export interface SubagentRenderContext extends TemplateVariables {
   /** Raw harness overlay YAML, feeding the frontmatter `_defaults`/per-agent merge. */
   readonly overlayYaml: string;
   /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
@@ -17,12 +22,6 @@ export interface SubagentRenderContext {
   readonly sourceLabel: string;
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
-  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
-  readonly guidanceFileName: string;
-  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
-  readonly homeDir: string;
-  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
-  readonly harnessId: string;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
