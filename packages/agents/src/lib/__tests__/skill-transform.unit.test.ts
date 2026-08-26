@@ -402,6 +402,7 @@ function buildContext(overrides: Partial<SkillDeployContext> = {}): SkillDeployC
   return {
     toolMapping: TOOL_MAPPING,
     anchor: homeAnchor('.claude/skills'),
+    guidanceFileName: 'CLAUDE.md',
     homeDir: '.claude',
     harnessId: 'claude',
     skillSigil: '/',

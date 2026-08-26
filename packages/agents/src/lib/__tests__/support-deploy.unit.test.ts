@@ -247,6 +247,7 @@ describe('source support delivery', () => {
         skillsDirName: 'skills',
         deployedSkillDirs: new Set(),
       }),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',

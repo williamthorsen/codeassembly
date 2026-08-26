@@ -7,7 +7,7 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
+import { getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
@@ -175,52 +175,6 @@ describe('uninstallCommand', () => {
     assert.ok(claudeEntries, 'Expected claude harness entries to be defined');
     expect(claudeEntries).toHaveLength(1);
     expect(claudeEntries[0]?.relativePath).toBe('scripts/demo.sh');
-  });
-
-  it('should retain only skipped entries in shared manifest after partial uninstall', async () => {
-    const sharedHome = path.join(tempDir, '.agents');
-    await mkdir(sharedHome, { recursive: true });
-
-    // Create two shared guidance files on disk
-    const fileA = path.join(sharedHome, 'AGENTS.md');
-    const fileB = path.join(sharedHome, 'EXTRA.md');
-    await writeFile(fileA, 'original content A', 'utf8');
-    await writeFile(fileB, 'original content B', 'utf8');
-
-    // Write a synthetic manifest with two shared entries
-    const hashA = await computeContentHash(fileA);
-    const hashB = await computeContentHash(fileB);
-    const manifest: AgentsManifest = {
-      schemaVersion: 1,
-      shared: {
-        version: '0.0.0',
-        installedAt: new Date().toISOString(),
-        entries: [
-          { relativePath: 'AGENTS.md', contentHash: hashA, linked: false },
-          { relativePath: 'EXTRA.md', contentHash: hashB, linked: false },
-        ],
-      },
-      harnesses: {},
-    };
-    await writeManifest(getManifestPath(tempDir), manifest);
-
-    // Modify one file so it gets skipped
-    await writeFile(fileA, 'modified content A', 'utf8');
-
-    // Uninstall without force — AGENTS.md is skipped, EXTRA.md is removed
-    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
-
-    // Shared manifest should contain only the skipped entry
-    const updated = await readManifest(getManifestPath(tempDir));
-    const sharedEntries = updated.shared?.entries;
-    assert.ok(sharedEntries, 'Expected shared entries to be defined');
-    expect(sharedEntries).toHaveLength(1);
-    expect(sharedEntries[0]?.relativePath).toBe('AGENTS.md');
-
-    // EXTRA.md should be deleted from disk
-    expect(existsSync(fileB)).toBe(false);
-    // AGENTS.md should still exist
-    expect(existsSync(fileA)).toBe(true);
   });
 
   it('should remove modified files when force is true', async () => {

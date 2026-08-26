@@ -9,9 +9,8 @@ import { resolveRulebook } from '../../src/lib/rulebook-deploy.ts';
 import { readTargetHarnesses } from '../../src/lib/skill-deploy.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
-// path rewrites invocation tokens: a harness-neutral destination has no sigil to render, so `{skill:<slug>}` is
-// unavailable here and a skill must be named in prose. That leaves the name outside every parse gate the tokenized
+// Shared guidance is inlined into every harness guidance file, a route that rewrites no invocation token, so
+// `{skill:<slug>}` is unavailable here and a skill must be named in prose. That leaves the name outside every parse gate the tokenized
 // trees pass through, which is how the guidance went on naming `git-commit-conventions` for as long as it did after
 // that skill was renamed. A dead pointer is worse than none: an agent that follows one finds nothing, treats the
 // lookup as satisfied, and falls back to its own defaults.

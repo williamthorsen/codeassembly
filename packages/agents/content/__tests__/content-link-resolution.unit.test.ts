@@ -124,6 +124,7 @@ async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
     try {
       renderRulebookBody(body, slug, {
         anchor: homeAnchor('.claude'),
+        guidanceFileName: 'CLAUDE.md',
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',

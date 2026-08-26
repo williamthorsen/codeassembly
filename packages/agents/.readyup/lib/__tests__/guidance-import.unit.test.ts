@@ -58,11 +58,11 @@ describe(resolveGuidanceImports, () => {
   });
 
   it('resolves a home-relative import against the home directory', () => {
-    const outcome = resolveGuidanceImports('@~/.agents/AGENTS.md\n', IMPORTING_DIR, GUIDANCE_PATH);
+    const outcome = resolveGuidanceImports('@~/.claude/CLAUDE.md\n', IMPORTING_DIR, GUIDANCE_PATH);
 
     expect(outcome).toEqual({
       doesReachGuidance: false,
-      resolvedPaths: [join(homedir(), '.agents/AGENTS.md')],
+      resolvedPaths: [join(homedir(), '.claude/CLAUDE.md')],
     });
   });
 

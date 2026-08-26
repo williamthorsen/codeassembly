@@ -16,17 +16,11 @@ import { recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { listSupportEntries } from '../lib/library-catalog.ts';
-import {
-  computeContentHash,
-  detectDrift,
-  getManifestPath,
-  readManifest,
-  resolveSharedHome,
-  writeManifest,
-} from '../lib/manifest.ts';
+import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
-import { homeAnchor, rewritePathsInFile } from '../lib/path-rewriter.ts';
+import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/path-rewriter.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
+import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -37,7 +31,6 @@ import type {
   HarnessManifest,
   InstallOptions,
   ManifestEntry,
-  SharedManifest,
 } from '../lib/types.ts';
 import { ensureHarnessHookEntries } from './configure-hooks.ts';
 
@@ -69,17 +62,13 @@ export async function installCommand(
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Install shared guidance unconditionally (before harness detection check)
-  const sharedGuidanceResult = await installSharedGuidance(contentDir, manifest, options, baseDir);
+  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the harness-detection check: a home that
+  // targets no harness still carries whatever a previous install left in `~/.agents/`.
+  const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
   if (harnesses.length === 0) {
-    // Even with no harnesses, persist the shared manifest update
-    if (!options.dryRun && sharedGuidanceResult) {
-      const updatedManifest: AgentsManifest = {
-        ...manifest,
-        shared: sharedGuidanceResult,
-      };
-      await writeManifest(manifestPath, updatedManifest);
+    if (!options.dryRun && didRetire) {
+      await writeManifest(manifestPath, withoutSharedTier(manifest));
       console.info('\nManifest updated.');
     } else {
       console.info('No target harnesses detected. Nothing else to install.');
@@ -112,6 +101,11 @@ export async function installCommand(
     const harnessConfig = HARNESSES[harnessId];
     const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
     const toolMapping = loadToolMapping(overlayYaml);
+    const templateVariables: TemplateVariables = {
+      guidanceFileName: harnessConfig.guidanceFileName,
+      harnessId: harnessConfig.id,
+      homeDir: harnessConfig.homeDir,
+    };
 
     // Install skill support directories (e.g. `_data`). Skills themselves deploy per-declaration via `sync`.
     const skillsPrefix = resolveSkillsPathPrefix(harnessConfig);
@@ -121,9 +115,8 @@ export async function installCommand(
       paths.harnessHome,
       existingByPath,
       options,
-      harnessId,
       skillsPrefix,
-      harnessConfig.homeDir,
+      templateVariables,
       toolMapping,
       harnessConfig.skillSigil,
       harnessConfig.subagentSigil,
@@ -185,8 +178,7 @@ export async function installCommand(
 
   if (!options.dryRun) {
     const updatedManifest: AgentsManifest = {
-      ...manifest,
-      shared: sharedGuidanceResult ?? manifest.shared,
+      ...withoutSharedTier(manifest),
       harnesses: updatedHarnesses,
     };
     await writeManifest(manifestPath, updatedManifest);
@@ -209,9 +201,8 @@ async function installSupportDirectories(
   harnessHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
-  harnessId: HarnessId,
   skillsPrefix: string,
-  homeDir: string,
+  variables: TemplateVariables,
   toolMapping: ReadonlyMap<string, string>,
   skillSigil: string,
   subagentSigil: string,
@@ -245,8 +236,7 @@ async function installSupportDirectories(
       existingByPath,
       options,
       skillsPrefix,
-      homeDir,
-      harnessId,
+      variables,
       contentDir,
       toolMapping,
       skillSigil,
@@ -274,8 +264,7 @@ async function installSkillEntry(
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
   skillsPrefix: string,
-  homeDir: string,
-  harnessId: string,
+  variables: TemplateVariables,
   contentDir: string,
   toolMapping: ReadonlyMap<string, string>,
   skillSigil: string,
@@ -288,8 +277,9 @@ async function installSkillEntry(
   const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
     toolMapping,
     anchor: homeAnchor(skillsPrefix),
-    homeDir,
-    harnessId,
+    guidanceFileName: variables.guidanceFileName,
+    homeDir: variables.homeDir,
+    harnessId: variables.harnessId,
     skillSigil,
     subagentSigil,
   });
@@ -441,133 +431,6 @@ async function installScripts(
 }
 
 /**
- * Installs shared guidance files from `content/guidance/shared/` to `~/.agents/`.
- * Runs unconditionally (not gated by harness detection).
- */
-async function installSharedGuidance(
-  contentDir: string,
-  manifest: AgentsManifest,
-  options: InstallOptions,
-  baseDir?: string,
-): Promise<SharedManifest | undefined> {
-  const sharedSrcDir = path.join(contentDir, 'guidance', 'shared');
-  let dirEntries: ReadonlyArray<string>;
-  try {
-    dirEntries = await readdir(sharedSrcDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    console.warn(
-      `  ⚠️ Warning: no shared guidance directory found at ${sharedSrcDir}, skipping shared guidance installation`,
-    );
-    return undefined;
-  }
-
-  const sharedHome = resolveSharedHome(baseDir);
-  checkSymlinkSafety(sharedHome);
-
-  const existingEntries = manifest.shared?.entries ?? [];
-  const existingByPath = new Map(existingEntries.map((e) => [e.relativePath, e]));
-  const entries: Array<ManifestEntry> = [];
-
-  console.info('\nInstalling shared guidance');
-
-  let anyWritten = false;
-
-  for (const fileName of dirEntries) {
-    if (fileName.startsWith('.')) {
-      continue;
-    }
-
-    const { manifestEntry, written } = await installSharedGuidanceEntry(
-      fileName,
-      sharedSrcDir,
-      sharedHome,
-      existingByPath.get(fileName),
-      options,
-    );
-    entries.push(manifestEntry);
-    anyWritten ||= written;
-  }
-
-  // Reconcile shared guidance against the previous manifest before reporting or persisting, so deleted-source
-  // files are removed from `~/.agents/` too. User-modified orphans are kept (unless `--force`) and stay tracked.
-  const pruned = await pruneOrphanedEntries(existingEntries, entries, sharedHome, options);
-  entries.push(...pruned.retained);
-  emitReport(describePruneResult(pruned, options));
-
-  if (options.dryRun) {
-    console.info(`  [dry-run] Would install ${entries.length} shared guidance items`);
-    return undefined;
-  }
-
-  console.info(`  ✅ Installed ${entries.length} shared guidance items`);
-
-  return {
-    version: readRunningPackageVersion(),
-    installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
-    entries,
-  };
-}
-
-/**
- * Installs one shared guidance file into `~/.agents/`, reporting the manifest entry to record and whether the install
- * touched the destination. A dry run and a skipped user-modified file both report `written: false`, which keeps the
- * caller's `installedAt` on its previous value when nothing reached disk.
- */
-async function installSharedGuidanceEntry(
-  fileName: string,
-  sharedSrcDir: string,
-  sharedHome: string,
-  existingEntry: ManifestEntry | undefined,
-  options: InstallOptions,
-): Promise<{ manifestEntry: ManifestEntry; written: boolean }> {
-  const srcPath = path.join(sharedSrcDir, fileName);
-  const destPath = path.join(sharedHome, fileName);
-  const isMarkdown = fileName.endsWith('.md');
-
-  // Shared guidance ships verbatim, with no include expansion and no rewriting, so the anchor check reads the source
-  // itself rather than riding a render. It runs before the dry-run gate, and in link mode too: a symlinked file
-  // reaches the reader with the same dead locator a copied one would.
-  if (isMarkdown) {
-    assertAnchorsResolve(await readFile(srcPath, 'utf8'), `guidance/shared/${fileName}`);
-  }
-
-  if (options.dryRun) {
-    const action = options.link ? 'link' : 'copy';
-    console.info(`    [${action}] ${fileName} -> ~/.agents/${fileName}`);
-    return { manifestEntry: { relativePath: fileName, contentHash: 'dry-run', linked: options.link }, written: false };
-  }
-
-  // Check for user modifications before overwriting
-  if (existingEntry && !options.force) {
-    const drift = await detectDrift(existingEntry, sharedHome);
-    if (drift === 'modified') {
-      console.warn(`  ⚠️ Skipping modified item: ~/.agents/${fileName}`);
-      return { manifestEntry: existingEntry, written: false };
-    }
-  }
-
-  await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
-
-  // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
-  // to the source file; marking them would mislabel the source itself.
-  if (!options.link && isMarkdown) {
-    await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${fileName}`));
-  }
-
-  return {
-    manifestEntry: {
-      relativePath: fileName,
-      contentHash: await computeContentHash(options.link ? srcPath : destPath),
-      linked: options.link,
-    },
-    written: true,
-  };
-}
-
-/**
  * Installs harness-specific guidance files from `content/guidance/_harnesses/{harnessId}/` into the harness
  * home directory. Harness guidance is always copied and rewritten (never symlinked), because install-time path
  * rewriting produces absolute link targets that agents can resolve without knowing a path convention.
@@ -645,7 +508,11 @@ async function installHarnessGuidance(
       if (expandedContent !== undefined) {
         await writeFile(destPath, expandedContent, 'utf8');
       }
-      await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, harnessConfig.homeDir, harnessConfig.id);
+      await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, {
+        guidanceFileName: harnessConfig.guidanceFileName,
+        harnessId: harnessConfig.id,
+        homeDir: harnessConfig.homeDir,
+      });
       await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_harnesses/${harnessId}/${entry}`));
 
       // Splice the preserved region content into the fresh render. The region's location comes from the template;

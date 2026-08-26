@@ -5,19 +5,20 @@ import { expandIncludes } from './directive-expander.ts';
 import { isTestDirectory } from './fs-helpers.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
 import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
-import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import {
+  type ResolveLinkAnchor,
+  rewriteMarkdownPaths,
+  rewriteTemplateVariables,
+  type TemplateVariables,
+} from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The per-harness inputs a declared-skill render depends on, resolved once per harness by the caller. */
-export interface SkillDeployContext {
+export interface SkillDeployContext extends TemplateVariables {
   /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
   readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the harness skills dir, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
-  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
-  readonly homeDir: string;
-  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
-  readonly harnessId: string;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
@@ -180,7 +181,7 @@ async function renderMarkdown(
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<string> {
-  const { anchor, toolMapping, homeDir, harnessId, skillSigil, subagentSigil } = context;
+  const { anchor, toolMapping, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const filled = fillGuidanceHooks(await expandIncludes(srcPath, contentRoot), context.guidanceHookFills, contextLabel);
   assertFilledAnchorsResolve(filled, contextLabel);
@@ -192,7 +193,7 @@ async function renderMarkdown(
     context.rulebooks,
   );
   const pathRewritten = rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor);
-  return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
+  return rewriteTemplateVariables(pathRewritten, context);
 }
 
 // endregion | Helpers

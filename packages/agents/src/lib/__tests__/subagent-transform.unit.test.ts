@@ -58,6 +58,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -79,6 +80,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor(ROVO_HOME),
+      guidanceFileName: 'AGENTS.md',
       homeDir: ROVO_HOME,
       harnessId: 'rovo',
       skillSigil: '!',
@@ -108,6 +110,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -124,6 +127,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor(ROVO_HOME),
+      guidanceFileName: 'AGENTS.md',
       homeDir: ROVO_HOME,
       harnessId: 'rovo',
       skillSigil: '!',
@@ -150,6 +154,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -179,6 +184,7 @@ describe(renderSubagentForHarness, () => {
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
+        guidanceFileName: 'CLAUDE.md',
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -195,6 +201,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -214,6 +221,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -234,6 +242,7 @@ describe(renderSubagentForHarness, () => {
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -259,6 +268,7 @@ describe(renderSubagentForHarness, () => {
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
+        guidanceFileName: 'CLAUDE.md',
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -279,6 +289,7 @@ describe(renderSubagentForHarness, () => {
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
+        guidanceFileName: 'CLAUDE.md',
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -298,6 +309,7 @@ describe(renderSubagentForHarness, () => {
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
+        guidanceFileName: 'CLAUDE.md',
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -315,6 +327,7 @@ describe(renderSubagentForHarness, () => {
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
+        guidanceFileName: 'CLAUDE.md',
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -325,11 +338,25 @@ describe(renderSubagentForHarness, () => {
   });
 
   it.each([
-    { harnessId: 'claude', overlayYaml: CLAUDE_OVERLAY, homeDir: '.claude', skillSigil: '/', subagentSigil: '' },
-    { harnessId: 'rovo', overlayYaml: ROVO_OVERLAY, homeDir: ROVO_HOME, skillSigil: '!', subagentSigil: '' },
+    {
+      harnessId: 'claude',
+      overlayYaml: CLAUDE_OVERLAY,
+      guidanceFileName: 'CLAUDE.md',
+      homeDir: '.claude',
+      skillSigil: '/',
+      subagentSigil: '',
+    },
+    {
+      harnessId: 'rovo',
+      overlayYaml: ROVO_OVERLAY,
+      guidanceFileName: 'AGENTS.md',
+      homeDir: ROVO_HOME,
+      skillSigil: '!',
+      subagentSigil: '',
+    },
   ])(
     'produces the same $harnessId output as the standalone merge → tools → invocations → markdown-path → template steps',
-    ({ harnessId, overlayYaml, homeDir, skillSigil, subagentSigil }) => {
+    ({ harnessId, overlayYaml, guidanceFileName, homeDir, skillSigil, subagentSigil }) => {
       const toolMapping = loadToolMapping(overlayYaml);
       const merged = mergeFrontmatter(SOURCE, overlayYaml);
       const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/demo-agent.md');
@@ -340,7 +367,7 @@ describe(renderSubagentForHarness, () => {
         NO_RULEBOOKS,
       );
       const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, 'demo-agent.md', homeAnchor(homeDir));
-      const expected = rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
+      const expected = rewriteTemplateVariables(rewrittenPaths, { guidanceFileName, harnessId, homeDir });
 
       const rendered = renderSubagentForHarness(SOURCE, {
         overlayYaml,
@@ -348,6 +375,7 @@ describe(renderSubagentForHarness, () => {
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor(homeDir),
+        guidanceFileName,
         homeDir,
         harnessId,
         skillSigil,

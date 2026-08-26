@@ -8,7 +8,7 @@ user-invocable: true
 
 Rules for interactive work with the user. These do not apply to orchestrated subagent sessions.
 
-This skill is invoked by a directive in `~/.agents/AGENTS.md` (the shared agent entry point) during interactive sessions, and can also be invoked directly with `{skill:collaborate}`. It is not triggered by other skills.
+This skill is invoked by a directive in the harness's global guidance during interactive sessions, and can also be invoked directly with `{skill:collaborate}`. It is not triggered by other skills.
 
 ## Principles
 

@@ -9,14 +9,14 @@ export const FIXTURE_AGENT_LEDE = 'Rulebooks can now address a file by linking t
 export const FIXTURE_MERGED_LEDE =
   'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
-/** A temporary fixture tree: the ticket's artifact directory, the `_data` directory, and an install-manifest path. */
+/** A temporary fixture tree: the ticket's artifact directory, the `_data` directory, and a provenance-stamp path. */
 export interface LedeFixture {
   /** Temporary root holding everything the fixture created. */
   root: string;
   artifactDir: string;
   dataDir: string;
-  /** Path the fixture would write an install manifest to; absent unless a test writes one. */
-  manifestPath: string;
+  /** Path the fixture would write a provenance stamp to; absent unless a test writes one. */
+  provenancePath: string;
 }
 
 /**
@@ -69,7 +69,7 @@ export async function createLedeFixture(
     'utf8',
   );
 
-  return { root, artifactDir, dataDir, manifestPath: join(root, 'manifest.json') };
+  return { root, artifactDir, dataDir, provenancePath: join(root, 'home-provenance.json') };
 }
 
 /** Renders a second-level Markdown section with its heading. */

@@ -8,7 +8,7 @@ import { hasAmbientRegion, stripAmbientRegionContent } from './ambient-region.ts
 import { isRecord } from './type-guards.ts';
 import type { AgentsManifest, ManifestEntry } from './types.ts';
 
-/** Shared guidance home directory relative to the user's home. */
+/** Home of the retired cross-harness guidance tier, relative to the user's home. */
 const SHARED_HOME_DIR = '.agents';
 
 /**
@@ -45,7 +45,8 @@ export function createEmptyManifest(): AgentsManifest {
 }
 
 /**
- * Resolves the absolute path to the shared guidance home directory (`~/.agents/`).
+ * Resolves the absolute path to `~/.agents/`, where a previous version deployed the cross-harness guidance tier.
+ * Nothing deploys there now; the retirement pass `install` and `uninstall` share is the sole caller.
  */
 export function resolveSharedHome(baseDir?: string): string {
   const home = baseDir ?? homedir();

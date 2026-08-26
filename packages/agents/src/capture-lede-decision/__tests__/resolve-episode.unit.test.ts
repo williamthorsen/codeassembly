@@ -1,8 +1,10 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { getHomeProvenancePath, recordHomeProvenance } from '../../lib/home-provenance.ts';
+import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import { resolveEpisode } from '../resolve-episode.ts';
 import {
   createLedeFixture,
@@ -91,33 +93,38 @@ describe(resolveEpisode, () => {
     expect(episode.mergedLede).toBe('A lede fetched from the forge.');
   });
 
-  it('omits the agents version when the install manifest is unreadable', async () => {
+  it('omits the agents version when no provenance stamp is there', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveFor(fixture)).agentsVersion).toBeUndefined();
   });
 
-  it('reads the agents version from the install manifest', async () => {
-    const fixture = await createLedeFixture();
-    await writeFile(fixture.manifestPath, JSON.stringify({ shared: { version: '1.2.3' } }), 'utf8');
-
-    expect((await resolveFor(fixture)).agentsVersion).toBe('1.2.3');
-  });
-
-  it('resolves the default manifest path against the caller-supplied home', async () => {
+  // Written by `recordHomeProvenance` rather than as a literal, so a change to the stamp's shape fails here instead of
+  // leaving the read against a shape nothing writes.
+  it('reads the agents version from the home-provenance stamp', async () => {
     const fixture = await createLedeFixture();
     const home = join(fixture.root, 'home');
-    await mkdir(join(home, '.codeassembly'), { recursive: true });
-    await writeFile(
-      join(home, '.codeassembly', 'agents-manifest.json'),
-      JSON.stringify({ shared: { version: '4.5.6' } }),
-      'utf8',
-    );
-    const { manifestPath: _manifestPath, ...withoutManifest } = inputFor(fixture);
+    await recordHomeProvenance('install', home);
+    const { provenancePath: _provenancePath, ...withoutProvenance } = inputFor(fixture);
 
-    const episode = expectEpisode(await resolveEpisode({ ...withoutManifest, home }));
+    const episode = expectEpisode(await resolveEpisode({ ...withoutProvenance, home }));
 
-    expect(episode.agentsVersion).toBe('4.5.6');
+    expect(episode.agentsVersion).toBe(readRunningPackageVersion());
+  });
+
+  it('reads a stamp at an explicitly supplied path', async () => {
+    const fixture = await createLedeFixture();
+    await recordHomeProvenance('install', fixture.root);
+    await rename(getHomeProvenancePath(fixture.root), fixture.provenancePath);
+
+    expect((await resolveFor(fixture)).agentsVersion).toBe(readRunningPackageVersion());
+  });
+
+  it('reports no version when the stamp is malformed', async () => {
+    const fixture = await createLedeFixture();
+    await writeFile(fixture.provenancePath, '{ not json', 'utf8');
+
+    expect((await resolveFor(fixture)).agentsVersion).toBeUndefined();
   });
 
   it('reports a missing artifact directory', async () => {
@@ -189,7 +196,7 @@ function inputFor(fixture: LedeFixture, overrides: { type?: string } = {}): Para
     mergeCommit: '35aa58d7',
     type: overrides.type ?? 'feat',
     scope: 'agents',
-    manifestPath: fixture.manifestPath,
+    provenancePath: fixture.provenancePath,
   };
 }
 

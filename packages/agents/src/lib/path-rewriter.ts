@@ -12,6 +12,18 @@ import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 
 /**
+ * The per-harness values the install-time template variables expand to, resolved once per harness by the caller.
+ */
+export interface TemplateVariables {
+  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
+  readonly guidanceFileName: string;
+  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
+  readonly harnessId: string;
+  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
+  readonly homeDir: string;
+}
+
+/**
  * Maps a resolved link target to the absolute path it deploys at. The argument is normalized and fragment-free, so an
  * implementation decides only which tree the target lands in, never how the target itself was resolved.
  *
@@ -94,33 +106,38 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
 }
 
 /**
- * Expands install-time template variables in `content`: `{harness_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`), and
- * `{harness_id}` to the harness identifier (e.g. `claude`), the value capture-event records as the agent
- * harness.
+ * Expands install-time template variables in `content`: `{harness_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`),
+ * `{harness_guidance_file}` to the harness's guidance filename (e.g. `CLAUDE.md`), and `{harness_id}` to the harness
+ * identifier (e.g. `claude`), the value capture-event records as the agent harness.
+ *
+ * The guidance token expands to the bare filename rather than a path, so a body composes it as
+ * `{harness_home_dir}/{harness_guidance_file}` where it needs the whole location and uses it alone where it does not.
  */
-export function rewriteTemplateVariables(content: string, homeDir: string, harnessId: string): string {
+export function rewriteTemplateVariables(content: string, variables: TemplateVariables): string {
   // Replacer functions, not strings: a string replacement expands `$$`, `$&`, `` $` ``, and `$'`, so a
   // substitution value carrying one of them would be rewritten into the match it was meant to replace.
-  return content.replaceAll('{harness_home_dir}', () => `~/${homeDir}`).replaceAll('{harness_id}', () => harnessId);
+  return content
+    .replaceAll('{harness_guidance_file}', () => variables.guidanceFileName)
+    .replaceAll('{harness_home_dir}', () => `~/${variables.homeDir}`)
+    .replaceAll('{harness_id}', () => variables.harnessId);
 }
 
 /**
  * Applies Markdown path rewriting and template variable expansion to a single `.md` file.
  * `fileRelPath` is the file's path relative to the tree root that `pathPrefix` names.
  * For flat guidance files (one directory, no nesting) the caller typically passes the file's
- * basename. `harnessId` is the harness identifier used to expand `{harness_id}`.
+ * basename.
  */
 export async function rewritePathsInFile(
   filePath: string,
   fileRelPath: string,
   pathPrefix: string,
-  homeDir: string,
-  harnessId: string,
+  variables: TemplateVariables,
 ): Promise<void> {
   try {
     const content = await readFile(filePath, 'utf8');
     let rewritten = rewriteMarkdownPaths(content, fileRelPath, homeAnchor(pathPrefix));
-    rewritten = rewriteTemplateVariables(rewritten, homeDir, harnessId);
+    rewritten = rewriteTemplateVariables(rewritten, variables);
     if (rewritten !== content) {
       await writeFile(filePath, rewritten, 'utf8');
     }
@@ -135,16 +152,12 @@ export async function rewritePathsInFile(
  * directory for a skill tree, or the harness home for flat harness-guidance files).
  * `pathPrefix` is the harness-relative prefix for rewriting link targets (e.g., `.claude/skills`
  * for skills, `.claude` for harness guidance).
- * `homeDir` is the harness home directory segment (e.g., `.claude`), used to expand
- * `{harness_home_dir}` template variables. `harnessId` is the harness identifier,
- * used to expand `{harness_id}`.
  */
 export async function rewritePathsInDirectory(
   dirPath: string,
   destRoot: string,
   pathPrefix: string,
-  homeDir: string,
-  harnessId: string,
+  variables: TemplateVariables,
 ): Promise<void> {
   const entries = await readdir(dirPath);
 
@@ -157,10 +170,10 @@ export async function rewritePathsInDirectory(
     }
 
     if (stats.isDirectory()) {
-      await rewritePathsInDirectory(fullPath, destRoot, pathPrefix, homeDir, harnessId);
+      await rewritePathsInDirectory(fullPath, destRoot, pathPrefix, variables);
     } else if (entry.endsWith('.md')) {
       const fileRelPath = path.relative(destRoot, fullPath).split(path.sep).join('/');
-      await rewritePathsInFile(fullPath, fileRelPath, pathPrefix, homeDir, harnessId);
+      await rewritePathsInFile(fullPath, fileRelPath, pathPrefix, variables);
     }
   }
 }

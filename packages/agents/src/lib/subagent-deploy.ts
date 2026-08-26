@@ -8,7 +8,7 @@ import { expandIncludes } from './directive-expander.ts';
 import { writeIfChanged } from './fs-helpers.ts';
 import type { GuidanceHookFills } from './guidance-hooks.ts';
 import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
-import type { ResolveLinkAnchor } from './path-rewriter.ts';
+import type { ResolveLinkAnchor, TemplateVariables } from './path-rewriter.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
 
 /**
@@ -24,17 +24,13 @@ export interface ResolvedSubagent {
 }
 
 /** The per-harness inputs a declared-subagent deploy depends on, resolved once per harness by `sync`. */
-export interface SubagentDeployContext {
+export interface SubagentDeployContext extends TemplateVariables {
   /** Raw harness overlay YAML feeding the frontmatter merge. */
   readonly overlayYaml: string;
   /** Canonical → harness tool-name mapping for the body-text placeholder rewriter. */
   readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
-  /** Harness home segment that `{harness_home_dir}` tokens expand to. */
-  readonly homeDir: string;
-  /** Harness identifier that `{harness_id}` tokens expand to. */
-  readonly harnessId: string;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
@@ -78,6 +74,7 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
     fileRelPath: fileName,
     sourceLabel: `subagents/${fileName}`,
     anchor: context.anchor,
+    guidanceFileName: context.guidanceFileName,
     homeDir: context.homeDir,
     harnessId: context.harnessId,
     skillSigil: context.skillSigil,

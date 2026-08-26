@@ -416,6 +416,7 @@ async function reconcileDomain(
         ...desiredSkillDirs.values(),
       ]),
       domainBase: domain.anchorBase,
+      guidanceFileName: config.guidanceFileName,
       homeDir: config.homeDir,
       skillsDirName: config.skillsDirName,
     };
@@ -1563,6 +1564,7 @@ function buildRulebookRenderContext(
   const config = HARNESSES[harnessId];
   return {
     anchor,
+    guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
@@ -1683,6 +1685,7 @@ async function resolveSubagentTarget(
     deployContext: {
       overlayYaml,
       toolMapping: loadToolMapping(overlayYaml),
+      guidanceFileName: harnessConfig.guidanceFileName,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
@@ -1712,6 +1715,7 @@ async function resolveSkillTarget(
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       toolMapping: loadToolMapping(overlayYaml),
+      guidanceFileName: harnessConfig.guidanceFileName,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

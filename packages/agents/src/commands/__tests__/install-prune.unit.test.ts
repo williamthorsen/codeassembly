@@ -39,21 +39,15 @@ describe('install stale-file pruning', () => {
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'keep'))).toBe(true);
   });
 
-  it('removes orphaned script and shared-guidance files whose sources were deleted', async () => {
-    const contentDir = await buildContent({
-      scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody },
-      shared: { 'AGENTS.md': '# Shared\n', 'EXTRA.md': '# Extra\n' },
-    });
+  it('removes an orphaned script whose source was deleted', async () => {
+    const contentDir = await buildContent({ scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody } });
     await installCommand(makeOptions(), tempDir, contentDir);
 
     await rm(path.join(contentDir, 'scripts', 'drop.sh'));
-    await rm(path.join(contentDir, 'guidance', 'shared', 'EXTRA.md'));
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'drop.sh'))).toBe(false);
-    expect(existsSync(path.join(tempDir, '.agents', 'EXTRA.md'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'keep.sh'))).toBe(true);
-    expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
   });
 
   it('keeps a user-modified orphan without --force and retains it in the manifest', async () => {
@@ -136,17 +130,15 @@ describe('install stale-file pruning', () => {
 
   /**
    * Builds a minimal content tree under a fresh temp directory and returns its path. Only the surfaces named in
-   * `options` get extra files; the baseline (shared `AGENTS.md`, claude guidance, subagent overlay) is always present
-   * so the install pipeline runs end to end. `supportDirs` are written under `skills/<name>/` without a `SKILL.md`,
-   * so install treats them as support directories (the skill catalog deploys per-declaration via `sync`, not install).
+   * `options` get extra files; the baseline (claude guidance, subagent overlay) is always present so the install
+   * pipeline runs end to end. `supportDirs` are written under `skills/<name>/` without a `SKILL.md`, so install treats
+   * them as support directories (the skill catalog deploys per-declaration via `sync`, not install).
    */
   async function buildContent(options: {
     supportDirs?: Record<string, Record<string, string>>;
     scripts?: Record<string, string>;
-    shared?: Record<string, string>;
   }): Promise<string> {
     const contentDir = path.join(tempDir, 'content');
-    await mkdir(path.join(contentDir, 'guidance', 'shared'), { recursive: true });
     await mkdir(path.join(contentDir, 'guidance', '_harnesses', 'claude'), { recursive: true });
     await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
     await mkdir(path.join(contentDir, 'skills'), { recursive: true });
@@ -155,10 +147,6 @@ describe('install stale-file pruning', () => {
     await writeFile(path.join(contentDir, 'guidance', '_harnesses', 'claude', 'CLAUDE.md'), '# Claude\n', 'utf8');
     await writeFile(path.join(contentDir, 'subagents', '_data', 'claude.yaml'), '_defaults: {}\n', 'utf8');
 
-    const shared = options.shared ?? { 'AGENTS.md': '# Shared\n' };
-    for (const [name, body] of Object.entries(shared)) {
-      await writeFile(path.join(contentDir, 'guidance', 'shared', name), body, 'utf8');
-    }
     const scripts = options.scripts ?? {};
     for (const [name, body] of Object.entries(scripts)) {
       await writeFile(path.join(contentDir, 'scripts', name), body, 'utf8');

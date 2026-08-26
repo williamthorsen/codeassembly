@@ -35,10 +35,10 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'data-dir', takesValue: true },
   { name: 'harness', takesValue: true },
   { name: 'inspect', takesValue: false },
-  { name: 'manifest', takesValue: true },
   { name: 'merge-commit', takesValue: true },
   { name: 'merged-lede-file', takesValue: true },
   { name: 'pr', takesValue: true },
+  { name: 'provenance', takesValue: true },
   { name: 'scope', takesValue: true },
   { name: 'store', takesValue: true },
   { name: 'ticket', takesValue: true },
@@ -71,7 +71,7 @@ export interface ParsedArgs {
   ticket: string | null;
   agentLedeFile: string | null;
   mergedLedeFile: string | null;
-  manifest: string | null;
+  provenance: string | null;
   harness: string | null;
 }
 
@@ -137,7 +137,7 @@ export async function runDecision(input: {
     ...(args.ticket !== null && { ticket: args.ticket }),
     ...(args.agentLedeFile !== null && { agentLedeFile: args.agentLedeFile }),
     ...(args.mergedLedeFile !== null && { mergedLedeFile: args.mergedLedeFile }),
-    ...(args.manifest !== null && { manifestPath: args.manifest }),
+    ...(args.provenance !== null && { provenancePath: args.provenance }),
     ...(input.home !== undefined && { home: input.home }),
   });
   if (!resolved.ok) {
@@ -255,7 +255,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     ticket: raw.ticket ?? null,
     agentLedeFile: raw['agent-lede-file'] ?? null,
     mergedLedeFile: raw['merged-lede-file'] ?? null,
-    manifest: raw.manifest ?? null,
+    provenance: raw.provenance ?? null,
     harness: raw.harness ?? null,
   };
 }

@@ -132,7 +132,7 @@ describe('statusCommand', () => {
 
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    await unlink(path.join(tempDir, '.agents', 'AGENTS.md'));
+    await unlink(path.join(claudeHome, 'CLAUDE.md'));
 
     using silent = silenceConsole(['info']);
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -148,7 +148,7 @@ describe('statusCommand', () => {
 
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    await writeFile(path.join(tempDir, '.agents', 'AGENTS.md'), 'tampered content', 'utf8');
+    await writeFile(path.join(claudeHome, 'CLAUDE.md'), 'tampered content', 'utf8');
 
     using silent = silenceConsole(['info']);
     await statusCommand({ harness: 'claude' }, tempDir);

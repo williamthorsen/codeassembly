@@ -1,12 +1,17 @@
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, type GuidanceHookFills } from './guidance-hooks.ts';
 import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
-import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import {
+  type ResolveLinkAnchor,
+  rewriteMarkdownPaths,
+  rewriteTemplateVariables,
+  type TemplateVariables,
+} from './path-rewriter.ts';
 import { injectDeclaredRulebooks } from './subagent-rulebook-injection.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The harness-specific inputs a subagent render depends on, resolved once per harness by the caller. */
-export interface SubagentRenderContext {
+export interface SubagentRenderContext extends TemplateVariables {
   /** Raw harness overlay YAML, feeding the frontmatter `_defaults`/per-agent merge. */
   readonly overlayYaml: string;
   /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
@@ -17,10 +22,6 @@ export interface SubagentRenderContext {
   readonly sourceLabel: string;
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
-  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
-  readonly homeDir: string;
-  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
-  readonly harnessId: string;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
@@ -51,27 +52,13 @@ export interface SubagentRenderContext {
  * passes through them. The fill precedes the frontmatter merge, and a directive written inside the frontmatter block
  * fails rather than splicing prose into YAML.
  *
- * `anchor` and `homeDir` are distinct arguments because they answer different questions: the anchor places a link
+ * `anchor` and `homeDir` are distinct fields because they answer different questions: the anchor places a link
  * target in whichever tree deploys it, while `homeDir` expands `{harness_home_dir}` tokens, which name the harness
  * home whatever the target is.
  */
-export function renderSubagentForHarness(
-  expandedSource: string,
-  {
-    overlayYaml,
-    toolMapping,
-    fileRelPath,
-    sourceLabel,
-    anchor,
-    homeDir,
-    harnessId,
-    skillSigil,
-    subagentSigil,
-    rulebooks,
-    guidanceHookFills,
-  }: SubagentRenderContext,
-): string {
-  const filled = fillGuidanceHooks(expandedSource, guidanceHookFills, sourceLabel);
+export function renderSubagentForHarness(expandedSource: string, context: SubagentRenderContext): string {
+  const { overlayYaml, toolMapping, fileRelPath, sourceLabel, anchor, skillSigil, subagentSigil, rulebooks } = context;
+  const filled = fillGuidanceHooks(expandedSource, context.guidanceHookFills, sourceLabel);
   assertFilledAnchorsResolve(filled, sourceLabel);
   const injected = injectDeclaredRulebooks(filled.content, rulebooks, sourceLabel);
   const merged = mergeFrontmatter(injected, overlayYaml);
@@ -83,5 +70,5 @@ export function renderSubagentForHarness(
     rulebooks,
   );
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);
-  return rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
+  return rewriteTemplateVariables(rewrittenPaths, context);
 }

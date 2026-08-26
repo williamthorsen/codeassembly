@@ -17,6 +17,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
 
 const CLAUDE_CONTEXT: RulebookRenderContext = {
   anchor: homeAnchor('.claude'),
+  guidanceFileName: 'CLAUDE.md',
   homeDir: '.claude',
   harnessId: 'claude',
   skillSigil: '/',
@@ -25,6 +26,7 @@ const CLAUDE_CONTEXT: RulebookRenderContext = {
 };
 const ROVO_CONTEXT: RulebookRenderContext = {
   anchor: homeAnchor(ROVO_HOME),
+  guidanceFileName: 'AGENTS.md',
   homeDir: ROVO_HOME,
   harnessId: 'rovo',
   skillSigil: '!',

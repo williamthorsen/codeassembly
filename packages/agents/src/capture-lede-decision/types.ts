@@ -42,7 +42,7 @@ export interface LedeEpisode {
   identity: EpisodeIdentity;
   /** `sha256:`-prefixed digest of the doctrine file that governed the agent's lede. */
   doctrineHash: string;
-  /** Installed agents-package version; absent when the install manifest is unreadable. */
+  /** Installed agents-package version; absent when the home-provenance stamp is unreadable. */
   agentsVersion?: string;
 }
 

@@ -26,7 +26,7 @@ Gather project information from these sources (skip any that don't exist).
 
 **General baseline:**
 
-- `~/.agents/AGENTS.md` (global, not in the repo): Read first; this defines what's already covered and must not be duplicated
+- `{harness_home_dir}/{harness_guidance_file}` (the harness's own global guidance, not in the repo): Read first; this defines what's already covered and must not be duplicated
 
 **Existing guidance (current state):**
 
@@ -35,7 +35,7 @@ Gather project information from these sources (skip any that don't exist).
 **Legacy guidance files (migrate or flag):**
 
 - `.agents/PROJECT.md`: the previous location for this file; content should migrate to the repo-root `AGENTS.md`
-- `.agents/AGENTS.md` (repo, not the global `~/.agents/AGENTS.md`): an earlier convention still; content should migrate the same way
+- `.agents/AGENTS.md` (in the repo, not the global guidance above): an earlier convention still; content should migrate the same way
 
 **Project metadata:**
 
@@ -76,17 +76,17 @@ State which path was selected, and why, before proceeding.
 
 For each finding, assign one of these classes:
 
-| Class               | Destination                             | Test                                                                    |
-| ------------------- | --------------------------------------- | ----------------------------------------------------------------------- |
-| **Ambient**         | `AGENTS.md`                             | Applies only to this repo, and the obvious action goes wrong without it |
-| **Reference**       | The owning package's README, or `docs/` | Applies only to this repo, but an agent needs it occasionally           |
-| **Already covered** | Omit                                    | Already stated in `~/.agents/AGENTS.md`, or printed by the tool itself  |
-| **General**         | Recommend for `~/.agents/AGENTS.md`     | Applies across repos but not yet in general guidance                    |
-| **Ambiguous**       | Ask the user                            | Could go either way; ask one question at a time                         |
+| Class               | Destination                             | Test                                                                                          |
+| ------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Ambient**         | `AGENTS.md`                             | Applies only to this repo, and the obvious action goes wrong without it                       |
+| **Reference**       | The owning package's README, or `docs/` | Applies only to this repo, but an agent needs it occasionally                                 |
+| **Already covered** | Omit                                    | Already stated in `{harness_home_dir}/{harness_guidance_file}`, or printed by the tool itself |
+| **General**         | Recommend for the global guidance       | Applies across repos but not yet in general guidance                                          |
+| **Ambiguous**       | Ask the user                            | Could go either way; ask one question at a time                                               |
 
 **Rules:**
 
-- Two axes decide the destination. **Scope** (general vs project-specific) separates `~/.agents/AGENTS.md` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` states from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
+- Two axes decide the destination. **Scope** (general vs project-specific) separates `{harness_home_dir}/{harness_guidance_file}` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` states from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
 - A finding belongs in the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch goes stale silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, ask the user: one question at a time, prefer multiple choice.
@@ -176,7 +176,7 @@ A `holds` row without an evidence token is not a permitted state. The audit is o
 
 Close the ledger by naming what was not audited, so a bounded run reads as bounded.
 
-Re-run the Phase 2 classification only on the sections the window touched, plus one pass against `~/.agents/AGENTS.md` for content the global file now states. What was ambient last month is still ambient unless something moved.
+Re-run the Phase 2 classification only on the sections the window touched, plus one pass against `{harness_home_dir}/{harness_guidance_file}` for content the global file now states. What was ambient last month is still ambient unless something moved.
 
 ##### Scan for gaps
 
@@ -263,8 +263,8 @@ If legacy guidance files were found in Phase 1 (`.agents/PROJECT.md` or `.agents
 If any findings were classified as **general** (cross-repo) in Phase 2:
 
 1. Present them as a bulleted list after the main file is written.
-2. Ask the user whether to integrate them into `~/.agents/AGENTS.md`.
-3. If approved, read `~/.agents/AGENTS.md`, identify the appropriate existing section for each recommendation, and integrate the new content in the right place; do not blindly append. If no suitable section exists, propose a new section name before adding it.
+2. Name where each one belongs, deciding by whether the harness's guidance file is generated. A file carrying a `codeassembly` marker is rendered on every install, so an edit to it is discarded or freezes the file against later updates; the content belongs in a rulebook with `delivery: ambient` in a source the user's `codeassembly.yaml` declares, which reaches the file through `sync --global`. A file carrying no marker is the user's own. See [deployed-file provenance](../_data/deployed-file-provenance.md) for the detection rule and the routes it implies.
+3. Where the file is the user's own, offer to integrate the recommendations: on approval, read it, place each one in the section that fits, and propose a name before adding a new section. Never append blindly, and never write into a generated file.
 
 #### 3g. Run the guidance checklist
 
@@ -281,7 +281,7 @@ Before presenting the draft or the change list, verify:
 - [ ] No path points into a harness-owned directory, home-anchored or repository-local
 - [ ] No `<!-- rulebook:` marker appears anywhere in the file
 - [ ] The file is at most 200 lines, matching the ambient budget the published guidance checklist reports against; anything that pushed it over went to the package level behind a pointer
-- [ ] No line duplicates content from `~/.agents/AGENTS.md`
+- [ ] No line duplicates content from `{harness_home_dir}/{harness_guidance_file}`
 - [ ] No section merely restates what's obvious from the code
 - [ ] Commands listed are ones an agent would actually need (not exhaustive npm script listings)
 - [ ] Each command group states where to run it (repo root, package directory, etc.); don't assume the agent knows

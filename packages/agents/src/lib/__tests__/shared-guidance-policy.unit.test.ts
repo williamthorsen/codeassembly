@@ -11,10 +11,10 @@ interface LinkViolation {
 }
 
 /**
- * Shared guidance lives under a harness-neutral path (`~/.agents/`) and
- * cannot resolve harness-scoped targets. The policy: no outbound Markdown
- * links. Skills are referenced by name; path-level conventions travel through
- * the skill chain (which the install-time rewriter handles correctly).
+ * Shared guidance is inlined into each harness's flat guidance file, where `rewriteMarkdownPaths` resolves a link
+ * against the destination rather than the source tree, so a source-tree-relative target lands nowhere. The policy:
+ * no outbound Markdown links. Skills are referenced by name; path-level conventions travel through the skill chain
+ * (which the install-time rewriter handles correctly).
  */
 describe('shared guidance link policy', () => {
   it('contains no bare-relative Markdown link targets', async () => {
