@@ -24,7 +24,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: Read ~/.agents/AGENTS.md, ./AGENTS.md, and any relevant project-specific conventions
+1. **Read project guidelines**: Read ./AGENTS.md and any relevant project-specific conventions
 2. **Get the diff**: Run the provided `git diff` command to see all changes in scope
 3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path; see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
 4. **Read changed files**: Read the full files to understand context (but see efficiency note below)
@@ -86,7 +86,7 @@ Focus exclusively on simplification opportunities in changed code:
 ### Simplification principles
 
 - **Preserve functionality**: Never suggest changes that alter what the code does, only how it does it
-- **Follow project conventions**: Defer to ~/.agents/AGENTS.md, ./AGENTS.md, and project-specific guidelines for language idioms and patterns; do not prescribe conventions the project hasn't adopted
+- **Follow project conventions**: Defer to ./AGENTS.md and project-specific guidelines for language idioms and patterns; do not prescribe conventions the project hasn't adopted
 - **Consult project DRY mechanisms before recommending pointer-indirection**: When flagging duplication, check whether the project documents a single-source mechanism (e.g., partials, includes, snippets, macros) in its agent guidance. Pointer-indirection is appropriate only when the reader must see the duplicated content verbatim *and* the project lacks a way to single-source it.
 - **Clarity over brevity**: Explicit code is often better than compact code. Do not suggest nested ternaries, dense one-liners, or clever constructs that trade readability for fewer lines
 - **Respect helpful abstractions**: Not every abstraction is premature. Only flag abstractions that add complexity without proportionate value
