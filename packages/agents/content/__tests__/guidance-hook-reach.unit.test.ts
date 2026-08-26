@@ -73,10 +73,15 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   },
   {
     hook: 'implementation-preferences',
-    role: 'writes or judges code',
+    role: 'writes, plans, or judges code',
     declaringBodies: [
       { label: 'implement-plan', relativePath: 'skills/implement-plan/SKILL.md' },
+      { label: 'orchestrated-architect', relativePath: 'subagents/orchestrated-architect.md' },
       { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
+      { label: 'orchestrated-planner', relativePath: 'subagents/orchestrated-planner.md' },
+      { label: 'plan-reviewer', relativePath: 'subagents/plan-reviewer.md' },
+      { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },
+      { label: 'planner', relativePath: 'subagents/planner.md' },
       { label: 'respond-to-review', relativePath: 'skills/respond-to-review/SKILL.md' },
       { label: 'review-branch', relativePath: 'skills/review-branch/SKILL.md' },
       { label: 'review-criteria', relativePath: 'skills/review-criteria/SKILL.md' },
@@ -99,6 +104,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     declaringBodies: [
       { label: 'create-ticket', relativePath: 'skills/create-ticket/SKILL.md' },
       { label: 'design-and-plan', relativePath: 'skills/design-and-plan/SKILL.md' },
+      { label: 'planner', relativePath: 'subagents/planner.md' },
       { label: 'respond-to-review', relativePath: 'skills/respond-to-review/SKILL.md' },
     ],
     boundRulebooks: [{ slug: 'williamthorsen-ticketing-preferences', rule: 'give each pull request its own ticket' }],
