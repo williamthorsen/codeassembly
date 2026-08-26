@@ -43,9 +43,17 @@ export function getHomeProvenancePath(homeDir?: string): string {
  * rather than the whole report.
  */
 export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenance | undefined> {
+  return readHomeProvenanceAt(getHomeProvenancePath(homeDir));
+}
+
+/**
+ * Reads the provenance stamp at an explicit path, applying the same validation as {@link readHomeProvenance}. Serves a
+ * caller that knows the file's location without deriving it from a home directory.
+ */
+export async function readHomeProvenanceAt(provenancePath: string): Promise<HomeProvenance | undefined> {
   let raw: string;
   try {
-    raw = await readFile(getHomeProvenancePath(homeDir), 'utf8');
+    raw = await readFile(provenancePath, 'utf8');
   } catch (error: unknown) {
     if (isEnoent(error)) {
       return undefined;

@@ -39,8 +39,8 @@ describe(parseArgs, () => {
       '/tmp/agent.md',
       '--merged-lede-file',
       '/tmp/merged.md',
-      '--manifest',
-      '/tmp/manifest.json',
+      '--provenance',
+      '/tmp/home-provenance.json',
       '--harness',
       'claude',
     ]);
@@ -58,7 +58,7 @@ describe(parseArgs, () => {
       ticket: '1107',
       agentLedeFile: '/tmp/agent.md',
       mergedLedeFile: '/tmp/merged.md',
-      manifest: '/tmp/manifest.json',
+      provenance: '/tmp/home-provenance.json',
       harness: 'claude',
     });
   });
@@ -241,14 +241,14 @@ function expectInspect(result: DecisionResult): Extract<DecisionResult, { mode: 
 }
 
 /** The flags a merge caller supplies, pointing at a fixture tree. */
-function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'manifestPath'>): string[] {
+function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'provenancePath'>): string[] {
   return [
     '--artifact-dir',
     fixture.artifactDir,
     '--data-dir',
     fixture.dataDir,
-    '--manifest',
-    fixture.manifestPath,
+    '--provenance',
+    fixture.provenancePath,
     '--pr',
     '1124',
     '--merge-commit',

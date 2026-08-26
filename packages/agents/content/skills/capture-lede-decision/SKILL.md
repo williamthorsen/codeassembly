@@ -124,7 +124,7 @@ Pass that file to `--merged-lede-file` and continue from step 2. Everything else
 One event per decision, in the corpus:
 
 - **Tags**: `lede-decision`, `type:{work type}`, and the verdict. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, and by work type with `--tag type:feat`.
-- **Frontmatter**: the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the install manifest supplies one.
+- **Frontmatter**: the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
 - **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
 `doctrine-hash` is what groups records by doctrine generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the doctrine file's own history.

@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { homedir } from 'node:os';
 import path from 'node:path';
 
 import { readNoteContent } from '@williamthorsen/kb/note-io';
 
 import { extractString } from '../kb-shared/note-helpers.ts';
+import { readHomeProvenance, readHomeProvenanceAt } from '../lib/home-provenance.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
-import { isEnoent, isRecord } from '../lib/type-guards.ts';
+import { isEnoent } from '../lib/type-guards.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
@@ -41,9 +41,9 @@ export async function resolveEpisode(input: {
   ticket?: string;
   agentLedeFile?: string;
   mergedLedeFile?: string;
-  /** Install manifest supplying the agents-package version; defaults to the user-global manifest. */
-  manifestPath?: string;
-  /** Home directory the user-global manifest path resolves against; defaults to the real home. */
+  /** Provenance stamp supplying the agents-package version; defaults to the user-global stamp. */
+  provenancePath?: string;
+  /** Home directory the user-global stamp path resolves against; defaults to the real home. */
   home?: string;
 }): Promise<ResolveEpisodeOutcome> {
   if (!(await isDirectory(input.artifactDir))) {
@@ -87,7 +87,7 @@ export async function resolveEpisode(input: {
     return identity;
   }
 
-  const agentsVersion = await readAgentsVersion({ manifestPath: input.manifestPath, home: input.home });
+  const agentsVersion = await readAgentsVersion({ provenancePath: input.provenancePath, home: input.home });
 
   return {
     ok: true,
@@ -156,27 +156,19 @@ function normalizeLede(value: string): string {
   return value.replaceAll(/\s+/gu, ' ').trim();
 }
 
-/** Reads the installed agents-package version from the install manifest; `null` when it is absent or unreadable. */
+/**
+ * Reads the installed agents-package version from the home-provenance stamp, which records the version of the package
+ * whose binary last wrote the home domain; `null` when no readable stamp is there.
+ */
 async function readAgentsVersion(input: {
-  manifestPath: string | undefined;
+  provenancePath: string | undefined;
   home: string | undefined;
 }): Promise<string | null> {
-  const resolved = input.manifestPath ?? path.join(input.home ?? homedir(), '.codeassembly', 'agents-manifest.json');
-  const content = await readFileSafely(resolved);
-  if (content === null) {
-    return null;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
-  if (!isRecord(parsed) || !isRecord(parsed.shared)) {
-    return null;
-  }
-  return typeof parsed.shared.version === 'string' ? parsed.shared.version : null;
+  const provenance =
+    input.provenancePath === undefined
+      ? await readHomeProvenance(input.home)
+      : await readHomeProvenanceAt(input.provenancePath);
+  return provenance?.version ?? null;
 }
 
 /**
