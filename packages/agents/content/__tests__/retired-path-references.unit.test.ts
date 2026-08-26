@@ -59,10 +59,11 @@ function findLineNumbers(content: string): ReadonlyArray<number> {
 async function findViolations(): Promise<ReadonlyArray<Violation>> {
   const violations: Array<Violation> = [];
   for (const dir of SCANNED_DIRS) {
-    const root = path.join(CONTENT_ROOT, dir);
-    for (const file of await listMarkdownFiles(root)) {
+    const files = await listMarkdownFiles(path.join(CONTENT_ROOT, dir));
+    for (const file of files) {
       const relativePath = path.relative(CONTENT_ROOT, file);
-      for (const line of findLineNumbers(await readFile(file, 'utf8'))) {
+      const lineNumbers = findLineNumbers(await readFile(file, 'utf8'));
+      for (const line of lineNumbers) {
         violations.push({ file: relativePath, line });
       }
     }
