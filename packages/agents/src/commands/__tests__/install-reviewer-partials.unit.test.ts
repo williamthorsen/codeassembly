@@ -43,6 +43,7 @@ describe('reviewer and coder partials render correctly', () => {
       fileRelPath: fileName,
       sourceLabel: `subagents/${fileName}`,
       anchor: homeAnchor(harnessConfig.homeDir),
+      guidanceFileName: harnessConfig.guidanceFileName,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

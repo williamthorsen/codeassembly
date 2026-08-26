@@ -53,7 +53,10 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
     }
 
     // No installed file retains a raw template token.
-    const tokenOffenders = await collectMarkdownMatches(tempDir, (content) => content.includes('{harness_home_dir}'));
+    const tokenOffenders = await collectMarkdownMatches(
+      tempDir,
+      (content) => content.includes('{harness_home_dir}') || content.includes('{harness_guidance_file}'),
+    );
     expect(tokenOffenders).toEqual([]);
 
     // No installed Markdown link points at a bare-relative target (all are rewritten to absolute/tilde paths).

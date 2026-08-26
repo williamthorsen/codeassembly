@@ -7,10 +7,21 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
-import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
+import {
+  homeAnchor,
+  rewriteMarkdownPaths,
+  rewriteTemplateVariables,
+  type TemplateVariables,
+} from '../path-rewriter.ts';
 import { deploySkill, resolveDeclaredSkill } from '../skill-deploy.ts';
 import { type SkillDeployContext } from '../skill-transform.ts';
 import { rewriteToolNames } from '../tool-name-rewriter.ts';
+
+const TEMPLATE_VARIABLES: TemplateVariables = {
+  guidanceFileName: 'CLAUDE.md',
+  harnessId: 'claude',
+  homeDir: '.claude',
+};
 
 describe(deploySkill, () => {
   let librarySkillsDir: string;
@@ -130,7 +141,7 @@ describe(deploySkill, () => {
     const expanded = await expandIncludes(path.join(librarySkillsDir, 'demo', 'SKILL.md'), librarySkillsDir);
     const tooled = rewriteToolNames(expanded, toolMapping, 'demo/SKILL.md');
     const pathed = rewriteMarkdownPaths(tooled, 'demo/SKILL.md', homeAnchor('.claude/skills'));
-    const expected = rewriteTemplateVariables(pathed, '.claude', 'claude');
+    const expected = rewriteTemplateVariables(pathed, TEMPLATE_VARIABLES);
 
     const deployed = await readFile(path.join(destDir, 'SKILL.md'), 'utf8');
     const withoutMarker = deployed
@@ -146,6 +157,7 @@ describe(deploySkill, () => {
     return {
       toolMapping,
       anchor: homeAnchor('.claude/skills'),
+      guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',

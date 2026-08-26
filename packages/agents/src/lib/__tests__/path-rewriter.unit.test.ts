@@ -12,9 +12,16 @@ import {
   rewritePathsInDirectory,
   rewritePathsInFile,
   rewriteTemplateVariables,
+  type TemplateVariables,
 } from '../path-rewriter.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
+const CLAUDE_VARIABLES: TemplateVariables = { guidanceFileName: 'CLAUDE.md', harnessId: 'claude', homeDir: '.claude' };
+const ROVO_VARIABLES: TemplateVariables = {
+  guidanceFileName: HARNESSES.rovo.guidanceFileName,
+  harnessId: 'rovo',
+  homeDir: ROVO_HOME,
+};
 
 describe(isRewritableLinkTarget, () => {
   it.each(['../_data/concision.md', './modules/review-cycle.md', 'SKILL.md', 'scripts/run.sh'])(
@@ -134,40 +141,49 @@ describe(rewriteMarkdownPaths, () => {
 describe(rewriteTemplateVariables, () => {
   it('replaces {harness_home_dir} with tilde-prefixed homeDir', () => {
     const content = '{harness_home_dir}/scripts/describe-change.sh --scope agents --type feat';
-    expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
+    expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(
       '~/.claude/scripts/describe-change.sh --scope agents --type feat',
     );
   });
 
   it('replaces multiple occurrences', () => {
     const content = 'Run {harness_home_dir}/scripts/a.sh then {harness_home_dir}/scripts/b.sh';
-    expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
+    expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(
       'Run ~/.claude/scripts/a.sh then ~/.claude/scripts/b.sh',
     );
   });
 
   it('returns content unchanged when no template variables are present', () => {
     const content = '# No variables here\n\nJust plain text.';
-    expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(content);
+    expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(content);
   });
 
   it('resolves to the correct path for different harnesses', () => {
     const content = '{harness_home_dir}/scripts/describe-change.sh';
-    expect(rewriteTemplateVariables(content, ROVO_HOME, 'rovo')).toBe(`~/${ROVO_HOME}/scripts/describe-change.sh`);
+    expect(rewriteTemplateVariables(content, ROVO_VARIABLES)).toBe(`~/${ROVO_HOME}/scripts/describe-change.sh`);
   });
 
   it('inserts a substitution value carrying a replacement pattern verbatim', () => {
     const content = '{harness_home_dir}/x --harness {harness_id}';
 
-    expect(rewriteTemplateVariables(content, '.cl$&$$aude', "cl$'aude")).toBe("~/.cl$&$$aude/x --harness cl$'aude");
+    const variables = { guidanceFileName: 'CLAUDE.md', harnessId: "cl$'aude", homeDir: '.cl$&$$aude' };
+    expect(rewriteTemplateVariables(content, variables)).toBe("~/.cl$&$$aude/x --harness cl$'aude");
+  });
+
+  it('replaces {harness_guidance_file} with the harness guidance filename', () => {
+    const content = 'Read {harness_home_dir}/{harness_guidance_file} first.';
+    expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe('Read ~/.claude/CLAUDE.md first.');
+    expect(rewriteTemplateVariables(content, ROVO_VARIABLES)).toBe(
+      `Read ~/${ROVO_HOME}/${HARNESSES.rovo.guidanceFileName} first.`,
+    );
   });
 
   it('replaces {harness_id} with the harness identifier, leaving no placeholder', () => {
     const content = 'node {harness_home_dir}/skills/capture-event/capture-event.mjs --harness {harness_id}';
-    expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
+    expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(
       'node ~/.claude/skills/capture-event/capture-event.mjs --harness claude',
     );
-    expect(rewriteTemplateVariables(content, ROVO_HOME, 'rovo')).toBe(
+    expect(rewriteTemplateVariables(content, ROVO_VARIABLES)).toBe(
       `node ~/${ROVO_HOME}/skills/capture-event/capture-event.mjs --harness rovo`,
     );
   });
@@ -177,14 +193,14 @@ describe(rewritePathsInFile, () => {
   const absentPath = path.join(tmpdir(), 'path-rewriter-absent.md');
 
   it('names the file it could not rewrite', async () => {
-    await expect(rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', '.claude', 'claude')).rejects.toThrow(
+    await expect(rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', CLAUDE_VARIABLES)).rejects.toThrow(
       /Failed to rewrite paths in/,
     );
   });
 
   it('attaches the read failure as the cause', async () => {
     await expect(
-      rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', '.claude', 'claude'),
+      rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', CLAUDE_VARIABLES),
     ).rejects.toHaveProperty('cause', expect.any(Error));
   });
 });
@@ -208,7 +224,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(path.join(skillDir, 'SKILL.md'), 'See [format](../_data/title-templates.md) for spec.', 'utf8');
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe('See [format](~/.claude/skills/_data/title-templates.md) for spec.');
@@ -227,8 +243,7 @@ describe(rewritePathsInDirectory, () => {
       path.join(skillsDestDir, 'orchestrate'),
       skillsDestDir,
       '.claude/skills',
-      '.claude',
-      'claude',
+      CLAUDE_VARIABLES,
     );
 
     const result = await readFile(path.join(nestedDir, 'review-cycle.md'), 'utf8');
@@ -241,7 +256,7 @@ describe(rewritePathsInDirectory, () => {
     const originalContent = 'See [format](../_data/title-templates.md) for spec.';
     await writeFile(path.join(skillDir, 'notes.txt'), originalContent, 'utf8');
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'notes.txt'), 'utf8');
     expect(result).toBe(originalContent);
@@ -252,7 +267,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
 
     await expect(
-      rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude'),
+      rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES),
     ).resolves.toBeUndefined();
   });
 
@@ -265,7 +280,7 @@ describe(rewritePathsInDirectory, () => {
       'utf8',
     );
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe('~/.claude/scripts/describe-change.sh --scope {scope} --type {type}');
@@ -280,7 +295,7 @@ describe(rewritePathsInDirectory, () => {
       'utf8',
     );
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe(
@@ -297,7 +312,7 @@ describe(rewritePathsInDirectory, () => {
       'utf8',
     );
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe('Run [describe-change](~/.claude/scripts/describe-change.sh) first.');
@@ -308,7 +323,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(path.join(skillDir, 'SKILL.md'), '# No links here\n', 'utf8');
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe('# No links here\n');

@@ -17,6 +17,8 @@ export interface SubagentRenderContext {
   readonly sourceLabel: string;
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
+  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
+  readonly guidanceFileName: string;
   /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
@@ -51,27 +53,13 @@ export interface SubagentRenderContext {
  * passes through them. The fill precedes the frontmatter merge, and a directive written inside the frontmatter block
  * fails rather than splicing prose into YAML.
  *
- * `anchor` and `homeDir` are distinct arguments because they answer different questions: the anchor places a link
+ * `anchor` and `homeDir` are distinct fields because they answer different questions: the anchor places a link
  * target in whichever tree deploys it, while `homeDir` expands `{harness_home_dir}` tokens, which name the harness
  * home whatever the target is.
  */
-export function renderSubagentForHarness(
-  expandedSource: string,
-  {
-    overlayYaml,
-    toolMapping,
-    fileRelPath,
-    sourceLabel,
-    anchor,
-    homeDir,
-    harnessId,
-    skillSigil,
-    subagentSigil,
-    rulebooks,
-    guidanceHookFills,
-  }: SubagentRenderContext,
-): string {
-  const filled = fillGuidanceHooks(expandedSource, guidanceHookFills, sourceLabel);
+export function renderSubagentForHarness(expandedSource: string, context: SubagentRenderContext): string {
+  const { overlayYaml, toolMapping, fileRelPath, sourceLabel, anchor, skillSigil, subagentSigil, rulebooks } = context;
+  const filled = fillGuidanceHooks(expandedSource, context.guidanceHookFills, sourceLabel);
   assertFilledAnchorsResolve(filled, sourceLabel);
   const injected = injectDeclaredRulebooks(filled.content, rulebooks, sourceLabel);
   const merged = mergeFrontmatter(injected, overlayYaml);
@@ -83,5 +71,5 @@ export function renderSubagentForHarness(
     rulebooks,
   );
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);
-  return rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
+  return rewriteTemplateVariables(rewrittenPaths, context);
 }

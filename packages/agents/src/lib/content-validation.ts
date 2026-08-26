@@ -270,6 +270,7 @@ async function renderForHarness(
   const skillContext: SkillDeployContext = {
     toolMapping,
     anchor: homeAnchor(resolveSkillsPathPrefix(config)),
+    guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
@@ -280,6 +281,7 @@ async function renderForHarness(
     overlayYaml,
     toolMapping,
     anchor: homeAnchor(config.homeDir),
+    guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
@@ -288,6 +290,7 @@ async function renderForHarness(
   };
   const rulebookContext: RulebookRenderContext = {
     anchor: homeAnchor(config.homeDir),
+    guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,

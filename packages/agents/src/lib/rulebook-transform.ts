@@ -19,6 +19,8 @@ import {
 export interface RulebookRenderContext {
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
+  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
+  readonly guidanceFileName: string;
   /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
@@ -68,7 +70,7 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
   assertRulebookTokensResolve(stripped, slug, context.rulebooks);
   const pathRewritten = rewriteMarkdownPaths(stripped, sourceLabel, context.anchor);
   const tokenRewritten = rewriteInvocationTokens(pathRewritten, context, sourceLabel, context.rulebooks);
-  return rewriteTemplateVariables(tokenRewritten, context.homeDir, context.harnessId);
+  return rewriteTemplateVariables(tokenRewritten, context);
 }
 
 // region | Helpers

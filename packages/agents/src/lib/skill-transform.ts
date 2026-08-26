@@ -14,6 +14,8 @@ export interface SkillDeployContext {
   readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the harness skills dir, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
+  /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
+  readonly guidanceFileName: string;
   /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
@@ -180,7 +182,7 @@ async function renderMarkdown(
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<string> {
-  const { anchor, toolMapping, homeDir, harnessId, skillSigil, subagentSigil } = context;
+  const { anchor, toolMapping, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const filled = fillGuidanceHooks(await expandIncludes(srcPath, contentRoot), context.guidanceHookFills, contextLabel);
   assertFilledAnchorsResolve(filled, contextLabel);
@@ -192,7 +194,7 @@ async function renderMarkdown(
     context.rulebooks,
   );
   const pathRewritten = rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor);
-  return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
+  return rewriteTemplateVariables(pathRewritten, context);
 }
 
 // endregion | Helpers

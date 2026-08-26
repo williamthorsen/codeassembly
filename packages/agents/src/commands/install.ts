@@ -25,7 +25,7 @@ import {
   writeManifest,
 } from '../lib/manifest.ts';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
-import { homeAnchor, rewritePathsInFile } from '../lib/path-rewriter.ts';
+import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/path-rewriter.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
@@ -112,6 +112,11 @@ export async function installCommand(
     const harnessConfig = HARNESSES[harnessId];
     const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
     const toolMapping = loadToolMapping(overlayYaml);
+    const templateVariables: TemplateVariables = {
+      guidanceFileName: harnessConfig.guidanceFileName,
+      harnessId: harnessConfig.id,
+      homeDir: harnessConfig.homeDir,
+    };
 
     // Install skill support directories (e.g. `_data`). Skills themselves deploy per-declaration via `sync`.
     const skillsPrefix = resolveSkillsPathPrefix(harnessConfig);
@@ -121,9 +126,8 @@ export async function installCommand(
       paths.harnessHome,
       existingByPath,
       options,
-      harnessId,
       skillsPrefix,
-      harnessConfig.homeDir,
+      templateVariables,
       toolMapping,
       harnessConfig.skillSigil,
       harnessConfig.subagentSigil,
@@ -209,9 +213,8 @@ async function installSupportDirectories(
   harnessHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
-  harnessId: HarnessId,
   skillsPrefix: string,
-  homeDir: string,
+  variables: TemplateVariables,
   toolMapping: ReadonlyMap<string, string>,
   skillSigil: string,
   subagentSigil: string,
@@ -245,8 +248,7 @@ async function installSupportDirectories(
       existingByPath,
       options,
       skillsPrefix,
-      homeDir,
-      harnessId,
+      variables,
       contentDir,
       toolMapping,
       skillSigil,
@@ -274,8 +276,7 @@ async function installSkillEntry(
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
   skillsPrefix: string,
-  homeDir: string,
-  harnessId: string,
+  variables: TemplateVariables,
   contentDir: string,
   toolMapping: ReadonlyMap<string, string>,
   skillSigil: string,
@@ -288,8 +289,9 @@ async function installSkillEntry(
   const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
     toolMapping,
     anchor: homeAnchor(skillsPrefix),
-    homeDir,
-    harnessId,
+    guidanceFileName: variables.guidanceFileName,
+    homeDir: variables.homeDir,
+    harnessId: variables.harnessId,
     skillSigil,
     subagentSigil,
   });
@@ -645,7 +647,11 @@ async function installHarnessGuidance(
       if (expandedContent !== undefined) {
         await writeFile(destPath, expandedContent, 'utf8');
       }
-      await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, harnessConfig.homeDir, harnessConfig.id);
+      await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, {
+        guidanceFileName: harnessConfig.guidanceFileName,
+        harnessId: harnessConfig.id,
+        homeDir: harnessConfig.homeDir,
+      });
       await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_harnesses/${harnessId}/${entry}`));
 
       // Splice the preserved region content into the fresh render. The region's location comes from the template;

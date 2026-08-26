@@ -31,6 +31,8 @@ export interface SubagentDeployContext {
   readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
+  /** Guidance filename that `{harness_guidance_file}` tokens expand to. */
+  readonly guidanceFileName: string;
   /** Harness home segment that `{harness_home_dir}` tokens expand to. */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to. */
@@ -78,6 +80,7 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
     fileRelPath: fileName,
     sourceLabel: `subagents/${fileName}`,
     anchor: context.anchor,
+    guidanceFileName: context.guidanceFileName,
     homeDir: context.homeDir,
     harnessId: context.harnessId,
     skillSigil: context.skillSigil,
