@@ -123,7 +123,6 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `high`: Pervasive unnecessary complexity indicating the code needs a simplification pass
 
 <!-- guidance-hook: comment-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

@@ -194,7 +194,6 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 </HARD-GATE>
 
 <!-- guidance-hook: comment-preferences -->
-
 <!-- guidance-hook: implementation-preferences -->
 
 <!-- guidance-hook: writing-preferences -->

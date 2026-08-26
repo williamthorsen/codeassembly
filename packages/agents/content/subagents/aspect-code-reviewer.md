@@ -117,7 +117,6 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `high`: Systematic guideline violations indicating the developer missed key conventions
 
 <!-- guidance-hook: comment-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

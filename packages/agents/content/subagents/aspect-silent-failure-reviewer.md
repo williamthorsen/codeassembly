@@ -111,7 +111,6 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `high`: Systematic error suppression that indicates a fundamental approach problem
 
 <!-- guidance-hook: comment-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

@@ -44,7 +44,6 @@ Detect and preserve the original plan's format:
 <!-- include: ../_partials/plain-speech.md / -->
 
 <!-- guidance-hook: implementation-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

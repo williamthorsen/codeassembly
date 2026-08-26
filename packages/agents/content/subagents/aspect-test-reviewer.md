@@ -126,7 +126,6 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `high`: New critical functionality with no tests, or tests that fundamentally don't test what they claim
 
 <!-- guidance-hook: comment-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

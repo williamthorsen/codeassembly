@@ -57,7 +57,6 @@ Classify the task into exactly one impact level:
 - Example: Migrating state management, changing database schema, adding a new service layer
 
 <!-- guidance-hook: implementation-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

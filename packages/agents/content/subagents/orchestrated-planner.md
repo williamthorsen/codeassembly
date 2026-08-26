@@ -45,7 +45,6 @@ You will receive:
 <!-- include: ../_partials/plain-speech.md / -->
 
 <!-- guidance-hook: implementation-preferences -->
-
 <!-- guidance-hook: writing-preferences -->
 
 ## Output: Plan (Markdown)
