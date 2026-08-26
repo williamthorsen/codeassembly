@@ -131,14 +131,15 @@ describe('CLI harness flag', () => {
 describe('CLI sync --warn-only', () => {
   let projectRoot: string;
 
-  // A declaration naming a source that does not exist fails `sync` before it writes anything, which makes it the
-  // cheapest way to exercise the two failure postures against the same input.
+  // A declaration whose source path names a file rather than a directory fails `sync` before it writes anything,
+  // which makes it the cheapest way to exercise the two failure postures against the same input.
   beforeEach(async () => {
     projectRoot = path.join(tmpdir(), `agents-test-warn-only-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(path.join(projectRoot, '.agents', 'not-a-dir'), 'not a dir\n', 'utf8');
     await writeFile(
       path.join(projectRoot, '.agents', 'codeassembly.yaml'),
-      'sources:\n  - name: missing-source\n    path: ./nowhere\n',
+      'sources:\n  - name: bad-source\n    path: ./not-a-dir\n',
       'utf8',
     );
   });
@@ -147,18 +148,18 @@ describe('CLI sync --warn-only', () => {
     await rm(projectRoot, { recursive: true, force: true });
   });
 
-  it('when a declared source is missing, exits 1 and names the source', async () => {
+  it('when a declared source is invalid, exits 1 and names the source', async () => {
     const result = await runCliIn(projectRoot, 'sync');
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('missing-source');
+    expect(result.stderr).toContain('bad-source');
   });
 
   it('when --warn-only is passed, exits 0 and warns that guidance may be stale', async () => {
     const result = await runCliIn(projectRoot, 'sync', '--warn-only');
 
     expect(result.exitCode).toBe(0);
-    expect(result.stderr).toContain('missing-source');
+    expect(result.stderr).toContain('bad-source');
     expect(result.stderr).toContain('may be stale');
   });
 

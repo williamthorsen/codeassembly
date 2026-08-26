@@ -25,7 +25,7 @@ import {
   SUPPORTED_HARNESSES_KEY,
 } from './skill-deploy.ts';
 import { renderSkillDirectory, renderSupportEntry, type SkillDeployContext } from './skill-transform.ts';
-import { describeSourceProblem } from './source-validation.ts';
+import { findSourceProblem } from './source-validation.ts';
 import {
   renderSubagent,
   resolveDeclaredSubagent,
@@ -75,9 +75,9 @@ export async function validateContentRoot(
   harnessIds: ReadonlyArray<HarnessId>,
   libraryDir: string = resolveContentDir(),
 ): Promise<ReadonlyArray<ContentDefect>> {
-  const problem = await describeSourceProblem(root);
+  const problem = await findSourceProblem(root);
   if (problem !== undefined) {
-    return [{ file: '.', kind: 'root', detail: `Content root is unusable: ${problem}.` }];
+    return [{ file: '.', kind: 'root', detail: `Content root is unusable: ${problem.detail}.` }];
   }
 
   const resolver = createSourceResolver([{ name: root, dir: root }], libraryDir);

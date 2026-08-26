@@ -313,13 +313,14 @@ describe('sync with a declared package', () => {
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
   });
 
-  it('fails the run when a declared package ships no content directory, writing nothing', async () => {
+  it('warns and completes when a declared package points at a content directory it does not ship', async () => {
     await installPackage('@ca-fixture/empty', 'missing-dir');
     await declare("packages:\n  use:\n    - '@ca-fixture/empty'\n");
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
-      /Invalid declared source.*@ca-fixture\/empty/s,
-    );
-    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+    const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    const warning = renderReportText(outcome, { level: 'warn' });
+    expect(warning).toMatch(/Declared source "@ca-fixture\/empty" \(.*missing-dir\) does not exist/);
+    expect(warning).toContain('report the omission upstream');
   });
 });

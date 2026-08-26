@@ -7,6 +7,7 @@ import type { ResolvedHarnessTargets } from '../../lib/target-harnesses.ts';
 import type {
   AmbientHostPlan,
   AmbientSkipReason,
+  DeclaredSource,
   GuidanceHookAdvisory,
   MissingDeclaration,
   ResolutionEntry,
@@ -58,7 +59,10 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
   }
   // Reported here as well as on a live run: each names a property of the declaration rather than of the writes, and a
   // dry run is where a declaration gets checked before it is committed to.
-  lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory));
+  lines.push(
+    ...plan.missingSources.map(describeMissingSource),
+    ...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory),
+  );
   return lines;
 }
 
@@ -86,7 +90,7 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
-  lines.push({ level: 'info', text: describeDeliveries(plan) });
+  lines.push(...plan.missingSources.map(describeMissingSource), { level: 'info', text: describeDeliveries(plan) });
 
   const shadows = plan.resolutionReport.filter((entry) => entry.shadowsLibrary);
   if (shadows.length > 0) {
@@ -240,6 +244,27 @@ function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
     : 'No .agents/codeassembly.yaml found. Nothing to sync.';
+}
+
+/**
+ * The advisory naming a declared source whose directory does not exist. Reported rather than thrown because the
+ * absence may be a not-yet state, and named because the alternative is a run that silently resolves from the library
+ * where the source was meant to override it.
+ *
+ * The remedy is keyed to the declaration form: a `sources:` entry names a path the reader wrote, while a package's
+ * content directory is named by the package's own manifest. The package branch names two actions because a
+ * `workspace:*` link resolves into a tree the reader maintains, while an installed dependency's is not theirs to edit.
+ */
+function describeMissingSource(source: DeclaredSource): ReportLine {
+  const remedy =
+    source.declaredAs === 'package'
+      ? "The package's own `codeassembly.content` names that path, so create the directory if you maintain the " +
+        'package, otherwise report the omission upstream or drop the package from `packages`.'
+      : "Create the directory, or correct the source's `path` in the declaration that names it.";
+  return {
+    level: 'warn',
+    text: `⚠️ Declared source "${source.name}" (${source.dir}) does not exist. ${remedy}`,
+  };
 }
 
 /** The dry-run lines for every retraction a run would perform, across the three delivery namespaces. */

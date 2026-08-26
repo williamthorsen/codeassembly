@@ -19,6 +19,7 @@ export function buildSyncPlan(overrides: Partial<SyncPlan> = {}): SyncPlan {
     sourceSupportPlans: [],
     sourceSupportRetractions: [],
     promptsYmlPaths: [],
+    missingSources: [],
     undeclaredPackages: [],
     guidanceHookAdvisories: [],
     ...overrides,

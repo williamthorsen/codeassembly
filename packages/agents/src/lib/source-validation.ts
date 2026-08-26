@@ -3,7 +3,13 @@ import { access, stat } from 'node:fs/promises';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isMissingFile } from './type-guards.ts';
+import { isEnoent, isErrorCode } from './type-guards.ts';
+
+/** What disqualifies a directory as a content source: which condition holds, and the phrase describing it. */
+export interface SourceProblem {
+  readonly kind: 'missing' | 'not-a-directory' | 'unreadable';
+  readonly detail: string;
+}
 
 /**
  * Reports what disqualifies a source `name` from serving as the directory segments its support entries deploy under,
@@ -40,12 +46,15 @@ export function describeSourceNameProblem(name: string): string | undefined {
  * `undefined` when valid. Validity requires both that `dir` is a directory and that the process can read and traverse
  * it, because `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the
  * parent chain, not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) folds
- * into the "unreadable" case so it surfaces through an error naming `dir`.
+ * into the "unreadable" case so it surfaces through a message naming `dir`.
+ *
+ * The condition is reported as a `kind` beside the phrase describing it, so a caller that treats the conditions
+ * differently branches on the classification rather than on prose written for a reader.
  */
-export async function describeSourceProblem(dir: string): Promise<string | undefined> {
+export async function findSourceProblem(dir: string): Promise<SourceProblem | undefined> {
   try {
     if (!(await stat(dir)).isDirectory()) {
-      return 'not a directory';
+      return { kind: 'not-a-directory', detail: 'not a directory' };
     }
     // Probe the read+traverse access the resolver's frontmatter lookups rely on, so a directory that stats as a
     // directory but is itself unreadable (e.g. mode 000) fails here with the attributed error rather than as a raw
@@ -53,9 +62,13 @@ export async function describeSourceProblem(dir: string): Promise<string | undef
     await access(dir, constants.R_OK | constants.X_OK);
     return undefined;
   } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      return 'does not exist';
+    if (isEnoent(error)) {
+      return { kind: 'missing', detail: 'does not exist' };
     }
-    return `unreadable — ${describeError(error)}`;
+    // `stat` raises ENOTDIR when a non-final path segment is a regular file, which the `isDirectory` check never sees.
+    if (isErrorCode(error, 'ENOTDIR')) {
+      return { kind: 'not-a-directory', detail: 'not a directory' };
+    }
+    return { kind: 'unreadable', detail: `unreadable — ${describeError(error)}` };
   }
 }
