@@ -239,6 +239,17 @@ A hook nothing binds contributes nothing to deployed output, marker included. `i
 
 Name a hook for the concern rather than the consumer — `implementation-preferences`, not `implement-plan-preferences` — since concern-scoping is what lets one binding fill every consumer, and carry no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar the directive enforces. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
 
+The library declares four hook names:
+
+| Hook                         | Concern                                      | Declared by                                                                           |
+| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `comment-preferences`        | the register of comments written into source | the coder subagent and the five reviewer subagents                                    |
+| `implementation-preferences` | how code is written and judged               | the implementing and reviewing skills, the coder, and the five plan-shaping subagents |
+| `ticketing-preferences`      | how work is split across tickets             | the ticket-composing skills and `planner`                                             |
+| `writing-preferences`        | how agent-authored prose reads               | every subagent but the deployment canary                                              |
+
+A binding fills a hook with the whole of the bound rulebook's body, and there is no way to bind part of one. A rulebook bound to a hook that only subagents declare is spliced entire into every declaring subagent, and none of the reports below can see that it carries guidance those subagents have no use for. Keep such a rulebook coherent for its narrowest consumer: once it mixes session-only guidance with the subagent-relevant kind, split it rather than binding the whole.
+
 Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
 
 Four further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
