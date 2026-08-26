@@ -65,6 +65,7 @@ Each finding is tagged with a resolution type:
 | Structural soundness      | Dependencies ordered? Steps scoped correctly?                     | `auto`                                                |
 | Requirements traceability | Every requirement has a step? Every step traces to a requirement? | `user` if intentionally omitted; `auto` if overlooked |
 
+<!-- guidance-hook: implementation-preferences -->
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

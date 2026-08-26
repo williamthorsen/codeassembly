@@ -161,7 +161,7 @@ The grammar reserves additional tokens for future use. Partial authors must not 
 
 - `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->`: Reserved for future named-slot support.
 - `<!-- children -->`: The canonical default-slot placeholder. Use exactly this token; do not invent variants.
-- `<!-- guidance-hook: name -->`: The guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line that resembles the directive but misses its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+- `<!-- guidance-hook: name -->`: The guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook a partial declares is declared by each body that inlines it. A line that resembles the directive but misses its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. A directive nothing binds is removed line by line, so a blank line separating two directives survives into the unbound render; a new directive goes on the line adjacent to the one it joins. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
 
 ### Partial or guidance hook
 

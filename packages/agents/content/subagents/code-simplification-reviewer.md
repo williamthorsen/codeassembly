@@ -122,6 +122,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `medium`: Several meaningful simplification opportunities, including file-header-scale comment violations (tutorial headers, repeated conversation memorialization, broad library re-teaching) or pervasive shared-setup duplication across a spec file
 - `high`: Pervasive unnecessary complexity indicating the code needs a simplification pass
 
+<!-- guidance-hook: comment-preferences -->
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

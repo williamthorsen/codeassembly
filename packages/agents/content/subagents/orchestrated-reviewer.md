@@ -94,6 +94,7 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill.
 
+<!-- guidance-hook: comment-preferences -->
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
@@ -35,17 +36,6 @@ const CARRIER_SKILLS: ReadonlyArray<string> = [
   'review-criteria',
   'revise-comments',
   'testing-conventions',
-];
-
-// Listed explicitly rather than discovered: the failure guarded against is a subagent dropping off the list, and a
-// discovered list would move with the bug.
-const COMMENT_AUTHORING_SUBAGENTS: ReadonlyArray<string> = [
-  'aspect-code-reviewer',
-  'aspect-silent-failure-reviewer',
-  'aspect-test-reviewer',
-  'code-simplification-reviewer',
-  'orchestrated-coder',
-  'orchestrated-reviewer',
 ];
 
 /** Paths no content file may name: a reference to one is a consumer pointing at the doctrine instead of inlining it. */

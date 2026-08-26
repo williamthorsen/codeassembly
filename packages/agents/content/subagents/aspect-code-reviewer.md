@@ -116,6 +116,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 - `medium`: 1-2 straightforward guideline/bug findings, or many W findings collectively indicating a quality concern
 - `high`: Systematic guideline violations indicating the developer missed key conventions
 
+<!-- guidance-hook: comment-preferences -->
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format

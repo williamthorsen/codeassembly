@@ -9,6 +9,7 @@ import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
 import type { GuidanceHookFill, GuidanceHookFills } from '../../src/lib/guidance-hooks.ts';
 import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
+import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.
@@ -50,11 +51,31 @@ interface SpliceProbe {
 // and a discovered list would move with the bug.
 const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
+    hook: 'comment-preferences',
+    role: 'writes or judges source comments',
+    declaringBodies: COMMENT_AUTHORING_SUBAGENTS.map(toSubagentBody),
+    boundRulebooks: [
+      {
+        slug: 'williamthorsen-comment-preferences',
+        rule: 'third-person indicative with the subject understood',
+      },
+    ],
+    spliceProbe: {
+      body: { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
+      coexisting: ['Comment-discipline violations'],
+    },
+  },
+  {
     hook: 'implementation-preferences',
-    role: 'writes or judges code',
+    role: 'writes, plans, or judges code',
     declaringBodies: [
       { label: 'implement-plan', relativePath: 'skills/implement-plan/SKILL.md' },
+      { label: 'orchestrated-architect', relativePath: 'subagents/orchestrated-architect.md' },
       { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
+      { label: 'orchestrated-planner', relativePath: 'subagents/orchestrated-planner.md' },
+      { label: 'plan-reviewer', relativePath: 'subagents/plan-reviewer.md' },
+      { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },
+      { label: 'planner', relativePath: 'subagents/planner.md' },
       { label: 'respond-to-review', relativePath: 'skills/respond-to-review/SKILL.md' },
       { label: 'review-branch', relativePath: 'skills/review-branch/SKILL.md' },
       { label: 'review-criteria', relativePath: 'skills/review-criteria/SKILL.md' },
@@ -77,6 +98,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     declaringBodies: [
       { label: 'create-ticket', relativePath: 'skills/create-ticket/SKILL.md' },
       { label: 'design-and-plan', relativePath: 'skills/design-and-plan/SKILL.md' },
+      { label: 'planner', relativePath: 'subagents/planner.md' },
       { label: 'respond-to-review', relativePath: 'skills/respond-to-review/SKILL.md' },
     ],
     boundRulebooks: [{ slug: 'williamthorsen-ticketing-preferences', rule: 'give each pull request its own ticket' }],
@@ -202,6 +224,11 @@ async function expandBody(relativePath: string): Promise<string> {
 async function readRulebookBody(slug: string): Promise<string> {
   const content = await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8');
   return parseFrontmatter(content).body;
+}
+
+/** Returns the declaring-body entry for a subagent named by its slug. */
+function toSubagentBody(slug: string): DeclaringBody {
+  return { label: slug, relativePath: `subagents/${slug}.md` };
 }
 
 // endregion | Helpers
