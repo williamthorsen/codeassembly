@@ -16,17 +16,11 @@ import { recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { listSupportEntries } from '../lib/library-catalog.ts';
-import {
-  computeContentHash,
-  detectDrift,
-  getManifestPath,
-  readManifest,
-  resolveSharedHome,
-  writeManifest,
-} from '../lib/manifest.ts';
+import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
 import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/path-rewriter.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
+import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -434,41 +428,6 @@ async function installScripts(
   }
 
   return entries;
-}
-
-/**
- * Retires the withdrawn shared-guidance tier: removes what a previous `install` deployed to `~/.agents/` and reports
- * whether the manifest's `shared` record should be dropped. Nothing is deployed there any more, so a lingering copy
- * presents a file no harness loads as current guidance.
- *
- * Retirement is driven by the manifest alone, which is what makes it safe: a `~/.agents/AGENTS.md` this CLI never
- * deployed carries no entry and is left untouched. Of the entries it does carry, an unmodified copy and a `--link`
- * symlink are removed, and a user-modified copy is kept and reported, all through the same orphan-prune pass that
- * governs every other withdrawn entry. A kept copy is left untracked, which is the intended end state: it holds the
- * user's own content.
- *
- * A home with no `shared` record has nothing to retire, so this is a no-op on every install after the first.
- */
-async function retireSharedGuidance(
-  manifest: AgentsManifest,
-  options: InstallOptions,
-  baseDir?: string,
-): Promise<boolean> {
-  const entries = manifest.shared?.entries ?? [];
-  if (entries.length === 0) {
-    return manifest.shared !== undefined;
-  }
-
-  console.info('\nRetiring shared guidance');
-  const pruned = await pruneOrphanedEntries(entries, [], resolveSharedHome(baseDir), options);
-  emitReport(describePruneResult(pruned, options));
-  return !options.dryRun;
-}
-
-/** Returns `manifest` without its retired `shared` tier. */
-function withoutSharedTier(manifest: AgentsManifest): AgentsManifest {
-  const { shared: _shared, ...rest } = manifest;
-  return rest;
 }
 
 /**

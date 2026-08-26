@@ -4,6 +4,7 @@ import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { removeItem } from '../lib/installer.ts';
 import { getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
+import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import type { AgentsManifest, InstallOptions, ManifestEntry } from '../lib/types.ts';
 import { removeHarnessHookEntries } from './configure-hooks.ts';
 
@@ -18,8 +19,18 @@ export async function uninstallCommand(
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
+  // Retire the withdrawn `~/.agents/` tier ahead of the harness-detection return, so a home that targets no harness is
+  // still cleared. `install` runs the same pass, and a user who upgrades and uninstalls without installing first
+  // reaches it only here.
+  const didRetire = await retireSharedGuidance(manifest, { force: options.force, dryRun: false }, baseDir);
+
   if (harnesses.length === 0) {
-    console.info('No target harnesses detected. Nothing to uninstall.');
+    if (didRetire) {
+      await writeManifest(manifestPath, withoutSharedTier(manifest));
+      console.info('\nManifest updated.');
+    } else {
+      console.info('No target harnesses detected. Nothing to uninstall.');
+    }
     return;
   }
 
@@ -59,7 +70,7 @@ export async function uninstallCommand(
   }
 
   const updatedManifest: AgentsManifest = {
-    ...manifest,
+    ...withoutSharedTier(manifest),
     harnesses: remainingHarnesses,
   };
 

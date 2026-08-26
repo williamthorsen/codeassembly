@@ -158,6 +158,58 @@ describe('guidance installation', () => {
     });
   });
 
+  describe('retired shared guidance on uninstall', () => {
+    it('removes a tracked copy', async () => {
+      await setupClaudeHome();
+      const retiredPath = await seedRetiredSharedGuidance();
+
+      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+
+      expect(existsSync(retiredPath)).toBe(false);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
+    });
+
+    it('removes a tracked copy when no harness home directories exist', async () => {
+      const retiredPath = await seedRetiredSharedGuidance();
+
+      await uninstallCommand({ harness: 'all', force: false }, tempDir);
+
+      expect(existsSync(retiredPath)).toBe(false);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
+    });
+
+    it('preserves a tracked copy carrying hand-written content', async () => {
+      await setupClaudeHome();
+      const handWritten = '# Retired\n\nMy own notes.\n';
+      const retiredPath = await seedRetiredSharedGuidance({ contentOnDisk: handWritten });
+
+      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+
+      expect(await readFile(retiredPath, 'utf8')).toBe(handWritten);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
+    });
+
+    it('removes a tracked copy carrying hand-written content with --force', async () => {
+      await setupClaudeHome();
+      const retiredPath = await seedRetiredSharedGuidance({ contentOnDisk: '# Retired\n\nMy own notes.\n' });
+
+      await uninstallCommand({ harness: 'claude', force: true }, tempDir);
+
+      expect(existsSync(retiredPath)).toBe(false);
+    });
+
+    it('leaves a copy this CLI never deployed untouched', async () => {
+      await setupClaudeHome();
+      const foreignPath = path.join(tempDir, '.agents', 'AGENTS.md');
+      await mkdir(path.dirname(foreignPath), { recursive: true });
+      await writeFile(foreignPath, '# Not ours\n', 'utf8');
+
+      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+
+      expect(await readFile(foreignPath, 'utf8')).toBe('# Not ours\n');
+    });
+  });
+
   describe('harness-specific guidance', () => {
     it('installs CLAUDE.md to ~/.claude/ for claude harness with includes expanded', async () => {
       const claudeHome = await setupClaudeHome();

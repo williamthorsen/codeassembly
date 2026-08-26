@@ -5,8 +5,8 @@ export type HarnessId = 'claude' | 'rovo';
 export interface AgentsManifest {
   readonly schemaVersion: number;
   /**
-   * The retired `~/.agents/` tier, present only in a manifest a previous version wrote. `install` reads it to retire
-   * what it deployed there and writes the manifest without it; nothing produces it.
+   * The retired `~/.agents/` tier, present only in a manifest a previous version wrote. `install` and `uninstall`
+   * read it to retire what was deployed there and write the manifest without it; nothing produces it.
    */
   readonly shared?: SharedManifest | undefined;
   readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
@@ -89,7 +89,7 @@ export interface ManifestEntry {
 
 /**
  * Manifest data for the retired cross-harness tier a previous version installed to `~/.agents/`. Retained as the shape
- * `install`'s retirement pass reads; no pass writes it.
+ * the retirement pass reads; no pass writes it.
  */
 export interface SharedManifest {
   readonly version: string;

@@ -46,7 +46,7 @@ export function createEmptyManifest(): AgentsManifest {
 
 /**
  * Resolves the absolute path to `~/.agents/`, where a previous version deployed the cross-harness guidance tier.
- * Nothing deploys there now; `install`'s retirement pass is the sole caller.
+ * Nothing deploys there now; the retirement pass `install` and `uninstall` share is the sole caller.
  */
 export function resolveSharedHome(baseDir?: string): string {
   const home = baseDir ?? homedir();
