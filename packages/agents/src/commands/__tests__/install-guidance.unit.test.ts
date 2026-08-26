@@ -50,80 +50,111 @@ describe('guidance installation', () => {
     return rovoHome;
   }
 
-  describe('shared guidance', () => {
-    it('installs AGENTS.md to ~/.agents/', async () => {
+  /**
+   * Recreates what a previous version left behind: a `~/.agents/AGENTS.md` and the `shared` manifest tier tracking it.
+   * `contentOnDisk` writes different bytes than the tracked hash records, which is how a hand-modified copy is staged;
+   * `linked` records the entry as a `--link` symlink, whose fate no drift check governs.
+   */
+  async function seedRetiredSharedGuidance(
+    options: { contentOnDisk?: string; linked?: boolean } = {},
+  ): Promise<string> {
+    const deployed = '# Retired shared guidance\n';
+    const retiredPath = path.join(tempDir, '.agents', 'AGENTS.md');
+    await mkdir(path.dirname(retiredPath), { recursive: true });
+    await writeFile(retiredPath, deployed, 'utf8');
+    const contentHash = await computeContentHash(retiredPath);
+    if (options.contentOnDisk !== undefined) {
+      await writeFile(retiredPath, options.contentOnDisk, 'utf8');
+    }
+
+    const manifestPath = getManifestPath(tempDir);
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    await writeFile(
+      manifestPath,
+      JSON.stringify({
+        schemaVersion: 2,
+        shared: {
+          version: '0.0.0',
+          installedAt: '2026-01-01T00:00:00.000Z',
+          entries: [{ relativePath: 'AGENTS.md', contentHash, linked: options.linked === true }],
+        },
+        harnesses: {},
+      }) + '\n',
+      'utf8',
+    );
+    return retiredPath;
+  }
+
+  describe('retired shared guidance', () => {
+    it('deploys nothing to ~/.agents/', async () => {
       await setupClaudeHome();
 
       await installCommand(makeOptions(), tempDir, contentDir);
 
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      expect(existsSync(sharedAgentsMd)).toBe(true);
-      expect(await readFile(sharedAgentsMd, 'utf8')).toContain('# Fixture shared guidance');
+      expect(existsSync(path.join(tempDir, '.agents'))).toBe(false);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
-    it('installs even when no harness home directories exist', async () => {
+    it('removes a tracked copy a previous version deployed', async () => {
+      await setupClaudeHome();
+      const retiredPath = await seedRetiredSharedGuidance();
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(retiredPath)).toBe(false);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
+    });
+
+    it('removes a tracked copy when no harness home directories exist', async () => {
+      const retiredPath = await seedRetiredSharedGuidance();
+
       await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
 
-      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
-
-      const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared?.entries.length).toBeGreaterThan(0);
+      expect(existsSync(retiredPath)).toBe(false);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
-    it('tracks shared entries in manifest.shared', async () => {
+    it('removes a tracked symlink, which carries no content to preserve', async () => {
       await setupClaudeHome();
+      const retiredPath = await seedRetiredSharedGuidance({ linked: true });
 
       await installCommand(makeOptions(), tempDir, contentDir);
 
-      const manifest = await readManifest(getManifestPath(tempDir));
-      const entry = manifest.shared?.entries.find((e) => e.relativePath === 'AGENTS.md');
-      expect(entry?.contentHash).toMatch(/^sha256:/);
-      expect(entry?.linked).toBe(false);
+      expect(existsSync(retiredPath)).toBe(false);
     });
 
-    it('creates symlinks in link mode', async () => {
+    it('preserves a tracked copy carrying hand-written content, and stops tracking it', async () => {
       await setupClaudeHome();
-
-      await installCommand(makeOptions({ link: true }), tempDir, contentDir);
-
-      // lstatSync (not existsSync, which follows the link) confirms the entry itself is a symlink.
-      expect(lstatSync(path.join(tempDir, '.agents', 'AGENTS.md')).isSymbolicLink()).toBe(true);
-
-      const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared?.entries.find((e) => e.relativePath === 'AGENTS.md')?.linked).toBe(true);
-    });
-
-    it('skips modified shared guidance without --force', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const modified = (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n';
-      await writeFile(sharedAgentsMd, modified, 'utf8');
+      const handWritten = '# Retired\n\nMy own notes.\n';
+      const retiredPath = await seedRetiredSharedGuidance({ contentOnDisk: handWritten });
 
       await installCommand(makeOptions(), tempDir, contentDir);
 
-      expect(await readFile(sharedAgentsMd, 'utf8')).toBe(modified);
+      expect(await readFile(retiredPath, 'utf8')).toBe(handWritten);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
-    it('overwrites modified shared guidance with --force', async () => {
+    it('leaves a copy this CLI never deployed untouched', async () => {
       await setupClaudeHome();
+      const foreignPath = path.join(tempDir, '.agents', 'AGENTS.md');
+      await mkdir(path.dirname(foreignPath), { recursive: true });
+      await writeFile(foreignPath, '# Not ours\n', 'utf8');
 
       await installCommand(makeOptions(), tempDir, contentDir);
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const managed = await readFile(sharedAgentsMd, 'utf8');
-      await writeFile(sharedAgentsMd, managed + '\n<!-- user modification -->\n', 'utf8');
 
-      await installCommand(makeOptions({ force: true }), tempDir, contentDir);
-
-      expect(await readFile(sharedAgentsMd, 'utf8')).toBe(managed);
+      expect(await readFile(foreignPath, 'utf8')).toBe('# Not ours\n');
     });
 
-    it('does not write files in dry-run mode', async () => {
-      await installCommand(makeOptions({ harness: 'all', dryRun: true }), tempDir, contentDir);
+    it('predicts the removal in dry-run mode without writing', async () => {
+      await setupClaudeHome();
+      const retiredPath = await seedRetiredSharedGuidance();
 
-      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
-      expect(existsSync(getManifestPath(tempDir))).toBe(false);
+      using silent = silenceConsole(['info']);
+      await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+
+      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
+      expect(output).toContain('Would remove stale item: AGENTS.md');
+      expect(existsSync(retiredPath)).toBe(true);
     });
   });
 
@@ -319,18 +350,6 @@ describe('guidance installation', () => {
   });
 
   describe('uninstall', () => {
-    it('removes shared guidance files', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
-
-      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
-
-      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
-      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
-    });
-
     it('removes harness-specific guidance files', async () => {
       const claudeHome = await setupClaudeHome();
 
@@ -341,81 +360,9 @@ describe('guidance installation', () => {
 
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
-
-    it('skips modified shared guidance without --force', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      await writeFile(
-        sharedAgentsMd,
-        (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n',
-        'utf8',
-      );
-
-      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
-
-      expect(existsSync(sharedAgentsMd)).toBe(true);
-      expect((await readManifest(getManifestPath(tempDir))).shared).toBeDefined();
-    });
-
-    it('removes shared guidance when no harness home directories exist', async () => {
-      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      expect(existsSync(sharedAgentsMd)).toBe(true);
-
-      await uninstallCommand({ harness: 'all', force: false }, tempDir);
-
-      expect(existsSync(sharedAgentsMd)).toBe(false);
-      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
-    });
-
-    it('removes modified shared guidance with --force', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      await writeFile(
-        sharedAgentsMd,
-        (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n',
-        'utf8',
-      );
-
-      await uninstallCommand({ harness: 'claude', force: true }, tempDir);
-
-      expect(existsSync(sharedAgentsMd)).toBe(false);
-      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
-    });
   });
 
   describe('status', () => {
-    it('reports shared guidance state', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-
-      using silent = silenceConsole(['info']);
-      await statusCommand({ harness: 'claude' }, tempDir);
-
-      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-      expect(output).toContain('shared (~/.agents/)');
-      expect(output).toContain('current');
-    });
-
-    it('reports missing shared guidance when file is deleted from disk', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-      await rm(path.join(tempDir, '.agents', 'AGENTS.md'));
-
-      using silent = silenceConsole(['info']);
-      await statusCommand({ harness: 'claude' }, tempDir);
-
-      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-      expect(output).toContain('missing:');
-      expect(output).toContain('AGENTS.md');
-    });
-
     it('reports harness guidance state', async () => {
       await setupClaudeHome();
 
@@ -427,24 +374,6 @@ describe('guidance installation', () => {
       const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('claude:');
       expect(output).toMatch(/\d+ current/);
-    });
-
-    it('reports modified shared guidance', async () => {
-      await setupClaudeHome();
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      await writeFile(
-        sharedAgentsMd,
-        (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n',
-        'utf8',
-      );
-
-      using silent = silenceConsole(['info']);
-      await statusCommand({ harness: 'claude' }, tempDir);
-
-      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-      expect(output).toContain('modified: AGENTS.md');
     });
   });
 
@@ -510,26 +439,17 @@ describe('guidance installation', () => {
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
 
-    it('fails a dry run on a shared guidance file whose anchor names no heading, writing nothing', async () => {
+    // Shared guidance reaches a harness file by include, so its dead anchor is reported against the file that inlines
+    // it: the shared source is no longer checked on a route of its own.
+    it('fails a dry run on shared guidance inlined into a harness file, writing nothing', async () => {
       const badContentDir = path.join(tempDir, 'bad-content');
       await buildContentTree(badContentDir, { sharedGuidance: { 'AGENTS.md': DEAD_ANCHOR_BODY } });
-      await setupClaudeHome();
+      const claudeHome = await setupClaudeHome();
 
       await expect(
         installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
-      ).rejects.toThrow(/guidance\/shared\/AGENTS\.md carries 1 unresolvable anchor link target/);
-      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
-    });
-
-    it('fails a shared guidance file in link mode, where the symlink would carry the dead locator', async () => {
-      const badContentDir = path.join(tempDir, 'bad-content');
-      await buildContentTree(badContentDir, { sharedGuidance: { 'AGENTS.md': DEAD_ANCHOR_BODY } });
-      await setupClaudeHome();
-
-      await expect(
-        installCommand(makeOptions({ harness: 'claude', link: true }), tempDir, badContentDir),
-      ).rejects.toThrow(/guidance\/shared\/AGENTS\.md carries 1 unresolvable anchor link target/);
-      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
+      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md carries 1 unresolvable anchor link target/);
+      expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
   });
 });

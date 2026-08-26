@@ -37,7 +37,6 @@ import type {
   HarnessManifest,
   InstallOptions,
   ManifestEntry,
-  SharedManifest,
 } from '../lib/types.ts';
 import { ensureHarnessHookEntries } from './configure-hooks.ts';
 
@@ -69,17 +68,13 @@ export async function installCommand(
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Install shared guidance unconditionally (before harness detection check)
-  const sharedGuidanceResult = await installSharedGuidance(contentDir, manifest, options, baseDir);
+  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the harness-detection check: a home that
+  // targets no harness still carries whatever a previous install left in `~/.agents/`.
+  const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
   if (harnesses.length === 0) {
-    // Even with no harnesses, persist the shared manifest update
-    if (!options.dryRun && sharedGuidanceResult) {
-      const updatedManifest: AgentsManifest = {
-        ...manifest,
-        shared: sharedGuidanceResult,
-      };
-      await writeManifest(manifestPath, updatedManifest);
+    if (!options.dryRun && didRetire) {
+      await writeManifest(manifestPath, withoutSharedTier(manifest));
       console.info('\nManifest updated.');
     } else {
       console.info('No target harnesses detected. Nothing else to install.');
@@ -189,8 +184,7 @@ export async function installCommand(
 
   if (!options.dryRun) {
     const updatedManifest: AgentsManifest = {
-      ...manifest,
-      shared: sharedGuidanceResult ?? manifest.shared,
+      ...withoutSharedTier(manifest),
       harnesses: updatedHarnesses,
     };
     await writeManifest(manifestPath, updatedManifest);
@@ -443,130 +437,38 @@ async function installScripts(
 }
 
 /**
- * Installs shared guidance files from `content/guidance/shared/` to `~/.agents/`.
- * Runs unconditionally (not gated by harness detection).
+ * Retires the withdrawn shared-guidance tier: removes what a previous `install` deployed to `~/.agents/` and reports
+ * whether the manifest's `shared` record should be dropped. Nothing is deployed there any more, so a lingering copy
+ * presents a file no harness loads as current guidance.
+ *
+ * Retirement is driven by the manifest alone, which is what makes it safe: a `~/.agents/AGENTS.md` this CLI never
+ * deployed carries no entry and is left untouched. Of the entries it does carry, an unmodified copy and a `--link`
+ * symlink are removed, and a user-modified copy is kept and reported, all through the same orphan-prune pass that
+ * governs every other withdrawn entry. A kept copy is left untracked, which is the intended end state: it holds the
+ * user's own content.
+ *
+ * A home with no `shared` record has nothing to retire, so this is a no-op on every install after the first.
  */
-async function installSharedGuidance(
-  contentDir: string,
+async function retireSharedGuidance(
   manifest: AgentsManifest,
   options: InstallOptions,
   baseDir?: string,
-): Promise<SharedManifest | undefined> {
-  const sharedSrcDir = path.join(contentDir, 'guidance', 'shared');
-  let dirEntries: ReadonlyArray<string>;
-  try {
-    dirEntries = await readdir(sharedSrcDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    console.warn(
-      `  ⚠️ Warning: no shared guidance directory found at ${sharedSrcDir}, skipping shared guidance installation`,
-    );
-    return undefined;
+): Promise<boolean> {
+  const entries = manifest.shared?.entries ?? [];
+  if (entries.length === 0) {
+    return manifest.shared !== undefined;
   }
 
-  const sharedHome = resolveSharedHome(baseDir);
-  checkSymlinkSafety(sharedHome);
-
-  const existingEntries = manifest.shared?.entries ?? [];
-  const existingByPath = new Map(existingEntries.map((e) => [e.relativePath, e]));
-  const entries: Array<ManifestEntry> = [];
-
-  console.info('\nInstalling shared guidance');
-
-  let anyWritten = false;
-
-  for (const fileName of dirEntries) {
-    if (fileName.startsWith('.')) {
-      continue;
-    }
-
-    const { manifestEntry, written } = await installSharedGuidanceEntry(
-      fileName,
-      sharedSrcDir,
-      sharedHome,
-      existingByPath.get(fileName),
-      options,
-    );
-    entries.push(manifestEntry);
-    anyWritten ||= written;
-  }
-
-  // Reconcile shared guidance against the previous manifest before reporting or persisting, so deleted-source
-  // files are removed from `~/.agents/` too. User-modified orphans are kept (unless `--force`) and stay tracked.
-  const pruned = await pruneOrphanedEntries(existingEntries, entries, sharedHome, options);
-  entries.push(...pruned.retained);
+  console.info('\nRetiring shared guidance');
+  const pruned = await pruneOrphanedEntries(entries, [], resolveSharedHome(baseDir), options);
   emitReport(describePruneResult(pruned, options));
-
-  if (options.dryRun) {
-    console.info(`  [dry-run] Would install ${entries.length} shared guidance items`);
-    return undefined;
-  }
-
-  console.info(`  ✅ Installed ${entries.length} shared guidance items`);
-
-  return {
-    version: readRunningPackageVersion(),
-    installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
-    entries,
-  };
+  return !options.dryRun;
 }
 
-/**
- * Installs one shared guidance file into `~/.agents/`, reporting the manifest entry to record and whether the install
- * touched the destination. A dry run and a skipped user-modified file both report `written: false`, which keeps the
- * caller's `installedAt` on its previous value when nothing reached disk.
- */
-async function installSharedGuidanceEntry(
-  fileName: string,
-  sharedSrcDir: string,
-  sharedHome: string,
-  existingEntry: ManifestEntry | undefined,
-  options: InstallOptions,
-): Promise<{ manifestEntry: ManifestEntry; written: boolean }> {
-  const srcPath = path.join(sharedSrcDir, fileName);
-  const destPath = path.join(sharedHome, fileName);
-  const isMarkdown = fileName.endsWith('.md');
-
-  // Shared guidance ships verbatim, with no include expansion and no rewriting, so the anchor check reads the source
-  // itself rather than riding a render. It runs before the dry-run gate, and in link mode too: a symlinked file
-  // reaches the reader with the same dead locator a copied one would.
-  if (isMarkdown) {
-    assertAnchorsResolve(await readFile(srcPath, 'utf8'), `guidance/shared/${fileName}`);
-  }
-
-  if (options.dryRun) {
-    const action = options.link ? 'link' : 'copy';
-    console.info(`    [${action}] ${fileName} -> ~/.agents/${fileName}`);
-    return { manifestEntry: { relativePath: fileName, contentHash: 'dry-run', linked: options.link }, written: false };
-  }
-
-  // Check for user modifications before overwriting
-  if (existingEntry && !options.force) {
-    const drift = await detectDrift(existingEntry, sharedHome);
-    if (drift === 'modified') {
-      console.warn(`  ⚠️ Skipping modified item: ~/.agents/${fileName}`);
-      return { manifestEntry: existingEntry, written: false };
-    }
-  }
-
-  await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
-
-  // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
-  // to the source file; marking them would mislabel the source itself.
-  if (!options.link && isMarkdown) {
-    await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${fileName}`));
-  }
-
-  return {
-    manifestEntry: {
-      relativePath: fileName,
-      contentHash: await computeContentHash(options.link ? srcPath : destPath),
-      linked: options.link,
-    },
-    written: true,
-  };
+/** Returns `manifest` without its retired `shared` tier. */
+function withoutSharedTier(manifest: AgentsManifest): AgentsManifest {
+  const { shared: _shared, ...rest } = manifest;
+  return rest;
 }
 
 /**

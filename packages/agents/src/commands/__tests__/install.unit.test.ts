@@ -112,11 +112,11 @@ describe(installCommand, () => {
     await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow('Target directory is a symlink');
   });
 
-  it('skips a user-modified shared-guidance file on re-install without --force', async () => {
-    await setupClaudeHome();
+  it('skips a user-modified guidance file on re-install without --force', async () => {
+    const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
+    const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     const modified = (await readFile(guidancePath, 'utf8')) + '\n<!-- user modification -->\n';
     await writeFile(guidancePath, modified, 'utf8');
 
@@ -125,11 +125,11 @@ describe(installCommand, () => {
     expect(await readFile(guidancePath, 'utf8')).toBe(modified);
   });
 
-  it('overwrites a user-modified shared-guidance file on re-install with --force', async () => {
-    await setupClaudeHome();
+  it('overwrites a user-modified guidance file on re-install with --force', async () => {
+    const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
+    const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     const managed = await readFile(guidancePath, 'utf8');
     await writeFile(guidancePath, managed + '\n<!-- user modification -->\n', 'utf8');
 
@@ -139,10 +139,10 @@ describe(installCommand, () => {
   });
 
   it('prefixes skip warnings with ⚠️ and the success summary with ✅', async () => {
-    await setupClaudeHome();
+    const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
+    const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     await writeFile(guidancePath, `${await readFile(guidancePath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
 
     using silent = silenceConsole(['info', 'warn']);
@@ -218,9 +218,8 @@ describe(installCommand, () => {
     expect(skills).not.toContain('beta');
     // Subagents do not install unconditionally.
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
-    // Scripts and shared guidance install as before.
+    // Scripts install as before.
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
-    expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
   });
 
   it('installs the _data support directory but not _harnesses', async () => {
@@ -241,20 +240,6 @@ describe(installCommand, () => {
 
     const content = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
     expect(content).toContain('content/guidance/_harnesses/claude/CLAUDE.md');
-  });
-
-  it('does not inject a marker into symlinked shared guidance', async () => {
-    await setupClaudeHome();
-    const sourcePath = path.join(contentDir, 'guidance', 'shared', 'AGENTS.md');
-    const sourceBefore = await readFile(sourcePath, 'utf8');
-
-    await installCommand(makeOptions({ link: true }), tempDir, contentDir);
-
-    expect(lstatSync(path.join(tempDir, '.agents', 'AGENTS.md')).isSymbolicLink()).toBe(true);
-    // Marking the symlink target would corrupt the source: marker-free on input, marker-free on output.
-    const sourceAfter = await readFile(sourcePath, 'utf8');
-    expect(sourceAfter).toBe(sourceBefore);
-    expect(sourceAfter.startsWith('<!-- GENERATED FILE')).toBe(false);
   });
 
   it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {

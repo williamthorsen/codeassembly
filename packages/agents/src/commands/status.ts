@@ -2,7 +2,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { readHomeProvenance } from '../lib/home-provenance.ts';
-import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.ts';
+import { detectDrift, getManifestPath, readManifest } from '../lib/manifest.ts';
 import type { HarnessId, InstallOptions } from '../lib/types.ts';
 import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
 
@@ -16,10 +16,7 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
 
   await reportHomeProvenance(baseDir);
 
-  // Report shared guidance status unconditionally
-  await reportSharedGuidanceStatus(manifest, baseDir);
-
-  if (harnesses.length === 0 && !manifest.shared) {
+  if (harnesses.length === 0) {
     console.info('No target harnesses detected.');
     return;
   }
@@ -116,46 +113,4 @@ async function reportHookEntryStatus(
       console.info(`    ${entry.status}: ${entry.hook}`);
     }
   }
-}
-
-/**
- * Reports the status of shared guidance files installed to `~/.agents/`.
- */
-async function reportSharedGuidanceStatus(
-  manifest: Awaited<ReturnType<typeof readManifest>>,
-  baseDir?: string,
-): Promise<void> {
-  const sharedManifest = manifest.shared;
-  if (!sharedManifest) {
-    return;
-  }
-
-  console.info('\nshared (~/.agents/):');
-  console.info(`  Installed at: ${sharedManifest.installedAt}`);
-  console.info(`  Version: ${sharedManifest.version}`);
-
-  const sharedHome = resolveSharedHome(baseDir);
-  let currentCount = 0;
-  let modifiedCount = 0;
-  let missingCount = 0;
-
-  for (const entry of sharedManifest.entries) {
-    const drift = await detectDrift(entry, sharedHome);
-
-    switch (drift) {
-      case 'current':
-        currentCount++;
-        break;
-      case 'modified':
-        modifiedCount++;
-        console.info(`    modified: ${entry.relativePath}`);
-        break;
-      case 'missing':
-        missingCount++;
-        console.info(`    missing:  ${entry.relativePath}`);
-        break;
-    }
-  }
-
-  console.info(`  Summary: ${currentCount} current, ${modifiedCount} modified, ${missingCount} missing`);
 }

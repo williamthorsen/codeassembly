@@ -54,11 +54,10 @@ describe('install (home provenance)', () => {
     expect(existsSync(getHomeProvenancePath(tempDir))).toBe(false);
   });
 
-  it('records the running package version in both manifest sections', async () => {
+  it('records the running package version in the harness manifest', async () => {
     await installCommand(makeOptions(), tempDir, contentDir);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude?.version).toBe(readRunningPackageVersion());
-    expect(manifest.shared?.version).toBe(readRunningPackageVersion());
   });
 });

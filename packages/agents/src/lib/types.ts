@@ -4,6 +4,10 @@ export type HarnessId = 'claude' | 'rovo';
 /** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
 export interface AgentsManifest {
   readonly schemaVersion: number;
+  /**
+   * The retired `~/.agents/` tier, present only in a manifest a previous version wrote. `install` reads it to retire
+   * what it deployed there and writes the manifest without it; nothing produces it.
+   */
   readonly shared?: SharedManifest | undefined;
   readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
 }
@@ -83,7 +87,10 @@ export interface ManifestEntry {
   readonly linked: boolean;
 }
 
-/** Manifest data for shared (cross-harness) entries installed to `~/.agents/`. */
+/**
+ * Manifest data for the retired cross-harness tier a previous version installed to `~/.agents/`. Retained as the shape
+ * `install`'s retirement pass reads; no pass writes it.
+ */
 export interface SharedManifest {
   readonly version: string;
   readonly installedAt: string;

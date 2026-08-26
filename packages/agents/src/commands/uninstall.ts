@@ -3,8 +3,8 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { removeItem } from '../lib/installer.ts';
-import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.ts';
-import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.ts';
+import { getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
+import type { AgentsManifest, InstallOptions, ManifestEntry } from '../lib/types.ts';
 import { removeHarnessHookEntries } from './configure-hooks.ts';
 
 /**
@@ -18,12 +18,7 @@ export async function uninstallCommand(
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Uninstall shared guidance unconditionally (not gated by harness detection)
-  const updatedShared = await uninstallSharedGuidance(manifest, options, baseDir);
-
-  // uninstallSharedGuidance above is a no-op when manifest.shared is undefined,
-  // so this guard safely covers the "nothing installed at all" case.
-  if (harnesses.length === 0 && !manifest.shared) {
+  if (harnesses.length === 0) {
     console.info('No target harnesses detected. Nothing to uninstall.');
     return;
   }
@@ -49,7 +44,7 @@ export async function uninstallCommand(
     }
 
     const paths = resolveHarnessPaths(harnessId, baseDir);
-    const skippedEntries = await removeTrackedEntries(harnessManifest.entries, paths.harnessHome, options.force, '');
+    const skippedEntries = await removeTrackedEntries(harnessManifest.entries, paths.harnessHome, options.force);
 
     // Remove harness from manifest or retain only skipped entries
     if (skippedEntries.length === 0) {
@@ -65,7 +60,6 @@ export async function uninstallCommand(
 
   const updatedManifest: AgentsManifest = {
     ...manifest,
-    shared: updatedShared,
     harnesses: remainingHarnesses,
   };
 
@@ -73,43 +67,16 @@ export async function uninstallCommand(
   console.info('\nManifest updated.');
 }
 
-/**
- * Uninstalls shared guidance files from `~/.agents/`.
- * Returns the updated shared manifest (undefined if all entries were removed).
- */
-async function uninstallSharedGuidance(
-  manifest: AgentsManifest,
-  options: Pick<InstallOptions, 'force'>,
-  baseDir?: string,
-): Promise<SharedManifest | undefined> {
-  const sharedManifest = manifest.shared;
-  if (!sharedManifest) {
-    return undefined;
-  }
-
-  console.info('\nUninstalling shared guidance');
-  const sharedHome = resolveSharedHome(baseDir);
-  const skippedEntries = await removeTrackedEntries(sharedManifest.entries, sharedHome, options.force, '~/.agents/');
-
-  // Retain shared manifest only with the entries that were skipped
-  if (skippedEntries.length > 0) {
-    return { ...sharedManifest, entries: skippedEntries };
-  }
-  return undefined;
-}
-
 // region | Helpers
 
 /**
  * Removes each tracked entry the policy marks for removal, collects user-modified entries to keep tracking,
- * reports the tally, and returns the skipped entries. `displayPrefix` is prepended to the relative path in
- * skip warnings (e.g., `~/.agents/` for shared guidance).
+ * reports the tally, and returns the skipped entries.
  */
 async function removeTrackedEntries(
   entries: ReadonlyArray<ManifestEntry>,
   home: string,
   force: boolean,
-  displayPrefix: string,
 ): Promise<ManifestEntry[]> {
   let removedCount = 0;
   const skippedEntries: ManifestEntry[] = [];
@@ -118,7 +85,7 @@ async function removeTrackedEntries(
     const verdict = await classifyOwnedEntry(entry, home, force);
 
     if (verdict === 'retain') {
-      console.warn(`  ⚠️ Skipping modified file: ${displayPrefix}${entry.relativePath}`);
+      console.warn(`  ⚠️ Skipping modified file: ${entry.relativePath}`);
       skippedEntries.push(entry);
       continue;
     }
