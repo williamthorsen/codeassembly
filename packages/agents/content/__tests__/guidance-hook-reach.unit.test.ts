@@ -50,6 +50,28 @@ interface SpliceProbe {
 // and a discovered list would move with the bug.
 const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
+    hook: 'comment-preferences',
+    role: 'writes or judges source comments',
+    declaringBodies: [
+      { label: 'aspect-code-reviewer', relativePath: 'subagents/aspect-code-reviewer.md' },
+      { label: 'aspect-silent-failure-reviewer', relativePath: 'subagents/aspect-silent-failure-reviewer.md' },
+      { label: 'aspect-test-reviewer', relativePath: 'subagents/aspect-test-reviewer.md' },
+      { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
+      { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
+      { label: 'orchestrated-reviewer', relativePath: 'subagents/orchestrated-reviewer.md' },
+    ],
+    boundRulebooks: [
+      {
+        slug: 'williamthorsen-comment-preferences',
+        rule: 'third-person indicative with the subject understood',
+      },
+    ],
+    spliceProbe: {
+      body: { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
+      coexisting: ['Comment-discipline violations'],
+    },
+  },
+  {
     hook: 'implementation-preferences',
     role: 'writes or judges code',
     declaringBodies: [
