@@ -107,6 +107,16 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 
 <!-- include: ../_partials/plain-speech.md / -->
 
+<!-- include: ../_partials/code-descriptions.md / -->
+
+<!-- include: ../_partials/code-style.md / -->
+
+<!-- include: ../_partials/concision.md / -->
+
+<!-- include: ../_partials/file-access.md / -->
+
+<!-- include: ../_partials/shell-commands.md / -->
+
 ## Criticality classification
 
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:

@@ -44,6 +44,14 @@ You will receive:
 
 <!-- include: ../_partials/plain-speech.md / -->
 
+<!-- include: ../_partials/concision.md / -->
+
+<!-- include: ../_partials/file-access.md / -->
+
+<!-- include: ../_partials/shell-commands.md / -->
+
+<!-- include: ../_partials/technical-recommendations.md / -->
+
 <!-- guidance-hook: implementation-preferences -->
 <!-- guidance-hook: ticketing-preferences -->
 <!-- guidance-hook: writing-preferences -->

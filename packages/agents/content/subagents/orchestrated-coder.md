@@ -193,6 +193,20 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 
 </HARD-GATE>
 
+<!-- include: ../_partials/code-descriptions.md / -->
+
+<!-- include: ../_partials/code-style.md / -->
+
+<!-- include: ../_partials/concision.md / -->
+
+<!-- include: ../_partials/file-access.md / -->
+
+<!-- include: ../_partials/live-repo-writes.md / -->
+
+<!-- include: ../_partials/shell-commands.md / -->
+
+<!-- include: ../_partials/technical-recommendations.md / -->
+
 <!-- guidance-hook: comment-preferences -->
 <!-- guidance-hook: implementation-preferences -->
 
