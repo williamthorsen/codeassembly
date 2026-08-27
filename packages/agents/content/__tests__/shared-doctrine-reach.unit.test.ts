@@ -18,7 +18,8 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArray<string> }>> = {
   'code-descriptions': {
     headline: '## Code descriptions',
-    phrases: ['Every non-trivial function, method, class, and component', 'In languages with doc-tag conventions'],
+    // `comment-discipline.md` states the same baseline at length, so these are the short form's own wording.
+    phrases: ['gets a brief description', 'In languages with doc-tag conventions'],
   },
   'code-style': {
     headline: '## Style',
@@ -66,7 +67,7 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
   { heading: '## Style', phrase: 'Code style should adhere to' },
   { heading: '## Concision', phrase: 'then costs the reader attention and hides the signal' },
   { heading: '## Plain speech', phrase: 'When writing practical documentation, speak plainly' },
-  { heading: '## Code descriptions', phrase: 'Every non-trivial function, method, class, and component' },
+  { heading: '## Code descriptions', phrase: 'gets a brief description' },
   { heading: '## File access', phrase: 'When given an exact file path' },
   { heading: '## Shell commands', phrase: 'Compound `cd &&` commands' },
   {
