@@ -156,8 +156,9 @@ async function expandSubagent(slug: string): Promise<string> {
 /** Returns `file -> phrase` for every content file but the partial that states one of the phrases. */
 async function findRestatements(partialPath: string, phrases: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
   const violations: Array<string> = [];
+  const files = await listMarkdownFiles(CONTENT_ROOT);
 
-  for (const file of await listMarkdownFiles(CONTENT_ROOT)) {
+  for (const file of files) {
     const relativePath = path.relative(CONTENT_ROOT, file);
     if (relativePath === partialPath) continue;
 
