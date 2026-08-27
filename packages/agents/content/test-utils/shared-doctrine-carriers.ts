@@ -50,7 +50,11 @@ function listApproachChoosingSubagents(): ReadonlyArray<string> {
   ];
 }
 
-/** Subagents that write code or judge it against a standard. */
+/**
+ * Subagents that write code or judge it against a standard. The population coincides with
+ * `COMMENT_AUTHORING_SUBAGENTS`, which selects on whether a subagent authors or judges comments; the two lists are
+ * independent, and either may take a member the other does not.
+ */
 function listCodeFacingSubagents(): ReadonlyArray<string> {
   return [
     'aspect-code-reviewer',
