@@ -36,6 +36,14 @@ You will receive:
 
 <!-- include: ../_partials/plain-speech.md / -->
 
+<!-- include: ../_partials/concision.md / -->
+
+<!-- include: ../_partials/file-access.md / -->
+
+<!-- include: ../_partials/shell-commands.md / -->
+
+<!-- include: ../_partials/technical-recommendations.md / -->
+
 ## Finding scheme (C/X)
 
 Plan review uses a resolution-oriented finding scheme, not the severity-oriented F/W/T/R/S scheme (with `-L` suffix for legacy) used for code review. The key decision is "who resolves this" -- the reviser autonomously, or the user.

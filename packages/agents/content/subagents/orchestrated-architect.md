@@ -22,6 +22,14 @@ You are NOT a planner or coder. You do not write implementation plans or code. Y
 
 <!-- include: ../_partials/plain-speech.md / -->
 
+<!-- include: ../_partials/concision.md / -->
+
+<!-- include: ../_partials/file-access.md / -->
+
+<!-- include: ../_partials/shell-commands.md / -->
+
+<!-- include: ../_partials/technical-recommendations.md / -->
+
 ## Impact levels
 
 Classify the task into exactly one impact level:

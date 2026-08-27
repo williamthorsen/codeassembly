@@ -57,6 +57,8 @@ Two things a partial may contain are resolved against the host that inlines it r
 
 A **relative Markdown link** cannot serve both a skill host and a rulebook host. A skill's links resolve against `<slug>/SKILL.md` in skills-dir space; a rulebook's resolve against `guidance/rulebooks/<slug>.md` in content-root space. One authored target therefore names two different files, and a skill-shaped one resolves outside a rulebook's linkable roots, so the run fails. `voice-checklist.md` links to `lede-voice.md` through the template-variable form for that reason, and inlines into a rulebook and a skill alike. Write the target as `{harness_home_dir}/...` inside inline code where a partial must reach a file from both.
 
+A partial that `guidance/shared/AGENTS.md` inlines takes no relative link at all. That file lands inside each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that reaches a file from there. `shared-guidance-policy.unit.test.ts` scans the expanded body and fails a relative target it finds.
+
 A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. Only a host that resolves a declaration knows the deployed rulebook set, and `install` ships a support entry having resolved none, so the token renders in the skill but breaks the support entry's install.
 
 ## Path references in installed content

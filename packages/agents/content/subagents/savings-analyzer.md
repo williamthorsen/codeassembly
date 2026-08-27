@@ -64,6 +64,10 @@ Tag every suggestion:
 
 <!-- include: ../_partials/plain-speech.md / -->
 
+<!-- include: ../_partials/concision.md / -->
+
+<!-- include: ../_partials/file-access.md / -->
+
 <!-- guidance-hook: writing-preferences -->
 
 ## Output format
