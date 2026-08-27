@@ -18,8 +18,9 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArray<string> }>> = {
   'code-descriptions': {
     headline: '## Code descriptions',
-    // `comment-discipline.md` states the same baseline at length, so these are the short form's own wording.
-    phrases: ['gets a brief description', 'In languages with doc-tag conventions'],
+    // Pins the rule's universality, so a restored carve-out fails. `comment-discipline.md` opens with the same
+    // words, so the phrase stops at the verb that parts the two.
+    phrases: ['Every function, method, class, and component gets', 'In languages with doc-tag conventions'],
   },
   'code-style': {
     headline: '## Style',
