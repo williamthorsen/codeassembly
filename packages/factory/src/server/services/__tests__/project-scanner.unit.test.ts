@@ -1,7 +1,7 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { ProjectScanner } from '../project-scanner.js';
 
 const { mockedDiscover, mockedValidate } = vi.hoisted(() => ({

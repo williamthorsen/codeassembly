@@ -1,7 +1,7 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { Actor, Color, Rectangle, Scene, vec } from 'excalibur';
 
 import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
-import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
 import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
 import {
   ArtifactActor,

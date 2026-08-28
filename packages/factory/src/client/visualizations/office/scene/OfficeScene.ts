@@ -1,6 +1,6 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { Actor, Canvas, Color, type ImageSource, Rectangle, Scene, vec } from 'excalibur';
 
-import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
 import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
 import { mapRunToLogicalScene } from '../../shared/run-to-logical-scene.js';
 import type { LogicalSceneState } from '../../shared/types.js';

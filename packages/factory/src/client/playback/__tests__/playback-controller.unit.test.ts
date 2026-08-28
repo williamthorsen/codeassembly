@@ -1,6 +1,6 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { PlaybackController } from '../playback-controller.js';
 
 function createSnapshots(): CanonicalRunStatus[] {

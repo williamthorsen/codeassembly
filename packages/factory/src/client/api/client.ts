@@ -1,7 +1,8 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
+
 import type {
   ArtifactContentResponse,
   ArtifactListResponse,
-  CanonicalRunStatus,
   ProjectIndex,
   RunEventsResponse,
 } from '../../shared/types/api.js';

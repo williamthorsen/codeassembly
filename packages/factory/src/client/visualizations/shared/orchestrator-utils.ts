@@ -1,6 +1,7 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
+
 import type { PhaseName } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES } from '../../../shared/constants/role-types.js';
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { isPresent, lookupArtifactColor } from './artifact-utils.js';
 
 // region | Types

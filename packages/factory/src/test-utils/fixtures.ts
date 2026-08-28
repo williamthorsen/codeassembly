@@ -1,4 +1,4 @@
-import type { CanonicalRunStatus, Phases } from '../shared/types/canonical.js';
+import type { CanonicalRunStatus, Phases } from 'codeassembly-run-core';
 
 export function emptyPhases(): Phases {
   return {

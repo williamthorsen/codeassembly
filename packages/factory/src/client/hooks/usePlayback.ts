@@ -1,6 +1,6 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import type { PlaybackControls, PlaybackSource, PlaybackState } from '../playback/playback-controller.js';
 import { PlaybackController } from '../playback/playback-controller.js';
 

@@ -1,7 +1,7 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { Actor, BaseAlign, Color, Font, Rectangle, Scene, Text, vec } from 'excalibur';
 
 import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
-import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
 import { ChuteActor } from '../../catwalk/actors/ChuteActor.js';
 import { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';
 import { StationAgentActor } from '../../catwalk/actors/StationAgentActor.js';

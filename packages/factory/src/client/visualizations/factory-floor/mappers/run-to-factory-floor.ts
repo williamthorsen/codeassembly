@@ -1,3 +1,5 @@
+import type { CanonicalRunStatus, Phases } from 'codeassembly-run-core';
+
 import { ARTIFACT_COLORS } from '../../../../shared/constants/artifact-colors.js';
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
@@ -7,7 +9,6 @@ import {
   isPhaseEvaluated,
   isPhasePresentInData,
 } from '../../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
 import { extractReviewerNames } from '../../shared/artifact-utils.js';
 import type {
   AgentAnimationState,

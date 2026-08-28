@@ -1,4 +1,5 @@
-import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
+import type { RunEvent, RunHeader } from 'codeassembly-run-core';
+
 import { generateSnapshots } from '../../playback/generate-snapshots.js';
 import type { DemoRecording } from '../index.js';
 

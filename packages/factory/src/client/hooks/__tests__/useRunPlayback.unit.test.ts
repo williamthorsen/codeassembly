@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import type { RunEvent, RunHeader } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
 import { useRunPlayback } from '../useRunPlayback.js';
 
 const { mockedFetchRunEvents } = vi.hoisted(() => ({

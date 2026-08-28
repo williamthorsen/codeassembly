@@ -1,6 +1,5 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import type React from 'react';
-
-import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 
 /** Props contract shared by all visualization components. */
 export interface VisualizationProps {
