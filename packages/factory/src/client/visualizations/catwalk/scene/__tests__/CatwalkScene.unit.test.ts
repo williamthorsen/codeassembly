@@ -67,7 +67,6 @@ vi.mock('excalibur', () => {
   };
 });
 
-// Mock all actor imports to avoid pulling in real Excalibur dependencies
 // Mock each actor module to avoid pulling in real Excalibur dependencies
 vi.mock('../../actors/ArtifactActor.js', () => ({
   ArtifactActor: class MockArtifactActor {
