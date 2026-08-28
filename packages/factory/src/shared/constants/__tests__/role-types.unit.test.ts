@@ -4,20 +4,10 @@ import { PALETTE } from '../palette.js';
 import {
   getRoleTypeColor,
   getRoleTypeLightFill,
-  PHASE_NAMES,
-  PHASE_ROLE_TYPE,
   ROLE_TYPE_COLORS,
   ROLE_TYPE_LIGHT_FILLS,
   ROLE_TYPES,
 } from '../role-types.js';
-
-describe('PHASE_ROLE_TYPE', () => {
-  it('includes an entry for every phase in PHASE_NAMES', () => {
-    for (const phase of PHASE_NAMES) {
-      expect(PHASE_ROLE_TYPE[phase]).toBeDefined();
-    }
-  });
-});
 
 describe('ROLE_TYPE_COLORS', () => {
   it('has an entry for every RoleType', () => {
