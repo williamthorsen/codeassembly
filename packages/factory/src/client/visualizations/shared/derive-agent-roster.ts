@@ -1,7 +1,7 @@
-import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
-import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
+import type { CanonicalRunStatus, ParallelReviewPhase, PhaseName, RoleType } from 'codeassembly-run-core';
+import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from 'codeassembly-run-core';
+
 import { findPhaseDecision } from '../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, ParallelReviewPhase } from '../../../shared/types/canonical.js';
 import { extractReviewerNames, isPresent, PHASE_AGENT_ID } from './artifact-utils.js';
 
 // -- Agent roster entry --

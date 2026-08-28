@@ -1,6 +1,5 @@
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import React from 'react';
-
-import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 
 import './StatusBar.css';
 

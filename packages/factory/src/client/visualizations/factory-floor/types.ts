@@ -1,4 +1,4 @@
-import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
+import type { PhaseName, RoleType } from 'codeassembly-run-core';
 
 /**
  * Animation states for factory-floor agents. Shared with the catwalk visualization

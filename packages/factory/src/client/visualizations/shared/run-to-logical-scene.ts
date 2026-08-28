@@ -1,6 +1,6 @@
-import type { PhaseName } from '../../../shared/constants/role-types.js';
+import type { CanonicalRunStatus, PhaseName } from 'codeassembly-run-core';
+
 import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.js';
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { type AgentAnimationState, resolveAgentState } from './agent-state-resolver.js';
 import { isPresent, lookupArtifactColor } from './artifact-utils.js';
 import { type AgentRosterEntry, deriveAgentRoster } from './derive-agent-roster.js';

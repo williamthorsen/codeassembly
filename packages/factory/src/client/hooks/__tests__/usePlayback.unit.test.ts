@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import type { PlaybackSource } from '../../playback/playback-controller.js';
 import { usePlayback } from '../usePlayback.js';
 

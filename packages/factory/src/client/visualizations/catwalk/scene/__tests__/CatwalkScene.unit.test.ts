@@ -67,8 +67,8 @@ vi.mock('excalibur', () => {
   };
 });
 
-// Mock all actor imports to avoid pulling in real Excalibur dependencies
-vi.mock('../../actors/index.js', () => ({
+// Mock each actor module to avoid pulling in real Excalibur dependencies
+vi.mock('../../actors/ArtifactActor.js', () => ({
   ArtifactActor: class MockArtifactActor {
     updateConfig = vi.fn();
     fadeIn = vi.fn();
@@ -77,6 +77,9 @@ vi.mock('../../actors/index.js', () => ({
       public position: unknown,
     ) {}
   },
+}));
+
+vi.mock('../../actors/CatwalkStationActor.js', () => ({
   CatwalkStationActor: class MockCatwalkStationActor {
     updateConfig = vi.fn();
     constructor(
@@ -84,6 +87,9 @@ vi.mock('../../actors/index.js', () => ({
       public position: unknown,
     ) {}
   },
+}));
+
+vi.mock('../../actors/ChuteActor.js', () => ({
   ChuteActor: class MockChuteActor {
     updateConfig = vi.fn();
     constructor(
@@ -91,6 +97,22 @@ vi.mock('../../actors/index.js', () => ({
       public endpoints: unknown,
     ) {}
   },
+}));
+
+vi.mock('../../actors/FlyingArtifactActor.js', () => ({
+  FlyingArtifactActor: class MockFlyingArtifactActor {
+    ascend = vi.fn().mockResolvedValue(undefined);
+    descend = vi.fn().mockResolvedValue(undefined);
+    kill = vi.fn();
+    constructor(
+      public config: unknown,
+      public endpoints: unknown,
+      public direction: string,
+    ) {}
+  },
+}));
+
+vi.mock('../../actors/GateActor.js', () => ({
   GateActor: class MockGateActor {
     updateConfig = vi.fn();
     animateOpen = vi.fn();
@@ -99,6 +121,9 @@ vi.mock('../../actors/index.js', () => ({
       public position: unknown,
     ) {}
   },
+}));
+
+vi.mock('../../actors/OrchestratorActor.js', () => ({
   OrchestratorActor: class MockOrchestratorActor {
     animateMoveTo = vi.fn().mockResolvedValue(undefined);
     fadeOut = vi.fn();
@@ -114,6 +139,9 @@ vi.mock('../../actors/index.js', () => ({
       public position: unknown,
     ) {}
   },
+}));
+
+vi.mock('../../actors/StationAgentActor.js', () => ({
   StationAgentActor: class MockStationAgentActor {
     animateToState = vi.fn();
     fadeIn = vi.fn();
@@ -122,21 +150,14 @@ vi.mock('../../actors/index.js', () => ({
       public position: unknown,
     ) {}
   },
-  FlyingArtifactActor: class MockFlyingArtifactActor {
-    ascend = vi.fn().mockResolvedValue(undefined);
-    descend = vi.fn().mockResolvedValue(undefined);
-    kill = vi.fn();
-    constructor(
-      public config: unknown,
-      public endpoints: unknown,
-      public direction: string,
-    ) {}
-  },
 }));
 
 const { CatwalkScene } = await import('../CatwalkScene.js');
-const { OrchestratorActor, ChuteActor, StationAgentActor, GateActor, ArtifactActor } =
-  await import('../../actors/index.js');
+const { ArtifactActor } = await import('../../actors/ArtifactActor.js');
+const { ChuteActor } = await import('../../actors/ChuteActor.js');
+const { GateActor } = await import('../../actors/GateActor.js');
+const { OrchestratorActor } = await import('../../actors/OrchestratorActor.js');
+const { StationAgentActor } = await import('../../actors/StationAgentActor.js');
 const { mapRunToCatwalk } = await import('../../mappers/run-to-catwalk.js');
 const { computeCatwalkLayout } = await import('../../layout/catwalk-layout.js');
 const { artifactKey } = await import('../../state/catwalk-differ.js');

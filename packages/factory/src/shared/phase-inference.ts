@@ -1,6 +1,5 @@
-import type { PhaseName } from './constants/role-types.js';
-import { PHASE_NAMES } from './constants/role-types.js';
-import type { PhaseDecision, Phases, RunStatus } from './types/canonical.js';
+import type { PhaseDecision, PhaseName, Phases, RunStatus } from 'codeassembly-run-core';
+import { PHASE_NAMES } from 'codeassembly-run-core';
 
 /**
  * Maps phase names to their possible `phaseDecisions` object keys.

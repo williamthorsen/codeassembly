@@ -21,7 +21,7 @@ vi.mock('node:fs/promises', () => ({
   readFile: mockedReadFile,
 }));
 
-vi.mock('../../adapters/status-adapter.js', () => ({
+vi.mock('codeassembly-run-core/parsers', () => ({
   parseRunData: mockedParseRunData,
   parseRunRawData: mockedParseRunRawData,
 }));

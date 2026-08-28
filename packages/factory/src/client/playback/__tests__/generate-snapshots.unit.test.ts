@@ -1,6 +1,6 @@
+import type { RunEvent, RunHeader } from 'codeassembly-run-core';
 import { describe, expect, it } from 'vitest';
 
-import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
 import { generateSnapshots } from '../generate-snapshots.js';
 
 const header: RunHeader = {

@@ -1,6 +1,6 @@
+import type { Phases } from 'codeassembly-run-core';
 import { describe, expect, it } from 'vitest';
 
-import type { Phases } from '../../../../shared/types/canonical.js';
 import {
   createCompletedRunPhases,
   createInProgressReviewPhases,

@@ -1,5 +1,5 @@
-import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
-import type { RunStatus } from '../../../shared/types/canonical.js';
+import type { PhaseName, RoleType, RunStatus } from 'codeassembly-run-core';
+
 import type { CarriedArtifact, CodeBadge } from './orchestrator-utils.js';
 
 // Re-export visualization-agnostic types from shared utilities

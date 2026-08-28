@@ -2,9 +2,10 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
+import { isEnoent } from 'codeassembly-run-core';
+
 import type { UserSettings } from '../../shared/types/settings.js';
 import { userSettingsSchema } from '../adapters/schemas/settings-schema.js';
-import { isEnoent } from '../type-guards.js';
 
 function defaultSettings(): UserSettings {
   return { dismissedRuns: {} };

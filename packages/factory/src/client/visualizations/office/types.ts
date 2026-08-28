@@ -1,4 +1,5 @@
-import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
+import type { PhaseName, RoleType } from 'codeassembly-run-core';
+
 import type { CarriedArtifact, CodeBadge } from '../shared/orchestrator-utils.js';
 import type { AgentStatus, ArtifactStatus, OrchestratorStatus } from '../shared/types.js';
 

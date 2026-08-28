@@ -1,4 +1,5 @@
-import type { PhaseName } from '../../../../shared/constants/role-types.js';
+import type { PhaseName } from 'codeassembly-run-core';
+
 import type {
   LogicalAgentState,
   LogicalArtifactState,

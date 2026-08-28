@@ -1,4 +1,4 @@
-import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 
 export type PlaybackState = 'stopped' | 'playing' | 'paused' | 'ended';
 

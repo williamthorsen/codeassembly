@@ -1,7 +1,7 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { useEffect, useRef, useState } from 'react';
 
-import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import { fetchRunStatus } from '../api/client.js';
 
 interface UseRunStatusResult {

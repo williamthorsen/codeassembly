@@ -1,6 +1,6 @@
+import type { CanonicalRunStatus, Phases } from 'codeassembly-run-core';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
 import type { AnimationHandle, TransitionContext } from '../transitions/transition-executor.js';
 import type { TransitionPlan } from '../types.js';
 
