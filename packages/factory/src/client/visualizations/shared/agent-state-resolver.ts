@@ -1,7 +1,6 @@
-import type { CanonicalRunStatus, Phases } from 'codeassembly-run-core';
+import type { CanonicalRunStatus, PhaseName, Phases } from 'codeassembly-run-core';
+import { PHASE_NAMES } from 'codeassembly-run-core';
 
-import type { PhaseName } from '../../../shared/constants/role-types.js';
-import { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 import { isPhaseEvaluated, isPhasePresentInData } from '../../../shared/phase-inference.js';
 
 // -- Agent animation state --

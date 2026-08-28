@@ -3,9 +3,6 @@ import { ROLE_TYPES } from 'codeassembly-run-core';
 
 import { PALETTE } from './palette.js';
 
-export type { PhaseName, RoleType } from 'codeassembly-run-core';
-export { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPES } from 'codeassembly-run-core';
-
 const ROLE_TYPE_SET: ReadonlySet<string> = new Set(ROLE_TYPES);
 
 function isRoleType(value: string): value is RoleType {

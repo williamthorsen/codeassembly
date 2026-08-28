@@ -1,13 +1,8 @@
+import { ROLE_TYPES } from 'codeassembly-run-core';
 import { describe, expect, it } from 'vitest';
 
 import { PALETTE } from '../palette.js';
-import {
-  getRoleTypeColor,
-  getRoleTypeLightFill,
-  ROLE_TYPE_COLORS,
-  ROLE_TYPE_LIGHT_FILLS,
-  ROLE_TYPES,
-} from '../role-types.js';
+import { getRoleTypeColor, getRoleTypeLightFill, ROLE_TYPE_COLORS, ROLE_TYPE_LIGHT_FILLS } from '../role-types.js';
 
 describe('ROLE_TYPE_COLORS', () => {
   it('has an entry for every RoleType', () => {
