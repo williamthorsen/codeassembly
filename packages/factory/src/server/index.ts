@@ -37,8 +37,8 @@ app.use('/api/settings', createSettingsRouter(settingsStore));
 
 app.use(errorHandler);
 
-// Start server
-app.listen(port, () => {
+// `shutdown` exits the process, so the listening handle never needs releasing.
+void app.listen(port, () => {
   console.info(`CodeAssembly API listening on port ${port}`);
   console.info('Scanning projects...');
 

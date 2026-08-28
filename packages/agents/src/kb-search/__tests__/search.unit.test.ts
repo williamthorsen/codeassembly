@@ -78,7 +78,7 @@ describe(searchNotes, () => {
 
   it('skips an unreadable note and surfaces a warning rather than dropping it silently', async () => {
     vi.resetModules();
-    vi.doMock('../../kb-shared/note-helpers.ts', async (importActual) => {
+    void vi.doMock('../../kb-shared/note-helpers.ts', async (importActual) => {
       const actual = await importActual<typeof import('../../kb-shared/note-helpers.ts')>();
       return {
         ...actual,
