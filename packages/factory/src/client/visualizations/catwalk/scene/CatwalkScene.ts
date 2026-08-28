@@ -3,14 +3,12 @@ import { Actor, Color, Rectangle, Scene, vec } from 'excalibur';
 
 import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
-import {
-  ArtifactActor,
-  CatwalkStationActor,
-  ChuteActor,
-  GateActor,
-  OrchestratorActor,
-  StationAgentActor,
-} from '../actors/index.js';
+import { ArtifactActor } from '../actors/ArtifactActor.js';
+import { CatwalkStationActor } from '../actors/CatwalkStationActor.js';
+import { ChuteActor } from '../actors/ChuteActor.js';
+import { GateActor } from '../actors/GateActor.js';
+import { OrchestratorActor } from '../actors/OrchestratorActor.js';
+import { StationAgentActor } from '../actors/StationAgentActor.js';
 import { choreograph, type SceneRefs } from '../choreography/chute-choreographer.js';
 import { CAMERA_TOP_MARGIN, DIVIDER_WIDTH, ENGINE_HEIGHT, ENGINE_WIDTH, RAIL_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
