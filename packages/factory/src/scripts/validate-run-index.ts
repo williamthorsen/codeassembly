@@ -3,8 +3,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
-
-import { v2RunIndexSchema } from '../server/adapters/schemas/run-index-schema.js';
+import { v2RunIndexSchema } from 'codeassembly-run-core';
 
 // -- core validation logic (exported for testing) --
 
