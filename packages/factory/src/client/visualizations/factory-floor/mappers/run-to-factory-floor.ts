@@ -2,7 +2,7 @@ import type { CanonicalRunStatus, PhaseName, Phases } from 'codeassembly-run-cor
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from 'codeassembly-run-core';
 
 import { ARTIFACT_COLORS } from '../../../../shared/constants/artifact-colors.js';
-import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
+import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.js';
 import {
   findCurrentPhase,
   findPhaseDecision,
