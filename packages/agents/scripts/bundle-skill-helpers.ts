@@ -52,7 +52,7 @@ export type DriftReason = 'differs' | 'orphaned' | 'unrecorded';
 export interface RecordedBundles {
   /** Returns the bytes git records for a bundle, or `undefined` where it records none. */
   read: (outFile: string) => Buffer | undefined;
-  /** Every `.mjs` under `content/` that git tracks, relative to the package root. */
+  /** Every `.mjs` under `content/` that `HEAD` records, relative to the package root. */
   tracked: readonly string[];
 }
 
@@ -194,7 +194,7 @@ export function readRecordedBundles(packageDir: string = packageRoot): RecordedB
         return;
       }
     },
-    tracked: runGit(packageDir, ['ls-files', '--', 'content'])
+    tracked: runGit(packageDir, ['ls-tree', '-r', '--name-only', 'HEAD', '--', 'content'])
       .toString('utf8')
       .split('\n')
       .filter((line) => line.endsWith('.mjs')),

@@ -29,6 +29,16 @@ describe(readRecordedBundles, () => {
     expect(readRecordedBundles(packageDir).read('content/skills/absent/absent.mjs')).toBeUndefined();
   });
 
+  it('omits a staged bundle that no commit records', () => {
+    const packageDir = makeCommittedPackage({ [BUNDLE]: 'committed' });
+    const staged = 'content/skills/staged/staged.mjs';
+    mkdirSync(join(packageDir, 'content/skills/staged'), { recursive: true });
+    writeFileSync(join(packageDir, staged), 'staged', 'utf8');
+    execFileSync('git', ['-C', packageDir, 'add', staged]);
+
+    expect(readRecordedBundles(packageDir).tracked).toEqual([BUNDLE]);
+  });
+
   it('tracks every committed bundle under content and nothing else', () => {
     const packageDir = makeCommittedPackage({
       [BUNDLE]: 'committed',
