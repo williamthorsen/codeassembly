@@ -1,24 +1,17 @@
-// Shapes for the capture-lede-decision helper: the verdict an author records, the resolved decision episode, and the
+// Shapes for the capture-lede-decision helper: the rating an author records, the resolved decision episode, and the
 // JSON payloads emitted to stdout.
 //
 // The stdout payload is a discriminated union on `ok`, mirroring `capture-event`. Recoverable failures (an unresolvable
 // artifact, an unreachable store on the recording path, schema validation, invalid args) return
 // `{ ok: false, error, message }`; system errors (out-of-disk, permission denied) print to stderr and exit non-zero.
 
-/** The verdicts an author may record, in the order the skill presents them. */
+import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
+
+/** The verdicts a record can carry, derived from whether the two ledes differ rather than supplied by a caller. */
 export const LEDE_VERDICTS = ['accepted', 'revised'] as const;
 
-/** An author's decision about a lede: the agent's text shipped as written, or it was rewritten before merge. */
+/** What became of the agent's lede: it shipped as written, or it was rewritten before merge. */
 export type LedeVerdict = (typeof LEDE_VERDICTS)[number];
-
-// A widened-element set for membership tests: the `as const` tuple's literal element type rejects a `string` argument
-// to `.includes`, and type assertions are banned, so the set's `.has(string)` is the assertion-free lookup.
-const VERDICT_SET: ReadonlySet<string> = new Set(LEDE_VERDICTS);
-
-/** Reports whether a value is one of the declared {@link LEDE_VERDICTS}. */
-export function isLedeVerdict(value: unknown): value is LedeVerdict {
-  return typeof value === 'string' && VERDICT_SET.has(value);
-}
 
 /** The change a decision describes, resolved from caller flags with change-summary frontmatter as the fallback. */
 export interface EpisodeIdentity {
@@ -78,6 +71,9 @@ export interface InspectSuccess {
 export interface CommitSuccess {
   ok: true;
   mode: 'commit';
+  /** The author's rating of the lede that shipped. */
+  quality: LedeQuality;
+  /** Derived from whether the ledes differ, so it always agrees with the sections the record carries. */
   verdict: LedeVerdict;
   /** The generated ULID, which is also the record's filename stem. */
   id: string;
