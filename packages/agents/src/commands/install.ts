@@ -6,6 +6,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { assertSupportedContentFormats } from '../lib/content-root-manifest.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { emitReport } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
@@ -58,6 +59,9 @@ export async function installCommand(
   });
 
   const contentDir = contentDirOverride ?? resolveContentDir();
+  // Refuse a content root whose declared format this tool cannot honor before anything is written, dry-run included.
+  await assertSupportedContentFormats([{ dir: contentDir }]);
+
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
