@@ -4,6 +4,7 @@ pnpm-lock.yaml
 # Generated esbuild bundles of skill helpers, not authored source. Prettier exhibits a
 # non-idempotent reformatting bug on long ternary expressions emitted by the bundler (the
 # `yaml` package surfaces the pattern), so the bundles are excluded at the root level too.
+packages/agents/content/scripts/**/*.mjs
 packages/agents/content/skills/**/*.mjs
 
 # Harness artifacts deployed by `codeassembly sync`: generated, gitignored, and carrying
