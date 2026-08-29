@@ -71,7 +71,7 @@ describe('rewriteToolNames', () => {
   });
 
   it('throws on the first unmapped placeholder when content has multiple', () => {
-    const content = '{tool:First} then {tool:Second}';
+    const content = '{tool:Read} then {tool:Nope} then {tool:AlsoNope}';
     try {
       rewriteToolNames(content, 'claude', 'x.md');
       expect.fail('Expected ToolNameRewriteError');
@@ -79,7 +79,7 @@ describe('rewriteToolNames', () => {
       if (!(error instanceof ToolNameRewriteError)) {
         throw error;
       }
-      expect(error.toolName).toBe('First');
+      expect(error.toolName).toBe('Nope');
     }
   });
 
