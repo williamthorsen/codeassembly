@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { LedeQuality } from '../../lede-corpus/lede-quality.ts';
 import { loadWorkTypes, type WorkType } from '../../lib/work-types.ts';
 import { selectExemplars } from '../select-exemplars.ts';
 import {
@@ -17,6 +18,15 @@ const CORPUS: readonly DecisionSpec[] = [
   { id: 'C', type: 'refactor', capturedAt: '2026-03-01T00:00:00Z' },
   { id: 'D', type: 'ci', capturedAt: '2026-04-01T00:00:00Z' },
   { id: 'E', type: 'feat', capturedAt: '2026-05-01T00:00:00Z' },
+];
+
+// The same five changes, each rated, so a floor has a full range to cut against.
+const RATED_CORPUS: readonly DecisionSpec[] = [
+  { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'exemplary' },
+  { id: 'B', type: 'fix', capturedAt: '2026-02-01T00:00:00Z', quality: 'strong' },
+  { id: 'C', type: 'refactor', capturedAt: '2026-03-01T00:00:00Z', quality: 'good' },
+  { id: 'D', type: 'ci', capturedAt: '2026-04-01T00:00:00Z', quality: 'adequate' },
+  { id: 'E', type: 'feat', capturedAt: '2026-05-01T00:00:00Z', quality: 'poor' },
 ];
 
 describe(selectExemplars, () => {
@@ -81,6 +91,53 @@ describe(selectExemplars, () => {
 
     expect(selection.widening).toBe('tier');
     expect(selection.exemplars.map((exemplar) => exemplar.type)).toStrictEqual(['retired']);
+  });
+
+  it('admits a rating at the floor and everything above it', async () => {
+    const selection = await select({ decisions: RATED_CORPUS, type: 'feat', count: 5, minQuality: 'strong' });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('B'), agentLedeFor('A')]);
+  });
+
+  it('excludes a record rated below the floor', async () => {
+    const selection = await select({ decisions: RATED_CORPUS, type: 'feat', count: 5, minQuality: 'exemplary' });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
+  });
+
+  it('excludes an unrated record whenever a floor is named', async () => {
+    const selection = await select({ decisions: CORPUS, type: 'feat', count: 5, minQuality: 'poor' });
+
+    expect(selection.exemplars).toStrictEqual([]);
+  });
+
+  it('reads every record, rated or not, when no floor is named', async () => {
+    const mixed: readonly DecisionSpec[] = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' },
+      { id: 'B', type: 'feat', capturedAt: '2026-02-01T00:00:00Z', quality: 'good' },
+    ];
+    const selection = await select({ decisions: mixed, type: 'feat', count: 5 });
+
+    expect(selection.exemplars).toHaveLength(2);
+  });
+
+  it('widens past a type the floor left short', async () => {
+    const decisions = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'poor' },
+      { id: 'B', type: 'fix', capturedAt: '2026-02-01T00:00:00Z', quality: 'exemplary' },
+    ];
+    const selection = await select({ decisions, type: 'feat', count: 1, minQuality: 'strong' });
+
+    expect(selection.widening).toBe('tier');
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('B')]);
+  });
+
+  it('reports a rating the scale does not declare and keeps the record selectable without a floor', async () => {
+    const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'excellent' }];
+    const selection = await select({ decisions, type: 'feat', count: 5 });
+
+    expect(selection.warnings[0]).toContain('A.md: carries quality "excellent"');
+    expect(selection.exemplars).toHaveLength(1);
   });
 
   it('returns an empty list for a corpus holding no decisions', async () => {
@@ -217,6 +274,7 @@ async function select(input: {
   files?: Readonly<Record<string, string>>;
   type: string;
   count: number;
+  minQuality?: LedeQuality;
 }): Promise<ExemplarSelection> {
   const fixture = await createCorpusFixture({
     decisions: input.decisions,
@@ -229,6 +287,7 @@ async function select(input: {
     workTypes,
     requested: requireType(workTypes, input.type),
     count: input.count,
+    ...(input.minQuality !== undefined && { minQuality: input.minQuality }),
   });
 }
 
