@@ -201,6 +201,12 @@ export function readRecordedBundles(packageDir: string = packageRoot): RecordedB
   };
 }
 
+/**
+ * Output cap for one git invocation, sized well past a bundle. The 1 MiB default throws `ENOBUFS` on a larger blob,
+ * which `read` cannot distinguish from an absent one, so the check would report a recorded bundle as unrecorded.
+ */
+const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
+
 /** How each drift reason reads in the check's failure output. */
 const driftMessages: Record<DriftReason, string> = {
   differs: 'differs from a fresh build',
@@ -228,7 +234,7 @@ if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === path.res
 
 /** Runs git in `cwd` and returns its stdout. Throws when git exits non-zero. */
 function runGit(cwd: string, args: readonly string[]): Buffer {
-  return execFileSync('git', args, { cwd, stdio: ['ignore', 'pipe', 'ignore'] });
+  return execFileSync('git', args, { cwd, maxBuffer: GIT_MAX_BUFFER, stdio: ['ignore', 'pipe', 'ignore'] });
 }
 
 // endregion | Helpers
