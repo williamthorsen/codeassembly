@@ -13,7 +13,14 @@
  * that install to every harness home.
  *
  * The bundle list is a plain array of `BundleTarget` entries; a new helper registers itself by appending one.
+ *
+ * The bundles are tracked files, so `--check` guards them: it builds every target into a temporary directory and
+ * compares the result against what git records at `HEAD`. The working tree is not a usable comparison target, since
+ * this build step and the smoke test both rewrite `content/` in place before any check runs.
  */
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -23,12 +30,30 @@ import { build } from 'esbuild';
 /** Absolute path to the `codeassembly` package root. */
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** A bundle whose tracked state no longer matches the target list that produces it. */
+export interface BundleDrift {
+  /** Path to the bundle, relative to the package root. */
+  outFile: string;
+  reason: DriftReason;
+}
+
 /** One helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
 export interface BundleTarget {
   /** Path to the helper's entry module, relative to the package root. */
   entry: string;
   /** Path to the bundled output, relative to the package root. */
   outFile: string;
+}
+
+/** Why a bundle counts as drifted. */
+export type DriftReason = 'differs' | 'orphaned' | 'unrecorded';
+
+/** The bundles git records at `HEAD`, which a fresh build is checked against. */
+export interface RecordedBundles {
+  /** Returns the bytes git records for a bundle, or `undefined` where it records none. */
+  read: (outFile: string) => Buffer | undefined;
+  /** Every `.mjs` under `content/` that git tracks, relative to the package root. */
+  tracked: readonly string[];
 }
 
 /** Every helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
@@ -96,12 +121,12 @@ export const targets: BundleTarget[] = [
 const requireShim =
   "import { createRequire as __cjsCreateRequire } from 'node:module';\nconst require = __cjsCreateRequire(import.meta.url);";
 
-/** Bundles every skill helper in `targets`, writing each `.mjs` into its skill's content directory. */
-export async function bundleSkillHelpers(): Promise<void> {
+/** Bundles every skill helper in `targets`, writing each `.mjs` under `outRoot` at the target's own relative path. */
+export async function bundleSkillHelpers(outRoot: string = packageRoot): Promise<void> {
   for (const target of targets) {
     await build({
       entryPoints: [path.join(packageRoot, target.entry)],
-      outfile: path.join(packageRoot, target.outFile),
+      outfile: path.join(outRoot, target.outFile),
       bundle: true,
       platform: 'node',
       format: 'esm',
@@ -118,7 +143,92 @@ export async function bundleSkillHelpers(): Promise<void> {
   }
 }
 
+/** Builds every target into a temporary directory and reports each bundle that has drifted from git's record. */
+export async function checkSkillHelperBundles(): Promise<BundleDrift[]> {
+  const outRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-helper-bundles-'));
+  try {
+    await bundleSkillHelpers(outRoot);
+    const built = new Map<string, Buffer>();
+    for (const target of targets) {
+      built.set(target.outFile, fs.readFileSync(path.join(outRoot, target.outFile)));
+    }
+    return findDriftedBundles(built, readRecordedBundles());
+  } finally {
+    fs.rmSync(outRoot, { force: true, recursive: true });
+  }
+}
+
+/** Compares freshly built bundles against what git records, returning every bundle that drifted. */
+export function findDriftedBundles(built: ReadonlyMap<string, Buffer>, recorded: RecordedBundles): BundleDrift[] {
+  const drifted: BundleDrift[] = [];
+
+  for (const [outFile, bytes] of built) {
+    const recordedBytes = recorded.read(outFile);
+    if (recordedBytes === undefined) {
+      drifted.push({ outFile, reason: 'unrecorded' });
+    } else if (!recordedBytes.equals(bytes)) {
+      drifted.push({ outFile, reason: 'differs' });
+    }
+  }
+
+  for (const outFile of recorded.tracked) {
+    if (!built.has(outFile)) {
+      drifted.push({ outFile, reason: 'orphaned' });
+    }
+  }
+
+  return drifted;
+}
+
+/** Reads the bundles git records at `HEAD` for the package rooted at `packageDir`. */
+export function readRecordedBundles(packageDir: string = packageRoot): RecordedBundles {
+  // git addresses a blob by its repository-relative path. `--show-prefix` supplies the package's own leading segments,
+  // where deriving them from `--show-toplevel` would break on any checkout reached through a symlink.
+  const prefix = runGit(packageDir, ['rev-parse', '--show-prefix']).toString('utf8').trim();
+
+  return {
+    read: (outFile) => {
+      try {
+        return runGit(packageDir, ['cat-file', 'blob', `HEAD:${prefix}${outFile}`]);
+      } catch {
+        return;
+      }
+    },
+    tracked: runGit(packageDir, ['ls-files', '--', 'content'])
+      .toString('utf8')
+      .split('\n')
+      .filter((line) => line.endsWith('.mjs')),
+  };
+}
+
+/** How each drift reason reads in the check's failure output. */
+const driftMessages: Record<DriftReason, string> = {
+  differs: 'differs from a fresh build',
+  orphaned: 'is tracked but no target produces it',
+  unrecorded: 'is not recorded at HEAD',
+};
+
 // Run as a build step, but stay importable (the smoke test reuses `targets` and `bundleSkillHelpers`).
 if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
-  await bundleSkillHelpers();
+  if (process.argv.includes('--check')) {
+    const drifted = await checkSkillHelperBundles();
+    for (const { outFile, reason } of drifted) {
+      console.error(`${outFile} ${driftMessages[reason]}.`);
+    }
+    if (drifted.length > 0) {
+      console.error('Run `nmr -F codeassembly build` and commit the regenerated bundles.');
+      process.exitCode = 1;
+    }
+  } else {
+    await bundleSkillHelpers();
+  }
 }
+
+// region | Helpers
+
+/** Runs git in `cwd` and returns its stdout. Throws when git exits non-zero. */
+function runGit(cwd: string, args: readonly string[]): Buffer {
+  return execFileSync('git', args, { cwd, stdio: ['ignore', 'pipe', 'ignore'] });
+}
+
+// endregion | Helpers

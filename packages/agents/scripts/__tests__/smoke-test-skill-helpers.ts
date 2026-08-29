@@ -8,8 +8,14 @@
  * `createRequire` banner, the `format: 'esm'` option, and the `conditions: ['source']` resolution setting; a
  * regression to any of them would crash the installed helper at load time, undetected by the unit suite.
  * This test runs the built bundle exactly as an installed skill would.
+ *
+ * The bundles are built into a temporary copy of the content tree, so a test run leaves the tracked bundles under
+ * `content/` as they were committed and the drift check keeps a comparison to make. The copy carries the tree's other
+ * files because a helper resolves its data relative to its own location, the way an installed skill directory does.
  */
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -54,7 +60,12 @@ for (const entry of Object.keys(smokeTests)) {
   }
 }
 
-await bundleSkillHelpers();
+const bundleRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-helper-smoke-'));
+fs.cpSync(path.join(packageRoot, 'content'), path.join(bundleRoot, 'content'), {
+  filter: (source) => !source.endsWith('.mjs'),
+  recursive: true,
+});
+await bundleSkillHelpers(bundleRoot);
 
 let failed = false;
 for (const target of targets) {
@@ -71,13 +82,15 @@ for (const target of targets) {
   }
 }
 
+fs.rmSync(bundleRoot, { force: true, recursive: true });
+
 if (failed) {
   process.exitCode = 1;
 }
 
 /** Run the built bundle for `target` under node with `invocation`, returning its stdout. Throws on non-zero exit. */
 async function runBundle(target: BundleTarget, invocation: SmokeTestInvocation): Promise<string> {
-  const bundlePath = path.join(packageRoot, target.outFile);
+  const bundlePath = path.join(bundleRoot, target.outFile);
   const args = invocation.args ?? [];
 
   return new Promise<string>((resolve, reject) => {
