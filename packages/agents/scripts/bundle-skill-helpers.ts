@@ -7,14 +7,14 @@
  * The bundle is written under `content/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
  * and the dev and built layouts both ship the helper.
  *
- * A helper's destination follows its consumer: a skill's helper bundles into that skill's own directory under
+ * A helper's destination follows its consumer: A skill's helper bundles into that skill's own directory under
  * `content/skills/`, while a helper with no skill to belong to — one the harness invokes, or one a subagent reaches
  * through the `{harness_home_dir}/scripts/` prefix — bundles into `content/scripts/`, alongside the shell helpers
  * that install to every harness home.
  *
  * The bundle list is a plain array of `BundleTarget` entries; a new helper registers itself by appending one.
  *
- * The bundles are tracked files, so `--check` guards them: it builds every target into a temporary directory and
+ * The bundles are tracked files, so `--check` guards them: It builds every target into a temporary directory and
  * compares the result against what git records at `HEAD`. The working tree is not a usable comparison target, since
  * this build step and the smoke test both rewrite `content/` in place before any check runs.
  */
@@ -139,7 +139,7 @@ export async function bundleSkillHelpers(outRoot: string = packageRoot): Promise
       // condition so the bundle does not require those packages to be pre-built.
       conditions: ['source'],
     });
-    console.info(`Bundled ${target.entry} -> ${target.outFile}`);
+    console.info(`Bundled ${target.entry} -> ${path.join(outRoot, target.outFile)}`);
   }
 }
 
