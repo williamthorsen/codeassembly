@@ -9,6 +9,7 @@ import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
 import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
 import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { assertSupportedContentFormats } from '../../lib/content-root-manifest.ts';
 import {
   createSourceResolver,
   describeSearchedLocations,
@@ -346,6 +347,10 @@ async function reconcileDomain(
   const missingSources = await checkDeclaredSources(sources);
   assertUsableSourceNames(sources);
   assertDistinctSourceNames(sources);
+  // Every root the run reads declares the content format it was authored against, the library included. Checked after
+  // the source checks above, so an unreadable directory reports as unreadable rather than as a failed manifest read;
+  // a source whose directory is missing carries no manifest and stays the warning it is.
+  await assertSupportedContentFormats([...sources, { dir: contentDir }]);
 
   // A package whose content dir is missing enumerates nothing: the walk reads through a directory listing that
   // answers an absent directory with no entries.
