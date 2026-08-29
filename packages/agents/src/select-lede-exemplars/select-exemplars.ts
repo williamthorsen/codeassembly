@@ -183,7 +183,7 @@ async function readDecision(input: {
   // the scale is worth reporting. Either way the candidate stays selectable by a request that names no floor.
   const rawQuality = extractString(extra, 'quality');
   const quality = isLedeQuality(rawQuality) ? rawQuality : null;
-  const warning =
+  const warnings =
     rawQuality !== null && quality === null
       ? [`${basename}: carries quality "${rawQuality}", which the scale does not declare`]
       : [];
@@ -195,7 +195,7 @@ async function readDecision(input: {
       resolved,
       quality,
     },
-    warnings: warning,
+    warnings,
   };
 }
 

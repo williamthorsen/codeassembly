@@ -175,8 +175,8 @@ export async function runSelect(input: {
 // region | Helpers
 
 /**
- * Describes why a selection came back empty, separating a corpus holding no decisions from one holding none the floor
- * admits. The two call for different responses, and the exemplars alone cannot tell them apart.
+ * Describes why a selection came back empty, naming the floor the request applied when it named one. The exemplars
+ * alone do not say whether a floor was in force.
  */
 function describeEmptyResult(storeName: string, minQuality: LedeQuality | null): string {
   const corpus = `the "${storeName}" corpus`;
