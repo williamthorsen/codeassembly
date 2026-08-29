@@ -40,7 +40,7 @@ Check commit messages for additional context.
 
 6. **Save** per the [Saving](#saving) section.
 
-**Audit before saving.** This audit applies to the `## What` returned in step 5, before step 6 writes the artifact. It is one test, and your authority over the draft is bounded by it.
+**Audit before saving.** This audit applies to the `## What` returned in step 5, before step 6 writes the artifact. Read the draft in full and judge it on two counts: the test below, and the three rejection codes beneath it. What you may edit is bounded by the test alone.
 
 - **The test.** No fact appears in both `## What` and `## Details`.
 - **The repair.** Cut the fact from `## What`. Where the fact appears nowhere else, move it into `## Details` instead of deleting it. Deleting and moving down are the whole of your authority.
