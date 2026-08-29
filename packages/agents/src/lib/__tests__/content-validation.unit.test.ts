@@ -160,6 +160,16 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.file).toBe('subagents/_data/claude.yaml');
   });
 
+  it('reports an overlay it cannot parse rather than throwing', async () => {
+    await writeFileAt(root, 'subagents/_data/claude.yaml', '_defaults:\n  model: [unclosed\n');
+
+    const defects = await validateContentRoot(root, ['claude']);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.kind).toBe('frontmatter');
+    expect(defects[0]?.file).toBe('subagents/_data/claude.yaml');
+  });
+
   it('passes an overlay carrying frontmatter defaults alone', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'subagents/_data/claude.yaml', '_defaults:\n  model: sonnet\n');

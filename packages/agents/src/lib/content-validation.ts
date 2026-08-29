@@ -239,7 +239,8 @@ async function findRetiredKeyDefects(artifacts: ResolvedArtifacts): Promise<Read
 /**
  * Reports every overlay the root ships that still carries the retired `_tools:` mapping, one defect per harness whose
  * overlay declares it. Read from the root's own tree rather than through the resolver, because an overlay is a file a
- * content root ships rather than an artifact a slug resolves to.
+ * content root ships rather than an artifact a slug resolves to. An overlay this cannot parse is reported as its own
+ * defect, since `validate` answers with a report rather than a throw.
  */
 async function findRetiredOverlayKeyDefects(
   root: string,
@@ -252,13 +253,18 @@ async function findRetiredOverlayKeyDefects(
     if (overlayYaml.trim() === '') {
       continue;
     }
-    const parsed: unknown = parseYaml(overlayYaml);
-    if (isRecord(parsed) && parsed[RETIRED_TOOLS_KEY] !== undefined) {
-      defects.push({
-        file: path.join('subagents', '_data', config.frontmatterFile),
-        kind: 'frontmatter',
-        detail: `Overlay declares the retired \`${RETIRED_TOOLS_KEY}:\` mapping, which nothing reads; each harness's tool names now come from codeassembly itself. Remove the key.`,
-      });
+    const file = path.join('subagents', '_data', config.frontmatterFile);
+    try {
+      const parsed: unknown = parseYaml(overlayYaml);
+      if (isRecord(parsed) && parsed[RETIRED_TOOLS_KEY] !== undefined) {
+        defects.push({
+          file,
+          kind: 'frontmatter',
+          detail: `Overlay declares the retired \`${RETIRED_TOOLS_KEY}:\` mapping, which nothing reads; each harness's tool names now come from codeassembly itself. Remove the key.`,
+        });
+      }
+    } catch (error: unknown) {
+      defects.push({ file, kind: 'frontmatter', detail: describeError(error) });
     }
   }
   return defects;
