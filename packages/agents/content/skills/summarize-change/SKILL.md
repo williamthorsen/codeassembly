@@ -24,15 +24,31 @@ Check commit messages for additional context.
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) is composed last, in step 5, so the factual substance must exist first.
+4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before the audit can run.
 
-5. **Compose `## What`**: Read `{harness_home_dir}/skills/_data/lede-voice.md` in full before drafting; the doctrine evolves, so the only safe assumption is what the file says now. Write the lede from the branch diff and the sections composed in step 4, applying the per-type section for the change's work type (inferred per [Consumer-field inference](#consumer-field-inference)). The lede is composed last and placed first.
+5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the change's work type (inferred per [Consumer-field inference](#consumer-field-inference)) in [work-types.json](../_data/work-types.json); where the type could not be inferred, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
+
+   ```dispatch
+   type: {resolved type}
+   tier: {resolved tier}
+   scope: {resolved scope}
+   ticket-source: {ticket URL or reference}
+   ```
+
+   **The block carries scalars only.** Omit `scope` and `ticket-source` where they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: the drafter gathers every fact itself, and a sentence written here would seed the draft with this session's weighting, which is the failure the fresh context exists to avoid. A content test fails the build on any line in the block that is not a `key: value` scalar.
+
+   Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
 
 6. **Save** per the [Saving](#saving) section.
 
-**Audit before saving.** This audit applies to the `## What` composed in step 5, before step 6 writes the artifact.
+**Audit before saving.** This audit applies to the `## What` returned in step 5, before step 6 writes the artifact. It is one test, and your authority over the draft is bounded by it.
 
-<!-- include: ../../_partials/voice-checklist.md / -->
+- **The test.** No fact appears in both `## What` and `## Details`.
+- **The repair.** Cut the fact from `## What`. Where the fact appears nowhere else, move it into `## Details` instead of deleting it. Deleting and moving down are the whole of your authority.
+
+Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
+
+Redispatch at most twice. After a second redispatch fails, save the artifact with the last draft and report the unresolved code to the developer.
 
 If expected information is missing, stop and ask the developer.
 
@@ -47,7 +63,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The lede, composed in Process step 5 under the doctrine.}
+{The lede, returned by the `lede-drafter` dispatch in Process step 5. Repair it by deleting a duplicated fact or moving it into `## Details`; redispatch for anything else.}
 
 ## Why
 
