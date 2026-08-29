@@ -217,6 +217,39 @@ describe(validateContentRoot, () => {
 
     expect(defects).toEqual([{ file: '.', kind: 'root', detail: 'Content root is unusable: does not exist.' }]);
   });
+
+  // The root also carries a defect the later stages would report, so a second entry would mean they ran anyway.
+  it('reports an unsupported content format on its own, naming the declared and supported formats', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 2\n');
+    await writeCollection(root, 'starter', { skills: ['no-such-skill'] });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toEqual([
+      {
+        file: '.',
+        kind: 'root',
+        detail: 'Content root declares content format 2; this codeassembly supports content format 1.',
+      },
+    ]);
+  });
+
+  it('reports a manifest that will not parse, naming the file', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: [1\n');
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: '.', kind: 'root' });
+    expect(defects[0]?.detail).toContain('codeassembly-content.yaml');
+  });
+
+  it('validates a root declaring a supported content format', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 1\n');
+    await writeSkill(root, 'alpha');
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+  });
 });
 
 /** The defect files in sorted order, the shape an assertion on "which artifacts were reported" reads most clearly. */

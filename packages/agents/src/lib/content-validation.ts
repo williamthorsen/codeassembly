@@ -6,6 +6,11 @@ import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
 import { resolveContentDir } from './content-resolver.ts';
+import {
+  type ContentFormatProblem,
+  describeSupportedFormats,
+  findContentFormatProblem,
+} from './content-root-manifest.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, resolveClosure, type ResolvedClosure } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
@@ -80,6 +85,13 @@ export async function validateContentRoot(
     return [{ file: '.', kind: 'root', detail: `Content root is unusable: ${problem.detail}.` }];
   }
 
+  // A root whose declared format this tool cannot honor is not then checked under the rules of the format it does
+  // support, which would report defects against a contract the root never claimed.
+  const formatProblem = await findContentFormatProblem(root);
+  if (formatProblem !== undefined) {
+    return [{ file: '.', kind: 'root', detail: describeContentFormatDefect(formatProblem) }];
+  }
+
   const resolver = createSourceResolver([{ name: root, dir: root }], libraryDir);
   const seeded = await resolveSeedClosures(await collectSeeds(root), resolver);
   const artifacts = await resolveArtifacts(seeded.closure, resolver);
@@ -133,6 +145,17 @@ function declaresRetiredHarnessesKey(content: string): boolean {
   const { lines } = parseFrontmatter(content);
   const parsed: unknown = parseYaml(lines.join('\n'));
   return isRecord(parsed) && parsed[RETIRED_HARNESSES_KEY] !== undefined;
+}
+
+/**
+ * Renders a content-format problem as the defect detail a producer reads. An unsupported format gains the supported
+ * set, which is the half that says what to do about it; a malformed manifest already names the file and the fault.
+ */
+function describeContentFormatDefect(problem: ContentFormatProblem): string {
+  if (problem.kind === 'malformed') {
+    return `Content manifest is unreadable: ${problem.detail}.`;
+  }
+  return `Content root ${problem.detail}; this codeassembly supports ${describeSupportedFormats()}.`;
 }
 
 /**
