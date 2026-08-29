@@ -36,7 +36,7 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
 3. **The diff.** `git diff {default_branch}...HEAD`. Where it exceeds 4000 lines, read `git diff --stat {default_branch}...HEAD` instead and work from the diffstat and the commit titles. This repository tracks generated bundles, so one rebuild can dominate a diff that is otherwise small.
 
-4. **Exemplars.** `{harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type}` returns ledes the author approved, newest first. Read them for the altitude and register they hold, not for phrases to reuse. An empty list is a normal result; draft without them.
+4. **Exemplars.** `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type}` returns ledes the author approved, newest first. Read them for the altitude and register they hold, not for phrases to reuse. An empty list is a normal result; draft without them. Where your dispatch carries no `type`, skip this step and name the omission in your report: the helper selects by work type and has nothing to select on.
 
 5. **The ticket.** Resolve it in this order: the `ticket-source` scalar from your dispatch, where present; otherwise `ticket_url`; otherwise `ticket_id`. Fetch a GitHub issue with `gh issue view {number} --json title,body`. Fetch a Jira issue with whichever connected read tool takes an issue URL, or the one taking an issue key and a cloud id where that is what the machine has.
 
