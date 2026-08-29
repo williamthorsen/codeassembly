@@ -1,25 +1,30 @@
 ---
 name: capture-lede-decision
-description: Record the author's decision about a merged pull request's lede (accepted as the agent wrote it, or revised) into the lede-decision corpus. Use after a merge, or to record a pull request merged outside the merge flow.
+description: Record the author's rating of a merged pull request's lede into the lede-decision corpus. Use after a merge, or to record a pull request merged outside the merge flow.
 user-invocable: true
 ---
 
 # Capture a lede decision
 
-Record what the author decided about a lede: that the agent's `## What` shipped as written, or that it was rewritten before merge. A bundled helper does the mechanical work: It reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present the pair and relay the author's decision.
+Record how good the lede that shipped is. A bundled helper does the mechanical work: It reads the lede the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present what shipped and relay the author's rating.
 
 Every lede decision belongs to one corpus, the `codeassembly` event store, whichever repository the pull request merged in. The helper targets it without being told, so a caller never chooses a destination.
 
 **Announce at start:** "Using capture-lede-decision to record the lede decision for #{pr}."
 
+## What the rating grades
+
+The rating grades the lede that shipped, whichever hand wrote it: the merged lede where the author rewrote it before merge, and the agent's lede where it shipped as written. It is one of five levels, lowest to highest:
+
+`poor`, `adequate`, `good`, `strong`, `exemplary`
+
+The middle of the scale is what the corpus most needs and most easily loses: a lede good enough that editing it is not worth the time, and not good enough that the author wants their imprimatur on it. Record such a lede at the level it deserves rather than rounding it up.
+
+The verdict, `accepted` or `revised`, is not asked. The helper derives it from whether the two ledes differ and records it beside the rating.
+
 ## The corpus stores positive signals only
 
-A record exists because the author looked at the lede and decided. There are exactly two decisions, and no third:
-
-- **`accepted`**: The author read the agent's lede and shipped it as written.
-- **`revised`**: The author rewrote it before merge.
-
-Declining to decide writes nothing. **The absence of a record means nothing, and in particular is not an acceptance**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a verdict, and never record one the author did not give: A lede that shipped unchanged under time pressure is not an accepted lede, and recording it as one is the single failure that would make the corpus useless.
+A record exists because the author looked at the lede and rated it. Declining to rate writes nothing. **The absence of a record means nothing, and in particular is not an endorsement**: A merge nobody evaluated is indistinguishable from a merge this skill never ran on. Never infer a rating, and never record one the author did not give: A lede that shipped unchanged under time pressure is not a rated lede, and recording a rating the author did not make is the single failure that would make the corpus useless.
 
 For the same reason, the corpus is outcome-selected: It contains only changes someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison's fixture draw must never read it.
 
@@ -30,8 +35,8 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 | `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.         | Yes      |
 | `--pr`               | The pull-request number.                                                                  | Yes      |
 | `--merge-commit`     | The merge commit's SHA.                                                                   | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--verdict`.      | Mode     |
-| `--verdict`          | The author's decision: `accepted` or `revised`. Mutually exclusive with `--inspect`.      | Mode     |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.      | Mode     |
+| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.        | Mode     |
 | `--store`            | Names a corpus registered under some other name; `@default` is refused.                   | No       |
 | `--type`             | Work type. Falls back to the change summary's frontmatter.                                | No       |
 | `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.                 | No       |
@@ -40,7 +45,7 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 | `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
 | `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                      | Injected |
 
-Exactly one of `--inspect` and `--verdict` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
+Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
 ## Runtime dependencies
 
@@ -66,31 +71,28 @@ On `ok: false`, report the `message` on one line and stop. The merge has already
 
 On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it can record no decision; asking for one would spend the author's attention on an answer this skill would then discard.
 
-### 2. Present the pair and ask
+### 2. Present what shipped and ask
 
-Read `episode.differ`. Present the ledes and ask, following [option format](#option-format):
+Read `episode.differ`. Where it is `true`, show the agent's lede and the merged lede; where it is `false`, show the single lede. Then ask for a rating of the lede that shipped, adding a comment if the author wants to say what was wrong:
 
-When `differ` is `true`, show the agent's lede and the merged lede, then ask:
+1. `exemplary`
+2. `strong`
+3. `good`
+4. `adequate`
+5. `poor`
+6. Skip (you did not evaluate it, or this was a content change)
 
-1. ■■□ Record it as a revision (add a comment to explain what was wrong, if you want)
-2. ■□□ Skip (this was a content change, or not a decision worth recording)
-
-When `differ` is `false`, show the single lede and ask:
-
-1. ■■□ Record it as accepted (you read it and shipped it as written)
-2. ■□□ Skip (you did not evaluate it)
-
-Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a decision the author did not make.
+Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a rating the author did not make.
 
 ### 3. Record the decision
 
 On a skip, write nothing and say nothing further.
 
-On a decision, pipe the author's comment (empty when they gave none) to the helper:
+On a rating, pipe the author's comment (empty when they gave none) to the helper:
 
 ```bash
 cat <<'EOF' | node {harness_home_dir}/skills/capture-lede-decision/capture-lede-decision.mjs \
-  --verdict <accepted|revised> \
+  --quality <poor|adequate|good|strong|exemplary> \
   --harness {harness_id} \
   --artifact-dir <ticket artifact directory> \
   --pr <number> \
@@ -123,8 +125,8 @@ Pass that file to `--merged-lede-file` and continue from step 2. Everything else
 
 One event per decision, in the corpus:
 
-- **Tags**: `lede-decision`, `type:{work type}`, and the verdict. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, and by work type with `--tag type:feat`.
-- **Frontmatter**: the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
+- **Tags**: `lede-decision`, `type:{work type}`, the derived verdict, and `quality:{level}`. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, by work type with `--tag type:feat`, and by rating with `--tag quality:exemplary`.
+- **Frontmatter**: the rating; the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
 - **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
 `doctrine-hash` is what groups records by doctrine generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the doctrine file's own history.
@@ -143,6 +145,6 @@ Route by the `error` code:
 
 ## Completion
 
-Either one written record at the reported path, or nothing at all. There is no third outcome, and no record is ever written without the author's decision.
+Either one written record at the reported path, or nothing at all. There is no third outcome, and no record is ever written without the author's rating.
 
 <!-- include: ../_partials/option-format.md / -->
