@@ -50,6 +50,12 @@ export type ContentDefectKind = 'collision' | 'dependency' | 'frontmatter' | 're
  */
 const RETIRED_HARNESSES_KEY = 'harnesses';
 
+/**
+ * The overlay key the tool's own harness table replaced. An overlay still declaring it deploys unchanged, since the
+ * frontmatter merge looks up by agent name and never reads it, so this pass is what tells a producer it is dead.
+ */
+const RETIRED_TOOLS_KEY = '_tools';
+
 /** One rejected artifact: where it lives relative to the content root, which stage rejected it, and why. */
 export interface ContentDefect {
   readonly file: string;
@@ -107,6 +113,7 @@ export async function validateContentRoot(
     ...artifacts.defects,
     ...findCollisionDefects(artifacts),
     ...(await findRetiredKeyDefects(artifacts)),
+    ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
   ];
 }
@@ -224,6 +231,34 @@ async function findRetiredKeyDefects(artifacts: ResolvedArtifacts): Promise<Read
       }
     } catch (error: unknown) {
       defects.push({ file, kind: 'frontmatter', detail: describeError(error) });
+    }
+  }
+  return defects;
+}
+
+/**
+ * Reports every overlay the root ships that still carries the retired `_tools:` mapping, one defect per harness whose
+ * overlay declares it. Read from the root's own tree rather than through the resolver, because an overlay is a file a
+ * content root ships rather than an artifact a slug resolves to.
+ */
+async function findRetiredOverlayKeyDefects(
+  root: string,
+  harnessIds: ReadonlyArray<HarnessId>,
+): Promise<ReadonlyArray<ContentDefect>> {
+  const defects: Array<ContentDefect> = [];
+  for (const harnessId of harnessIds) {
+    const config = HARNESSES[harnessId];
+    const overlayYaml = await loadHarnessOverlay(root, config);
+    if (overlayYaml.trim() === '') {
+      continue;
+    }
+    const parsed: unknown = parseYaml(overlayYaml);
+    if (isRecord(parsed) && parsed[RETIRED_TOOLS_KEY] !== undefined) {
+      defects.push({
+        file: path.join('subagents', '_data', config.frontmatterFile),
+        kind: 'frontmatter',
+        detail: `Overlay declares the retired \`${RETIRED_TOOLS_KEY}:\` mapping, which nothing reads; each harness's tool names now come from codeassembly itself. Remove the key.`,
+      });
     }
   }
   return defects;
