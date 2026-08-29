@@ -16,6 +16,10 @@ aspect-test-reviewer: {} # inherits _defaults
 
 code-simplification-reviewer: {} # inherits _defaults
 
+# Names the grant Claude reaches by inheritance: Rovo reads no denylist, and the drafter writes no files.
+lede-drafter:
+  tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
+
 plan-reviewer: {} # inherits _defaults
 
 plan-reviser: {} # inherits _defaults
