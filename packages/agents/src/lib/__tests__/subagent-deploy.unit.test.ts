@@ -18,9 +18,6 @@ import { renderSubagentForHarness } from '../subagent-transform.ts';
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 const CLAUDE_OVERLAY = dedent`
-  _tools:
-    Read: Read
-
   _defaults:
     permissionMode: bypassPermissions
 

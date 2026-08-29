@@ -320,15 +320,11 @@ async function writeLibrarySubagent(contentDir: string, slug: string, body: stri
   await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n# ${slug}\n\n${body}`, 'utf8');
 }
 
-/** Writes the Claude harness overlay so the subagent transform has its tool mapping and defaults. */
+/** Writes the Claude harness overlay supplying the `_defaults` the subagent frontmatter merge applies. */
 async function writeOverlays(contentDir: string): Promise<void> {
   const dataDir = path.join(contentDir, 'subagents', '_data');
   await mkdir(dataDir, { recursive: true });
-  await writeFile(
-    path.join(dataDir, 'claude.yaml'),
-    '_tools:\n  Read: Read\n\n_defaults:\n  permissionMode: bypassPermissions\n',
-    'utf8',
-  );
+  await writeFile(path.join(dataDir, 'claude.yaml'), '_defaults:\n  permissionMode: bypassPermissions\n', 'utf8');
 }
 
 // endregion | Helpers

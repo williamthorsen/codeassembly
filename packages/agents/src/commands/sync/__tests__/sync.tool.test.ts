@@ -1832,17 +1832,11 @@ describe(syncCommand, () => {
 
   describe('declared subagents', () => {
     const CLAUDE_OVERLAY = dedent`
-      _tools:
-        Read: Read
-
       _defaults:
         permissionMode: bypassPermissions
 
     `;
     const ROVO_OVERLAY = dedent`
-      _tools:
-        Read: open_files
-
       _defaults:
         tools: [open_files]
 
@@ -1851,7 +1845,7 @@ describe(syncCommand, () => {
     const subagentPath = (slug: string, dotDir = '.claude', subDir = 'agents'): string =>
       path.join(projectRoot, dotDir, subDir, `${slug}.md`);
 
-    /** Writes the harness overlays so the subagent transform has tool mappings and `_defaults`. */
+    /** Writes the harness overlays supplying the `_defaults` the subagent frontmatter merge applies. */
     async function writeOverlays(): Promise<void> {
       const dataDir = path.join(contentDir, 'subagents', '_data');
       await mkdir(dataDir, { recursive: true });

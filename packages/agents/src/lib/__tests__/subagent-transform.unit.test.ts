@@ -34,17 +34,11 @@ const SOURCE = dedent`
 `;
 
 const CLAUDE_OVERLAY = dedent`
-  _tools:
-    Read: Read
-
   _defaults:
     permissionMode: bypassPermissions
 
 `;
 const ROVO_OVERLAY = dedent`
-  _tools:
-    Read: open_files
-
   _defaults:
     tools: [bash, open_files]
 
