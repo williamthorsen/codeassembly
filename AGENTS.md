@@ -28,6 +28,7 @@ Content appearing identically in two or more skill or subagent files belongs in 
 ## Gotchas
 
 - `pnpm run bootstrap` builds every package, then deploys current guidance into the worktree's harness directories. The MCP server and the CLI bins do not run until it has. `pnpm run agents:sync` does the deploy half alone.
+- The helper bundles under `packages/agents/content/` are tracked build output, so a helper edit lands with its rebuilt bundle in the same commit. `nmr -F codeassembly build` regenerates them, and `nmr check:strict` fails on a bundle that is stale or that no bundling target produces.
 - Deleting `dist/` does not force a rebuild. The `nmr-compile` cache lives in `node_modules/.cache/nmr-compile/` and is keyed on inputs alone, so the rebuild skips and leaves `dist/` empty. Clear the cache too. Tracked upstream at williamthorsen/node-monorepo-tools#470.
 - A package carries a `vitest.config.ts` only where it configures something of its own; every other package resolves the repo-root config by walking up. nmr's Vitest factory supplies the `source` resolve conditions and the git-isolation setup file, so no config declares either. It leaves `resolve.tsconfigPaths` to the consumer, so every config here declares it.
 - The root `tsconfig.json` names `"types": ["node"]`, so every package declares `@types/node` as `catalog:`. TypeScript 6 includes no ambient `@types` package automatically, and naming one here excludes the rest: an `@types/*` supplying globals has no effect until it joins that list.
