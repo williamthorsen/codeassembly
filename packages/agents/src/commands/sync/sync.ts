@@ -1688,7 +1688,7 @@ async function buildResolutionReport(
 function createOverlayLoader(): ResolveOverlay {
   const cache = new Map<string, Promise<string>>();
   return (harnessId, contentRoot) => {
-    const key = `${harnessId}\u0000${contentRoot}`;
+    const key = `${harnessId}\u{0}${contentRoot}`;
     const cached = cache.get(key);
     if (cached !== undefined) {
       return cached;
