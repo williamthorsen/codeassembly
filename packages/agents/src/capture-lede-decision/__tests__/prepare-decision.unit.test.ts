@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { prepareDecision, type PrepareDecisionOutcome } from '../prepare-decision.ts';
+import type { LedeQuality } from '../../lede-corpus/lede-quality.ts';
+import { type PreparedDecision, prepareDecision, type PrepareDecisionOutcome } from '../prepare-decision.ts';
 import type { LedeEpisode } from '../types.ts';
 
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
@@ -16,10 +17,16 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^recordType: event$/m);
   });
 
-  it('carries the group, the namespaced work type, and the verdict as tags', () => {
-    const content = expectContent(prepareDecision(decisionFor({ verdict: 'revised' })));
+  it('carries the group, the namespaced work type, the verdict, and the namespaced rating as tags', () => {
+    const content = expectContent(prepareDecision(decisionFor({ differ: true, quality: 'strong' })));
 
-    expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised]$/m);
+    expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
+  });
+
+  it('carries the rating in frontmatter, where the exemplar selector reads a record', () => {
+    const content = expectContent(prepareDecision(decisionFor({ quality: 'exemplary' })));
+
+    expect(content).toMatch(/^quality: exemplary$/m);
   });
 
   it('carries the change identity and the doctrine fingerprint in frontmatter', () => {
@@ -33,10 +40,24 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^doctrine-hash: sha256:abc$/m);
   });
 
-  it('summarizes the decision so recall names the verdict and the change', () => {
-    const content = expectContent(prepareDecision(decisionFor({ verdict: 'revised' })));
+  it('summarizes the decision so recall names the verdict, the change, and the rating', () => {
+    const content = expectContent(prepareDecision(decisionFor({ differ: true, quality: 'good' })));
 
-    expect(content).toMatch(/^summary: 'Lede revised for agents #1124'$/m);
+    expect(content).toMatch(/^summary: 'Lede revised for agents #1124, rated good'$/m);
+  });
+
+  it('derives a revised verdict when the two texts differ', () => {
+    const outcome = prepareDecision(decisionFor({ differ: true }));
+
+    expect(expectContent(outcome)).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
+    expect(expectPrepared(outcome).verdict).toBe('revised');
+  });
+
+  it('derives an accepted verdict when the two texts match', () => {
+    const outcome = prepareDecision(decisionFor({ differ: false }));
+
+    expect(expectContent(outcome)).toMatch(/^tags: \[lede-decision, type:feat, accepted, quality:strong]$/m);
+    expect(expectPrepared(outcome).verdict).toBe('accepted');
   });
 
   it('records only the agent lede when the two texts match', () => {
@@ -50,13 +71,6 @@ describe(prepareDecision, () => {
     const content = expectContent(prepareDecision(decisionFor({ differ: true })));
 
     expect(content).toContain(`## Merged lede\n\n${MERGED_LEDE}`);
-  });
-
-  it('records the merged lede on a differing pair even when the author called it accepted', () => {
-    const content = expectContent(prepareDecision(decisionFor({ differ: true, verdict: 'accepted' })));
-
-    expect(content).toContain('## Merged lede');
-    expect(content).toMatch(/^tags: \[lede-decision, type:feat, accepted]$/m);
   });
 
   it('omits the comment section when no comment was given', () => {
@@ -111,13 +125,13 @@ const IDENTITY = {
 
 /** Builds a decision input over a minimal episode, applying the overrides a test cares about. */
 function decisionFor(overrides: {
-  verdict?: 'accepted' | 'revised';
+  quality?: LedeQuality;
   differ?: boolean;
   comment?: string;
 }): Parameters<typeof prepareDecision>[0] {
   return {
     episode: episodeFor(overrides),
-    verdict: overrides.verdict ?? 'revised',
+    quality: overrides.quality ?? 'strong',
     comment: overrides.comment ?? '',
     context: { cwd: '/tmp/work' },
     harness: null,
@@ -139,8 +153,13 @@ function episodeFor(overrides: { differ?: boolean }): LedeEpisode {
 
 /** Narrows a prepare outcome to its rendered content, failing the test with the validation errors when it did not. */
 function expectContent(outcome: PrepareDecisionOutcome): string {
+  return expectPrepared(outcome).content;
+}
+
+/** Narrows a prepare outcome to the prepared decision, failing the test with the validation errors when it did not. */
+function expectPrepared(outcome: PrepareDecisionOutcome): PreparedDecision {
   if (outcome.ok) {
-    return outcome.prepared.content;
+    return outcome.prepared;
   }
   throw new Error(`expected a prepared decision, got errors: ${outcome.errors.join('; ')}`);
 }

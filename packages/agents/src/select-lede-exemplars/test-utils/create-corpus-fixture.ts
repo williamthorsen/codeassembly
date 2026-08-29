@@ -24,6 +24,8 @@ export interface DecisionSpec {
   pr?: string;
   /** Tier as the record recorded it; defaults to the tier the fixture taxonomy declares for `type`. */
   tier?: string;
+  /** Rating as the record's frontmatter spells it; absent leaves the record unrated, as one captured earlier is. */
+  quality?: string;
   tags?: readonly string[];
 }
 
@@ -108,6 +110,7 @@ export function renderDecision(spec: DecisionSpec): string {
     `tier: ${tier}`,
     `scope: ${spec.scope ?? 'agents'}`,
     `pr: '${spec.pr ?? '1'}'`,
+    ...(spec.quality === undefined ? [] : [`quality: ${spec.quality}`]),
     '---',
     '',
     `${sections.join('\n\n')}\n`,

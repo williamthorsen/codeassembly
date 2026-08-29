@@ -4,6 +4,8 @@
 // The payload is a discriminated union on `ok`. An exhausted corpus is a success carrying a diagnostic rather than a
 // failure: a drafter degrades to no exemplars, and is never blocked by their absence.
 
+import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
+
 /** One author-approved lede, with the change identity a drafter calibrates a new lede against. */
 export interface LedeExemplar {
   /** The approved text: the record's merged lede when it carries one, its agent lede otherwise. */
@@ -31,6 +33,9 @@ export interface ExemplarSelection {
   warnings: string[];
 }
 
+/** The stdout payload's report of the floor a request applied. */
+export type AppliedFloor = LedeQuality | 'none';
+
 /** Every categorical reason a request fails without an unexpected throw. */
 export type SelectErrorCode = 'invalid-args' | 'no-taxonomy' | 'store-not-registered' | 'unknown-type';
 
@@ -41,6 +46,8 @@ export interface SelectSuccess {
   type: string;
   tier: string;
   widening: Widening;
+  /** The rating floor the request applied; `none` when it named none and read every record. */
+  minQuality: AppliedFloor;
   exemplars: LedeExemplar[];
   /** Registry name of the corpus that was read. */
   store: string;

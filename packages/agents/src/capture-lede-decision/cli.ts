@@ -14,19 +14,14 @@ import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
+import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
 import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareDecision } from './prepare-decision.ts';
 import { resolveEpisode } from './resolve-episode.ts';
-import {
-  type DecisionErrorCode,
-  type DecisionResult,
-  isLedeVerdict,
-  LEDE_VERDICTS,
-  type LedeVerdict,
-} from './types.ts';
+import type { DecisionErrorCode, DecisionResult } from './types.ts';
 
 /** The flags this helper accepts; the comment comes from stdin, so it has no flag of its own. */
 const FLAGS: readonly FlagSpec[] = [
@@ -39,11 +34,11 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'merged-lede-file', takesValue: true },
   { name: 'pr', takesValue: true },
   { name: 'provenance', takesValue: true },
+  { name: 'quality', takesValue: true },
   { name: 'scope', takesValue: true },
   { name: 'store', takesValue: true },
   { name: 'ticket', takesValue: true },
   { name: 'type', takesValue: true },
-  { name: 'verdict', takesValue: true },
 ];
 
 /**
@@ -55,10 +50,10 @@ const LEDE_DECISION_STORE = 'codeassembly';
 
 /** Parsed command-line invocation of the capture-lede-decision helper. */
 export interface ParsedArgs {
-  /** `inspect` resolves and reports the episode; `commit` records the author's verdict. */
+  /** `inspect` resolves and reports the episode; `commit` records the author's rating. */
   mode: 'inspect' | 'commit';
-  /** The author's decision; `null` in inspect mode. */
-  verdict: LedeVerdict | null;
+  /** The author's rating of the lede that shipped; `null` in inspect mode. */
+  quality: LedeQuality | null;
   artifactDir: string;
   pr: string;
   mergeCommit: string;
@@ -160,9 +155,9 @@ export async function runDecision(input: {
     };
   }
 
-  const verdict = args.verdict;
-  if (verdict === null) {
-    return { ok: false, error: 'invalid-args', message: '--verdict is required to record a decision' };
+  const quality = args.quality;
+  if (quality === null) {
+    return { ok: false, error: 'invalid-args', message: '--quality is required to record a decision' };
   }
 
   if (!target.ok) {
@@ -175,7 +170,7 @@ export async function runDecision(input: {
 
   const prep = prepareDecision({
     episode: resolved.episode,
-    verdict,
+    quality,
     comment,
     context: {
       cwd: input.cwd,
@@ -204,7 +199,8 @@ export async function runDecision(input: {
   return {
     ok: true,
     mode: 'commit',
-    verdict,
+    quality,
+    verdict: prep.prepared.verdict,
     id: prep.prepared.id,
     capturedAt: prep.prepared.capturedAt,
     path: recordPath,
@@ -213,7 +209,7 @@ export async function runDecision(input: {
 }
 
 /**
- * Parses the helper's argv. `--inspect` and `--verdict` select the mode and are mutually exclusive; exactly one must
+ * Parses the helper's argv. `--inspect` and `--quality` select the mode and are mutually exclusive; exactly one must
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
  * change it describes is not worth recording. Every other flag is optional: the work type, scope, and ticket fall back
  * to the change-summary artifact, the two lede overrides fall back to their artifacts, and `--store` names a corpus
@@ -240,11 +236,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     );
   }
 
-  const { mode, verdict } = resolveMode({ inspect: flags.some((flag) => flag.name === 'inspect'), raw });
+  const { mode, quality } = resolveMode({ inspect: flags.some((flag) => flag.name === 'inspect'), raw });
 
   return {
     mode,
-    verdict,
+    quality,
     artifactDir: requireFlag(raw, 'artifact-dir'),
     pr: requireFlag(raw, 'pr'),
     mergeCommit: requireFlag(raw, 'merge-commit'),
@@ -328,23 +324,23 @@ function resolveDefaultDataDir(): string {
 
 /**
  * Resolves which mode the invocation selects, rejecting an argv that names both or neither. Exactly one of `--inspect`
- * and `--verdict` must appear, so the mode and the verdict are decided together rather than validated separately.
+ * and `--quality` must appear, so the mode and the rating are decided together rather than validated separately.
  */
 function resolveMode(input: { inspect: boolean; raw: Record<string, string> }): {
   mode: 'inspect' | 'commit';
-  verdict: LedeVerdict | null;
+  quality: LedeQuality | null;
 } {
-  const rawVerdict = input.raw.verdict;
-  if (rawVerdict !== undefined && input.inspect) {
-    throw new Error('--inspect and --verdict are mutually exclusive');
+  const rawQuality = input.raw.quality;
+  if (rawQuality !== undefined && input.inspect) {
+    throw new Error('--inspect and --quality are mutually exclusive');
   }
-  if (rawVerdict === undefined && !input.inspect) {
-    throw new Error(`one of --inspect or --verdict <${LEDE_VERDICTS.join('|')}> is required`);
+  if (rawQuality === undefined && !input.inspect) {
+    throw new Error(`one of --inspect or --quality <${LEDE_QUALITY_LEVELS.join('|')}> is required`);
   }
-  if (rawVerdict !== undefined && !isLedeVerdict(rawVerdict)) {
-    throw new Error(`--verdict must be one of ${LEDE_VERDICTS.join(', ')}`);
+  if (rawQuality !== undefined && !isLedeQuality(rawQuality)) {
+    throw new Error(`--quality must be one of ${LEDE_QUALITY_LEVELS.join(', ')}`);
   }
-  return input.inspect ? { mode: 'inspect', verdict: null } : { mode: 'commit', verdict: rawVerdict ?? null };
+  return input.inspect ? { mode: 'inspect', quality: null } : { mode: 'commit', quality: rawQuality ?? null };
 }
 
 /** Reads a required value-bearing flag, throwing a usage-style message when it is absent. */

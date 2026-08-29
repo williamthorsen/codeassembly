@@ -34,7 +34,7 @@ Agent-invoked:
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields.
 - `resolve-merge-options.sh`: Resolves merge-method and squash-title inputs from CLI overrides, label maps, and commit majority.
 - `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.
-- `select-lede-exemplars.mjs`: Selects author-approved ledes of a given work type from the lede-decision corpus.
+- `select-lede-exemplars.mjs`: Selects author-approved ledes of a given work type from the lede-decision corpus, optionally floored at a quality rating.
 
 Harness-invoked:
 

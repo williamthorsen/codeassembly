@@ -6,7 +6,7 @@ import { Readable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runDecision } from '../cli.ts';
-import { createLedeFixture, type LedeFixture } from '../test-utils/create-lede-fixture.ts';
+import { createLedeFixture, FIXTURE_AGENT_LEDE, type LedeFixture } from '../test-utils/create-lede-fixture.ts';
 import type { DecisionResult } from '../types.ts';
 
 const NOW = new Date('2026-07-30T20:41:17.000Z');
@@ -17,8 +17,8 @@ const OTHER_STORE_NAME = 'some-other-corpus';
 describe(parseArgs, () => {
   it('parses every value-bearing flag in long form', () => {
     const parsed = parseArgs([
-      '--verdict',
-      'revised',
+      '--quality',
+      'strong',
       '--artifact-dir',
       '/tickets/1107',
       '--pr',
@@ -47,7 +47,7 @@ describe(parseArgs, () => {
 
     expect(parsed).toStrictEqual({
       mode: 'commit',
-      verdict: 'revised',
+      quality: 'strong',
       artifactDir: '/tickets/1107',
       pr: '1124',
       mergeCommit: '35aa58d7',
@@ -63,11 +63,11 @@ describe(parseArgs, () => {
     });
   });
 
-  it('selects inspect mode and leaves the verdict unset', () => {
+  it('selects inspect mode and leaves the rating unset', () => {
     const parsed = parseArgs(['--inspect', ...requiredFlags()]);
 
     expect(parsed.mode).toBe('inspect');
-    expect(parsed.verdict).toBeNull();
+    expect(parsed.quality).toBeNull();
   });
 
   it('resolves the store this helper serves when --store names none', () => {
@@ -83,15 +83,19 @@ describe(parseArgs, () => {
   });
 
   it('refuses an invocation that selects both modes', () => {
-    expect(() => parseArgs(['--inspect', '--verdict', 'revised', ...requiredFlags()])).toThrow('mutually exclusive');
+    expect(() => parseArgs(['--inspect', '--quality', 'strong', ...requiredFlags()])).toThrow('mutually exclusive');
   });
 
   it('refuses an invocation that selects neither mode', () => {
-    expect(() => parseArgs(requiredFlags())).toThrow('one of --inspect or --verdict');
+    expect(() => parseArgs(requiredFlags())).toThrow('one of --inspect or --quality');
   });
 
-  it('refuses a verdict outside the declared set', () => {
-    expect(() => parseArgs(['--verdict', 'maybe', ...requiredFlags()])).toThrow('--verdict must be one of');
+  it('refuses a rating outside the declared scale', () => {
+    expect(() => parseArgs(['--quality', 'excellent', ...requiredFlags()])).toThrow('--quality must be one of');
+  });
+
+  it('refuses --verdict, which the record derives rather than accepts', () => {
+    expect(() => parseArgs(['--verdict', 'revised', ...requiredFlags()])).toThrow('unknown flag: --verdict');
   });
 
   it('refuses the @default sentinel, which names a machine setting rather than a corpus', () => {
@@ -137,13 +141,13 @@ describe(runDecision, () => {
     });
   });
 
-  it('writes one event record when a verdict is recorded', async () => {
+  it('writes one event record when a rating is recorded', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
 
     const result = await runDecision(
       runInput({
-        argv: ['--verdict', 'revised', ...flagsFor(fixture)],
+        argv: ['--quality', 'strong', ...flagsFor(fixture)],
         fixture,
         home: store.home,
         comment: 'Cut the setup clause.',
@@ -153,8 +157,26 @@ describe(runDecision, () => {
     const written = expectCommit(result);
     expect(written.store).toBe(STORE_NAME);
     const content = await readFile(written.path, 'utf8');
-    expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised]$/m);
+    expect(written.quality).toBe('strong');
+    expect(written.verdict).toBe('revised');
+    expect(content).toMatch(/^quality: strong$/m);
+    expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
     expect(content).toContain('## Comment\n\nCut the setup clause.');
+  });
+
+  it('reports an accepted verdict when the merged lede matches what the agent wrote', async () => {
+    const fixture = await createLedeFixture({ mergedLede: FIXTURE_AGENT_LEDE });
+    const store = await makeStore();
+
+    const result = await runDecision(
+      runInput({ argv: ['--quality', 'exemplary', ...flagsFor(fixture)], fixture, home: store.home }),
+    );
+
+    const written = expectCommit(result);
+    expect(written.verdict).toBe('accepted');
+    const content = await readFile(written.path, 'utf8');
+    expect(content).toMatch(/^tags: \[lede-decision, type:feat, accepted, quality:exemplary]$/m);
+    expect(content).not.toContain('## Merged lede');
   });
 
   it('writes nothing in inspect mode', async () => {
@@ -178,7 +200,7 @@ describe(runDecision, () => {
   it('records into the store it serves when --store names none', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
-    const argv = ['--verdict', 'accepted', ...flagsFor(fixture)];
+    const argv = ['--quality', 'good', ...flagsFor(fixture)];
 
     const result = await runDecision(runInput({ argv, fixture, home: store.home }));
 
@@ -188,7 +210,7 @@ describe(runDecision, () => {
   it('records into a corpus named by --store', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore(OTHER_STORE_NAME);
-    const argv = ['--verdict', 'accepted', '--store', OTHER_STORE_NAME, ...flagsFor(fixture)];
+    const argv = ['--quality', 'good', '--store', OTHER_STORE_NAME, ...flagsFor(fixture)];
 
     const result = await runDecision(runInput({ argv, fixture, home: store.home }));
 
@@ -198,7 +220,7 @@ describe(runDecision, () => {
   it('refuses a decision where the store it serves is registered under no name', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore(OTHER_STORE_NAME);
-    const argv = ['--verdict', 'accepted', ...flagsFor(fixture)];
+    const argv = ['--quality', 'good', ...flagsFor(fixture)];
 
     const result = await runDecision(runInput({ argv, fixture, home: store.home }));
 

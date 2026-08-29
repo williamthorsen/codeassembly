@@ -204,7 +204,7 @@ Invoke `{skill:capture-lede-decision}` with:
 | `--merge-commit`    | The merge commit SHA from the delegate's completion report         |
 | `--type`, `--scope` | The values resolved in step 3, as settled at the approval gate     |
 
-That skill owns the prompt and the record: It asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ: A lede that shipped unchanged under time pressure is not an accepted lede.
+That skill owns the prompt and the record: It asks once, writes one event on a rating, and writes nothing on a skip. Do not ask again, and never supply a rating the author did not give: A lede that shipped unchanged under time pressure is not a rated lede.
 
 Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle events](#lifecycle-events).
 

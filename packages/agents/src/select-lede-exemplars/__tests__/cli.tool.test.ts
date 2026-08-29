@@ -21,9 +21,34 @@ const CORPUS: readonly DecisionSpec[] = [
 
 describe(parseArgs, () => {
   it('parses every value-bearing flag in long form', () => {
-    const parsed = parseArgs(['--type', 'feat', '--count', '3', '--store', OTHER_STORE_NAME, '--data-dir', '/_data']);
+    const parsed = parseArgs([
+      '--type',
+      'feat',
+      '--count',
+      '3',
+      '--min-quality',
+      'strong',
+      '--store',
+      OTHER_STORE_NAME,
+      '--data-dir',
+      '/_data',
+    ]);
 
-    expect(parsed).toStrictEqual({ type: 'feat', count: 3, store: OTHER_STORE_NAME, dataDir: '/_data' });
+    expect(parsed).toStrictEqual({
+      type: 'feat',
+      count: 3,
+      minQuality: 'strong',
+      store: OTHER_STORE_NAME,
+      dataDir: '/_data',
+    });
+  });
+
+  it('reads every record when --min-quality names no floor', () => {
+    expect(parseArgs(['--type', 'feat']).minQuality).toBeNull();
+  });
+
+  it('refuses a --min-quality outside the declared scale', () => {
+    expect(() => parseArgs(['--type', 'feat', '--min-quality', 'excellent'])).toThrow('--min-quality must be one of');
   });
 
   it('returns five exemplars when --count names no number', () => {
@@ -86,6 +111,26 @@ describe(runSelect, () => {
     const success = expectSuccess(result);
     expect(success.exemplars).toStrictEqual([]);
     expect(success.diagnostic).toContain('no lede decisions were found');
+  });
+
+  it('reports the floor a request applied, so an empty draw names its cause', async () => {
+    const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'adequate' }];
+    const fixture = await createCorpusFixture({ decisions });
+
+    const result = await run({ argv: ['--type', 'feat', '--min-quality', 'strong'], fixture });
+
+    const success = expectSuccess(result);
+    expect(success.minQuality).toBe('strong');
+    expect(success.exemplars).toStrictEqual([]);
+    expect(success.diagnostic).toContain('rated strong or better');
+  });
+
+  it('reports no floor when the request named none', async () => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await run({ argv: ['--type', 'feat'], fixture });
+
+    expect(expectSuccess(result).minQuality).toBe('none');
   });
 
   it('carries the reason a decision record could not be read', async () => {

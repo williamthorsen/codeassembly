@@ -1,6 +1,7 @@
 import { readNoteContent, renderNote } from '@williamthorsen/kb/note-io';
 import { type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/records';
 
+import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
 import {
   AGENT_LEDE_HEADING,
   COMMENT_HEADING,
@@ -15,6 +16,8 @@ export interface PreparedDecision {
   id: string;
   /** ISO-8601 capture timestamp. */
   capturedAt: string;
+  /** The verdict derived for this decision, reported so a caller states the same one the record carries. */
+  verdict: LedeVerdict;
   /** The full note content (frontmatter fence plus body) to write. */
   content: string;
 }
@@ -28,26 +31,28 @@ export type PrepareDecisionOutcome = { ok: true; prepared: PreparedDecision } | 
  * record type of its own, so it carries the same typed spine every captured event does and rides its change identity,
  * doctrine fingerprint, and provenance in `extra`.
  *
- * Tags carry the group (`lede-decision`), the work type under a `type:` namespace, and the verdict. The namespace is
- * what keeps a work type from colliding with the topical tags an event already uses — a bare `fix` already means a
- * solved-problem episode.
+ * Tags carry the group (`lede-decision`), the work type under a `type:` namespace, the verdict, and the rating under a
+ * `quality:` namespace. The namespaces are what keep a work type or a rating from colliding with the topical tags an
+ * event already uses — a bare `fix` already means a solved-problem episode.
  *
- * The body carries the merged lede whenever the two texts differ, which is a fact about the change rather than a
- * restatement of the verdict: the verdict records what the author says they did, and the body records what happened.
+ * The verdict is derived from whether the two ledes differ, which is also what decides whether the body carries a
+ * merged section. One derivation drives both, so the verdict and the sections can never describe different episodes.
  */
 export function prepareDecision(input: {
   episode: LedeEpisode;
-  verdict: LedeVerdict;
+  quality: LedeQuality;
   comment: string;
   context: { cwd: string; session?: string; repo?: string };
   harness: string | null;
   id: string;
   capturedAt: string;
 }): PrepareDecisionOutcome {
-  const { episode, verdict, context, harness, id, capturedAt } = input;
+  const { episode, quality, context, harness, id, capturedAt } = input;
   const { identity } = episode;
+  const verdict: LedeVerdict = episode.differ ? 'revised' : 'accepted';
 
   const extra: Record<string, unknown> = {
+    quality,
     type: identity.type,
     tier: identity.tier,
     scope: identity.scope,
@@ -66,8 +71,8 @@ export function prepareDecision(input: {
     capturedAt,
     ...(context.session !== undefined && { session: context.session }),
     cwd: context.cwd,
-    summary: `Lede ${verdict} for ${identity.scope} #${identity.pr}`,
-    tags: [LEDE_DECISION_TAG, `type:${identity.type}`, verdict],
+    summary: `Lede ${verdict} for ${identity.scope} #${identity.pr}, rated ${quality}`,
+    tags: [LEDE_DECISION_TAG, `type:${identity.type}`, verdict, `quality:${quality}`],
     addressedBy: [],
     extra,
     body: composeBody({ episode, comment: input.comment }),
@@ -81,7 +86,7 @@ export function prepareDecision(input: {
     return { ok: false, errors };
   }
 
-  return { ok: true, prepared: { id, capturedAt, content } };
+  return { ok: true, prepared: { id, capturedAt, verdict, content } };
 }
 
 // region | Helpers

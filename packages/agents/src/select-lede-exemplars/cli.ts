@@ -9,6 +9,7 @@ import { tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
+import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';
 import { selectExemplars } from './select-exemplars.ts';
@@ -18,6 +19,7 @@ import type { SelectResult } from './types.ts';
 const FLAGS: readonly FlagSpec[] = [
   { name: 'count', takesValue: true },
   { name: 'data-dir', takesValue: true },
+  { name: 'min-quality', takesValue: true },
   { name: 'store', takesValue: true },
   { name: 'type', takesValue: true },
 ];
@@ -39,6 +41,8 @@ export interface ParsedArgs {
   /** The requested work type, as spelled: a canonical key or a declared alias. */
   type: string;
   count: number;
+  /** Lowest rating a record may carry and still be selected; `null` reads every record, rated or not. */
+  minQuality: LedeQuality | null;
   /** The corpus to read; falls back to the one this helper serves when `--store` names none. */
   store: string;
   /** Directory holding `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
@@ -63,7 +67,8 @@ if (isEntryPoint()) {
 
 /**
  * Parses the helper's argv. `--type` is required, because the exemplars a drafter needs are the ones its own work type
- * was written under. `--count`, `--store`, and `--data-dir` each fall back to a default. The `@default` sentinel is
+ * was written under. `--count`, `--min-quality`, `--store`, and `--data-dir` each fall back to a default; an absent
+ * `--min-quality` reads every record, so a corpus whose ratings are still sparse is not filtered down to nothing. The `@default` sentinel is
  * refused: it names whichever store a machine defaults to rather than this corpus, and reading the wrong corpus yields
  * plausible exemplars drawn from nothing relevant.
  *
@@ -95,6 +100,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   return {
     type,
     count: parseCount(raw.count),
+    minQuality: parseMinQuality(raw['min-quality']),
     store: raw.store ?? LEDE_DECISION_STORE,
     dataDir: raw['data-dir'] ?? null,
   };
@@ -150,6 +156,7 @@ export async function runSelect(input: {
     workTypes,
     requested,
     count: args.count,
+    ...(args.minQuality !== null && { minQuality: args.minQuality }),
   });
 
   return {
@@ -157,16 +164,26 @@ export async function runSelect(input: {
     type: requested.key,
     tier: requested.tier,
     widening: selection.widening,
+    minQuality: args.minQuality ?? 'none',
     exemplars: selection.exemplars,
     store: corpus.store.name,
     warnings: selection.warnings,
-    ...(selection.exemplars.length === 0 && {
-      diagnostic: `no lede decisions were found in the "${corpus.store.name}" corpus`,
-    }),
+    ...(selection.exemplars.length === 0 && { diagnostic: describeEmptyResult(corpus.store.name, args.minQuality) }),
   };
 }
 
 // region | Helpers
+
+/**
+ * Describes why a selection came back empty, naming the floor the request applied when it named one. The exemplars
+ * alone do not say whether a floor was in force.
+ */
+function describeEmptyResult(storeName: string, minQuality: LedeQuality | null): string {
+  const corpus = `the "${storeName}" corpus`;
+  return minQuality === null
+    ? `no lede decisions were found in ${corpus}`
+    : `no lede decisions rated ${minQuality} or better were found in ${corpus}`;
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
@@ -197,6 +214,17 @@ function parseCount(value: string | undefined): number {
     throw new Error('--count must be a whole number of at least 1');
   }
   return count;
+}
+
+/** Reads the `--min-quality` value as a declared rating level, throwing a usage-style message for anything else. */
+function parseMinQuality(value: string | undefined): LedeQuality | null {
+  if (value === undefined) {
+    return null;
+  }
+  if (!isLedeQuality(value)) {
+    throw new Error(`--min-quality must be one of ${LEDE_QUALITY_LEVELS.join(', ')}`);
+  }
+  return value;
 }
 
 /**

@@ -20,9 +20,8 @@ export const MERGED_LEDE_HEADING = 'Merged lede';
  * Reads the author-approved lede from a decision record's body: the merged lede when the record carries one, the
  * agent's lede otherwise. Yields `null` when neither heading appears.
  *
- * Presence decides, never the verdict. A decision the author called `revised` whose two texts differ only by
- * whitespace carries no merged section, and one called `accepted` whose texts differ carries one; a reader keying off
- * the verdict would take the wrong text in both cases.
+ * Presence decides, never the verdict. Some records in the corpus carry a verdict that disagrees with the sections
+ * beside it, so a reader keying off the verdict would take the wrong text.
  *
  * A comment is critique of a lede rather than a lede, and no path here reads it.
  */

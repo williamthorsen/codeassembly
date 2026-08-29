@@ -6,6 +6,7 @@ import { readNoteContent } from '@williamthorsen/kb/note-io';
 import { parseEvent } from '@williamthorsen/kb/records';
 
 import { extractString, readStringList } from '../kb-shared/note-helpers.ts';
+import { isLedeQuality, type LedeQuality, meetsQualityFloor } from '../lede-corpus/lede-quality.ts';
 import { extractApprovedLede, LEDE_DECISION_TAG } from '../lede-corpus/lede-sections.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import type { WorkType } from '../lib/work-types.ts';
@@ -15,11 +16,18 @@ import type { ExemplarSelection, LedeExemplar, Widening } from './types.ts';
 interface Candidate {
   exemplar: LedeExemplar;
   resolved: WorkType | null;
+  /** The record's rating; `null` for a record carrying none, which fails every floor. */
+  quality: LedeQuality | null;
 }
 
-/** What reading one event file yielded: a candidate, the reason the record was unreadable, or nothing to report. */
+/**
+ * What reading one event file yielded: a candidate, the reason the record was unreadable, or nothing to report. A
+ * candidate carries its own warnings, for a record selectable despite a field that could not be read as written.
+ */
 type RecordOutcome =
-  { kind: 'candidate'; candidate: Candidate } | { kind: 'warning'; warning: string } | { kind: 'skip' };
+  | { kind: 'candidate'; candidate: Candidate; warnings: readonly string[] }
+  | { kind: 'warning'; warning: string }
+  | { kind: 'skip' };
 
 /**
  * Selects author-approved ledes of a requested work type from a store's event records, widening to the type's
@@ -32,12 +40,17 @@ type RecordOutcome =
  *
  * Each of the three buckets is capped at `count`, and the fill takes the exact type first, so widening only ever makes
  * up a shortfall and never displaces an exact match with a newer tier-mate.
+ *
+ * A `minQuality` floor filters candidates before they reach a bucket, so a type left short by the floor widens exactly
+ * as a scarce type does. Filtering the filled buckets instead would return fewer than `count` while qualifying
+ * tier-mates went untaken.
  */
 export async function selectExemplars(input: {
   storePath: string;
   workTypes: ReadonlyMap<string, WorkType>;
   requested: WorkType;
   count: number;
+  minQuality?: LedeQuality;
 }): Promise<ExemplarSelection> {
   const eventsDir = resolveEventsDir(input.storePath);
   const filenames = await readEventFilenames(eventsDir);
@@ -56,6 +69,10 @@ export async function selectExemplars(input: {
       continue;
     }
     if (outcome.kind === 'skip') {
+      continue;
+    }
+    warnings.push(...outcome.warnings);
+    if (!clearsFloor({ candidate: outcome.candidate, floor: input.minQuality })) {
       continue;
     }
     const bucket = buckets[classifyWidening({ candidate: outcome.candidate, requested: input.requested })];
@@ -90,6 +107,19 @@ function classifyWidening(input: { candidate: Candidate; requested: WorkType }):
     return 'none';
   }
   return exemplar.tier === input.requested.tier ? 'tier' : 'any';
+}
+
+/**
+ * Reports whether a candidate is admitted by a floor. A request naming no floor admits every candidate, rated or not;
+ * a floor admits only a rating that meets it, so an unrated record is left out whenever one is named.
+ */
+function clearsFloor(input: { candidate: Candidate; floor: LedeQuality | undefined }): boolean {
+  if (input.floor === undefined) {
+    return true;
+  }
+  return (
+    input.candidate.quality !== null && meetsQualityFloor({ quality: input.candidate.quality, floor: input.floor })
+  );
 }
 
 /** Orders two strings greatest-first by code unit, which sorts ULID stems and ISO-8601 timestamps by recency. */
@@ -149,12 +179,23 @@ async function readDecision(input: {
     return { kind: 'warning', warning: `${basename}: names work type "${type}", which no taxonomy or record tiers` };
   }
 
+  // A record carrying no rating is the ordinary case for one captured before ratings existed, so only a value outside
+  // the scale is worth reporting. Either way the candidate stays selectable by a request that names no floor.
+  const rawQuality = extractString(extra, 'quality');
+  const quality = isLedeQuality(rawQuality) ? rawQuality : null;
+  const warnings =
+    rawQuality !== null && quality === null
+      ? [`${basename}: carries quality "${rawQuality}", which the scale does not declare`]
+      : [];
+
   return {
     kind: 'candidate',
     candidate: {
       exemplar: { lede, type: resolved?.key ?? type, tier, scope, pr, capturedAt: parsed.record.capturedAt },
       resolved,
+      quality,
     },
+    warnings,
   };
 }
 
