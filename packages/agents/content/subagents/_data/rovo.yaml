@@ -16,6 +16,10 @@ aspect-test-reviewer: {} # inherits _defaults
 
 code-simplification-reviewer: {} # inherits _defaults
 
+# Rovo reads no denylist, so the read-only grant is named here. `create_file` is dropped: the drafter returns text.
+lede-drafter:
+  tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
+
 plan-reviewer: {} # inherits _defaults
 
 plan-reviser: {} # inherits _defaults

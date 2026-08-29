@@ -67,6 +67,7 @@ members:
     - aspect-silent-failure-reviewer
     - aspect-test-reviewer
     - code-simplification-reviewer
+    - lede-drafter
     - orchestrated-architect
     - orchestrated-coder
     - orchestrated-planner
