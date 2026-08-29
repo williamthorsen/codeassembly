@@ -1,9 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { readRecordedBundles } from '../bundle-skill-helpers.ts';
 
@@ -59,6 +59,7 @@ describe(readRecordedBundles, () => {
  */
 function makeCommittedPackage(files: Record<string, string>): string {
   const repoRoot = mkdtempSync(join(tmpdir(), 'recorded-bundles-'));
+  onTestFinished(() => rmSync(repoRoot, { force: true, recursive: true }));
   execFileSync('git', ['-C', repoRoot, 'init', '--quiet']);
 
   const packageDir = join(repoRoot, 'packages', 'agents');
