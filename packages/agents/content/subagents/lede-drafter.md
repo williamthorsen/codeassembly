@@ -42,7 +42,7 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
    **Read the ticket's `## Problem` section and nothing else.** The proposed solution and the acceptance criteria are deliberation about what to build, and a lede reports what the change did on its own merits, not what the ticket asked for.
 
-   An unreachable ticket is not a failure. Draft from the diff and the commit titles, and name the omission in your report.
+   A ticket you cannot reach, and a branch that names none, are both normal. Draft from the diff and the commit titles alone, and name the omission in your report. Never fill the gap by asking the caller for a summary.
 
 ## The doctrine constrains the answer
 
