@@ -15,8 +15,6 @@ import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The per-harness inputs a declared-skill render depends on, resolved once per harness by the caller. */
 export interface SkillDeployContext extends TemplateVariables {
-  /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
-  readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the harness skills dir, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
@@ -181,11 +179,11 @@ async function renderMarkdown(
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<string> {
-  const { anchor, toolMapping, skillSigil, subagentSigil } = context;
+  const { anchor, harnessId, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const filled = fillGuidanceHooks(await expandIncludes(srcPath, contentRoot), context.guidanceHookFills, contextLabel);
   assertFilledAnchorsResolve(filled, contextLabel);
-  const toolRewritten = rewriteToolNames(filled.content, toolMapping, contextLabel);
+  const toolRewritten = rewriteToolNames(filled.content, harnessId, contextLabel);
   const invocationRewritten = rewriteInvocationTokens(
     toolRewritten,
     { skillSigil, subagentSigil },

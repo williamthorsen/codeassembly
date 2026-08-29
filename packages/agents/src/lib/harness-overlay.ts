@@ -5,9 +5,9 @@ import { isEnoent } from './type-guards.ts';
 import type { HarnessConfig } from './types.ts';
 
 /**
- * Reads a harness's overlay YAML, returning an empty string when the file is absent. Though it lives under
- * `subagents/_data/`, the overlay is harness-level: it carries both the subagent frontmatter `_defaults`/per-agent merge
- * and the shared `{tool:NAME}` mapping.
+ * Reads the subagent frontmatter overlay one harness applies to the content root at `contentDir`, returning an empty
+ * string when the file is absent. A root shipping no overlay therefore contributes no `_defaults` and no per-agent
+ * override, which is what makes the merge source-scoped.
  */
 export async function loadHarnessOverlay(contentDir: string, harnessConfig: HarnessConfig): Promise<string> {
   const overlayPath = path.join(contentDir, 'subagents', '_data', harnessConfig.frontmatterFile);

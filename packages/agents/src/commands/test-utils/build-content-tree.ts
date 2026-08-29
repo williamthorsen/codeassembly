@@ -146,11 +146,6 @@ const DEFAULT_SUBAGENTS: Record<string, string> = {
 
 const DEFAULT_OVERLAYS: Record<HarnessId, string> = {
   claude: [
-    '_tools:',
-    '  Bash: Bash',
-    '  Read: Read',
-    '  Write: Write',
-    '',
     '_defaults:',
     '  permissionMode: bypassPermissions',
     '',
@@ -159,7 +154,7 @@ const DEFAULT_OVERLAYS: Record<HarnessId, string> = {
     '  memory: user',
     '',
   ].join('\n'),
-  rovo: ['_tools:', '  Bash: bash', '  Read: open_files', '  Write: create_file', '', '_defaults: {}', ''].join('\n'),
+  rovo: ['_defaults: {}', ''].join('\n'),
 };
 
 const DEFAULT_SCRIPTS: Record<string, string> = {

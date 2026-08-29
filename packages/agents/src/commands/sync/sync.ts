@@ -62,7 +62,6 @@ import {
   type SourceSupportOutcome,
 } from '../../lib/support-deploy.ts';
 import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../../lib/target-harnesses.ts';
-import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
 import type { AmbientHostKind, HarnessId, InstallOptions } from '../../lib/types.ts';
 
@@ -89,8 +88,8 @@ export interface ResolutionEntry {
 export interface HarnessSubagentTarget {
   readonly harnessId: HarnessId;
   readonly subagentsDir: string;
-  /** Everything but the anchor, which the owning source decides and so is supplied per subagent. */
-  readonly deployContext: Omit<SubagentDeployContext, 'anchor'>;
+  /** Everything but the anchor and the overlay, which the owning source decides and so are supplied per subagent. */
+  readonly deployContext: Omit<SubagentDeployContext, 'anchor' | 'overlayYaml'>;
 }
 
 /** One targeted harness's ambient host, paired with the harness id whose paths its rulebook bodies render for. */
@@ -111,6 +110,13 @@ type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string | 
  * tree from the same target written by a library artifact.
  */
 type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
+
+/**
+ * Reads the frontmatter overlay one harness applies to subagents resolved from `contentRoot`. Source-scoped rather
+ * than per-harness: a subagent merges against the overlay of the root it came from, so a source shipping none merges
+ * against nothing.
+ */
+type ResolveOverlay = (harnessId: HarnessId, contentRoot: string) => Promise<string>;
 
 /**
  * One source's support entries rendered for one harness, paired with the namespace directory they deploy into and
@@ -447,21 +453,20 @@ async function reconcileDomain(
     ]),
   );
 
-  const harnessSkillTargets = await Promise.all(
-    harnessIds.map((harnessId) =>
-      resolveSkillTarget(harnessId, domain.baseDir, contentDir, rulebookCatalog, fillsByHarness.get(harnessId)),
-    ),
+  const harnessSkillTargets = harnessIds.map((harnessId) =>
+    resolveSkillTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
   );
 
-  // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
-  // mapping so the deploy applies the same transform `install` would. Resolved separately from skills because the
+  // Subagent delivery targets each harness's project-local subagents dir. Resolved separately from skills because the
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
-  const harnessSubagentTargets = await Promise.all(
-    harnessIds.map((harnessId) =>
-      resolveSubagentTarget(harnessId, domain.baseDir, contentDir, rulebookCatalog, fillsByHarness.get(harnessId)),
-    ),
+  const harnessSubagentTargets = harnessIds.map((harnessId) =>
+    resolveSubagentTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
   );
+
+  // Memoized, so the pre-write render gate and the write that follows it read one overlay per (harness, source)
+  // rather than one per subagent.
+  const resolveOverlay = createOverlayLoader();
 
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
@@ -521,7 +526,7 @@ async function reconcileDomain(
 
   // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
   // host and every skill file are already on disk.
-  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents, resolveAnchorContext);
+  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents, resolveAnchorContext, resolveOverlay);
 
   // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
@@ -623,6 +628,7 @@ async function reconcileDomain(
     subagentOrphansByDir,
     resolvedSubagents,
     resolveAnchorContext,
+    resolveOverlay,
   );
 
   await refreshPromptsYml(harnessIds, domain);
@@ -1107,6 +1113,7 @@ async function reconcileDeclaredSubagents(
   orphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
   resolveAnchorContext: ResolveAnchorContext,
+  resolveOverlay: ResolveOverlay,
 ): Promise<void> {
   for (const target of targets) {
     const orphans = orphansByDir.find((entry) => entry.subagentsDir === target.subagentsDir)?.orphans ?? [];
@@ -1117,6 +1124,7 @@ async function reconcileDeclaredSubagents(
       await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), {
         ...target.deployContext,
         anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+        overlayYaml: await resolveOverlay(target.harnessId, subagent.contentRoot),
       });
     }
   }
@@ -1273,12 +1281,14 @@ async function assertDeclaredSubagentsRender(
   targets: ReadonlyArray<HarnessSubagentTarget>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
   resolveAnchorContext: ResolveAnchorContext,
+  resolveOverlay: ResolveOverlay,
 ): Promise<void> {
   for (const target of targets) {
     for (const subagent of resolvedSubagents) {
       await renderSubagent(subagent, {
         ...target.deployContext,
         anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+        overlayYaml: await resolveOverlay(target.harnessId, subagent.contentRoot),
       });
     }
   }
@@ -1671,25 +1681,40 @@ async function buildResolutionReport(
 }
 
 /**
- * Resolves one harness's project-local subagents dir together with the per-harness inputs the deploy transform needs:
- * the harness overlay YAML, its tool-name mapping, the link anchor, the home-dir segment, and the harness id. Passing
- * `projectRoot` as the base keeps delivery project-scoped, matching the skill passes.
+ * Builds a memoized reader of the subagent frontmatter overlay, keyed on the harness and the content root a subagent
+ * resolved from. Memoized because every subagent from one source reads the same overlay, and the pre-write render
+ * gate reads each of them a second time.
  */
-async function resolveSubagentTarget(
+function createOverlayLoader(): ResolveOverlay {
+  const cache = new Map<string, Promise<string>>();
+  return (harnessId, contentRoot) => {
+    const key = `${harnessId}\u0000${contentRoot}`;
+    const cached = cache.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const loading = loadHarnessOverlay(contentRoot, HARNESSES[harnessId]);
+    cache.set(key, loading);
+    return loading;
+  };
+}
+
+/**
+ * Resolves one harness's project-local subagents dir together with the per-harness inputs the deploy transform needs:
+ * the link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
+ * project-scoped, matching the skill passes.
+ */
+function resolveSubagentTarget(
   harnessId: HarnessId,
   projectRoot: string,
-  contentDir: string,
   rulebooks: RulebookInvocationCatalog,
   guidanceHookFills: GuidanceHookFills | undefined,
-): Promise<HarnessSubagentTarget> {
+): HarnessSubagentTarget {
   const harnessConfig = HARNESSES[harnessId];
-  const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
     harnessId,
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {
-      overlayYaml,
-      toolMapping: loadToolMapping(overlayYaml),
       guidanceFileName: harnessConfig.guidanceFileName,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
@@ -1703,23 +1728,20 @@ async function resolveSubagentTarget(
 
 /**
  * Resolves one harness's project-local skills dir together with the per-harness inputs the skill transform needs: the
- * tool-name mapping (from the harness overlay), the link anchor, the home-dir segment, and the harness id.
- * Passing `projectRoot` as the base keeps delivery project-scoped.
+ * link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
+ * project-scoped.
  */
-async function resolveSkillTarget(
+function resolveSkillTarget(
   harnessId: HarnessId,
   projectRoot: string,
-  contentDir: string,
   rulebooks: RulebookInvocationCatalog,
   guidanceHookFills: GuidanceHookFills | undefined,
-): Promise<HarnessSkillTarget> {
+): HarnessSkillTarget {
   const harnessConfig = HARNESSES[harnessId];
-  const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
     harnessId,
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
-      toolMapping: loadToolMapping(overlayYaml),
       guidanceFileName: harnessConfig.guidanceFileName,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,

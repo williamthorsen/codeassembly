@@ -14,8 +14,6 @@ import { rewriteToolNames } from './tool-name-rewriter.ts';
 export interface SubagentRenderContext extends TemplateVariables {
   /** Raw harness overlay YAML, feeding the frontmatter `_defaults`/per-agent merge. */
   readonly overlayYaml: string;
-  /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
-  readonly toolMapping: ReadonlyMap<string, string>;
   /** The subagent file's path relative to the subagents tree root, anchoring relative Markdown link rewrites. */
   readonly fileRelPath: string;
   /** Content-relative source path (e.g. `subagents/canary.md`) used only as the unmapped-tool error reference. */
@@ -57,12 +55,12 @@ export interface SubagentRenderContext extends TemplateVariables {
  * home whatever the target is.
  */
 export function renderSubagentForHarness(expandedSource: string, context: SubagentRenderContext): string {
-  const { overlayYaml, toolMapping, fileRelPath, sourceLabel, anchor, skillSigil, subagentSigil, rulebooks } = context;
+  const { overlayYaml, harnessId, fileRelPath, sourceLabel, anchor, skillSigil, subagentSigil, rulebooks } = context;
   const filled = fillGuidanceHooks(expandedSource, context.guidanceHookFills, sourceLabel);
   assertFilledAnchorsResolve(filled, sourceLabel);
   const injected = injectDeclaredRulebooks(filled.content, rulebooks, sourceLabel);
   const merged = mergeFrontmatter(injected, overlayYaml);
-  const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
+  const rewrittenTools = rewriteToolNames(merged, harnessId, sourceLabel);
   const rewrittenInvocations = rewriteInvocationTokens(
     rewrittenTools,
     { skillSigil, subagentSigil },

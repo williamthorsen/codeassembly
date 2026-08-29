@@ -16,8 +16,6 @@ import {
 } from '../skill-transform.ts';
 import { ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
-const TOOL_MAPPING = new Map([['Read', 'open_files']]);
-
 // `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
@@ -51,7 +49,7 @@ describe(renderSkillDirectory, () => {
 
     const content = markdownContent(entries, 'SKILL.md');
     expect(content).toContain('Shared fragment.');
-    expect(content).toContain('Use the open_files tool');
+    expect(content).toContain('Use the Read tool');
     expect(content).toContain('~/.claude/x');
     expect(content).not.toContain('{tool:Read}');
     expect(content).not.toContain('include:');
@@ -140,7 +138,7 @@ describe(renderSkillDirectory, () => {
   });
 
   it('throws a file/line-anchored error for an unmapped tool placeholder', async () => {
-    await writeSkill({ 'SKILL.md': '# Demo\n\nUse {tool:Bash}.\n' });
+    await writeSkill({ 'SKILL.md': '# Demo\n\nUse {tool:NoSuchTool}.\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
       ToolNameRewriteError,
@@ -400,7 +398,6 @@ describe(renderSupportEntry, () => {
 /** Builds a deploy context targeting the Claude harness, with `overrides` applied over its defaults. */
 function buildContext(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
   return {
-    toolMapping: TOOL_MAPPING,
     anchor: homeAnchor('.claude/skills'),
     guidanceFileName: 'CLAUDE.md',
     homeDir: '.claude',

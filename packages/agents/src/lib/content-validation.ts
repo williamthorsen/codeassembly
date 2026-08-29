@@ -37,7 +37,6 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from './subagent-deploy.ts';
-import { loadToolMapping } from './tool-name-rewriter.ts';
 import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
@@ -100,7 +99,7 @@ export async function validateContentRoot(
   // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses it affects.
   const rendered: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
-    rendered.push(...(await renderForHarness(harnessId, root, libraryDir, artifacts)));
+    rendered.push(...(await renderForHarness(harnessId, root, artifacts)));
   }
 
   return [
@@ -278,20 +277,16 @@ function ownedByRoot(artifact: { readonly source: string | undefined }): boolean
 async function renderForHarness(
   harnessId: HarnessId,
   root: string,
-  libraryDir: string,
   artifacts: ResolvedArtifacts,
 ): Promise<ReadonlyArray<HarnessDefect>> {
   const config = HARNESSES[harnessId];
-  // The overlay comes from the library, never from the root under validation: `{tool:NAME}` names are library-defined,
-  // and this is the mapping a consumer's deploy would apply to the root's content.
-  const overlayYaml = await loadHarnessOverlay(libraryDir, config);
-  const toolMapping = loadToolMapping(overlayYaml);
+  // The root's own overlay, which is what a consumer's `sync` merges into a subagent resolved from this root.
+  const overlayYaml = await loadHarnessOverlay(root, config);
   // One catalog for all three renders, so a `{rulebook:<slug>}` token resolves here exactly as it will under `sync`.
   const rulebooks: RulebookInvocationCatalog = new Map(
     artifacts.rulebooks.map((book) => [book.slug, { skillName: book.skillName, skill: book.skill }]),
   );
   const skillContext: SkillDeployContext = {
-    toolMapping,
     anchor: homeAnchor(resolveSkillsPathPrefix(config)),
     guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,
@@ -302,7 +297,6 @@ async function renderForHarness(
   };
   const subagentContext: SubagentDeployContext = {
     overlayYaml,
-    toolMapping,
     anchor: homeAnchor(config.homeDir),
     guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,

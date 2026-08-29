@@ -9,7 +9,6 @@ import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
 import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { homeAnchor } from '../../lib/path-rewriter.ts';
 import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
-import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
 
 /** The rulebook `orchestrated-coder` injects; no source under test addresses another. */
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
@@ -26,11 +25,9 @@ describe('reviewer and coder partials render correctly', () => {
   const contentDir = resolveContentDir();
   const harnessConfig = HARNESSES.claude;
   let overlayYaml: string;
-  let toolMapping: ReadonlyMap<string, string>;
 
   beforeAll(async () => {
     overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
-    toolMapping = loadToolMapping(overlayYaml);
   });
 
   /** Renders a subagent's deployed claude body exactly as `sync`'s `deploySubagent` does: expand includes, then merge frontmatter and rewrite tool, path, and template placeholders. */
@@ -39,7 +36,6 @@ describe('reviewer and coder partials render correctly', () => {
     const expanded = await expandIncludes(path.join(contentDir, 'subagents', fileName), contentDir);
     return renderSubagentForHarness(expanded, {
       overlayYaml,
-      toolMapping,
       fileRelPath: fileName,
       sourceLabel: `subagents/${fileName}`,
       anchor: homeAnchor(harnessConfig.homeDir),

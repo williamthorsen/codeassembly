@@ -27,8 +27,6 @@ export interface ResolvedSubagent {
 export interface SubagentDeployContext extends TemplateVariables {
   /** Raw harness overlay YAML feeding the frontmatter merge. */
   readonly overlayYaml: string;
-  /** Canonical → harness tool-name mapping for the body-text placeholder rewriter. */
-  readonly toolMapping: ReadonlyMap<string, string>;
   /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
   readonly anchor: ResolveLinkAnchor;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
@@ -70,7 +68,6 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
   const fileName = `${resolved.slug}.md`;
   return renderSubagentForHarness(expanded, {
     overlayYaml: context.overlayYaml,
-    toolMapping: context.toolMapping,
     fileRelPath: fileName,
     sourceLabel: `subagents/${fileName}`,
     anchor: context.anchor,
