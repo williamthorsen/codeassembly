@@ -6,7 +6,7 @@ import { HARNESSES } from '../harness.ts';
 import { rewriteInvocationTokens, type RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
-import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
+import { rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -34,17 +34,11 @@ const SOURCE = dedent`
 `;
 
 const CLAUDE_OVERLAY = dedent`
-  _tools:
-    Read: Read
-
   _defaults:
     permissionMode: bypassPermissions
 
 `;
 const ROVO_OVERLAY = dedent`
-  _tools:
-    Read: open_files
-
   _defaults:
     tools: [bash, open_files]
 
@@ -54,7 +48,6 @@ describe(renderSubagentForHarness, () => {
   it('merges _defaults, rewrites the tool placeholder, and expands {harness_home_dir} for claude', () => {
     const output = renderSubagentForHarness(SOURCE, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
@@ -76,7 +69,6 @@ describe(renderSubagentForHarness, () => {
   it('applies the harness-native tool name and home dir for rovo', () => {
     const output = renderSubagentForHarness(SOURCE, {
       overlayYaml: ROVO_OVERLAY,
-      toolMapping: loadToolMapping(ROVO_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor(ROVO_HOME),
@@ -106,7 +98,6 @@ describe(renderSubagentForHarness, () => {
 
     const claude = renderSubagentForHarness(source, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
@@ -123,7 +114,6 @@ describe(renderSubagentForHarness, () => {
 
     const rovo = renderSubagentForHarness(source, {
       overlayYaml: ROVO_OVERLAY,
-      toolMapping: loadToolMapping(ROVO_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor(ROVO_HOME),
@@ -150,7 +140,6 @@ describe(renderSubagentForHarness, () => {
 
     const output = renderSubagentForHarness(source, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
@@ -180,7 +169,6 @@ describe(renderSubagentForHarness, () => {
     expect(() =>
       renderSubagentForHarness(source, {
         overlayYaml: CLAUDE_OVERLAY,
-        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
@@ -197,7 +185,6 @@ describe(renderSubagentForHarness, () => {
   it('rewrites a relative Markdown link to the path its anchor names', () => {
     const output = renderSubagentForHarness(SOURCE, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
@@ -217,7 +204,6 @@ describe(renderSubagentForHarness, () => {
 
     const output = renderSubagentForHarness(source, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
@@ -238,7 +224,6 @@ describe(renderSubagentForHarness, () => {
 
     const output = renderSubagentForHarness(source, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
       anchor: homeAnchor('.claude'),
@@ -264,7 +249,6 @@ describe(renderSubagentForHarness, () => {
     expect(() =>
       renderSubagentForHarness(source, {
         overlayYaml: CLAUDE_OVERLAY,
-        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
@@ -285,7 +269,6 @@ describe(renderSubagentForHarness, () => {
     expect(() =>
       renderSubagentForHarness(source, {
         overlayYaml: CLAUDE_OVERLAY,
-        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
@@ -305,7 +288,6 @@ describe(renderSubagentForHarness, () => {
     expect(() =>
       renderSubagentForHarness(source, {
         overlayYaml: CLAUDE_OVERLAY,
-        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
@@ -319,11 +301,10 @@ describe(renderSubagentForHarness, () => {
     ).toThrow(/subagents\/demo-agent\.md carries 1 unresolvable anchor link target/);
   });
 
-  it('throws ToolNameRewriteError when a placeholder has no overlay mapping', () => {
+  it('throws ToolNameRewriteError for a tool the harness does not name', () => {
     expect(() =>
-      renderSubagentForHarness(SOURCE, {
-        overlayYaml: '_tools: {}\n',
-        toolMapping: loadToolMapping('_tools: {}\n'),
+      renderSubagentForHarness(SOURCE.replace('{tool:Read}', '{tool:NoSuchTool}'), {
+        overlayYaml: '',
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor('.claude'),
@@ -339,7 +320,7 @@ describe(renderSubagentForHarness, () => {
 
   it.each([
     {
-      harnessId: 'claude',
+      harnessId: 'claude' as const,
       overlayYaml: CLAUDE_OVERLAY,
       guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
@@ -347,7 +328,7 @@ describe(renderSubagentForHarness, () => {
       subagentSigil: '',
     },
     {
-      harnessId: 'rovo',
+      harnessId: 'rovo' as const,
       overlayYaml: ROVO_OVERLAY,
       guidanceFileName: 'AGENTS.md',
       homeDir: ROVO_HOME,
@@ -357,9 +338,8 @@ describe(renderSubagentForHarness, () => {
   ])(
     'produces the same $harnessId output as the standalone merge → tools → invocations → markdown-path → template steps',
     ({ harnessId, overlayYaml, guidanceFileName, homeDir, skillSigil, subagentSigil }) => {
-      const toolMapping = loadToolMapping(overlayYaml);
       const merged = mergeFrontmatter(SOURCE, overlayYaml);
-      const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/demo-agent.md');
+      const rewrittenTools = rewriteToolNames(merged, harnessId, 'subagents/demo-agent.md');
       const rewrittenInvocations = rewriteInvocationTokens(
         rewrittenTools,
         { skillSigil, subagentSigil },
@@ -371,7 +351,6 @@ describe(renderSubagentForHarness, () => {
 
       const rendered = renderSubagentForHarness(SOURCE, {
         overlayYaml,
-        toolMapping,
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
         anchor: homeAnchor(homeDir),

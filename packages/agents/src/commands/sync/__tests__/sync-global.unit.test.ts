@@ -58,7 +58,18 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     expect(designAndPlan).not.toContain('{tool:');
 
     // Subagents and rulebooks reach the home domain through a collection's members too.
-    expect((await readdir(path.join(homeDir, '.claude', 'agents'))).length).toBeGreaterThan(0);
+    const agentsDir = path.join(homeDir, '.claude', 'agents');
+    const deployedSubagents = await readdir(agentsDir);
+    expect(deployedSubagents.length).toBeGreaterThan(0);
+
+    // Each resolved from the library, so each merged against the library's own overlay: the source-scoped merge
+    // reaches the home domain, and applies the same `_defaults` there that it applies in a project.
+    for (const fileName of deployedSubagents) {
+      const deployed = await readFile(path.join(agentsDir, fileName), 'utf8');
+      expect(deployed, `${fileName} deployed without the overlay defaults`).toContain(
+        'permissionMode: bypassPermissions',
+      );
+    }
     expect(existsSync(path.join(skillsDir, 'consult-shell-conventions', 'SKILL.md'))).toBe(true);
   });
 });

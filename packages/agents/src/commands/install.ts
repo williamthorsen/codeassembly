@@ -12,7 +12,6 @@ import { emitReport } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
-import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
@@ -23,7 +22,6 @@ import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/p
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
-import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
@@ -100,11 +98,7 @@ export async function installCommand(
 
     const entries: Array<ManifestEntry> = [];
 
-    // Load the harness overlay once per harness. The raw YAML feeds the frontmatter merger (subagents only);
-    // the parsed `_tools:` mapping feeds the body-text placeholder rewriter (subagents and skills).
     const harnessConfig = HARNESSES[harnessId];
-    const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
-    const toolMapping = loadToolMapping(overlayYaml);
     const templateVariables: TemplateVariables = {
       guidanceFileName: harnessConfig.guidanceFileName,
       harnessId: harnessConfig.id,
@@ -121,7 +115,6 @@ export async function installCommand(
       options,
       skillsPrefix,
       templateVariables,
-      toolMapping,
       harnessConfig.skillSigil,
       harnessConfig.subagentSigil,
     );
@@ -207,7 +200,6 @@ async function installSupportDirectories(
   options: InstallOptions,
   skillsPrefix: string,
   variables: TemplateVariables,
-  toolMapping: ReadonlyMap<string, string>,
   skillSigil: string,
   subagentSigil: string,
 ): Promise<ReadonlyArray<ManifestEntry>> {
@@ -242,7 +234,6 @@ async function installSupportDirectories(
       skillsPrefix,
       variables,
       contentDir,
-      toolMapping,
       skillSigil,
       subagentSigil,
     );
@@ -270,7 +261,6 @@ async function installSkillEntry(
   skillsPrefix: string,
   variables: TemplateVariables,
   contentDir: string,
-  toolMapping: ReadonlyMap<string, string>,
   skillSigil: string,
   subagentSigil: string,
   label = '',
@@ -279,7 +269,6 @@ async function installSkillEntry(
   // dead anchors, and unmapped tool placeholders surface even when no files are written. `renderSupportEntry` is the
   // same render `validate` runs, which is what keeps the two passes agreeing on what a support entry is.
   const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
-    toolMapping,
     anchor: homeAnchor(skillsPrefix),
     guidanceFileName: variables.guidanceFileName,
     homeDir: variables.homeDir,

@@ -91,15 +91,16 @@ describe('sync with a declared package', () => {
     await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n${members}---\n\n# ${slug}\n`, 'utf8');
   }
 
-  /** Writes the Claude harness overlay into the library, which is where the subagent transform reads it from. */
-  async function writeOverlays(): Promise<void> {
-    const dataDir = path.join(contentDir, 'subagents', '_data');
+  /** Writes the Claude subagent frontmatter overlay into a content root. */
+  async function writeOverlay(root: string, body: string): Promise<void> {
+    const dataDir = path.join(root, 'subagents', '_data');
     await mkdir(dataDir, { recursive: true });
-    await writeFile(
-      path.join(dataDir, 'claude.yaml'),
-      '_tools:\n  Read: Read\n\n_defaults:\n  model: sonnet\n',
-      'utf8',
-    );
+    await writeFile(path.join(dataDir, 'claude.yaml'), body, 'utf8');
+  }
+
+  /** Writes the library's Claude overlay, whose `_defaults` a library-resolved subagent merges against. */
+  async function writeOverlays(): Promise<void> {
+    await writeOverlay(contentDir, '_defaults:\n  model: sonnet\n');
   }
 
   /** The package's content root, as resolved from its declared `codeassembly.content`. */
@@ -118,6 +119,37 @@ describe('sync with a declared package', () => {
     await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
       /claimed more than once.*@ca-fixture\/guide/s,
     );
+  });
+
+  it('merges a package subagent against the package overlay rather than the library one', async () => {
+    await writeSubagent(packageContent(), 'pkg-agent');
+    await writeOverlay(packageContent(), '_defaults:\n  model: haiku\n');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    const deployed = await readFile(subagentPath('pkg-agent'), 'utf8');
+    expect(deployed).toContain('model: haiku');
+    expect(deployed).not.toContain('model: sonnet');
+  });
+
+  it('applies no defaults to a subagent from a source shipping no overlay', async () => {
+    await writeSubagent(packageContent(), 'pkg-agent');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    expect(await readFile(subagentPath('pkg-agent'), 'utf8')).not.toContain('model:');
+  });
+
+  it('merges a library subagent against the library overlay when a source ships its own', async () => {
+    await writeSubagent(contentDir, 'lib-agent');
+    await writeOverlay(packageContent(), '_defaults:\n  model: haiku\n');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\nsubagents:\n  use:\n    - lib-agent\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    expect(await readFile(subagentPath('lib-agent'), 'utf8')).toContain('model: sonnet');
   });
 
   it('deploys every deployable artifact the package ships, from the package name alone', async () => {

@@ -1,6 +1,12 @@
 /** Supported harness identifiers. */
 export type HarnessId = 'claude' | 'rovo';
 
+/**
+ * The canonical tool names a `{tool:NAME}` placeholder may address, spelled as Claude names them. Closed rather than
+ * open: every harness maps every name, so adding one here fails the build until each mapping is filled in.
+ */
+export type CanonicalToolName = 'AskUserQuestion' | 'Bash' | 'Edit' | 'Glob' | 'Grep' | 'Read' | 'Task' | 'Write';
+
 /** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
 export interface AgentsManifest {
   readonly schemaVersion: number;
@@ -34,6 +40,8 @@ export interface HarnessConfig {
   readonly configFileName: string;
   /** Filename of the frontmatter overlay YAML for this harness. */
   readonly frontmatterFile: string;
+  /** What this harness calls each canonical tool, resolving `{tool:NAME}` placeholders in deployed body text. */
+  readonly toolNames: Readonly<Record<CanonicalToolName, string>>;
   /** Filename of the mechanically-loaded guidance file under the harness home that hosts the ambient region. */
   readonly guidanceFileName: string;
   /**

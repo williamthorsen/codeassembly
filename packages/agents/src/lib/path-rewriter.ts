@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 
+import type { HarnessId } from './types.ts';
+
 /**
  * The Markdown link grammar this module rewrites: `[text](target)`, capturing text then target. Exported because the
  * grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must match
@@ -17,8 +19,8 @@ export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 export interface TemplateVariables {
   /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
   readonly guidanceFileName: string;
-  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
-  readonly harnessId: string;
+  /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`), and whose tool names a render resolves against. */
+  readonly harnessId: HarnessId;
   /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
 }

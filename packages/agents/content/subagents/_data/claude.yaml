@@ -1,18 +1,6 @@
 # claude.yaml
 
-# Body-text tool-name mapping for the {tool:NAME} placeholder rewriter.
-# Authoring guide: ../../_partials/README.md (Tool-name placeholders).
-# Keys are canonical PascalCase tool names; values are platform-native names.
-# Claude uses canonical names, so this is an identity mapping.
-_tools:
-  AskUserQuestion: AskUserQuestion
-  Bash: Bash
-  Edit: Edit
-  Glob: Glob
-  Grep: Grep
-  Read: Read
-  Task: Task
-  Write: Write
+# Frontmatter this harness merges into each deployed subagent: _defaults for every agent, then per-agent overrides.
 
 _defaults:
   permissionMode: bypassPermissions

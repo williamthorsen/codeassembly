@@ -1620,12 +1620,6 @@ describe(syncCommand, () => {
     });
 
     it('applies include expansion and tool-name and link rewriting when deploying a declared skill', async () => {
-      await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
-      await writeFile(
-        path.join(contentDir, 'subagents', '_data', 'claude.yaml'),
-        '_tools:\n  Read: open_files\n',
-        'utf8',
-      );
       const skillDir = path.join(contentDir, 'skills', 'demo');
       await mkdir(path.join(skillDir, '_partials'), { recursive: true });
       await writeFile(
@@ -1641,7 +1635,7 @@ describe(syncCommand, () => {
 
       const skill = await readFile(skillPath('demo'), 'utf8');
       expect(skill).toContain('Shared fragment.');
-      expect(skill).toContain('Use open_files.');
+      expect(skill).toContain('Use Read.');
       // Anchored in the project, where this same run deployed the target, rather than in the home harness dir a
       // project sync never populates.
       expect(skill).toContain(`[guide](${path.resolve(projectRoot)}/.claude/skills/demo/guide.md)`);
@@ -1664,14 +1658,14 @@ describe(syncCommand, () => {
     });
 
     it('fails before writing when a declared skill has an unmapped tool placeholder, dry-run included', async () => {
-      await writeLibrarySkill('demo', { body: 'Use {tool:Read}.' });
+      await writeLibrarySkill('demo', { body: 'Use {tool:NoSuchTool}.' });
       await declareSkills('demo');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /Unmapped tool name "Read" in skills\/demo\/SKILL\.md/,
+        /Unmapped tool name "NoSuchTool" in skills\/demo\/SKILL\.md/,
       );
       await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /Unmapped tool name "Read"/,
+        /Unmapped tool name "NoSuchTool"/,
       );
       expect(existsSync(skillPath('demo'))).toBe(false);
     });
@@ -1710,22 +1704,6 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('rovo-only', '.claude'))).toBe(false);
       expect(existsSync(skillPath('everywhere', '.claude'))).toBe(true);
       expect(existsSync(skillPath('everywhere', ROVO_HOME))).toBe(true);
-    });
-
-    it('does not render a harness-targeted skill against a non-target harness whose tool map would reject it', async () => {
-      await installBothHarnesses();
-      // rovo maps Read; claude does not, so rendering this skill against claude would throw on the unmapped tool.
-      const overlays = path.join(contentDir, 'subagents', '_data');
-      await mkdir(overlays, { recursive: true });
-      await writeFile(path.join(overlays, 'rovo.yaml'), '_tools:\n  Read: open_files\n', 'utf8');
-      await writeFile(path.join(overlays, 'claude.yaml'), '_tools:\n  Edit: Edit\n', 'utf8');
-      await writeLibrarySkill('rovo-tool', { supportedHarnesses: '[rovo]', body: 'Use {tool:Read}.' });
-      await declareSkills('rovo-tool');
-
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
-
-      expect(await readFile(skillPath('rovo-tool', ROVO_HOME), 'utf8')).toContain('Use open_files.');
-      expect(existsSync(skillPath('rovo-tool', '.claude'))).toBe(false);
     });
 
     it('retracts a skill from a harness it no longer targets while keeping it where it still does', async () => {
@@ -1854,17 +1832,11 @@ describe(syncCommand, () => {
 
   describe('declared subagents', () => {
     const CLAUDE_OVERLAY = dedent`
-      _tools:
-        Read: Read
-
       _defaults:
         permissionMode: bypassPermissions
 
     `;
     const ROVO_OVERLAY = dedent`
-      _tools:
-        Read: open_files
-
       _defaults:
         tools: [open_files]
 
@@ -1873,7 +1845,7 @@ describe(syncCommand, () => {
     const subagentPath = (slug: string, dotDir = '.claude', subDir = 'agents'): string =>
       path.join(projectRoot, dotDir, subDir, `${slug}.md`);
 
-    /** Writes the harness overlays so the subagent transform has tool mappings and `_defaults`. */
+    /** Writes the harness overlays supplying the `_defaults` the subagent frontmatter merge applies. */
     async function writeOverlays(): Promise<void> {
       const dataDir = path.join(contentDir, 'subagents', '_data');
       await mkdir(dataDir, { recursive: true });

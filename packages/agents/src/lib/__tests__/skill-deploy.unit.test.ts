@@ -112,11 +112,11 @@ describe(deploySkill, () => {
     });
     const destDir = path.join(destParent, 'demo');
 
-    await deploySkill(resolvedSkill('demo'), destDir, context(new Map([['Read', 'open_files']])));
+    await deploySkill(resolvedSkill('demo'), destDir, context());
 
     const skillMd = await readFile(path.join(destDir, 'SKILL.md'), 'utf8');
     expect(skillMd).toContain('Shared fragment.');
-    expect(skillMd).toContain('Use open_files.');
+    expect(skillMd).toContain('Use Read.');
     expect(skillMd).toContain('[guide](~/.claude/skills/demo/reference/guide.md)');
     expect(skillMd).not.toContain('{tool:Read}');
     const guide = await readFile(path.join(destDir, 'reference', 'guide.md'), 'utf8');
@@ -127,7 +127,6 @@ describe(deploySkill, () => {
   });
 
   it('deploys the same body install composes from the shared transform steps, markers aside', async () => {
-    const toolMapping = new Map([['Read', 'open_files']]);
     await writeLibrarySkill('demo', {
       'SKILL.md':
         '---\nname: demo\n---\n\nUse {tool:Read}. See [guide](./reference/guide.md). Run `{harness_home_dir}/x`.\n',
@@ -135,11 +134,11 @@ describe(deploySkill, () => {
     });
     const destDir = path.join(destParent, 'demo');
 
-    await deploySkill(resolvedSkill('demo'), destDir, context(toolMapping));
+    await deploySkill(resolvedSkill('demo'), destDir, context());
 
     // Recompose install's pipeline for SKILL.md independently: expand → tools → markdown paths → template vars.
     const expanded = await expandIncludes(path.join(librarySkillsDir, 'demo', 'SKILL.md'), librarySkillsDir);
-    const tooled = rewriteToolNames(expanded, toolMapping, 'demo/SKILL.md');
+    const tooled = rewriteToolNames(expanded, 'claude', 'demo/SKILL.md');
     const pathed = rewriteMarkdownPaths(tooled, 'demo/SKILL.md', homeAnchor('.claude/skills'));
     const expected = rewriteTemplateVariables(pathed, TEMPLATE_VARIABLES);
 
@@ -153,9 +152,8 @@ describe(deploySkill, () => {
 
   // region | Helpers
 
-  function context(toolMapping: ReadonlyMap<string, string> = new Map()): SkillDeployContext {
+  function context(): SkillDeployContext {
     return {
-      toolMapping,
       anchor: homeAnchor('.claude/skills'),
       guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',

@@ -37,7 +37,6 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from './subagent-deploy.ts';
-import { loadToolMapping } from './tool-name-rewriter.ts';
 import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
@@ -50,6 +49,12 @@ export type ContentDefectKind = 'collision' | 'dependency' | 'frontmatter' | 're
  * why this pass reports it.
  */
 const RETIRED_HARNESSES_KEY = 'harnesses';
+
+/**
+ * The overlay key the tool's own harness table replaced. An overlay still declaring it deploys unchanged, since the
+ * frontmatter merge looks up by agent name and never reads it, so this pass is what tells a producer it is dead.
+ */
+const RETIRED_TOOLS_KEY = '_tools';
 
 /** One rejected artifact: where it lives relative to the content root, which stage rejected it, and why. */
 export interface ContentDefect {
@@ -100,7 +105,7 @@ export async function validateContentRoot(
   // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses it affects.
   const rendered: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
-    rendered.push(...(await renderForHarness(harnessId, root, libraryDir, artifacts)));
+    rendered.push(...(await renderForHarness(harnessId, root, artifacts)));
   }
 
   return [
@@ -108,6 +113,7 @@ export async function validateContentRoot(
     ...artifacts.defects,
     ...findCollisionDefects(artifacts),
     ...(await findRetiredKeyDefects(artifacts)),
+    ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
   ];
 }
@@ -231,6 +237,40 @@ async function findRetiredKeyDefects(artifacts: ResolvedArtifacts): Promise<Read
 }
 
 /**
+ * Reports every overlay the root ships that still carries the retired `_tools:` mapping, one defect per harness whose
+ * overlay declares it. Read from the root's own tree rather than through the resolver, because an overlay is a file a
+ * content root ships rather than an artifact a slug resolves to. An overlay this cannot parse is reported as its own
+ * defect, since `validate` answers with a report rather than a throw.
+ */
+async function findRetiredOverlayKeyDefects(
+  root: string,
+  harnessIds: ReadonlyArray<HarnessId>,
+): Promise<ReadonlyArray<ContentDefect>> {
+  const defects: Array<ContentDefect> = [];
+  for (const harnessId of harnessIds) {
+    const config = HARNESSES[harnessId];
+    const overlayYaml = await loadHarnessOverlay(root, config);
+    if (overlayYaml.trim() === '') {
+      continue;
+    }
+    const file = path.join('subagents', '_data', config.frontmatterFile);
+    try {
+      const parsed: unknown = parseYaml(overlayYaml);
+      if (isRecord(parsed) && parsed[RETIRED_TOOLS_KEY] !== undefined) {
+        defects.push({
+          file,
+          kind: 'frontmatter',
+          detail: `Overlay declares the retired \`${RETIRED_TOOLS_KEY}:\` mapping, which nothing reads; each harness's tool names now come from codeassembly itself. Remove the key.`,
+        });
+      }
+    } catch (error: unknown) {
+      defects.push({ file, kind: 'frontmatter', detail: describeError(error) });
+    }
+  }
+  return defects;
+}
+
+/**
  * Collapses per-harness render defects into one list. A defect every validated harness raised is emitted once, since
  * it is a property of the source rather than of any harness; one raised by a subset keeps the harnesses in its detail,
  * because that subset is the finding.
@@ -278,20 +318,16 @@ function ownedByRoot(artifact: { readonly source: string | undefined }): boolean
 async function renderForHarness(
   harnessId: HarnessId,
   root: string,
-  libraryDir: string,
   artifacts: ResolvedArtifacts,
 ): Promise<ReadonlyArray<HarnessDefect>> {
   const config = HARNESSES[harnessId];
-  // The overlay comes from the library, never from the root under validation: `{tool:NAME}` names are library-defined,
-  // and this is the mapping a consumer's deploy would apply to the root's content.
-  const overlayYaml = await loadHarnessOverlay(libraryDir, config);
-  const toolMapping = loadToolMapping(overlayYaml);
+  // The root's own overlay, which is what a consumer's `sync` merges into a subagent resolved from this root.
+  const overlayYaml = await loadHarnessOverlay(root, config);
   // One catalog for all three renders, so a `{rulebook:<slug>}` token resolves here exactly as it will under `sync`.
   const rulebooks: RulebookInvocationCatalog = new Map(
     artifacts.rulebooks.map((book) => [book.slug, { skillName: book.skillName, skill: book.skill }]),
   );
   const skillContext: SkillDeployContext = {
-    toolMapping,
     anchor: homeAnchor(resolveSkillsPathPrefix(config)),
     guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,
@@ -302,7 +338,6 @@ async function renderForHarness(
   };
   const subagentContext: SubagentDeployContext = {
     overlayYaml,
-    toolMapping,
     anchor: homeAnchor(config.homeDir),
     guidanceFileName: config.guidanceFileName,
     homeDir: config.homeDir,

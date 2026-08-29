@@ -137,6 +137,69 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.kind).toBe('frontmatter');
   });
 
+  it('reports an overlay that still carries the retired _tools mapping', async () => {
+    await writeSkill(root, 'alpha');
+    await writeFileAt(root, 'subagents/_data/claude.yaml', '_tools:\n  Read: Read\n\n_defaults:\n  model: sonnet\n');
+
+    const defects = await validateContentRoot(root, ['claude']);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.kind).toBe('frontmatter');
+    expect(defects[0]?.file).toBe('subagents/_data/claude.yaml');
+    expect(defects[0]?.detail).toContain('_tools');
+  });
+
+  it('reports the retired _tools mapping once per harness whose overlay carries it', async () => {
+    await writeSkill(root, 'alpha');
+    await writeFileAt(root, 'subagents/_data/claude.yaml', '_tools:\n  Read: Read\n');
+    await writeFileAt(root, 'subagents/_data/rovo.yaml', '_defaults: {}\n');
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.file).toBe('subagents/_data/claude.yaml');
+  });
+
+  it('reports an overlay it cannot parse rather than throwing', async () => {
+    await writeFileAt(root, 'subagents/_data/claude.yaml', '_defaults:\n  model: [unclosed\n');
+
+    const defects = await validateContentRoot(root, ['claude']);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.kind).toBe('frontmatter');
+    expect(defects[0]?.file).toBe('subagents/_data/claude.yaml');
+  });
+
+  it('passes an overlay carrying frontmatter defaults alone', async () => {
+    await writeSkill(root, 'alpha');
+    await writeFileAt(root, 'subagents/_data/claude.yaml', '_defaults:\n  model: sonnet\n');
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+  });
+
+  it('renders a root subagent against the root own overlay, not the library one', async () => {
+    const library = path.join(root, 'library');
+    await writeFileAt(library, 'subagents/_data/claude.yaml', '_defaults:\n  description: Fine.\n');
+    const producer = path.join(root, 'producer');
+    await writeSubagent(producer, 'alpha');
+    await writeFileAt(producer, 'subagents/_data/claude.yaml', '_defaults:\n  description: Use {tool:NoSuchTool}\n');
+
+    const defects = await validateContentRoot(producer, ['claude'], library);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: 'subagents/alpha.md', kind: 'render' });
+    expect(defects[0]?.detail).toContain('NoSuchTool');
+  });
+
+  it('passes a root subagent whose own overlay is clean, whatever the library overlay carries', async () => {
+    const library = path.join(root, 'library');
+    await writeFileAt(library, 'subagents/_data/claude.yaml', '_defaults:\n  description: Use {tool:NoSuchTool}\n');
+    const producer = path.join(root, 'producer');
+    await writeSubagent(producer, 'alpha');
+
+    expect(await validateContentRoot(producer, ['claude'], library)).toEqual([]);
+  });
+
   it('passes a skill that declares only the current harness-narrowing key', async () => {
     await writeSkill(root, 'alpha', { supportedHarnesses: ['claude'] });
 

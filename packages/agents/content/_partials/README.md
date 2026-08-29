@@ -87,8 +87,8 @@ The `_partials` directory itself never appears in installed output.
 For each `.md` source file the install pipeline performs, in order:
 
 1. **Expand includes.** `expandIncludes(srcPath, contentDir)` resolves all directive shapes recursively and substitutes slot content.
-2. **Merge frontmatter** (subagents only). Platform-specific frontmatter overrides from `_data/{platform}.yaml` are merged into the source's frontmatter.
-3. **Rewrite tool-name placeholders.** `rewriteToolNames(content, mapping)` replaces each `{tool:NAME}` placeholder using the platform's `_tools:` mapping from the same overlay YAML. An unmapped name is a fatal install error anchored to the source file and line. See [Tool-name placeholders](#tool-name-placeholders).
+2. **Merge frontmatter** (subagents only). Platform-specific frontmatter overrides from the `_data/{platform}.yaml` of the content root the subagent resolved from are merged into the source's frontmatter. A source shipping no overlay contributes no overrides.
+3. **Rewrite tool-name placeholders.** `rewriteToolNames(content, harnessId)` replaces each `{tool:NAME}` placeholder with what that platform calls the tool. An unmapped name is a fatal install error anchored to the source file and line. See [Tool-name placeholders](#tool-name-placeholders).
 4. **Inject the provenance marker.** A `GENERATED FILE` comment is added at the top of the output, with a `Source:` link to the original file.
 5. **Rewrite paths** (skills only, post-write). Bare-relative Markdown links are rewritten to absolute platform paths.
 6. **Write the destination file.**
@@ -99,20 +99,11 @@ Expansion runs before the dry-run gate, so missing partials, cycles, and out-of-
 
 ## Tool-name placeholders
 
-Subagent and skill body text reference tools using the `{tool:NAME}` placeholder so the same source can install for platforms that name their tools differently. `NAME` is the canonical (Claude) tool name (`AskUserQuestion`, `Bash`, `Edit`, `Glob`, `Grep`, `Read`, `Task`, `Write`). The install pipeline rewrites each placeholder using the platform's `_tools:` mapping, which appears at the top of each overlay YAML at `content/subagents/_data/{platform}.yaml`.
+Subagent and skill body text reference tools using the `{tool:NAME}` placeholder so the same source can install for platforms that name their tools differently. `NAME` is the canonical (Claude) tool name (`AskUserQuestion`, `Bash`, `Edit`, `Glob`, `Grep`, `Read`, `Task`, `Write`). The install pipeline rewrites each placeholder to the platform's own name for that tool, which `codeassembly` carries in its harness table rather than reading from content.
 
-```yaml
-# content/subagents/_data/rovo.yaml
-_tools:
-  Bash: bash
-  Edit: find_and_replace_code
-  Glob: expand_folder
-  Grep: grep
-  Read: open_files
-  Write: create_file
-```
+The canonical set is closed and identical across platforms: every platform names every canonical tool, so a name one platform maps is mapped by all of them. Introducing a new canonical name is a change to `codeassembly` itself and ships in a release; content cannot add one.
 
-When a placeholder names a tool not present in the overlay's `_tools:` mapping, the rewriter aborts install with a fatal error anchored to the source file and line. There is no identity pass-through; every match must resolve through the mapping. This catches typos (e.g., `{tool:Reed}`) and out-of-date placeholders at install time rather than at agent runtime.
+When a placeholder names a tool outside that set, the rewriter aborts install with a fatal error anchored to the source file and line. There is no identity pass-through; every match must resolve through the table. This catches typos (e.g., `{tool:Reed}`) and out-of-date placeholders at install time rather than at agent runtime.
 
 **Authoring guidance:**
 

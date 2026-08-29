@@ -13,15 +13,11 @@ import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { homeAnchor } from '../path-rewriter.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
-import { loadToolMapping } from '../tool-name-rewriter.ts';
 
 /** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 const CLAUDE_OVERLAY = dedent`
-  _tools:
-    Read: Read
-
   _defaults:
     permissionMode: bypassPermissions
 
@@ -54,7 +50,6 @@ describe(deploySubagent, () => {
   function claudeContext(): SubagentDeployContext {
     return {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       anchor: homeAnchor('.claude'),
       guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',
@@ -70,7 +65,6 @@ describe(deploySubagent, () => {
     const expanded = await expandIncludes(srcPath, contentDir);
     const rendered = renderSubagentForHarness(expanded, {
       overlayYaml: CLAUDE_OVERLAY,
-      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'canary.md',
       sourceLabel: 'subagents/canary.md',
       anchor: homeAnchor('.claude'),

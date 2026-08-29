@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HARNESSES } from '../harness.ts';
 import { loadHarnessOverlay } from '../harness-overlay.ts';
 
-const OVERLAY = '_tools:\n  Read: Read\n';
+const OVERLAY = '_defaults:\n  model: sonnet\n';
 
 describe(loadHarnessOverlay, () => {
   let contentDir: string;

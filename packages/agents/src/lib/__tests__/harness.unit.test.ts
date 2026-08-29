@@ -116,4 +116,21 @@ describe('harness', () => {
       }
     });
   });
+
+  describe('HARNESSES tool names', () => {
+    it('should name every canonical tool for every harness', () => {
+      const canonical = Object.keys(HARNESSES.claude.toolNames).toSorted();
+      expect(canonical.length).toBeGreaterThan(0);
+      for (const config of Object.values(HARNESSES)) {
+        expect(Object.keys(config.toolNames).toSorted()).toEqual(canonical);
+        expect(Object.values(config.toolNames).every((name) => name.length > 0)).toBe(true);
+      }
+    });
+
+    it('should map each canonical name to itself for claude, which uses the canonical names', () => {
+      for (const [canonical, native] of Object.entries(HARNESSES.claude.toolNames)) {
+        expect(native).toBe(canonical);
+      }
+    });
+  });
 });

@@ -166,8 +166,8 @@ describe(rewriteTemplateVariables, () => {
   it('inserts a substitution value carrying a replacement pattern verbatim', () => {
     const content = '{harness_home_dir}/x --harness {harness_id}';
 
-    const variables = { guidanceFileName: 'CLAUDE.md', harnessId: "cl$'aude", homeDir: '.cl$&$$aude' };
-    expect(rewriteTemplateVariables(content, variables)).toBe("~/.cl$&$$aude/x --harness cl$'aude");
+    const variables = { guidanceFileName: 'CLAUDE.md', harnessId: 'claude', homeDir: ".cl$&$$$'aude" } as const;
+    expect(rewriteTemplateVariables(content, variables)).toBe("~/.cl$&$$$'aude/x --harness claude");
   });
 
   it('replaces {harness_guidance_file} with the harness guidance filename', () => {

@@ -59,10 +59,10 @@ describe('source support delivery', () => {
     it('rewrites tool placeholders and template variables in support content', async () => {
       await writeSupportFile('_data/tools.md', 'Use {tool:Read}; run `{harness_home_dir}/scripts/x.sh`.\n');
 
-      const entries = await renderSourceSupport(sourceDir, context(new Map([['Read', 'open_files']])));
+      const entries = await renderSourceSupport(sourceDir, context());
 
       const rendered = entries.find((entry) => entry.relPath === '_data/tools.md');
-      expect(rendered?.kind === 'markdown' && rendered.content).toContain('Use open_files;');
+      expect(rendered?.kind === 'markdown' && rendered.content).toContain('Use Read;');
       expect(rendered?.kind === 'markdown' && rendered.content).toContain('~/.claude/scripts/x.sh');
     });
 
@@ -237,9 +237,8 @@ describe('source support delivery', () => {
 
   // region | Helpers
 
-  function context(toolMapping: ReadonlyMap<string, string> = new Map()): SkillDeployContext {
+  function context(): SkillDeployContext {
     return {
-      toolMapping,
       anchor: createSkillLinkAnchor({
         supportNamespace: 'org',
         domainBase: '~',
