@@ -37,6 +37,7 @@
   "scripts": {
     "build:post": "tsx scripts/bundle-skill-helpers.ts && tsx scripts/copy-content.ts && rdy compile",
     "build:pre": "rdy verify",
+    "check-bundles": "tsx scripts/bundle-skill-helpers.ts --check",
     "prepublishOnly": "nmr build",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",

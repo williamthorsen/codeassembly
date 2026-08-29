@@ -1,0 +1,5 @@
+# Generated esbuild bundles of the skill helpers.
+# `-diff` keeps minified output out of every diff a reader or an agent reads.
+# `-merge` turns a collision between branches into an explicit conflict, whose resolution is a rebuild, not a merge.
+packages/agents/content/scripts/**/*.mjs linguist-generated=true -diff -merge
+packages/agents/content/skills/**/*.mjs linguist-generated=true -diff -merge
