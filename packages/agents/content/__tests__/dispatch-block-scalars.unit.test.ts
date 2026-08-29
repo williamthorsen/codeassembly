@@ -21,6 +21,12 @@ const SCALAR_LINE = /^[a-z][a-z0-9-]*: \S/;
 /** A value opening a YAML block scalar, which is the shape a seeding sentence takes even before its body is written. */
 const BLOCK_SCALAR_VALUE = /^[a-z][a-z0-9-]*: [|>][+-]?$/;
 
+/**
+ * Every key a dispatch block may carry. The shape check alone admits a one-line `outcome:` sentence, which seeds the
+ * drafter exactly as the block form does, so the closed set is what makes the check a guard rather than a formality.
+ */
+const DECLARED_KEYS: ReadonlySet<string> = new Set(['rejection', 'ticket-source', 'tier', 'type']);
+
 /** One line inside a dispatch block that is not a scalar. */
 interface Violation {
   readonly line: number;
@@ -39,17 +45,22 @@ describe('dispatch blocks', () => {
   });
 
   it('carry scalars alone', async () => {
-    const violations = (await BLOCKS).flatMap((block) =>
-      block.lines
-        .map((text, index) => ({ text, line: block.firstLine + index }))
-        .filter(({ text }) => text.trim() !== '' && (!SCALAR_LINE.test(text) || BLOCK_SCALAR_VALUE.test(text)))
-        .map(({ text, line }) => ({ line, relativePath: block.relativePath, text })),
-    );
+    const violations = await findViolations((text) => !SCALAR_LINE.test(text) || BLOCK_SCALAR_VALUE.test(text));
 
     const message =
       'A dispatch block carries the scalars a subagent cannot derive, and no prose: a sentence written here makes ' +
       'the caller the author of the facts, which is the arrangement the fresh-context dispatch replaced. These ' +
       `lines are not \`key: value\` scalars:\n  ${violations.map(describeViolation).join('\n  ')}`;
+    expect(violations, message).toEqual([]);
+  });
+
+  it('carry declared keys alone', async () => {
+    const violations = await findViolations((text) => !DECLARED_KEYS.has(readKey(text)));
+
+    const message =
+      `A dispatch block carries these keys and no others: ${[...DECLARED_KEYS].toSorted().join(', ')}. An ` +
+      'undeclared key is how a seeding sentence enters as a well-formed scalar. Add the key to DECLARED_KEYS where ' +
+      `the drafter reads it, and drop it from the block where it does not:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 });
@@ -110,6 +121,21 @@ function findDispatchBlocks(content: string, relativePath: string): ReadonlyArra
   }
 
   return blocks;
+}
+
+/** Returns every non-blank dispatch-block line the predicate rejects, located for the failure message. */
+async function findViolations(isViolation: (text: string) => boolean): Promise<ReadonlyArray<Violation>> {
+  return (await BLOCKS).flatMap((block) =>
+    block.lines
+      .map((text, index) => ({ text, line: block.firstLine + index }))
+      .filter(({ text }) => text.trim() !== '' && isViolation(text))
+      .map(({ text, line }) => ({ line, relativePath: block.relativePath, text })),
+  );
+}
+
+/** Reads the key from a `key: value` line, returning the empty string where the line carries none. */
+function readKey(text: string): string {
+  return /^([a-z][a-z0-9-]*):/.exec(text)?.[1] ?? '';
 }
 
 // endregion | Helpers

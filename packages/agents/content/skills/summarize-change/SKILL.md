@@ -31,11 +31,10 @@ Check commit messages for additional context.
    ```dispatch
    type: {resolved type}
    tier: {resolved tier}
-   scope: {resolved scope}
    ticket-source: {ticket URL or reference}
    ```
 
-   **The block carries scalars only.** Omit `scope` and `ticket-source` where they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: the drafter gathers every fact itself, and a sentence written here would seed the draft with this session's weighting, which is the failure the fresh context exists to avoid. A content test fails the build on any line in the block that is not a `key: value` scalar.
+   **The block carries scalars only, and only these keys.** Omit `type` and `ticket-source` where they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: the drafter gathers every fact itself, and a sentence written here would seed the draft with this session's weighting, which is the failure the fresh context exists to avoid. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set, so a new flag is added deliberately rather than by a passing test.
 
    Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
 
