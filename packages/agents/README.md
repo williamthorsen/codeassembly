@@ -341,7 +341,7 @@ rulebooks:
     - team-standards
 ```
 
-Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. Declaration entries stay bare slugs — resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, with no per-entry `from:` syntax.
+Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format it was authored against; see [Content-format version](#content-format-version). Declaration entries stay bare slugs — resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, with no per-entry `from:` syntax.
 
 **Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, so a source can override a same-slug library artifact. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
 
@@ -417,7 +417,7 @@ Each source's support entries deploy into a namespace of their own, under `skill
 
 **Include the content directory in `files`.** This is the one thing most likely to go wrong, because a `workspace:*` self-link resolves the live source tree and so never exercises packing. A producer that omits the entry sees its own guidance work perfectly and every consumer's install fail. `pnpm pack` and inspecting the tarball is the check that catches it.
 
-Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens.
+Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens. A package's content directory is a content root, so it carries a `codeassembly-content.yaml` like any other; see [Content-format version](#content-format-version).
 
 **Gate the content in the producer's own build.** `codeassembly validate` runs the checks a consumer's `sync` runs before writing — dependency closure, artifact resolution, delivery collisions, and a per-harness render — over the whole content root, writing nothing:
 
@@ -430,6 +430,27 @@ It reads no `codeassembly.yaml`, so a package that produces guidance without con
 Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that carry no `SKILL.md`. Link-target existence and cross-file anchors are not checked — a target resolves against the deployed tree, which unions this content with the library's and with every other declared source's.
 
 One shape cannot consume its own guidance: a single-package repo whose package is the repo root has no `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
+
+### Content-format version
+
+A content root and the tool that deploys it are released separately, so a checkout can be newer than the `codeassembly` reading it. A root states the format contract it was authored against in a `codeassembly-content.yaml` at its top level — a `sources:` path and a `packages:` content directory alike:
+
+```yaml
+# content/codeassembly-content.yaml
+format: 1
+```
+
+The tool holds the set of formats it supports and refuses a root declaring any other, before any file is written and `--dry-run` included, naming the root, the format it declares, and the formats supported. `sync`, `sync --global`, and `install` fail; `validate` reports it as a defect and exits 1. The remedy is to upgrade `codeassembly` to a version that supports the declared format.
+
+**A root with no manifest is format 1**, which is what keeps a producer that predates the manifest working unchanged. A manifest that exists states its format: an absent or malformed `format` fails rather than passing as format 1, so every manifest that exists is self-describing.
+
+Unknown keys pass through, so a later tool can read a key an older one ignores without the older one rejecting a root it would otherwise honor. `helpers:` is reserved for the helper-bundling command and is unread at format 1.
+
+**What a bump obliges.** The format version names the contract the tool implements — frontmatter keys, invocation tokens, directives, and content-root layout — so it rises when content authored against the new contract would deploy wrongly under the old one rather than failing outright. Adding a key nothing older depends on does not need one; changing what an existing key means does.
+
+| Format | Contract                      |
+| ------ | ----------------------------- |
+| 1      | The contract documented here. |
 
 ### Scopes
 

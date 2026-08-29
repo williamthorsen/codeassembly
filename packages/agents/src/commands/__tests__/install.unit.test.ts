@@ -47,6 +47,34 @@ describe(installCommand, () => {
     return rovoHome;
   }
 
+  it('refuses a content root declaring an unsupported format, writing nothing', async () => {
+    const claudeHome = await setupClaudeHome();
+    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+
+    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir)).rejects.toThrow(
+      /Unsupported content format.*2.*supports content format 1/s,
+    );
+    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(false);
+  });
+
+  it('refuses a dry run exactly as it refuses the real one', async () => {
+    await setupClaudeHome();
+    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+
+    await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, contentDir)).rejects.toThrow(
+      /Unsupported content format/,
+    );
+  });
+
+  it('installs from a content root declaring a supported format', async () => {
+    const claudeHome = await setupClaudeHome();
+    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 1\n', 'utf8');
+
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
+  });
+
   it('installs support directories and guidance with a manifest', async () => {
     const claudeHome = await setupClaudeHome();
 

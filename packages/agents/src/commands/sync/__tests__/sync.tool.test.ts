@@ -1058,6 +1058,53 @@ describe(syncCommand, () => {
       },
     );
 
+    it('fails the run when a declared source declares an unsupported content format', async () => {
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+      await declareWithSource('rulebooks:\n  use: []\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /Unsupported content format.*"org".*2.*supports content format 1/s,
+      );
+    });
+
+    it('fails a dry run, writing nothing, when a declared source declares an unsupported content format', async () => {
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+      await declareWithSource('rulebooks:\n  use: []\n');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /Unsupported content format/,
+      );
+      expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
+    });
+
+    it('fails the run when the content library declares an unsupported content format', async () => {
+      await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+      await declareWithSource('rulebooks:\n  use: []\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        new RegExp(`Unsupported content format.*${contentDir}`, 's'),
+      );
+    });
+
+    it('fails the run when a declared source carries a manifest that will not parse', async () => {
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: [1\n', 'utf8');
+      await declareWithSource('rulebooks:\n  use: []\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        /Unreadable content manifest.*"org"/s,
+      );
+    });
+
+    it('syncs a declared source that declares a supported content format', async () => {
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 1\n', 'utf8');
+      await writeSourceRulebook('source-only', 'delivery: skill\ndescription: From org.', 'Org rules.');
+      await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+      expect(await readFile(skillPath('consult-source-only'), 'utf8')).toContain('Org rules.');
+    });
+
     it('deploys a declared source skill from its source into the harness skills dir', async () => {
       await writeSourceSkill('source-skill');
       await declareWithSource('skills:\n  use:\n    - source-skill\n');
@@ -2359,6 +2406,21 @@ describe(syncGlobalCommand, () => {
 
     expect(await readFile(claudeMd, 'utf8')).toContain('<!-- rulebook:alpha -->');
     expect(await readFile(rovoMd, 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+  });
+
+  it('fails the run when a declared source declares an unsupported content format', async () => {
+    const sourceDir = path.join(contentDir, '..', `${path.basename(contentDir)}-source`);
+    await mkdir(sourceDir, { recursive: true });
+    await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+    await declareRaw(`sources:\n  - name: org\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`);
+
+    try {
+      await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(
+        /Unsupported content format.*"org".*2/s,
+      );
+    } finally {
+      await rm(sourceDir, { recursive: true, force: true });
+    }
   });
 
   it('warns and skips ambient delivery when the guidance file is missing', async () => {
