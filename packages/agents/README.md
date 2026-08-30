@@ -185,7 +185,7 @@ A third, `harnesses`, names where they go: see [Harness targeting](#harness-targ
 
 #### Harness targeting
 
-`harnesses` declares which harnesses a `sync` run deploys into, in the same `use`/`drop` shape as a type block, with harness ids for entries:
+`harnesses` declares which harnesses a run deploys into, in the same `use`/`drop` shape as a type block, with harness ids for entries:
 
 ```yaml
 harnesses:
@@ -209,7 +209,9 @@ The three tiers therefore state three different things: the user-global tier sta
 
 **Targeting selects the harness set; artifact narrowing filters within it.** A run targeting `[claude, rovo]` with a skill declaring `supported-harnesses: [rovo]` deploys that skill to Rovo alone. The two keys are distinct: `harnesses` lives in `codeassembly.yaml` and governs a whole run, while `supported-harnesses` lives in an artifact's frontmatter and governs that artifact.
 
-Both `sync` and `sync --global` honor the declaration. `install`, `uninstall`, `status`, and `configure-hooks` deploy into the harness homes and so are answered by detection alone; they read `--harness` and the installed set, never the declaration.
+`sync`, `sync --global`, and `install` all honor the declaration; `install` resolves it against the home tier alone, since it deploys into the harness homes. A declaration naming a harness whose home does not yet exist provisions that home, which detection could never reach. `uninstall`, `status`, and `configure-hooks` read `--harness` and the installed set, never the declaration: they must reach what is installed rather than what is declared.
+
+**Dropping a harness from the declaration retracts it.** The next `install` removes that harness's tracked files, unwires its session-lifecycle hook entries, and drops it from the manifest; an empty declared set retracts every harness. A user-modified file is kept without `--force` and keeps its harness tracked for that file alone, and `--dry-run` previews the removals. Retraction follows the declaration alone: `--harness claude` names a run's target rather than declaring the other harnesses unwanted, and a harness detection misses has no home directory holding stale files. `sync`'s own deployed skills and subagents are not covered; that residue is tracked separately.
 
 Every run names what it targeted and what decided it:
 
@@ -235,7 +237,7 @@ guidance-hooks:
 
 A binding is also a dependency edge: a bound rulebook joins the deploy closure and still deploys by its own `delivery:`, so binding it and declaring it are one act. Bound bodies fill in declaration order, with their headings demoted one level so a rulebook's title nests under the host's structure, and the result is wrapped in `<!-- codeassembly-guidance-hook:<name>:start -->` / `:end` markers enclosing one `<!-- rulebook:<slug> -->` block per rulebook. A deployed file therefore says what filled it without being re-rendered.
 
-A hook nothing binds contributes nothing to deployed output, marker included. `install` resolves no declaration, so every hook it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
+A hook nothing binds contributes nothing to deployed output, marker included. `install` reads no `guidance-hooks:` block, so every hook it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
 
 Name a hook for the concern rather than the consumer — `implementation-preferences`, not `implement-plan-preferences` — since concern-scoping is what lets one binding fill every consumer, and carry no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar the directive enforces. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
 

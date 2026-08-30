@@ -4,7 +4,7 @@ import type { ArtifactType } from '../../lib/artifact-types.ts';
 import { describeMissingSource } from '../../lib/declared-sources.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
 import { skillTargetsHarness } from '../../lib/skill-deploy.ts';
-import type { ResolvedHarnessTargets } from '../../lib/target-harnesses.ts';
+import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
 import type {
   AmbientHostPlan,
   AmbientSkipReason,
@@ -216,27 +216,6 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
           'rulebook under a hook in the `guidance-hooks:` block of .agents/codeassembly.yaml.',
       };
   }
-}
-
-/** Names what settled a run's harness set, in the phrasing the targeting line embeds. */
-function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
-  switch (targets.origin) {
-    case 'declaration':
-      return 'declared';
-    case 'detection':
-      return 'detected in ~';
-    case 'flag':
-      return `--harness ${targets.harnessIds.join(', ')}`;
-  }
-}
-
-/**
- * Renders what a run targets and what decided it. Reported on every run, because the closing summary counts harnesses
- * without naming them: a run that deploys somewhere unexpected — or nowhere — otherwise reads as a success.
- */
-function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
-  const subject = targets.harnessIds.length === 0 ? 'no harnesses' : targets.harnessIds.join(', ');
-  return `Targeting ${subject} (${describeHarnessOrigin(targets)}).`;
 }
 
 /** The advice for a scope that carries no declaration to act on, naming the remedy the global tier has. */

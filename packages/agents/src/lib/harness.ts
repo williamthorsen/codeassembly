@@ -139,9 +139,9 @@ export function resolveSkillsPathPrefix(config: HarnessConfig): string {
  * Resolves which harnesses to target from the `--harness` value alone, falling back to what is installed under
  * `homeDir` when the value is the `'all'` sentinel.
  *
- * This serves the home-domain commands — `install`, `uninstall`, `status`, and `configure-hooks` — which deploy into
- * the harness homes and so are answered by detection alone. A sync run resolves its targets through
- * `resolveTargetHarnesses`, which consults the `harnesses` declaration first.
+ * This serves `uninstall`, `status`, and `configure-hooks`, which must reach what is installed rather than what is
+ * declared. `install` and `sync` resolve their targets through `resolveTargetHarnesses`, which consults the
+ * `harnesses` declaration first.
  */
 export function resolveHarnessIds(harness: InstallOptions['harness'], homeDir?: string): ReadonlyArray<HarnessId> {
   if (harness === 'all') {

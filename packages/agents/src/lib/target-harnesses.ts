@@ -9,22 +9,32 @@ import type { HarnessId, InstallOptions } from './types.ts';
 /** What decided a run's harness targeting, so the run can report it rather than leaving the set unexplained. */
 export type HarnessTargetOrigin = 'declaration' | 'detection' | 'flag';
 
-/** The harnesses a sync run targets, paired with what decided them. */
+/** The harnesses a run targets, paired with what decided them. */
 export interface ResolvedHarnessTargets {
   readonly harnessIds: ReadonlyArray<HarnessId>;
   readonly origin: HarnessTargetOrigin;
 }
 
 /**
- * Resolves which harnesses a sync run targets, in the order: the `--harness` flag, the `harnesses` declaration, then
- * the harnesses installed under `homeDir`. `'all'` is the flag's not-specified sentinel and falls through, so
+ * Renders what a run targets and what decided it. Reported on every run, because the closing summary counts harnesses
+ * without naming them: a run that deploys somewhere unexpected — or nowhere — otherwise reads as a success.
+ */
+export function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
+  const subject = targets.harnessIds.length === 0 ? 'no harnesses' : targets.harnessIds.join(', ');
+  return `Targeting ${subject} (${describeHarnessOrigin(targets)}).`;
+}
+
+/**
+ * Resolves which harnesses a run targets, in the order: the `--harness` flag, the `harnesses` declaration, then the
+ * harnesses installed under `homeDir`. `'all'` is the flag's not-specified sentinel and falls through, so
  * `--harness all` means "do not narrow" rather than "every known harness".
  *
  * Detection reads the home directory rather than `cwd`, because a harness home is created by that harness's own
  * installer while a repository has no reason to hold one. A declaration is honored even when it resolves to an empty
  * set — a run that deploys nowhere on purpose is distinct from one that never declared a target.
  *
- * @param options.cwd The domain's base: the project root for a repo sync, the home directory for a global one.
+ * @param options.cwd The domain's base: the project root for a repo sync, the home directory for a global one or for
+ * `install`.
  */
 export async function resolveTargetHarnesses(options: {
   readonly harness: InstallOptions['harness'];
@@ -96,6 +106,18 @@ async function accumulateDeclaredHarnesses(
   // Ordered canonically rather than by declaration, so the reported set does not vary with authoring order — matching
   // how detection orders its own result.
   return anyDeclared ? ALL_HARNESS_IDS.filter((harnessId) => effective.has(harnessId)) : undefined;
+}
+
+/** Names what settled a run's harness set, in the phrasing the targeting line embeds. */
+function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
+  switch (targets.origin) {
+    case 'declaration':
+      return 'declared';
+    case 'detection':
+      return 'detected in ~';
+    case 'flag':
+      return `--harness ${targets.harnessIds.join(', ')}`;
+  }
 }
 
 /**
