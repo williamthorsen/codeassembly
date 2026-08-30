@@ -1,0 +1,622 @@
+/**
+ * Candidate detection for the revise-object-relatives sweep.
+ *
+ * The construction has no reliable surface form, so the anchor is adjacency rather than a verb pattern: a head noun
+ * followed directly by the start of a new noun phrase, with no relativizer, preposition, conjunction, auxiliary, or
+ * punctuation licensing the join. Three of the four shapes announce that new phrase with a closed-class word; the
+ * bare-noun shape announces nothing, and is anchored on a plural subject instead.
+ *
+ * Detection is deliberately over-inclusive: precision is the agent's, which adjudicates each candidate with the
+ * sentence in view. Three things are nonetheless decided here, because each is decidable without a reading. The
+ * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type. A word
+ * carrying verbal morphology is read as a head noun only where a determiner makes it one, which is what keeps a main
+ * clause and most participial phrases out. And a bare-noun subject is held to plural agreement.
+ */
+import type { Candidate, ProseSpan, SubjectShape } from './types.ts';
+
+/** Scans every span for the construction, returning one candidate per site in reading order. */
+export function detectCandidates(spans: readonly ProseSpan[]): Candidate[] {
+  const candidates: Candidate[] = [];
+  for (const span of spans) {
+    candidates.push(...detectInSpan(span));
+  }
+  return candidates;
+}
+
+// region | Helpers
+
+/** Auxiliary and modal verbs. One between a head and a subject licenses the join; one after a subject discharges it. */
+const AUXILIARIES: ReadonlySet<string> = new Set([
+  'am',
+  'are',
+  'be',
+  'been',
+  'being',
+  'can',
+  'could',
+  'did',
+  'do',
+  'does',
+  'had',
+  'has',
+  'have',
+  'is',
+  'may',
+  'might',
+  'must',
+  'shall',
+  'should',
+  'was',
+  'were',
+  'will',
+  'would',
+]);
+
+/**
+ * Head nouns whose relative clause has an adjunct gap rather than an object gap. The rulebook puts these outside the
+ * rule, since neither the passive participle nor the restored relativizer repairs one.
+ */
+const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
+  'place',
+  'places',
+  'reason',
+  'reasons',
+  'time',
+  'times',
+  'way',
+  'ways',
+]);
+
+/**
+ * Verbs whose bare form carries no verbal morphology, so nothing but a lexicon recognizes one. Every entry is a
+ * word no reading takes as a noun: a homograph such as `name` or `report` would read a head noun as a verb.
+ */
+const BARE_VERBS: ReadonlySet<string> = new Set([
+  'accept',
+  'acknowledge',
+  'allow',
+  'apply',
+  'assume',
+  'avoid',
+  'become',
+  'begin',
+  'believe',
+  'belong',
+  'bring',
+  'choose',
+  'compare',
+  'comprise',
+  'consider',
+  'contain',
+  'convey',
+  'create',
+  'decide',
+  'declare',
+  'define',
+  'deliver',
+  'depend',
+  'describe',
+  'determine',
+  'discard',
+  'distinguish',
+  'emit',
+  'enable',
+  'encode',
+  'enforce',
+  'ensure',
+  'exclude',
+  'expect',
+  'explain',
+  'extend',
+  'extract',
+  'follow',
+  'forbid',
+  'govern',
+  'happen',
+  'hide',
+  'ignore',
+  'imply',
+  'include',
+  'inherit',
+  'invoke',
+  'know',
+  'leave',
+  'lose',
+  'maintain',
+  'mean',
+  'mention',
+  'obtain',
+  'omit',
+  'perform',
+  'permit',
+  'prefer',
+  'prevent',
+  'produce',
+  'provide',
+  'receive',
+  'recognize',
+  'reduce',
+  'reject',
+  'remove',
+  'render',
+  'repeat',
+  'replace',
+  'require',
+  'resolve',
+  'retain',
+  'reveal',
+  'satisfy',
+  'seek',
+  'select',
+  'send',
+  'solve',
+  'suppose',
+  'surround',
+  'sustain',
+  'teach',
+  'tolerate',
+  'treat',
+  'understand',
+  'verify',
+  'want',
+  'withhold',
+]);
+
+/** Coordinators. One inside a subject ends the noun phrase, so the verb scan stops there. */
+const COORDINATORS: ReadonlySet<string> = new Set(['and', 'but', 'nor', 'or']);
+
+/** Determiners, demonstratives, and possessives opening a definite noun phrase. `that` is a relativizer instead. */
+const DETERMINERS: ReadonlySet<string> = new Set([
+  'a',
+  'an',
+  'her',
+  'his',
+  'its',
+  'my',
+  'our',
+  'the',
+  'their',
+  'these',
+  'this',
+  'those',
+  'your',
+]);
+
+/** Adverbs that may sit between a head noun and the subject without licensing the join. */
+const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
+  'almost',
+  'also',
+  'barely',
+  'even',
+  'hardly',
+  'just',
+  'merely',
+  'nearly',
+  'only',
+  'simply',
+]);
+
+/**
+ * Fused heads: a head that is its own relative pronoun. The rulebook puts these outside the rule, since the head is
+ * not a lexical noun and no relativizer can be restored.
+ */
+const FUSED_HEADS: ReadonlySet<string> = new Set([
+  'all',
+  'anybody',
+  'anyone',
+  'anything',
+  'enough',
+  'everybody',
+  'everyone',
+  'everything',
+  'less',
+  'more',
+  'much',
+  'nobody',
+  'none',
+  'nothing',
+  'somebody',
+  'someone',
+  'something',
+  'what',
+  'whatever',
+  'whoever',
+]);
+
+/** Cardinals worth naming; a digit string is recognized by shape instead. */
+const NUMERALS: ReadonlySet<string> = new Set([
+  'eight',
+  'eleven',
+  'five',
+  'four',
+  'nine',
+  'one',
+  'seven',
+  'six',
+  'ten',
+  'three',
+  'twelve',
+  'two',
+]);
+
+/** Prepositions. One between a head and a subject licenses the join. */
+const PREPOSITIONS: ReadonlySet<string> = new Set([
+  'about',
+  'above',
+  'across',
+  'after',
+  'against',
+  'along',
+  'among',
+  'around',
+  'as',
+  'at',
+  'before',
+  'behind',
+  'below',
+  'beneath',
+  'beside',
+  'besides',
+  'between',
+  'beyond',
+  'by',
+  'despite',
+  'down',
+  'during',
+  'except',
+  'for',
+  'from',
+  'in',
+  'inside',
+  'into',
+  'like',
+  'near',
+  'of',
+  'off',
+  'on',
+  'onto',
+  'out',
+  'outside',
+  'over',
+  'past',
+  'per',
+  'since',
+  'through',
+  'throughout',
+  'to',
+  'toward',
+  'towards',
+  'under',
+  'underneath',
+  'unlike',
+  'until',
+  'up',
+  'upon',
+  'via',
+  'with',
+  'within',
+  'without',
+]);
+
+/** Quantifiers opening a quantified noun phrase, the shape the rulebook ranks worst. */
+const QUANTIFIERS: ReadonlySet<string> = new Set([
+  'all',
+  'another',
+  'any',
+  'both',
+  'each',
+  'either',
+  'enough',
+  'every',
+  'few',
+  'fewer',
+  'many',
+  'most',
+  'neither',
+  'no',
+  'nobody',
+  'none',
+  'nothing',
+  'several',
+  'some',
+  'such',
+]);
+
+/** Relativizers. One between a head and a subject is the overt relativizer the rule asks for, so the site is clean. */
+const RELATIVIZERS: ReadonlySet<string> = new Set(['that', 'when', 'where', 'which', 'who', 'whom', 'whose', 'why']);
+
+/** Subject pronouns opening the mildest shape. */
+const SUBJECT_PRONOUNS: ReadonlySet<string> = new Set(['he', 'i', 'it', 'one', 'she', 'they', 'we', 'you']);
+
+/**
+ * The window each shape's finite verb must fall in, counted in tokens from the subject's first word. A determiner
+ * must reach a noun before the verb, so a definite subject starts at two; a bare subject is one word, since nothing
+ * marks where a longer one would begin.
+ */
+const SUBJECT_WINDOWS: Readonly<Record<SubjectShape, { min: number; max: number }>> = {
+  bare: { min: 1, max: 1 },
+  definite: { min: 2, max: 4 },
+  pronoun: { min: 1, max: 4 },
+  quantified: { min: 1, max: 4 },
+};
+
+/** Subordinators. One between a head and a subject licenses the join. */
+const SUBORDINATORS: ReadonlySet<string> = new Set([
+  'although',
+  'because',
+  'else',
+  'if',
+  'once',
+  'so',
+  'than',
+  'then',
+  'though',
+  'unless',
+  'until',
+  'whether',
+  'while',
+  'yet',
+]);
+
+/** Verbs marked for a singular subject, which a bare plural subject cannot take. */
+const SINGULAR_VERBS: ReadonlySet<string> = new Set(['does', 'has', 'is', 'was']);
+
+/** Words ending in `s` that no reading takes as a verb, which the morphological test would otherwise admit. */
+const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
+  'always',
+  'hers',
+  'ours',
+  'perhaps',
+  'plus',
+  'sometimes',
+  'theirs',
+  'thus',
+  'versus',
+  'yes',
+  'yours',
+]);
+
+/** One word of a span, with the offsets a report and a line lookup are computed from. */
+interface Token {
+  /** The word as written, stripped of the punctuation around it. */
+  raw: string;
+  /** The word lowercased, which every lexical test reads. */
+  word: string;
+  /** Offset of the word's first character within the span's text. */
+  start: number;
+  /** Offset just past the word's last character. */
+  end: number;
+  /** Whether clause punctuation separates this word from the one before it. */
+  afterBreak: boolean;
+}
+
+/** Punctuation that ends a clause, which no relative clause may be read across. */
+const CLAUSE_BREAK_PATTERN = /[,;:.!?()[\]{}"\u{2013}\u{2014}]/u;
+
+/** Reports whether a verb agrees with a plural subject, which is what a bare-noun subject always is. */
+function agreesWithPluralSubject(word: string): boolean {
+  return !SINGULAR_VERBS.has(word) && !word.endsWith('s');
+}
+
+/** Builds one candidate from a resolved head, subject, and verb, reading its sentence out of the span. */
+function buildCandidate(input: {
+  span: ProseSpan;
+  tokens: readonly Token[];
+  headIndex: number;
+  subjectIndex: number;
+  verbIndex: number;
+  shape: SubjectShape;
+}): Candidate {
+  const { span, tokens, headIndex, subjectIndex, verbIndex, shape } = input;
+  const head = tokens[headIndex];
+  const verb = tokens[verbIndex];
+  if (head === undefined || verb === undefined) throw new Error('candidate resolved outside its token run');
+
+  const subject = tokens
+    .slice(subjectIndex, verbIndex)
+    .map((token) => token.raw)
+    .join(' ');
+
+  return {
+    file: span.file,
+    line: span.line + countNewlinesBefore(span.text, head.start),
+    shape,
+    head: head.raw,
+    subject,
+    verb: verb.raw,
+    phrase: flattenWhitespace(span.text.slice(head.start, verb.end)),
+    sentence: findSentence(span.text, head.start, verb.end),
+  };
+}
+
+/** Counts the newlines preceding `offset`, which is how a span's own line maps to the line a candidate sits on. */
+function countNewlinesBefore(text: string, offset: number): number {
+  let count = 0;
+  for (let index = 0; index < offset && index < text.length; index += 1) {
+    if (text[index] === '\n') count += 1;
+  }
+  return count;
+}
+
+/**
+ * Scans one span for every site the construction may occupy. A later anchor whose head falls inside an accepted
+ * phrase is that same site read from one word further in, so the scan resumes past the verb instead.
+ */
+function detectInSpan(span: ProseSpan): Candidate[] {
+  const tokens = tokenize(span.text);
+  const candidates: Candidate[] = [];
+  let claimedThrough = -1;
+
+  for (let index = 1; index < tokens.length; index += 1) {
+    const headIndex = findHeadIndex(tokens, index);
+    if (headIndex === undefined || headIndex <= claimedThrough) continue;
+
+    const shape = classifySubject(tokens, index);
+    if (shape === undefined) continue;
+
+    const verbIndex = findVerbIndex(tokens, index, shape);
+    if (verbIndex === undefined) continue;
+
+    claimedThrough = verbIndex;
+    candidates.push(buildCandidate({ span, tokens, headIndex, subjectIndex: index, verbIndex, shape }));
+  }
+
+  return candidates;
+}
+
+/**
+ * Classifies the subject a token opens, or reports undefined where it opens none. The three marked shapes are read
+ * off closed classes; the bare shape has no marker, so a plural noun stands in for one.
+ */
+function classifySubject(tokens: readonly Token[], index: number): SubjectShape | undefined {
+  const token = tokens[index];
+  if (token === undefined) return undefined;
+  const { word } = token;
+
+  if (SUBJECT_PRONOUNS.has(word)) return 'pronoun';
+  if (QUANTIFIERS.has(word) || NUMERALS.has(word) || /^\d+$/.test(word)) return 'quantified';
+  if (DETERMINERS.has(word)) return 'definite';
+  return isPluralNoun(word) ? 'bare' : undefined;
+}
+
+/** Collapses a phrase's own newlines and runs of spaces, so a wrapped site reads as one line in the report. */
+function flattenWhitespace(text: string): string {
+  return text.replaceAll(/\s+/g, ' ').trim();
+}
+
+/**
+ * Returns the index of the head noun a subject at `subjectIndex` attaches to, or undefined where nothing there can be
+ * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, or an adjunct head cannot.
+ */
+function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number | undefined {
+  let index = subjectIndex;
+  while (index > 0) {
+    const candidate = tokens[index];
+    if (candidate === undefined || candidate.afterBreak) return undefined;
+    index -= 1;
+    const head = tokens[index];
+    if (head === undefined) return undefined;
+    if (FOCUS_ADVERBS.has(head.word)) continue;
+    if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
+    return isDeterminedHead(tokens, index) ? index : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Reports whether a word carrying verbal morphology is nonetheless heading a noun phrase, which a determiner before
+ * it is what settles. Without one, an `-s` form is the clause's own verb and an `-ing` form is a participle, so
+ * reading either as a head noun produces a whole clause dressed as a relative.
+ */
+function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean {
+  const head = tokens[headIndex];
+  if (head === undefined) return false;
+  if (!isFiniteVerb(head.word) && !head.word.endsWith('ing')) return true;
+  if (head.afterBreak || headIndex === 0) return false;
+  return DETERMINERS.has(tokens[headIndex - 1]?.word ?? '');
+}
+
+/**
+ * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
+ * within that shape's window. A bare subject is additionally held to plural agreement, which is the only reading its
+ * own form supports.
+ */
+function findVerbIndex(tokens: readonly Token[], subjectIndex: number, shape: SubjectShape): number | undefined {
+  const window = SUBJECT_WINDOWS[shape];
+  const first = subjectIndex + window.min;
+  const last = Math.min(subjectIndex + window.max, tokens.length - 1);
+
+  for (let index = subjectIndex + 1; index <= last; index += 1) {
+    const token = tokens[index];
+    if (token === undefined || token.afterBreak) return undefined;
+    if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
+    if (index < first || !isFiniteVerb(token.word)) continue;
+    if (shape === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
+    return index;
+  }
+  return undefined;
+}
+
+/** Returns the sentence enclosing the span offsets `start` through `end`, flattened onto one line for the report. */
+function findSentence(text: string, start: number, end: number): string {
+  const boundary = /[.!?](?=\s|$)/g;
+  let sentenceStart = 0;
+  let match = boundary.exec(text);
+
+  while (match !== null) {
+    const stop = match.index + 1;
+    if (stop >= end) break;
+    if (stop <= start) sentenceStart = stop;
+    match = boundary.exec(text);
+  }
+
+  const sentenceEnd = match === null ? text.length : Math.max(match.index + 1, end);
+  return flattenWhitespace(text.slice(sentenceStart, sentenceEnd));
+}
+
+/**
+ * Reports whether a word can be read as a finite verb. The test is loose by design: precision belongs to the agent,
+ * and a test tight enough to reject every noun rejects the bare-noun and quantified shapes along with them.
+ */
+function isFiniteVerb(word: string): boolean {
+  if (AUXILIARIES.has(word)) return true;
+  if (isFunctionWord(word) || S_FINAL_NON_VERBS.has(word)) return false;
+  if (BARE_VERBS.has(word)) return true;
+  if (/(?:ize|ise|ify)$/.test(word)) return true;
+  if (word.length > 3 && word.endsWith('ed')) return true;
+  return word.length > 2 && word.endsWith('s') && !/(?:ss|us|is)$/.test(word);
+}
+
+/** Reports whether a word belongs to a closed class, which disqualifies it as a head noun and as a finite verb. */
+function isFunctionWord(word: string): boolean {
+  return (
+    AUXILIARIES.has(word) ||
+    COORDINATORS.has(word) ||
+    DETERMINERS.has(word) ||
+    FOCUS_ADVERBS.has(word) ||
+    PREPOSITIONS.has(word) ||
+    QUANTIFIERS.has(word) ||
+    RELATIVIZERS.has(word) ||
+    SUBJECT_PRONOUNS.has(word) ||
+    SUBORDINATORS.has(word)
+  );
+}
+
+/** Reports whether a word reads as a plural noun, which is the only marker a bare-noun subject carries. */
+function isPluralNoun(word: string): boolean {
+  return (
+    word.length > 3 &&
+    word.endsWith('s') &&
+    !/(?:ss|us|is)$/.test(word) &&
+    !isFunctionWord(word) &&
+    !S_FINAL_NON_VERBS.has(word)
+  );
+}
+
+/** Splits a span into words, recording each word's offsets and whether clause punctuation precedes it. */
+function tokenize(text: string): Token[] {
+  const tokens: Token[] = [];
+  let afterBreak = false;
+  const pattern = /\S+/g;
+
+  let match = pattern.exec(text);
+  while (match !== null) {
+    const chunk = match[0];
+    const leading = chunk.length - chunk.replace(/^[^\p{L}\p{N}]+/u, '').length;
+    const stripped = chunk.replace(/^[^\p{L}\p{N}]+/u, '').replace(/[^\p{L}\p{N}]+$/u, '');
+    const trailing = chunk.slice(leading + stripped.length);
+
+    if (stripped !== '') {
+      afterBreak ||= CLAUSE_BREAK_PATTERN.test(chunk.slice(0, leading));
+      const start = match.index + leading;
+      tokens.push({ raw: stripped, word: stripped.toLowerCase(), start, end: start + stripped.length, afterBreak });
+      afterBreak = false;
+    }
+    afterBreak ||= CLAUSE_BREAK_PATTERN.test(trailing);
+    match = pattern.exec(text);
+  }
+
+  return tokens;
+}
+
+// endregion | Helpers
