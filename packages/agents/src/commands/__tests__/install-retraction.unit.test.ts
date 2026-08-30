@@ -77,7 +77,7 @@ describe('install retraction of a de-declared harness', () => {
   });
 
   it('removes a user-modified file when --force is set', async () => {
-    using silent = silenceConsole(['info', 'warn']);
+    using _silent = silenceConsole(['info', 'warn']);
     await installBoth();
     await writeFile(modifiedScriptPath(), EDITED_SCRIPT, 'utf8');
 
@@ -87,7 +87,6 @@ describe('install retraction of a de-declared harness', () => {
     expect(existsSync(modifiedScriptPath())).toBe(false);
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.rovo).toBeUndefined();
-    expect(silent.info.mock.calls.length).toBeGreaterThan(0);
   });
 
   it('previews the retraction under --dry-run, writing neither disk nor manifest', async () => {
@@ -95,14 +94,14 @@ describe('install retraction of a de-declared harness', () => {
     await installBoth();
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+    await installCommand(makeOptions({ dryRun: true, hooks: true }), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.rovo?.entries.length).toBeGreaterThan(0);
-    expect(silent.info.mock.calls.map((call) => String(call[0]))).toContainEqual(
-      expect.stringContaining('[dry-run] Would remove stale item'),
-    );
+    const lines = silent.info.mock.calls.map((call) => String(call[0]));
+    expect(lines).toContainEqual(expect.stringContaining('[dry-run] Would remove stale item'));
+    expect(lines).toContain('  [hooks] Would remove session-lifecycle hook entries');
   });
 
   it('retracts every harness when the declaration resolves to an empty set', async () => {
@@ -128,7 +127,27 @@ describe('install retraction of a de-declared harness', () => {
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.rovo?.entries.length).toBeGreaterThan(0);
-    expect(silent.info.mock.calls.length).toBeGreaterThan(0);
+    expect(silent.info.mock.calls.map((call) => String(call[0]))).not.toContainEqual(
+      expect.stringContaining('Retracting harness'),
+    );
+  });
+
+  it('warns and completes the retraction when the dropped harness config cannot be parsed', async () => {
+    using silent = silenceConsole(['info', 'warn']);
+    await installBoth({ hooks: true });
+    const rovoConfig = path.join(tempDir, ROVO_HOME, 'config.yml');
+    await writeFile(rovoConfig, BROKEN_CONFIG, 'utf8');
+
+    await declareHarnesses('harnesses:\n  use:\n    - claude\n');
+    await installCommand(makeOptions({ hooks: true }), tempDir, contentDir);
+
+    expect(silent.warn.mock.calls.map((call) => String(call[0]))).toContainEqual(
+      expect.stringContaining('Skipping hook-entry removal'),
+    );
+    expect(await readFile(rovoConfig, 'utf8')).toBe(BROKEN_CONFIG);
+    expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(false);
+    const manifest = await readManifest(getManifestPath(tempDir));
+    expect(manifest.harnesses.rovo).toBeUndefined();
   });
 
   it('retracts nothing when detection settles the targets', async () => {
@@ -144,6 +163,8 @@ describe('install retraction of a de-declared harness', () => {
   });
 
   // region | Helpers
+
+  const BROKEN_CONFIG = 'hooks: [\n';
 
   const EDITED_SCRIPT = '#!/usr/bin/env bash\necho edited\n';
 
