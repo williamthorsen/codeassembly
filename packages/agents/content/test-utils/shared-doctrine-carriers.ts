@@ -1,12 +1,4 @@
-import { readdirSync } from 'node:fs';
-
-const SUBAGENTS_DIR = new URL('../subagents/', import.meta.url).pathname;
-
-/** Subagents that neither compose prose nor read code, so no extracted section governs their work. */
-const EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set([
-  // Exercises the declared-subagent deployment mechanism and is never invoked.
-  'canary',
-]);
+import { listGovernedSubagents } from './list-governed-subagents.ts';
 
 /**
  * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section
@@ -26,15 +18,6 @@ export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<str
   'shell-commands': listGovernedSubagents().filter((slug) => slug !== 'savings-analyzer'),
   'technical-recommendations': listApproachChoosingSubagents(),
 };
-
-/** Returns every subagent slug the shared doctrine can govern. */
-export function listGovernedSubagents(): ReadonlyArray<string> {
-  return readdirSync(SUBAGENTS_DIR)
-    .filter((entry) => entry.endsWith('.md'))
-    .map((entry) => entry.replace(/\.md$/, ''))
-    .filter((slug) => !EXEMPT_SUBAGENTS.has(slug))
-    .toSorted();
-}
 
 // region | Helpers
 
