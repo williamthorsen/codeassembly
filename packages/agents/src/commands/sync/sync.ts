@@ -165,7 +165,7 @@ export type SyncOutcome = MissingDeclaration | { readonly kind: 'reconciled'; re
  */
 export interface SyncPlan {
   readonly targets: ResolvedHarnessTargets;
-  /** What each harness the declaration dropped still holds from a previous sync, one entry per harness holding any. */
+  /** What each harness dropped by the declaration still holds from a previous sync, one entry per harness with any. */
   readonly droppedHarnesses: ReadonlyArray<DroppedHarnessRetraction>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly ambientHosts: ReadonlyArray<PlannedAmbientHost>;

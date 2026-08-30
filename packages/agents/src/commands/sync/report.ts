@@ -179,7 +179,7 @@ function describeDeliveries(plan: SyncPlan): string {
   );
 }
 
-/** The lines naming what one dropped harness still holds: one per path the sweep removes and per region it strips. */
+/** The lines naming what one dropped harness still holds: one for each path removed and each region stripped. */
 function describeDroppedHarness(retraction: DroppedHarnessRetraction): ReadonlyArray<string> {
   const lines = [
     ...retraction.skillDirs.map((skillDir) => `remove skill ${skillDir}`),
