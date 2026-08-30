@@ -129,6 +129,16 @@ describe('install with declared sources', () => {
     expect(existsSync(path.join(tempDir, '.claude', 'scripts'))).toBe(false);
   });
 
+  it('refuses an unusable declared source on a dry run exactly as it refuses the real run', async () => {
+    const filePath = path.join(tempDir, 'a-file');
+    await writeFile(filePath, '', 'utf8');
+    await declareSources(tempDir, [{ name: 'a-file', dir: filePath }]);
+
+    await expect(installCommand(makeOptions({ dryRun: true }), tempDir, contentDir)).rejects.toThrow(
+      /Invalid declared source/,
+    );
+  });
+
   it('refuses a declared source declaring an unsupported content format on a dry run', async () => {
     const sourceDir = await makeSource(tempDir, 'future', {});
     await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 99\n', 'utf8');
@@ -195,6 +205,22 @@ describe('install with declared sources', () => {
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
       /claude guidance template is shipped by more than one content root.*the built-in library/s,
     );
+  });
+
+  // A template carries the ambient region `sync --global` writes into. Install deploys one that omits it, leaving the
+  // region's absence for sync to classify and report.
+  it('deploys a source template carrying no ambient region', async () => {
+    const sourceDir = await makeSource(tempDir, 'org', {
+      claudeGuidance: { 'CLAUDE.md': 'Org claude preamble, no ambient region.\n' },
+    });
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using _silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    const deployed = await readGuidance(tempDir);
+    expect(deployed).toContain('Org claude preamble, no ambient region.');
+    expect(deployed).not.toContain('codeassembly-ambient:start');
   });
 
   it('retracts a template file the owning source does not ship', async () => {
