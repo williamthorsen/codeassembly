@@ -30,8 +30,8 @@ import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/p
 import type { ReportLine } from '../lib/report-line.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
-import { describeHarnessTargeting, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
+import { describeHarnessTargeting, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
@@ -42,6 +42,7 @@ import type {
   ManifestEntry,
 } from '../lib/types.ts';
 import { ensureHarnessHookEntries } from './configure-hooks.ts';
+import { retractDroppedHarnesses } from './harness-retraction.ts';
 
 /**
  * The extensions that ship from `content/scripts/` to a harness home: `.sh` shell helpers and `.mjs` TypeScript
@@ -96,9 +97,14 @@ export async function installCommand(
   // harness still carries whatever a previous install left in `~/.agents/`.
   const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
+  // Above the no-target return for the same reason: a declaration resolving to an empty set targets nothing and still
+  // has to clear what a previous run deployed.
+  const retraction = await retractDroppedHarnesses({ manifest, targets, baseDir, install: options });
+  emitReport(retraction.lines);
+
   if (harnesses.length === 0) {
-    if (!options.dryRun && didRetire) {
-      await writeManifest(manifestPath, withoutSharedTier(manifest));
+    if (!options.dryRun && (didRetire || retraction.didRetract)) {
+      await writeManifest(manifestPath, { ...withoutSharedTier(manifest), harnesses: retraction.harnesses });
       console.info('\nManifest updated.');
     } else {
       console.info('Nothing else to install.');
@@ -109,7 +115,7 @@ export async function installCommand(
     return;
   }
 
-  const updatedHarnesses: Partial<Record<HarnessId, HarnessManifest>> = { ...manifest.harnesses };
+  const updatedHarnesses: Partial<Record<HarnessId, HarnessManifest>> = { ...retraction.harnesses };
 
   for (const harnessId of harnesses) {
     console.info(`\nInstalling for harness: ${harnessId}`);

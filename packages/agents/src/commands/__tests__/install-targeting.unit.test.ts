@@ -37,7 +37,7 @@ describe('install harness targeting', () => {
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(false);
-    expect(infoLines(silent)).toContain('Targeting claude (declared).');
+    expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude (declared).');
   });
 
   it('falls back to the installed harnesses when no file declares the block', async () => {
@@ -48,7 +48,7 @@ describe('install harness targeting', () => {
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(true);
-    expect(infoLines(silent)).toContain('Targeting claude, rovo (detected in ~).');
+    expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude, rovo (detected in ~).');
   });
 
   it('installs into a declared harness whose home does not yet exist', async () => {
@@ -58,7 +58,7 @@ describe('install harness targeting', () => {
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(true);
-    expect(infoLines(silent)).toContain('Targeting rovo (declared).');
+    expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting rovo (declared).');
   });
 
   it('reports a flag-narrowed run as decided by the flag, reading no declaration', async () => {
@@ -69,7 +69,7 @@ describe('install harness targeting', () => {
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
-    expect(infoLines(silent)).toContain('Targeting claude (--harness claude).');
+    expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude (--harness claude).');
   });
 
   // region | Helpers
@@ -78,10 +78,6 @@ describe('install harness targeting', () => {
   async function declareHarnesses(body: string): Promise<void> {
     await mkdir(path.join(tempDir, '.agents'), { recursive: true });
     await writeFile(path.join(tempDir, '.agents', 'codeassembly.yaml'), body, 'utf8');
-  }
-
-  function infoLines(silent: ReturnType<typeof silenceConsole>): ReadonlyArray<string> {
-    return silent.info.mock.calls.map((call) => String(call[0]));
   }
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
