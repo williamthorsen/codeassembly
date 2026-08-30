@@ -10,6 +10,7 @@ import type { GuidanceHookFill, GuidanceHookFills } from '../../src/lib/guidance
 import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
+import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.
@@ -110,20 +111,10 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
     hook: 'writing-preferences',
     role: 'composes prose',
-    declaringBodies: [
-      { label: 'aspect-code-reviewer', relativePath: 'subagents/aspect-code-reviewer.md' },
-      { label: 'aspect-silent-failure-reviewer', relativePath: 'subagents/aspect-silent-failure-reviewer.md' },
-      { label: 'aspect-test-reviewer', relativePath: 'subagents/aspect-test-reviewer.md' },
-      { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
-      { label: 'orchestrated-architect', relativePath: 'subagents/orchestrated-architect.md' },
-      { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
-      { label: 'orchestrated-planner', relativePath: 'subagents/orchestrated-planner.md' },
-      { label: 'orchestrated-reviewer', relativePath: 'subagents/orchestrated-reviewer.md' },
-      { label: 'plan-reviewer', relativePath: 'subagents/plan-reviewer.md' },
-      { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },
-      { label: 'planner', relativePath: 'subagents/planner.md' },
-      { label: 'savings-analyzer', relativePath: 'subagents/savings-analyzer.md' },
-    ],
+    // Every subagent composes prose, so this population is read from the directory rather than written out: a
+    // subagent added later fails here until it declares the hook or joins the exemption. No skill declares this
+    // hook, because a skill runs in a session the rulebook's ambient route already reaches.
+    declaringBodies: listGovernedSubagents().map(toSubagentBody),
     boundRulebooks: [
       {
         slug: 'williamthorsen-writing-preferences',
