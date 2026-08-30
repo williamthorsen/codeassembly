@@ -46,7 +46,7 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 ## Proposed-change gate
 
-A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs, and drop it otherwise. Naming the change is not settling it: Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, name the alternatives and say the choice is theirs. Alternatives are named because the author knows something you do not, never because you could not settle on a fix; two offered for want of a decision are one unwritten finding. So a finding has one of exactly two shapes, a single named change or a choice among named alternatives, and only the absence of any envisioned change disqualifies one. Full treatment: [finding scheme § Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate).
+A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs, and drop it otherwise. Naming the change is not settling it: Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, name the alternatives and say the choice is theirs, because the author knows something you do not, never because you could not settle on a fix. Full treatment: [finding scheme § Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate).
 
 ## Actionability gate
 

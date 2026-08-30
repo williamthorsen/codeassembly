@@ -767,9 +767,7 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 
 A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs (see [Insight gate](#insight-gate)), and drop it otherwise.
 
-Naming the change is not settling it. Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, such as which callers can recover or which of two contracts is the intended one, name the alternatives and leave the choice to them. That is a finding, and the reviewer states whose call it is rather than picking for them.
-
-The escape this forecloses is the reviewer's own indecision. Alternatives are named because the author knows something the reviewer does not, never because the reviewer could not settle on a fix. Two alternatives offered for want of a decision are one unwritten finding.
+Naming the change is not settling it. Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, such as which callers can recover or which of two contracts is the intended one, name the alternatives and leave the choice to them. That is a finding, and the reviewer states whose call it is rather than picking for them. Alternatives are named because the author knows something the reviewer does not, never because the reviewer could not settle on a fix.
 
 A finding therefore has one of exactly two shapes, and consumers may rely on the pair being exhaustive: a single named change, or a choice among named alternatives the author decides. Only the absence of any envisioned change disqualifies a finding.
 

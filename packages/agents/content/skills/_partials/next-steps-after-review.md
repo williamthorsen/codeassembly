@@ -14,7 +14,7 @@ Three of the sub-blocks below offer options that rewrite an artifact, one each: 
 
 **Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change; the source target's label is plural, `Proposed edits to the source:`, because it covers every open finding. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", has no preview.
 
-Ticket and PR-description deltas render as a flat list, one line per change. Source entries render as blocks instead, each led by its bolded finding ID, because a table cannot live inside a list item and still render and the [option format](#option-format)'s nesting stops one level short of carrying one.
+Ticket and PR-description deltas render as a flat list, one line per change. Source entries render as blocks instead, each led by its bolded finding ID.
 
 **Notation.** The preview is a delta. It never restates the ticket, the PR description, or a finding's Recommendation, which would duplicate the artifact in the terminal, and it carries one entry per change:
 
@@ -25,7 +25,7 @@ Ticket and PR-description deltas render as a flat list, one line per change. Sou
 - **Source targets** derive their delta from the open findings, one entry per finding, keyed to its ID. An entry states two things: the surface the change touches (source, test, comment, docs, config) and the substance of the edit. Its form follows the edit's own granularity rather than a fixed notation, so a literal single-site edit is a `{old} → {new}` clause, many sites sharing one edit are a table captioned with what is invariant across its rows, and a structural edit is a prose clause naming the shape of the resulting diff. A code snippet is one rendering among these, never the required form.
   - Where an entry covers several sites and deliberately leaves one of them alone, that site is named with the reason, so the entry states its own boundary rather than leaving the reader to infer it from silence.
 
-Every finding has one of the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) fixes, and a source entry renders which one it has: a single named change, or a choice among named alternatives the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved; picking an option that would implement it is picking someone to make that call. An entry whose finding the follow-up-ticket option would cover is tagged `separable`, matching the IDs that option's line names. A finding with no envisioned change is not a legal finding and has no entry.
+Every finding has one of the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) fixes, and a source entry renders which one it has: a single named change, or a choice among named alternatives the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved.
 
 Render no exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out over-triggers into noise and hides the proposal it was meant to qualify.
 
@@ -33,7 +33,7 @@ Render no exclusions line. A criterion genuinely arguable as in conflict belongs
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). Where a source divergence proposes a PR-description edit, that delta is never empty, because a divergence the implementation resolves in the ticket's favor always leaves a claim to reconcile. A source delta is never empty either: The Findings sub-block renders only when there is at least one finding, and every finding names a change.
+**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). Where a source divergence proposes a PR-description edit, that delta is never empty, because a divergence the implementation resolves in the ticket's favor always leaves a claim to reconcile.
 
 ### Deviations sub-block
 
@@ -244,7 +244,7 @@ Proposed edits to the source:
 
 **S3: test code.** Add the empty-input case to `parseRange.test.ts`, asserting the `RangeError` the guard now throws.
 
-**R2: source, separable.** Extract the retry loop from `client.ts` into a helper the three callers share.
+**R2: source.** Extract the retry loop from `client.ts` into a helper the three callers share.
 
 1. 🚀 ■■□ Implement directly
 2. 📋 ■□□ Ask the author to address the findings
