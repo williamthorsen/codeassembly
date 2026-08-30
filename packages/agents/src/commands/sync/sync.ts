@@ -63,6 +63,11 @@ import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../../lib/t
 import { isMissingFile } from '../../lib/type-guards.ts';
 import type { AmbientHostKind, HarnessId, InstallOptions } from '../../lib/types.ts';
 import {
+  type DroppedHarnessRetraction,
+  planDroppedHarnessRetractions,
+  retractDroppedHarnesses,
+} from './harness-retraction.ts';
+import {
   listOwnedDeclaredSkills,
   listOwnedSkills,
   listOwnedSubagents,
@@ -160,6 +165,8 @@ export type SyncOutcome = MissingDeclaration | { readonly kind: 'reconciled'; re
  */
 export interface SyncPlan {
   readonly targets: ResolvedHarnessTargets;
+  /** What each harness the declaration dropped still holds from a previous sync, one entry per harness holding any. */
+  readonly droppedHarnesses: ReadonlyArray<DroppedHarnessRetraction>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly ambientHosts: ReadonlyArray<PlannedAmbientHost>;
   /** Hosts the run writes that git does not ignore, so machine-local guidance does not become a commit candidate. */
@@ -540,6 +547,11 @@ async function reconcileDomain(
 
   const plan: SyncPlan = {
     targets,
+    droppedHarnesses: await planDroppedHarnessRetractions({
+      targets,
+      baseDir: domain.baseDir,
+      ambient: domain.ambient,
+    }),
     resolutionReport,
     ambientHosts: ambientHostPlans,
     unignoredHosts,
@@ -568,6 +580,10 @@ async function reconcileDomain(
   if (options.dryRun) {
     return { kind: 'reconciled', plan };
   }
+
+  // First write of the run, so a harness leaving the target set is cleared before anything is delivered to the ones
+  // that remain. Its paths are disjoint from every targeted harness's, so the order costs the delivery passes nothing.
+  await retractDroppedHarnesses(plan.droppedHarnesses);
 
   await deliverAmbient(ambientHostPlans);
 
