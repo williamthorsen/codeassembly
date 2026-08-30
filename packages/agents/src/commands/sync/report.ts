@@ -5,6 +5,7 @@ import { describeMissingSource } from '../../lib/declared-sources.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
 import { skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
+import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
 import type {
   AmbientHostPlan,
   AmbientSkipReason,
@@ -47,6 +48,7 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
     { level: 'info', text: '[dry-run] sync would:' },
     ...describePlannedWrites(plan),
     ...describePlannedRetractions(plan),
+    ...describePlannedDroppedHarnesses(plan),
   );
   for (const promptsPath of plan.promptsYmlPaths) {
     lines.push({
@@ -81,6 +83,7 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   for (const retirement of plan.retirements) {
     lines.push(describeRetirement(retirement, true));
   }
+  lines.push(...describeDroppedHarnesses(plan));
   for (const { hostPath, plan: hostPlan } of plan.ambientHosts) {
     const reason = hostPlan.kind === 'skip' ? describeAmbientSkip(hostPlan.reason, hostPath) : undefined;
     if (reason !== undefined) {
@@ -176,6 +179,40 @@ function describeDeliveries(plan: SyncPlan): string {
   );
 }
 
+/** The lines naming what one dropped harness still holds: one per path the sweep removes and per region it strips. */
+function describeDroppedHarness(retraction: DroppedHarnessRetraction): ReadonlyArray<string> {
+  const lines = [
+    ...retraction.skillDirs.map((skillDir) => `remove skill ${skillDir}`),
+    ...retraction.subagentFiles.map((subagentFile) => `remove subagent ${subagentFile}`),
+    ...retraction.supportPaths.map((supportPath) => `remove source support ${supportPath}`),
+  ];
+  if (retraction.ambientHost !== undefined) {
+    lines.push(describeHostRetraction(retraction.ambientHost, 'ambient'));
+  }
+  if (retraction.promptsYml !== undefined) {
+    lines.push(describeHostRetraction(retraction.promptsYml, 'codeassembly'));
+  }
+  return lines;
+}
+
+/**
+ * The live-run lines for the dropped-harness sweep, one headed block per harness. Headed rather than counted into the
+ * closing summary: that sentence reconciles the targeted set, and a harness leaving that set is a different event.
+ */
+function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
+  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => [
+    { level: 'info', text: `\nRetracting harness dropped from the declaration: ${retraction.harnessId}` },
+    ...describeDroppedHarness(retraction).map((text): ReportLine => ({ level: 'info', text: `  ${text}` })),
+  ]);
+}
+
+/** Names what retraction does to one host carrying a sync-owned region: delete the file, or strip the region. */
+function describeHostRetraction(retraction: HostRetraction, region: string): string {
+  return retraction.kind === 'delete'
+    ? `remove ${retraction.path}`
+    : `strip the ${region} region from ${retraction.path}`;
+}
+
 /**
  * Renders one guidance-hook advisory. `bound-undeclared` names both remedies because the reader may control only
  * one: a rulebook resolved from the library carries frontmatter they cannot edit, leaving the binding as the half
@@ -223,6 +260,14 @@ function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
     : 'No .agents/codeassembly.yaml found. Nothing to sync.';
+}
+
+/** The dry-run lines for the dropped-harness sweep, each harness's paths nested under a header naming it. */
+function describePlannedDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
+  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => [
+    { level: 'info', text: `  retract harness dropped from the declaration: ${retraction.harnessId}` },
+    ...describeDroppedHarness(retraction).map((text): ReportLine => ({ level: 'info', text: `    ${text}` })),
+  ]);
 }
 
 /** The dry-run lines for every retraction a run would perform, across the three delivery namespaces. */

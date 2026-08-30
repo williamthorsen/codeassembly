@@ -727,7 +727,7 @@ describe(syncCommand, () => {
     expect(hasAmbientRegion(await readFile(path.join(projectRoot, 'CLAUDE.local.md'), 'utf8'))).toBe(true);
   });
 
-  it('leaves the dropped harness in place under --dry-run', async () => {
+  it('names what it would retract under --dry-run, leaving the dropped harness in place', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
@@ -735,8 +735,13 @@ describe(syncCommand, () => {
     await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
 
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
-    await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, contentDir, homeDir);
+    const output = renderReportText(
+      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'info' },
+    );
 
+    expect(output).toContain('retract harness dropped from the declaration: rovo');
+    expect(output).toContain(`remove skill ${path.join(projectRoot, ROVO_HOME, 'skills', 'consult-gamma')}`);
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
   });
 

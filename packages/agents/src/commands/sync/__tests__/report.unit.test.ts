@@ -29,6 +29,59 @@ function textOf(lines: ReadonlyArray<{ text: string }>): string {
   return lines.map((line) => line.text).join('\n');
 }
 
+describe('dropped-harness retraction', () => {
+  const DROPPED = {
+    harnessId: 'rovo',
+    skillDirs: ['/project/.rovo/skills/consult-alpha'],
+    subagentFiles: ['/project/.rovo/agents/lede-drafter.md'],
+    supportPaths: ['/project/.rovo/skills/_sources'],
+    ambientHost: { kind: 'delete', path: '/project/AGENTS.local.md' },
+    promptsYml: { kind: 'rewrite', path: '/project/.rovo/prompts.yml', content: 'prompts:\n' },
+  } as const;
+
+  it('names every surface on the live path, under a header naming the harness', () => {
+    const output = textOf(renderSyncReport(reconciled({ droppedHarnesses: [DROPPED] })));
+
+    expect(output).toContain('Retracting harness dropped from the declaration: rovo');
+    expect(output).toContain('  remove skill /project/.rovo/skills/consult-alpha');
+    expect(output).toContain('  remove subagent /project/.rovo/agents/lede-drafter.md');
+    expect(output).toContain('  remove source support /project/.rovo/skills/_sources');
+    expect(output).toContain('  remove /project/AGENTS.local.md');
+    expect(output).toContain('  strip the codeassembly region from /project/.rovo/prompts.yml');
+  });
+
+  it('names every surface on the dry-run path', () => {
+    const output = textOf(renderDryRunReport(reconciled({ droppedHarnesses: [DROPPED] })));
+
+    expect(output).toContain('  retract harness dropped from the declaration: rovo');
+    expect(output).toContain('    remove skill /project/.rovo/skills/consult-alpha');
+    expect(output).toContain('    remove /project/AGENTS.local.md');
+    expect(output).toContain('    strip the codeassembly region from /project/.rovo/prompts.yml');
+  });
+
+  it('says the ambient region is stripped where the host survives it', () => {
+    const output = textOf(
+      renderSyncReport(
+        reconciled({
+          droppedHarnesses: [
+            {
+              ...DROPPED,
+              ambientHost: { kind: 'rewrite', path: HOME_HOST, content: '# Guidance\n' },
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(output).toContain(`  strip the ambient region from ${HOME_HOST}`);
+  });
+
+  it('adds no line when the run dropped no harness', () => {
+    expect(textOf(renderSyncReport(reconciled()))).not.toContain('dropped from the declaration');
+    expect(textOf(renderDryRunReport(reconciled()))).not.toContain('dropped from the declaration');
+  });
+});
+
 describe('ambient-host skips', () => {
   it('reports a skip that names a problem on both paths, in the same words', () => {
     const outcome = reconciled({
