@@ -251,13 +251,6 @@ function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
   });
 }
 
-/** Names what retraction does to one host carrying a sync-owned region: delete the file, or strip the region. */
-function describeHostRetraction(retraction: HostRetraction, region: string, verbs: RetractionVerbs): string {
-  return retraction.kind === 'delete'
-    ? `${verbs.remove} ${retraction.path}`
-    : `${verbs.strip} the ${region} region from ${retraction.path}`;
-}
-
 /**
  * Renders one guidance-hook advisory. `bound-undeclared` names both remedies because the reader may control only
  * one: a rulebook resolved from the library carries frontmatter they cannot edit, leaving the binding as the half
@@ -298,6 +291,13 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
           'rulebook under a hook in the `guidance-hooks:` block of .agents/codeassembly.yaml.',
       };
   }
+}
+
+/** Names what retraction does to one host carrying a sync-owned region: delete the file, or strip the region. */
+function describeHostRetraction(retraction: HostRetraction, region: string, verbs: RetractionVerbs): string {
+  return retraction.kind === 'delete'
+    ? `${verbs.remove} ${retraction.path}`
+    : `${verbs.strip} the ${region} region from ${retraction.path}`;
 }
 
 /** The advice for a scope that carries no declaration to act on, naming the remedy the global tier has. */
