@@ -44,9 +44,13 @@ Focus findings (F/W/T) only on code authored in the current change; observations
 
 Findings use the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix); see that section for the table, category criteria, criticality mapping, and re-review escalation chain.
 
+## Proposed-change gate
+
+A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs, and drop it otherwise. Naming the change is not settling it: Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, name the alternatives and say the choice is theirs. Alternatives are named because the author knows something you do not, never because you could not settle on a fix; two offered for want of a decision are one unwritten finding. So a finding has one of exactly two shapes, a single named change or a choice among named alternatives, and only the absence of any envisioned change disqualifies one. Full treatment: [finding scheme § Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate).
+
 ## Actionability gate
 
-Before emitting any F/W/T/R/S finding, confirm it gives the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _Would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
+A named change still has to be worth making. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _Would I make this change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
 
 ## Insight gate
 
