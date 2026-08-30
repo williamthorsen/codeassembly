@@ -290,6 +290,11 @@ async function declareSources(homeDir: string, sources: ReadonlyArray<{ name: st
   await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), `sources:\n${body}\n`, 'utf8');
 }
 
+/** The install options every case runs with, targeting the claude harness on a real (non-dry) run. */
+function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
+  return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
+}
+
 /** Creates a source content root under `homeDir` holding the given scripts, claude template, and shared guidance. */
 async function makeSource(
   homeDir: string,
@@ -308,6 +313,21 @@ async function makeSource(
   return dir;
 }
 
+/** Reads the claude guidance file the install deployed into the harness home. */
+async function readGuidance(homeDir: string): Promise<string> {
+  return readFile(path.join(homeDir, '.claude', 'CLAUDE.md'), 'utf8');
+}
+
+/** Reads a script the install deployed into the claude harness home. */
+async function readScript(homeDir: string, name: string): Promise<string> {
+  return readFile(path.join(homeDir, '.claude', 'scripts', name), 'utf8');
+}
+
+/** Joins every line a silenced run wrote to `console.warn`, so one regex can match across them. */
+function warnedLines(calls: ReadonlyArray<ReadonlyArray<unknown>>): string {
+  return calls.map((call) => String(call[0])).join('\n');
+}
+
 /** Writes a flat map of file name to content into `dir`, doing nothing when the map is absent. */
 async function writeFileMap(dir: string, files: Record<string, string> | undefined): Promise<void> {
   if (files === undefined) {
@@ -317,25 +337,6 @@ async function writeFileMap(dir: string, files: Record<string, string> | undefin
   for (const [fileName, body] of Object.entries(files)) {
     await writeFile(path.join(dir, fileName), body, 'utf8');
   }
-}
-
-function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-  return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
-}
-
-/** Joins every line a silenced run wrote to `console.warn`, so one regex can match across them. */
-function warnedLines(calls: ReadonlyArray<ReadonlyArray<unknown>>): string {
-  return calls.map((call) => String(call[0])).join('\n');
-}
-
-/** Reads the claude guidance file the install deployed into the harness home. */
-async function readGuidance(homeDir: string): Promise<string> {
-  return readFile(path.join(homeDir, '.claude', 'CLAUDE.md'), 'utf8');
-}
-
-/** Reads a script the install deployed into the claude harness home. */
-async function readScript(homeDir: string, name: string): Promise<string> {
-  return readFile(path.join(homeDir, '.claude', 'scripts', name), 'utf8');
 }
 
 // endregion | Helpers
