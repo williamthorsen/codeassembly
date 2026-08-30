@@ -76,6 +76,51 @@ describe('dropped-harness retraction', () => {
     expect(output).toContain(`  stripped the ambient region from ${HOME_HOST}`);
   });
 
+  it('warns about a damaged ambient host on both paths, outside the harness block', () => {
+    const damaged = {
+      ...DROPPED,
+      ambientHost: { kind: 'damaged', path: '/project/AGENTS.local.md' },
+    } as const;
+    const warning =
+      '⚠️ Skipping ambient retraction: /project/AGENTS.local.md carries a damaged ambient region. ' +
+      'Repair the codeassembly-ambient markers and re-run, or the withdrawn guidance keeps loading.';
+
+    expect(textOf(renderSyncReport(reconciled({ droppedHarnesses: [damaged] })))).toContain(warning);
+    expect(textOf(renderDryRunReport(reconciled({ droppedHarnesses: [damaged] })))).toContain(warning);
+  });
+
+  it('names no ambient action for a damaged host, whose block carries only the other removals', () => {
+    const output = textOf(
+      renderSyncReport(
+        reconciled({
+          droppedHarnesses: [{ ...DROPPED, ambientHost: { kind: 'damaged', path: '/project/AGENTS.local.md' } }],
+        }),
+      ),
+    );
+
+    expect(output).toContain('  removed skill /project/.rovo/skills/consult-alpha');
+    expect(output).not.toContain('removed /project/AGENTS.local.md');
+    expect(output).not.toContain('stripped the ambient region');
+  });
+
+  it('renders no block header for a harness whose only residue is a damaged host', () => {
+    const damagedOnly = {
+      harnessId: 'rovo',
+      skillDirs: [],
+      subagentFiles: [],
+      supportPaths: [],
+      ambientHost: { kind: 'damaged', path: '/project/AGENTS.local.md' },
+      promptsYml: undefined,
+    } as const;
+
+    expect(textOf(renderSyncReport(reconciled({ droppedHarnesses: [damagedOnly] })))).not.toContain(
+      'Retracted harness dropped from the declaration',
+    );
+    expect(textOf(renderDryRunReport(reconciled({ droppedHarnesses: [damagedOnly] })))).not.toContain(
+      'retract harness dropped from the declaration',
+    );
+  });
+
   it('adds no line when the run dropped no harness', () => {
     expect(textOf(renderSyncReport(reconciled()))).not.toContain('dropped from the declaration');
     expect(textOf(renderDryRunReport(reconciled()))).not.toContain('dropped from the declaration');

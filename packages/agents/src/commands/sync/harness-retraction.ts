@@ -1,7 +1,7 @@
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
 
-import { removeAmbientRegion, stripAmbientRegionContent } from '../../lib/ambient-region.ts';
+import { classifyAmbientRegion, removeAmbientRegion, stripAmbientRegionContent } from '../../lib/ambient-region.ts';
 import { readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { ALL_HARNESS_IDS, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { SOURCE_SUPPORT_DIR } from '../../lib/link-anchor.ts';
@@ -23,9 +23,16 @@ export interface DroppedHarnessRetraction {
   readonly subagentFiles: ReadonlyArray<string>;
   /** Paths under the harness's support root that no source claims, which for a dropped harness is the root itself. */
   readonly supportPaths: ReadonlyArray<string>;
-  readonly ambientHost: HostRetraction | undefined;
+  readonly ambientHost: AmbientRetraction | undefined;
   readonly promptsYml: HostRetraction | undefined;
 }
+
+/**
+ * What retraction does to one dropped harness's ambient host. `damaged` is the ambient host's own case: a region no
+ * transform may touch, which the sweep leaves standing and the report names, since the alternative is a clean-looking
+ * run over guidance the declaration has withdrawn.
+ */
+export type AmbientRetraction = HostRetraction | { readonly kind: 'damaged'; readonly path: string };
 
 /** What retraction does to one host file that carries a sync-owned region: rewrite it, or delete it outright. */
 export type HostRetraction =
@@ -104,9 +111,9 @@ export async function retractDroppedHarnesses(retractions: ReadonlyArray<Dropped
 
 // region | Helpers
 
-/** Writes or deletes one host per its retraction; an absent retraction is a no-op. */
-async function applyHostRetraction(retraction: HostRetraction | undefined): Promise<void> {
-  if (retraction === undefined) {
+/** Writes or deletes one host per its retraction. An absent retraction is a no-op, and so is a damaged region. */
+async function applyHostRetraction(retraction: AmbientRetraction | undefined): Promise<void> {
+  if (retraction === undefined || retraction.kind === 'damaged') {
     return;
   }
   await (retraction.kind === 'delete'
@@ -129,15 +136,19 @@ function hasResidue(retraction: DroppedHarnessRetraction): boolean {
  * Decides what retraction does to one dropped harness's ambient host. The two hosts differ in who owns the region's
  * placement: `install` renders the harness-home region, so sync empties the content that it owns and keeps the markers,
  * while the project-local host is sync's own and goes entirely, taking the file with it once nothing else remains.
- * A host carrying no well-formed region is left alone, so a damaged one stays the developer's to repair.
+ * A damaged region is reported rather than touched, since the span the pattern matches there reaches text the region
+ * does not own; a host carrying no region at all is nothing to report.
  */
 async function planAmbientRetraction(
   harnessId: HarnessId,
   baseDir: string,
   ambient: AmbientHostKind,
-): Promise<HostRetraction | undefined> {
+): Promise<AmbientRetraction | undefined> {
   const hostPath = resolveAmbientHostPath(harnessId, ambient, baseDir);
   const content = await readFileOrEmpty(hostPath);
+  if (classifyAmbientRegion(content) === 'malformed') {
+    return { kind: 'damaged', path: hostPath };
+  }
   const retracted = ambient === 'harness-home' ? stripAmbientRegionContent(content) : removeAmbientRegion(content);
   if (retracted === content) {
     return undefined;

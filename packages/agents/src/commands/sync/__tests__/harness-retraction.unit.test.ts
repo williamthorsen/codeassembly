@@ -18,6 +18,10 @@ import {
 } from '../test-utils/harness-tree.ts';
 
 const AMBIENT_REGION = '<!-- codeassembly-ambient:start -->\nambient guidance\n<!-- codeassembly-ambient:end -->';
+/** Two open markers, which `classifyAmbientRegion` reports as malformed. */
+const DAMAGED_REGION =
+  '<!-- codeassembly-ambient:start -->\nstale guidance\n<!-- codeassembly-ambient:start -->\n<!-- codeassembly-ambient:end -->';
+
 const PROMPTS_REGION = '  # codeassembly:managed:start\n  - name: deployed\n  # codeassembly:managed:end';
 
 /** Targets naming claude alone, declared, so rovo is the dropped harness in every case below. */
@@ -110,6 +114,49 @@ describe(planDroppedHarnessRetractions, () => {
       path: path.join(harnessHome, 'AGENTS.md'),
       content: '# Guidance\n\n<!-- codeassembly-ambient:start -->\n<!-- codeassembly-ambient:end -->\n',
     });
+  });
+
+  it('declines a damaged ambient region, naming the host rather than touching it', async () => {
+    const { skillsDir } = await scaffoldHarnessTree('rovo', baseDir);
+    await writeDeclaredSkill(skillsDir, 'create-commit');
+    await writeFile(path.join(baseDir, 'AGENTS.local.md'), `# Local\n\n${DAMAGED_REGION}\n`, 'utf8');
+
+    const [retraction] = await planDroppedHarnessRetractions({
+      targets: CLAUDE_DECLARED,
+      baseDir,
+      ambient: 'project-local',
+    });
+
+    expect(retraction?.ambientHost).toEqual({ kind: 'damaged', path: path.join(baseDir, 'AGENTS.local.md') });
+  });
+
+  it('declines a damaged harness-home region too', async () => {
+    const { harnessHome } = await scaffoldHarnessTree('rovo', baseDir);
+    await writeFile(path.join(harnessHome, 'AGENTS.md'), `# Guidance\n\n${DAMAGED_REGION}\n`, 'utf8');
+
+    const [retraction] = await planDroppedHarnessRetractions({
+      targets: CLAUDE_DECLARED,
+      baseDir,
+      ambient: 'harness-home',
+    });
+
+    expect(retraction?.ambientHost).toEqual({ kind: 'damaged', path: path.join(harnessHome, 'AGENTS.md') });
+  });
+
+  // The harness would otherwise drop out of the plan, and the damaged host would reach no report at all.
+  it('keeps a harness whose only residue is a damaged ambient host', async () => {
+    await scaffoldHarnessTree('rovo', baseDir);
+    await writeFile(path.join(baseDir, 'AGENTS.local.md'), `${DAMAGED_REGION}\n`, 'utf8');
+
+    const [retraction, ...rest] = await planDroppedHarnessRetractions({
+      targets: CLAUDE_DECLARED,
+      baseDir,
+      ambient: 'project-local',
+    });
+
+    expect(rest).toEqual([]);
+    expect(retraction?.harnessId).toBe('rovo');
+    expect(retraction?.skillDirs).toEqual([]);
   });
 
   it('leaves a prompts.yml carrying foreign entries, with the codeassembly region gone', async () => {
@@ -206,6 +253,21 @@ describe(retractDroppedHarnesses, () => {
     expect(existsSync(foreignSkill)).toBe(true);
     expect(existsSync(foreignSubagent)).toBe(true);
     expect(await readFile(hostPath, 'utf8')).toBe('# Local\n\n## Tail\n');
+  });
+
+  it('leaves a damaged ambient host exactly as it found it', async () => {
+    const { skillsDir } = await scaffoldHarnessTree('rovo', baseDir);
+    await writeDeclaredSkill(skillsDir, 'create-commit');
+    const hostPath = path.join(baseDir, 'AGENTS.local.md');
+    const before = `# Local\n\n${DAMAGED_REGION}\n`;
+    await writeFile(hostPath, before, 'utf8');
+
+    await retractDroppedHarnesses(
+      await planDroppedHarnessRetractions({ targets: CLAUDE_DECLARED, baseDir, ambient: 'project-local' }),
+    );
+
+    expect(await readFile(hostPath, 'utf8')).toBe(before);
+    expect(existsSync(path.join(skillsDir, 'create-commit'))).toBe(false);
   });
 
   it('leaves the targeted harness untouched', async () => {
