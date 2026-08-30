@@ -146,5 +146,3 @@ Route by the `error` code:
 ## Completion
 
 Either one written record at the reported path, or nothing at all. There is no third outcome, and no record is ever written without the author's rating.
-
-<!-- include: ../_partials/option-format.md / -->
