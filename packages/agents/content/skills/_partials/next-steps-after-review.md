@@ -23,6 +23,7 @@ Ticket and PR-description deltas render as a flat list, one line per change. Sou
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
 - **Source targets** derive their delta from the open findings, one entry per finding, keyed to its ID. An entry states two things: the surface the change touches (source, test, comment, docs, config) and the substance of the edit. Its form follows the edit's own granularity rather than a fixed notation, so a literal single-site edit is a `{old} → {new}` clause, many sites sharing one edit are a table captioned with what is invariant across its rows, and a structural edit is a prose clause naming the shape of the resulting diff. A code snippet is one rendering among these, never the required form.
+  - Where an entry covers several sites and deliberately leaves one of them alone, that site is named with the reason, so the entry states its own boundary rather than leaving the reader to infer it from silence.
 
 Every finding has one of the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) fixes, and a source entry renders which one it has: a single named change, or a choice among named alternatives the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved; picking an option that would implement it is picking someone to make that call. A finding with no envisioned change is not a legal finding and has no entry.
 
@@ -194,10 +195,10 @@ Proposed edits to the source:
 
 **T1 — test code.** Assert the corrected error classes in `parseRange.test.ts`. Every row keeps its message text and only gains the wrapper.
 
-| Line     | Case                  | `toThrow(…)` becomes           |
-| -------- | --------------------- | ------------------------------ |
-| 62       | index out of bounds   | `toThrow(new RangeError(msg))` |
-| 33,38,43 | missing key           | unchanged; that throw is still `Error` |
+| Line         | Case                | `toThrow(…)` becomes                   |
+| ------------ | ------------------- | -------------------------------------- |
+| 62           | index out of bounds | `toThrow(new RangeError(msg))`         |
+| 33, 38, 43   | missing key         | unchanged; that throw is still `Error` |
 
 **S1 — comment.** Replace the stale `@returns` line on `resolveBase` (`resolve.ts:88`) with a `todo:` naming what went stale.
 
