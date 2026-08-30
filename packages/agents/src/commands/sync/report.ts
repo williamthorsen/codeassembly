@@ -5,6 +5,7 @@ import { describeMissingSource } from '../../lib/declared-sources.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
 import { skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
+import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
 import type {
   AmbientHostPlan,
   AmbientSkipReason,
@@ -24,6 +25,15 @@ const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
   subagent: 2,
   collection: 3,
 };
+
+/** The verbs a retraction line takes, so the same renderer serves a preview and the run it previews. */
+interface RetractionVerbs {
+  readonly remove: string;
+  readonly strip: string;
+}
+
+const PERFORMED_VERBS: RetractionVerbs = { remove: 'removed', strip: 'stripped' };
+const PLANNED_VERBS: RetractionVerbs = { remove: 'remove', strip: 'strip' };
 
 /**
  * Renders what a dry run reports: where it would deploy, what it would retire, how each artifact resolved, and every
@@ -47,6 +57,7 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
     { level: 'info', text: '[dry-run] sync would:' },
     ...describePlannedWrites(plan),
     ...describePlannedRetractions(plan),
+    ...describePlannedDroppedHarnesses(plan),
   );
   for (const promptsPath of plan.promptsYmlPaths) {
     lines.push({
@@ -54,6 +65,7 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
       text: `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
     });
   }
+  lines.push(...describeDamagedDroppedHosts(plan));
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
@@ -81,12 +93,14 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   for (const retirement of plan.retirements) {
     lines.push(describeRetirement(retirement, true));
   }
+  lines.push(...describeDroppedHarnesses(plan));
   for (const { hostPath, plan: hostPlan } of plan.ambientHosts) {
     const reason = hostPlan.kind === 'skip' ? describeAmbientSkip(hostPlan.reason, hostPath) : undefined;
     if (reason !== undefined) {
       lines.push({ level: 'warn', text: `⚠️ Skipping ambient delivery: ${reason}` });
     }
   }
+  lines.push(...describeDamagedDroppedHosts(plan));
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
@@ -142,12 +156,37 @@ function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): Repor
 function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): string | undefined {
   switch (reason.cause) {
     case 'damaged-region':
-      return `${hostPath} carries a damaged ambient region.`;
+      return describeDamagedRegion(hostPath);
     case 'not-needed':
       return undefined;
     case 'stale-install':
       return describeStaleAmbientHost(reason.status, hostPath);
   }
+}
+
+/**
+ * The warning for each dropped harness whose ambient host the sweep declines to touch. Emitted at the report's top
+ * level, beside the ambient-delivery skips it mirrors, rather than inside the harness's block: nothing was retracted
+ * there, and a run that says only what it removed reads clean over guidance the declaration has withdrawn.
+ */
+function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> {
+  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> =>
+    retraction.ambientHost?.kind === 'damaged'
+      ? [
+          {
+            level: 'warn',
+            text:
+              `⚠️ Skipping ambient retraction: ${describeDamagedRegion(retraction.ambientHost.path)} Repair the ` +
+              'codeassembly-ambient markers and re-run, or the withdrawn guidance keeps loading.',
+          },
+        ]
+      : [],
+  );
+}
+
+/** The sentence naming a host whose ambient region no transform may touch, shared by every path that reports one. */
+function describeDamagedRegion(hostPath: string): string {
+  return `${hostPath} carries a damaged ambient region.`;
 }
 
 /** Names the skills whose declaration of a hook overlaps an ambient route, as the relative clause the line embeds. */
@@ -174,6 +213,42 @@ function describeDeliveries(plan: SyncPlan): string {
     `${countOrphans(plan.declaredSkillOrphansByDir)} declared-skill dir(s), and ` +
     `${countOrphans(plan.subagentOrphansByDir)} declared-subagent file(s).`
   );
+}
+
+/**
+ * The lines naming what one dropped harness still holds: one for each path removed and each region stripped. `verbs`
+ * carries the tense, so a preview reads as what a run would do and a run as what it did.
+ */
+function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: RetractionVerbs): ReadonlyArray<string> {
+  const lines = [
+    ...retraction.skillDirs.map((skillDir) => `${verbs.remove} skill ${skillDir}`),
+    ...retraction.subagentFiles.map((subagentFile) => `${verbs.remove} subagent ${subagentFile}`),
+    ...retraction.supportPaths.map((supportPath) => `${verbs.remove} source support ${supportPath}`),
+  ];
+  // A damaged host is reported as a warning of its own, so it contributes no line to the actions block.
+  if (retraction.ambientHost !== undefined && retraction.ambientHost.kind !== 'damaged') {
+    lines.push(describeHostRetraction(retraction.ambientHost, 'ambient', verbs));
+  }
+  if (retraction.promptsYml !== undefined) {
+    lines.push(describeHostRetraction(retraction.promptsYml, 'codeassembly', verbs));
+  }
+  return lines;
+}
+
+/**
+ * The live-run lines for the dropped-harness sweep, one headed block per harness. Headed rather than counted into the
+ * closing summary: that sentence reconciles the targeted set, and a harness leaving that set is a different event.
+ */
+function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
+  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => {
+    const removals = describeDroppedHarness(retraction, PERFORMED_VERBS);
+    return removals.length === 0
+      ? []
+      : [
+          { level: 'info', text: `\nRetracted harness dropped from the declaration: ${retraction.harnessId}` },
+          ...removals.map((text): ReportLine => ({ level: 'info', text: `  ${text}` })),
+        ];
+  });
 }
 
 /**
@@ -218,11 +293,31 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
   }
 }
 
+/** Names what retraction does to one host carrying a sync-owned region: delete the file, or strip the region. */
+function describeHostRetraction(retraction: HostRetraction, region: string, verbs: RetractionVerbs): string {
+  return retraction.kind === 'delete'
+    ? `${verbs.remove} ${retraction.path}`
+    : `${verbs.strip} the ${region} region from ${retraction.path}`;
+}
+
 /** The advice for a scope that carries no declaration to act on, naming the remedy the global tier has. */
 function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
     : 'No .agents/codeassembly.yaml found. Nothing to sync.';
+}
+
+/** The dry-run lines for the dropped-harness sweep, each harness's paths nested under a header naming it. */
+function describePlannedDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
+  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => {
+    const removals = describeDroppedHarness(retraction, PLANNED_VERBS);
+    return removals.length === 0
+      ? []
+      : [
+          { level: 'info', text: `  retract harness dropped from the declaration: ${retraction.harnessId}` },
+          ...removals.map((text): ReportLine => ({ level: 'info', text: `    ${text}` })),
+        ];
+  });
 }
 
 /** The dry-run lines for every retraction a run would perform, across the three delivery namespaces. */

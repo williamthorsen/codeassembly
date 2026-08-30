@@ -87,6 +87,26 @@ export function injectAmbientRegion(content: string, body: string): string {
 }
 
 /**
+ * Removes the ambient region along with its markers, closing the gap it leaves: text on either side is rejoined by a
+ * single blank line, and content holding nothing but the region yields the empty string. This is the project-local
+ * host's case, where `sync` owns the region's placement as well as its content and a host with nothing to carry stays
+ * absent. Content without a complete region is returned unchanged, matching `stripAmbientRegionContent`.
+ */
+export function removeAmbientRegion(content: string): string {
+  const match = hasAmbientRegion(content) ? REGION_PATTERN.exec(content) : null;
+  if (match === null) {
+    return content;
+  }
+  const before = content.slice(0, match.index).replace(/\s+$/, '');
+  const after = content
+    .slice(match.index + match[0].length)
+    .replace(/^\s+/, '')
+    .replace(/\s+$/, '');
+  const joined = before === '' || after === '' ? `${before}${after}` : `${before}\n\n${after}`;
+  return joined === '' ? '' : `${joined}\n`;
+}
+
+/**
  * Empties the ambient region's content, keeping the markers, so hashes computed over the result are insensitive to
  * what `sync` wrote there. Content without a complete region is returned unchanged.
  */

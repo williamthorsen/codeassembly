@@ -8,6 +8,7 @@ import {
   extractAmbientRegionContent,
   hasAmbientRegion,
   injectAmbientRegion,
+  removeAmbientRegion,
   stripAmbientRegionContent,
 } from '../ambient-region.ts';
 
@@ -183,6 +184,40 @@ describe(injectAmbientRegion, () => {
 
   it('throws when no region is present', () => {
     expect(() => injectAmbientRegion('# Guidance\n', BODY)).toThrow(/No ambient region/);
+  });
+});
+
+describe(removeAmbientRegion, () => {
+  it('removes the region and its markers, rejoining the text around it', () => {
+    expect(removeAmbientRegion(injectAmbientRegion(GUIDANCE, BODY))).toBe(
+      '# Guidance\n\nIntro prose.\n\n## Tail section\n',
+    );
+  });
+
+  it('yields the empty string for content holding nothing but the region', () => {
+    expect(removeAmbientRegion(`${FILLED_REGION}\n`)).toBe('');
+  });
+
+  it('leaves no trailing blank line when the region ends the content', () => {
+    expect(removeAmbientRegion(`# Guidance\n\n${FILLED_REGION}\n`)).toBe('# Guidance\n');
+  });
+
+  it('leaves no leading blank line when the region opens the content', () => {
+    expect(removeAmbientRegion(`${FILLED_REGION}\n\n## Tail section\n`)).toBe('## Tail section\n');
+  });
+
+  it('returns region-less content unchanged', () => {
+    expect(removeAmbientRegion('# Guidance\n')).toBe('# Guidance\n');
+  });
+
+  it('returns content with an unclosed marker unchanged', () => {
+    const unclosed = '<!-- codeassembly-ambient:start -->\ncontent\n';
+    expect(removeAmbientRegion(unclosed)).toBe(unclosed);
+  });
+
+  it('returns content carrying two regions unchanged', () => {
+    const doubled = `${EMPTY_REGION}\n\n${EMPTY_REGION}\n`;
+    expect(removeAmbientRegion(doubled)).toBe(doubled);
   });
 });
 

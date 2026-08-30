@@ -710,6 +710,53 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
   });
 
+  it('retracts the harness a narrowed declaration drops', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
+    await installBothHarnesses();
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+    expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
+
+    await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+
+    expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(false);
+    expect(existsSync(path.join(projectRoot, HARNESSES.rovo.localGuidanceFileName))).toBe(false);
+    expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(true);
+    expect(hasAmbientRegion(await readFile(path.join(projectRoot, 'CLAUDE.local.md'), 'utf8'))).toBe(true);
+  });
+
+  it('names what it would retract under --dry-run, leaving the dropped harness in place', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
+    await installBothHarnesses();
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+
+    await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
+    const output = renderReportText(
+      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, contentDir, homeDir),
+      { dryRun: true, level: 'info' },
+    );
+
+    expect(output).toContain('retract harness dropped from the declaration: rovo');
+    expect(output).toContain(`remove skill ${path.join(projectRoot, ROVO_HOME, 'skills', 'consult-gamma')}`);
+    expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
+  });
+
+  it('retracts nothing from a harness --harness merely excludes', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+    await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
+    await installBothHarnesses();
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir, homeDir);
+
+    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, contentDir, homeDir);
+
+    expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
+  });
+
   it('names its targeting under --dry-run as well', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
@@ -2341,6 +2388,27 @@ describe(syncGlobalCommand, () => {
     expect(content).toContain('Alpha rules.');
     expect(existsSync(path.join(homeDir, '.agents', 'GLOBAL.md'))).toBe(false);
     expect(existsSync(path.join(homeDir, '.agents', 'PROJECT.md'))).toBe(false);
+  });
+
+  it('retracts the harness a narrowed declaration drops, emptying its guidance region but keeping the markers', async () => {
+    const rovoMd = await seedGuidanceFile(ROVO_HOME, HARNESSES.rovo.guidanceFileName);
+    await writeLibraryRulebook('alpha', 'delivery: [ambient, skill]', 'Alpha rules.');
+    await declareRaw('harnesses:\n  use:\n    - claude\n    - rovo\nrulebooks:\n  use:\n    - alpha\n');
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
+    const rovoSkill = path.join(homeDir, ROVO_HOME, 'skills', 'consult-alpha', 'SKILL.md');
+    expect(existsSync(rovoSkill)).toBe(true);
+    expect(existsSync(path.join(homeDir, ROVO_HOME, 'prompts.yml'))).toBe(true);
+    expect(await readFile(rovoMd, 'utf8')).toContain('Alpha rules.');
+
+    await declareRaw('harnesses:\n  use:\n    - claude\nrulebooks:\n  use:\n    - alpha\n');
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
+
+    expect(existsSync(rovoSkill)).toBe(false);
+    expect(existsSync(path.join(homeDir, ROVO_HOME, 'prompts.yml'))).toBe(false);
+    // The region's placement is `install`'s, so retraction empties what sync wrote and leaves the file and markers.
+    expect(await readFile(rovoMd, 'utf8')).toBe(
+      '# Guidance\n\n<!-- codeassembly-ambient:start -->\n<!-- codeassembly-ambient:end -->\n',
+    );
   });
 
   it('opens the harness guidance region with the generated note, directly above the first rulebook block', async () => {

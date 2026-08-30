@@ -4,6 +4,7 @@ import type { SyncPlan } from '../sync.ts';
 export function buildSyncPlan(overrides: Partial<SyncPlan> = {}): SyncPlan {
   return {
     targets: { harnessIds: ['claude'], origin: 'declaration' },
+    droppedHarnesses: [],
     resolutionReport: [],
     ambientHosts: [],
     unignoredHosts: [],
