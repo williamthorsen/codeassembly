@@ -9,13 +9,13 @@ import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
 import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
 import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { assertSupportedContentFormats } from '../../lib/content-root-manifest.ts';
 import {
   createSourceResolver,
   describeSearchedLocations,
   hasLibraryArtifact,
   type SourceResolver,
 } from '../../lib/content-sources.ts';
+import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
@@ -35,7 +35,7 @@ import {
   type LinkAnchorContext,
   SOURCE_SUPPORT_DIR,
 } from '../../lib/link-anchor.ts';
-import { findUndeclaredGuidancePackages, resolvePackageSources } from '../../lib/package-sources.ts';
+import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
@@ -46,7 +46,6 @@ import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../../lib/skill-transform.ts';
-import { describeSourceNameProblem, findSourceProblem } from '../../lib/source-validation.ts';
 import {
   deploySubagent,
   renderSubagent,
@@ -138,17 +137,6 @@ export interface HarnessSkillTarget {
   readonly skillsDir: string;
   /** Everything but the anchor, which the owning source decides and so is supplied per skill. */
   readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
-}
-
-/**
- * A resolved content source, and which declaration form introduced it. The form is carried because it decides what a
- * reader can do about the source: a `sources:` entry names a path they wrote, while a `packages:` entry names a
- * directory the dependency's own manifest declares.
- */
-export interface DeclaredSource {
-  readonly name: string;
-  readonly dir: string;
-  readonly declaredAs: 'package' | 'path';
 }
 
 /** A scope carrying no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
@@ -338,29 +326,22 @@ async function reconcileDomain(
 
   const contentDir = contentDirOverride ?? resolveContentDir();
 
-  // A declared package contributes both a source and a set of seeds: Its content dir joins the search order below the
-  // hand-declared sources, so a hand-pointed local directory outranks a dependency, and everything it ships seeds the
-  // closure — which is what makes naming the package the whole declaration.
-  const packageSources = await resolvePackageSources(declaration.packages, domain.baseDir);
-  const sources: ReadonlyArray<DeclaredSource> = [
-    ...declaration.sources.map((source): DeclaredSource => ({ ...source, declaredAs: 'path' })),
-    ...packageSources.map((source): DeclaredSource => ({ ...source, declaredAs: 'package' })),
-  ];
-
-  // Resolution searches declared sources (highest precedence first) then the built-in library. Validate each declared
-  // source up front so a non-directory or unreadable one fails the whole run — dry-run included — before any write.
+  // Resolution searches declared sources (highest precedence first) then the built-in library. Every declared source
+  // is validated up front, so a non-directory or unreadable one fails the whole run — dry-run included — before any
+  // write.
+  const { sources, missingSources } = await resolveDeclaredSources({
+    baseDir: domain.baseDir,
+    contentDir,
+    declaration,
+  });
   const resolver = createSourceResolver(sources, contentDir);
-  const missingSources = await checkDeclaredSources(sources);
-  assertUsableSourceNames(sources);
-  assertDistinctSourceNames(sources);
-  // Every root the run reads declares the content format it was authored against, the library included. Checked after
-  // the source checks above, so an unreadable directory reports as unreadable rather than as a failed manifest read;
-  // a source whose directory is missing carries no manifest and stays the warning it is.
-  await assertSupportedContentFormats([...sources, { dir: contentDir }]);
 
-  // A package whose content dir is missing enumerates nothing: the walk reads through a directory listing that
-  // answers an absent directory with no entries.
-  const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
+  // Everything a declared package ships seeds the closure, which is what makes naming the package the whole
+  // declaration. A package whose content dir is missing enumerates nothing: the walk reads through a directory listing
+  // that answers an absent directory with no entries.
+  const packageCatalogs = await Promise.all(
+    sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
+  );
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
@@ -637,85 +618,6 @@ async function reconcileDomain(
 }
 
 // region | Helpers
-
-/**
- * Reports the declared sources whose directory does not exist, and throws when any other source path is a
- * non-directory or unreadable, so a misconfigured source fails the whole run (dry-run included) before any file is
- * touched. The error names each offending source and what is wrong with it.
- *
- * Absence is returned rather than thrown, because it is the one problem that can be a not-yet state: a source declared
- * under version control before anything populates it. Such a source resolves as contributing nothing, so the run
- * proceeds and the report warns, which keeps the diagnostic a mistyped `path:` needs without making the declaration
- * itself illegal.
- */
-async function checkDeclaredSources(sources: ReadonlyArray<DeclaredSource>): Promise<ReadonlyArray<DeclaredSource>> {
-  const missing: Array<DeclaredSource> = [];
-  const invalid: Array<string> = [];
-  for (const source of sources) {
-    const problem = await findSourceProblem(source.dir);
-    if (problem === undefined) {
-      continue;
-    }
-    if (problem.kind === 'missing') {
-      missing.push(source);
-      continue;
-    }
-    invalid.push(`"${source.name}" (${source.dir}): ${problem.detail}`);
-  }
-  if (invalid.length > 0) {
-    throw new Error(
-      `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be a readable directory.`,
-    );
-  }
-  return missing;
-}
-
-/**
- * Throws when two declared sources share a name, which the hand-declared tier and the package tier can each satisfy
- * independently: names are unique within a tier, and nothing reconciles one tier's against the other's.
- *
- * A shared name would let both claim one support namespace, so the source that wins artifact resolution and the one
- * whose support files survive delivery are different sources, and links rendered for the first reach the second's
- * files. Failing here, before any write, forces the conflict to be resolved by renaming rather than by delivery order.
- */
-function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
-  const dirsByName = new Map<string, Array<string>>();
-  for (const source of sources) {
-    dirsByName.set(source.name, [...(dirsByName.get(source.name) ?? []), source.dir]);
-  }
-
-  const collisions = dirsByName
-    .entries()
-    .filter(([, dirs]) => dirs.length > 1)
-    .map(([name, dirs]) => `"${name}" (${dirs.join(', ')})`)
-    .toArray();
-
-  if (collisions.length > 0) {
-    throw new Error(
-      `Declared source name(s) claimed more than once: ${collisions.join('; ')}. A source name is the directory its ` +
-        'support files deploy under, so two sources cannot share one. Rename one of them.',
-    );
-  }
-}
-
-/**
- * Throws when a declared source's name cannot serve as the directory segments its support entries deploy under, so a
- * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
- * name is reported together, so a declaration with two of them takes one fix rather than two runs.
- */
-function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
-  const unusable = sources
-    .map((source) => ({ source, problem: describeSourceNameProblem(source.name) }))
-    .filter((entry) => entry.problem !== undefined)
-    .map((entry) => `"${entry.source.name}": ${entry.problem}`);
-
-  if (unusable.length > 0) {
-    throw new Error(
-      `Unusable declared source name(s): ${unusable.join('; ')}. A source name becomes a directory under the ` +
-        'harness skills dir, so it must name one.',
-    );
-  }
-}
 
 /**
  * Concatenates per-type seed sets into the one set that seeds closure resolution. Deduping is deliberately left out:
