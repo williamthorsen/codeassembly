@@ -26,6 +26,15 @@ const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
   collection: 3,
 };
 
+/** The verbs a retraction line takes, so the same renderer serves a preview and the run it previews. */
+interface RetractionVerbs {
+  readonly remove: string;
+  readonly strip: string;
+}
+
+const PERFORMED_VERBS: RetractionVerbs = { remove: 'removed', strip: 'stripped' };
+const PLANNED_VERBS: RetractionVerbs = { remove: 'remove', strip: 'strip' };
+
 /**
  * Renders what a dry run reports: where it would deploy, what it would retire, how each artifact resolved, and every
  * write and retraction it would perform.
@@ -179,18 +188,21 @@ function describeDeliveries(plan: SyncPlan): string {
   );
 }
 
-/** The lines naming what one dropped harness still holds: one for each path removed and each region stripped. */
-function describeDroppedHarness(retraction: DroppedHarnessRetraction): ReadonlyArray<string> {
+/**
+ * The lines naming what one dropped harness still holds: one for each path removed and each region stripped. `verbs`
+ * carries the tense, so a preview reads as what a run would do and a run as what it did.
+ */
+function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: RetractionVerbs): ReadonlyArray<string> {
   const lines = [
-    ...retraction.skillDirs.map((skillDir) => `remove skill ${skillDir}`),
-    ...retraction.subagentFiles.map((subagentFile) => `remove subagent ${subagentFile}`),
-    ...retraction.supportPaths.map((supportPath) => `remove source support ${supportPath}`),
+    ...retraction.skillDirs.map((skillDir) => `${verbs.remove} skill ${skillDir}`),
+    ...retraction.subagentFiles.map((subagentFile) => `${verbs.remove} subagent ${subagentFile}`),
+    ...retraction.supportPaths.map((supportPath) => `${verbs.remove} source support ${supportPath}`),
   ];
   if (retraction.ambientHost !== undefined) {
-    lines.push(describeHostRetraction(retraction.ambientHost, 'ambient'));
+    lines.push(describeHostRetraction(retraction.ambientHost, 'ambient', verbs));
   }
   if (retraction.promptsYml !== undefined) {
-    lines.push(describeHostRetraction(retraction.promptsYml, 'codeassembly'));
+    lines.push(describeHostRetraction(retraction.promptsYml, 'codeassembly', verbs));
   }
   return lines;
 }
@@ -201,16 +213,19 @@ function describeDroppedHarness(retraction: DroppedHarnessRetraction): ReadonlyA
  */
 function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => [
-    { level: 'info', text: `\nRetracting harness dropped from the declaration: ${retraction.harnessId}` },
-    ...describeDroppedHarness(retraction).map((text): ReportLine => ({ level: 'info', text: `  ${text}` })),
+    { level: 'info', text: `\nRetracted harness dropped from the declaration: ${retraction.harnessId}` },
+    ...describeDroppedHarness(retraction, PERFORMED_VERBS).map((text): ReportLine => ({
+      level: 'info',
+      text: `  ${text}`,
+    })),
   ]);
 }
 
 /** Names what retraction does to one host carrying a sync-owned region: delete the file, or strip the region. */
-function describeHostRetraction(retraction: HostRetraction, region: string): string {
+function describeHostRetraction(retraction: HostRetraction, region: string, verbs: RetractionVerbs): string {
   return retraction.kind === 'delete'
-    ? `remove ${retraction.path}`
-    : `strip the ${region} region from ${retraction.path}`;
+    ? `${verbs.remove} ${retraction.path}`
+    : `${verbs.strip} the ${region} region from ${retraction.path}`;
 }
 
 /**
@@ -266,7 +281,10 @@ function describeMissingDeclaration(outcome: MissingDeclaration): string {
 function describePlannedDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => [
     { level: 'info', text: `  retract harness dropped from the declaration: ${retraction.harnessId}` },
-    ...describeDroppedHarness(retraction).map((text): ReportLine => ({ level: 'info', text: `    ${text}` })),
+    ...describeDroppedHarness(retraction, PLANNED_VERBS).map((text): ReportLine => ({
+      level: 'info',
+      text: `    ${text}`,
+    })),
   ]);
 }
 
