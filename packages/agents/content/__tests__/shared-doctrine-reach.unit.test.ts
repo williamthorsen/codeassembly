@@ -5,8 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
+import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
-import { listGovernedSubagents, SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers.ts';
+import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers.ts';
 
 // `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. A subagent
 // runs on its own system prompt and loads no guidance file, so a section its role's work needs reaches it only by
