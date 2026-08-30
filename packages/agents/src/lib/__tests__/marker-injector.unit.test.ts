@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSourceUrl, injectProvenanceMarker, SOURCE_REF } from '../marker-injector.ts';
+import { buildSourceReference, buildSourceUrl, injectProvenanceMarker, SOURCE_REF } from '../marker-injector.ts';
 
 describe(injectProvenanceMarker, () => {
   const sourceUrl =
@@ -107,6 +107,23 @@ describe(injectProvenanceMarker, () => {
       const result = injectProvenanceMarker(input, sourceUrl);
       expect(result).toContain('Emoji: 👍🏼');
     });
+  });
+});
+
+describe(buildSourceReference, () => {
+  it('renders the library blob URL for a root with no name', () => {
+    expect(buildSourceReference({ dir: '/anywhere/content' }, 'scripts/relay-hook-event.mjs')).toBe(
+      buildSourceUrl('scripts/relay-hook-event.mjs'),
+    );
+  });
+
+  it('names the path, the source, and its directory for a declared source', () => {
+    expect(
+      buildSourceReference(
+        { name: 'org-guidance', dir: '/Users/you/repos/org-guidance/content' },
+        'guidance/_harnesses/claude/CLAUDE.md',
+      ),
+    ).toBe('guidance/_harnesses/claude/CLAUDE.md in source "org-guidance" (/Users/you/repos/org-guidance/content)');
   });
 });
 

@@ -6,9 +6,23 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HARNESSES } from '../../lib/harness.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+
+const ROVO_HOME = HARNESSES.rovo.homeDir;
+
+/** A claude template shaped like the library's: a preamble, the shared-guidance include, and the ambient region. */
+const SOURCE_CLAUDE_TEMPLATE = [
+  'Org claude preamble.',
+  '',
+  '<!-- include: ../../shared/AGENTS.md / -->',
+  '',
+  '<!-- codeassembly-ambient:start -->',
+  '<!-- codeassembly-ambient:end -->',
+  '',
+].join('\n');
 
 describe('install with declared sources', () => {
   let tempDir: string;
@@ -19,6 +33,8 @@ describe('install with declared sources', () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
     await mkdir(path.join(tempDir, '.claude', 'agents'), { recursive: true });
+    await mkdir(path.join(tempDir, ROVO_HOME, 'skills'), { recursive: true });
+    await mkdir(path.join(tempDir, ROVO_HOME, 'subagents'), { recursive: true });
     await buildContentTree(contentDir);
   });
 
@@ -122,6 +138,85 @@ describe('install with declared sources', () => {
       /Unsupported content format/,
     );
   });
+
+  it('deploys a source template with its own shared guidance inlined', async () => {
+    const sourceDir = await makeSource(tempDir, 'org', {
+      claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
+      sharedGuidance: { 'AGENTS.md': '# Org shared guidance\n' },
+    });
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using _silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    const deployed = await readGuidance(tempDir);
+    expect(deployed).toContain('Org claude preamble.');
+    expect(deployed).toContain('Org shared guidance');
+    expect(deployed).not.toContain('Fixture shared guidance');
+  });
+
+  it("names the source in the deployed template's provenance marker", async () => {
+    const sourceDir = await makeSource(tempDir, 'org', {
+      claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
+      sharedGuidance: { 'AGENTS.md': '# Org shared guidance\n' },
+    });
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using _silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    expect(await readGuidance(tempDir)).toContain(
+      `Source: guidance/_harnesses/claude/CLAUDE.md in source "org" (${sourceDir})`,
+    );
+  });
+
+  it('fails when a source ships a template but not the shared guidance it includes', async () => {
+    const sourceDir = await makeSource(tempDir, 'org', {
+      claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
+    });
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using _silent = silenceConsole(['info', 'warn']);
+    await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(
+      /Include directive target not found.*org\/guidance\/shared\/AGENTS\.md/s,
+    );
+  });
+
+  it('installs the template from the higher-precedence root and warns', async () => {
+    const sourceDir = await makeSource(tempDir, 'org', {
+      claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
+      sharedGuidance: { 'AGENTS.md': '# Org shared guidance\n' },
+    });
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    expect(warnedLines(silent.warn.mock.calls)).toMatch(
+      /claude guidance template is shipped by more than one content root.*the built-in library/s,
+    );
+  });
+
+  it('retracts a template file the owning source does not ship', async () => {
+    using _silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+    expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(true);
+
+    const sourceDir = path.join(tempDir, 'sources', 'org');
+    await mkdir(path.join(sourceDir, 'guidance', '_harnesses', 'rovo'), { recursive: true });
+    await writeFile(
+      path.join(sourceDir, 'guidance', '_harnesses', 'rovo', 'AGENTS.md'),
+      ['Org rovo preamble.', '', '<!-- codeassembly-ambient:start -->', '<!-- codeassembly-ambient:end -->', ''].join(
+        '\n',
+      ),
+      'utf8',
+    );
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+
+    expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(false);
+  });
 });
 
 // region | Helpers
@@ -133,21 +228,33 @@ async function declareSources(homeDir: string, sources: ReadonlyArray<{ name: st
   await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), `sources:\n${body}\n`, 'utf8');
 }
 
-/** Creates a source content root under `homeDir` holding the given `scripts/` files. */
+/** Creates a source content root under `homeDir` holding the given scripts, claude template, and shared guidance. */
 async function makeSource(
   homeDir: string,
   name: string,
-  content: { scripts?: Record<string, string> },
+  content: {
+    claudeGuidance?: Record<string, string>;
+    scripts?: Record<string, string>;
+    sharedGuidance?: Record<string, string>;
+  },
 ): Promise<string> {
   const dir = path.join(homeDir, 'sources', name);
   await mkdir(dir, { recursive: true });
-  if (content.scripts !== undefined) {
-    await mkdir(path.join(dir, 'scripts'), { recursive: true });
-    for (const [fileName, body] of Object.entries(content.scripts)) {
-      await writeFile(path.join(dir, 'scripts', fileName), body, 'utf8');
-    }
-  }
+  await writeFileMap(path.join(dir, 'scripts'), content.scripts);
+  await writeFileMap(path.join(dir, 'guidance', '_harnesses', 'claude'), content.claudeGuidance);
+  await writeFileMap(path.join(dir, 'guidance', 'shared'), content.sharedGuidance);
   return dir;
+}
+
+/** Writes a flat map of file name to content into `dir`, doing nothing when the map is absent. */
+async function writeFileMap(dir: string, files: Record<string, string> | undefined): Promise<void> {
+  if (files === undefined) {
+    return;
+  }
+  await mkdir(dir, { recursive: true });
+  for (const [fileName, body] of Object.entries(files)) {
+    await writeFile(path.join(dir, fileName), body, 'utf8');
+  }
 }
 
 function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
@@ -157,6 +264,11 @@ function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
 /** Joins every line a silenced run wrote to `console.warn`, so one regex can match across them. */
 function warnedLines(calls: ReadonlyArray<ReadonlyArray<unknown>>): string {
   return calls.map((call) => String(call[0])).join('\n');
+}
+
+/** Reads the claude guidance file the install deployed into the harness home. */
+async function readGuidance(homeDir: string): Promise<string> {
+  return readFile(path.join(homeDir, '.claude', 'CLAUDE.md'), 'utf8');
 }
 
 /** Reads a script the install deployed into the claude harness home. */

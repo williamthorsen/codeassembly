@@ -1,6 +1,8 @@
 import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import type { ContentRootRef } from './content-root-manifest.ts';
+
 /**
  * Git ref used in Source: URLs of provenance markers. Hardcoded until
  * version-pinning lands (tracked in williamthorsen/codeassembly#444).
@@ -18,6 +20,19 @@ const HTML_MARKER_OPEN = '<!-- ';
 const HTML_MARKER_CLOSE = ' -->';
 
 const FRONTMATTER_OPEN = '---';
+
+/**
+ * Builds the `Source:` reference a deployed file's provenance marker carries, naming where its content came from.
+ * The built-in library resolves to its public blob URL; a declared source has none, so its reference names the file's
+ * path within the source, the source's name, and the directory holding it — the name locates the declaration entry,
+ * and the directory locates the file to edit, which a package source's `node_modules` path does not reveal on its own.
+ */
+export function buildSourceReference(root: ContentRootRef, contentRelativePath: string): string {
+  if (root.name === undefined) {
+    return buildSourceUrl(contentRelativePath);
+  }
+  return `${contentRelativePath} in source "${root.name}" (${root.dir})`;
+}
 
 /**
  * Build the GitHub URL pointing to a source file under `packages/agents/content/`.

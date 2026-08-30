@@ -20,7 +20,12 @@ import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { listSupportEntries } from '../lib/library-catalog.ts';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
-import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
+import {
+  buildSourceReference,
+  buildSourceUrl,
+  injectMarkerInFile,
+  injectMarkersInDirectory,
+} from '../lib/marker-injector.ts';
 import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/path-rewriter.ts';
 import type { ReportLine } from '../lib/report-line.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
@@ -159,7 +164,7 @@ export async function installCommand(
     }
 
     // Install harness-specific guidance file
-    const guidanceEntries = await installHarnessGuidance(contentDir, paths, harnessId, existingByPath, options);
+    const guidanceEntries = await installHarnessGuidance(roots, paths, harnessId, existingByPath, options);
     entries.push(...guidanceEntries);
 
     // Reconcile against the previous manifest: remove files whose source was deleted. Runs before the dry-run
@@ -421,26 +426,35 @@ async function installScripts(
  * rewriting produces absolute link targets that agents can resolve without knowing a path convention.
  */
 async function installHarnessGuidance(
-  contentDir: string,
+  roots: ReadonlyArray<ContentRootRef>,
   harnessPaths: { harnessHome: string },
   harnessId: HarnessId,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const harnessConfig = HARNESSES[harnessId];
-  const guidanceSrcDir = path.join(contentDir, 'guidance', '_harnesses', harnessId);
-  let dirEntries: ReadonlyArray<string>;
-  try {
-    dirEntries = await readdir(guidanceSrcDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
+  const shippingRoots = await findTemplateRoots(roots, harnessId);
+  const owner = shippingRoots.at(0);
+  if (owner === undefined) {
     console.warn(
-      `  ⚠️ Warning: no harness guidance directory found at ${guidanceSrcDir}, skipping harness guidance installation`,
+      `  ⚠️ Warning: no ${harnessId} guidance directory found in any content root, skipping harness guidance installation`,
     );
     return [];
   }
+  const shadowed = shippingRoots.slice(1);
+  if (shadowed.length > 0) {
+    emitReport([
+      {
+        level: 'warn',
+        text:
+          `  ⚠️ The ${harnessId} guidance template is shipped by more than one content root: installing it from ` +
+          `${describeContentRoot(owner)} and ignoring ${shadowed.map(describeContentRoot).join(', ')}.`,
+      },
+    ]);
+  }
+
+  const guidanceSrcDir = path.join(owner.dir, 'guidance', '_harnesses', harnessId);
+  const dirEntries = await readdir(guidanceSrcDir);
 
   const entries: Array<ManifestEntry> = [];
 
@@ -459,7 +473,7 @@ async function installHarnessGuidance(
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
       const sourceLabel = `guidance/_harnesses/${harnessId}/${entry}`;
-      expandedContent = stripGuidanceHooks(await expandIncludes(srcPath, contentDir), sourceLabel);
+      expandedContent = stripGuidanceHooks(await expandIncludes(srcPath, owner.dir), sourceLabel);
       assertAnchorsResolve(expandedContent, sourceLabel);
     }
 
@@ -498,7 +512,7 @@ async function installHarnessGuidance(
         harnessId: harnessConfig.id,
         homeDir: harnessConfig.homeDir,
       });
-      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_harnesses/${harnessId}/${entry}`));
+      await injectMarkerInFile(destPath, buildSourceReference(owner, `guidance/_harnesses/${harnessId}/${entry}`));
 
       // Splice the preserved region content into the fresh render. The region's location comes from the template;
       // its content belongs to sync and must survive an install. A template that no longer carries the region wins:
@@ -586,6 +600,36 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
   }
 
   return { claims, foundDirectory, warnings };
+}
+
+/**
+ * Reports the roots shipping a guidance template for `harnessId`, highest precedence first. A root ships one when its
+ * `guidance/_harnesses/<harnessId>/` directory holds at least one installable file; a directory that is absent or
+ * holds only dotfiles ships nothing, so it cannot blank a harness the library would otherwise supply.
+ *
+ * Ownership is whole-directory rather than per file, which is what keeps the template's `guidance/shared/AGENTS.md`
+ * include resolving inside the one root the template came from.
+ */
+async function findTemplateRoots(
+  roots: ReadonlyArray<ContentRootRef>,
+  harnessId: HarnessId,
+): Promise<ReadonlyArray<ContentRootRef>> {
+  const shipping: Array<ContentRootRef> = [];
+  for (const root of roots) {
+    let dirEntries: ReadonlyArray<string>;
+    try {
+      dirEntries = await readdir(path.join(root.dir, 'guidance', '_harnesses', harnessId));
+    } catch (error: unknown) {
+      if (!isEnoent(error)) {
+        throw error;
+      }
+      continue;
+    }
+    if (dirEntries.some((entry) => !entry.startsWith('.'))) {
+      shipping.push(root);
+    }
+  }
+  return shipping;
 }
 
 /**
