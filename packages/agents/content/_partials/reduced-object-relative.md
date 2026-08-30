@@ -8,11 +8,11 @@ A relative clause with an object gap takes an overt relativizer: "the source tha
 2. **Restore the relativizer** where the passive reads worse: "the ticket that the branch name encodes".
 3. **Recast** where neither fits: Promote the embedded clause to a main clause, or replace the relative with a prepositional phrase.
 
-**The shapes, ranked by cost.** Each is an exhibit of the construction, not a model to copy.
+**The shapes, ranked by cost.** The rank follows the embedded subject's form, since that is what the reader holds open before the verb arrives. Each is an exhibit of the construction, not a model to copy.
 
 1. **Quantified noun phrase** (worst): "a dependency no exported tier module imports". The reader absorbs a quantifier and a full noun phrase before any verb discharges the head.
 2. **Definite noun phrase**: "the ticket the branch name encodes".
-3. **Bare noun or gerund**: "an idiom two of them recognize".
+3. **Bare noun**: "an idiom developers recognize".
 4. **Pronoun** (mildest): "the source it names". Forbidden all the same; a pronoun shortens the wait rather than ending it.
 
 **The agentive `by`-phrase is outside the active-voice rule.** Plain speech rejects the _agentless_ passive that hides who acted. A `by`-phrase names the actor in the same breath, so "imported by no exported tier module" satisfies plain speech as fully as the active form does. This rule breaks the habit of reaching for a contact clause to dodge a passive that was never the target.
