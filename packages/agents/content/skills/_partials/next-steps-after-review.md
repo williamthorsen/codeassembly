@@ -25,7 +25,7 @@ Ticket and PR-description deltas render as a flat list, one line per change. Sou
 - **Source targets** derive their delta from the open findings, one entry per finding, keyed to its ID. An entry states two things: the surface the change touches (source, test, comment, docs, config) and the substance of the edit. Its form follows the edit's own granularity rather than a fixed notation, so a literal single-site edit is a `{old} → {new}` clause, many sites sharing one edit are a table captioned with what is invariant across its rows, and a structural edit is a prose clause naming the shape of the resulting diff. A code snippet is one rendering among these, never the required form.
   - Where an entry covers several sites and deliberately leaves one of them alone, that site is named with the reason, so the entry states its own boundary rather than leaving the reader to infer it from silence.
 
-Every finding has one of the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) fixes, and a source entry renders which one it has: a single named change, or a choice among named alternatives the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved; picking an option that would implement it is picking someone to make that call. A finding with no envisioned change is not a legal finding and has no entry.
+Every finding has one of the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) fixes, and a source entry renders which one it has: a single named change, or a choice among named alternatives the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved; picking an option that would implement it is picking someone to make that call. An entry whose finding the follow-up-ticket option would cover is tagged `separable`, matching the IDs that option's line names. A finding with no envisioned change is not a legal finding and has no entry.
 
 Render no exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out over-triggers into noise and hides the proposal it was meant to qualify.
 
@@ -153,7 +153,7 @@ For case 2, the recommended option's marker follows how cleanly the case's own t
 
 Shown when the review has at least one finding.
 
-There is no tier condition, and none should be reintroduced. Every finding a review emits has already cleared the [Actionability gate](../_data/artifact-conventions.md#actionability-gate), which requires it to hand the author a concrete decision they can act on; anything producing no decision was dropped before it reached the artifact. Severity orders how findings rank and what blocks merge. It never decides whether they are shown, or whether the user is offered a way to act on them.
+There is no tier condition, and none should be reintroduced. Every finding a review emits has already cleared the [Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate), which requires it to name a change the author can act on; anything with no envisioned change was dropped before it reached the artifact. Severity orders how findings rank and what blocks merge. It never decides whether they are shown, or whether the user is offered a way to act on them.
 
 Stating the trigger as a list of tiers is the failure this rule replaces: An enumeration goes stale the next time the finding scheme moves, and silently withdraws the menu from whichever tier it omits.
 
@@ -193,7 +193,7 @@ Actionable findings:
 
 Proposed edits to the source:
 
-**T1: test code.** Assert the corrected error classes in `parseRange.test.ts`. Every row keeps its message text and only gains the wrapper.
+**T1: test code.** Assert the corrected error classes in `parseRange.test.ts`. Every changed row keeps its message text and only gains the wrapper.
 
 | Line         | Case                | `toThrow(…)` becomes                   |
 | ------------ | ------------------- | -------------------------------------- |
@@ -298,7 +298,7 @@ The selected option's marker follows how cleanly its rule matched: ■■■ whe
 
 Complexity levels classify individual findings, but the recommendation applies to the collection.
 
-Where the cascade's conditions leave two options genuinely in balance, prefer the one that keeps a human in the loop. That resolves a tie and nothing more: It never overrides a rule that fired, and a fix that satisfies rule 2's determinacy test is not a tie.
+Where the cascade's conditions leave two options genuinely in balance, prefer the one that keeps a human in the loop. That resolves a tie and nothing more: It never overrides a rule that fired, and a fix that satisfies rule 2's single-change test is not a tie.
 
 ### Combined output format
 
