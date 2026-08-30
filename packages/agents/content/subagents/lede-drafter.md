@@ -72,8 +72,12 @@ Two sections, in this order. Return nothing else, and write no file.
 {One line per source you could not reach, naming the source and what you drafted from instead. `None.` where you reached them all.}
 ```
 
+<!-- include: ../_partials/prose-line-breaks.md / -->
+
 <!-- include: ../_partials/concision.md / -->
 
 <!-- include: ../_partials/file-access.md / -->
 
 <!-- include: ../_partials/shell-commands.md / -->
+
+<!-- guidance-hook: writing-preferences -->
