@@ -10,24 +10,29 @@ Use `~/`-relative paths where possible and absolute paths otherwise. Every line 
 
 ### Proposed-edit preview
 
-Two of the sub-blocks below offer options that rewrite an artifact, one each: the Deviations sub-block rewrites the ticket's acceptance criteria, and the source-divergence sub-block rewrites the PR description. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which criteria are genuinely in conflict with the implementation is a judgment the reviewer makes, and the preview is where that judgment becomes reviewable instead of silent.
+Three of the sub-blocks below offer options that rewrite an artifact, one each: the Deviations sub-block rewrites the ticket's acceptance criteria, the source-divergence sub-block rewrites the PR description, and the Findings sub-block rewrites the source. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which criteria are genuinely in conflict with the implementation, and which findings name a change the reviewer can carry out, are judgments the reviewer makes; the preview is where those judgments become reviewable instead of silent.
 
-**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", has no preview.
+**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change; the source target's label is plural, `Proposed edits to the source:`, because it covers every open finding. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", has no preview.
 
-**Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
+Ticket and PR-description deltas render as a flat list, one line per change. Source entries render as blocks instead, each led by its bolded finding ID, because a table cannot live inside a list item and still render and the [option format](#option-format)'s nesting stops one level short of carrying one.
+
+**Notation.** The preview is a delta. It never restates the ticket, the PR description, or a finding's Recommendation, which would duplicate the artifact in the terminal, and it carries one entry per change:
 
 - **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection, and from nothing else. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it yields no line. A ticket's `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when it was written, so no edit this menu offers reaches them; a divergence between one of them and the implementation is reported in the PR description instead.
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
+- **Source targets** derive their delta from the open findings, one entry per finding, keyed to its ID. An entry states two things: the surface the change touches (source, test, comment, docs, config) and the substance of the edit. Its form follows the edit's own granularity rather than a fixed notation, so a literal single-site edit is a `{old} → {new}` clause, many sites sharing one edit are a table captioned with what is invariant across its rows, and a structural edit is a prose clause naming the shape of the resulting diff. A code snippet is one rendering among these, never the required form.
+
+Every finding has one of the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) fixes, and a source entry renders which one it has: a single named change, or a choice among named alternatives the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved; picking an option that would implement it is picking someone to make that call. A finding with no envisioned change is not a legal finding and has no entry.
 
 Render no exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out over-triggers into noise and hides the proposal it was meant to qualify.
 
-**Open findings.** When a delta line would settle or obviate an open finding, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
+**Open findings.** When a ticket or PR-description delta line would settle or obviate an open finding, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. Those preview lists stay flat; nothing nests beneath a delta line.
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). Where a source divergence proposes a PR-description edit, that delta is never empty, because a divergence the implementation resolves in the ticket's favor always leaves a claim to reconcile.
+**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). Where a source divergence proposes a PR-description edit, that delta is never empty, because a divergence the implementation resolves in the ticket's favor always leaves a claim to reconcile. A source delta is never empty either: The Findings sub-block renders only when there is at least one finding, and every finding names a change.
 
 ### Deviations sub-block
 
