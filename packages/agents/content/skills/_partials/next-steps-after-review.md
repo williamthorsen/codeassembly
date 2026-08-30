@@ -193,14 +193,14 @@ Actionable findings:
 
 Proposed edits to the source:
 
-**T1 — test code.** Assert the corrected error classes in `parseRange.test.ts`. Every row keeps its message text and only gains the wrapper.
+**T1: test code.** Assert the corrected error classes in `parseRange.test.ts`. Every row keeps its message text and only gains the wrapper.
 
 | Line         | Case                | `toThrow(…)` becomes                   |
 | ------------ | ------------------- | -------------------------------------- |
 | 62           | index out of bounds | `toThrow(new RangeError(msg))`         |
 | 33, 38, 43   | missing key         | unchanged; that throw is still `Error` |
 
-**S1 — comment.** Replace the stale `@returns` line on `resolveBase` (`resolve.ts:88`) with a `todo:` naming what went stale.
+**S1: comment.** Replace the stale `@returns` line on `resolveBase` (`resolve.ts:88`) with a `todo:` naming what went stale.
 
 1. 🚀 ■■□ Implement directly
 2. 📋 ■□□ Ask the author to address the findings
@@ -219,7 +219,7 @@ Actionable findings:
 
 Proposed edits to the source:
 
-**W2 — source, author's choice.** `flush()` in `writer.ts:140` swallows the write error. Propagate it, or log and continue; which one turns on whether callers can recover.
+**W2: source, author's choice.** `flush()` in `writer.ts:140` swallows the write error. Propagate it, or log and continue; which one turns on whether callers can recover.
 
 1. 🚀 ■□□ Implement directly
 2. 📋 ■■□ Ask the author to address the findings
@@ -238,13 +238,13 @@ Actionable findings:
 
 Proposed edits to the source:
 
-**S1 — source.** Rename `x` to `descriptiveName` at its four sites in `resolve.ts`.
+**S1: source.** Rename `x` to `descriptiveName` at its four sites in `resolve.ts`.
 
-**S2 — comment.** Drop the paraphrase above the `useDocumentTitle` call in `Header.tsx:31`.
+**S2: comment.** Drop the paraphrase above the `useDocumentTitle` call in `Header.tsx:31`.
 
-**S3 — test code.** Add the empty-input case to `parseRange.test.ts`, asserting the `RangeError` the guard now throws.
+**S3: test code.** Add the empty-input case to `parseRange.test.ts`, asserting the `RangeError` the guard now throws.
 
-**R2 — source, separable.** Extract the retry loop from `client.ts` into a helper the three callers share.
+**R2: source, separable.** Extract the retry loop from `client.ts` into a helper the three callers share.
 
 1. 🚀 ■■□ Implement directly
 2. 📋 ■□□ Ask the author to address the findings
@@ -263,9 +263,9 @@ Actionable findings:
 
 Proposed edits to the source:
 
-**F1 — source.** Guard the null branch in `parseRange.ts:44` before the index read, returning the empty result the caller already handles.
+**F1: source.** Guard the null branch in `parseRange.ts:44` before the index read, returning the empty result the caller already handles.
 
-**S1 — test code.** Add the empty-input case to `parseRange.test.ts`.
+**S1: test code.** Add the empty-input case to `parseRange.test.ts`.
 
 1. 📋 ■■□ Post findings on the PR
 2. 🚀 ■□□ Implement directly
@@ -327,9 +327,9 @@ Proposed edit to the PR description:
 
 Proposed edits to the source:
 
-**F1 — source.** Fail on an unknown directive in `directives.ts:52`, replacing the warning the loop currently emits.
+**F1: source.** Fail on an unknown directive in `directives.ts:52`, replacing the warning the loop currently emits.
 
-**S1 — test code.** Add the unknown-directive case to `directives.test.ts`, asserting the failure.
+**S1: test code.** Add the unknown-directive case to `directives.test.ts`, asserting the failure.
 
 1. 📋 ■■□ Post findings on the PR
 2. 🚀 ■□□ Implement directly
