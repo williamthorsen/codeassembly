@@ -223,6 +223,42 @@ describe('install with declared sources', () => {
     expect(deployed).not.toContain('codeassembly-ambient:start');
   });
 
+  it('ignores a subdirectory in the owning source template directory', async () => {
+    const sourceDir = await makeSource(tempDir, 'org', {
+      claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
+      sharedGuidance: { 'AGENTS.md': '# Org shared guidance\n' },
+    });
+    await mkdir(path.join(sourceDir, 'guidance', '_harnesses', 'claude', 'fragments'), { recursive: true });
+    await writeFile(
+      path.join(sourceDir, 'guidance', '_harnesses', 'claude', 'fragments', 'partial.md'),
+      '# Fragment\n',
+      'utf8',
+    );
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using _silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    expect(await readGuidance(tempDir)).toContain('Org claude preamble.');
+    expect(existsSync(path.join(tempDir, '.claude', 'fragments'))).toBe(false);
+  });
+
+  it('falls back to the library when a source ships only a subdirectory for the harness', async () => {
+    const sourceDir = path.join(tempDir, 'sources', 'org');
+    await mkdir(path.join(sourceDir, 'guidance', '_harnesses', 'claude', 'fragments'), { recursive: true });
+    await writeFile(
+      path.join(sourceDir, 'guidance', '_harnesses', 'claude', 'fragments', 'partial.md'),
+      '# Fragment\n',
+      'utf8',
+    );
+    await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
+
+    using _silent = silenceConsole(['info', 'warn']);
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    expect(await readGuidance(tempDir)).toContain('Fixture claude preamble.');
+  });
+
   it('retracts a template file the owning source does not ship', async () => {
     using _silent = silenceConsole(['info', 'warn']);
     await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);

@@ -49,6 +49,12 @@ import { ensureHarnessHookEntries } from './configure-hooks.ts';
  */
 const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
 
+/** One content root shipping a harness's guidance template, and the file names it installs from there. */
+interface TemplateRoot {
+  readonly root: ContentRootRef;
+  readonly fileNames: ReadonlyArray<string>;
+}
+
 /**
  * Executes the install command, installing skills and subagents for the specified harnesses.
  */
@@ -448,21 +454,16 @@ async function installHarnessGuidance(
         level: 'warn',
         text:
           `  ⚠️ The ${harnessId} guidance template is shipped by more than one content root: installing it from ` +
-          `${describeContentRoot(owner)} and ignoring ${shadowed.map(describeContentRoot).join(', ')}.`,
+          `${describeContentRoot(owner.root)} and ignoring ${shadowed.map((shipping) => describeContentRoot(shipping.root)).join(', ')}.`,
       },
     ]);
   }
 
-  const guidanceSrcDir = path.join(owner.dir, 'guidance', '_harnesses', harnessId);
-  const dirEntries = await readdir(guidanceSrcDir);
+  const guidanceSrcDir = path.join(owner.root.dir, 'guidance', '_harnesses', harnessId);
 
   const entries: Array<ManifestEntry> = [];
 
-  for (const entry of dirEntries) {
-    if (entry.startsWith('.')) {
-      continue;
-    }
-
+  for (const entry of owner.fileNames) {
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
@@ -473,7 +474,7 @@ async function installHarnessGuidance(
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
       const sourceLabel = `guidance/_harnesses/${harnessId}/${entry}`;
-      expandedContent = stripGuidanceHooks(await expandIncludes(srcPath, owner.dir), sourceLabel);
+      expandedContent = stripGuidanceHooks(await expandIncludes(srcPath, owner.root.dir), sourceLabel);
       assertAnchorsResolve(expandedContent, sourceLabel);
     }
 
@@ -512,7 +513,7 @@ async function installHarnessGuidance(
         harnessId: harnessConfig.id,
         homeDir: harnessConfig.homeDir,
       });
-      await injectMarkerInFile(destPath, buildSourceReference(owner, `guidance/_harnesses/${harnessId}/${entry}`));
+      await injectMarkerInFile(destPath, buildSourceReference(owner.root, `guidance/_harnesses/${harnessId}/${entry}`));
 
       // Splice the preserved region content into the fresh render. The region's location comes from the template;
       // its content belongs to sync and must survive an install. A template that no longer carries the region wins:
@@ -603,9 +604,14 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
 }
 
 /**
- * Reports the roots shipping a guidance template for `harnessId`, highest precedence first. A root ships one when its
- * `guidance/_harnesses/<harnessId>/` directory holds at least one installable file; a directory that is absent or
- * holds only dotfiles ships nothing, so it cannot blank a harness the library would otherwise supply.
+ * Reports the roots shipping a guidance template for `harnessId`, highest precedence first, each paired with the file
+ * names it installs. A root ships a template when its `guidance/_harnesses/<harnessId>/` directory holds at least one
+ * such file; a directory that is absent, or holds only dotfiles and subdirectories, ships nothing, so it cannot shadow
+ * the root that would otherwise supply the harness.
+ *
+ * The file names travel with the root so selection and installation apply one definition of an installable entry.
+ * `copyItem` copies a directory recursively and `computeContentHash` reads a file, so an entry the two passes
+ * classified differently would be written to the harness home and then fail the hash that records it.
  *
  * Ownership is whole-directory rather than per file, which is what keeps the template's `guidance/shared/AGENTS.md`
  * include resolving inside the one root the template came from.
@@ -613,20 +619,31 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
 async function findTemplateRoots(
   roots: ReadonlyArray<ContentRootRef>,
   harnessId: HarnessId,
-): Promise<ReadonlyArray<ContentRootRef>> {
-  const shipping: Array<ContentRootRef> = [];
+): Promise<ReadonlyArray<TemplateRoot>> {
+  const shipping: Array<TemplateRoot> = [];
   for (const root of roots) {
+    const templateDir = path.join(root.dir, 'guidance', '_harnesses', harnessId);
     let dirEntries: ReadonlyArray<string>;
     try {
-      dirEntries = await readdir(path.join(root.dir, 'guidance', '_harnesses', harnessId));
+      dirEntries = await readdir(templateDir);
     } catch (error: unknown) {
       if (!isEnoent(error)) {
         throw error;
       }
       continue;
     }
-    if (dirEntries.some((entry) => !entry.startsWith('.'))) {
-      shipping.push(root);
+
+    const fileNames: Array<string> = [];
+    for (const entry of dirEntries) {
+      if (entry.startsWith('.')) {
+        continue;
+      }
+      if ((await stat(path.join(templateDir, entry))).isFile()) {
+        fileNames.push(entry);
+      }
+    }
+    if (fileNames.length > 0) {
+      shipping.push({ root, fileNames });
     }
   }
   return shipping;
