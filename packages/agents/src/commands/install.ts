@@ -1,12 +1,15 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import path from 'node:path';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
+import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { assertSupportedContentFormats } from '../lib/content-root-manifest.ts';
+import type { ContentRootRef } from '../lib/content-root-manifest.ts';
+import { describeContentRoot, describeMissingSource, resolveDeclaredSources } from '../lib/declared-sources.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { emitReport } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
@@ -19,6 +22,7 @@ import { listSupportEntries } from '../lib/library-catalog.ts';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
 import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/path-rewriter.ts';
+import type { ReportLine } from '../lib/report-line.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
@@ -56,9 +60,17 @@ export async function installCommand(
     shouldOverrideWriter: options.shouldOverrideWriter,
   });
 
+  const homeDir = baseDir ?? homedir();
   const contentDir = contentDirOverride ?? resolveContentDir();
-  // Refuse a content root whose declared format this tool cannot honor before anything is written, dry-run included.
-  await assertSupportedContentFormats([{ dir: contentDir }]);
+  // Resolve the home declaration's sources, which refuses an unusable source or a content root whose declared format
+  // this tool cannot honor before anything is written, dry-run included. `roots` is the search order every pass below
+  // that reads undeclared content follows: each declared source in precedence order, then the built-in library.
+  const { missingSources, roots } = await resolveDeclaredSources({
+    baseDir: homeDir,
+    contentDir,
+    declaration: await resolveDeclaration({ cwd: homeDir, domain: 'home' }),
+  });
+  emitReport(missingSources.map(describeMissingSource));
 
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
@@ -122,7 +134,7 @@ export async function installCommand(
 
     // Install scripts
     const scriptEntries = await installScripts(
-      contentDir,
+      roots,
       paths.scriptsDir,
       paths.harnessHome,
       harnessConfig,
@@ -340,49 +352,29 @@ async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<Ren
 }
 
 /**
- * Installs script files from content/scripts/ into the target scripts directory.
- * Scripts are flat files (no frontmatter, no harness-specific variants).
+ * Installs script files from every content root's `scripts/` directory into the target scripts directory.
+ * Scripts are flat files (no frontmatter, no harness-specific variants), so the roots merge by file name rather than
+ * one root owning the directory.
  * Copied scripts receive the executable bit (0o755); symlinked scripts inherit the source's permissions.
  */
 async function installScripts(
-  contentDir: string,
+  roots: ReadonlyArray<ContentRootRef>,
   scriptsDestDir: string,
   harnessHome: string,
   harnessConfig: HarnessConfig,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
 ): Promise<ReadonlyArray<ManifestEntry>> {
-  const scriptsSrcDir = path.join(contentDir, 'scripts');
-  let dirEntries: ReadonlyArray<string>;
-  try {
-    dirEntries = await readdir(scriptsSrcDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    console.warn(`  ⚠️ Warning: no scripts directory found at ${scriptsSrcDir}, skipping script installation`);
+  const { claims, foundDirectory, warnings } = await collectScriptClaims(roots);
+  emitReport(warnings);
+  if (!foundDirectory) {
+    console.warn('  ⚠️ Warning: no scripts directory found in any content root, skipping script installation');
     return [];
   }
 
   const entries: Array<ManifestEntry> = [];
 
-  for (const entry of dirEntries) {
-    if (entry.startsWith('.')) {
-      continue;
-    }
-
-    // Skip non-script files (e.g. README.md); only helper scripts ship to harness homes.
-    if (SCRIPT_EXTENSIONS.every((extension) => !entry.endsWith(extension))) {
-      continue;
-    }
-
-    const srcPath = path.join(scriptsSrcDir, entry);
-
-    // Skip directories (e.g. __tests__)
-    const srcStat = await stat(srcPath);
-    if (!srcStat.isFile()) {
-      continue;
-    }
+  for (const [entry, srcPath] of claims) {
     const destPath = path.join(scriptsDestDir, entry);
     const relativePath = `${harnessConfig.scriptsDirName}/${entry}`;
 
@@ -527,6 +519,73 @@ async function installHarnessGuidance(
   }
 
   return entries;
+}
+
+/**
+ * Collects the installable scripts across `roots`, keyed by file name, taking each name from the highest-precedence
+ * root that ships it. A name a lower-precedence root also ships is dropped and reported: scripts deploy into one flat
+ * directory, and their file names are undeclared, so a collision states none of the override intent a declared
+ * artifact's slug does.
+ *
+ * `foundDirectory` distinguishes a run where no root ships a `scripts/` directory at all from one where the
+ * directories exist and hold nothing installable, because only the first is worth a warning.
+ */
+async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promise<{
+  claims: ReadonlyMap<string, string>;
+  foundDirectory: boolean;
+  warnings: ReadonlyArray<ReportLine>;
+}> {
+  const claims = new Map<string, string>();
+  const claimants = new Map<string, ContentRootRef>();
+  const warnings: Array<ReportLine> = [];
+  let foundDirectory = false;
+
+  for (const root of roots) {
+    const scriptsSrcDir = path.join(root.dir, 'scripts');
+    let dirEntries: ReadonlyArray<string>;
+    try {
+      dirEntries = await readdir(scriptsSrcDir);
+    } catch (error: unknown) {
+      if (!isEnoent(error)) {
+        throw error;
+      }
+      continue;
+    }
+    foundDirectory = true;
+
+    for (const entry of dirEntries) {
+      if (entry.startsWith('.')) {
+        continue;
+      }
+
+      // Skip non-script files (e.g. README.md); only helper scripts ship to harness homes.
+      if (SCRIPT_EXTENSIONS.every((extension) => !entry.endsWith(extension))) {
+        continue;
+      }
+
+      const srcPath = path.join(scriptsSrcDir, entry);
+
+      // Skip directories (e.g. __tests__)
+      if (!(await stat(srcPath)).isFile()) {
+        continue;
+      }
+
+      const claimant = claimants.get(entry);
+      if (claimant !== undefined) {
+        warnings.push({
+          level: 'warn',
+          text:
+            `  ⚠️ Script ${entry} is shipped by more than one content root: installing it from ` +
+            `${describeContentRoot(claimant)} and ignoring ${describeContentRoot(root)}.`,
+        });
+        continue;
+      }
+      claims.set(entry, srcPath);
+      claimants.set(entry, root);
+    }
+  }
+
+  return { claims, foundDirectory, warnings };
 }
 
 /**

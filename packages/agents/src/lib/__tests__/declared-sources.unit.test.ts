@@ -18,10 +18,10 @@ describe(resolveDeclaredSources, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it('resolves no sources when no declaration exists', async () => {
+  it('resolves the library as the only root when no declaration exists', async () => {
     expect(
       await resolveDeclaredSources({ baseDir: root, contentDir: libraryDir(root), declaration: undefined }),
-    ).toEqual({ sources: [], missingSources: [] });
+    ).toEqual({ sources: [], missingSources: [], roots: [{ dir: libraryDir(root) }] });
   });
 
   it('resolves hand-declared sources in declaration order', async () => {
@@ -73,6 +73,24 @@ describe(resolveDeclaredSources, () => {
 
     expect(sources).toEqual([{ name: 'not-yet', dir: absent, declaredAs: 'path' }]);
     expect(missingSources).toEqual([{ name: 'not-yet', dir: absent, declaredAs: 'path' }]);
+  });
+
+  it('leaves a missing source out of the roots', async () => {
+    const present = await makeSourceDir(root, 'present');
+
+    const { roots } = await resolveDeclaredSources({
+      baseDir: root,
+      contentDir: libraryDir(root),
+      declaration: {
+        packages: [],
+        sources: [
+          { name: 'present', dir: present },
+          { name: 'not-yet', dir: path.join(root, 'not-yet') },
+        ],
+      },
+    });
+
+    expect(roots).toEqual([{ name: 'present', dir: present, declaredAs: 'path' }, { dir: libraryDir(root) }]);
   });
 
   it('rejects a source path that is not a directory', async () => {

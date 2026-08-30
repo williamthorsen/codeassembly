@@ -1,5 +1,5 @@
 import type { ResolvedDeclaration } from './codeassembly-manifest.ts';
-import { assertSupportedContentFormats } from './content-root-manifest.ts';
+import { assertSupportedContentFormats, type ContentRootRef } from './content-root-manifest.ts';
 import { resolvePackageSources } from './package-sources.ts';
 import type { ReportLine } from './report-line.ts';
 import { describeSourceNameProblem, findSourceProblem } from './source-validation.ts';
@@ -15,10 +15,20 @@ export interface DeclaredSource {
   readonly declaredAs: 'package' | 'path';
 }
 
-/** The content sources a declaration resolves to, and the subset whose directory does not exist. */
+/** The content sources a declaration resolves to, the subset whose directory does not exist, and the roots to read. */
 export interface DeclaredSources {
   readonly sources: ReadonlyArray<DeclaredSource>;
   readonly missingSources: ReadonlyArray<DeclaredSource>;
+  /**
+   * The roots a command reads undeclared content from, highest precedence first: every source whose directory exists,
+   * then the built-in library. A root with no `name` is the library.
+   */
+  readonly roots: ReadonlyArray<ContentRootRef>;
+}
+
+/** Renders a content root for a report line, distinguishing a declared source from the built-in library. */
+export function describeContentRoot(root: ContentRootRef): string {
+  return root.name === undefined ? 'the built-in library' : `source "${root.name}" (${root.dir})`;
 }
 
 /**
@@ -59,7 +69,7 @@ export async function resolveDeclaredSources(options: {
   const { baseDir, contentDir, declaration } = options;
   if (declaration === undefined) {
     await assertSupportedContentFormats([{ dir: contentDir }]);
-    return { sources: [], missingSources: [] };
+    return { sources: [], missingSources: [], roots: [{ dir: contentDir }] };
   }
 
   // A declared package contributes both a source and a set of seeds: Its content dir joins the search order below the
@@ -78,7 +88,14 @@ export async function resolveDeclaredSources(options: {
   // a source whose directory is missing carries no manifest and stays the warning it is.
   await assertSupportedContentFormats([...sources, { dir: contentDir }]);
 
-  return { sources, missingSources };
+  // A missing source contributes no root: there is nothing to read from it, and the warning above already names it.
+  const missingDirs = new Set(missingSources.map((source) => source.dir));
+  const roots: ReadonlyArray<ContentRootRef> = [
+    ...sources.filter((source) => !missingDirs.has(source.dir)),
+    { dir: contentDir },
+  ];
+
+  return { sources, missingSources, roots };
 }
 
 // region | Helpers
