@@ -14,7 +14,7 @@ import { expandIncludes } from '../lib/directive-expander.ts';
 import { emitReport } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
-import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
+import { HARNESSES, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
 import { recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
@@ -30,6 +30,7 @@ import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/p
 import type { ReportLine } from '../lib/report-line.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
+import { describeHarnessTargeting, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import type {
@@ -85,10 +86,14 @@ export async function installCommand(
 
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
-  const harnesses = resolveHarnessIds(options.harness, baseDir);
+  // Both arguments are the home directory: `install` deploys into the harness homes, so its declaration chain is the
+  // home tier pair alone. Passing a project root would let a repository decide where the home domain deploys.
+  const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: homeDir, homeDir });
+  const harnesses = targets.harnessIds;
+  console.info(describeHarnessTargeting(targets));
 
-  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the harness-detection check: a home that
-  // targets no harness still carries whatever a previous install left in `~/.agents/`.
+  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the no-target return: a home that targets no
+  // harness still carries whatever a previous install left in `~/.agents/`.
   const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
   if (harnesses.length === 0) {
@@ -96,7 +101,7 @@ export async function installCommand(
       await writeManifest(manifestPath, withoutSharedTier(manifest));
       console.info('\nManifest updated.');
     } else {
-      console.info('No target harnesses detected. Nothing else to install.');
+      console.info('Nothing else to install.');
     }
     if (!options.dryRun) {
       await recordHomeProvenance('install', baseDir);
