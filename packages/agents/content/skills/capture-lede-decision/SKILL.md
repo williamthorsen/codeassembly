@@ -75,11 +75,11 @@ On `store.reachable: false`, report `store.message` on one line and stop here, b
 
 Read `episode.differ`. Where it is `true`, show the agent's lede and the merged lede; where it is `false`, show the single lede. Then ask for a rating of the lede that shipped, adding a comment if the author wants to say what was wrong:
 
-1. `exemplary`
-2. `strong`
+1. `poor`
+2. `adequate`
 3. `good`
-4. `adequate`
-5. `poor`
+4. `strong`
+5. `exemplary`
 6. Skip (you did not evaluate it, or this was a content change)
 
 Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a rating the author did not make.
