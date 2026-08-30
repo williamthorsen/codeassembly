@@ -750,7 +750,7 @@ A role can only disposition findings directed at it or its own prior findings. T
 
 ## Finding scheme (F/W/T/R/S + legacy suffix)
 
-Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must clear the [Actionability gate](#actionability-gate) before it is emitted.
+Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must clear the [Proposed-change gate](#proposed-change-gate) and the [Actionability gate](#actionability-gate) before it is emitted.
 
 | ID                 | Category       | Icon | Criticality | Merge-blocking?            |
 | ------------------ | -------------- | ---- | ----------- | -------------------------- |
@@ -763,9 +763,17 @@ Used by review-producing skills and agents for structured code review findings. 
 
 Consumers that present or report findings (review skills, wrap-up, response artifacts) should render the icon alongside the prefix or category to give an at-a-glance severity cue. The Legacy row uses 🔍 regardless of underlying severity letter.
 
+### Proposed-change gate
+
+A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs (see [Insight gate](#insight-gate)), and drop it otherwise.
+
+Naming the change is not settling it. Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, such as which callers can recover or which of two contracts is the intended one, name the alternatives and leave the choice to them. That is a finding, and the reviewer states whose call it is rather than picking for them. Alternatives are named because the author knows something the reviewer does not, never because the reviewer could not settle on a fix.
+
+A finding therefore has one of exactly two shapes, and consumers may rely on the pair being exhaustive: a single named change, or a choice among named alternatives the author decides. Only the absence of any envisioned change disqualifies a finding.
+
 ### Actionability gate
 
-Every finding (F/W/T/R/S) must give the author a concrete decision they can act on **in the change under review**: fix it, defer it with a ticket, or explicitly accept it. A finding that produces no decision is not a finding; drop it, don't soften it.
+A named change still has to be worth making. This gate is where that is decided; the [Proposed-change gate](#proposed-change-gate) has already established that a change exists.
 
 A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as taking on a burden of proof, weighed against that full cost, never against its line length.
 
@@ -778,7 +786,7 @@ This gate is the [concision principle](./concision.md) applied to findings: A fi
 - "Call it out only if X" / "consider when Y" / "would matter once Z" / "revisit if/when…", where the named condition is not currently met
 - A body that endorses the current state ("the current shape is correct") and then proposes a change anyway: incoherent, since no recommendation remains once you have endorsed the status quo
 
-Self-test before writing each finding: _Would I make this exact change right now if it were my code?_ If no, it is not a finding.
+Self-test before writing each finding: _Would I make this change right now if it were my code?_ If no, it is not a finding.
 
 Where dropped content goes: An observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
 
