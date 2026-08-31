@@ -10,7 +10,8 @@ import type { BranchManifest, ResolvedPreferences } from './types.ts';
 
 /** Default values when not set in preferences. */
 const DEFAULT_SCM = 'github';
-const DEFAULT_BASE_DIR = '~/ai-artifacts';
+/** Where artifacts are written when no `preferences.yaml` names a base directory. */
+export const DEFAULT_ARTIFACT_BASE_DIR = '~/ai-artifacts';
 /** Default remote name, used when preferences don't configure one. */
 export const DEFAULT_REMOTE_NAME = 'origin';
 const DEFAULT_REMOTE_BRANCH = 'main';
@@ -59,8 +60,8 @@ export function composeManifest(input: {
   const remoteBranch = preferences.repository?.default_remote?.default_branch ?? DEFAULT_REMOTE_BRANCH;
   const defaultBranch = `${remoteName}/${remoteBranch}`;
 
-  const rawBaseDir = preferences.artifacts?.base_dir ?? DEFAULT_BASE_DIR;
-  const artifactBaseDir = resolveBaseDir(rawBaseDir, cwd, home);
+  const rawBaseDir = preferences.artifacts?.base_dir ?? DEFAULT_ARTIFACT_BASE_DIR;
+  const artifactBaseDir = resolveArtifactBaseDir(rawBaseDir, cwd, home);
 
   const artifactPaths: Record<string, string> = { ...DEFAULT_ARTIFACT_PATHS };
   const configuredPaths = preferences.artifacts?.paths;
@@ -89,13 +90,11 @@ export function composeManifest(input: {
   };
 }
 
-// region | Helpers
-
 /**
  * Resolves `~`/`~/...` against `home` and resolves relative paths against `cwd`. Absolute paths
  * are returned unchanged.
  */
-function resolveBaseDir(rawBaseDir: string, cwd: string, home: string): string {
+export function resolveArtifactBaseDir(rawBaseDir: string, cwd: string, home: string): string {
   let expanded = rawBaseDir;
   if (rawBaseDir === '~') {
     expanded = home;
@@ -107,6 +106,8 @@ function resolveBaseDir(rawBaseDir: string, cwd: string, home: string): string {
   }
   return path.resolve(cwd, expanded);
 }
+
+// region | Helpers
 
 /**
  * Resolves the ticket base URL from preferences and, when a ticket id is also known, the full

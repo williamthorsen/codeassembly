@@ -50,6 +50,7 @@ members:
     - review-permissions
     - review-pr
     - revise-comments
+    - revise-object-relatives
     - save-artifact
     - save-plan
     - software-engineering

@@ -37,7 +37,7 @@ export interface BundleDrift {
   reason: DriftReason;
 }
 
-/** One helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
+/** One helper to bundle: its TypeScript entry point and the `.mjs` output that it produces. */
 export interface BundleTarget {
   /** Path to the helper's entry module, relative to the package root. */
   entry: string;
@@ -105,6 +105,10 @@ export const targets: BundleTarget[] = [
   {
     entry: 'src/emit-event/cli.ts',
     outFile: 'content/skills/emit-event/emit-event.mjs',
+  },
+  {
+    entry: 'src/revise-object-relatives/cli.ts',
+    outFile: 'content/skills/revise-object-relatives/revise-object-relatives.mjs',
   },
   {
     entry: 'src/relay-hook-event/cli.ts',
