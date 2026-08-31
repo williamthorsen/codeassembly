@@ -121,7 +121,7 @@ function summarize(candidates: readonly Candidate[], filesScanned: number): Cand
 
   const byFile: FileCount[] = [...counts]
     .map(([file, count]) => ({ file, count }))
-    .sort((a, b) => b.count - a.count || a.file.localeCompare(b.file));
+    .toSorted((a, b) => b.count - a.count || a.file.localeCompare(b.file));
 
   return { total: candidates.length, filesScanned, byFile, byShape };
 }
