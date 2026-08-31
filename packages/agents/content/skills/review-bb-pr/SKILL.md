@@ -6,7 +6,7 @@ user-invocable: false
 
 # Review Bitbucket pull request
 
-Internal delegate that handles the Bitbucket-specific work for `review-pr`: Fetch PR metadata via the Bitbucket REST API, verify the local HEAD matches the PR's head commit, resolve the ticket (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
+Internal delegate that handles the Bitbucket-specific work for `review-pr`: Fetch PR metadata, verify the local HEAD matches the PR's head commit, resolve the ticket (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
 
 This skill does not run a review. The review logic is implemented in `review-branch`.
 
@@ -36,46 +36,23 @@ On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-
 
 ## Bitbucket access
 
-Fetch PR metadata through the Bitbucket Cloud REST API at `https://api.bitbucket.org/2.0/`. This delegate pins REST rather than using whatever Bitbucket tooling is available, because the _Verify HEAD_ step fails closed on `source.commit.hash` and a generic instruction cannot guarantee a client surfaces that field. **Use one client for every call below.**
-
-Authentication resolves in priority order:
-
-1. **Bot credentials (Basic auth):** `BITBUCKET_BOT_USERNAME` + `BITBUCKET_BOT_TOKEN` env vars. Basic auth pairs an Atlassian API token with the account's email, so `BITBUCKET_BOT_USERNAME` holds that email.
-2. **Access token (Bearer auth):** `BITBUCKET_API_TOKEN` env var, holding a repository, project, or workspace access token.
-3. **macOS keychain (Bearer auth):** `security find-generic-password -a "$USER" -s "bitbucket-api-token" -w`, holding an access token of the same kind.
-
-If no credentials are available, exit non-zero with:
-
-```
-No authentication configured
-  Set BITBUCKET_BOT_USERNAME + BITBUCKET_BOT_TOKEN, or
-  Set BITBUCKET_API_TOKEN, or
-  Add macOS keychain entry 'bitbucket-api-token'
-```
+Every Bitbucket call below goes through the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). That document owns the tool, the coordinates, the field vocabulary, and the not-connected stop; this skill states only what it does with them.
 
 ## Process
 
-### 1. Normalize `pr_id` and detect workspace/repo
+### 1. Normalize `pr_id` and resolve coordinates
 
-If `pr_id` is a URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}`, extract `{workspace}`, `{repo}`, and `{number}`.
+If `pr_id` is a URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}`, take `{number}` as the PR number.
 
-Otherwise treat `pr_id` as the number directly. Auto-detect workspace and repo from `git remote get-url origin`: Strip a trailing `.git`, then take the two path segments following `bitbucket.org`, which either `/` or `:` separates from the host. This accepts the HTTPS form (`https://{user}@bitbucket.org/{workspace}/{repo}.git`) and the SSH form (`git@bitbucket.org:{workspace}/{repo}.git`) alike.
+Otherwise treat `pr_id` as the number directly.
+
+Resolve `workspaceId` and `repoId` per [Coordinates](../_data/bitbucket-pr-access.md#coordinates), which takes them from the `pr_id` URL when it is one.
 
 ### 2. Fetch PR metadata
 
-Issue a single Bitbucket REST call:
+Issue a single `action: "get"` call with `prId` set to the PR number, per [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request). Capture `id`, `title`, `description`, `links.html.href`, `updated_on`, `source.branch.name`, `source.commit.hash`, and `destination.branch.name`.
 
-```
-GET https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests/{pr_number}
-```
-
-Parse the JSON response with `jq` (or python3). Capture from the response:
-
-- `id` (PR number), `title`, `description` (PR body), `links.html.href` (URL), `updated_on` (PR last-updated timestamp)
-- `source.branch.name` (head branch name), `source.commit.hash` (full head commit SHA)
-- `destination.branch.name` (base branch name)
-
-If the API call fails (non-2xx), surface the response status and body and stop.
+If the call fails, surface the tool's error and stop.
 
 ### 3. Verify HEAD
 
@@ -85,7 +62,7 @@ Compare the local HEAD against the PR's head commit:
 local_head=$(git rev-parse HEAD)
 ```
 
-If `local_head` does not equal `source.commit.hash`, exit non-zero with:
+The comparison is a prefix test, not an equality test, because `source.commit.hash` may arrive abbreviated; see [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request) for the rule. If `source.commit.hash` is not a prefix of `local_head` of at least 7 characters, exit non-zero with:
 
 ```
 PR #{number}'s head commit is {short(source_commit_hash)} but HEAD is at {short(local_head)}. Check out the PR branch first (e.g., "git fetch origin pull-requests/{number}/from:pr-{number} && git checkout pr-{number}") or pull the latest commits on {source_branch_name}.
@@ -164,18 +141,21 @@ The list order is `[ticket?, pr_description]`, same as `review-gh-pr`.
   pr_metadata: {
     number: <id>,
     url: <links.html.href>,
-    head_oid: <source.commit.hash>,
+    head_oid: <local_head from step 3>,
     base_ref: <destination.branch.name>,
     title: <title>
   }
 }
 ```
 
+`head_oid` carries the local HEAD rather than `source.commit.hash`, which step 3 may have matched abbreviated. The two name the same commit once step 3 passes, and the local one is the full 40 characters a consumer of an OID expects.
+
 `review-pr` passes this to `review-branch` and the review proceeds.
 
 ## Important
 
-- **Single REST call for metadata.** All fields are fetched at once. Do not split into multiple calls.
+- **Single read for metadata.** All fields are fetched at once. Do not split into multiple calls.
+- **The REST pin is discharged.** This delegate used to pin the REST API on the ground that a generic "whatever tooling is available" instruction could not guarantee a client surfaced `source.commit.hash`, which the _Verify HEAD_ step fails closed on. Naming one tool discharges that ground, and the field is verified present in its response. Do not restore the credential cascade or the REST endpoint on the strength of the old comment.
 - **HEAD mismatch is a hard stop.** The error message must include a Bitbucket-equivalent checkout suggestion so the user has a one-line fix path even though Bitbucket lacks `gh pr checkout`'s exact equivalent.
 - **Linked-issues divergence is intentional.** The Bitbucket cascade lacks the GitHub `closingIssuesReferences` step. This is documented above so the parity gap is visible to future readers; do not silently re-add a partial implementation.
 - **No review logic here.** This delegate prepares inputs only. The review process runs inside `review-branch` after `review-pr` invokes it with the resolved inputs.

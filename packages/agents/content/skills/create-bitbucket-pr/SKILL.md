@@ -26,22 +26,21 @@ This skill receives the following inputs from the orchestrator:
 
 ### 1. Create the pull request
 
-Use whatever Bitbucket tooling is available (MCP server, REST API, CLI) to create a pull request:
+Call `action: "create"` on the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). No pull-request URL exists yet, so the coordinates come from that document's second source, the git remote.
 
 - **Title**: Use `title` as provided.
 - **Description**: Use `body` as provided.
+- **Source branch**: Use the current branch, `git rev-parse --abbrev-ref HEAD`. The action requires it, and the delegate interface carries no head-branch input.
 - **Destination branch**: Use `base_branch`.
 - **Draft/WIP**: Create as draft if the platform supports it.
 
-### 2. Apply labels
+### 2. Report every label as skipped
 
-If `labels` is non-empty, apply labels using whatever mechanism Bitbucket provides (e.g., labels API, metadata). If label application fails:
+Bitbucket pull requests carry no labels, and the tool exposes no label parameter on any action. Attempt no call. Report every name in `labels` under `Labels skipped:` in the completion output, and leave `Labels applied:` as `none`.
 
-1. Record which labels failed.
-2. Continue without the failing labels; the PR itself must still be created.
-3. Report skipped labels in the completion output.
+`merge-pr` resolves scope and type on the standing fact that a Bitbucket PR contributes no labels; this step is what makes that true.
 
-If Bitbucket does not support labels in the current context, skip label application silently.
+The artifact's label lines keep `create-gh-pr`'s three-field shape: `Labels attempted:` carries the requested set, `Labels applied:` is always `none`, and `Labels skipped:` repeats the requested set.
 
 ### 3. Save PR artifact
 
@@ -81,8 +80,7 @@ Labels skipped: {comma-separated list, or "none"}
 
 ```
 PR created: {URL}
-Labels applied: {list}                  <- only if labels were requested
-Labels skipped: {list}                  <- only if any labels failed
+Labels skipped: {list}                  <- only if labels were requested
 Artifact saved: {artifact path}
 ```
 

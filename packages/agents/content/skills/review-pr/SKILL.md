@@ -50,14 +50,14 @@ If `<pr_id>` is a full URL, the URL host overrides the cascade: A `https://githu
 
 Pass the following inputs to the selected delegate per its delegate interface:
 
-| Input                | Value                                                                                                                                                                                                           |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pr_id`              | The PR resolved in step 2. The delegate parses and normalizes it (extracts the PR number from a URL when applicable; the Bitbucket delegate also auto-detects workspace/repo from `git remote get-url origin`). |
-| `diff_base_override` | Value of `--diff-base` if provided; otherwise `null`                                                                                                                                                            |
-| `ticket_override`    | Value of `--ticket` if provided; otherwise `null`                                                                                                                                                               |
-| `project_slug`       | From session context                                                                                                                                                                                            |
-| `ticket_id`          | From session context                                                                                                                                                                                            |
-| `artifact_base_dir`  | From session context                                                                                                                                                                                            |
+| Input                | Value                                                                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pr_id`              | The PR resolved in step 2. The delegate parses and normalizes it (extracts the PR number from a URL when applicable; the Bitbucket delegate also resolves the workspace and repository it addresses). |
+| `diff_base_override` | Value of `--diff-base` if provided; otherwise `null`                                                                                                                                                  |
+| `ticket_override`    | Value of `--ticket` if provided; otherwise `null`                                                                                                                                                     |
+| `project_slug`       | From session context                                                                                                                                                                                  |
+| `ticket_id`          | From session context                                                                                                                                                                                  |
+| `artifact_base_dir`  | From session context                                                                                                                                                                                  |
 
 The delegate returns a resolved-input record:
 
