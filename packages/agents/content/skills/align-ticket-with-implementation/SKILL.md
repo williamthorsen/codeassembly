@@ -81,6 +81,8 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with-implementation --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
+Append `--extra copies_remote=true` where the remote write in [Write targets](#write-targets) succeeded, which records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the generation branch, where no ticket of record exists to copy; under `--write-target=local`, whose snapshot is the newer contract by design; and where the remote write failed, leaving the remote without the body that the artifact holds. Writing the remote before saving the local artifact is what makes the outcome known in time to record it.
+
 ## Saving
 
 ### Write targets

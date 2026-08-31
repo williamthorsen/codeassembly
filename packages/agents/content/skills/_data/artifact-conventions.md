@@ -296,6 +296,20 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 The unified frontmatter shape places `provenance:` first, then top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`), then the consumer extensions (`title`, `scope`, `type`). `commit:` and `ticket_id:` appear exactly once each and serve a dual role: canonical identity fields that downstream consumers may also read. This is the canonical example for any future skill that adds consumer-specific fields alongside canonical ones.
 
+## Ticket frontmatter
+
+This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extension, read by `review-branch` when it chooses between a local ticket snapshot and the remote issue:
+
+| Field           | Required | Description                                                                                                           |
+| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `copies_remote` | no       | `true` when the artifact's body is a copy of the ticket of record as written. Omitted otherwise; there is no `false`. |
+
+**The field is a claim about the body, not a timestamp.** A remote that already holds the snapshot's content can only move ahead of it, so the claim stays true however far the remote later advances, and `review-branch` reads it as a precedence rule rather than as a value to compare. This is why the snapshot records _that_ it copied rather than _when_: An exact source timestamp would cost a re-fetch after every remote write, since `gh issue edit` returns no `updatedAt`, and would misstate what the snapshot holds where a concurrent edit landed between the write and that fetch.
+
+**Omission is meaningful, and is the default.** The field is set where the artifact's body and the ticket of record's body are known to agree, whether because a remote write of that body succeeded or because the body was adopted from the remote unchanged. A snapshot whose body neither reached the remote nor came from it is the newer contract and says so by carrying nothing: A write that failed, and a producer that deliberately kept its revision local, both leave the field off. A snapshot written before the field existed carries nothing either and compares by filename recency exactly as it does today.
+
+`align-ticket-with-implementation`, `create-ticket`, and `design-and-plan` write the field, each from what it already knows at save time about that agreement; each states its own condition. All three emit it through the frontmatter script's `--extra copies_remote=true` flag, the extension surface that the consumer fields above already use.
+
 ## run-index.json
 
 Machine-readable metadata for orchestrated runs. Written and maintained exclusively by the orchestrator. Individual skills do not write to this file directly.
