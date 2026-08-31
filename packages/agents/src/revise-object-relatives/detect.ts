@@ -263,27 +263,12 @@ const NUMERALS: ReadonlySet<string> = new Set([
 /** Negators, which sit between an auxiliary and its verb. */
 const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
 
-/** Specifiers that require a plural head, which is what number agreement holds them to. */
-const PLURAL_SPECIFIERS: ReadonlySet<string> = new Set([
-  'both',
-  'eight',
-  'eleven',
-  'few',
-  'fewer',
-  'five',
-  'four',
-  'many',
-  'nine',
-  'seven',
-  'several',
-  'six',
-  'ten',
-  'these',
-  'those',
-  'three',
-  'twelve',
-  'two',
-]);
+/**
+ * Specifiers other than a numeral that require a plural head, which is what number agreement holds them to. Every
+ * numeral but `one` requires one too, and {@link isSpecifier} derives that half from {@link NUMERALS} rather than
+ * restating it, so a numeral added there cannot specify differently from the ones beside it.
+ */
+const PLURAL_SPECIFIERS: ReadonlySet<string> = new Set(['both', 'few', 'fewer', 'many', 'several', 'these', 'those']);
 
 /** Prepositions. One between a head and a subject licenses the join. */
 const PREPOSITIONS: ReadonlySet<string> = new Set([
@@ -705,7 +690,9 @@ function isFunctionWord(word: string): boolean {
  * warnings` from the `2 carrying` that a preceding exit code and a participle put side by side.
  */
 function isSpecifier(specifier: string, head: string): boolean {
-  if (PLURAL_SPECIFIERS.has(specifier) || /^\d+$/.test(specifier)) {
+  const requiresPluralHead =
+    (NUMERALS.has(specifier) && specifier !== 'one') || PLURAL_SPECIFIERS.has(specifier) || /^\d+$/.test(specifier);
+  if (requiresPluralHead) {
     return specifier !== '1' && isPluralNoun(head);
   }
   return DETERMINERS.has(specifier) || QUANTIFIERS.has(specifier) || NUMERALS.has(specifier);
