@@ -13,13 +13,13 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ## Optional arguments
 
-| Flag              | Effect                                                       | Default                         |
-| ----------------- | ------------------------------------------------------------ | ------------------------------- |
-| `--pr {n}`        | Merge PR `{n}` instead of the PR for the current branch.     | PR for the current branch       |
-| `--scope {scope}` | Override the inferred scope.                                 | inferred (see resolution below) |
-| `--type {type}`   | Override the inferred work type.                             | inferred (see resolution below) |
-| `--strategy {s}`  | Override the merge strategy: `squash`, `merge`, or `rebase`. | `squash`                        |
-| `--delete {v}`    | Override branch deletion: `both`, `remote`, or `none`.       | `remote`                        |
+| Flag              | Effect                                                                        | Default                         |
+| ----------------- | ----------------------------------------------------------------------------- | ------------------------------- |
+| `--pr {n}`        | Merge PR `{n}` instead of the PR for the current branch.                      | PR for the current branch       |
+| `--scope {scope}` | Override the inferred scope.                                                  | inferred (see resolution below) |
+| `--type {type}`   | Override the inferred work type.                                              | inferred (see resolution below) |
+| `--strategy {s}`  | Override the merge strategy: `squash`, `merge`, or `rebase`.                  | `squash`                        |
+| `--delete {v}`    | Override branch deletion: `both`, `remote`, or `none`. `both` is GitHub-only. | `remote`                        |
 
 ## Reserved preference keys
 
@@ -228,7 +228,7 @@ Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle even
 ## Important
 
 - The orchestrator owns all decisions (PR resolution, scope/type/strategy/deletion-strategy resolution, body composition, approval gate). Delegates own only execution (platform API calls + state validation).
-- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
+- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is held by another worktree. On Bitbucket, `both` has no counterpart at all and `merge-bb-pr` refuses it, naming `--delete remote` as the alternative.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
 
