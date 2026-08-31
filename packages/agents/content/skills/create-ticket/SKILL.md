@@ -228,6 +228,8 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --i
 
 The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
 
+Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the Jira stub and the [no-remote fallback](#fallback-no-remote-platform), which save a snapshot with no ticket of record to copy.
+
 ### 9. Save plan (if present)
 
 If a plan exists in conversation context, save it as a ticket-scoped artifact in the same directory:

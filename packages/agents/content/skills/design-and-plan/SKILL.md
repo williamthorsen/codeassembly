@@ -151,6 +151,8 @@ Then save both artifacts:
 
    Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body.
 
+   Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where the source was a remote ticket and the refined ticket does not differ from its body: the same condition under which the remote-issue offer below is not made. This records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Where the offer is made, omit it on both outcomes: consent writes the remote after the artifact is saved, so recency already prefers the remote, and a refusal leaves the snapshot genuinely newer.
+
 3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
    - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md`
