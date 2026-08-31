@@ -1,5 +1,5 @@
-// Shapes for the revise-object-relatives helper: the prose it extracts, the candidates it detects, and the JSON
-// payload it writes to stdout.
+// Shapes for the revise-object-relatives helper: the prose extracted, the candidates detected, and the JSON payload
+// written to stdout.
 //
 // The helper reports; it never writes. Repair selection is judgment, so the payload carries everything an adjudicator
 // needs to decide without reading the file: the sentence, the matched phrase, and the shape that ranks the cost.
@@ -18,11 +18,14 @@ export interface Candidate {
   subject: string;
   /** The finite verb the reading turns on. */
   verb: string;
-  /** The head noun through the verb: the span a repair rewrites. */
+  /** The head noun through the verb: the span rewritten by a repair. */
   phrase: string;
   /** The whole sentence containing the phrase, so adjudication needs no file read. */
   sentence: string;
 }
+
+/** Why a prose-bearing file was held out of the sweep. */
+export type SkipReason = 'generated' | 'machine-generated' | 'unreadable';
 
 /** How a file's prose is delimited, which decides how the extractor reads it. */
 export type ProseKind = 'markdown' | 'script' | 'shell';
@@ -31,7 +34,7 @@ export type ProseKind = 'markdown' | 'script' | 'shell';
  * A block of prose lifted out of a file: a Markdown paragraph, a comment, a string literal, or a table cell.
  *
  * `text` preserves the source's own newlines, so the line holding any offset within it is `line` plus the newlines
- * preceding that offset. Every transformation the extractor applies is line-preserving for that reason.
+ * preceding that offset. Every transformation applied by the extractor is line-preserving for that reason.
  */
 export interface ProseSpan {
   /** Path to the source file, relative to the repository root. */
@@ -61,8 +64,10 @@ export interface FileCount {
 export interface CandidateSummary {
   /** Total candidates reported. */
   total: number;
-  /** Files the sweep read. */
+  /** Files whose prose the sweep read. */
   filesScanned: number;
+  /** Prose-bearing files held out of the sweep, by the reason each was held out. */
+  filesSkipped: Readonly<Record<SkipReason, number>>;
   /** Per-file counts, descending by count and then by path. */
   byFile: readonly FileCount[];
   /** Per-shape counts, keyed by every shape so an absent shape reads as zero. */

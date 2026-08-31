@@ -19,7 +19,15 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { scanFlags } from '../lib/parse-flags.ts';
 import { collectProse, NotARepositoryError } from './collect-prose.ts';
 import { detectCandidates } from './detect.ts';
-import type { Candidate, CandidateSummary, DetectResult, FileCount, ParsedArgs, SubjectShape } from './types.ts';
+import type {
+  Candidate,
+  CandidateSummary,
+  DetectResult,
+  FileCount,
+  ParsedArgs,
+  SkipReason,
+  SubjectShape,
+} from './types.ts';
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -68,13 +76,13 @@ export async function runDetect(input: {
   }
 
   try {
-    const { files, spans } = await collectProse({
+    const { scanned, skipped, spans } = await collectProse({
       root: input.root,
       paths: args.paths,
       ...(input.home !== undefined && { home: input.home }),
     });
     const candidates = detectCandidates(spans);
-    return { ok: true, root: input.root, candidates, summary: summarize(candidates, files.length) };
+    return { ok: true, root: input.root, candidates, summary: summarize({ candidates, scanned, skipped }) };
   } catch (error) {
     if (error instanceof NotARepositoryError) {
       return { ok: false, error: 'not-a-repository', message: error.message };
@@ -106,15 +114,21 @@ function isEntryPoint(): boolean {
 }
 
 /**
- * Counts a candidate set by file and by shape. A whole-repository sweep can return more candidates than one
- * adjudication pass affords, and these counts are what a caller reads to narrow the next run before paying for it.
+ * Counts a candidate set by file and by shape, alongside how many files the sweep read and how many it held out. A
+ * whole-repository sweep can return more candidates than one adjudication pass affords, and these counts are what a
+ * caller reads to narrow the next run before paying for it. The skip counts keep an exclusion visible: a file never
+ * opened by the sweep would otherwise leave the report looking clean.
  */
-function summarize(candidates: readonly Candidate[], filesScanned: number): CandidateSummary {
+function summarize(input: {
+  candidates: readonly Candidate[];
+  scanned: number;
+  skipped: Readonly<Record<SkipReason, number>>;
+}): CandidateSummary {
   const counts = new Map<string, number>();
-  // Keyed in the order the rulebook ranks the shapes, so a shape no candidate carries still reads as zero.
+  // Keyed in the order the rulebook ranks the shapes, so a shape carried by no candidate still reads as zero.
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
 
-  for (const candidate of candidates) {
+  for (const candidate of input.candidates) {
     counts.set(candidate.file, (counts.get(candidate.file) ?? 0) + 1);
     byShape[candidate.shape] += 1;
   }
@@ -123,7 +137,13 @@ function summarize(candidates: readonly Candidate[], filesScanned: number): Cand
     .map(([file, count]) => ({ file, count }))
     .toSorted((a, b) => b.count - a.count || a.file.localeCompare(b.file));
 
-  return { total: candidates.length, filesScanned, byFile, byShape };
+  return {
+    total: input.candidates.length,
+    filesScanned: input.scanned,
+    filesSkipped: input.skipped,
+    byFile,
+    byShape,
+  };
 }
 
 // endregion | Helpers

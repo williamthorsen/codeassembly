@@ -13,6 +13,7 @@ const FIXTURE_FILES: Readonly<Record<string, string>> = {
   '.claude/skills/deployed/SKILL.md': 'Deployed prose the sweep may not edit.\n',
   'docs/guide.md': 'Authored prose the sweep reads.\n',
   'generated.md': '<!-- GENERATED FILE: do not edit -->\n\nCopied prose the sweep may not edit.\n',
+  'marker-docs.md': 'A file marked `GENERATED FILE` is deployed output.\n\nDocumented prose the sweep reads.\n',
   'ignored/notes.md': 'Ignored prose the sweep never sees.\n',
   'src/helper.ts': '/** Authored doc prose the sweep reads. */\nexport const helper = 1;\n',
 };
@@ -48,7 +49,20 @@ describe(collectProse, () => {
   });
 
   it('yields nothing from a marker-bearing file', async () => {
-    expect(joinText(await sweep())).not.toContain('Copied prose');
+    const collection = await sweep();
+
+    expect(joinText(collection)).not.toContain('Copied prose');
+    expect(collection.skipped.generated).toBe(1);
+  });
+
+  it('reads a file that names the marker mid-sentence, which is prose about the marker', async () => {
+    expect(joinText(await sweep())).toContain('Documented prose the sweep reads.');
+  });
+
+  it('counts the files it read, so a silent exclusion cannot read as a clean sweep', async () => {
+    const collection = await sweep();
+
+    expect(collection.scanned).toBe(3);
   });
 
   it('yields nothing from a gitignored path', async () => {

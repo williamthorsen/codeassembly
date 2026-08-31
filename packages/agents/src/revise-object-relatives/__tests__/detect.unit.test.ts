@@ -131,6 +131,33 @@ describe(detectCandidates, () => {
       });
     });
 
+    it.each([
+      'Reports the warning the parser emitted.',
+      'Reports every warning the parser emitted.',
+      'Reports each setting the config overrides.',
+      'Reports two warnings the parser emitted.',
+    ])('licenses a head carrying verbal morphology under any specifier: %s', (sentence) => {
+      expect(detect(sentence)).toHaveLength(1);
+    });
+
+    it.each(['Reports the file the parser may read.', 'Reports the file the parser will not read.'])(
+      'reads through a modal to the verb it carries: %s',
+      (sentence) => {
+        expect(detect(sentence)).toHaveLength(1);
+      },
+    );
+
+    it('passes over a modal carrying no lexical verb', () => {
+      expect(detect('Reports whether the file the parser should be.')).toStrictEqual([]);
+    });
+
+    it('holds a plural specifier to a plural head, so a numeral beside a participle licenses nothing', () => {
+      const candidates = detect('The key exits 2 carrying the message it raises.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'message', subject: 'it', verb: 'raises' });
+    });
+
     it('reads a bare plural subject as the bare shape', () => {
       const candidates = detect('The library ships an idiom developers recognize.');
 
@@ -171,8 +198,13 @@ describe(detectCandidates, () => {
       expect(detect('A package holding one drops it silently.')).toStrictEqual([]);
     });
 
-    it('reads a determined gerund as a head noun, since a determiner is what makes one', () => {
+    it('reads a specified gerund as a head noun, since a specifier is what makes one', () => {
       expect(detect('The wrapping two of them apply is identical.')).toHaveLength(1);
+      expect(detect('Every wrapping two of them apply is identical.')).toHaveLength(1);
+    });
+
+    it('reads a quantified bare-noun subject, whose head a quantifier specifies', () => {
+      expect(detect('The library ships every idiom developers recognize.')).toHaveLength(1);
     });
   });
 

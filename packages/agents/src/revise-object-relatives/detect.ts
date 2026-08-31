@@ -69,7 +69,7 @@ const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
 
 /**
  * Verbs whose bare form carries no verbal morphology, so nothing but a lexicon recognizes one. Every entry is a
- * word no reading takes as a noun: a homograph such as `name` or `report` would read a head noun as a verb.
+ * word that no reading takes as a noun: a homograph such as `name` or `report` would read a head noun as a verb.
  */
 const BARE_VERBS: ReadonlySet<string> = new Set([
   'accept',
@@ -260,8 +260,30 @@ const NUMERALS: ReadonlySet<string> = new Set([
   'two',
 ]);
 
-/** Negators, which sit between an auxiliary and the verb it carries. */
+/** Negators, which sit between an auxiliary and its verb. */
 const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
+
+/** Specifiers that require a plural head, which is what number agreement holds them to. */
+const PLURAL_SPECIFIERS: ReadonlySet<string> = new Set([
+  'both',
+  'eight',
+  'eleven',
+  'few',
+  'fewer',
+  'five',
+  'four',
+  'many',
+  'nine',
+  'seven',
+  'several',
+  'six',
+  'ten',
+  'these',
+  'those',
+  'three',
+  'twelve',
+  'two',
+]);
 
 /** Prepositions. One between a head and a subject licenses the join. */
 const PREPOSITIONS: ReadonlySet<string> = new Set([
@@ -338,7 +360,7 @@ const QUANTIFIER_PRONOUNS: ReadonlySet<string> = new Set([
   'something',
 ]);
 
-/** Quantifiers opening a quantified noun phrase, the shape the rulebook ranks worst. */
+/** Quantifiers opening a quantified noun phrase, the shape ranked worst by the rulebook. */
 const QUANTIFIERS: ReadonlySet<string> = new Set([
   'all',
   'another',
@@ -491,7 +513,7 @@ function countNewlinesBefore(text: string, offset: number): number {
 }
 
 /**
- * Scans one span for every site the construction may occupy. A later anchor whose head falls inside an accepted
+ * Scans one span for every site that the construction may occupy. A later anchor whose head falls inside an accepted
  * phrase is that same site read from one word further in, so the scan resumes past the verb instead.
  */
 function detectInSpan(span: ProseSpan): Candidate[] {
@@ -561,20 +583,20 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
 }
 
 /**
- * Reports whether a word carrying verbal morphology is nonetheless heading a noun phrase, which a determiner before
- * it is what settles. Without one, an `-s` form is the clause's own verb and an `-ing` form is a participle, so
- * reading either as a head noun produces a whole clause dressed as a relative.
+ * Reports whether a word carrying verbal morphology is nonetheless heading a noun phrase, which a specifier before it
+ * is what settles. Without one, an `-s` form is the clause's own verb and an `-ing` form is a participle, so reading
+ * either as a head noun produces a whole clause dressed as a relative.
  */
 function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean {
   const head = tokens[headIndex];
   if (head === undefined) return false;
   if (!isFiniteVerb(head.word) && !head.word.endsWith('ing')) return true;
   if (head.afterBreak || headIndex === 0) return false;
-  return DETERMINERS.has(tokens[headIndex - 1]?.word ?? '');
+  return isSpecifier(tokens[headIndex - 1]?.word ?? '', head.word);
 }
 
 /**
- * Reports whether a determiner opens the phrase a head at `headIndex` closes, allowing one modifier between the two.
+ * Reports whether a specifier opens the phrase a head at `headIndex` closes, allowing one modifier between the two.
  * A bare-noun subject carries no marker of its own, so this is what keeps a plain `Noun Nouns Verb` main clause from
  * reading as a relative clause.
  */
@@ -582,7 +604,7 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
   for (let index = headIndex - 1; index >= 0 && index >= headIndex - 2; index -= 1) {
     const token = tokens[index];
     if (token === undefined) return false;
-    if (DETERMINERS.has(token.word)) return true;
+    if (isSpecifier(token.word, tokens[headIndex]?.word ?? '')) return true;
     if (tokens[index + 1]?.afterBreak === true) return false;
   }
   return false;
@@ -604,9 +626,28 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
     if (token === undefined || token.afterBreak) return undefined;
     if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
     if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
+    if (AUXILIARIES.has(token.word) && index >= first) {
+      const carried = findCarriedVerbIndex(tokens, index, last);
+      if (carried !== undefined) return carried;
+    }
     if (index < first || !isFiniteVerb(token.word)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
+  }
+  return undefined;
+}
+
+/**
+ * Returns the index of the lexical verb an auxiliary at `auxiliaryIndex` carries, or undefined where it carries none
+ * within `last`. A modal is always followed by a verb, which is what lets `the file the parser may read` be found
+ * where the morphological test sees nothing on `read`; a second auxiliary or a negator between the two is skipped.
+ */
+function findCarriedVerbIndex(tokens: readonly Token[], auxiliaryIndex: number, last: number): number | undefined {
+  for (let index = auxiliaryIndex + 1; index <= last; index += 1) {
+    const token = tokens[index];
+    if (token === undefined || token.afterBreak) return undefined;
+    if (AUXILIARIES.has(token.word) || NEGATORS.has(token.word)) continue;
+    return isFunctionWord(token.word) ? undefined : index;
   }
   return undefined;
 }
@@ -657,7 +698,20 @@ function isFunctionWord(word: string): boolean {
   );
 }
 
-/** Reports whether a word reads as a plural noun, which is the only marker a bare-noun subject carries. */
+/**
+ * Reports whether `specifier` specifies `head` rather than being a noun itself. A determiner, a quantifier, and a
+ * numeral all specify, which is the same set {@link SUBJECT_WINDOWS} keys its two-token minimum on: whatever opens an
+ * embedded subject's noun phrase opens the head's own. Number agreement decides the rest, and is what tells `two
+ * warnings` from the `2 carrying` that a preceding exit code and a participle put side by side.
+ */
+function isSpecifier(specifier: string, head: string): boolean {
+  if (PLURAL_SPECIFIERS.has(specifier) || /^\d+$/.test(specifier)) {
+    return specifier !== '1' && isPluralNoun(head);
+  }
+  return DETERMINERS.has(specifier) || QUANTIFIERS.has(specifier) || NUMERALS.has(specifier);
+}
+
+/** Reports whether a word reads as a plural noun, which is the only marker carried by a bare-noun subject. */
 function isPluralNoun(word: string): boolean {
   return (
     word.length > 3 &&

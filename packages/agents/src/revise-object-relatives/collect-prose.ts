@@ -14,12 +14,16 @@ import path from 'node:path';
 import { DEFAULT_ARTIFACT_BASE_DIR, resolveArtifactBaseDir } from '../derive-session-context/compose-manifest.ts';
 import { readPreferences } from '../derive-session-context/read-preferences.ts';
 import { HARNESSES } from '../lib/harness.ts';
-import type { ProseKind, ProseSpan } from './types.ts';
+import type { ProseKind, ProseSpan, SkipReason } from './types.ts';
 
-/** A resolved sweep: the files read, and every block of prose they yielded. */
+/** A resolved sweep: what it read, what it held out, and every block of prose that it yielded. */
 export interface ProseCollection {
   /** The resolved target set, in git's own order. Nothing outside it may be edited. */
   files: readonly string[];
+  /** How many files the sweep read prose from. */
+  scanned: number;
+  /** Prose-bearing files held out, by the reason each was held out, so no exclusion is silent. */
+  skipped: Readonly<Record<SkipReason, number>>;
   spans: readonly ProseSpan[];
 }
 
@@ -41,18 +45,38 @@ export async function collectProse(input: {
   const files = resolveTargetFiles({ root: input.root, paths: input.paths ?? [], artifactBaseDir });
 
   const spans: ProseSpan[] = [];
+  const skipped: Record<SkipReason, number> = { generated: 0, 'machine-generated': 0, unreadable: 0 };
+  let scanned = 0;
+
   for (const file of files) {
+    // The extension decides whether a file is worth reading at all, so a lockfile or an image is never pulled into
+    // a string. Only an extensionless file falls through to the read, where a shebang is the one remaining signal.
+    const extensionKind = classifyByExtension(file);
+    if (extensionKind === undefined && path.extname(file) !== '') continue;
+
     const content = readFileSafely(path.join(input.root, file));
-    if (content === undefined || isGeneratedContent(content)) continue;
+    if (content === undefined) {
+      if (extensionKind !== undefined) skipped.unreadable += 1;
+      continue;
+    }
 
-    const kind = classifyProseKind(file, content);
+    const kind = extensionKind ?? classifyByShebang(content);
     if (kind === undefined) continue;
-    if (kind !== 'markdown' && hasMachineWidthLines(content)) continue;
 
+    if (isGeneratedContent(content)) {
+      skipped.generated += 1;
+      continue;
+    }
+    if (kind !== 'markdown' && hasMachineWidthLines(content)) {
+      skipped['machine-generated'] += 1;
+      continue;
+    }
+
+    scanned += 1;
     spans.push(...extractProse({ file, content, kind }));
   }
 
-  return { files, spans };
+  return { files, scanned, skipped, spans };
 }
 
 /** Extracts every block of prose from one file's content, each carrying the line it begins on. */
@@ -92,6 +116,13 @@ export function resolveTargetFiles(input: {
 
 // region | Helpers
 
+/**
+ * The NUL byte, which separates `git ls-files -z` records and marks a file as binary. Built rather than written as an
+ * escape, because the formatter rewrites an escape into the byte itself, and a literal NUL in a source file makes
+ * `grep` treat that file as binary and skip it.
+ */
+const NUL = String.fromCodePoint(0);
+
 /** File extensions whose prose the sweep reads, mapped to the extractor that reads them. */
 const PROSE_KINDS_BY_EXTENSION: Readonly<Record<string, ProseKind>> = {
   '.bash': 'shell',
@@ -109,11 +140,19 @@ const PROSE_KINDS_BY_EXTENSION: Readonly<Record<string, ProseKind>> = {
   '.zsh': 'shell',
 };
 
-/** Output cap for one `git ls-files`, sized past the listing a large repository produces. */
+/** Output cap for one `git ls-files`, sized past the listing produced by a large repository. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
-/** Markers stamped into deployed output. A file carrying either is a copy, and the edit belongs to its source. */
-const GENERATED_MARKERS: readonly string[] = ['GENERATED FILE', '<!-- codeassembly-'];
+/**
+ * Markers stamped into deployed output, each anchored to the start of a line. Every deployment writes its marker on a
+ * line of its own: the provenance headline as a `#` or `<!--` comment, and an ownership or guidance-hook marker as an
+ * HTML comment. A mention inside a sentence or a code span is prose about the marker, and the file carrying it is
+ * authored source that the sweep must read.
+ */
+const GENERATED_MARKERS: readonly RegExp[] = [
+  /^[ \t]*(?:#|\/\/|<!--|\*)?[ \t]*GENERATED FILE\b/m,
+  /^[ \t]*<!-- codeassembly-/m,
+];
 
 /**
  * Line width above which a script is machine-generated rather than authored. A bundler emits a whole module on one
@@ -149,12 +188,13 @@ function buildBlockCommentSpan(file: string, line: number, body: string): ProseS
   return { file, line: line + start, text: texts.slice(start, end).join('\n') };
 }
 
-/** Classifies a file by extension, falling back to a shell shebang for the extensionless scripts a repository keeps. */
-function classifyProseKind(file: string, content: string): ProseKind | undefined {
-  const extension = path.extname(file).toLowerCase();
-  if (extension !== '') {
-    return PROSE_KINDS_BY_EXTENSION[extension];
-  }
+/** Classifies a file by extension, which needs no read. Returns undefined for an extension read by no extractor. */
+function classifyByExtension(file: string): ProseKind | undefined {
+  return PROSE_KINDS_BY_EXTENSION[path.extname(file).toLowerCase()];
+}
+
+/** Classifies an extensionless file by its shebang, which is what the scripts kept by a repository carry instead. */
+function classifyByShebang(content: string): ProseKind | undefined {
   return /^#![^\n]*\b(?:ba|z|k)?sh\b/.test(content) ? 'shell' : undefined;
 }
 
@@ -388,7 +428,7 @@ function findStringEnd(content: string, start: number, quote: string): number {
   return content.length;
 }
 
-/** Reports whether a script carries a line no formatter would produce, which marks it as bundled output. */
+/** Reports whether a script carries a line produced by no formatter, which marks it as bundled output. */
 function hasMachineWidthLines(content: string): boolean {
   return content.split('\n').some((line) => line.length > MACHINE_LINE_WIDTH);
 }
@@ -417,7 +457,7 @@ function isExcludedPath(input: { file: string; root: string; artifactBaseDir: st
 
 /** Reports whether a file's content marks it as deployed output, whose edit belongs to the source it was copied from. */
 function isGeneratedContent(content: string): boolean {
-  return GENERATED_MARKERS.some((marker) => content.includes(marker));
+  return GENERATED_MARKERS.some((marker) => marker.test(content));
 }
 
 /** Reports whether a line is a Markdown link definition, whose payload is a URL rather than prose. */
@@ -448,11 +488,11 @@ function listGitFiles(root: string, args: readonly string[], paths: readonly str
   } catch {
     throw new NotARepositoryError(`${root} is not inside a git working tree; the sweep reads what git tracks`);
   }
-  return stdout.split(' ').filter((file) => file !== '');
+  return stdout.split(NUL).filter((file) => file !== '');
 }
 
 /**
- * Strips the syntax a Markdown line carries around its prose: the block marker opening it, and each link's URL. The
+ * Strips the syntax that a Markdown line carries around its prose: the block marker opening it, and each link's URL. The
  * result holds the line's own newline count, which is zero, so a span's line mapping survives the rewrite.
  */
 function normalizeMarkdownLine(line: string): string {
@@ -469,7 +509,7 @@ function normalizeMarkdownLine(line: string): string {
 function readFileSafely(absolutePath: string): string | undefined {
   try {
     const content = readFileSync(absolutePath, 'utf8');
-    return content.includes(' ') ? undefined : content;
+    return content.includes(NUL) ? undefined : content;
   } catch {
     return undefined;
   }
