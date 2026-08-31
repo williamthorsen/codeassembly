@@ -34,6 +34,8 @@ const TRIAGE_DISPOSITION = 'triage';
  */
 const STANDALONE: Readonly<Record<ArtifactId, string>> = {
   'rulebook:codeassembly-content-specification': 'applies to this repository alone, which declares it directly',
+  'rulebook:live-worktree-conventions':
+    'wanted in the repositories carrying a `live` worktree, which declare it directly',
   'skill:migrate-feedback-memories': 'wanted once per machine, too rarely to justify a standing skill-index line',
   'subagent:canary': 'exercises the declared-subagent mechanism rather than doing work of its own',
 };
