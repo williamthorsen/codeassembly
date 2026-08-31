@@ -6,9 +6,7 @@ user-invocable: false
 
 # Merge Bitbucket pull request
 
-Internal delegate that would merge a pull request on Bitbucket. Called by `merge-pr` with fully-resolved inputs.
-
-**Bitbucket merge execution is not yet implemented.** This skill is a stub: The delegate interface is declared so the orchestrator can dispatch consistently across platforms, but the actual merge is left to the user.
+Internal delegate that merges a pull request on Bitbucket. Called by `merge-pr` with fully-resolved inputs: This skill does not resolve scope, type, strategy, or body; it only validates platform state and executes the merge.
 
 ## Delegate interface
 
@@ -23,27 +21,111 @@ Internal delegate that would merge a pull request on Bitbucket. Called by `merge
 | `project_slug`      | string                          | Project slug for artifact path resolution |
 | `artifact_base_dir` | string                          | Base directory for artifact storage       |
 
+## Bitbucket access
+
+Every Bitbucket call below goes through the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). Coordinates come from that document's cascade; `merge-pr` has already resolved the PR's URL, so the first source applies.
+
 ## Process
 
-Print a notice listing the resolved title, body, strategy, and deletion strategy, then exit successfully without invoking any Bitbucket API. The user merges manually using the Bitbucket UI or CLI.
+### 1. Refuse an unmappable deletion strategy
+
+`deletion_strategy: both` has no Bitbucket counterpart. `closeSourceBranch` governs the remote side alone, and nothing in the tool's surface deletes a local branch. Refuse before any other step, so nothing is published:
 
 ```
-Bitbucket merge is not yet implemented. Resolved values:
-
-  PR:                 {pr_number}
-  Title:              ▶︎ {title} ◀︎
-  Strategy:           {strategy}
-  Deletion strategy:  {deletion_strategy}
-
-  ▼ Body
-  {body}
-  ▲
-
-Merge manually via the Bitbucket UI, then re-run with `merge-pr` if you want a merge artifact saved locally.
+Bitbucket cannot delete a local branch as part of a merge; `--delete both` has no counterpart. Re-run with `--delete remote` and remove the local branch yourself.
 ```
 
-Do not save a merge artifact; no merge has occurred. Exit with success.
+`remote` and `none` map to `closeSourceBranch` in step 4.
+
+### 2. Fetch and validate PR state
+
+Issue one `action: "get"` call with `prId` set to `pr_number`, per [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request). Capture `state`, `source.branch.name`, and `links.html.href`.
+
+Refuse the merge when `state` is not `OPEN`, naming the state: "PR #{n} is {state} (not OPEN); cannot merge." The refusal covers `MERGED`, `DECLINED`, and `SUPERSEDED`. When `state` is missing from the response, **fail closed**: Refuse with "Cannot determine merge state for PR #{n}; verify and merge manually."
+
+Bitbucket exposes no counterpart to GitHub's `mergeable` or `mergeStateStatus`, and this step invents none. A conflict, a failing required check, or a missing required approval surfaces as the step 4 merge call's own error, which happens before anything is published.
+
+### 3. Verify branch sync
+
+The check only makes sense when the local current branch is the PR's source branch. Otherwise the local working copy is unrelated to what is being merged, and the comparison would produce a spurious refusal.
+
+```bash
+local_branch=$(git rev-parse --abbrev-ref HEAD)
+```
+
+Skip the check when `local_branch` does not equal `source.branch.name`. Otherwise:
+
+```bash
+git fetch origin
+git rev-list --left-right --count "origin/{source.branch.name}...HEAD"
+```
+
+If the counts differ from `0\t0`, refuse: "Local branch is out of sync with `origin/{source.branch.name}` (ahead {a}, behind {b}); push or pull before merging."
+
+### 4. Execute the merge
+
+Map `strategy` per [Merging a pull request](../_data/bitbucket-pr-access.md#merging-a-pull-request): `squash` to `squash`, `merge` to `merge_commit`, and `rebase` to `rebase_fast_forward`. Do not pre-check the repository's enabled strategies; the tool exposes no such list, and a disabled strategy surfaces the platform's own error naming it.
+
+Compose `message` as `title`, a blank line, then `body`, for `squash` and `merge_commit`. Omit `message` for `rebase_fast_forward`: Rebased commits keep their own messages, so a composed merge message has nothing to attach to. This mirrors `merge-gh-pr`'s handling of `--rebase`.
+
+Passing a composed title for `merge_commit` diverges from `merge-gh-pr`, which omits `--subject` and lets GitHub compose its own subject. Bitbucket's single `message` field covers title and body together, so there is no way to supply the body and leave the subject to the platform.
+
+Set `closeSourceBranch` to `true` for `deletion_strategy: remote` and `false` for `none`.
+
+Call `action: "merge"` with `prId`, `mergeStrategy`, `message` (except for `rebase_fast_forward`), and `closeSourceBranch`. If the call fails, surface the tool's error and exit non-zero. Do not retry, and do not fall back to another strategy.
+
+### 5. Capture the merge result
+
+Issue a second `action: "get"` call and read `merge_commit.hash`, `links.html.href`, and `updated_on`. The merge commit hash comes from this read rather than from the merge response, so it does not depend on what that response returns.
+
+`updated_on` after a successful merge is the moment the merge landed, and it stands in for GitHub's `mergedAt`.
+
+### 6. Save merge artifact
+
+Save a `merge` artifact in the ticket directory, in the same format `merge-gh-pr` writes, so `merge-pr` step 10 reads it on this platform as it does on GitHub.
+
+Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+
+`mkdir -p` the target directory before writing.
+
+Filename format:
+
+```
+{timestamp}_{slug}_merge.md
+```
+
+Use `YYYYMMDD-HHMMSSZ` for `{timestamp}` (UTC). Slug is derived from the title (lowercased, non-alphanumerics replaced with `-`, collapsed).
+
+Follow [artifact conventions](../_data/artifact-conventions.md).
+
+`capture-lede-decision` reads this artifact's `## Body` later to recover the lede that merged, and it is the only record of that text once the pull request is edited. Where the lede is needed and the artifact does not carry it, that skill takes `--merged-lede-file`; the artifact is not edited to supply it.
+
+Artifact content:
+
+```markdown
+<!-- include: ../../_partials/seal-marker.md / -->
+
+# {title}
+
+PR: {links.html.href}
+Merged at: {updated_on}
+Merge commit: {merge_commit.hash}
+Strategy: {strategy}
+Branch: {source.branch.name}
+
+## Body
+
+{body as submitted, not as the pull request later reads}
+```
 
 ## Completion
 
-Notice rendered as above. No artifact saved. No API call made.
+```
+Merged: {links.html.href}
+Commit: {merge_commit.hash}
+Strategy: {strategy}
+Branch: {source.branch.name}
+Artifact saved: {artifact path}
+```
+
+Local state is intentionally left untouched; removing the merged branch is left to the user. Do not append local-branch cleanup steps or advice. Do not report this state to the user.
