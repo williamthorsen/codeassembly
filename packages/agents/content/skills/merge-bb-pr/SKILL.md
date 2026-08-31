@@ -23,7 +23,7 @@ Internal delegate that merges a pull request on Bitbucket. Called by `merge-pr` 
 
 ## Bitbucket access
 
-Every Bitbucket call below goes through the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). Coordinates come from that document's cascade; `merge-pr` has already resolved the PR's URL, so the first source applies.
+Every Bitbucket call below goes through the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). Coordinates come from that document's cascade: the PR URL where `merge-pr` resolved one, and the git remote where it was handed a bare `--pr {n}` instead.
 
 ## Process
 
@@ -39,7 +39,7 @@ Bitbucket cannot delete a local branch as part of a merge; `--delete both` has n
 
 ### 2. Fetch and validate PR state
 
-Issue one `action: "get"` call with `prId` set to `pr_number`, per [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request). Capture `state`, `source.branch.name`, and `links.html.href`.
+Issue one `action: "get"` call with `prId` set to `pr_number`, per [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request). Capture `state`, `source.branch.name`, `source.repository.full_name`, and `links.html.href`.
 
 Refuse the merge when `state` is not `OPEN`, naming the state: "PR #{n} is {state} (not OPEN); cannot merge." The refusal covers `MERGED`, `DECLINED`, and `SUPERSEDED`. When `state` is missing from the response, **fail closed**: Refuse with "Cannot determine merge state for PR #{n}; verify and merge manually."
 
@@ -47,13 +47,18 @@ Bitbucket exposes no counterpart to GitHub's `mergeable` or `mergeStateStatus`, 
 
 ### 3. Verify branch sync
 
-The check only makes sense when the local current branch is the PR's source branch. Otherwise the local working copy is unrelated to what is being merged, and the comparison would produce a spurious refusal.
+The check only makes sense when the local working copy holds the branch being merged. Otherwise it is unrelated to what is being merged, and the comparison would produce a spurious refusal.
 
 ```bash
 local_branch=$(git rev-parse --abbrev-ref HEAD)
 ```
 
-Skip the check when `local_branch` does not equal `source.branch.name`. Otherwise:
+Skip the check when **either** holds:
+
+- `local_branch` does not equal `source.branch.name`.
+- `source.repository.full_name` does not equal the resolved `{workspace}/{repo}` pair, which makes this a fork PR. `origin/{source.branch.name}` then names a branch in the base repository, and a fork PR whose source branch happens to share that name would be compared against an unrelated ref.
+
+Both conditions mirror `merge-gh-pr`'s, whose second keys on `isCrossRepository`. Otherwise:
 
 ```bash
 git fetch origin
@@ -76,9 +81,11 @@ Call `action: "merge"` with `prId`, `mergeStrategy`, `message` (except for `reba
 
 ### 5. Capture the merge result
 
-Issue a second `action: "get"` call and read `merge_commit.hash`, `links.html.href`, and `updated_on`. The merge commit hash comes from this read rather than from the merge response, so it does not depend on what that response returns.
+Issue a second `action: "get"` call and read `state`, `merge_commit.hash`, `links.html.href`, and `updated_on`. The merge commit hash comes from this read rather than from the merge response, so it does not depend on what that response returns.
 
 `updated_on` after a successful merge is the moment the merge landed, and it stands in for GitHub's `mergedAt`.
+
+Step 4 returning success means the merge landed, so an absent `merge_commit.hash` is an anomaly in this read rather than evidence of no merge. Report it as such: Where `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads a missing SHA in the completion report as "nothing merged" and skips the lede decision on that basis, so a silent omission here would classify a landed merge as no merge at all.
 
 ### 6. Save merge artifact
 

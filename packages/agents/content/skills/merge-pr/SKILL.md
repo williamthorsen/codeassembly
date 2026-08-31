@@ -87,6 +87,14 @@ resolveDeletionStrategy(cliOverride):  return cliOverride ?? 'remote'
 
 These are intentionally written as named functions with an explicit pipeline so adding preference-file lookup later means inserting one stage. `--delete both|remote|none` map directly to the same string values.
 
+Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `both`, before step 7 asks for anything:
+
+```
+Bitbucket cannot delete a local branch as part of a merge; `--delete both` has no counterpart. Re-run with `--delete remote` and remove the local branch yourself.
+```
+
+`scm` is known from step 1 and the strategy from this step, so the refusal costs nothing here. Deferring it to the delegate would have step 7 ask the user to authorize deleting a local branch the platform cannot touch, and refuse after they answered. `merge-bb-pr` keeps the same guard for a caller that reaches it without this orchestrator.
+
 ### 5. Render merge-commit title
 
 Compute the bare title from the PR title with the `ticket_ref` prefix stripped:
@@ -179,11 +187,16 @@ Read `scm` from session context:
 
 ### 9. Re-read the PR and re-confirm a changed title or body
 
-Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's platform dispatch, then re-run step 5's title render and step 6's body composition over the new values.
-
 This step exists because a published merge-commit title and body cannot be amended on a protected default branch under a squash merge. The approval gate is human-paced, so an edit made to the PR while it is pending would otherwise be discarded and the merge would publish the pre-gate text irrecoverably. Do not fold this read back into step 2: A single pre-gate read is what leaves that window open.
 
-Compare the **derived** values, the rendered merge title and the composed body, against the ones the user approved at the gate. Comparing the raw description instead would raise on an edit confined to another section, which changes nothing that gets published. Re-deriving also picks up a description that has since gained a real `## What`, so step 6's thin-body fallback resolves against the current text.
+Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's platform dispatch, then re-derive the two values the merge publishes:
+
+- **Title**: Re-run step 5 over the new PR title, passing the scope and type as settled at the approval gate. Step 5's omit-when-ambiguous rule governs its initial provisional render alone. A re-render that dropped `--scope` or `--type` because step 3's `status` was `ambiguous` would render a title the user never saw and report it as the user's own edit.
+- **Body**: Re-run step 6's extraction over the new description and compare the extracted `## What` region against the region step 6 extracted before the gate. Where that region is unchanged, carry the approved body forward unchanged. Where it moved, re-run step 6 over it in full, the thin-body fallback included, so a description that has since gained a real `## What` is picked up.
+
+The body comparison keys on the extracted region rather than on the composed body because step 6's thin-body fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The extraction is deterministic, so it has one. Keying on the region rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` reaches the merge commit.
+
+The window this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope, and a generated body is not re-derived on their account; the delegate's own branch-sync check is where local and remote divergence surfaces.
 
 Where both derived values match the approved ones, continue to step 10 without saying anything. Where either differs, re-render step 7's gate with the new values and ask again, and repeat this step after each approval until the values hold steady. Merging the newest version silently would publish text the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 7 does.
 
@@ -204,11 +217,13 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate: All values are concrete by this point.
 
-If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it includes one, and continue.
+If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture two things from the delegate's completion report and continue: whether it reported a merge, and the merge commit SHA where it reported one. Step 11 branches on both, and they are not the same signal.
 
 ### 11. Record the lede decision
 
-Skip this step when the delegate's completion report includes no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+Skip this step when the delegate reported no merge: Nothing shipped, so there is no lede to decide about. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+
+Skip it too, for a different reason, when the delegate reported a merge whose commit SHA is unavailable. `capture-lede-decision` requires `--merge-commit`, so the record cannot be written; the merge still landed. Say so, and emit `skill.completed` (payload `{"outcome":"merged: lede decision skipped, no SHA"}`). Never fold this case into "not merged", which would report a landed merge as one that did not happen.
 
 Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge; never present a failure at this step as a merge failure.
 

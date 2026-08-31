@@ -19,7 +19,11 @@ These skills discover a PR for the current branch at runtime. Resolve in this or
 
 1. **Explicit argument**: When the command supplies a PR (e.g., `review-pr <pr_id>` or `merge-pr --pr {n}`), use it. An explicit argument always overrides the stored URL.
 2. **Stored URL**: Otherwise, if the manifest has a non-null `pr_url`, use it as the default.
-3. **Discover from the platform**: Otherwise, look up the PR for the current branch with `gh pr view --json number,title,body,labels,headRefName,baseRefName,url` (or the platform equivalent). If no PR is found, stop and direct the user to create one.
+3. **Discover from the platform**: Otherwise, look up the PR for the current branch, dispatching on `scm`:
+   - **`"github"`**: `gh pr view --json number,title,body,labels,headRefName,baseRefName,url`.
+   - **`"bitbucket"`**: The branch query in [Bitbucket pull-request access](bitbucket-pr-access.md#finding-the-pull-request-for-a-branch).
+
+   If no PR is found, stop and direct the user to create one.
 
 After resolving the URL by any of the three paths above, **persist** it per [Stored PR URL](#stored-pr-url). If a stored URL from step 2 does not yield the expected PR, **invalidate** it and fall through to step 3.
 

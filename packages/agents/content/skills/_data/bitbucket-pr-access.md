@@ -16,31 +16,45 @@ The `bitbucketPullRequest` MCP tool is not connected, and it is the only Bitbuck
 
 Every action takes `workspaceId` and `repoId`, both required, both accepting a slug. Resolve them once, at the first source that yields a pair:
 
-1. **A pull-request URL already in hand.** A URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}` carries both slugs and the PR number. This is the path for `review-bb-pr` (whose `pr_id` may be that URL) and for `merge-pr` (whose PR resolution yields a stored or discovered URL per [PR source resolution](pr-source-resolution.md)), so neither reads the git remote at all.
+1. **A pull-request URL already in hand.** A URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}` carries both slugs and the PR number. `review-bb-pr` takes this path when its `pr_id` is that URL, and `merge-pr` takes it when its PR resolution produced a stored or discovered URL per [PR source resolution](pr-source-resolution.md). An explicit `merge-pr --pr {n}` or `review-pr {n}` is a bare number and yields no pair, so it falls through.
 2. **The git remote.** Otherwise take them from `git remote get-url origin`: Strip a trailing `.git`, then take the two path segments following `bitbucket.org`, which either `/` or `:` separates from the host. This accepts the HTTPS form (`https://{user}@bitbucket.org/{workspace}/{repo}.git`) and the SSH form (`git@bitbucket.org:{workspace}/{repo}.git`) alike.
 
 The second source exists because the tool exposes no "current repository" action and requires the pair on every call. It belongs here rather than in any skill: A skill states which source applies to it and links to this section, and never restates the parsing.
 
 ## Reading a pull request
 
-`action: "get"` with `prId` returns the Bitbucket REST pull-request object verbatim. The fields the four skills read:
+`action: "get"` with `prId` returns the Bitbucket REST pull-request object verbatim. The fields these skills read:
 
-| Field                     | Description                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| `id`                      | PR number                                                    |
-| `title`                   | PR title                                                     |
-| `description`             | PR body, as raw Markdown                                     |
-| `state`                   | `OPEN`, `MERGED`, `DECLINED`, or `SUPERSEDED`                |
-| `source.branch.name`      | Head branch name                                             |
-| `source.commit.hash`      | Head commit hash, which Bitbucket may abbreviate (see below) |
-| `destination.branch.name` | Base branch name                                             |
-| `links.html.href`         | PR URL                                                       |
-| `updated_on`              | Last-updated timestamp, ISO 8601                             |
-| `merge_commit.hash`       | Merge commit hash; present once `state` is `MERGED`          |
+| Field                         | Description                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| `id`                          | PR number                                                                            |
+| `title`                       | PR title                                                                             |
+| `description`                 | PR body, as raw Markdown                                                             |
+| `state`                       | `OPEN`, `MERGED`, `DECLINED`, or `SUPERSEDED`                                        |
+| `source.branch.name`          | Head branch name                                                                     |
+| `source.repository.full_name` | Head repository as `{workspace}/{repo}`; differs from the resolved pair on a fork PR |
+| `source.commit.hash`          | Head commit hash, which Bitbucket may abbreviate (see below)                         |
+| `destination.branch.name`     | Base branch name                                                                     |
+| `links.html.href`             | PR URL                                                                               |
+| `updated_on`                  | Last-updated timestamp, ISO 8601                                                     |
+| `merge_commit.hash`           | Merge commit hash; present once `state` is `MERGED`                                  |
 
 Body text comes from `description` and nowhere else. `rendered.description` carries the same content as HTML, and `summary` carries a duplicate raw copy; either substituted for `description` publishes or reviews the wrong text.
 
 **`source.commit.hash` is not a fixed width.** Bitbucket has been observed returning it abbreviated to 12 characters where `git rev-parse HEAD` returns 40. Compare on a prefix rather than on equality or on a fixed truncation: The platform's hash matches when it is a non-empty prefix of the local SHA and is at least 7 characters long. A shorter or empty hash fails the comparison rather than matching everything.
+
+## Finding the pull request for a branch
+
+`action: "list"` takes `state` and `q`, a Bitbucket query expression. To find the open pull request whose source is a given branch:
+
+```
+state: "OPEN"
+q: 'source.branch.name = "{branch}"'
+```
+
+Take the single result's `id`. More than one open pull request from one source branch is possible; where the list returns several, ask which one rather than picking the first. An empty list means no open pull request exists for that branch.
+
+This is the Bitbucket counterpart of `gh pr view` with no argument, which [PR source resolution](pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr) reaches when neither an explicit argument nor a stored URL supplied the pull request.
 
 ## Merging a pull request
 
@@ -64,4 +78,4 @@ A repository can disable any strategy, and the tool exposes no list of the enabl
 
 `message` is a single field, unlike `gh pr merge`'s separate `--subject` and `--body`. Compose it as the title, a blank line, then the body.
 
-The merge response's shape is not relied on. Read the merge commit hash from a follow-up `action: "get"`, which returns `merge_commit.hash` once `state` is `MERGED`.
+The merge response's shape is not relied on. Read the merge commit hash from a follow-up `action: "get"`, which returns `merge_commit.hash` once `state` is `MERGED`. A caller reads `state` alongside the hash, so that an absent hash under a `MERGED` state is reported as a landed merge with the hash unavailable rather than as no merge.
