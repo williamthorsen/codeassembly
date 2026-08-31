@@ -31,9 +31,7 @@ Every Bitbucket call below goes through the tool named in [Bitbucket pull-reques
 
 `deletion_strategy: both` has no Bitbucket counterpart. `closeSourceBranch` governs the remote side alone, and nothing in the tool's surface deletes a local branch. Refuse before any other step, so nothing is published:
 
-```
-Bitbucket cannot delete a local branch as part of a merge; `--delete both` has no counterpart. Re-run with `--delete remote` and remove the local branch yourself.
-```
+<!-- include: ../_partials/bitbucket-delete-both-refusal.md / -->
 
 `remote` and `none` map to `closeSourceBranch` in step 4.
 

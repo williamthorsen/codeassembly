@@ -87,11 +87,9 @@ resolveDeletionStrategy(cliOverride):  return cliOverride ?? 'remote'
 
 These are intentionally written as named functions with an explicit pipeline so adding preference-file lookup later means inserting one stage. `--delete both|remote|none` map directly to the same string values.
 
-Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `both`, before step 7 asks for anything:
+Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `both`, before step 7 asks for anything. Emit `skill.completed` (payload `{"outcome":"stopped: unsupported deletion strategy"}`) per [Lifecycle events](#lifecycle-events), then stop with:
 
-```
-Bitbucket cannot delete a local branch as part of a merge; `--delete both` has no counterpart. Re-run with `--delete remote` and remove the local branch yourself.
-```
+<!-- include: ../_partials/bitbucket-delete-both-refusal.md / -->
 
 `scm` is known from step 1 and the strategy from this step, so the refusal costs nothing here. Deferring it to the delegate would have step 7 ask the user to authorize deleting a local branch the platform cannot touch, and refuse after they answered. `merge-bb-pr` keeps the same guard for a caller that reaches it without this orchestrator.
 
@@ -192,7 +190,7 @@ This step exists because a published merge-commit title and body cannot be amend
 Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's platform dispatch, then re-derive the two values the merge publishes:
 
 - **Title**: Re-run step 5 over the new PR title, passing the scope and type as settled at the approval gate. Step 5's omit-when-ambiguous rule governs its initial provisional render alone. A re-render that dropped `--scope` or `--type` because step 3's `status` was `ambiguous` would render a title the user never saw and report it as the user's own edit.
-- **Body**: Re-run step 6's extraction over the new description and compare the extracted `## What` region against the region step 6 extracted before the gate. Where that region is unchanged, carry the approved body forward unchanged. Where it moved, re-run step 6 over it in full, the thin-body fallback included, so a description that has since gained a real `## What` is picked up.
+- **Body**: Re-run step 6's extraction over the new description and compare the extracted `## What` region against the region extracted for the body the user most recently approved. Where that region is unchanged, carry the approved body forward unchanged. Where it moved, re-run step 6 over it in full, the thin-body fallback included, so a description that has since gained a real `## What` is picked up. The baseline advances with each approval, as the title's does; holding it at the pre-gate region would re-run the fallback on every pass and never converge.
 
 The body comparison keys on the extracted region rather than on the composed body because step 6's thin-body fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The extraction is deterministic, so it has one. Keying on the region rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` reaches the merge commit.
 

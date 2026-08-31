@@ -52,7 +52,7 @@ state: "OPEN"
 q: 'source.branch.name = "{branch}"'
 ```
 
-Take the single result's `id`. More than one open pull request from one source branch is possible; where the list returns several, ask which one rather than picking the first. An empty list means no open pull request exists for that branch.
+Take the single result's `id` and `links.html.href`. The URL is what [PR source resolution](pr-source-resolution.md#stored-pr-url) persists, so a discovery that yielded only the id would leave the caller to construct it. More than one open pull request from one source branch is possible; where the list returns several, ask which one rather than picking the first. An empty list means no open pull request exists for that branch.
 
 This is the Bitbucket counterpart of `gh pr view` with no argument, which [PR source resolution](pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr) reaches when neither an explicit argument nor a stored URL supplied the pull request.
 
