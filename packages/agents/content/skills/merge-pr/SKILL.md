@@ -35,11 +35,16 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 
 Resolve the PR to merge per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): An explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR.
 
-Read the PR's metadata for the steps below:
+Read the PR's metadata for the steps below, dispatching on `scm`:
 
-```bash
-gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
-```
+- **`"github"`**:
+
+  ```bash
+  gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
+  ```
+
+- **`"bitbucket"`**: Issue an `action: "get"` call per [Bitbucket pull-request access](../_data/bitbucket-pr-access.md), then map its fields onto the same names the steps below use: `description` to `body`, `source.branch.name` to `headRefName`, `destination.branch.name` to `baseRefName`, `links.html.href` to `url`, and an empty array to `labels`.
+- **Unknown or missing**: Ask the user which platform to use, matching step 8's behavior.
 
 If no PR can be resolved or discovered, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
 
@@ -59,6 +64,8 @@ json=$({harness_home_dir}/scripts/resolve-merge-options.sh \
 ```
 
 Omit `--cli-scope`/`--cli-type` when no override was provided. Pass each PR label from step 2 as a separate `--pr-label` flag (the repeated form is robust against label names that contain commas). Include `--ticket-ref` when `ticket_ref` is non-null in session context.
+
+A Bitbucket PR contributes no labels, since `create-bitbucket-pr` applies none. The script already treats zero labels as no signal and falls through to commit-majority, so this is a missing signal rather than a failure and needs no special handling here.
 
 The output is a JSON object with one entry per dimension:
 
@@ -167,18 +174,28 @@ If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: decl
 Read `scm` from session context:
 
 - `"github"` → delegate to `{skill:merge-gh-pr}`
-- `"bitbucket"` → delegate to `{skill:merge-bb-pr}` (stub; prints the resolved values and exits without merging)
+- `"bitbucket"` → delegate to `{skill:merge-bb-pr}`
 - Unknown or missing → ask the user which platform to use
 
-### 9. Call delegate
+### 9. Re-read the PR and re-confirm a changed title or body
+
+Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's platform dispatch, then re-run step 5's title render and step 6's body composition over the new values.
+
+This step exists because a published merge-commit title and body cannot be amended on a protected default branch under a squash merge. The approval gate is human-paced, so an edit made to the PR while it is pending would otherwise be discarded and the merge would publish the pre-gate text irrecoverably. Do not fold this read back into step 2: A single pre-gate read is what leaves that window open.
+
+Compare the **derived** values, the rendered merge title and the composed body, against the ones the user approved at the gate. Comparing the raw description instead would raise on an edit confined to another section, which changes nothing that gets published. Re-deriving also picks up a description that has since gained a real `## What`, so step 6's thin-body fallback resolves against the current text.
+
+Where both derived values match the approved ones, continue to step 10 without saying anything. Where either differs, re-render step 7's gate with the new values and ask again, and repeat this step after each approval until the values hold steady. Merging the newest version silently would publish text the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 7 does.
+
+### 10. Call delegate
 
 Pass the following inputs to the selected delegate per the delegate interface:
 
 | Input               | Value                                                                  |
 | ------------------- | ---------------------------------------------------------------------- |
 | `pr_number`         | Resolved PR number                                                     |
-| `title`             | Rendered `merge_title` from step 5 (re-rendered after gate resolution) |
-| `body`              | Composed body from step 6                                              |
+| `title`             | Rendered `merge_title` as step 9 last re-derived and the user approved |
+| `body`              | Composed body as step 9 last re-derived and the user approved          |
 | `strategy`          | Resolved strategy from step 4                                          |
 | `deletion_strategy` | Resolved value from step 4 (`both` \| `remote` \| `none`)              |
 | `ticket_id`         | From session context                                                   |
@@ -189,9 +206,9 @@ The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels 
 
 If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it includes one, and continue.
 
-### 10. Record the lede decision
+### 11. Record the lede decision
 
-Skip this step when the delegate's completion report includes no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+Skip this step when the delegate's completion report includes no merge commit SHA: Nothing merged, so there is no shipped lede to decide about. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
 
 Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge; never present a failure at this step as a merge failure.
 
