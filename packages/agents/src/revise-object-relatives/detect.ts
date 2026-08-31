@@ -78,10 +78,8 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
   'apply',
   'assume',
   'avoid',
-  'become',
   'begin',
   'believe',
-  'belong',
   'bring',
   'choose',
   'compare',
@@ -94,7 +92,6 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
   'declare',
   'define',
   'deliver',
-  'depend',
   'describe',
   'determine',
   'discard',
@@ -112,7 +109,6 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
   'follow',
   'forbid',
   'govern',
-  'happen',
   'hide',
   'ignore',
   'imply',
@@ -160,6 +156,31 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
   'verify',
   'want',
   'withhold',
+]);
+
+/**
+ * Verbs that take no object. A relative clause with an object gap needs a transitive verb, so one of these closing a
+ * subject means the clause is the sentence's own rather than a relative.
+ */
+const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
+  'appear',
+  'arise',
+  'become',
+  'belong',
+  'come',
+  'consist',
+  'depend',
+  'differ',
+  'emerge',
+  'exist',
+  'go',
+  'happen',
+  'matter',
+  'occur',
+  'persist',
+  'remain',
+  'stay',
+  'vary',
 ]);
 
 /** Coordinators. One inside a subject ends the noun phrase, so the verb scan stops there. */
@@ -239,6 +260,9 @@ const NUMERALS: ReadonlySet<string> = new Set([
   'two',
 ]);
 
+/** Negators, which sit between an auxiliary and the verb it carries. */
+const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
+
 /** Prepositions. One between a head and a subject licenses the join. */
 const PREPOSITIONS: ReadonlySet<string> = new Set([
   'about',
@@ -298,6 +322,22 @@ const PREPOSITIONS: ReadonlySet<string> = new Set([
   'without',
 ]);
 
+/** Quantifiers that stand alone as a subject, taking no noun of their own. */
+const QUANTIFIER_PRONOUNS: ReadonlySet<string> = new Set([
+  'anybody',
+  'anyone',
+  'anything',
+  'everybody',
+  'everyone',
+  'everything',
+  'nobody',
+  'none',
+  'nothing',
+  'somebody',
+  'someone',
+  'something',
+]);
+
 /** Quantifiers opening a quantified noun phrase, the shape the rulebook ranks worst. */
 const QUANTIFIERS: ReadonlySet<string> = new Set([
   'all',
@@ -329,15 +369,30 @@ const RELATIVIZERS: ReadonlySet<string> = new Set(['that', 'when', 'where', 'whi
 const SUBJECT_PRONOUNS: ReadonlySet<string> = new Set(['he', 'i', 'it', 'one', 'she', 'they', 'we', 'you']);
 
 /**
- * The window each shape's finite verb must fall in, counted in tokens from the subject's first word. A determiner
- * must reach a noun before the verb, so a definite subject starts at two; a bare subject is one word, since nothing
- * marks where a longer one would begin.
+ * The window each anchor's finite verb must fall in, counted in tokens from the subject's first word. A determiner,
+ * a numeral, and a quantifier each specify a noun, so the verb may not sit directly on one; a pronoun subject is one
+ * word, and so is a bare one, since nothing marks where a longer one would begin.
  */
-const SUBJECT_WINDOWS: Readonly<Record<SubjectShape, { min: number; max: number }>> = {
+const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }>> = {
   bare: { min: 1, max: 1 },
-  definite: { min: 2, max: 4 },
-  pronoun: { min: 1, max: 4 },
-  quantified: { min: 1, max: 4 },
+  determiner: { min: 2, max: 4 },
+  numeral: { min: 2, max: 4 },
+  pronoun: { min: 1, max: 1 },
+  quantifier: { min: 2, max: 4 },
+  'quantifier-pronoun': { min: 1, max: 1 },
+};
+
+/** What opens an embedded subject, which decides its window. Several kinds report under one shape. */
+type SubjectKind = 'bare' | 'determiner' | 'numeral' | 'pronoun' | 'quantifier' | 'quantifier-pronoun';
+
+/** The shape each anchor reports under, in the rulebook's own vocabulary. */
+const SHAPES_BY_KIND: Readonly<Record<SubjectKind, SubjectShape>> = {
+  bare: 'bare',
+  determiner: 'definite',
+  numeral: 'quantified',
+  pronoun: 'pronoun',
+  quantifier: 'quantified',
+  'quantifier-pronoun': 'quantified',
 };
 
 /** Subordinators. One between a head and a subject licenses the join. */
@@ -357,9 +412,6 @@ const SUBORDINATORS: ReadonlySet<string> = new Set([
   'while',
   'yet',
 ]);
-
-/** Verbs marked for a singular subject, which a bare plural subject cannot take. */
-const SINGULAR_VERBS: ReadonlySet<string> = new Set(['does', 'has', 'is', 'was']);
 
 /** Words ending in `s` that no reading takes as a verb, which the morphological test would otherwise admit. */
 const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
@@ -390,12 +442,12 @@ interface Token {
   afterBreak: boolean;
 }
 
-/** Punctuation that ends a clause, which no relative clause may be read across. */
+/** Punctuation that ends a clause where it adjoins a word; standing alone, any punctuation ends one. */
 const CLAUSE_BREAK_PATTERN = /[,;:.!?()[\]{}"\u{2013}\u{2014}]/u;
 
 /** Reports whether a verb agrees with a plural subject, which is what a bare-noun subject always is. */
 function agreesWithPluralSubject(word: string): boolean {
-  return !SINGULAR_VERBS.has(word) && !word.endsWith('s');
+  return !word.endsWith('s');
 }
 
 /** Builds one candidate from a resolved head, subject, and verb, reading its sentence out of the span. */
@@ -451,13 +503,15 @@ function detectInSpan(span: ProseSpan): Candidate[] {
     const headIndex = findHeadIndex(tokens, index);
     if (headIndex === undefined || headIndex <= claimedThrough) continue;
 
-    const shape = classifySubject(tokens, index);
-    if (shape === undefined) continue;
+    const kind = classifySubject(tokens, index);
+    if (kind === undefined) continue;
+    if (kind === 'bare' && !isDeterminedPhrase(tokens, headIndex)) continue;
 
-    const verbIndex = findVerbIndex(tokens, index, shape);
+    const verbIndex = findVerbIndex(tokens, index, kind);
     if (verbIndex === undefined) continue;
 
     claimedThrough = verbIndex;
+    const shape = SHAPES_BY_KIND[kind];
     candidates.push(buildCandidate({ span, tokens, headIndex, subjectIndex: index, verbIndex, shape }));
   }
 
@@ -465,17 +519,19 @@ function detectInSpan(span: ProseSpan): Candidate[] {
 }
 
 /**
- * Classifies the subject a token opens, or reports undefined where it opens none. The three marked shapes are read
- * off closed classes; the bare shape has no marker, so a plural noun stands in for one.
+ * Classifies what a token opens an embedded subject with, or reports undefined where it opens none. Four kinds are
+ * read off closed classes; the bare kind has no marker, so a plural noun stands in for one.
  */
-function classifySubject(tokens: readonly Token[], index: number): SubjectShape | undefined {
+function classifySubject(tokens: readonly Token[], index: number): SubjectKind | undefined {
   const token = tokens[index];
   if (token === undefined) return undefined;
   const { word } = token;
 
   if (SUBJECT_PRONOUNS.has(word)) return 'pronoun';
-  if (QUANTIFIERS.has(word) || NUMERALS.has(word) || /^\d+$/.test(word)) return 'quantified';
-  if (DETERMINERS.has(word)) return 'definite';
+  if (NUMERALS.has(word) || /^\d+$/.test(word)) return 'numeral';
+  if (QUANTIFIER_PRONOUNS.has(word)) return 'quantifier-pronoun';
+  if (QUANTIFIERS.has(word)) return 'quantifier';
+  if (DETERMINERS.has(word)) return 'determiner';
   return isPluralNoun(word) ? 'bare' : undefined;
 }
 
@@ -498,6 +554,7 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     if (head === undefined) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
     if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
+    if (isVerbPosition(tokens, index)) return undefined;
     return isDeterminedHead(tokens, index) ? index : undefined;
   }
   return undefined;
@@ -517,12 +574,28 @@ function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean 
 }
 
 /**
- * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
- * within that shape's window. A bare subject is additionally held to plural agreement, which is the only reading its
- * own form supports.
+ * Reports whether a determiner opens the phrase a head at `headIndex` closes, allowing one modifier between the two.
+ * A bare-noun subject carries no marker of its own, so this is what keeps a plain `Noun Nouns Verb` main clause from
+ * reading as a relative clause.
  */
-function findVerbIndex(tokens: readonly Token[], subjectIndex: number, shape: SubjectShape): number | undefined {
-  const window = SUBJECT_WINDOWS[shape];
+function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolean {
+  for (let index = headIndex - 1; index >= 0 && index >= headIndex - 2; index -= 1) {
+    const token = tokens[index];
+    if (token === undefined) return false;
+    if (DETERMINERS.has(token.word)) return true;
+    if (tokens[index + 1]?.afterBreak === true) return false;
+  }
+  return false;
+}
+
+/**
+ * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
+ * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
+ * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
+ * plural agreement, which is the only reading its own form supports.
+ */
+function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
+  const window = SUBJECT_WINDOWS[kind];
   const first = subjectIndex + window.min;
   const last = Math.min(subjectIndex + window.max, tokens.length - 1);
 
@@ -530,8 +603,9 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, shape: Su
     const token = tokens[index];
     if (token === undefined || token.afterBreak) return undefined;
     if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
+    if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
     if (index < first || !isFiniteVerb(token.word)) continue;
-    if (shape === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
+    if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
   return undefined;
@@ -555,12 +629,12 @@ function findSentence(text: string, start: number, end: number): string {
 }
 
 /**
- * Reports whether a word can be read as a finite verb. The test is loose by design: precision belongs to the agent,
- * and a test tight enough to reject every noun rejects the bare-noun and quantified shapes along with them.
+ * Reports whether a word can be read as the finite verb of a relative clause. The test is loose by design: precision
+ * belongs to the agent, and a test tight enough to reject every noun rejects the bare-noun and quantified shapes along
+ * with them. An auxiliary or modal is excluded, since a relative clause's verb is a lexical one.
  */
 function isFiniteVerb(word: string): boolean {
-  if (AUXILIARIES.has(word)) return true;
-  if (isFunctionWord(word) || S_FINAL_NON_VERBS.has(word)) return false;
+  if (isFunctionWord(word) || S_FINAL_NON_VERBS.has(word) || INTRANSITIVE_VERBS.has(word)) return false;
   if (BARE_VERBS.has(word)) return true;
   if (/(?:ize|ise|ify)$/.test(word)) return true;
   if (word.length > 3 && word.endsWith('ed')) return true;
@@ -574,6 +648,7 @@ function isFunctionWord(word: string): boolean {
     COORDINATORS.has(word) ||
     DETERMINERS.has(word) ||
     FOCUS_ADVERBS.has(word) ||
+    NUMERALS.has(word) ||
     PREPOSITIONS.has(word) ||
     QUANTIFIERS.has(word) ||
     RELATIVIZERS.has(word) ||
@@ -593,6 +668,21 @@ function isPluralNoun(word: string): boolean {
   );
 }
 
+/**
+ * Reports whether a head sits where a verb belongs rather than where a noun does. Three positions say so: after `to`,
+ * which opens an infinitive; after an auxiliary or modal, optionally negated; and at the start of a clause, unless
+ * the word is plural, since a bare singular noun does not open one.
+ */
+function isVerbPosition(tokens: readonly Token[], headIndex: number): boolean {
+  const head = tokens[headIndex];
+  if (head === undefined) return true;
+  if (headIndex === 0 || head.afterBreak) return !isPluralNoun(head.word);
+
+  const previous = tokens[headIndex - 1]?.word ?? '';
+  const governor = NEGATORS.has(previous) ? (tokens[headIndex - 2]?.word ?? '') : previous;
+  return governor === 'to' || AUXILIARIES.has(governor);
+}
+
 /** Splits a span into words, recording each word's offsets and whether clause punctuation precedes it. */
 function tokenize(text: string): Token[] {
   const tokens: Token[] = [];
@@ -606,13 +696,15 @@ function tokenize(text: string): Token[] {
     const stripped = chunk.replace(/^[^\p{L}\p{N}]+/u, '').replace(/[^\p{L}\p{N}]+$/u, '');
     const trailing = chunk.slice(leading + stripped.length);
 
-    if (stripped !== '') {
+    if (stripped === '') {
+      afterBreak = true;
+    } else {
       afterBreak ||= CLAUSE_BREAK_PATTERN.test(chunk.slice(0, leading));
       const start = match.index + leading;
       tokens.push({ raw: stripped, word: stripped.toLowerCase(), start, end: start + stripped.length, afterBreak });
       afterBreak = false;
+      afterBreak ||= CLAUSE_BREAK_PATTERN.test(trailing);
     }
-    afterBreak ||= CLAUSE_BREAK_PATTERN.test(trailing);
     match = pattern.exec(text);
   }
 
