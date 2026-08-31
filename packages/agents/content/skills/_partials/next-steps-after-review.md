@@ -172,11 +172,11 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Options: PR variant (review-pr)
 
-| #   | Emoji | Option                    | Description                                                                                                                                                                                     |
-| --- | ----- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📋    | Post findings on the PR   | Post the findings as comments anchored to file and line. On Bitbucket, use whatever Bitbucket tooling is available (MCP server, REST API, CLI); GitHub has no posting mechanism yet (see #1018) |
-| 2   | 🚀    | Implement directly        | Fix the findings in this session                                                                                                                                                                |
-| 3   | 🎫    | Create a follow-up ticket | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule                                                                        |
+| #   | Emoji | Option                    | Description                                                                                                                                                                                                    |
+| --- | ----- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR   | Post the findings as comments anchored to file and line. On Bitbucket, use the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md); GitHub has no posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly        | Fix the findings in this session                                                                                                                                                                               |
+| 3   | 🎫    | Create a follow-up ticket | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule                                                                                       |
 
 #### Output format
 

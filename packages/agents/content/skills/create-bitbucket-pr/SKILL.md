@@ -26,7 +26,7 @@ This skill receives the following inputs from the orchestrator:
 
 ### 1. Create the pull request
 
-Use whatever Bitbucket tooling is available (MCP server, REST API, CLI) to create a pull request:
+Call `action: "create"` on the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). No pull-request URL exists yet, so the coordinates come from that document's second source, the git remote.
 
 - **Title**: Use `title` as provided.
 - **Description**: Use `body` as provided.

@@ -1,6 +1,6 @@
 # Bitbucket pull-request access
 
-Single access path for every skill that reads, creates, or merges a Bitbucket pull request: `review-bb-pr`, `create-bitbucket-pr`, `merge-pr`, and `merge-bb-pr`. One named tool and one field vocabulary keep the four from each restating an access cascade or re-deriving the repository's coordinates.
+Single access path for every skill that touches a Bitbucket pull request, whether it reads, creates, comments on, or merges one: `review-bb-pr`, `create-bitbucket-pr`, `merge-pr`, `merge-bb-pr`, and the review skills that post findings. One named tool and one field vocabulary keep them from each restating an access cascade or re-deriving the repository's coordinates.
 
 ## The tool
 
