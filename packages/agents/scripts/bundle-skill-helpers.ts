@@ -37,7 +37,7 @@ export interface BundleDrift {
   reason: DriftReason;
 }
 
-/** One helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
+/** One helper to bundle: its TypeScript entry point and the `.mjs` output that it produces. */
 export interface BundleTarget {
   /** Path to the helper's entry module, relative to the package root. */
   entry: string;

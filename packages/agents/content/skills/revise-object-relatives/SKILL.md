@@ -34,7 +34,7 @@ node "$(dirname "$SKILL_PATH")/revise-object-relatives.mjs" docs src/lib
 
 The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` it swept, a `candidates` array, and a `summary` holding `total`, `filesScanned`, `byFile`, and `byShape`. On failure it carries `ok: false` with `invalid-args` or `not-a-repository`, the latter because the sweep reads what git tracks and has nothing to read outside a working tree.
 
-Each candidate names its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` the reading turns on, the `phrase` a repair rewrites, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
+Each candidate names its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` the reading turns on, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
 
 ### 2. Read the summary before the candidates
 
@@ -51,7 +51,7 @@ Detection is over-inclusive by design. Reject a candidate on any of these ground
 
 ### 4. Choose the repair
 
-Repair a surviving candidate under the preference order the inlined rule states, choosing per site rather than applying one repair throughout. Where a passage would end up with restored relativizers in consecutive sentences, reach for the participle or the recast in some of them.
+Repair a surviving candidate under the preference order stated by the inlined rule, choosing per site rather than applying one repair throughout. Where a passage would end up with restored relativizers in consecutive sentences, reach for the participle or the recast in some of them.
 
 ### 5. Report
 
