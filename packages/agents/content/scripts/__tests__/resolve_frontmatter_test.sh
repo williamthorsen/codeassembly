@@ -716,6 +716,64 @@ When run main --format yaml --skill foo --interactive maybe
 The status should be failure
 The stderr should include "--interactive must be true or false"
 End
+
+Context "when git cannot read the repository"
+setup_unreadable_repo() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null || exit
+  git init --quiet --initial-branch=main .
+  git config user.email "test@example.com"
+  git config user.name "Test"
+  git commit --allow-empty --quiet -m "initial"
+}
+
+cleanup_unreadable_repo() {
+  popd >/dev/null || exit
+  rm -rf "$tmpdir"
+}
+
+BeforeEach "setup_unreadable_repo"
+AfterEach "cleanup_unreadable_repo"
+
+It "names the unreadable repository rather than an unresolvable branch"
+# `GIT_DIR` points nowhere while the working directory is a healthy repository, which is the shape a
+# sandboxed nested `git` produces: the repository is present and git refuses to read it.
+run_unreadable_repo() {
+  GIT_DIR=/nonexistent/x main --skill foo --interactive true
+}
+When run run_unreadable_repo
+The status should be failure
+The stderr should include "cannot read the git repository"
+The stderr should include "fatal:"
+The stderr should not include "could not resolve the current branch"
+End
+End
+
+Context "when git cannot resolve the branch"
+setup_unborn_head() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null || exit
+  # No commit: `git rev-parse --git-dir` answers while `--abbrev-ref HEAD` fails, which is the only
+  # condition that reaches the branch diagnostic past the readability probe.
+  git init --quiet --initial-branch=main .
+}
+
+cleanup_unborn_head() {
+  popd >/dev/null || exit
+  rm -rf "$tmpdir"
+}
+
+BeforeEach "setup_unborn_head"
+AfterEach "cleanup_unborn_head"
+
+It "quotes git's diagnostic rather than naming a cause"
+When run main --skill foo --interactive true
+The status should be failure
+The stderr should include "git could not resolve the current branch"
+The stderr should include "fatal:"
+The stderr should not include "cannot read the git repository"
+End
+End
 End
 
 Describe "main missing manifest invokes the bundled deriver"

@@ -293,6 +293,32 @@ When call test_tally
 The output should equal "$(printf '1\tfeat')"
 End
 
+It "yields an empty tally when no subject carries a prefix"
+test_tally() {
+  git commit --allow-empty -q -m "Just a plain title"
+  collect_commit_tally "type"
+}
+When call test_tally
+The output should equal ""
+End
+
+It "reports a commit log that git cannot read"
+# A missing object in the walk range leaves the repository readable and the base ref resolvable, so
+# `git log` is the only call that fails. Without the guard the failure yields an empty tally, which
+# is indistinguishable from the unprefixed-subjects case above.
+test_tally() {
+  git commit --allow-empty -q -m "agents|feat: Second"
+  git commit --allow-empty -q -m "agents|feat: Third"
+  mid=$(git rev-parse HEAD~1)
+  rm -f ".git/objects/${mid:0:2}/${mid:2}"
+  collect_commit_tally "type"
+}
+When run test_tally
+The status should equal 1
+The stderr should include "Cannot read commits in main..HEAD"
+The stderr should include "fatal:"
+End
+
 It "strips a leading ticket-ref token before parsing the prefix"
 test_tally() {
   ticket_ref="#494"
@@ -458,6 +484,21 @@ It "errors out when --base-ref does not exist in the repo"
 When run bash "$script" --base-ref "nonexistent"
 The status should equal 1
 The stderr should include "resolve-merge-options.sh: Base ref not found"
+The stderr should include "fatal:"
+End
+
+It "reports an unreadable repository rather than an absent base ref"
+# `GIT_DIR` points nowhere while the working directory is a healthy repository, which is the shape a
+# sandboxed nested `git` produces: the repository is present and git refuses to read it. `main` is
+# passed a base ref that does exist, so an unreadable repository is the only thing under test.
+run_unreadable_repo() {
+  GIT_DIR=/nonexistent/x bash "$script" --base-ref "main"
+}
+When run run_unreadable_repo
+The status should equal 1
+The stderr should include "resolve-merge-options.sh: Cannot read the git repository"
+The stderr should include "fatal:"
+The stderr should not include "Base ref not found"
 End
 
 It "errors out with status 1 on an unknown option"

@@ -47,8 +47,8 @@
 #
 # Exit codes:
 #   0  Success.
-#   1  Not in a git repository, missing required commands (`jq`, `git`), required-arg violation in yaml mode, or
-#      the bundled `derive-session-context` helper itself failed.
+#   1  Git could not read the repository or resolve the branch, missing required commands (`jq`, `git`),
+#      required-arg violation in yaml mode, or the bundled `derive-session-context` helper itself failed.
 
 set -euo pipefail
 
@@ -151,8 +151,16 @@ main() {
   # -- Resolve session-level values --
   require_commands jq git
 
-  local branch
-  branch=$(current_branch) || fail "not in a git repository"
+  # Probe readability before resolving the branch, so an unreadable repository is named as such
+  # rather than reported as an unresolvable branch.
+  local branch git_err
+  if ! git_err="$(git rev-parse --git-dir 2>&1 >/dev/null)"; then
+    fail "cannot read the git repository: $git_err"
+  fi
+  if ! branch=$(current_branch); then
+    git_err="$(git rev-parse --abbrev-ref HEAD 2>&1 >/dev/null || true)"
+    fail "git could not resolve the current branch: $git_err"
+  fi
 
   local manifest_path
   manifest_path=$(resolve_manifest_path "$branch") || fail "could not resolve repo root for manifest lookup"

@@ -17,6 +17,7 @@ describe(resolveProjectRoot, () => {
 
   afterEach(async () => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     await rm(scratch, { recursive: true, force: true });
   });
 
@@ -43,10 +44,22 @@ describe(resolveProjectRoot, () => {
     expect(resolveProjectRoot({ startDir: subdir })).toBe(realpathSync(scratch));
   });
 
-  it('falls back to the start directory and warns when not inside a git repository', () => {
+  it('falls back to the start directory and quotes git when the root cannot be resolved', () => {
     const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
 
     expect(resolveProjectRoot({ startDir: scratch })).toBe(scratch);
-    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/not inside a git repository/));
+    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/git could not resolve the repository root/));
+    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/fatal:/));
+  });
+
+  it('names the unreadable repository rather than an absent one', () => {
+    execFileSync('git', ['-C', scratch, 'init', '--quiet']);
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    // `GIT_DIR` points nowhere while `scratch` is a healthy repository, which is the shape a sandboxed
+    // nested `git` produces: the repository is present and git refuses to read it.
+    vi.stubEnv('GIT_DIR', '/nonexistent/x');
+
+    expect(resolveProjectRoot({ startDir: scratch })).toBe(scratch);
+    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/not a git repository: '\/nonexistent\/x'/));
   });
 });

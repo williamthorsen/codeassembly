@@ -35,13 +35,14 @@ extract_bare_number() {
 }
 
 # Resolve the project preferences file, anchored at the git repo root so that the lookup does not depend on the
-# caller's working directory. Falls back to the current directory when not inside a git repository, emitting a
-# stderr diagnostic so a misanchored run is debuggable rather than silent.
+# caller's working directory. Falls back to the current directory when git cannot resolve the root, quoting git's
+# own diagnostic so a misanchored run is debuggable rather than silent.
 project_preferences_file() {
   local root
   if ! root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
     root="$PWD"
-    printf '%s: not inside a git repository; anchoring .agents/ lookup at %s\n' "$PROG" "$root" >&2
+    printf '%s: git could not resolve the repository root (%s); anchoring .agents/ lookup at %s\n' \
+      "$PROG" "$(git rev-parse --show-toplevel 2>&1 || true)" "$root" >&2
   fi
   printf '%s/.agents/preferences.yaml' "$root"
 }

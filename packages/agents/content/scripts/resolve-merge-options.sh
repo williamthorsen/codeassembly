@@ -35,8 +35,8 @@
 #
 # Exit codes:
 #   0  Normal: JSON produced (regardless of resolved/ambiguous status).
-#   1  Usage error (missing/unknown flag) or runtime error (base-ref not found,
-#      label-map malformed).
+#   1  Usage error (missing/unknown flag) or runtime error (repository unreadable,
+#      base-ref not found, commit log unreadable, label-map malformed).
 
 set -euo pipefail
 # Propagate failures from command substitutions ($(...)) under `set -e`.
@@ -203,8 +203,16 @@ PYTHON
 # `base_ref` and HEAD. Subjects without a `[scope|type: ]` prefix are skipped.
 collect_commit_tally() {
   local dim="$1" # "scope" or "type"
-  local subject scope_val type_val
+  local subject scope_val type_val subjects
   declare -A tally=()
+
+  # Read the log up front rather than through process substitution, whose failure cannot reach this
+  # function. A git failure and a branch of unprefixed commits both yield an empty tally, and only
+  # the second is a state this script must keep reporting.
+  if ! subjects="$(git log "$base_ref"..HEAD --format=%s 2>&1)"; then
+    echo "$PROG: Cannot read commits in $base_ref..HEAD: $subjects" >&2
+    exit 1
+  fi
 
   while IFS= read -r subject || [[ -n "$subject" ]]; do
     [[ -z "$subject" ]] && continue
@@ -221,7 +229,7 @@ collect_commit_tally() {
         tally["$type_val"]=$((${tally["$type_val"]:-0} + 1))
       fi
     fi
-  done < <(git log "$base_ref"..HEAD --format=%s 2>/dev/null || true)
+  done <<<"$subjects"
 
   if [[ ${#tally[@]} -eq 0 ]]; then
     return
@@ -334,8 +342,16 @@ main() {
     show_usage
   fi
 
-  if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
-    echo "$PROG: Base ref not found: $base_ref" >&2
+  # Probe readability before the ref check. `git rev-parse` returns 128 both for an absent ref in
+  # a healthy repository and for a repository git cannot read, so only the ordering separates them.
+  local git_err
+  if ! git_err="$(git rev-parse --git-dir 2>&1 >/dev/null)"; then
+    echo "$PROG: Cannot read the git repository: $git_err" >&2
+    exit 1
+  fi
+
+  if ! git_err="$(git rev-parse --verify "$base_ref" 2>&1 >/dev/null)"; then
+    echo "$PROG: Base ref not found: $base_ref ($git_err)" >&2
     exit 1
   fi
 

@@ -145,7 +145,7 @@ Filename format:
 {timestamp}_{slug}_merge.md
 ```
 
-Use `YYYYMMDD-HHMMSSZ` for `{timestamp}` (UTC). Slug is derived from the title (lowercased, non-alphanumerics replaced with `-`, collapsed).
+Use `YYYYMMDD-HHMMSSZ` for `{timestamp}` (UTC).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

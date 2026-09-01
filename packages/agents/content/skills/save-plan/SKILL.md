@@ -16,7 +16,7 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
    - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout
    - Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
-3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)
+3. **Resolve the slug** per [artifact conventions](../_data/artifact-conventions.md#naming-conventions)
 
 4. **Resolve frontmatter fields**:
 
