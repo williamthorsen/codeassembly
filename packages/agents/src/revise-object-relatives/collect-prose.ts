@@ -460,9 +460,12 @@ function hasMachineWidthLines(content: string): boolean {
   return content.split('\n').some((line) => line.length > MACHINE_LINE_WIDTH);
 }
 
-/** Reports whether a line opens a new Markdown block: a heading, a list item, or a blockquote. */
+/**
+ * Reports whether a line opens a new Markdown block: a heading or a list item. A `>` opens none, since every line of
+ * a wrapped blockquote carries one and treating each as a block start splits a construction across two spans.
+ */
 function isBlockStart(line: string): boolean {
-  return /^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>)/.test(line);
+  return /^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s)/.test(line);
 }
 
 /**

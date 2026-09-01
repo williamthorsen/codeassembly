@@ -63,6 +63,12 @@ describe(extractProse, () => {
 
       expect(spans).toStrictEqual([{ file: 'fixture.md', line: 1, text: 'First half of a\nsentence that wraps.' }]);
     });
+
+    it('joins a wrapped blockquote into one span, so a construction spanning its lines survives', () => {
+      const spans = extract('> First half of a\n> sentence that wraps.\n', 'markdown');
+
+      expect(spans).toStrictEqual([{ file: 'fixture.md', line: 1, text: 'First half of a\nsentence that wraps.' }]);
+    });
   });
 
   describe('script', () => {
