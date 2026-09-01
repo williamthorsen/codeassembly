@@ -1,41 +1,52 @@
 ---
 name: update-jira-ticket
-description: 'Use whenever updating a Jira issue description or comment, with either the contentFormat-based tool (editJiraIssue, taking fields.description plus contentFormat markdown/adf) or the HTML-based tool (update_jira_issue, taking description_html / comment_html). The HTML tool needs the bundled pre-flight checker to catch INVALID_INPUT triggers (composition rules, named entities, Confluence macros, multi-line <pre>, disallowed elements) before any MCP round-trip; the contentFormat tool takes Markdown directly.'
+description: 'Use whenever creating or updating a Jira issue description or comment, whether through acli, a contentFormat-based tool (createJiraIssue / editJiraIssue, taking fields.description plus contentFormat markdown/adf), or an HTML-based tool (create_jira_issue / update_jira_issue, taking description_html / comment_html). No client renders Markdown task-list syntax as a checkbox, so checklists go in as plain bullets whichever one you use. The HTML tools additionally need the bundled pre-flight checker to catch INVALID_INPUT triggers (composition rules, named entities, Confluence macros, multi-line <pre>, disallowed elements) before any MCP round-trip; the contentFormat tools take Markdown directly and acli takes plain text or ADF.'
 user-invocable: true
 ---
 
 # Update Jira ticket
 
-Two different MCP tool shapes update Jira issues, and they need opposite handling. One takes Markdown (or ADF) directly and needs no sanitization; the other takes HTML that Jira converts to Atlassian Document Format (ADF), a conversion that frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. Identify which tool you have, then follow that branch.
+Creating a Jira issue and updating one meet the same boundary: whatever the client, what you submit is stored as Atlassian Document Format (ADF). One rule follows from that and holds for every client, stated first below. Past it, the two MCP tool shapes need opposite handling. One takes Markdown (or ADF) directly and needs no sanitization; the other takes HTML that Jira converts to ADF, a conversion that frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. Apply the content rule, identify your client, then follow that branch.
 
-## Identify which tool you have
+## Write checklists as plain bullets
 
-Inspect your available MCP tools and match the shape:
+Convert task-list syntax (`- [ ]` / `- [x]`) to plain `-` bullets before submitting. Jira's Markdown-to-ADF conversion does not map it to task items: it escapes the brackets, so the line persists as a bullet reading `\[ \] ...`.
 
-- **`contentFormat`-based tool**, e.g. `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
-- **`description_html`-based tool**: `update_jira_issue` / `create_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
+The rule is a property of the content rather than of the client, and holds on creation and update alike. `acli` documents its description as plain text or ADF, neither of which reads Markdown checkbox syntax, so no client renders `- [ ]` as a checkbox.
 
-If both are available, prefer the `contentFormat` tool: The Markdown path is simpler and cannot trigger the HTML→ADF failure classes.
+Artefact-sourced content is in scope, and is where this most often slips through: ticket artefacts from `design-and-plan` and `create-ticket` template acceptance criteria as `- [ ]` checkboxes, so a body forwarded verbatim from one carries them in.
+
+Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, and `contentFormat` applies to the whole field rather than a section of it, so a checklist never justifies authoring the entire description as ADF.
+
+## Identify your client
+
+Match your client to one of these shapes:
+
+- **`acli`**: `acli jira workitem create` / `acli jira workitem edit`, whose `--description` and `--description-file` are documented as plain text or ADF rather than Markdown. No HTML conversion, so no allowlist and no pre-flight checker. → Follow the [Markdown path](#markdown-path).
+- **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
+- **`description_html`-based tool**: `create_jira_issue` / `update_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
+
+Where more than one is available, prefer `acli` or the `contentFormat` tool: The Markdown path is simpler and cannot trigger the HTML→ADF failure classes.
 
 ## Markdown path
 
-Use this branch when a `contentFormat`-based tool (e.g. `editJiraIssue`) is available.
+Use this branch when `acli` or a `contentFormat`-based tool (e.g. `createJiraIssue` / `editJiraIssue`) is available.
 
-1. **Author Markdown.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. Pass it via `contentFormat: "markdown"`.
+1. **Author Markdown.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. On a `contentFormat` tool, pass it via `contentFormat: "markdown"`.
 2. **Prefer Markdown over ADF.** Reserve `contentFormat: "adf"` for content whose fidelity Markdown cannot express (panels, status lozenges, expand blocks, layout columns). ADF is full-fidelity JSON but verbose and harder to author, so use it only when Markdown genuinely falls short.
-3. **Write checklists as plain bullets.** Jira's Markdown converter does not map `- [ ]` / `- [x]` to ADF task items. It escapes the brackets, so the line persists as a bullet reading `\[ \] ...`. Convert task-list syntax to plain `-` bullets before submitting, including when the source is a local artefact that uses checkboxes, as ticket artefacts from `design-and-plan` and `create-ticket` do. Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, and `contentFormat` applies to the whole field rather than a section of it, so a checklist never justifies authoring the entire description as ADF.
+3. **Write checklists as plain bullets**, per [Write checklists as plain bullets](#write-checklists-as-plain-bullets).
 4. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`. Those rules exist solely to survive Jira's HTML→ADF conversion, and that converter is never invoked when you submit Markdown or ADF, so there is nothing for them to guard against. Rendering content to allowlist HTML and running the checker on this path is wasted work.
 
-That is the entire path. Everything under [HTML path](#html-path) is irrelevant when a `contentFormat` tool is available.
+That is the entire path. Everything under [HTML path](#html-path) is irrelevant when `acli` or a `contentFormat` tool is available.
 
 ## HTML path
 
-Use this branch only when the available tool is the HTML-surface `update_jira_issue` / `create_jira_issue` (with `description_html` or `comment_html`). The MCP tool advertises a permissive HTML surface, but the payload is converted to Atlassian Document Format (ADF) before persistence, and that conversion frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. This branch prescribes the one path that avoids the known triggers, backed by a deterministic pre-flight checker.
+Use this branch only when the available tool is the HTML-surface `create_jira_issue` / `update_jira_issue` (with `description_html` or `comment_html`). The MCP tool advertises a permissive HTML surface, but the payload is converted to Atlassian Document Format (ADF) before persistence, and that conversion frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. This branch prescribes the one path that avoids the known triggers, backed by a deterministic pre-flight checker.
 
 ### The correct path for the HTML tool
 
 1. **Source content as Markdown.** Prefer a local Markdown artefact when one exists. Otherwise, compose in Markdown first; never author HTML directly.
-2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten. Task-list syntax (`- [ ]` / `- [x]`) becomes a plain `<li>`; never pass the brackets through as literal text.
+2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten. Task-list syntax becomes a plain `<li>`, which is how [Write checklists as plain bullets](#write-checklists-as-plain-bullets) renders on this path; never pass the brackets through as literal text.
 3. **Run the pre-flight checker against the rendered HTML.** Fix everything it flags, then re-run until it returns `ok: true`. See [Pre-flight checker](#pre-flight-checker) for the contract.
 4. **Pass the HTML inline** to `description_html` or `comment_html`.
 5. **Never pass a file path** to `description_html` / `comment_html`. File-path mode is forbidden: It has been observed to fail with `INVALID_INPUT`.
