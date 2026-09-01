@@ -221,6 +221,13 @@ describe(detectCandidates, () => {
       expect(candidates[0]).toMatchObject({ phrase });
     });
 
+    it('reaches a lexical verb three tokens past its auxiliary', () => {
+      const candidates = detect('Reports the file it may not have read.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'file it may not have read' });
+    });
+
     it("holds a main-verb auxiliary to the bare subject's plural agreement", () => {
       expect(detect('Reports the fields records have.')).toHaveLength(1);
       expect(detect('Reports the fields records has.')).toStrictEqual([]);

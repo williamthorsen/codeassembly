@@ -159,8 +159,9 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Verbs that take no object. A relative clause with an object gap needs a transitive verb, so one of these closing a
- * subject means the clause is the sentence's own rather than a relative.
+ * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
+ * relative's, which is what keeps a main clause out. The set holds the detector to the direct-object gap: a
+ * prepositional-phrase gap is hosted by exactly these verbs, so `the set the entries belong to` is suppressed too.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
@@ -235,9 +236,10 @@ const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * How far past an auxiliary its lexical verb may sit, counted in tokens. Three reaches `is probed`, `may not read`,
- * and `has been read`. The measure runs from the auxiliary rather than from the subject, since a subject window
- * bounds the subject alone and the one-token pronoun window leaves an auxiliary chain no room under it.
+ * How far past an auxiliary its lexical verb may sit, counted in tokens. Three is what `may not have read` needs,
+ * since a skipped negator and a skipped auxiliary each consume one. The measure runs from the auxiliary rather than
+ * from the subject, since a subject window bounds the subject alone and the one-token pronoun window leaves an
+ * auxiliary chain no room under it.
  */
 const CARRIED_VERB_WINDOW = 3;
 
@@ -276,8 +278,8 @@ const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Fused heads: a head that is its own relative pronoun. The rulebook puts these outside the rule, since the head is
- * not a lexical noun and no relativizer can be restored.
+ * Fused heads: a head that is its own relative pronoun. The rulebook puts these outside the rule on head type
+ * alone, since the head is not a lexical noun.
  */
 const FUSED_HEADS: ReadonlySet<string> = new Set([
   'all',
