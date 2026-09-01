@@ -177,6 +177,63 @@ describe(detectCandidates, () => {
     });
   });
 
+  describe('verbs', () => {
+    it.each([
+      { sentence: 'Declares the version the consumer has for this kit.', verb: 'has' },
+      { sentence: 'Reports the check it does on every run.', verb: 'does' },
+    ])("reads a $verb carrying no lexical verb as the clause's own", ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb });
+    });
+
+    it.each([
+      { sentence: 'Reports the state it found.', verb: 'found' },
+      { sentence: 'Reports a message the console never wrote.', verb: 'wrote' },
+      { sentence: 'Reports the ticket the branch name held.', verb: 'held' },
+    ])('reads $verb, an irregular past tense that no suffix marks', ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb });
+    });
+
+    it('closes the subject on an irregular past tense rather than reading past it', () => {
+      const candidates = detect('Reports the file the parser read was empty.');
+
+      expect(candidates[0]).toMatchObject({ subject: 'the parser', verb: 'read' });
+    });
+
+    it('prefers the lexical verb an auxiliary carries over the auxiliary itself', () => {
+      const candidates = detect('Declares the version the consumer has read.');
+
+      expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'version the consumer has read' });
+    });
+
+    it.each([
+      { sentence: 'Reports the level it is probed against.', phrase: 'level it is probed' },
+      { sentence: 'Reports the file it may read.', phrase: 'file it may read' },
+    ])("reads through an auxiliary filling a pronoun subject's whole window: $phrase", ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+
+    it('reaches a lexical verb three tokens past its auxiliary', () => {
+      const candidates = detect('Reports the file it may not have read.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'file it may not have read' });
+    });
+
+    it("holds a main-verb auxiliary to the bare subject's plural agreement", () => {
+      expect(detect('Reports the fields records have.')).toHaveLength(1);
+      expect(detect('Reports the fields records has.')).toStrictEqual([]);
+    });
+  });
+
   describe('scope', () => {
     it.each(OUT_OF_SCOPE_HEADS)('passes over %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);

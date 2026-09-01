@@ -53,8 +53,8 @@ const AUXILIARIES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Head nouns whose relative clause has an adjunct gap rather than an object gap. The rulebook puts these outside the
- * rule, since neither the passive participle nor the restored relativizer repairs one.
+ * Head nouns whose relative clause has an adjunct gap rather than a gap in an argument position. The rulebook puts
+ * these outside the rule on that ground alone; a prepositional-phrase gap fills an argument position and stays in.
  */
 const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
   'place',
@@ -159,8 +159,10 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Verbs that take no object. A relative clause with an object gap needs a transitive verb, so one of these closing a
- * subject means the clause is the sentence's own rather than a relative.
+ * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
+ * relative's, which is what keeps a main clause out. The set holds the detector to the direct-object gap: a
+ * prepositional-phrase gap under one of these verbs is suppressed with them, so `the set the entries belong to`
+ * goes unreported.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
@@ -182,6 +184,65 @@ const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'stay',
   'vary',
 ]);
+
+/**
+ * Past-tense forms that no suffix marks as a verb, so nothing but a lexicon recognizes one. Admission follows the
+ * rule {@link BARE_VERBS} states: every entry is a word that no reading takes as a noun, which keeps `cost`, `cut`,
+ * `hit`, `put`, `run`, `saw`, `set`, `split`, and `spread` out. A past participle needs no entry, since
+ * {@link findCarriedVerbIndex} admits whatever an auxiliary carries.
+ */
+const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
+  'began',
+  'bought',
+  'broke',
+  'brought',
+  'built',
+  'caught',
+  'chose',
+  'dealt',
+  'drew',
+  'drove',
+  'found',
+  'gave',
+  'grew',
+  'held',
+  'kept',
+  'knew',
+  'laid',
+  'led',
+  'left',
+  'lent',
+  'lost',
+  'made',
+  'meant',
+  'met',
+  'paid',
+  'read',
+  'said',
+  'sent',
+  'sold',
+  'sought',
+  'spent',
+  'struck',
+  'swept',
+  'taught',
+  'thought',
+  'threw',
+  'told',
+  'took',
+  'understood',
+  'withheld',
+  'won',
+  'wrote',
+]);
+
+/**
+ * How far past an auxiliary its lexical verb may sit, counted in tokens. Three is what `may not have read` needs,
+ * since a skipped negator and a skipped auxiliary each consume one. The measure runs from the auxiliary rather than
+ * from the subject, since a subject window bounds the subject alone and the one-token pronoun window leaves an
+ * auxiliary chain no room under it.
+ */
+const CARRIED_VERB_WINDOW = 3;
 
 /** Coordinators. One inside a subject ends the noun phrase, so the verb scan stops there. */
 const COORDINATORS: ReadonlySet<string> = new Set(['and', 'but', 'nor', 'or']);
@@ -218,8 +279,8 @@ const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Fused heads: a head that is its own relative pronoun. The rulebook puts these outside the rule, since the head is
- * not a lexical noun and no relativizer can be restored.
+ * Fused heads: a head that is its own relative pronoun. The rulebook puts these outside the rule on head type
+ * alone, since the head is not a lexical noun.
  */
 const FUSED_HEADS: ReadonlySet<string> = new Set([
   'all',
@@ -243,6 +304,12 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
   'whatever',
   'whoever',
 ]);
+
+/**
+ * Auxiliaries that also serve as a clause's transitive main verb, which is what `the version the consumer has` turns
+ * on. A `be` form is absent: a copula takes no object, so a clause it closes has no gap to find.
+ */
+const MAIN_VERB_AUXILIARIES: ReadonlySet<string> = new Set(['did', 'do', 'does', 'had', 'has', 'have']);
 
 /** Cardinals worth naming; a digit string is recognized by shape instead. */
 const NUMERALS: ReadonlySet<string> = new Set([
@@ -599,7 +666,8 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
  * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
- * plural agreement, which is the only reading its own form supports.
+ * plural agreement, which is the only reading its own form supports. An auxiliary carrying no lexical verb closes the
+ * subject itself where it is a {@link MAIN_VERB_AUXILIARIES} member, since there a main-verb reading is what remains.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
@@ -612,8 +680,11 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
     if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
     if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
     if (AUXILIARIES.has(token.word) && index >= first) {
-      const carried = findCarriedVerbIndex(tokens, index, last);
+      const carried = findCarriedVerbIndex(tokens, index);
       if (carried !== undefined) return carried;
+      if (!MAIN_VERB_AUXILIARIES.has(token.word)) continue;
+      if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
+      return index;
     }
     if (index < first || !isFiniteVerb(token.word)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
@@ -624,10 +695,13 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 
 /**
  * Returns the index of the lexical verb an auxiliary at `auxiliaryIndex` carries, or undefined where it carries none
- * within `last`. A modal is always followed by a verb, which is what lets `the file the parser may read` be found
- * where the morphological test sees nothing on `read`; a second auxiliary or a negator between the two is skipped.
+ * within {@link CARRIED_VERB_WINDOW}. A modal is always followed by a verb, which is what lets `the file the parser
+ * may read` be found where the morphological test sees nothing on `read`; a second auxiliary or a negator between the
+ * two is skipped.
  */
-function findCarriedVerbIndex(tokens: readonly Token[], auxiliaryIndex: number, last: number): number | undefined {
+function findCarriedVerbIndex(tokens: readonly Token[], auxiliaryIndex: number): number | undefined {
+  const last = Math.min(auxiliaryIndex + CARRIED_VERB_WINDOW, tokens.length - 1);
+
   for (let index = auxiliaryIndex + 1; index <= last; index += 1) {
     const token = tokens[index];
     if (token === undefined || token.afterBreak) return undefined;
@@ -661,7 +735,7 @@ function findSentence(text: string, start: number, end: number): string {
  */
 function isFiniteVerb(word: string): boolean {
   if (isFunctionWord(word) || S_FINAL_NON_VERBS.has(word) || INTRANSITIVE_VERBS.has(word)) return false;
-  if (BARE_VERBS.has(word)) return true;
+  if (BARE_VERBS.has(word) || IRREGULAR_PAST_VERBS.has(word)) return true;
   if (/(?:ize|ise|ify)$/.test(word)) return true;
   if (word.length > 3 && word.endsWith('ed')) return true;
   return word.length > 2 && word.endsWith('s') && !/(?:ss|us|is)$/.test(word);
