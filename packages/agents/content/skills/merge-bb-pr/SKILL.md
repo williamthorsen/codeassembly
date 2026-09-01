@@ -79,11 +79,11 @@ Call `action: "merge"` with `prId`, `mergeStrategy`, `message` (except for `reba
 
 ### 5. Capture the merge result
 
-Issue a second `action: "get"` call and read `state`, `merge_commit.hash`, `links.html.href`, and `updated_on`. The merge commit hash comes from this read rather than from the merge response, so it does not depend on what that response returns.
+Where the `action: "merge"` response carries `state`, `merge_commit.hash`, `links.html.href`, and `updated_on`, read them from it. Where any is absent, issue an `action: "get"` call to obtain them. The hash must come from a response that reports `state: "MERGED"`.
 
 `updated_on` after a successful merge is the moment the merge landed, and it stands in for GitHub's `mergedAt`.
 
-Step 4 returning success means the merge landed, so an absent `merge_commit.hash` is an anomaly in this read rather than evidence of no merge. Report it as such: Where `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads a missing SHA in the completion report as "nothing merged" and skips the lede decision on that basis, so a silent omission here would classify a landed merge as no merge at all.
+Step 4 returning success means the merge landed, so a `merge_commit.hash` absent from both the merge response and the fallback read is an anomaly rather than evidence of no merge. Report it as such: Where `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads a missing SHA in the completion report as "nothing merged" and skips the lede decision on that basis, so a silent omission here would classify a landed merge as no merge at all.
 
 ### 6. Save merge artifact
 
