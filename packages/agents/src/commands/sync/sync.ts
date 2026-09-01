@@ -6,7 +6,7 @@ import process from 'node:process';
 
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
 import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
-import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
+import { type ResolvedDeclaration, resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import {
   createSourceResolver,
@@ -352,12 +352,13 @@ async function reconcileDomain(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
   );
 
+  // Checked before the closure resolves so a typo names the hook or the file that wrote it; seeding alone would
+  // report only that some rulebook went missing.
+  await assertBindingsResolve(declaration.guidanceHooks, resolver);
+  await assertDeclaredArtifactsResolve(declaration, domain.ambient === 'harness-home' ? 'home' : 'project', resolver);
+
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
-  // Checked before the closure resolves so a typo names the hook that wrote it; seeding alone would report only that
-  // some rulebook went missing.
-  await assertBindingsResolve(declaration.guidanceHooks, resolver);
-
   const closure = await resolveClosure(
     mergeSeeds([
       {
@@ -673,6 +674,30 @@ async function assertBindingsResolve(
         throw new Error(
           `Guidance hook "${hook}" binds rulebook "${slug}", which was not found in any of: ` +
             describeSearchedLocations(resolver, 'rulebook', slug),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Throws when a declaration's own `use:` list names an artifact that resolves from no declared source or the
+ * library, naming the chain files that declare it alongside the slug. The closure catches the same slug, but only
+ * as an anonymous missing reference: the declaring file is the half that says where to go and fix it, and a path
+ * derived from the domain cannot supply it, since either tier of the chain could have named the slug.
+ */
+async function assertDeclaredArtifactsResolve(
+  declaration: ResolvedDeclaration,
+  scope: 'home' | 'project',
+  resolver: SourceResolver,
+): Promise<void> {
+  for (const type of ARTIFACT_TYPE_VALUES) {
+    const declared = declaration.declaredIn[type];
+    for (const [slug, declaredIn] of declared) {
+      if ((await resolver.resolve(type, slug)) === undefined) {
+        throw new Error(
+          `The ${scope} declaration (${declaredIn.join(', ')}) declares ${type} "${slug}", which was not found ` +
+            `in any of: ${describeSearchedLocations(resolver, type, slug)}`,
         );
       }
     }

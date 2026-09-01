@@ -82,6 +82,10 @@ describe(syncCommand, () => {
     await writeFile(path.join(projectRoot, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
   }
 
+  const declarationPath = (): string => path.join(projectRoot, '.agents', 'codeassembly.yaml');
+
+  const localDeclarationPath = (): string => path.join(projectRoot, '.agents', 'codeassembly.local.yaml');
+
   const projectMdPath = (): string => path.join(projectRoot, '.agents', 'PROJECT.md');
 
   const agentsMdPath = (): string => path.join(projectRoot, 'AGENTS.md');
@@ -934,6 +938,69 @@ describe(syncCommand, () => {
         /\{rulebook:nmr-cheatsheet\}[\s\S]*ambient-only/,
       );
       expect(existsSync(localHostPath())).toBe(false);
+    });
+  });
+
+  describe('unresolvable declared artifacts', () => {
+    it('names the project declaration and writes nothing when a declared rulebook resolves from no source', async () => {
+      await declareRulebooks('ghost');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        `The project declaration (${declarationPath()}) declares rulebook "ghost", which was not found in any of:`,
+      );
+      expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
+      expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+    });
+
+    it('names the local declaration when only it declares the missing slug', async () => {
+      await declareRulebooks();
+      await writeLocalDeclaration('rulebooks:\n  use:\n    - ghost\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        `The project declaration (${localDeclarationPath()}) declares rulebook "ghost"`,
+      );
+    });
+
+    it('names both tiers when both declare the missing slug', async () => {
+      await declareRulebooks('ghost');
+      await writeLocalDeclaration('rulebooks:\n  use:\n    - ghost\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        `The project declaration (${declarationPath()}, ${localDeclarationPath()}) declares rulebook "ghost"`,
+      );
+    });
+
+    it('names a declared skill, subagent, and collection the same way', async () => {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      for (const [key, type] of [
+        ['skills', 'skill'],
+        ['subagents', 'subagent'],
+        ['collections', 'collection'],
+      ]) {
+        await writeFile(
+          path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+          `${key}:\n  use:\n    - ghost\n`,
+          'utf8',
+        );
+
+        await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+          `The project declaration (${declarationPath()}) declares ${type} "ghost"`,
+        );
+      }
+    });
+
+    it('reports the locations searched alongside the declaring file', async () => {
+      await declareRulebooks('ghost');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(contentDir);
+    });
+
+    it('refuses a dry run wherever a real run would', async () => {
+      await declareRulebooks('ghost');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
+        `declares rulebook "ghost"`,
+      );
     });
   });
 
@@ -2344,6 +2411,14 @@ describe(syncGlobalCommand, () => {
     );
     return file;
   }
+
+  it('names the home declaration when a declared artifact resolves from no source', async () => {
+    await declareRaw('skills:\n  use:\n    - ghost\n');
+
+    await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(
+      `The home declaration (${path.join(homeDir, '.agents', 'codeassembly.yaml')}) declares skill "ghost"`,
+    );
+  });
 
   it('when no ~/.agents/codeassembly.yaml exists, makes no changes and points at init --global', async () => {
     const infoLines = renderReportLines(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'info' });
