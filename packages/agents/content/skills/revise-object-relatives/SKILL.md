@@ -6,7 +6,7 @@ user-invocable: true
 
 # Revise object relatives
 
-Sweep a repository's prose for the construction the writing rule below forbids, and repair each instance. A bundled helper does the mechanical half: it resolves which files may be swept, extracts their prose, and emits over-inclusive candidates carrying the whole sentence. You do the judgment half: decide which candidates are the construction, choose each repair, and report before anything is written.
+Sweep a repository's prose for the construction forbidden by the writing rule below, and repair each instance. A bundled helper does the mechanical half: it resolves which files may be swept, extracts their prose, and emits over-inclusive candidates carrying the whole sentence. You do the judgment half: decide which candidates are the construction, choose each repair, and report before anything is written.
 
 The default is a report. `--apply` is the only thing that writes.
 
@@ -78,7 +78,7 @@ docs/architecture.md
 3 candidates, 2 repaired, 1 rejected. 41 candidates in 12 other files were not read; narrow with a path to reach them. 2 files held out: 1 generated, 1 machine-generated.
 ```
 
-The `Original` and `Repair` columns hold the phrase rather than the whole sentence, so a row stays readable; the sentence is what you adjudicated from, not what you print. A rejected candidate keeps its row with the ground in the `Repair` column, so the user can see a rejection they disagree with.
+The `Original` and `Repair` columns hold the phrase rather than the whole sentence, so a row stays readable; the sentence is what you adjudicated from, not what you print. A rejected candidate keeps its row with the ground in the `Repair` column, so the user can see a rejection with which they disagree.
 
 `filesSkipped` counts the prose-bearing files held out by the sweep, keyed by the reason each was held out. Where any count is non-zero, close with a `{n} files held out: ` clause naming each reason and its count, so a file never opened by the sweep cannot read as a clean result; omit the clause where every count is zero.
 
