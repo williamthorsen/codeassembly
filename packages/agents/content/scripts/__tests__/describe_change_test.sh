@@ -684,7 +684,8 @@ run_outside_repo() {
 }
 When call run_outside_repo
 The output should equal '{"commit_title":"","ticket_title":"","pr_title":"","merge_title":""}'
-The stderr should include "not inside a git repository"
+The stderr should include "git could not resolve the repository root"
+The stderr should include "fatal:"
 The status should be success
 End
 End
