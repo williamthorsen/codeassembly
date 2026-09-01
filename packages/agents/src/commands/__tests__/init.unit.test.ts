@@ -71,6 +71,7 @@ describe(initCommand, () => {
       declinedPackages: [],
       sources: [],
       guidanceHooks: new Map(),
+      declaredIn: { rulebook: new Map(), skill: new Map(), subagent: new Map(), collection: new Map() },
     });
   });
 
@@ -154,6 +155,15 @@ describe(initGlobalCommand, () => {
       declinedPackages: [],
       sources: [],
       guidanceHooks: new Map(),
+      declaredIn: {
+        rulebook: new Map(),
+        skill: new Map(),
+        subagent: new Map(),
+        collection: new Map([
+          ['recommended', [declarationPath()]],
+          ['triage', [declarationPath()]],
+        ]),
+      },
     });
   });
 
