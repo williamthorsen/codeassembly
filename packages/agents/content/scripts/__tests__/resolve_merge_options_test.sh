@@ -458,6 +458,21 @@ It "errors out when --base-ref does not exist in the repo"
 When run bash "$script" --base-ref "nonexistent"
 The status should equal 1
 The stderr should include "resolve-merge-options.sh: Base ref not found"
+The stderr should include "fatal:"
+End
+
+It "reports an unreadable repository rather than an absent base ref"
+# `GIT_DIR` points nowhere while the working directory is a healthy repository, which is the shape a
+# sandboxed nested `git` produces: the repository is present and git refuses to read it. `main` is
+# passed a base ref that does exist, so an unreadable repository is the only thing under test.
+run_unreadable_repo() {
+  GIT_DIR=/nonexistent/x bash "$script" --base-ref "main"
+}
+When run run_unreadable_repo
+The status should equal 1
+The stderr should include "resolve-merge-options.sh: Cannot read the git repository"
+The stderr should include "fatal:"
+The stderr should not include "Base ref not found"
 End
 
 It "errors out with status 1 on an unknown option"
