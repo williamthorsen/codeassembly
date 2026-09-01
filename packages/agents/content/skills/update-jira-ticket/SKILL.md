@@ -6,15 +6,15 @@ user-invocable: true
 
 # Update Jira ticket
 
-Creating a Jira issue and updating one meet the same boundary: whatever the client, what you submit is stored as Atlassian Document Format (ADF). One rule follows from that and holds for every client, stated first below. Past it, the two MCP tool shapes need opposite handling. One takes Markdown (or ADF) directly and needs no sanitization; the other takes HTML that Jira converts to ADF, a conversion that frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. Apply the content rule, identify your client, then follow that branch.
+Creating a Jira issue and updating one meet the same boundary: Whatever the client, what you submit is stored as Atlassian Document Format (ADF). One rule follows from that and holds for every client, stated first below. Past it, the two MCP tool shapes need opposite handling. One takes Markdown (or ADF) directly and needs no sanitization; the other takes HTML that Jira converts to ADF, a conversion that frequently rejects valid-looking HTML with an opaque `INVALID_INPUT` error. Apply the content rule, identify your client, then follow that branch.
 
 ## Write checklists as plain bullets
 
-Convert task-list syntax (`- [ ]` / `- [x]`) to plain `-` bullets before submitting. Jira's Markdown-to-ADF conversion does not map it to task items: it escapes the brackets, so the line persists as a bullet reading `\[ \] ...`.
+Convert task-list syntax (`- [ ]` / `- [x]`) to plain `-` bullets before submitting. Jira's Markdown-to-ADF conversion does not map it to task items: It escapes the brackets, so the line persists as a bullet reading `\[ \] ...`.
 
 The rule is a property of the content rather than of the client, and holds on creation and update alike. `acli` documents its description as plain text or ADF, neither of which reads Markdown checkbox syntax, so no client renders `- [ ]` as a checkbox.
 
-Artefact-sourced content is in scope, and is where this most often slips through: ticket artefacts from `design-and-plan` and `create-ticket` template acceptance criteria as `- [ ]` checkboxes, so a body forwarded verbatim from one carries them in.
+Artefact-sourced content is in scope, and is where this most often slips through: Ticket artefacts from `design-and-plan` and `create-ticket` template acceptance criteria as `- [ ]` checkboxes, so a body forwarded verbatim from one carries them in.
 
 Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, and `contentFormat` applies to the whole field rather than a section of it, so a checklist never justifies authoring the entire description as ADF.
 
@@ -26,13 +26,13 @@ Match your client to one of these shapes:
 - **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
 - **`description_html`-based tool**: `create_jira_issue` / `update_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
 
-Where more than one is available, prefer `acli` or the `contentFormat` tool: The Markdown path is simpler and cannot trigger the HTML→ADF failure classes.
+Where more than one is available, prefer the `contentFormat` tool: It takes Markdown directly, where `acli`'s description surface is plain text or ADF, so `acli` is the fallback for a machine with no connected Jira server. Both stay on the Markdown path, which cannot trigger the HTML→ADF failure classes.
 
 ## Markdown path
 
 Use this branch when `acli` or a `contentFormat`-based tool (e.g. `createJiraIssue` / `editJiraIssue`) is available.
 
-1. **Author Markdown.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. On a `contentFormat` tool, pass it via `contentFormat: "markdown"`.
+1. **Author Markdown.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. On a `contentFormat` tool, pass it via `contentFormat: "markdown"`. `acli` documents the field as plain text or ADF, so Markdown reaches it as plain text: Pass ADF through `--description-file` where the description's structure has to survive.
 2. **Prefer Markdown over ADF.** Reserve `contentFormat: "adf"` for content whose fidelity Markdown cannot express (panels, status lozenges, expand blocks, layout columns). ADF is full-fidelity JSON but verbose and harder to author, so use it only when Markdown genuinely falls short.
 3. **Write checklists as plain bullets**, per [Write checklists as plain bullets](#write-checklists-as-plain-bullets).
 4. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`. Those rules exist solely to survive Jira's HTML→ADF conversion, and that converter is never invoked when you submit Markdown or ADF, so there is nothing for them to guard against. Rendering content to allowlist HTML and running the checker on this path is wasted work.
@@ -50,11 +50,11 @@ Use this branch only when the available tool is the HTML-surface `create_jira_is
 3. **Run the pre-flight checker against the rendered HTML.** Fix everything it flags, then re-run until it returns `ok: true`. See [Pre-flight checker](#pre-flight-checker) for the contract.
 4. **Pass the HTML inline** to `description_html` or `comment_html`.
 5. **Never pass a file path** to `description_html` / `comment_html`. File-path mode is forbidden: It has been observed to fail with `INVALID_INPUT`.
-6. **Never include `version_message`** as an argument. It is not a parameter of `update_jira_issue` or `create_jira_issue`; including it triggers a validation failure and a wasted retry.
+6. **Never include `version_message`** as an argument. It is not a parameter of `create_jira_issue` or `update_jira_issue`; including it triggers a validation failure and a wasted retry.
 
 ### Pre-flight checker
 
-A bundled helper at `{harness_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs` validates the rendered HTML against every known failure class. The agent invokes it before every `update_jira_issue` / `create_jira_issue` call.
+A bundled helper at `{harness_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs` validates the rendered HTML against every known failure class. The agent invokes it before every `create_jira_issue` / `update_jira_issue` call.
 
 #### Invocation
 
@@ -102,7 +102,7 @@ The rule classes are: `composition-code-inline-mark`, `named-entity`, `confluenc
 
 #### Acting on findings
 
-For each finding, apply the suggested fix to the source. Do not invoke `update_jira_issue` / `create_jira_issue` until the checker returns `ok: true`. Findings are not optional: Every rule corresponds to a documented `INVALID_INPUT` trigger.
+For each finding, apply the suggested fix to the source. Do not invoke `create_jira_issue` / `update_jira_issue` until the checker returns `ok: true`. Findings are not optional: Every rule corresponds to a documented `INVALID_INPUT` trigger.
 
 ### Allowed elements
 
@@ -230,7 +230,7 @@ If recorded failures distribute across truly **unknown classes** (no clear patte
 
 ### Antipatterns
 
-- Skipping the pre-flight check before invoking `update_jira_issue` / `create_jira_issue`.
+- Skipping the pre-flight check before invoking `create_jira_issue` / `update_jira_issue`.
 - Creating a probe ticket without the `mcp-probe` label, the deterministic title, and the description prefix.
 - Hand-authoring HTML containing constructs outside the allowlist.
 - Passing `- [ ]` / `- [x]` brackets into `<li>` text instead of rendering a plain bullet.
