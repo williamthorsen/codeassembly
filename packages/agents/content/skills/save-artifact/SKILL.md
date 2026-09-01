@@ -71,7 +71,7 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 Create a filesystem-safe slug (for ticket-level artifacts only):
 
-1. Reuse the slug of the artifacts already in the ticket directory for this change, where any are there
+1. Reuse the slug of the artifacts already in the ticket directory for this change, where any are there, unless the change's descriptor has moved
 2. If explicit title provided, use it (convert to kebab-case)
 3. Extract descriptive part from branch name after ticket ID
 4. Analyze recent commits for work theme

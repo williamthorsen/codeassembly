@@ -71,7 +71,7 @@ Resolve session context and the artifact directory before writing.
    {artifact_base_dir}/projects/{project_slug}/{artifact_paths.devlogs}/{filename}
    ```
 
-   Filename uses the standard ticket-level shape: `{YYYYMMDD-HHMMSSZ}_{slug}.md`.
+   Filename uses the ticket-level timestamp and slug without the artifact-type segment: `{YYYYMMDD-HHMMSSZ}_{slug}.md`.
 
 4. `mkdir -p` the target directory before writing.
 
