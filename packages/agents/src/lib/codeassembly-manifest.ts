@@ -16,7 +16,7 @@ import { resolveSourcePath } from './source-path.ts';
  * The effective slugs a project declares per artifact type, after combining the scope chain. `rulebooks`, `skills`,
  * and `subagents` are deployable; `collections` are dependency-only aggregates the caller expands into the others.
  * `sources` are the declared content sources, each resolved to an absolute directory, in precedence order (highest
- * first). `packages` are the declared package names in that same precedence order, left unresolved: locating one probes
+ * first). `packages` are the declared package names in that same precedence order, left unresolved: Locating one probes
  * `node_modules`, which is filesystem work this parser deliberately leaves to its caller. `declinedPackages` are the
  * names a tier dropped and no higher tier re-adopted, which distinguishes "declined" from "never mentioned".
  * `guidanceHooks` maps each bound hook name to the rulebooks bound to it, in declaration order; a hook every binding
@@ -42,7 +42,7 @@ export interface ResolvedDeclaration {
  * `drop` subtracts an inherited slug; `root: true` discards every type's lower-precedence contributions before that
  * tier is applied. Each type accumulates independently.
  *
- * Returns the direct, unexpanded sets: a declared collection appears in `collections`, not yet expanded into its
+ * Returns the direct, unexpanded sets: A declared collection appears in `collections`, not yet expanded into its
  * members — the caller passes the result to the closure resolver for that. Returns `undefined` when no
  * `codeassembly.yaml` exists anywhere in the chain — a total no-op for `sync`, distinct from a present-but-empty
  * declaration, which returns empty lists.

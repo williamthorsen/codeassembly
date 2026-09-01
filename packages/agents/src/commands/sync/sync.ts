@@ -126,7 +126,7 @@ type ResolveOverlay = (harnessId: HarnessId, contentRoot: string) => Promise<str
 
 /**
  * One source's support entries rendered for one harness, paired with the namespace directory they deploy into and
- * what delivery will do there: write the entries, remove a namespace the source no longer fills, or nothing at all.
+ * what delivery will do there: Write the entries, remove a namespace the source no longer fills, or nothing at all.
  * Carrying the verdict is what lets the preview describe the removals without re-deriving them from the tree that
  * delivery is about to change.
  */
@@ -194,7 +194,7 @@ export interface SyncPlan {
 
 /**
  * A disagreement between what a declaration's guidance-hook bindings do and what they find: a rulebook whose
- * `delivery` answers the binding differently, or a hook no body declares. Every kind is advisory: a rulebook's
+ * `delivery` answers the binding differently, or a hook no body declares. Every kind is advisory: A rulebook's
  * delivery is written by its author and a binding by its consumer, so a mismatch is not always the consumer's to fix
  * and never fails their run.
  *
@@ -249,7 +249,7 @@ export async function syncCommand(
 ): Promise<SyncOutcome> {
   if (path.resolve(projectRoot) === path.resolve(homeDir)) {
     throw new Error(
-      'Refusing to run `sync` in the home directory: that would deploy the user-global tier through the project ' +
+      'Refusing to run `sync` in the home directory: That would deploy the user-global tier through the project ' +
         'path. Run `sync --global` to sync the user-global tier into the home harness dirs.',
     );
   }
@@ -312,7 +312,7 @@ export async function syncGlobalCommand(
  * absent `codeassembly.yaml` is a total no-op. Repo and home domains share this one reconciler, differing only in
  * the `SyncDomain` they pass.
  *
- * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: it
+ * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: It
  * carries the user-global half of the `harnesses` chain and the harnesses targeting falls back to.
  */
 async function reconcileDomain(
@@ -346,7 +346,7 @@ async function reconcileDomain(
   const resolver = createSourceResolver(sources, contentDir);
 
   // Everything a declared package ships seeds the closure, which is what makes naming the package the whole
-  // declaration. A package whose content dir is missing enumerates nothing: the walk reads through a directory listing
+  // declaration. A package whose content dir is missing enumerates nothing: The walk reads through a directory listing
   // that answers an absent directory with no entries.
   const packageCatalogs = await Promise.all(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
@@ -515,11 +515,11 @@ async function reconcileDomain(
   // rendered result is carried to the preview and the delivery pass rather than rendered again by each.
   const sourceSupportPlans = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
 
-  // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
+  // Same gate for subagents, whose deploy is the last write pass: Without it a render failure lands after the ambient
   // host and every skill file are already on disk.
   await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents, resolveAnchorContext, resolveOverlay);
 
-  // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
+  // Same gate for rulebooks: A link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
   assertRulebooksRender(harnessIds, resolved, resolveRulebookContext);
 
@@ -683,7 +683,7 @@ async function assertBindingsResolve(
 /**
  * Throws when a declaration's own `use:` list names an artifact that resolves from no declared source or the
  * library, naming the chain files that declare it alongside the slug. The closure catches the same slug, but only
- * as an anonymous missing reference: the declaring file is the half that says where to go and fix it, and a path
+ * as an anonymous missing reference: The declaring file is the half that says where to go and fix it, and a path
  * derived from the domain cannot supply it, since either tier of the chain could have named the slug.
  */
 async function assertDeclaredArtifactsResolve(
@@ -757,7 +757,7 @@ function buildGuidanceHookFills(
 
 /**
  * Collects every disagreement between the rulebooks a declaration binds and the delivery those rulebooks declare.
- * No disagreement throws: each reaches the reader as a report line, because a binding and a `delivery` are written by
+ * No disagreement throws: Each reaches the reader as a report line, because a binding and a `delivery` are written by
  * different people and a run whose output is correct must not fail over their disagreement.
  *
  * `declarers` is what separates a real overlap from a pairing that only looks like one. Ambient delivery lands in the
@@ -765,7 +765,7 @@ function buildGuidanceHookFills(
  * routes reaches an agent twice only where a skill declares the hook. A subagent's context never carries the ambient
  * region, so there the two routes are the only way to reach both audiences.
  *
- * Order is fixed so both reports render alike: the bound findings follow the bindings in declaration order, each
+ * Order is fixed so both reports render alike: The bound findings follow the bindings in declaration order, each
  * hook's own finding ahead of its rulebooks', and the unbound ones follow `resolved`, whose order the closure walk
  * fixes.
  */
@@ -780,7 +780,7 @@ function findGuidanceHookAdvisories(
 
   for (const [hook, slugs] of bindings) {
     const declaring = declarers.get(hook);
-    // Reported once for the hook rather than per rulebook: the binding delivers nothing, whatever it names.
+    // Reported once for the hook rather than per rulebook: The binding delivers nothing, whatever it names.
     if (declaring === undefined) {
       advisories.push({ kind: 'bound-unreached', hook });
     }
@@ -788,7 +788,7 @@ function findGuidanceHookAdvisories(
     for (const slug of slugs) {
       boundSlugs.add(slug);
       const rulebook = readBoundRulebook(bySlug, slug, hook);
-      // Both can hold at once, and both are reported: one says the rulebook was never authored for the splice, the
+      // Both can hold at once, and both are reported: One says the rulebook was never authored for the splice, the
       // other that its text now reaches a session twice. Neither remedy resolves the other.
       if (!rulebook.hook) {
         advisories.push({ kind: 'bound-undeclared', slug, hook });
@@ -800,7 +800,7 @@ function findGuidanceHookAdvisories(
   }
 
   for (const rulebook of resolved) {
-    // Measured against every hook's bindings at once: a rulebook bound anywhere has taken the route it declares.
+    // Measured against every hook's bindings at once: A rulebook bound anywhere has taken the route it declares.
     if (rulebook.hook && !boundSlugs.has(rulebook.slug)) {
       advisories.push({ kind: 'declared-unbound', slug: rulebook.slug });
     }
@@ -1180,7 +1180,7 @@ export interface PlannedAmbientHost {
 /**
  * Decides what a sync does to one ambient host. The harness-home host is `install`'s to create, so anything but a
  * rendered region is skipped with the remedy named. The project-local host is sync's own, and is materialized only
- * when there is ambient content to carry: an absent host with nothing to deliver stays absent, matching how the
+ * when there is ambient content to carry: An absent host with nothing to deliver stays absent, matching how the
  * `prompts.yml` region and the legacy ambient host withdraw rather than persist empty.
  */
 function planAmbientHost(hostKind: AmbientHostKind, host: AmbientHostState, body: string): AmbientHostPlan {
@@ -1224,7 +1224,7 @@ async function planAmbientHosts(
 
 /**
  * The hosts a sync writes that git does not ignore, so machine-local guidance does not quietly become a commit
- * candidate. Purely advisory: an ignored host is omitted, and so is one the check cannot answer for — the project may
+ * candidate. Purely advisory: An ignored host is omitted, and so is one the check cannot answer for — the project may
  * not be a repository at all, which is no reason to fail a sync. A host the run skips is never asked about.
  */
 async function findUnignoredHosts(
@@ -1421,7 +1421,7 @@ function buildRulebookRenderContext(
 
 /**
  * Indexes the deployed rulebooks by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys
- * under. Harness-invariant, unlike the render contexts that carry it: what a rulebook deploys as does not vary by
+ * under. Harness-invariant, unlike the render contexts that carry it: What a rulebook deploys as does not vary by
  * harness.
  */
 function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedRulebook>): RulebookInvocationCatalog {
@@ -1559,7 +1559,7 @@ function resolveSubagentTarget(
 
 /**
  * Resolves one harness's project-local skills dir together with the per-harness inputs the skill transform needs: the
- * link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
+ * link anchor, the home-dir segment, and the harness ID. Passing `projectRoot` as the base keeps delivery
  * project-scoped.
  */
 function resolveSkillTarget(

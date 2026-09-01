@@ -29,7 +29,7 @@ export interface ResolvedClosure {
  * collection's `members:`, every other type's `dependencies:`, a subagent's top-level `skills:` injection list, plus
  * the invocation tokens in a rulebook's, skill's, or subagent's body — and following them across every type. The
  * result is deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending
- * path. A collection is a traversal-only node: its members are followed but the collection itself is dropped from
+ * path. A collection is a traversal-only node: Its members are followed, but the collection itself is dropped from
  * the deployable result. A referenced artifact that resolves from no source or the library throws an error naming
  * its type and slug, the artifact that named it, and every location searched.
  */
@@ -84,7 +84,7 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
  * every location searched when the artifact resolves from no source or the library, plus the artifact that named it
  * where `trail` carries one. A seed's trail is empty, and naming where a seed came from is its caller's job. Every type
- * resolves from any source: a skill or subagent expands its include-expanded body against that source's own root, and a
+ * resolves from any source: A skill or subagent expands its include-expanded body against that source's own root, and a
  * collection's `'@library'` sentinel enumerates the content root it resolved from — the built-in library for a library
  * collection, the owning source for a source collection (a library collection's resolved directory is the library, so
  * one rule covers both). A collection's edges come from `members:` — that resolved-root catalog when it carries
@@ -92,7 +92,7 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
  * additionally unions the invocation tokens in its include-expanded body (`{skill:<slug>}` / `{subagent:<slug>}`, the
  * same surface the render pass rewrites) — so a token inside a shared partial becomes an edge for every artifact that
  * includes it — and a subagent further unions its top-level `skills:` and `rulebooks:` injection lists. A body token
- * that names the artifact itself is dropped rather than unioned: a self-reference renders per harness but is not a
+ * that names the artifact itself is dropped rather than unioned: A self-reference renders per harness but is not a
  * dependency and must not trip the cycle check; a self-dependency written in `dependencies:` is not dropped, so it
  * still errors. A rulebook unions its own body tokens the same way, off its include-expanded body, since its
  * frontmatter file is also its body file. A `{rulebook:<slug>}` token is unioned from every body that renders one --
@@ -144,7 +144,7 @@ async function readArtifactEdges(
   // by both a token and `dependencies:` collapses to one visit.
   const expanded = await expandIncludes(filePath, resolved.dir);
   const tokens = extractInvocationEdges(expanded);
-  // A body token that names its own artifact is a render-only self-reference, not a dependency: drop it before it
+  // A body token that names its own artifact is a render-only self-reference, not a dependency: Drop it before it
   // becomes an edge and reaches the cycle check. Only a same-kind, same-slug token self-collides, so filter per kind.
   // A self-dependency declared in frontmatter is left untouched and still surfaces as a cycle error.
   const bodySkills = type === 'skill' ? tokens.skills.filter((edge) => edge !== slug) : tokens.skills;
