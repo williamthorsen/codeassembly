@@ -234,6 +234,13 @@ const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
   'wrote',
 ]);
 
+/**
+ * How far past an auxiliary its lexical verb may sit, counted in tokens. Three reaches `is probed`, `may not read`,
+ * and `has been read`. The measure runs from the auxiliary rather than from the subject, since a subject window
+ * bounds the subject alone and the one-token pronoun window leaves an auxiliary chain no room under it.
+ */
+const CARRIED_VERB_WINDOW = 3;
+
 /** Coordinators. One inside a subject ends the noun phrase, so the verb scan stops there. */
 const COORDINATORS: ReadonlySet<string> = new Set(['and', 'but', 'nor', 'or']);
 
@@ -670,7 +677,7 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
     if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
     if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
     if (AUXILIARIES.has(token.word) && index >= first) {
-      const carried = findCarriedVerbIndex(tokens, index, last);
+      const carried = findCarriedVerbIndex(tokens, index);
       if (carried !== undefined) return carried;
       if (!MAIN_VERB_AUXILIARIES.has(token.word)) continue;
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
@@ -685,10 +692,13 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 
 /**
  * Returns the index of the lexical verb an auxiliary at `auxiliaryIndex` carries, or undefined where it carries none
- * within `last`. A modal is always followed by a verb, which is what lets `the file the parser may read` be found
- * where the morphological test sees nothing on `read`; a second auxiliary or a negator between the two is skipped.
+ * within {@link CARRIED_VERB_WINDOW}. A modal is always followed by a verb, which is what lets `the file the parser
+ * may read` be found where the morphological test sees nothing on `read`; a second auxiliary or a negator between the
+ * two is skipped.
  */
-function findCarriedVerbIndex(tokens: readonly Token[], auxiliaryIndex: number, last: number): number | undefined {
+function findCarriedVerbIndex(tokens: readonly Token[], auxiliaryIndex: number): number | undefined {
+  const last = Math.min(auxiliaryIndex + CARRIED_VERB_WINDOW, tokens.length - 1);
+
   for (let index = auxiliaryIndex + 1; index <= last; index += 1) {
     const token = tokens[index];
     if (token === undefined || token.afterBreak) return undefined;

@@ -211,6 +211,16 @@ describe(detectCandidates, () => {
       expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'version the consumer has read' });
     });
 
+    it.each([
+      { sentence: 'Reports the level it is probed against.', phrase: 'level it is probed' },
+      { sentence: 'Reports the file it may read.', phrase: 'file it may read' },
+    ])("reads through an auxiliary filling a pronoun subject's whole window: $phrase", ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+
     it("holds a main-verb auxiliary to the bare subject's plural agreement", () => {
       expect(detect('Reports the fields records have.')).toHaveLength(1);
       expect(detect('Reports the fields records has.')).toStrictEqual([]);
