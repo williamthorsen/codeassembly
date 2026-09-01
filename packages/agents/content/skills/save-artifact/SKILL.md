@@ -17,7 +17,7 @@ Save AI-generated files with standardized naming conventions.
 ```
 
 - **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
-- **slug**: Kebab-case descriptor drawn from work context, e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
+- **slug**: Kebab-case descriptor of the change. See [artifact-conventions.md](../_data/artifact-conventions.md#naming-conventions) for what it is drawn from and the length bound, and [Slug generation](#slug-generation) below for how to produce one.
 - **artifact-type**: Type of artifact. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the artifact type list.
 
 ### Run artifacts (review workflow)
@@ -71,14 +71,14 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 Create a filesystem-safe slug (for ticket-level artifacts only):
 
-1. If explicit title provided, use it (convert to kebab-case)
-2. Extract descriptive part from branch name after ticket ID
-3. Analyze recent commits for work theme
-4. Generate concise description
+1. Reuse the slug of the artifacts already in the ticket directory for this change, where any are there
+2. If explicit title provided, use it (convert to kebab-case)
+3. Extract descriptive part from branch name after ticket ID
+4. Analyze recent commits for work theme
+5. Generate concise description
 
-Format requirements:
+Format requirements, within the length bound [artifact-conventions.md](../_data/artifact-conventions.md#naming-conventions) sets:
 
 - Kebab-case (lowercase, hyphens)
-- Maximum 60 characters
 - Filesystem-safe characters only
 - No leading/trailing hyphens

@@ -748,6 +748,32 @@ The stderr should include "fatal:"
 The stderr should not include "could not resolve the current branch"
 End
 End
+
+Context "when git cannot resolve the branch"
+setup_unborn_head() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null || exit
+  # No commit: `git rev-parse --git-dir` answers while `--abbrev-ref HEAD` fails, which is the only
+  # condition that reaches the branch diagnostic past the readability probe.
+  git init --quiet --initial-branch=main .
+}
+
+cleanup_unborn_head() {
+  popd >/dev/null || exit
+  rm -rf "$tmpdir"
+}
+
+BeforeEach "setup_unborn_head"
+AfterEach "cleanup_unborn_head"
+
+It "quotes git's diagnostic rather than naming a cause"
+When run main --skill foo --interactive true
+The status should be failure
+The stderr should include "git could not resolve the current branch"
+The stderr should include "fatal:"
+The stderr should not include "cannot read the git repository"
+End
+End
 End
 
 Describe "main missing manifest invokes the bundled deriver"
