@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { resolveDeclaration } from '../codeassembly-manifest.ts';
+import { type ResolvedDeclaration, resolveDeclaration } from '../codeassembly-manifest.ts';
 
 describe(resolveDeclaration, () => {
   let cwd: string;
@@ -26,6 +26,12 @@ describe(resolveDeclaration, () => {
     await writeFile(path.join(cwd, '.agents', 'codeassembly.yaml'), content, 'utf8');
   }
 
+  /** The absolute path of the project-local `codeassembly.local.yaml`. */
+  const localPath = (): string => path.join(cwd, '.agents', 'codeassembly.local.yaml');
+
+  /** The absolute path of the project-scope `codeassembly.yaml`. */
+  const projectPath = (): string => path.join(cwd, '.agents', 'codeassembly.yaml');
+
   /** Writes the project-local `codeassembly.local.yaml`. */
   async function writeLocal(content: string): Promise<void> {
     await writeFile(path.join(cwd, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
@@ -42,7 +48,7 @@ describe(resolveDeclaration, () => {
 
   it('returns empty type and source lists when a file is present but declares nothing', async () => {
     await writeProject('# nothing declared yet\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: [],
       subagents: [],
@@ -56,7 +62,7 @@ describe(resolveDeclaration, () => {
 
   it('resolves additive rulebook use from a single project file, deduplicating', async () => {
     await writeProject('rulebooks:\n  use:\n    - alpha\n    - beta\n    - alpha\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: ['alpha', 'beta'],
       skills: [],
       subagents: [],
@@ -70,7 +76,7 @@ describe(resolveDeclaration, () => {
 
   it('resolves additive skill use from a single project file, deduplicating', async () => {
     await writeProject('skills:\n  use:\n    - one\n    - two\n    - one\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: ['one', 'two'],
       subagents: [],
@@ -84,7 +90,7 @@ describe(resolveDeclaration, () => {
 
   it('resolves additive subagent use from a single project file, deduplicating', async () => {
     await writeProject('subagents:\n  use:\n    - canary\n    - other\n    - canary\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: [],
       subagents: ['canary', 'other'],
@@ -98,7 +104,7 @@ describe(resolveDeclaration, () => {
 
   it('resolves additive collection use, leaving expansion of its members to the caller', async () => {
     await writeProject('collections:\n  use:\n    - recommended\n    - other\n    - recommended\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: [],
       subagents: [],
@@ -114,7 +120,7 @@ describe(resolveDeclaration, () => {
     await writeProject(
       'rulebooks:\n  use:\n    - alpha\nskills:\n  use:\n    - one\nsubagents:\n  use:\n    - canary\ncollections:\n  use:\n    - recommended\n',
     );
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: ['alpha'],
       skills: ['one'],
       subagents: ['canary'],
@@ -131,7 +137,7 @@ describe(resolveDeclaration, () => {
       'rulebooks:\n  use:\n    - alpha\nskills:\n  use:\n    - one\nsubagents:\n  use:\n    - canary\n',
     );
     await writeLocal('rulebooks:\n  use:\n    - beta\nskills:\n  use:\n    - two\nsubagents:\n  use:\n    - other\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: ['alpha', 'beta'],
       skills: ['one', 'two'],
       subagents: ['canary', 'other'],
@@ -146,7 +152,7 @@ describe(resolveDeclaration, () => {
   it('lets a higher tier drop a rulebook inherited from a lower tier', async () => {
     await writeProject('rulebooks:\n  use:\n    - alpha\n    - beta\n');
     await writeLocal('rulebooks:\n  drop:\n    - alpha\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: ['beta'],
       skills: [],
       subagents: [],
@@ -161,7 +167,7 @@ describe(resolveDeclaration, () => {
   it('lets a higher tier drop a collection inherited from a lower tier', async () => {
     await writeProject('collections:\n  use:\n    - recommended\n    - other\n');
     await writeLocal('collections:\n  drop:\n    - recommended\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: [],
       subagents: [],
@@ -175,7 +181,7 @@ describe(resolveDeclaration, () => {
 
   it('resolves additive package use, deduplicating', async () => {
     await writeProject("packages:\n  use:\n    - '@williamthorsen/nmr'\n    - readyup\n    - '@williamthorsen/nmr'\n");
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: [],
       subagents: [],
@@ -190,7 +196,7 @@ describe(resolveDeclaration, () => {
   it('lets a higher tier drop a package inherited from a lower tier, recording it as declined', async () => {
     await writeProject("packages:\n  use:\n    - '@williamthorsen/nmr'\n    - readyup\n");
     await writeLocal("packages:\n  drop:\n    - '@williamthorsen/nmr'\n");
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: [],
       subagents: [],
@@ -239,7 +245,7 @@ describe(resolveDeclaration, () => {
     await writeLocal(
       "root: true\nrulebooks:\n  use:\n    - beta\nskills:\n  use:\n    - two\nsubagents:\n  use:\n    - other\ncollections:\n  use:\n    - fresh\npackages:\n  use:\n    - '@acme/new'\n",
     );
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: ['beta'],
       skills: ['two'],
       subagents: ['other'],
@@ -253,7 +259,7 @@ describe(resolveDeclaration, () => {
 
   it('resolves the project-local tier alone when the project file is absent', async () => {
     await writeLocal('skills:\n  use:\n    - gamma\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({
+    expect(withoutDeclaredIn(await resolveDeclaration({ cwd }))).toEqual({
       rulebooks: [],
       skills: ['gamma'],
       subagents: [],
@@ -268,6 +274,60 @@ describe(resolveDeclaration, () => {
   it('does not read a legacy rulebooks.yaml: it returns undefined when only that file is present', async () => {
     await writeLegacy('rulebooks:\n  - alpha\n');
     expect(await resolveDeclaration({ cwd })).toBeUndefined();
+  });
+
+  describe('declaredIn', () => {
+    it('names the project file that declares a slug', async () => {
+      await writeProject('rulebooks:\n  use:\n    - alpha\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.rulebook).toEqual(new Map([['alpha', [projectPath()]]]));
+    });
+
+    it('names the local file when only it declares a slug', async () => {
+      await writeProject('rulebooks:\n  use:\n    - alpha\n');
+      await writeLocal('rulebooks:\n  use:\n    - beta\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.rulebook.get('beta')).toEqual([localPath()]);
+    });
+
+    it('names both files in chain order when both declare a slug', async () => {
+      await writeProject('rulebooks:\n  use:\n    - alpha\n');
+      await writeLocal('rulebooks:\n  use:\n    - alpha\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.rulebook.get('alpha')).toEqual([projectPath(), localPath()]);
+    });
+
+    it('names a file once when it declares the same slug twice', async () => {
+      await writeProject('rulebooks:\n  use:\n    - alpha\n    - alpha\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.rulebook.get('alpha')).toEqual([projectPath()]);
+    });
+
+    it("drops a slug's declaring files along with the slug", async () => {
+      await writeProject('rulebooks:\n  use:\n    - alpha\n    - beta\n');
+      await writeLocal('rulebooks:\n  drop:\n    - alpha\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.rulebook.has('alpha')).toBe(false);
+      expect(declaration?.declaredIn.rulebook.get('beta')).toEqual([projectPath()]);
+    });
+
+    it('discards lower-tier declaring files when a higher tier declares root: true', async () => {
+      await writeProject('rulebooks:\n  use:\n    - alpha\n');
+      await writeLocal('root: true\nrulebooks:\n  use:\n    - alpha\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.rulebook.get('alpha')).toEqual([localPath()]);
+    });
+
+    it('records each artifact type independently', async () => {
+      await writeProject(
+        'skills:\n  use:\n    - alpha\nsubagents:\n  use:\n    - beta\ncollections:\n  use:\n    - gamma\n',
+      );
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.declaredIn.skill.get('alpha')).toEqual([projectPath()]);
+      expect(declaration?.declaredIn.subagent.get('beta')).toEqual([projectPath()]);
+      expect(declaration?.declaredIn.collection.get('gamma')).toEqual([projectPath()]);
+      expect(declaration?.declaredIn.rulebook.size).toBe(0);
+    });
   });
 
   describe('sources', () => {
@@ -391,3 +451,19 @@ describe(resolveDeclaration, () => {
     });
   });
 });
+
+// region | Helpers
+
+/**
+ * Drops the per-slug declaring files from a resolved declaration, so an assertion about the resolved slug sets is not
+ * restated as absolute temp-directory paths. Provenance has its own coverage.
+ */
+function withoutDeclaredIn(declaration: ResolvedDeclaration | undefined): Omit<ResolvedDeclaration, 'declaredIn'> {
+  if (declaration === undefined) {
+    throw new Error('Expected a resolved declaration.');
+  }
+  const { declaredIn: _declaredIn, ...rest } = declaration;
+  return rest;
+}
+
+// endregion | Helpers
