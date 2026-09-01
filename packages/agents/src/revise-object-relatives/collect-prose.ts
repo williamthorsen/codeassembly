@@ -160,9 +160,9 @@ const DEPLOYMENT_MARKERS: readonly RegExp[] = [
  * alternation spanning every kind would hold out a document that merely lists the markers.
  */
 const GENERATOR_MARKERS: Readonly<Record<ProseKind, readonly RegExp[]>> = {
-  markdown: buildGeneratorMarkers(String.raw`<!--`),
+  markdown: buildGeneratorMarkers(`<!--`),
   script: buildGeneratorMarkers(String.raw`\/\/|\/\*+|\*`),
-  shell: buildGeneratorMarkers(String.raw`#`),
+  shell: buildGeneratorMarkers(`#`),
 };
 
 /**
