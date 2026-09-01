@@ -177,6 +177,29 @@ describe(detectCandidates, () => {
     });
   });
 
+  describe('verbs', () => {
+    it.each([
+      { sentence: 'Declares the version the consumer has for this kit.', verb: 'has' },
+      { sentence: 'Reports the check it does on every run.', verb: 'does' },
+    ])("reads a $verb carrying no lexical verb as the clause's own", ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb });
+    });
+
+    it('prefers the lexical verb an auxiliary carries over the auxiliary itself', () => {
+      const candidates = detect('Declares the version the consumer has read.');
+
+      expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'version the consumer has read' });
+    });
+
+    it("holds a main-verb auxiliary to the bare subject's plural agreement", () => {
+      expect(detect('Reports the fields records have.')).toHaveLength(1);
+      expect(detect('Reports the fields records has.')).toStrictEqual([]);
+    });
+  });
+
   describe('scope', () => {
     it.each(OUT_OF_SCOPE_HEADS)('passes over %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);

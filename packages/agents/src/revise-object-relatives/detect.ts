@@ -244,6 +244,12 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
   'whoever',
 ]);
 
+/**
+ * Auxiliaries that also serve as a clause's transitive main verb, which is what `the version the consumer has` turns
+ * on. A `be` form is absent: a copula takes no object, so a clause it closes has no gap to find.
+ */
+const MAIN_VERB_AUXILIARIES: ReadonlySet<string> = new Set(['did', 'do', 'does', 'had', 'has', 'have']);
+
 /** Cardinals worth naming; a digit string is recognized by shape instead. */
 const NUMERALS: ReadonlySet<string> = new Set([
   'eight',
@@ -599,7 +605,8 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
  * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
- * plural agreement, which is the only reading its own form supports.
+ * plural agreement, which is the only reading its own form supports. An auxiliary carrying no lexical verb closes the
+ * subject itself where it is a {@link MAIN_VERB_AUXILIARIES} member, since there a main-verb reading is what remains.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
@@ -614,6 +621,9 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
     if (AUXILIARIES.has(token.word) && index >= first) {
       const carried = findCarriedVerbIndex(tokens, index, last);
       if (carried !== undefined) return carried;
+      if (!MAIN_VERB_AUXILIARIES.has(token.word)) continue;
+      if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
+      return index;
     }
     if (index < first || !isFiniteVerb(token.word)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
