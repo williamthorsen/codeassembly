@@ -116,6 +116,8 @@ Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in sess
 - **slug**: Kebab-case descriptor drawn from work context, e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
 - **artifact-type**: One of the registered types (see below)
 
+Where the ticket directory already holds artifacts for this change, reuse their slug; derive a fresh one only where the change's descriptor has moved. One change carries one name, which keeps it legible where the enclosing path is not in view: an editor tab, a search result, an export.
+
 ### Run artifacts (review workflow)
 
 ```
