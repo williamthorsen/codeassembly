@@ -82,11 +82,25 @@ describe(resolveClosure, () => {
     );
   });
 
-  it('throws naming the type and slug when a referenced artifact is missing', async () => {
+  it('throws naming the missing member and the collection that named it', async () => {
     await writeArtifact(contentDir, 'collection', 'recommended', { skill: ['ghost'] });
 
     await expect(resolveClosure({ collection: ['recommended'] }, libraryResolver(contentDir))).rejects.toThrow(
-      /skill "ghost" was not found/,
+      /skill "ghost", named by collection:recommended, was not found/,
+    );
+  });
+
+  it('throws naming the artifact whose dependencies edge named the missing slug', async () => {
+    await writeArtifact(contentDir, 'skill', 'wrap-up', { rulebook: ['ghost'] });
+
+    await expect(resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir))).rejects.toThrow(
+      /rulebook "ghost", named by skill:wrap-up, was not found/,
+    );
+  });
+
+  it('throws without a referrer when the missing slug is a seed', async () => {
+    await expect(resolveClosure({ rulebook: ['ghost'] }, libraryResolver(contentDir))).rejects.toThrow(
+      /^Referenced rulebook "ghost" was not found in any of: /,
     );
   });
 
@@ -175,11 +189,11 @@ describe(resolveClosure, () => {
     );
   });
 
-  it('throws naming the skill when an injected skill is missing from the library', async () => {
+  it('throws naming the skill and the subagent that injected it when an injected skill is missing', async () => {
     await writeSubagent(contentDir, 'orchestrated-coder', ['ghost']);
 
     await expect(resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir))).rejects.toThrow(
-      /skill "ghost" was not found/,
+      /skill "ghost", named by subagent:orchestrated-coder, was not found/,
     );
   });
 
@@ -246,7 +260,7 @@ describe(resolveClosure, () => {
       await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns'], undefined, ['ghost']);
 
       await expect(resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir))).rejects.toThrow(
-        /rulebook "ghost" was not found/,
+        /rulebook "ghost", named by subagent:orchestrated-coder, was not found/,
       );
     });
 
@@ -254,7 +268,7 @@ describe(resolveClosure, () => {
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:ghost}.');
 
       await expect(resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir))).rejects.toThrow(
-        /skill "ghost" was not found/,
+        /skill "ghost", named by skill:wrap-up, was not found/,
       );
     });
 
