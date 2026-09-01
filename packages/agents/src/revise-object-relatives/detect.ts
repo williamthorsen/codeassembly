@@ -183,6 +183,57 @@ const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'vary',
 ]);
 
+/**
+ * Past-tense forms that no suffix marks as a verb, so nothing but a lexicon recognizes one. Admission follows the
+ * rule {@link BARE_VERBS} states: every entry is a word that no reading takes as a noun, which keeps `cost`, `cut`,
+ * `hit`, `put`, `run`, `saw`, `set`, `split`, and `spread` out. A past participle needs no entry, since
+ * {@link findCarriedVerbIndex} admits whatever an auxiliary carries.
+ */
+const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
+  'began',
+  'bought',
+  'broke',
+  'brought',
+  'built',
+  'caught',
+  'chose',
+  'dealt',
+  'drew',
+  'drove',
+  'found',
+  'gave',
+  'grew',
+  'held',
+  'kept',
+  'knew',
+  'laid',
+  'led',
+  'left',
+  'lent',
+  'lost',
+  'made',
+  'meant',
+  'met',
+  'paid',
+  'read',
+  'said',
+  'sent',
+  'sold',
+  'sought',
+  'spent',
+  'struck',
+  'swept',
+  'taught',
+  'thought',
+  'threw',
+  'told',
+  'took',
+  'understood',
+  'withheld',
+  'won',
+  'wrote',
+]);
+
 /** Coordinators. One inside a subject ends the noun phrase, so the verb scan stops there. */
 const COORDINATORS: ReadonlySet<string> = new Set(['and', 'but', 'nor', 'or']);
 
@@ -671,7 +722,7 @@ function findSentence(text: string, start: number, end: number): string {
  */
 function isFiniteVerb(word: string): boolean {
   if (isFunctionWord(word) || S_FINAL_NON_VERBS.has(word) || INTRANSITIVE_VERBS.has(word)) return false;
-  if (BARE_VERBS.has(word)) return true;
+  if (BARE_VERBS.has(word) || IRREGULAR_PAST_VERBS.has(word)) return true;
   if (/(?:ize|ise|ify)$/.test(word)) return true;
   if (word.length > 3 && word.endsWith('ed')) return true;
   return word.length > 2 && word.endsWith('s') && !/(?:ss|us|is)$/.test(word);

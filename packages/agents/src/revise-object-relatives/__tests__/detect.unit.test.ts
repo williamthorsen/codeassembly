@@ -188,6 +188,23 @@ describe(detectCandidates, () => {
       expect(candidates[0]).toMatchObject({ verb });
     });
 
+    it.each([
+      { sentence: 'Reports the state it found.', verb: 'found' },
+      { sentence: 'Reports a message the console never wrote.', verb: 'wrote' },
+      { sentence: 'Reports the ticket the branch name held.', verb: 'held' },
+    ])('reads $verb, an irregular past tense that no suffix marks', ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb });
+    });
+
+    it('closes the subject on an irregular past tense rather than reading past it', () => {
+      const candidates = detect('Reports the file the parser read was empty.');
+
+      expect(candidates[0]).toMatchObject({ subject: 'the parser', verb: 'read' });
+    });
+
     it('prefers the lexical verb an auxiliary carries over the auxiliary itself', () => {
       const candidates = detect('Declares the version the consumer has read.');
 
