@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.8 — 2026-09-01
+
+### ♻️ Refactoring
+
+- Replace hand-rolled error handling and process-exit mocking with toolbelt helpers (#1408)
+
+  Replaces hand-rolled error handling across `agents`, `factory`, and `fleet` with `describeError` and `isError` from `@williamthorsen/toolbelt.errors`. Sites that fell back to a domain literal now report what was actually thrown, and `useRunStatus` exposes its `error` as a message string, matching its sibling hook.
+
+  Separately, the `generate-label-map` tests drop their hand-rolled `process.exit` and console mocks for `throwOnProcessExit` and `silenceConsole` from `@williamthorsen/toolbelt.vitest`.
+
+- Retire factory's run-core re-exports and their duplicated tests (#1451)
+
+  Deletes the modules in `packages/factory` that re-exported `codeassembly-run-core` symbols under factory-local paths, and strips the same forwards from the two modules holding local content besides. Consumers import `codeassembly-run-core` directly, and `role-types.ts` becomes `role-type-colors.ts`.
+
+  Also deletes the factory test files whose subject is run-core behavior. Run-core's own tests cover every case they did.
+
+### 🧪 Tests
+
+- Consolidate console silencing on toolbelt.vitest's silenceConsole (#1413)
+
+  Consolidates console silencing across the test suites on `silenceConsole` from `@williamthorsen/toolbelt.vitest/candidate`, replacing a local copy of that function and hand-rolled `vi.spyOn(console, …)` pairs. The conversion also closes a spy leak in agents' `captureList`, where a throw from the command under test left `console.info` and `console.warn` mocked for the rest of the file.
+
+### 📦 Dependencies
+
+- Upgrade all dependencies and adopt nmr's Vitest factory defaults (#1427)
+
+  Upgrades eight dependencies, most notably `@williamthorsen/nmr` to 0.34.0. That upgrade moves source resolution and git isolation into nmr's Vitest factory, so the repo's hand-rolled `.config/vitest/` layer is deleted, and a package carries a Vitest config only where it configures something of its own.
+
+  Separately, `@types/node` is declared in every workspace package and named in the root `tsconfig.json`'s `types`, which TypeScript 6 requires for a package that imports a `node:` builtin.
+
+- Declare the configuration files' dependencies and restore the lint rules that enforce them (#1428)
+
+  Declares `eslint`, `@williamthorsen/nmr`, and `vite` in every package whose configuration files import them, and pins each once in the workspace catalog. Restores two `eslint-plugin-n` import rules the root configuration had switched off, so that a configuration file importing a package not declared in its own manifest now fails the lint gate.
+
+- Consolidate shared dependency pins into the catalog and guard the rule (#1432)
+
+  Moves every dependency pinned by two or more manifests into `pnpm-workspace.yaml`'s `catalog:` block. A test enforces the use of the catalog whenever a dependency has more than one consumer or is already listed in the catalog.
+
+- Upgrade eslint-config-typescript to 12.0.1 (#1454)
+
+  Upgrades `@williamthorsen/eslint-config-typescript` to v12, which adds the `no-unpublished-barrel` and `no-floating-disposable` rules to the preset extended by this repo. Fixes the lint violations surfaced by the new rules.
+
 ## 0.2.7 — 2026-08-20
 
 ### ♻️ Refactoring

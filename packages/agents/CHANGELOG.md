@@ -2,6 +2,251 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.0 — 2026-09-01
+
+### 🎉 Features
+
+- Add a bar for whether a proposed test earns its place (#1431)
+
+  Adds a bar to the `testing-conventions` skill for whether a proposed test earns its place. Every site that mandates a test criterion now points to the bar, not to the carve-outs alone, and `review-criteria` instructs an agent not to recommend any test that fails to clear the bar. "When in doubt, write the test" is retired.
+
+- Consolidate the title-authoring rules into title-voice.md (#1435)
+
+  Consolidates guidance on authoring a title into a new `title-voice.md` document. Every skill and subagent that composes a title routes to the new file.
+
+  The file adds two new rules: Backticks should not be used in a title, and the 72-character bound measures the authored string. It also distinguishes among titles used for tickets, PR titles, and commit messages.
+
+- Add a comment-preferences hook and extend two others to plan subagents (#1445)
+
+  Adds `comment-preferences`, a guidance hook declared by the six subagents that write or judge source comments. The hook allows these subagents to receive guidance unavailable to them ambiently (through CLAUDE.md or AGENTS.md).
+
+  Also extends `implementation-preferences` to the five subagents that produce or judge an implementation plan, and extends `ticketing-preferences` to `planner`.
+
+- Give each subagent the shared doctrine its role requires (#1447)
+
+  Inlines into each subagent the sections of `guidance/shared/AGENTS.md` its role's work requires, and composes that file from the same `_partials/` sources, so that interactive sessions and subagents receive the same common guidance.
+
+  Separately, `Code descriptions` drops its triviality carve-out: A description is now required for every function, method, class, and component.
+
+- Add a content-format manifest and refuse an unsupported format (#1472)
+
+  Adds `codeassembly-content.yaml`, the manifest in which a content root declares its content-format contract. `sync`, `sync --global`, `install`, and `validate` refuse a root declaring a format the tool does not support, before any file is written.
+
+  A root without a manifest is treated as content format 1, so a producer shipping content without one keeps working. Unknown keys pass through, so a later tool can read a key that an older one ignores. The built-in library declares `format: 1` as the exemplar that a producer copies.
+
+- Record a five-level quality rating with each lede decision (#1474)
+
+  Gives `capture-lede-decision` a five-level quality rating, `poor` through `exemplary`, for the lede that shipped. The skill asks the author to rate the lede rather than to call it accepted or revised, and derives the verdict from whether the agent's lede and the merged lede differ.
+
+  Separately, `select-lede-exemplars` takes `--min-quality`, admitting only records at or above the named level and reading every record when none is named. Records captured before this change do not have a rating and are omitted whenever a level filter is used.
+
+- 🚨 **Breaking:** Source-scope the subagent overlay and move tool names into the tool (#1479)
+
+  The extra frontmatter written into a subagent definition now comes from the source that defines the subagent, in a file at `subagents/_data/{harness}.yaml`, rather than the built-in library's copy of that file.
+
+  An author writes `{tool:Read}` in subagent and skill text where a tool name belongs, and `codeassembly` substitutes whatever the target harness calls that tool.
+
+  The per-harness tool mappings formerly declared in the harness file (`subagents/_data/{harness}.yaml`) have been relocated to `codeassembly` itself.
+
+  Migration: Delete the `_tools:` block from any harness file that contains one. If a content source defines subagents but has no harness file, subagents will deploy with their authored frontmatter alone; override this by adding a harness file that duplicates the `_defaults:` block from the library's own file.
+
+- Let a declared source ship install's scripts and harness templates (#1482)
+
+  Extends `codeassembly install` to read scripts and harness guidance templates from declared sources. A declared source can now hold `scripts/` and `guidance/_harnesses/` directories alongside the skills, subagents, rulebooks, and collections it already could; `install` reads them from every declared source in precedence order, falling back to the built-in library.
+
+  `install` merges scripts by file name. When one root holds a script, it deploys that script; when two roots have a script with the same file name, the higher-precedence root's copy is deployed and a warning is shown. A harness's guidance template is treated as a unit: `install` takes the whole directory from the highest-precedence root that holds a template, reads `guidance/shared/AGENTS.md` from that same root, and warns when it skips a template held by another root.
+
+  For a file read from a declared source, `install` writes a provenance marker giving the file's path within the source, the source's name, and the source directory, instead of the CodeAssembly URL it writes for a library file.
+
+- Gate review findings on a named change and preview it in the menu (#1485)
+
+  The review criteria now require that every finding be paired with a proposed change, which can be a single edit or a choice among alternatives. A problem for which the reviewer cannot propose a change can only be presented as an insight. The post-review menu now includes the proposed source edit for each open finding, so the reader sees in advance what "Implement directly" would do.
+
+- Resolve install's harness targeting from the declaration (#1486)
+
+  Adds declaration-based harness targeting to `codeassembly install`. It now takes its harness set from the `harnesses:` block of the user-global `codeassembly.yaml`, as `sync` does, and falls back to detecting installed harness homes when no file in that chain declares one. Declaring a harness whose home directory does not yet exist installs into it, creating the home.
+
+  Dropping a harness from the declaration retracts it: The next `install` removes that harness's tracked files, unwires its session-lifecycle hook entries, and drops it from the manifest. An empty declared set retracts every harness. A user-modified file is kept without `--force`, and `--dry-run` previews the removals. Retraction follows the declaration alone, so `--harness <id>` narrows a single run without retracting the harnesses it leaves out.
+
+  `install` also reports which harnesses it targets and what decided them.
+
+- Forbid the reduced object relative in agent-written prose (#1493)
+
+  Refines the `williamthorsen-writing-preferences` rulebook to help avoid awkward sentence structures. First, the rulebook now bans use of the reduced object relative, a construction excessively used by agents today. Second, the agentive `by`-phrase is now exempt from the plain-speech rule against the passive voice.
+
+- Add a skill that sweeps a repository for the reduced object relative (#1495)
+
+  Adds a `revise-object-relatives` skill that sweeps a repository's prose to reduce overuse of the object relative construction. The skill reads Markdown body text, comments in TypeScript, JavaScript, and shell, and multi-word string literals, but not deployed, saved artifacts, or machine-generated files.
+
+  `revise-object-relatives` and `revise-comments` now state the target-file-set rule once, in a shared partial, so that `revise-comments` uses the same exclusions.
+
+- Merge Bitbucket pull requests and re-read the PR after the merge gate (#1499)
+
+  Adds Bitbucket merging to `merge-pr` and fixes Bitbucket reviews in `review-pr`, so a Bitbucket pull request is now reviewed and merged through the skills.
+
+  Separately, fixes an issue where an edit made to a pull request while `merge-pr` waited for approval was discarded, and the merge published the superseded title and body.
+
+- Add a rulebook for the live deployment-worktree convention (#1500)
+
+  Adds `live-worktree-conventions`, a rulebook stating that a repository keeping a worktree on a `live` branch deploys from that worktree rather than from the main one, that a merged change reaches the machine only once the developer advances `live` to it, and that authoring belongs in a branch worktree, never through `.live`. Delivery is ambient, so the rulebook reaches an agent at launch.
+
+  The rulebook is standalone rather than a collection member, so each repository carrying a `live` worktree declares it directly.
+
+### 🪦 Removed
+
+- 🚨 **Breaking:** Retire the ~/.agents/AGENTS.md deployment and repoint its consumers (#1442)
+
+  Modifies `codeassembly install` so that it no longer deploys `~/.agents/AGENTS.md`. An existing copy will be removed if it contains no custom content. The file was a verbatim copy of text every harness already loads from its own guidance file.
+
+  Adds a `{harness_guidance_file}` token so a skill, subagent, or rulebook body can name whichever guidance file the target harness loads. `update-project-guidance` reads global guidance through it, and the subagents that pointed at the retired path now name the repository's own `AGENTS.md` alone.
+
+### 🐛 Bug fixes
+
+- Replace the artifact-write carve-out with an in-file seal marker (#1397)
+
+  Removes the artifacts doctrine's standing permission to update a saved artifact, and deletes the two writes it existed to authorize: `create-pr`'s `pr:` backfill into the change summary, and `plan-orchestrable-steps`'s frontmatter prepend onto the planner's plan snapshot.
+
+  Puts the rule in the artifact instead of in standing guidance. Every saved artifact now opens with a one-line seal marker declaring it a point-in-time record, not to be edited to match anything downstream and not to have its divergence from current state reported.
+
+- Seal a ticket's authoring-time sections from hindsight revision (#1416)
+
+  Seals a ticket's `## Problem`, `## Context`, and `## Proposed solution` against revision in hindsight. `align-ticket-with-implementation` described `## Proposed solution` as recording the approach the branch took, which read as licence to rewrite a proposal authored before the work so that it matched what shipped. The skill now cuts its behavior by whether a prior ticket exists: Where one does, it reproduces those three sections verbatim and revises `## Acceptance criteria` alone, the one part an implementation can falsify.
+
+  The post-review menus lose the narrative-rewrite path with it. `_partials/next-steps-after-review.md` drops its `Rewrite: {## Section}` preview notation, and its source-divergence sub-block now edits the PR description alone, leaving every ticket edit to the Deviations sub-block. A divergence between a proposal and what was built belongs in the pull-request description instead.
+
+  Separately, the shared artifacts guidance states the sealing rule in its own right, ahead of the acceptance-criteria allowance that had carried it, and bounds it to the point work is handed to implementation. Design comes before that point, so `design-and-plan` may still rewrite a raw ticket in full.
+
+- Make the remote issue a write target of ticket alignment (#1420)
+- Add an upstream-first cross-repo default and reserve sequencing calls for the developer (#1429)
+
+  Adds a `## Cross-repo sequencing` section to `williamthorsen-workflow-preferences` setting upstream-first as the default order where work would be better done in a dependency: land the upstream change, publish it, upgrade here, then change downstream. A downstream workaround ahead of the upstream change is ruled out, and a condition that would displace the default is named as something to raise rather than resolve.
+
+  Separately, the "settle whose call it is" gate in `williamthorsen-collaboration-preferences` and in the `option-format` partial reserves sequencing and scheduling for the developer without exception, and the rulebook's Persona section bounds advocacy to a single statement of the case.
+
+- Replace the sequencing carve-out with a test on what the order changes (#1439)
+
+  Revises the guidance on ownership of sequencing and sizing decisions to clarify that decisions on sequencing and sizing to produce optimal code are the agent's responsibility, whereas decisions that change only timing are the developer's.
+
+- Warn rather than fail when a declared source directory is missing (#1440)
+
+  Fixes an issue where a `sync` run failed if a declared source's directory did not exist. `sync` now continues without the missing source and reports a warning. A similar warning is issued if a package declares a content directory but that directory is missing.
+
+  `sync` still fails, before any file is written, if a file sits at the declared path or above it, or if the directory is unreadable.
+
+- Deliver writing guidance to lede-drafter and guard its reach (#1490)
+
+  Fixes an issue where the `williamthorsen-writing-preferences` rulebook did not reach `lede-drafter`, the subagent that drafts the "What" section of a change summary and pull request. The subagent definition now declares the guidance hook that delivers the rulebook.
+
+- Number the lede rating menu from poor to exemplary (#1492)
+
+  Fixes an issue where the rating menu in `capture-lede-decision` numbered the quality levels highest-first, so an author reading `1` as the worst rating on a five-point scale recorded the inverse of what they intended. The menu now runs ascending, from `1` for `poor` to `5` for `exemplary`.
+
+- Retract a harness dropped from the harnesses declaration on sync (#1494)
+
+  Fixes an issue where a harness dropped from the `harnesses:` declaration kept every skill, subagent, and guidance region deployed to it by an earlier `sync`. No command removed what was left there, so a developer still using that harness kept loading guidance that the declaration had withdrawn.
+
+  `sync` and `sync --global` now retract from a dropped harness: its skills, subagents, per-source support, ambient region, and `prompts.yml` region. Every removal is gated on a sync provenance marker or a well-formed sync-owned region, so a hand-authored file survives. Narrowing a run with `--harness` retracts nothing, since it names the run's target rather than declaring the other harnesses unwanted.
+
+- Prefer the remote issue over a ticket snapshot copied from it (#1502)
+
+  Fixes an issue where `review-branch` chose the local ticket snapshot over the remote issue that it copied. The two candidates were ranked by recency, and a snapshot is saved after the remote write that it copies, so its filename timestamp was always the later one.
+
+  A ticket snapshot whose body is a copy of the ticket of record now says so in a `copies_remote` frontmatter field, and `review-branch` reads that field ahead of the recency comparison and takes the remote. `align-ticket-with-implementation`, `create-ticket`, and `design-and-plan` each set the field from what they already know at save time. A snapshot carrying no such claim, including one saved by `--write-target=local` and one whose remote write failed, is still chosen by recency.
+
+- Hold out files marked @generated or Generated by/Do not edit (#1503)
+
+  Fixes an issue where the `revise-object-relatives` sweep reported candidates from generated files because not all skip markers were recognized. `@generated` and a `Generated by … Do not edit` comment have been added to the recognized skip markers. A marker counts only if it opens a comment line.
+
+### ♻️ Refactoring
+
+- Repunctuate the skill reference data (#1389)
+
+  Repunctuates every em-dash under `skills/_data/`, containing the guidance documents referenced by CodeAssembly skills.
+
+- Repunctuate the subagent and orchestrate prose (#1392)
+
+  Repunctuates every em-dash in `subagents/` and `skills/orchestrate/`, the subagent library and the engine that dispatches it.
+
+- Plainify the skill bodies from design-and-plan through kb-update-events (#1398)
+
+  Rewrites the skill bodies from `design-and-plan` through `kb-update-events` in the plain-speech register. `design-and-plan` and `implement-plan` now read in a single register with the partials they inline. The remaining skill bodies follow in later changes.
+
+  Separately, fixes `kb-edit`'s stale pointer, which sent vault-hygiene work to `kb-curate` "once it ships" after `kb-curate` had shipped.
+
+- Repunctuate the skill bodies from align-ticket-with-implementation through create-ticket (#1399)
+
+  Repunctuates every em-dash in the skill directories sorting from `align-ticket-with-implementation` through `create-ticket`, except in `brainstorming/SKILL.md`, which the extracted-verbatim marker holds out of a corpus prose sweep.
+
+- Repunctuate the skill bodies from migrate-feedback-memories through revise-comments (#1400)
+
+  Repunctuates every em-dash in the skill directories sorting from `migrate-feedback-memories` through `revise-comments`.
+
+- Repunctuate the skill bodies from save-artifact through wrap-up (#1401)
+
+  Repunctuates every em-dash in the skill directories sorting from `save-artifact` through `wrap-up`, except the `&mdash;` row of `update-jira-ticket`'s character-reference table.
+
+- Repunctuate the skill bodies from design-and-plan through merge-pr (#1403)
+
+  Repunctuates every em-dash in the skill directories sorting from `design-and-plan` through `merge-pr`.
+
+- Replace hand-rolled error handling and process-exit mocking with toolbelt helpers (#1408)
+
+  Replaces hand-rolled error handling across `agents`, `factory`, and `fleet` with `describeError` and `isError` from `@williamthorsen/toolbelt.errors`. Sites that fell back to a domain literal now report what was actually thrown, and `useRunStatus` exposes its `error` as a message string, matching its sibling hook.
+
+  Separately, the `generate-label-map` tests drop their hand-rolled `process.exit` and console mocks for `throwOnProcessExit` and `silenceConsole` from `@williamthorsen/toolbelt.vitest`.
+
+- Point the rovo harness home at ~/.rovo (#1424)
+
+  Migrates the `codeassembly install` and `codeassembly sync` commands to use Rovo's new standard directory. Skills, subagents, scripts, and guidance for the Rovo harness are now deployed to `~/.rovo` instead of `~/.rovodev`.
+
+### 🧪 Tests
+
+- Guard the corpus against em-dashes and repunctuate the script and test prose (#1404)
+
+  Adds a build guard that fails when an em-dash (U+2014) or a non-breaking space (U+00A0) reaches an authored file under `packages/agents/content/`, and repunctuates the em-dash sites that remained in the `scripts/` and `__tests__/` comments. `content-rendering.unit.test.ts` becomes `banned-codepoints.unit.test.ts`, and its non-breaking-space scan, which read Markdown alone, joins the new ban behind one listing of the corpus.
+
+- Consolidate console silencing on toolbelt.vitest's silenceConsole (#1413)
+
+  Consolidates console silencing across the test suites on `silenceConsole` from `@williamthorsen/toolbelt.vitest/candidate`, replacing a local copy of that function and hand-rolled `vi.spyOn(console, …)` pairs. The conversion also closes a spy leak in agents' `captureList`, where a throw from the command under test left `console.info` and `console.warn` mocked for the rest of the file.
+
+### ⚙️ Tooling
+
+- Track the skill-helper bundles behind a drift check (#1471)
+
+  Commits the 14 skill-helper `.mjs` bundles under `packages/agents/content/`, so a plain checkout includes runnable helpers without the need to install or build. An entry in `.gitattributes` keeps their contents out of diffs, both locally and in review.
+
+  Also adds a `--check` mode to `bundle-skill-helpers.ts`. When this option is passed, the script reports any bundle that no longer matches its source or isn't the target of any source. The check runs in a root `check:strict:post` hook.
+
+### 📦 Dependencies
+
+- Upgrade all dependencies and adopt nmr's Vitest factory defaults (#1427)
+
+  Upgrades eight dependencies, most notably `@williamthorsen/nmr` to 0.34.0. That upgrade moves source resolution and git isolation into nmr's Vitest factory, so the repo's hand-rolled `.config/vitest/` layer is deleted, and a package carries a Vitest config only where it configures something of its own.
+
+  Separately, `@types/node` is declared in every workspace package and named in the root `tsconfig.json`'s `types`, which TypeScript 6 requires for a package that imports a `node:` builtin.
+
+- Declare the configuration files' dependencies and restore the lint rules that enforce them (#1428)
+
+  Declares `eslint`, `@williamthorsen/nmr`, and `vite` in every package whose configuration files import them, and pins each once in the workspace catalog. Restores two `eslint-plugin-n` import rules the root configuration had switched off, so that a configuration file importing a package not declared in its own manifest now fails the lint gate.
+
+- Consolidate shared dependency pins into the catalog and guard the rule (#1432)
+
+  Moves every dependency pinned by two or more manifests into `pnpm-workspace.yaml`'s `catalog:` block. A test enforces the use of the catalog whenever a dependency has more than one consumer or is already listed in the catalog.
+
+- Upgrade eslint-config-typescript to 12.0.1 (#1454)
+
+  Upgrades `@williamthorsen/eslint-config-typescript` to v12, which adds the `no-unpublished-barrel` and `no-floating-disposable` rules to the preset extended by this repo. Fixes the lint violations surfaced by the new rules.
+
+### 🤖 Agentic support
+
+- Add the lede-drafter subagent and dispatch it from summarize-change (#1480)
+
+  Adds a `lede-drafter` subagent that composes the lede of a change summary in an isolated context, and rewires `summarize-change` to dispatch that subagent instead of composing the lede in session. The drafter is directed to gather every fact first-hand and to take no prose from its caller.
+
+  The calling agent now has authority only to delete or relocate information from the lede in `summarize-change`'s pre-save audit. Any other defect in the draft is redispatched to the subagent.
+
+  Separately, the content specification now allows the use of a denylist, as an alternative to the existing allowlist, to control which tools are available to a subagent.
+
 ## 0.10.0 — 2026-08-20
 
 ### 🎉 Features

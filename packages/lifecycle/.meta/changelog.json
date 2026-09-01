@@ -1,5 +1,43 @@
 [
   {
+    "version": "0.4.2",
+    "date": "2026-09-01",
+    "sections": [
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Consolidate console silencing on toolbelt.vitest's silenceConsole (#1413)",
+            "body": "Consolidates console silencing across the test suites on `silenceConsole` from `@williamthorsen/toolbelt.vitest/candidate`, replacing a local copy of that function and hand-rolled `vi.spyOn(console, …)` pairs. The conversion also closes a spy leak in agents' `captureList`, where a throw from the command under test left `console.info` and `console.warn` mocked for the rest of the file.",
+            "hash": "4deeb1e57f5fa7bf4dbb0edb5c80c4f000838019"
+          }
+        ]
+      },
+      {
+        "title": "📦 Dependencies",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrade all dependencies and adopt nmr's Vitest factory defaults (#1427)",
+            "body": "Upgrades eight dependencies, most notably `@williamthorsen/nmr` to 0.34.0. That upgrade moves source resolution and git isolation into nmr's Vitest factory, so the repo's hand-rolled `.config/vitest/` layer is deleted, and a package carries a Vitest config only where it configures something of its own.\n\nSeparately, `@types/node` is declared in every workspace package and named in the root `tsconfig.json`'s `types`, which TypeScript 6 requires for a package that imports a `node:` builtin.",
+            "hash": "c1288ff93e755d9346c518e812e2b6e1b094068c"
+          },
+          {
+            "description": "Declare the configuration files' dependencies and restore the lint rules that enforce them (#1428)",
+            "body": "Declares `eslint`, `@williamthorsen/nmr`, and `vite` in every package whose configuration files import them, and pins each once in the workspace catalog. Restores two `eslint-plugin-n` import rules the root configuration had switched off, so that a configuration file importing a package not declared in its own manifest now fails the lint gate.",
+            "hash": "8cf79d48201de0d38ef7ef9fb5a4049ee336c236"
+          },
+          {
+            "description": "Consolidate shared dependency pins into the catalog and guard the rule (#1432)",
+            "body": "Moves every dependency pinned by two or more manifests into `pnpm-workspace.yaml`'s `catalog:` block. A test enforces the use of the catalog whenever a dependency has more than one consumer or is already listed in the catalog.",
+            "hash": "b3836586645dfbb7f9f69cc90c1eac30cc540eff"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.1",
     "date": "2026-08-20",
     "sections": [

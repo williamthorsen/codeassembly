@@ -1,6 +1,6 @@
 {
   "name": "@codeassembly/factory",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": true,
   "description": "Visual factory for orchestrated workflow management",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
