@@ -53,8 +53,8 @@ const AUXILIARIES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Head nouns whose relative clause has an adjunct gap rather than an object gap. The rulebook puts these outside the
- * rule, since neither the passive participle nor the restored relativizer repairs one.
+ * Head nouns whose relative clause has an adjunct gap rather than a gap in an argument position. The rulebook puts
+ * these outside the rule on that ground alone; a prepositional-phrase gap fills an argument position and stays in.
  */
 const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
   'place',
