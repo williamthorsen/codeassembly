@@ -352,8 +352,8 @@ async function reconcileDomain(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
   );
 
-  // Checked before the closure resolves so a typo names the hook or the file that wrote it; seeding alone would
-  // report only that some rulebook went missing.
+  // Checked before the closure resolves so a typo names the hook that bound it or the file that declared it;
+  // seeding alone would report only that some artifact went missing.
   await assertBindingsResolve(declaration.guidanceHooks, resolver);
   await assertDeclaredArtifactsResolve(declaration, domain.ambient === 'harness-home' ? 'home' : 'project', resolver);
 
