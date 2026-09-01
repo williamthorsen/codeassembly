@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { KbConfig } from '../config-schema.ts';
-import { defaultKbConfig } from '../config-schema.ts';
+import { defaultKbConfig, type KbConfig } from '../config-schema.ts';
 import { createNoteScopeMatcher } from '../note-scope.ts';
 
 describe(createNoteScopeMatcher, () => {

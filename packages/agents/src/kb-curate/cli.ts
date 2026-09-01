@@ -5,14 +5,12 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import type { Finding } from '@williamthorsen/kb';
-import type { EnumeratedNote } from '@williamthorsen/kb/check';
-import { check } from '@williamthorsen/kb/check';
+import { check, type EnumeratedNote } from '@williamthorsen/kb/check';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
-import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
-import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { applyFixes } from './apply.ts';
 import { detectCurateFindings, sortFindings } from './detect.ts';
 import type { CurateResult, CurateSummary, ParsedArgs } from './types.ts';

@@ -1,5 +1,4 @@
-import type { EmitEventResult } from './emit-event.ts';
-import { emitEvent } from './emit-event.ts';
+import { emitEvent, type EmitEventResult } from './emit-event.ts';
 
 export interface RegisterArtifactInput {
   runDir: string;

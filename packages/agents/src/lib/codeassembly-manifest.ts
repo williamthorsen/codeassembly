@@ -1,13 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type {
-  DeclarationDomain,
-  DeclarationSource,
-  GuidanceHookBindings,
-  TypeDeclaration,
+import {
+  type DeclarationDomain,
+  type DeclarationSource,
+  type GuidanceHookBindings,
+  parseCodeAssemblyFile,
+  type TypeDeclaration,
 } from './codeassembly-schema.ts';
-import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import { resolveSourcePath } from './source-path.ts';
 

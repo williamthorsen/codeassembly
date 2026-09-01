@@ -1,5 +1,4 @@
-import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
-import { parseNote } from '@williamthorsen/kb/frontmatter';
+import { type ParsedNote, parseNote } from '@williamthorsen/kb/frontmatter';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 /** Whole-day divisor for converting a date delta in milliseconds to an age in days. */

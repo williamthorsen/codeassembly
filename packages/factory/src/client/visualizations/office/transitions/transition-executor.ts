@@ -1,5 +1,4 @@
-import type { Actor } from 'excalibur';
-import { vec } from 'excalibur';
+import { type Actor, vec } from 'excalibur';
 
 import {
   ARTIFACT_APPEAR_SCALE_SPEED,

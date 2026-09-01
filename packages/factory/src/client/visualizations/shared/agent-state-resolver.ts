@@ -1,5 +1,4 @@
-import type { CanonicalRunStatus, PhaseName, Phases } from 'codeassembly-run-core';
-import { PHASE_NAMES } from 'codeassembly-run-core';
+import { type CanonicalRunStatus, PHASE_NAMES, type PhaseName, type Phases } from 'codeassembly-run-core';
 
 import { isPhaseEvaluated, isPhasePresentInData } from '../../../shared/phase-inference.js';
 

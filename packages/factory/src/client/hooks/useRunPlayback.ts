@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchRunEvents } from '../api/client.js';
 import { generateSnapshots } from '../playback/generate-snapshots.js';
 import type { PlaybackSource } from '../playback/playback-controller.js';
-import type { UsePlaybackResult } from './usePlayback.js';
-import { usePlayback } from './usePlayback.js';
+import { usePlayback, type UsePlaybackResult } from './usePlayback.js';
 
 export interface UseRunPlaybackResult extends UsePlaybackResult {
   startReplay: () => void;

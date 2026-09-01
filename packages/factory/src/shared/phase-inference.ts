@@ -1,5 +1,4 @@
-import type { PhaseDecision, PhaseName, Phases, RunStatus } from 'codeassembly-run-core';
-import { PHASE_NAMES } from 'codeassembly-run-core';
+import { PHASE_NAMES, type PhaseDecision, type PhaseName, type Phases, type RunStatus } from 'codeassembly-run-core';
 
 /**
  * Maps phase names to their possible `phaseDecisions` object keys.

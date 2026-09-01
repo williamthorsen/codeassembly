@@ -1,7 +1,6 @@
 import { resolveProjectsDir } from 'codeassembly-run-core/config';
 import cors from 'cors';
-import type { ErrorRequestHandler } from 'express';
-import express from 'express';
+import express, { type ErrorRequestHandler } from 'express';
 
 import { createProjectsRouter } from './routes/projects.js';
 import { createRunsRouter } from './routes/runs.js';

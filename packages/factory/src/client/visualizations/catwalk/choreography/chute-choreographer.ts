@@ -1,5 +1,4 @@
-import type { Actor } from 'excalibur';
-import { vec } from 'excalibur';
+import { type Actor, vec } from 'excalibur';
 
 import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.js';
 import { FlyingArtifactActor } from '../actors/FlyingArtifactActor.js';

@@ -1,5 +1,4 @@
-import type { FSWatcher } from 'node:fs';
-import { watch } from 'node:fs';
+import { type FSWatcher, watch } from 'node:fs';
 
 import type { ProjectIndex } from '../../shared/types/api.js';
 

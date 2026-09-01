@@ -31,7 +31,7 @@ import { resolveRepo } from '../shared/resolve-repo.ts';
 import { resolveSession } from '../shared/resolve-session.ts';
 import { composeEnvelope } from './compose-envelope.ts';
 import { resolveEventPath } from './resolve-event-path.ts';
-import { type EmitContext, type EmitErrorCode, type EmitFailure, type EmitResult, type ParsedArgs } from './types.ts';
+import type { EmitContext, EmitErrorCode, EmitFailure, EmitResult, ParsedArgs } from './types.ts';
 import { appendEvent } from './write-event.ts';
 
 /** The flags this helper accepts. Every one takes a value; the event body arrives inline via `--payload`, not stdin. */

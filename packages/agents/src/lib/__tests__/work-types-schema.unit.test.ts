@@ -2,8 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { JsonSchemaDraft202012Object } from '@hyperjump/json-schema/draft-2020-12';
-import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
+import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
 // `BASIC` is only exported from `/experimental` in version 1.17.6 — used only on the diagnostic
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.

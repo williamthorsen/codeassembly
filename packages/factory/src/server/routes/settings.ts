@@ -1,5 +1,4 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 
 import type { UserSettings } from '../../shared/types/settings.js';
 import { userSettingsSchema } from '../adapters/schemas/settings-schema.js';

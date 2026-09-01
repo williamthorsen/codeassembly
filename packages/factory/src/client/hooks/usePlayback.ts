@@ -1,8 +1,12 @@
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { PlaybackControls, PlaybackSource, PlaybackState } from '../playback/playback-controller.js';
-import { PlaybackController } from '../playback/playback-controller.js';
+import {
+  PlaybackController,
+  type PlaybackControls,
+  type PlaybackSource,
+  type PlaybackState,
+} from '../playback/playback-controller.js';
 
 export interface UsePlaybackResult {
   data: CanonicalRunStatus | null;

@@ -2,8 +2,7 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ChuteEndpoints, FactoryFloorLayoutResult, Position } from '../../layout/factory-floor-layout.js';
-import type { FactoryFloorDiff, OrchestratorDiff, StationArtifactConfig } from '../../types.js';
-import type { Zone } from '../../types.js';
+import type { FactoryFloorDiff, OrchestratorDiff, StationArtifactConfig, Zone } from '../../types.js';
 import type { FloorSceneRefs } from '../floor-choreographer.js';
 
 vi.mock('excalibur', () => {

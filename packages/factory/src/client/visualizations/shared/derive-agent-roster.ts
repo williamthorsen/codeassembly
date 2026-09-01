@@ -1,5 +1,12 @@
-import type { CanonicalRunStatus, ParallelReviewPhase, PhaseName, RoleType } from 'codeassembly-run-core';
-import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from 'codeassembly-run-core';
+import {
+  type CanonicalRunStatus,
+  type ParallelReviewPhase,
+  PHASE_NAMES,
+  PHASE_ROLE,
+  PHASE_ROLE_TYPE,
+  type PhaseName,
+  type RoleType,
+} from 'codeassembly-run-core';
 
 import { findPhaseDecision } from '../../../shared/phase-inference.js';
 import { extractReviewerNames, isPresent, PHASE_AGENT_ID } from './artifact-utils.js';

@@ -14,7 +14,7 @@ import {
   type TemplateVariables,
 } from '../path-rewriter.ts';
 import { deploySkill, resolveDeclaredSkill } from '../skill-deploy.ts';
-import { type SkillDeployContext } from '../skill-transform.ts';
+import type { SkillDeployContext } from '../skill-transform.ts';
 import { rewriteToolNames } from '../tool-name-rewriter.ts';
 
 const TEMPLATE_VARIABLES: TemplateVariables = {

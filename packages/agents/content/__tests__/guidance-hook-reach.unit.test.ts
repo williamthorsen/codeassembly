@@ -6,8 +6,13 @@ import { describe, expect, it } from 'vitest';
 import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
-import type { GuidanceHookFill, GuidanceHookFills } from '../../src/lib/guidance-hooks.ts';
-import { assertFilledAnchorsResolve, fillGuidanceHooks, listGuidanceHooks } from '../../src/lib/guidance-hooks.ts';
+import {
+  assertFilledAnchorsResolve,
+  fillGuidanceHooks,
+  type GuidanceHookFill,
+  type GuidanceHookFills,
+  listGuidanceHooks,
+} from '../../src/lib/guidance-hooks.ts';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';

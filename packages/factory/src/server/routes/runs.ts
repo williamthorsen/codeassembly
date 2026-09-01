@@ -3,8 +3,7 @@ import { join } from 'node:path';
 
 import { isEnoent, RunDataParseError } from 'codeassembly-run-core';
 import { parseRunData, parseRunRawData } from 'codeassembly-run-core/parsers';
-import type { Request, Response } from 'express';
-import { Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { marked } from 'marked';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';

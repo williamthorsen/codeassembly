@@ -1,5 +1,4 @@
-import type { Actor } from 'excalibur';
-import { vec } from 'excalibur';
+import { type Actor, vec } from 'excalibur';
 
 import { FlyingArtifactActor } from '../../catwalk/actors/FlyingArtifactActor.js';
 import type { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';

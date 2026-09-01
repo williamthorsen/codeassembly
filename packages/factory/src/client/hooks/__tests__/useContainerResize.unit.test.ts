@@ -1,8 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ResizableEngine } from '../useContainerResize.js';
-import { useContainerResize } from '../useContainerResize.js';
+import { type ResizableEngine, useContainerResize } from '../useContainerResize.js';
 
 type ResizeCallback = ResizeObserverCallback;
 

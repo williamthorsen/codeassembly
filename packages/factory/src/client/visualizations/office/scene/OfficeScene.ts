@@ -20,8 +20,7 @@ import {
 } from '../sprites/office-sprite-loader.js';
 import { DIR_DOWN, DIR_UP, FURNITURE_MANIFEST, resolveCharacterName } from '../sprites/sprite-definitions.js';
 import { diffOfficeConfigs } from '../state/office-differ.js';
-import type { AnimationHandle } from '../transitions/transition-executor.js';
-import { executeTransitions } from '../transitions/transition-executor.js';
+import { type AnimationHandle, executeTransitions } from '../transitions/transition-executor.js';
 import { planTransitions } from '../transitions/transition-planner.js';
 import type {
   EntityKind,

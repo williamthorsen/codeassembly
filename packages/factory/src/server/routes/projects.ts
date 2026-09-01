@@ -1,5 +1,4 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
 

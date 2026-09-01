@@ -1,10 +1,8 @@
 import { join } from 'node:path';
 
-import type { Mock } from 'vitest';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, type Mock, vi } from 'vitest';
 
-import type { ProcessRunner } from '../recall.ts';
-import { parseRipgrepOutput, recallNotes } from '../recall.ts';
+import { parseRipgrepOutput, type ProcessRunner, recallNotes } from '../recall.ts';
 import type { ScopedKb } from '../types.ts';
 
 const NOTES_VAULT = join(import.meta.dirname, 'fixtures', 'notes-vault');

@@ -1,5 +1,4 @@
-import type { RoleType } from 'codeassembly-run-core';
-import { ROLE_TYPES } from 'codeassembly-run-core';
+import { ROLE_TYPES, type RoleType } from 'codeassembly-run-core';
 
 import { PALETTE } from './palette.js';
 

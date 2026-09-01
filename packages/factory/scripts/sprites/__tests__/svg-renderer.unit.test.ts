@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ORCHESTRATOR_POSES } from '../orchestrator-poses.ts';
 import { ORCHESTRATOR_PALETTE, SUBAGENT_PALETTE } from '../palettes.ts';
 import { SUBAGENT_POSES } from '../subagent-poses.ts';
-import type { BodyPart, Palette, Pose } from '../svg-renderer.ts';
-import { composePose, renderSpriteSheet } from '../svg-renderer.ts';
+import { type BodyPart, composePose, type Palette, type Pose, renderSpriteSheet } from '../svg-renderer.ts';
 
 // ── composePose ─────────────────────────────────────────────────────────────
 

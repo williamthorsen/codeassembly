@@ -1,8 +1,7 @@
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { useCallback, useMemo, useState } from 'react';
 
-import type { DemoRecording } from '../demo/index.js';
-import { DEMO_RECORDINGS } from '../demo/index.js';
+import { DEMO_RECORDINGS, type DemoRecording } from '../demo/index.js';
 import type { PlaybackControls, PlaybackSource, PlaybackState } from '../playback/playback-controller.js';
 import { usePlayback } from './usePlayback.js';
 

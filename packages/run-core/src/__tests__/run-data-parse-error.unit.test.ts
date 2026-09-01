@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { core } from 'zod';
 
-import type { RunDataParseErrorCategory } from '../run-data-parse-error.ts';
-import { RunDataParseError } from '../run-data-parse-error.ts';
+import { RunDataParseError, type RunDataParseErrorCategory } from '../run-data-parse-error.ts';
 
 describe('RunDataParseError', () => {
   it('extends Error with the correct name', () => {

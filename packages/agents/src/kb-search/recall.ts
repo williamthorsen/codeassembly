@@ -3,8 +3,7 @@ import { promisify } from 'node:util';
 
 import { directoryExists } from '@williamthorsen/kb/filesystem';
 import { KB_DIR, resolveKbDir } from '@williamthorsen/kb/layout';
-import type { AliasMap } from '@williamthorsen/kb/tags';
-import { loadAliases } from '@williamthorsen/kb/tags';
+import { type AliasMap, loadAliases } from '@williamthorsen/kb/tags';
 
 import { isErrorCode, isRecord } from '../lib/type-guards.ts';
 import type { RawHit, ScopedKb } from './types.ts';

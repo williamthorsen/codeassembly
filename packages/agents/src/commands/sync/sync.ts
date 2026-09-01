@@ -20,8 +20,7 @@ import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
 import { findGuidanceHookDeclarers, type GuidanceHookDeclarers } from '../../lib/guidance-hook-declarers.ts';
-import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hooks.ts';
-import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
+import { type GuidanceHookFill, type GuidanceHookFills, listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
 import { recordHomeProvenance } from '../../lib/home-provenance.ts';

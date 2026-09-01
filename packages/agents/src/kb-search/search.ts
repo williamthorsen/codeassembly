@@ -1,14 +1,17 @@
 import { relative, sep } from 'node:path';
 
-import type { NoteScopeMatcher } from '@williamthorsen/kb/config';
-import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@williamthorsen/kb/config';
+import {
+  createNoteScopeMatcher,
+  defaultKbConfig,
+  loadKbConfig,
+  type NoteScopeMatcher,
+} from '@williamthorsen/kb/config';
 import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
-import type { RecallFn } from './recall.ts';
-import { recallNotes } from './recall.ts';
+import { type RecallFn, recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
 import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from './types.ts';
 

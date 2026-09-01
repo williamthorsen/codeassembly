@@ -13,8 +13,7 @@ import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
-import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
-import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';

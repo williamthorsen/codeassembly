@@ -1,5 +1,4 @@
-import type { CanonicalRunStatus, RunEvent, RunHeader } from 'codeassembly-run-core';
-import { foldEvents } from 'codeassembly-run-core';
+import { type CanonicalRunStatus, foldEvents, type RunEvent, type RunHeader } from 'codeassembly-run-core';
 
 /**
  * Generate playback snapshots by folding events up to each position.
