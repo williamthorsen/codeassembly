@@ -32,9 +32,9 @@ node "$(dirname "$SKILL_PATH")/revise-object-relatives.mjs"
 node "$(dirname "$SKILL_PATH")/revise-object-relatives.mjs" docs src/lib
 ```
 
-The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` it swept, a `candidates` array, and a `summary` holding `total`, `filesScanned`, `filesSkipped`, `byFile`, and `byShape`. On failure it carries `ok: false` with `invalid-args` or `not-a-repository`, the latter because the sweep reads what git tracks and has nothing to read outside a working tree.
+The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` that it swept, a `candidates` array, and a `summary` holding `total`, `filesScanned`, `filesSkipped`, `byFile`, and `byShape`. On failure it carries `ok: false` with `invalid-args` or `not-a-repository`, the latter because the sweep reads what git tracks and has nothing to read outside a working tree.
 
-Each candidate names its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` the reading turns on, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
+Each candidate names its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` on which the reading turns, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
 
 ### 2. Read the summary before the candidates
 
@@ -47,7 +47,7 @@ Detection is over-inclusive by design. Reject a candidate on any of these ground
 - **Not a relative clause.** The verb is the sentence's own, or the head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like the construction and are neither.
 - **An exhibit.** Prose that _displays_ the construction is not a violation. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each carry it deliberately, and repairing one destroys what it was written to show. The rule inlined below carries four, one per shape, and the report example further down carries three more.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that happened to fall inside an extracted span.
-- **Outside the rule.** The gap is not an object gap. The helper rejects the fused head and the adjunct relative by head type, so what reaches you is a residue: a gap in a prepositional phrase, or a head the mechanical test read wrongly.
+- **Outside the rule.** The gap fills no argument position. The helper rejects the fused head and the adjunct relative by head type, so the residue reaching you is a head misread by the mechanical test.
 
 ### 4. Choose the repair
 
