@@ -161,7 +161,8 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
 /**
  * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
  * relative's, which is what keeps a main clause out. The set holds the detector to the direct-object gap: a
- * prepositional-phrase gap is hosted by exactly these verbs, so `the set the entries belong to` is suppressed too.
+ * prepositional-phrase gap under one of these verbs is suppressed with them, so `the set the entries belong to`
+ * goes unreported.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
