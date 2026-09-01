@@ -36,7 +36,7 @@
 # Exit codes:
 #   0  Normal: JSON produced (regardless of resolved/ambiguous status).
 #   1  Usage error (missing/unknown flag) or runtime error (repository unreadable,
-#      base-ref not found, label-map malformed).
+#      base-ref not found, commit log unreadable, label-map malformed).
 
 set -euo pipefail
 # Propagate failures from command substitutions ($(...)) under `set -e`.
@@ -203,8 +203,16 @@ PYTHON
 # `base_ref` and HEAD. Subjects without a `[scope|type: ]` prefix are skipped.
 collect_commit_tally() {
   local dim="$1" # "scope" or "type"
-  local subject scope_val type_val
+  local subject scope_val type_val subjects
   declare -A tally=()
+
+  # Read the log up front rather than through process substitution, whose failure cannot reach this
+  # function. A git failure and a branch of unprefixed commits both yield an empty tally, and only
+  # the second is a state this script must keep reporting.
+  if ! subjects="$(git log "$base_ref"..HEAD --format=%s 2>&1)"; then
+    echo "$PROG: Cannot read commits in $base_ref..HEAD: $subjects" >&2
+    exit 1
+  fi
 
   while IFS= read -r subject || [[ -n "$subject" ]]; do
     [[ -z "$subject" ]] && continue
@@ -221,7 +229,7 @@ collect_commit_tally() {
         tally["$type_val"]=$((${tally["$type_val"]:-0} + 1))
       fi
     fi
-  done < <(git log "$base_ref"..HEAD --format=%s 2>/dev/null || true)
+  done <<<"$subjects"
 
   if [[ ${#tally[@]} -eq 0 ]]; then
     return

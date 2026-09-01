@@ -293,6 +293,32 @@ When call test_tally
 The output should equal "$(printf '1\tfeat')"
 End
 
+It "yields an empty tally when no subject carries a prefix"
+test_tally() {
+  git commit --allow-empty -q -m "Just a plain title"
+  collect_commit_tally "type"
+}
+When call test_tally
+The output should equal ""
+End
+
+It "reports a commit log that git cannot read"
+# A missing object in the walk range leaves the repository readable and the base ref resolvable, so
+# `git log` is the only call that fails. Without the guard the failure yields an empty tally, which
+# is indistinguishable from the unprefixed-subjects case above.
+test_tally() {
+  git commit --allow-empty -q -m "agents|feat: Second"
+  git commit --allow-empty -q -m "agents|feat: Third"
+  mid=$(git rev-parse HEAD~1)
+  rm -f ".git/objects/${mid:0:2}/${mid:2}"
+  collect_commit_tally "type"
+}
+When run test_tally
+The status should equal 1
+The stderr should include "Cannot read commits in main..HEAD"
+The stderr should include "fatal:"
+End
+
 It "strips a leading ticket-ref token before parsing the prefix"
 test_tally() {
   ticket_ref="#494"
