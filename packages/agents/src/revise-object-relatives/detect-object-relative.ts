@@ -1,5 +1,5 @@
 /**
- * Candidate detection for the revise-object-relatives sweep.
+ * Reduced-object-relative detection.
  *
  * The construction has no reliable surface form, so the anchor is adjacency rather than a verb pattern: a head noun
  * followed directly by the start of a new noun phrase, with no relativizer, preposition, conjunction, auxiliary, or
@@ -17,10 +17,11 @@
  * verb reports only where it strands a preposition. A copula takes no object at all, and closes a clause only at the
  * end of one, where the head fills its complement slot.
  */
+import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
 import type { ObjectRelativeCandidate, ProseSpan, SubjectShape } from './types.ts';
 
 /** Scans every span for the construction, returning one candidate per site in reading order. */
-export function detectCandidates(spans: readonly ProseSpan[]): ObjectRelativeCandidate[] {
+export function detectObjectRelatives(spans: readonly ProseSpan[]): ObjectRelativeCandidate[] {
   const candidates: ObjectRelativeCandidate[] = [];
   for (const span of spans) {
     candidates.push(...detectInSpan(span));
@@ -711,17 +712,6 @@ function buildCandidate(input: {
 }
 
 /**
- * Counts the newlines preceding `offset`, which is how a span's own line maps to the line on which a candidate sits.
- */
-function countNewlinesBefore(text: string, offset: number): number {
-  let count = 0;
-  for (let index = 0; index < offset && index < text.length; index += 1) {
-    if (text[index] === '\n') count += 1;
-  }
-  return count;
-}
-
-/**
  * Scans one span for every site that the construction may occupy. A later anchor whose head falls inside an accepted
  * phrase is that same site read from one word further in: where it closes on the same verb it replaces the reading
  * before it, the nearer head being the tighter one, and where it closes elsewhere it is dropped. A distant head can
@@ -800,11 +790,6 @@ function opensDegreeAdverbial(tokens: readonly Token[], index: number): boolean 
   const next = tokens[index + 1];
   if (next === undefined || next.afterBreak) return false;
   return DEGREE_ADVERBIALS.has(`${tokens[index]?.word ?? ''} ${next.word}`);
-}
-
-/** Collapses a phrase's own newlines and runs of spaces, so a wrapped site reads as one line in the report. */
-function flattenWhitespace(text: string): string {
-  return text.replaceAll(/\s+/g, ' ').trim();
 }
 
 /**
@@ -1192,23 +1177,6 @@ function hasStrandedPreposition(tokens: readonly Token[], index: number): boolea
   if (next === undefined || next.afterBreak) return true;
   if (DETERMINERS.has(next.word) || NUMERALS.has(next.word) || QUANTIFIERS.has(next.word)) return false;
   return !SUBJECT_PRONOUNS.has(next.word) && !OBJECT_PRONOUNS.has(next.word) && isFunctionWord(next.word);
-}
-
-/** Returns the sentence enclosing the span offsets `start` through `end`, flattened onto one line for the report. */
-function findSentence(text: string, start: number, end: number): string {
-  const boundary = /[.!?](?=\s|$)/g;
-  let sentenceStart = 0;
-  let match = boundary.exec(text);
-
-  while (match !== null) {
-    const stop = match.index + 1;
-    if (stop >= end) break;
-    if (stop <= start) sentenceStart = stop;
-    match = boundary.exec(text);
-  }
-
-  const sentenceEnd = match === null ? text.length : Math.max(match.index + 1, end);
-  return flattenWhitespace(text.slice(sentenceStart, sentenceEnd));
 }
 
 /**

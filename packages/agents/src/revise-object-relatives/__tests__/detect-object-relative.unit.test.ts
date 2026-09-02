@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { detectCandidates } from '../detect.ts';
+import { detectObjectRelatives } from '../detect-object-relative.ts';
 import type { ObjectRelativeCandidate, SubjectShape } from '../types.ts';
 
 /**
@@ -97,7 +97,7 @@ const OUT_OF_SCOPE_HEADS: ReadonlyArray<string> = [
   'All you need is the branch name.',
 ];
 
-describe(detectCandidates, () => {
+describe(detectObjectRelatives, () => {
   describe('the worked before-and-after', () => {
     it.each(REPAIRED_SITES)('reports $before', ({ before, shape }) => {
       const candidates = detect(before);
@@ -655,7 +655,7 @@ describe(detectCandidates, () => {
 
   describe('location', () => {
     it('reports the line the site sits on within a wrapped block', () => {
-      const candidates = detectCandidates([
+      const candidates = detectObjectRelatives([
         { file: 'docs/guide.md', line: 40, text: 'A clean first line.\nThen the source it names.' },
       ]);
 
@@ -669,7 +669,7 @@ describe(detectCandidates, () => {
 
 /** Detects over one sentence held in a single span, which is how every lexical assertion below is phrased. */
 function detect(sentence: string): ObjectRelativeCandidate[] {
-  return detectCandidates([{ file: 'fixture.md', line: 1, text: sentence }]);
+  return detectObjectRelatives([{ file: 'fixture.md', line: 1, text: sentence }]);
 }
 
 // endregion | Helpers

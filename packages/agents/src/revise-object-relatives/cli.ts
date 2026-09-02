@@ -18,7 +18,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { scanFlags } from '../lib/parse-flags.ts';
 import { collectProse, NotARepositoryError } from './collect-prose.ts';
-import { detectCandidates } from './detect.ts';
+import { detectRules } from './rules.ts';
 import type {
   Candidate,
   CandidateSummary,
@@ -82,7 +82,8 @@ export async function runDetect(input: {
       paths: args.paths,
       ...(input.home !== undefined && { home: input.home }),
     });
-    const candidates = detectCandidates(spans);
+    // Naming no rule detects the object relative alone, which is what holds the pre-rules invocation stable.
+    const candidates = detectRules(spans, ['reduced-object-relative']);
     return { ok: true, root: input.root, candidates, summary: summarize({ candidates, scanned, skipped }) };
   } catch (error) {
     if (error instanceof NotARepositoryError) {
