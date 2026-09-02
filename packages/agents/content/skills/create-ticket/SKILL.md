@@ -178,7 +178,7 @@ Identify the client per {skill:update-jira-ticket}, which ranks the three client
 
 Every client takes `ticket_title` as the summary, the resolved project key, the resolved issue type, and the step-2 body as the description in that skill's assigned format:
 
-- **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and `fields.description` with `contentFormat: "markdown"`.
+- **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
 - **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
 - **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file.
 
