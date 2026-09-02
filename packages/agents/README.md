@@ -684,9 +684,11 @@ Append `!` after the type: `agents|feat!: Remove deprecated API`
 
 #### `integrations`
 
-| Key                         | Type    | Default | Description                                                  |
-| --------------------------- | ------- | ------- | ------------------------------------------------------------ |
-| `integrations.jira.enabled` | boolean | `false` | Enable Jira integration for ticket creation and referencing. |
+| Key                             | Type    | Default                                                  | Description                                                                                                                                                                     |
+| ------------------------------- | ------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `integrations.jira.enabled`     | boolean | `false`                                                  | Enable Jira integration for ticket creation and referencing.                                                                                                                    |
+| `integrations.jira.issue_types` | object  | none                                                     | Maps work-type keys and aliases to Jira issue-type names, plus a `default` entry covering every unmapped work type. A work type matching neither falls back to the `Task` type. |
+| `integrations.jira.project_key` | string  | `project.ticket_ref_prefix` minus its trailing separator | Jira project key that created work items land in. Set it where the derivation is wrong or where `ticket_ref_prefix` is absent.                                                  |
 
 #### `orchestration`
 
@@ -765,6 +767,11 @@ merge:
 integrations:
   jira:
     enabled: false
+    issue_types:
+      default: Task
+      feat: Story
+      fix: Bug
+    project_key: MAC
 
 orchestration:
   max_review_rounds: 3

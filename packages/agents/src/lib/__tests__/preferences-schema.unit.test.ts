@@ -152,8 +152,55 @@ describe('preferences.json schema', () => {
   });
 
   it('rejects an `integrations.<key>` object missing the required `enabled` field', async () => {
-    // Guards the `integrations.additionalProperties.required: ["enabled"]` sub-constraint.
+    // Guards the `integrations.additionalProperties.required: ["enabled"]` sub-constraint, which governs
+    // every integration except `jira`; the named property shadows `additionalProperties` for that key.
+    const output = await validate(schemaId, { integrations: { linear: {} } }, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
+
+  it('rejects an `integrations.jira` object missing the required `enabled` field', async () => {
+    // Guards the `integrations.properties.jira.required: ["enabled"]` sub-constraint, which carries the
+    // requirement forward now that the named property no longer resolves through `additionalProperties`.
     const output = await validate(schemaId, { integrations: { jira: {} } }, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
+
+  it('accepts an `integrations.jira` object with and without the creation-path keys', async () => {
+    // Guards `integrations.jira.project_key` and `integrations.jira.issue_types`, read by the Jira
+    // creation path in `create-ticket`. Both are optional, so an `enabled`-only object still validates.
+    const configuredOutput = await validate(
+      schemaId,
+      {
+        integrations: {
+          jira: {
+            enabled: true,
+            issue_types: { default: 'Task', feat: 'Story', fix: 'Bug' },
+            project_key: 'MAC',
+          },
+        },
+      },
+      FLAG,
+    );
+    expect(configuredOutput).toMatchObject({ valid: true });
+
+    const minimalOutput = await validate(schemaId, { integrations: { jira: { enabled: true } } }, FLAG);
+    expect(minimalOutput).toMatchObject({ valid: true });
+  });
+
+  it('accepts an undeclared sibling key under `integrations.jira`', async () => {
+    // The `jira` object omits `additionalProperties: false` on purpose: a live preferences file carries an
+    // inert `workspace` key, and declaring the two keys the skill reads does not make its siblings errors.
+    const output = await validate(schemaId, { integrations: { jira: { enabled: true, workspace: 'hello' } } }, FLAG);
+    expect(output).toMatchObject({ valid: true });
+  });
+
+  it('rejects a non-string `integrations.jira.issue_types` value', async () => {
+    // Guards `issue_types.additionalProperties.type`; each value names a Jira issue type.
+    const output = await validate(
+      schemaId,
+      { integrations: { jira: { enabled: true, issue_types: { default: 42 } } } },
+      FLAG,
+    );
     expect(output).toMatchObject({ valid: false });
   });
 });
