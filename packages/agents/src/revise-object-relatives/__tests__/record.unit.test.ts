@@ -124,6 +124,19 @@ describe(composeRecord, () => {
     ).toThrow(/which the fold does not cover/);
   });
 
+  it('holds one entry per key when a bump is followed by a re-rejection of the same site', () => {
+    const older = rejection({ 'unit-version': '1', hash: hashPhrase('the source that it names') });
+    const prior: ProseRecord = { units: {}, rejections: [older] };
+
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', roots: ['.'] } }, rejections: [foldRejection()] }),
+    );
+
+    expect(record.rejections).toHaveLength(1);
+    expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
+  });
+
   it('keeps a rejection recorded at an older version, a bump being a review rather than a deletion', () => {
     const older = rejection({ unit: 'writing', 'unit-version': '1' });
     const prior: ProseRecord = { units: {}, rejections: [older] };

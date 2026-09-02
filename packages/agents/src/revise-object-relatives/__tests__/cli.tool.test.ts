@@ -78,6 +78,13 @@ describe(runDetect, () => {
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['reduced-object-relative']);
     });
 
+    it('sweeps past a malformed record, never having consulted it', async () => {
+      await mkdir(path.join(scratch, '.agents'), { recursive: true });
+      await writeFile(path.join(scratch, RECORD_PATH), 'units: [not, a, map]\n', 'utf8');
+
+      expect(expectSuccess(await sweep()).candidates).toHaveLength(1);
+    });
+
     it('reads no record, so a repository with one sweeps as though it had none', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
 

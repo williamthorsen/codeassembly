@@ -53,6 +53,15 @@ function detectInSpan(span: ProseSpan): EmDashCandidate[] {
   return candidates;
 }
 
+/** Advances `runs` to the next backtick run of exactly `length`, or returns null where the text holds none. */
+function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {
+  let candidate = runs.exec(text);
+  while (candidate !== null && candidate[0].length !== length) {
+    candidate = runs.exec(text);
+  }
+  return candidate;
+}
+
 /**
  * Returns the offsets covered by each inline code span, delimiters included. A run of backticks opens a span and the
  * next run of the same length closes it, which is Markdown's own rule and the reason a span may hold a backtick of its
@@ -65,21 +74,18 @@ function findCodeSpans(text: string): ReadonlyArray<{ start: number; end: number
 
   while (opening !== null) {
     const closing = findClosingRun(text, runs, opening[0].length);
-    if (closing === null) break;
+    if (closing === null) {
+      // The run closes nothing, so it is literal text. Resuming just past it keeps every later pair in view, where
+      // abandoning the scan would leave the rest of the span unmasked.
+      runs.lastIndex = opening.index + opening[0].length;
+      opening = runs.exec(text);
+      continue;
+    }
     spans.push({ start: opening.index, end: closing.index + closing[0].length });
     opening = runs.exec(text);
   }
 
   return spans;
-}
-
-/** Advances `runs` to the next backtick run of exactly `length`, or returns null where the text holds none. */
-function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {
-  let candidate = runs.exec(text);
-  while (candidate !== null && candidate[0].length !== length) {
-    candidate = runs.exec(text);
-  }
-  return candidate;
 }
 
 // endregion | Helpers

@@ -7,8 +7,9 @@
  * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files they
  * name or contain; with none, the sweep covers the whole repository.
  *
- * Naming no rule detects the reduced object relative alone and neither reads nor writes the record, which is what
- * holds the pre-rules invocation stable.
+ * Declaring no unit detects the reduced object relative alone and neither reads nor writes the record, which is what
+ * holds the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule
+ * declares no unit unless it names one on its own.
  *
  * JSON on stdout is the only output: the human-readable report is the agent's, composed once each candidate has been
  * adjudicated. The helper revises no prose. Repairs land through the agent's own editing tool, which keeps one write
@@ -54,6 +55,9 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<'batch-budget' | 'rule' | 'unit'>> = [
   { name: 'rule', takesValue: true },
   { name: 'unit', takesValue: true },
 ];
+
+/** What an invocation declaring no unit reads in place of the repository's record. */
+const EMPTY_RECORD: ProseRecord = { units: {}, rejections: [] };
 
 /** What an invocation naming no rule detects, which is what the pre-rules skill still calls. */
 const LEGACY_RULES: ReadonlyArray<RuleId> = ['reduced-object-relative'];
@@ -112,6 +116,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     if (!isRuleId(name)) {
       throw new Error(`unknown rule "${name}"; the helper detects ${RULE_IDS.join(', ')}`);
     }
+    const owner = rules.find((named) => named.rule === name);
+    if (owner !== undefined) {
+      throw new Error(`rule "${name}" is named twice, under units "${owner.unit}" and "${rest}"; a rule has one unit`);
+    }
     rules.push({ rule: name, unit: rest });
   }
 
@@ -143,11 +151,15 @@ export async function runDetect(input: {
     return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
-  let record: ProseRecord;
-  try {
-    record = readRecordFile(input.root);
-  } catch (error) {
-    return { ok: false, error: 'invalid-record', message: describeError(error) };
+  // Read only where a unit is declared: with none, no version exists to compare coverage or a rejection against, and
+  // a malformed record would otherwise fail an invocation that never consults it.
+  let record: ProseRecord = EMPTY_RECORD;
+  if (args.units.size > 0) {
+    try {
+      record = readRecordFile(input.root);
+    } catch (error) {
+      return { ok: false, error: 'invalid-record', message: describeError(error) };
+    }
   }
 
   try {

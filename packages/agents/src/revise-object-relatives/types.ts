@@ -52,13 +52,16 @@ export type RuleId = 'em-dash' | 'reduced-object-relative';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
 export interface Batch {
-  /** 0-indexed position. Batch 0 is the recurring-sentence batch wherever a run has one. */
+  /** 0-indexed position in the run, the recurring batches leading. */
   index: number;
   /** The files this batch covers. */
   files: readonly string[];
   /** Combined byte length of those files. */
   bytes: number;
-  /** Whether this batch holds every copy of a recurring sentence, which is the one batch the budget does not bind. */
+  /**
+   * Whether this batch holds components of files linked by a shared sentence. The budget binds it like any other,
+   * except where one component exceeds the budget on its own.
+   */
   recurring: boolean;
 }
 

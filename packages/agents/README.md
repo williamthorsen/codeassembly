@@ -803,7 +803,7 @@ revise-object-relatives.mjs record < fold.json
 
 `detect` is the default and may be omitted; a leading `detect` or `record` is read as the command, so a repository path colliding with either is written `./record`. Positional paths narrow the sweep, and with none it covers the repository.
 
-`--rule` names a rule to detect and the unit owning it. `--unit` names a unit in force and the version it is at. Both repeat, and every rule's unit must be declared by a `--unit`. Naming no rule detects `reduced-object-relative` alone and neither reads nor writes the record, which is what holds the pre-rules invocation stable.
+`--rule` names a rule to detect and the unit owning it. `--unit` names a unit in force and the version it is at. Both repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, a rule having one unit. Declaring no unit detects `reduced-object-relative` alone and neither reads nor writes the record, which is what holds the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule declares no unit unless it declares one on its own.
 
 A rule has a detector; a unit is a versioned document whose coverage the record tracks, and a unit may carry no detector at all. The helper reads no rule document: what a rule _says_ is the skill's to hold, and what a rule _finds_ is the registry's.
 

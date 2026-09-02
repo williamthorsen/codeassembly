@@ -64,6 +64,31 @@ export const RunFoldSchema = z.object({
 });
 
 /**
+ * Applies the record's rejections to a candidate set: a candidate matching a rejection at its unit's current version
+ * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
+ * judgment for review rather than discarding it.
+ */
+export function applyRejections(
+  candidates: readonly Candidate[],
+  record: ProseRecord,
+  unitVersions: ReadonlyMap<string, string>,
+): Candidate[] {
+  const byKey = new Map(record.rejections.map((rejection) => [rejectionKey(rejection), rejection]));
+  const applied: Candidate[] = [];
+
+  for (const candidate of candidates) {
+    const rejection = byKey.get(composeKey(candidate.rule, candidate.file, hashPhrase(candidate.phrase)));
+    if (rejection === undefined) {
+      applied.push(candidate);
+      continue;
+    }
+    if (isStaleRejection(rejection, unitVersions)) applied.push({ ...candidate, stale: true });
+  }
+
+  return applied;
+}
+
+/**
  * Merges a run's fold into the prior record and returns the result.
  *
  * A unit the run did not name keeps its coverage and its rejections untouched, so a narrowed run never retracts what a
@@ -87,8 +112,13 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
   });
 
   const swept = new Set(Object.keys(fold.units));
+  // A key the run re-recorded supersedes whatever the record held for it. Without this, a version bump followed by a
+  // re-rejection leaves both entries, and which one suppresses a candidate would rest on the sort being stable.
+  const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
   const carried = prior.rejections.filter(
-    (rejection) => !swept.has(rejection.unit) || rejection['unit-version'] !== units[rejection.unit]?.version,
+    (rejection) =>
+      (!swept.has(rejection.unit) || rejection['unit-version'] !== units[rejection.unit]?.version) &&
+      !rerecorded.has(rejectionKey(rejection)),
   );
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };
@@ -104,6 +134,22 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
 export function hashPhrase(phrase: string): string {
   const normalized = phrase.normalize('NFC').replaceAll(/\s+/g, ' ').trim();
   return createHash('sha256').update(normalized, 'utf8').digest('hex').slice(0, 16);
+}
+
+/**
+ * Reports whether every named unit covers `file` at the version the run holds for it. A unit whose recorded version
+ * differs covers nothing, its sweep having been taken against a rule that has since changed.
+ */
+export function isCoveredAt(record: ProseRecord, unitVersions: ReadonlyMap<string, string>, file: string): boolean {
+  if (unitVersions.size === 0) return false;
+
+  for (const [unit, version] of unitVersions) {
+    const coverage = record.units[unit];
+    if (coverage === undefined || coverage.version !== version) return false;
+    if (coverage.roots.every((root) => !isUnderRoot(file, root))) return false;
+  }
+
+  return true;
 }
 
 /** Reports whether a rejection was recorded at a version older than the one a run holds for its unit. */
@@ -128,47 +174,6 @@ export function parseRecord(content: string, sourceLabel: string = RECORD_PATH):
   }
 
   return result.data;
-}
-
-/**
- * Applies the record's rejections to a candidate set: a candidate matching a rejection at its unit's current version
- * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
- * judgment for review rather than discarding it.
- */
-export function applyRejections(
-  candidates: readonly Candidate[],
-  record: ProseRecord,
-  unitVersions: ReadonlyMap<string, string>,
-): Candidate[] {
-  const byKey = new Map(record.rejections.map((rejection) => [rejectionKey(rejection), rejection]));
-  const applied: Candidate[] = [];
-
-  for (const candidate of candidates) {
-    const rejection = byKey.get(`${candidate.rule}\u{0}${candidate.file}\u{0}${hashPhrase(candidate.phrase)}`);
-    if (rejection === undefined) {
-      applied.push(candidate);
-      continue;
-    }
-    if (isStaleRejection(rejection, unitVersions)) applied.push({ ...candidate, stale: true });
-  }
-
-  return applied;
-}
-
-/**
- * Reports whether every named unit covers `file` at the version the run holds for it. A unit whose recorded version
- * differs covers nothing, its sweep having been taken against a rule that has since changed.
- */
-export function isCoveredAt(record: ProseRecord, unitVersions: ReadonlyMap<string, string>, file: string): boolean {
-  if (unitVersions.size === 0) return false;
-
-  for (const [unit, version] of unitVersions) {
-    const coverage = record.units[unit];
-    if (coverage === undefined || coverage.version !== version) return false;
-    if (coverage.roots.every((root) => !isUnderRoot(file, root))) return false;
-  }
-
-  return true;
 }
 
 /**
@@ -213,6 +218,11 @@ export function stringifyRecord(record: ProseRecord): string {
 
 // region | Helpers
 
+/** Joins the three parts of a rejection key on a delimiter no rule, path, or hash can contain. */
+function composeKey(rule: string, file: string, hash: string): string {
+  return `${rule}\u{0}${file}\u{0}${hash}`;
+}
+
 /** Reports whether a repository-relative path lies under a recorded root, `.` covering the whole repository. */
 function isUnderRoot(file: string, root: string): boolean {
   return root === '.' || file === root || file.startsWith(`${root}/`);
@@ -220,7 +230,7 @@ function isUnderRoot(file: string, root: string): boolean {
 
 /** The key a candidate is matched against: its rule, its file, and the hash of its phrase. */
 function rejectionKey(rejection: RecordedRejection): string {
-  return `${rejection.rule}\u{0}${rejection.file}\u{0}${rejection.hash}`;
+  return composeKey(rejection.rule, rejection.file, rejection.hash);
 }
 
 /** Orders rejections by rule, file, and hash, which is what makes a rewrite of unchanged content byte-identical. */

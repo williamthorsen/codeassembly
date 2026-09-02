@@ -63,6 +63,10 @@ describe(detectEmDashes, () => {
     expect(candidates).toHaveLength(1);
   });
 
+  it('still recognizes a code span following an unclosed backtick run', () => {
+    expect(detect(`A stray \`\` opener and \`b${EM_DASH}c\` in code.`)).toStrictEqual([]);
+  });
+
   it('reports the line on which the sentence begins, not the first line of the span', () => {
     const candidates = detectEmDashes([
       { file: 'docs/guide.md', line: 7, text: `First sentence.\nSecond${EM_DASH}here.` },
