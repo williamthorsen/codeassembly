@@ -4,7 +4,7 @@
  * The sweep reads what git tracks plus what git would track, which respects `.gitignore` and so keeps `node_modules/`
  * and `dist/` out for free. Extraction is per file type: Markdown body text, comments and multi-word string literals
  * in TypeScript and JavaScript, and `#` comments in shell. Everything mechanical about scope is decided here, so the
- * detector sees prose alone and the agent never adjudicates a candidate from a file it may not edit.
+ * detector sees prose alone and the agent never adjudicates a candidate from a file that it may not edit.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -79,7 +79,7 @@ export async function collectProse(input: {
   return { files, scanned, skipped, spans };
 }
 
-/** Extracts every block of prose from one file's content, each carrying the line it begins on. */
+/** Extracts every block of prose from one file's content, each carrying the line on which it begins. */
 export function extractProse(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
   switch (input.kind) {
     case 'markdown':
@@ -155,9 +155,9 @@ const DEPLOYMENT_MARKERS: readonly RegExp[] = [
 ];
 
 /**
- * Markers a code generator writes into its own output, by the kind of file each set reads. The comment openers differ
- * by kind because a Markdown bullet opens with the same `*` that a block comment's continuation line does, so one
- * alternation spanning every kind would hold out a document that merely lists the markers.
+ * Markers written by a code generator into its own output, by the kind of file that each set reads. The comment
+ * openers differ by kind because a Markdown bullet opens with the same `*` that a block comment's continuation line
+ * does, so one alternation spanning every kind would hold out a document that merely lists the markers.
  */
 const GENERATOR_MARKERS: Readonly<Record<ProseKind, readonly RegExp[]>> = {
   markdown: buildGeneratorMarkers(`<!--`),
@@ -187,7 +187,7 @@ const REGEX_PRECEDERS = new Set(['(', ',', '=', ':', '[', '!', '&', '|', '?', '{
 /**
  * Builds one span from a block comment's body, stripping each line's leading `*` and the blank lines a `/**` opener
  * and a closing line contribute. The span's own line advances past each blank line dropped, so it still names the
- * source line its first word sits on. Returns undefined for a comment holding no prose at all.
+ * source line on which its first word sits. Returns undefined for a comment holding no prose at all.
  */
 function buildBlockCommentSpan(file: string, line: number, body: string): ProseSpan | undefined {
   const texts = body.split('\n').map(stripCommentMarkers);
@@ -242,7 +242,8 @@ function countWords(text: string): number {
 /**
  * Extracts Markdown body prose: paragraphs, list items, headings, and table cells. Frontmatter, fenced code, HTML
  * comments, and link definitions are dropped, and a link is reduced to its own text so no URL reaches the detector.
- * Inline code keeps its content, whose tokens read as opaque nouns and so preserve the adjacency a repair turns on.
+ * Inline code keeps its content, whose tokens read as opaque nouns and so preserve the adjacency on which a repair
+ * turns.
  */
 function extractMarkdownProse(file: string, content: string): ProseSpan[] {
   const lines = content.split('\n');
@@ -486,8 +487,8 @@ function isExcludedPath(input: { file: string; root: string; artifactBaseDir: st
 }
 
 /**
- * Reports whether a file's content marks it as generated, whose edit belongs to the source it was produced from. The
- * kind decides which comment openers may lead a generator's marker.
+ * Reports whether a file's content marks it as generated, whose edit belongs to the source from which it was
+ * produced. The kind decides which comment openers may lead a generator's marker.
  */
 function isGeneratedContent(content: string, kind: ProseKind): boolean {
   return (
@@ -552,9 +553,9 @@ function readFileSafely(absolutePath: string): string | undefined {
 }
 
 /**
- * Resolves the artifact base directory the sweep must stay out of, from the same preferences the session-context
- * deriver reads. A preferences file that cannot be read falls back to the documented default rather than failing the
- * sweep, since the exclusion binds only where a repository keeps its artifacts in tree.
+ * Resolves the artifact base directory that the sweep must stay out of, from the same preferences read by the
+ * session-context deriver. A preferences file that cannot be read falls back to the documented default rather than
+ * failing the sweep, since the exclusion binds only where a repository keeps its artifacts in tree.
  */
 async function resolveSweepArtifactBaseDir(root: string, home: string): Promise<string> {
   try {
