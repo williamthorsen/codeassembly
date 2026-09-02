@@ -114,6 +114,24 @@ describe(syncCommand, () => {
     expect(localHost).not.toContain('slug:');
   });
 
+  it('names the rulebook version directly below the open marker', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient\nversion: 3', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->\n<!-- rulebook-version: 3 -->');
+  });
+
+  it('names no version for a rulebook that declares none', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    expect(await readFile(localHostPath(), 'utf8')).not.toContain('rulebook-version');
+  });
+
   it('creates the local host carrying the ambient region when one is absent', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
@@ -512,6 +530,17 @@ describe(syncCommand, () => {
     expect(skill).toContain('description: Gamma desc.');
     expect(skill).toContain('<!-- codeassembly-rulebook:gamma -->');
     expect(skill).toContain('Gamma rules.');
+  });
+
+  it('names the rulebook version directly below the ownership marker of a rulebook skill', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill\nversion: 5', 'Gamma rules.');
+    await declareRulebooks('gamma');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    expect(await readFile(skillPath('consult-gamma'), 'utf8')).toContain(
+      '<!-- codeassembly-rulebook:gamma -->\n<!-- rulebook-version: 5 -->',
+    );
   });
 
   it('delivers a hook-bearing rulebook body carrying no directive, in both delivery modes', async () => {

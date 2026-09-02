@@ -82,10 +82,14 @@ export class GuidanceHookError extends Error {
   }
 }
 
-/** One rulebook bound to a guidance hook: the slug its block is attributed to, and its already-rendered body. */
+/**
+ * One rulebook bound to a guidance hook: the slug its block is attributed to, its already-rendered body, and the
+ * version named in its block where it declares one.
+ */
 export interface GuidanceHookFill {
   readonly slug: string;
   readonly body: string;
+  readonly version?: string | undefined;
 }
 
 /**
@@ -294,7 +298,7 @@ function openHookMarker(name: string): string {
  * grammar a source body is parsed against.
  */
 function renderHookFill(name: string, bound: ReadonlyArray<GuidanceHookFill>): string {
-  const blocks = bound.map((fill) => renderRulebookBlock(fill.slug, demoteHeadings(fill.body)));
+  const blocks = bound.map((fill) => renderRulebookBlock(fill.slug, demoteHeadings(fill.body), fill.version));
   return [openHookMarker(name), ...blocks, closeHookMarker(name)].join('\n');
 }
 

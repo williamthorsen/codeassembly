@@ -603,12 +603,13 @@ async function reconcileDomain(
       await mkdir(skillDir, { recursive: true });
       await writeIfChanged(
         path.join(skillDir, 'SKILL.md'),
-        renderSkillFile(
-          rulebook.skillName,
-          rulebook.slug,
-          rulebook.description,
-          renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
-        ),
+        renderSkillFile({
+          body: renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
+          description: rulebook.description,
+          skillName: rulebook.skillName,
+          slug: rulebook.slug,
+          version: rulebook.version,
+        }),
       );
     }
   }
@@ -748,7 +749,7 @@ function buildGuidanceHookFills(
       slugs.map((slug) => {
         const rulebook = readBoundRulebook(bySlug, slug, hook);
         const context = resolveRulebookContext(harnessId, rulebook.source);
-        return { slug, body: renderRulebookBody(rulebook.body, slug, context) };
+        return { slug, body: renderRulebookBody(rulebook.body, slug, context), version: rulebook.version };
       }),
     );
   }
@@ -1390,7 +1391,12 @@ function renderAmbientBody(
       continue;
     }
     const context = resolveRulebookContext(harnessId, rulebook.source);
-    body = injectRulebook(body, rulebook.slug, renderRulebookBody(rulebook.body, rulebook.slug, context));
+    body = injectRulebook(
+      body,
+      rulebook.slug,
+      renderRulebookBody(rulebook.body, rulebook.slug, context),
+      rulebook.version,
+    );
   }
   // Prepend rather than seed the loop: seeding would route the note through `injectRulebook`, which separates it from
   // the first block with a blank line and would leave the note standing as the whole body when nothing is ambient.

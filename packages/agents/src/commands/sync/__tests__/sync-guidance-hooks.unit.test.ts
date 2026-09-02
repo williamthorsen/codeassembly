@@ -63,6 +63,25 @@ describe('syncCommand with guidance-hook bindings', () => {
     }
   });
 
+  it('names the bound rulebook version directly below the open marker', async () => {
+    await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
+    await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n', 'hook', '4');
+    await declare(projectRoot, [
+      'skills:',
+      '  use:',
+      '    - implement-plan',
+      'guidance-hooks:',
+      '  impl:',
+      '    use:',
+      '      - layout-preferences',
+    ]);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    const deployed = await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
+    expect(deployed).toContain('<!-- rulebook:layout-preferences -->\n<!-- rulebook-version: 4 -->');
+  });
+
   it('deploys a bound rulebook by its own delivery mode without a separate declaration', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n', 'skill');
@@ -298,10 +317,12 @@ async function writeLibraryRulebook(
   slug: string,
   body: string,
   delivery = 'ambient',
+  version?: string,
 ): Promise<void> {
   const dir = path.join(contentDir, 'guidance', 'rulebooks');
   await mkdir(dir, { recursive: true });
-  const frontmatter = `slug: ${slug}\ndescription: Fixture ${slug}\ndelivery: ${delivery}\n`;
+  const versionLine = version === undefined ? '' : `version: ${version}\n`;
+  const frontmatter = `slug: ${slug}\ndescription: Fixture ${slug}\ndelivery: ${delivery}\n${versionLine}`;
   await writeFile(path.join(dir, `${slug}.md`), `---\n${frontmatter}---\n\n${body}`, 'utf8');
 }
 

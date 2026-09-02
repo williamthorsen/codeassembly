@@ -8,6 +8,7 @@ import { makeArtifactMarker } from '../../src/lib/artifact-marker.ts';
 import { SOURCE_SUPPORT_DIR } from '../../src/lib/link-anchor.ts';
 import { injectProvenanceMarker } from '../../src/lib/marker-injector.ts';
 import { renderSkillFile } from '../../src/lib/rulebook-skill.ts';
+import { renderRulebookVersionLines } from '../../src/lib/rulebook-version-line.ts';
 import { injectRulebook } from '../../src/lib/sentinel-inliner.ts';
 
 // The recipe quotes deployment markers verbatim so a reader can match one by sight, and nothing but this suite ties
@@ -28,8 +29,14 @@ const FIXTURE_SOURCE_URL = 'https://example.invalid/fixture.md';
 /** Stands in for a slug, so the lines a producer stamps can be found and rewritten into the placeholder the recipe uses. */
 const SENTINEL_SLUG = 'sentinel-artifact';
 
-/** The placeholder the recipe writes where a deployed marker contains an artifact's own slug. */
+/** The placeholder written by the recipe where a deployed marker contains an artifact's own slug. */
 const SLUG_PLACEHOLDER = '{slug}';
+
+/** Stands in for a declared version, so the line stamped by a producer can be rewritten into the recipe's placeholder. */
+const SENTINEL_VERSION = 'sentinel-version';
+
+/** The placeholder written by the recipe where the version line contains a rulebook's own version. */
+const VERSION_PLACEHOLDER = '{version}';
 
 describe('deployment markers', () => {
   let recipe: string;
@@ -48,6 +55,14 @@ describe('deployment markers', () => {
 
   it.each(buildRegionDelimiterCases())('quotes the $label region delimiter', ({ delimiter }) => {
     expect(recipe).toContain(delimiter);
+  });
+
+  it('quotes the rulebook version line', () => {
+    const line = renderRulebookVersionLines(SENTINEL_VERSION)
+      .join('')
+      .replaceAll(SENTINEL_VERSION, () => VERSION_PLACEHOLDER);
+
+    expect(recipe).toContain(line);
   });
 
   it('names the source-support directory as deployment writes it', () => {
@@ -73,7 +88,13 @@ function buildOwnershipMarkerCases(): ReadonlyArray<{ label: string; marker: str
     {
       label: 'rulebook skill',
       markerCount: 1,
-      rendered: renderSkillFile('fixture-skill', SENTINEL_SLUG, 'Fixture rulebook.', 'Body line.'),
+      rendered: renderSkillFile({
+        body: 'Body line.',
+        description: 'Fixture rulebook.',
+        skillName: 'fixture-skill',
+        slug: SENTINEL_SLUG,
+        version: undefined,
+      }),
     },
     // `injectRulebook` opens and closes the block, so both lines contain the slug and the recipe quotes both.
     { label: 'rulebook block', markerCount: 2, rendered: injectRulebook('', SENTINEL_SLUG, 'Body line.') },

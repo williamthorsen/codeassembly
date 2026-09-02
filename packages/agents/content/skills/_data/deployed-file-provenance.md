@@ -17,11 +17,13 @@ A file is deployed when any of the following holds.
 - `<!-- codeassembly-subagent:{slug} -->` in a subagent's file
 - `<!-- codeassembly-rulebook:{slug} -->` in a rulebook delivered as a skill
 
+A rulebook that declares a version follows its `<!-- codeassembly-rulebook:{slug} -->` marker with `<!-- rulebook-version: {version} -->`, so a reader can name the version of the guidance in front of them.
+
 **It is under a harness's `skills/` tree.** Both commands populate that tree and mark only part of what they leave there: A skill's root `SKILL.md` contains an ownership marker while its nested Markdown and bundled scripts contain none, the shared `_data/` tree and the helper directories with no `SKILL.md` are `install`'s, and a declared source's support entries go under `_sources/`. The one thing there that is not deployed is a skill added by hand, whose `SKILL.md` contains no ownership marker.
 
 **It is in a harness's `scripts/` directory.** `install` copies those files verbatim and marks none of them, whatever the extension.
 
-A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region is inside an otherwise hand-authored guidance file. Inside it, each rulebook's block runs from `<!-- rulebook:{slug} -->` to `<!-- /rulebook:{slug} -->`.
+A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region is inside an otherwise hand-authored guidance file. Inside it, each rulebook's block runs from `<!-- rulebook:{slug} -->` to `<!-- /rulebook:{slug} -->`, with `<!-- rulebook-version: {version} -->` directly below the open marker where the rulebook declares a version. A guidance-hook fill spliced into a skill or subagent body writes the same block.
 
 One deployed file has neither a marker nor a marked artifact around it: `install --link` writes a symlink rather than a copy. Its target is a build output under `dist/`, so an edit there survives until the next build and no longer.
 

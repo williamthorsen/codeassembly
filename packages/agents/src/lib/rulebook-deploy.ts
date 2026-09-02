@@ -19,6 +19,8 @@ export interface ResolvedRulebook {
   readonly description: string | undefined;
   /** The name of the declared source it resolved from, or `undefined` for the built-in library. */
   readonly source: string | undefined;
+  /** The version declared by the rulebook, named in its deployed output so an agent can read which version it holds. */
+  readonly version: string | undefined;
 }
 
 /**
@@ -59,5 +61,6 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
     skill: rulebook.delivery.includes('skill'),
     description: rulebook.description,
     source: resolved.source,
+    version: rulebook.version,
   };
 }
