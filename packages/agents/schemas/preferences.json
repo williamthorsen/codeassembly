@@ -80,7 +80,7 @@
             },
             "project_key": {
               "type": "string",
-              "description": "Jira project key that created work items land in (e.g., `MAC`). Overrides the key derived from `project.ticket_ref_prefix` minus its trailing separator."
+              "description": "Key of the Jira project to create work items in (e.g., `MAC`). Overrides the key derived from `project.ticket_ref_prefix` minus its trailing separator."
             }
           },
           "required": ["enabled"]
