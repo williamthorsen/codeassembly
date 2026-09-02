@@ -45,9 +45,9 @@ A whole-repository sweep can return more candidates than one pass affords to adj
 Detection is over-inclusive by design. Reject a candidate on any of these grounds, and record the ground in the report:
 
 - **Not a relative clause.** The verb is the sentence's own, or the head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like the construction and are neither.
-- **An exhibit.** Prose that _displays_ the construction is not a violation. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each carry it deliberately, and repairing one destroys what it was written to show. The rule inlined below carries four, one per shape, and the report example further down carries three more.
+- **An exhibit.** Prose that _displays_ the construction is not a violation. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each carry it deliberately, and repairing one destroys what it was written to show. The rule inlined below carries six, one per shape plus its opening pair and a predicate-nominal gap, and the report example further down carries three more.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that happened to fall inside an extracted span.
-- **Outside the rule.** The gap fills no argument position. The helper rejects the fused head and the adjunct relative by head type, so the residue reaching you is a head misread by the mechanical test.
+- **Outside the rule.** The gap fills no argument position. The helper rejects the fused head, the adjunct relative, and the predicate of a degree question by head type, so the residue reaching you is a head misread by the mechanical test.
 
 ### 4. Choose the repair
 

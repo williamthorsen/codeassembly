@@ -148,7 +148,7 @@ describe(detectCandidates, () => {
     );
 
     it('passes over a modal carrying no lexical verb', () => {
-      expect(detect('Reports whether the file the parser should be.')).toStrictEqual([]);
+      expect(detect('Reports whether the file the parser should.')).toStrictEqual([]);
     });
 
     it('holds a plural specifier to a plural head, so a numeral beside a participle licenses nothing', () => {
@@ -295,8 +295,11 @@ describe(detectCandidates, () => {
       expect(detect('Reports the phase the ticket was not approved.')).toStrictEqual([]);
     });
 
-    it('withholds the main-verb reading where the chain ends on a verb that cannot be one', () => {
-      expect(detect('Declares the version the consumer has been.')).toStrictEqual([]);
+    it('closes on the copula a chain ends with rather than on the auxiliary before it', () => {
+      const candidates = detect('Declares the version the consumer has been.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb: 'been' });
     });
 
     it.each([
@@ -310,7 +313,7 @@ describe(detectCandidates, () => {
     });
   });
 
-  describe('intransitive verbs', () => {
+  describe('stranded prepositions', () => {
     it.each([
       { sentence: 'The set the entries belong to is closed.', phrase: 'set the entries belong' },
       { sentence: 'The levels systems depend on are fixed.', phrase: 'levels systems depend' },
@@ -334,6 +337,143 @@ describe(detectCandidates, () => {
       expect(detect('The levels systems depend on the parser are fixed.')).toStrictEqual([]);
       expect(detect('Reports the state it may depend on the parser.')).toStrictEqual([]);
     });
+
+    it.each([
+      { sentence: 'That is the consent these checks rest on.', verb: 'rest' },
+      { sentence: 'The report names the baseline the values sit above.', verb: 'sit' },
+    ])('rescues a verb no lexicon holds: $verb', ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb });
+    });
+  });
+
+  describe('demonstrative subjects', () => {
+    it('closes on the verb beside a demonstrative standing alone', () => {
+      const candidates = detect('The reviewer opened a body this read in full and found no throw in.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'body', verb: 'read', shape: 'pronoun' });
+    });
+
+    it('keeps the pronoun shape where an adverb sits between the demonstrative and the verb', () => {
+      const candidates = detect('The reviewer opened a body this also read in full and found no throw in.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb: 'read', shape: 'pronoun' });
+    });
+
+    it('reads a demonstrative specifying a noun as the definite shape', () => {
+      const candidates = detect('Reports the version this package declares, not an ancestor manifest.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ subject: 'this package', shape: 'definite' });
+    });
+
+    it('passes over a plural noun beside a demonstrative, which reads as the noun it specifies', () => {
+      const candidates = detect('The sweep repairs the checks these gates enforce.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb: 'enforce', shape: 'definite' });
+    });
+  });
+
+  describe('predicate-nominal gaps', () => {
+    it.each(['The double is the throwing mock it is.', 'The double is the throwing mock it also is.'])(
+      'closes a clause on a copula that ends it: %s',
+      (sentence) => {
+        const candidates = detect(sentence);
+
+        expect(candidates).toHaveLength(1);
+        expect(candidates[0]).toMatchObject({ head: 'mock', verb: 'is' });
+      },
+    );
+
+    it('reads a trailing negator as leaving the complement slot open', () => {
+      expect(detect('The double is the throwing mock it is not.')).toHaveLength(1);
+    });
+
+    it('passes over a copula that its own complement follows', () => {
+      expect(detect('The double is the throwing mock it is today.')).toStrictEqual([]);
+    });
+
+    it('passes over a degree question, whose predicate is no head noun', () => {
+      expect(detect('Nobody said how big the problem is.')).toStrictEqual([]);
+    });
+
+    it.each([
+      'Nobody said how many files the parser reads.',
+      'Before asking, settle whose call it is.',
+      'An ask is theirs however confident you are.',
+    ])('passes over a head a wh-word fronts, which binds its own gap: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it.each(['Nobody said how twelve files the parser reads.', 'Nobody said how 12 files the parser reads.'])(
+      'crosses a numeral to the wh-word whichever way it is written: %s',
+      (sentence) => {
+        expect(detect(sentence)).toStrictEqual([]);
+      },
+    );
+
+    it('keeps a genuine site nested inside a wh-clause', () => {
+      expect(detect('Nobody said how the source it names got stale.')).toHaveLength(1);
+    });
+
+    it('closes on a copula an auxiliary chain ends with', () => {
+      const candidates = detect('Reports whether the file the parser should be.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'file', verb: 'be' });
+    });
+  });
+
+  describe('adverbs between the subject and the verb', () => {
+    it.each([
+      { sentence: 'Audits every workspace bin against the source it also names.', verb: 'names' },
+      { sentence: 'Audits every workspace bin against the source it quietly names.', verb: 'names' },
+    ])('reads through one to the verb: $verb', ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'source', verb });
+    });
+  });
+
+  describe('a preposition inside the subject', () => {
+    it('reaches the verb past a prepositional phrase', () => {
+      const candidates = detect("The sweep covers the sources this package's own prose about the idioms lives in.");
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'sources', verb: 'lives' });
+    });
+
+    it.each([
+      'The sweep covers the sources this prose about the idioms lists.',
+      'The sweep covers the sources this prose about the idioms lists in the appendix.',
+    ])('passes over a verb stranding no clause-final preposition: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('holds a verb an auxiliary carries to the same gate', () => {
+      const stranded = detect('The sweep covers the sources this prose about the idioms has drawn on.');
+
+      expect(stranded).toHaveLength(1);
+      expect(stranded[0]).toMatchObject({ head: 'sources', verb: 'drawn' });
+      expect(detect('The sweep covers the sources this prose about the idioms has listed.')).toStrictEqual([]);
+    });
+
+    it('holds a main-verb auxiliary to the same gate', () => {
+      expect(detect('The sweep covers the sources this prose about the idioms has.')).toStrictEqual([]);
+    });
+
+    it('holds a partitive `of` to neither the raised ceiling nor the gate that pays for it', () => {
+      const candidates = detect('The wrapping two of them apply is identical.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'wrapping', verb: 'apply' });
+    });
   });
 
   describe('non-head modifiers', () => {
@@ -351,6 +491,37 @@ describe(detectCandidates, () => {
 
       expect(candidates).toHaveLength(1);
       expect(candidates[0]).toMatchObject({ head: 'source', phrase: 'source it names' });
+    });
+  });
+
+  describe('pro-form heads', () => {
+    it.each([
+      'The failure is not one the spy carries.',
+      'The failure is not one it declares.',
+      'The report names the one the runner renders.',
+    ])('reads the anaphoric `one` as a head: %s', (sentence) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'one' });
+    });
+
+    it('reads the plural of the series the same way', () => {
+      const candidates = detect('The report lists the ones the runner renders.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'ones', phrase: 'ones the runner renders' });
+    });
+
+    it.each(['No one it names survives the sweep.', 'Every one it names survives the sweep.'])(
+      'passes over a quantifier fused with the series: %s',
+      (sentence) => {
+        expect(detect(sentence)).toStrictEqual([]);
+      },
+    );
+
+    it('keeps a partitive, which a relativizer restores to', () => {
+      expect(detect('Another one it names survives the sweep.')).toHaveLength(1);
     });
   });
 
@@ -406,6 +577,79 @@ describe(detectCandidates, () => {
 
     it('reads a quantified bare-noun subject, whose head a quantifier specifies', () => {
       expect(detect('The library ships every idiom developers recognize.')).toHaveLength(1);
+    });
+  });
+
+  describe('competing anchors', () => {
+    it.each([
+      {
+        sentence: 'The next sync overwrites it, so the edit belongs to the source it was copied from.',
+        head: 'source',
+      },
+      {
+        sentence: 'Each pass renders its content for the harness it lands on.',
+        head: 'harness',
+      },
+    ])('keeps the tightest head closing on a verb: $head', ({ sentence, head }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head });
+    });
+
+    it.each([
+      { sentence: 'The report drops the entries the sweep no longer holds.', head: 'entries', verb: 'holds' },
+      { sentence: 'Compare it against the body the user most recently approved.', head: 'body', verb: 'approved' },
+    ])('passes over an adverbial that would win the site on nearness: $head', ({ sentence, head, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head, verb });
+    });
+
+    it.each([
+      'The suite lists the reports many early readers cited.',
+      'The suite lists the reports two likely readers cited.',
+      'The suite lists the reports two longer digests cited.',
+      'The suite lists the reports many later drafts cited.',
+      'The suite lists the reports no early readers cited.',
+    ])('keeps a quantified subject whose second word is an adjective: %s', (sentence) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'reports' });
+    });
+
+    it("reads a pro-form after a comparative as its phrase's head, not as a subject", () => {
+      const candidates = detect('A later tool can read a key an older one ignores.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'key', subject: 'an older one', verb: 'ignores' });
+    });
+
+    it('keeps a pro-form subject that no comparative precedes', () => {
+      const candidates = detect('The report names the source one names.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'source', subject: 'one', verb: 'names' });
+    });
+
+    it('leaves a quantified subject that opens a real noun phrase to win on nearness', () => {
+      const candidates = detect('Then retract the namespaces no source claims.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'namespaces', subject: 'no source', shape: 'quantified' });
+    });
+
+    it("reads an object pronoun as neither the verb nor a stranded preposition's gap", () => {
+      const candidates = detect("Joins one kind's problems into the clause its error message reports them in.");
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'clause', verb: 'reports' });
+    });
+
+    it('keeps a filled preposition unstranded where an object pronoun fills it', () => {
+      expect(detect('The store the entries belong to them is closed.')).toStrictEqual([]);
     });
   });
 
