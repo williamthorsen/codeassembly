@@ -275,6 +275,12 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Determiners that also stand alone as a subject. `that` is absent: between a head and a subject it is the overt
+ * relativizer the rule asks for, so a clause it opens is already clean.
+ */
+const DEMONSTRATIVES: ReadonlySet<string> = new Set(['these', 'this', 'those']);
+
+/**
  * Participles whose verb takes two objects. A passive promotes one and leaves the other open, so a head noun can fill
  * the gap that remains: `the paths it is given` is the construction where `the paths it is used` is not.
  */
@@ -518,10 +524,12 @@ const SUBJECT_PRONOUNS: ReadonlySet<string> = new Set(['he', 'i', 'it', 'one', '
 /**
  * The window in which each anchor's finite verb must fall, counted in tokens from the subject's first word. A
  * determiner, a numeral, and a quantifier each specify a noun, so the verb may not sit directly on one; a pronoun
- * subject is one word, and so is a bare one, since nothing marks where a longer one would begin.
+ * subject is one word, and so is a bare one, since nothing marks where a longer one would begin. A demonstrative
+ * reads either way, so it spans both: one token where it stands alone, up to four where it specifies a noun.
  */
 const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }>> = {
   bare: { min: 1, max: 1 },
+  demonstrative: { min: 1, max: 4 },
   determiner: { min: 2, max: 4 },
   numeral: { min: 2, max: 4 },
   pronoun: { min: 1, max: 1 },
@@ -537,10 +545,15 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
 const EXTENDED_SUBJECT_WINDOW = 12;
 
 /** What opens an embedded subject, which decides its window. Several kinds report under one shape. */
-type SubjectKind = 'bare' | 'determiner' | 'numeral' | 'pronoun' | 'quantifier' | 'quantifier-pronoun';
+type SubjectKind =
+  'bare' | 'demonstrative' | 'determiner' | 'numeral' | 'pronoun' | 'quantifier' | 'quantifier-pronoun';
 
-/** The shape under which each anchor reports, in the rulebook's own vocabulary. */
-const SHAPES_BY_KIND: Readonly<Record<SubjectKind, SubjectShape>> = {
+/**
+ * The shape under which each anchor reports, in the rulebook's own vocabulary. A demonstrative has none of its own:
+ * it reports as a pronoun standing alone and as a definite noun phrase otherwise, which {@link resolveShape} reads
+ * off where the verb closed.
+ */
+const SHAPES_BY_KIND: Readonly<Record<Exclude<SubjectKind, 'demonstrative'>, SubjectShape>> = {
   bare: 'bare',
   determiner: 'definite',
   numeral: 'quantified',
@@ -677,7 +690,7 @@ function detectInSpan(span: ProseSpan): Candidate[] {
     if (verbIndex === undefined) continue;
 
     claimedThrough = verbIndex;
-    const shape = SHAPES_BY_KIND[kind];
+    const shape = resolveShape(kind, index, verbIndex);
     candidates.push(buildCandidate({ span, tokens, headIndex, subjectIndex: index, verbIndex, shape }));
   }
 
@@ -685,8 +698,9 @@ function detectInSpan(span: ProseSpan): Candidate[] {
 }
 
 /**
- * Classifies what a token opens an embedded subject with, or reports undefined where it opens none. Four kinds are
- * read off closed classes; the bare kind has no marker, so a plural noun stands in for one.
+ * Classifies what a token opens an embedded subject with, or reports undefined where it opens none. Five kinds are
+ * read off closed classes; the bare kind has no marker, so a plural noun stands in for one. A demonstrative is
+ * tested ahead of the determiner it also belongs to, since it alone of the determiners stands as a subject by itself.
  */
 function classifySubject(tokens: readonly Token[], index: number): SubjectKind | undefined {
   const token = tokens[index];
@@ -697,6 +711,7 @@ function classifySubject(tokens: readonly Token[], index: number): SubjectKind |
   if (NUMERALS.has(word) || /^\d+$/.test(word)) return 'numeral';
   if (QUANTIFIER_PRONOUNS.has(word)) return 'quantifier-pronoun';
   if (QUANTIFIERS.has(word)) return 'quantifier';
+  if (DEMONSTRATIVES.has(word)) return 'demonstrative';
   if (DETERMINERS.has(word)) return 'determiner';
   return isPluralNoun(word) ? 'bare' : undefined;
 }
@@ -799,6 +814,9 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * An adverb or a negator between the subject and the verb raises the ceiling by one rather than spending a token of
  * it, mirroring what {@link resolveAuxiliaryChain} reads through, so `the source it also names` reports as `the
  * source it names` does.
+ *
+ * A demonstrative standing alone closes on the token beside it, but not on one reading as a plural noun:
+ * {@link isFiniteVerb} cannot tell that from a verb, and the noun a demonstrative specifies is the likelier reading.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
@@ -835,11 +853,22 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       return chain.lastAuxiliaryIndex;
     }
     if (index < first || !closesScannedClause(tokens, index, kind)) continue;
+    if (kind === 'demonstrative' && index === subjectIndex + 1 && isPluralNoun(token.word)) continue;
     if (crossedPreposition && !closesClause(tokens, index)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
   return undefined;
+}
+
+/**
+ * Resolves the shape an anchor reports under. Every kind but the demonstrative has one of its own; a demonstrative
+ * reports as a pronoun where it stands alone as the subject and as a definite noun phrase where it specifies a noun,
+ * which is what the verb's distance from it says.
+ */
+function resolveShape(kind: SubjectKind, subjectIndex: number, verbIndex: number): SubjectShape {
+  if (kind !== 'demonstrative') return SHAPES_BY_KIND[kind];
+  return verbIndex === subjectIndex + 1 ? 'pronoun' : 'definite';
 }
 
 /**

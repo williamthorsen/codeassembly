@@ -349,6 +349,29 @@ describe(detectCandidates, () => {
     });
   });
 
+  describe('demonstrative subjects', () => {
+    it('closes on the verb beside a demonstrative standing alone', () => {
+      const candidates = detect('The reviewer opened a body this read in full and found no throw in.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'body', verb: 'read', shape: 'pronoun' });
+    });
+
+    it('reads a demonstrative specifying a noun as the definite shape', () => {
+      const candidates = detect('Reports the version this package declares, not an ancestor manifest.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ subject: 'this package', shape: 'definite' });
+    });
+
+    it('passes over a plural noun beside a demonstrative, which reads as the noun it specifies', () => {
+      const candidates = detect('The sweep repairs the checks these gates enforce.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb: 'enforce', shape: 'definite' });
+    });
+  });
+
   describe('predicate-nominal gaps', () => {
     it.each(['The double is the throwing mock it is.', 'The double is the throwing mock it also is.'])(
       'closes a clause on a copula that ends it: %s',
