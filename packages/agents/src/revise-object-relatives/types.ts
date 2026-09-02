@@ -68,6 +68,48 @@ export interface ScannedFile {
   bytes: number;
 }
 
+/** What the record holds for one unit: the version swept, when, and the path roots the sweep covered. */
+export interface UnitCoverage {
+  /** The unit's version at the time of the sweep, opaque and never parsed as semver. */
+  version: string;
+  /** The ISO calendar date of the sweep. */
+  'swept-at': string;
+  /** The path roots covered, `.` where the sweep covered the repository. */
+  roots: readonly string[];
+}
+
+/** One adjudicated rejection, keyed on its rule, its file, and the hash of its phrase. */
+export interface RecordedRejection {
+  rule: RuleId;
+  /** The unit owning the rule, which is what a version bump marks stale. */
+  unit: string;
+  /** The unit's version when the rejection was recorded. */
+  'unit-version': string;
+  file: string;
+  /** The phrase as it reads after the run's edits. */
+  phrase: string;
+  /** Hash of the phrase, which is the key a later run matches a candidate against. */
+  hash: string;
+  /** Why the site was left as it stands. */
+  ground: string;
+}
+
+/** The per-repository sweep record. */
+export interface ProseRecord {
+  /** Coverage by unit name. */
+  units: Record<string, UnitCoverage>;
+  rejections: readonly RecordedRejection[];
+}
+
+/** What one run reports back for recording: the units it covered and the rejections it adjudicated. */
+export interface RunFold {
+  /** The ISO calendar date to record the sweep under. */
+  sweptAt: string;
+  /** Per unit, the version swept and the path roots covered. */
+  units: Record<string, { version: string; roots: readonly string[] }>;
+  rejections: readonly RecordedRejection[];
+}
+
 /** Why a prose-bearing file was held out of the sweep. */
 export type SkipReason = 'generated' | 'machine-generated' | 'unreadable';
 
