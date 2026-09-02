@@ -310,7 +310,7 @@ describe(detectCandidates, () => {
     });
   });
 
-  describe('intransitive verbs', () => {
+  describe('stranded prepositions', () => {
     it.each([
       { sentence: 'The set the entries belong to is closed.', phrase: 'set the entries belong' },
       { sentence: 'The levels systems depend on are fixed.', phrase: 'levels systems depend' },
@@ -333,6 +333,16 @@ describe(detectCandidates, () => {
     it('reads the same verb the same way bare and under an auxiliary', () => {
       expect(detect('The levels systems depend on the parser are fixed.')).toStrictEqual([]);
       expect(detect('Reports the state it may depend on the parser.')).toStrictEqual([]);
+    });
+
+    it.each([
+      { sentence: 'That is the consent these checks rest on.', verb: 'rest' },
+      { sentence: 'The report names the baseline the values sit above.', verb: 'sit' },
+    ])('rescues a verb no lexicon holds: $verb', ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb });
     });
   });
 

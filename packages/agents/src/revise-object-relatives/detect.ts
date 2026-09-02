@@ -857,12 +857,12 @@ function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
 
 /**
  * Reports whether the token at `index`, reached by the scan rather than through an auxiliary, closes a relative
- * clause. {@link isFiniteVerb} decides that on the word alone; an intransitive verb that it rejects is admitted back
- * where a stranded preposition gives the clause a gap, and an agentive participle is rejected whatever it says.
+ * clause. {@link isFiniteVerb} decides that on the word alone; a word that it rejects is admitted back where a
+ * stranded preposition gives the clause a gap, and an agentive participle is rejected whatever it says.
  */
 function closesScannedClause(tokens: readonly Token[], index: number, kind: SubjectKind): boolean {
   if (kind === 'bare' && isAgentiveParticiple(tokens, index)) return false;
-  return isFiniteVerb(tokens[index]?.word ?? '') || isStrandedIntransitive(tokens, index);
+  return isFiniteVerb(tokens[index]?.word ?? '') || isStrandedVerb(tokens, index);
 }
 
 /**
@@ -880,12 +880,15 @@ function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean 
 }
 
 /**
- * Reports whether an intransitive verb at `index` strands a preposition. {@link isFiniteVerb} rejects every member of
- * {@link INTRANSITIVE_VERBS}, since one closing a subject usually reads as the sentence's own verb; a stranded
- * preposition gives it a gap and admits it back.
+ * Reports whether the token at `index` is a verb that a stranded preposition rescues. {@link isFiniteVerb} recognizes
+ * a verb by morphology or by lexicon, and neither reaches a bare form such as `rest`; the stranded preposition is the
+ * gap itself, so what precedes it needs only to be a word that can carry one. {@link hasStrandedPreposition} is what
+ * keeps this from reaching a noun: a preposition with an object of its own strands nothing.
  */
-function isStrandedIntransitive(tokens: readonly Token[], index: number): boolean {
-  return INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') && hasStrandedPreposition(tokens, index);
+function isStrandedVerb(tokens: readonly Token[], index: number): boolean {
+  const word = tokens[index]?.word ?? '';
+  if (word === '' || isFunctionWord(word) || S_FINAL_NON_VERBS.has(word)) return false;
+  return hasStrandedPreposition(tokens, index);
 }
 
 /**
