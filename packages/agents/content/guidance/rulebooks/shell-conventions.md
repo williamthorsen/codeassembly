@@ -2,7 +2,7 @@
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
 delivery: skill
-version: 1
+version: '1'
 ---
 
 # Shell script conventions

@@ -21,10 +21,17 @@ const DeliveryModeSchema = z.enum(['ambient', 'hook', 'skill']);
  */
 const DELIVERY_ERROR = "delivery must be 'ambient', 'hook', or 'skill', or a non-empty list of them";
 
+/** The rejection a non-string `version` carries: it reached the schema as a number, so quoting is the fix. */
+const VERSION_TYPE_ERROR = "version must be quoted (e.g. version: '1.10'); unquoted, 1.10 is read as the number 1.1";
+
+/** The rejection a `version` carries that cannot occupy the line naming it in deployed output. */
+const VERSION_SHAPE_ERROR = "version must be a non-blank single line containing no '-->'";
+
 /**
  * Frontmatter schema for a rulebook source file. The operational fields drive the resolver; unknown keys
  * (e.g. future classification metadata) are accepted but dropped, not preserved on the parsed object.
- * `delivery` is normalized to an array, and `version` is treated as an opaque string, never parsed as semver.
+ * `delivery` is normalized to an array, and `version` is an opaque string, never parsed as semver, accepted only in
+ * the shape the deployed version line can carry.
  * `skill-name` overrides the rendered skill's name (and directory) for `skill` delivery; absent it, the name
  * is derived from the slug.
  */
@@ -41,10 +48,7 @@ export const RulebookFrontmatterSchema = z.object({
     .union([DeliveryModeSchema, z.array(DeliveryModeSchema).min(1, DELIVERY_ERROR)], { error: DELIVERY_ERROR })
     .default('ambient')
     .transform((value) => (typeof value === 'string' ? [value] : value)),
-  version: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((value) => (value === undefined ? undefined : String(value))),
+  version: z.string({ error: VERSION_TYPE_ERROR }).refine(isRenderableVersion, VERSION_SHAPE_ERROR).optional(),
 });
 
 /** A validated rulebook's operational frontmatter. */
@@ -69,3 +73,12 @@ export function parseRulebookFile(content: string, sourceLabel?: string): { rule
 
   return { rulebook: result.data, body };
 }
+
+// region | Helpers
+
+/** Whether a version can occupy its own `<!-- rulebook-version: ... -->` line: non-blank, one line, closing no comment. */
+function isRenderableVersion(version: string): boolean {
+  return version.trim() !== '' && !/[\r\n]/.test(version) && !version.includes('-->');
+}
+
+// endregion | Helpers

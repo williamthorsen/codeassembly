@@ -115,7 +115,7 @@ describe(syncCommand, () => {
   });
 
   it('names the rulebook version directly below the open marker', async () => {
-    await writeLibraryRulebook('alpha', 'delivery: ambient\nversion: 3', 'Alpha rules.');
+    await writeLibraryRulebook('alpha', "delivery: ambient\nversion: '3'", 'Alpha rules.');
     await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
@@ -533,7 +533,7 @@ describe(syncCommand, () => {
   });
 
   it('names the rulebook version directly below the ownership marker of a rulebook skill', async () => {
-    await writeLibraryRulebook('gamma', 'delivery: skill\nversion: 5', 'Gamma rules.');
+    await writeLibraryRulebook('gamma', "delivery: skill\nversion: '5'", 'Gamma rules.');
     await declareRulebooks('gamma');
 
     await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);

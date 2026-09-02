@@ -2,7 +2,7 @@
 slug: williamthorsen-workflow-preferences
 description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, and guidance capture.
 delivery: ambient
-version: 3
+version: '3'
 ---
 
 # William Thorsen's workflow preferences
