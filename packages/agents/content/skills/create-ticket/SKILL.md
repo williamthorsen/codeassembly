@@ -252,7 +252,9 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 **blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool where one is available, `acli` next, a reported skip only where neither is. The link client need not be the one that created the work item, because a link call carries no description and the creation client's format contract does not reach it.
 
-Through a connected tool, select the link type whose outward description reads `blocks`, then place the two keys by that type's own inward and outward descriptions: the blocker takes the side the outward description names.
+Through a connected tool, use the link type named `Blocks`, falling back to a type whose outward description reads `blocks` where the site carries no type of that name; `getIssueLinkTypes` lists them. Place the blocker in `inwardIssue` and the blocked work item in `outwardIssue`, the mapping the tool's own argument documentation states and a live call confirms.
+
+The two clients take opposite argument orders for the same relationship: `acli --out` names the blocker, where a connected tool's `inwardIssue` does. A link type's inward and outward descriptions describe how Jira stores the link, and only `acli`'s argument names follow that orientation, so take each client's mapping from its own documentation and the descriptions only to select the type.
 
 Through `acli`:
 
