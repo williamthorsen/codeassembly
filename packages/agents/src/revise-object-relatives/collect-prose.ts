@@ -14,14 +14,14 @@ import path from 'node:path';
 import { DEFAULT_ARTIFACT_BASE_DIR, resolveArtifactBaseDir } from '../derive-session-context/compose-manifest.ts';
 import { readPreferences } from '../derive-session-context/read-preferences.ts';
 import { HARNESSES } from '../lib/harness.ts';
-import type { ProseKind, ProseSpan, SkipReason } from './types.ts';
+import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 
 /** A resolved sweep: what it read, what it held out, and every block of prose that it yielded. */
 export interface ProseCollection {
   /** The resolved target set, in git's own order. Nothing outside it may be edited. */
   files: readonly string[];
-  /** How many files the sweep read prose from. */
-  scanned: number;
+  /** The files the sweep read prose from, in the target set's own order, each with the bytes a batch budget reads. */
+  scannedFiles: readonly ScannedFile[];
   /** Prose-bearing files held out, by the reason each was held out, so no exclusion is silent. */
   skipped: Readonly<Record<SkipReason, number>>;
   spans: readonly ProseSpan[];
@@ -46,7 +46,7 @@ export async function collectProse(input: {
 
   const spans: ProseSpan[] = [];
   const skipped: Record<SkipReason, number> = { generated: 0, 'machine-generated': 0, unreadable: 0 };
-  let scanned = 0;
+  const scannedFiles: ScannedFile[] = [];
 
   for (const file of files) {
     // The extension decides whether a file is worth reading at all, so a lockfile or an image is never pulled into
@@ -72,11 +72,11 @@ export async function collectProse(input: {
       continue;
     }
 
-    scanned += 1;
+    scannedFiles.push({ file, bytes: Buffer.byteLength(content, 'utf8') });
     spans.push(...extractProse({ file, content, kind }));
   }
 
-  return { files, scanned, skipped, spans };
+  return { files, scannedFiles, skipped, spans };
 }
 
 /** Extracts every block of prose from one file's content, each carrying the line on which it begins. */

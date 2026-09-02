@@ -48,6 +48,26 @@ export interface ObjectRelativeCandidate extends CandidateBase {
 /** A rule the sweep detects. A rule has a detector; a unit, which the record tracks, need not. */
 export type RuleId = 'em-dash' | 'reduced-object-relative';
 
+/** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
+export interface Batch {
+  /** 0-indexed position. Batch 0 is the recurring-sentence batch wherever a run has one. */
+  index: number;
+  /** The files this batch covers. */
+  files: readonly string[];
+  /** Combined byte length of those files. */
+  bytes: number;
+  /** Whether this batch holds every copy of a recurring sentence, which is the one batch the budget does not bind. */
+  recurring: boolean;
+}
+
+/** One file the sweep read prose from, with the byte length a batch budget is measured against. */
+export interface ScannedFile {
+  /** Path to the source file, relative to the repository root. */
+  file: string;
+  /** The file's byte length as read. */
+  bytes: number;
+}
+
 /** Why a prose-bearing file was held out of the sweep. */
 export type SkipReason = 'generated' | 'machine-generated' | 'unreadable';
 

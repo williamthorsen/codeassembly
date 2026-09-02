@@ -77,14 +77,19 @@ export async function runDetect(input: {
   }
 
   try {
-    const { scanned, skipped, spans } = await collectProse({
+    const { scannedFiles, skipped, spans } = await collectProse({
       root: input.root,
       paths: args.paths,
       ...(input.home !== undefined && { home: input.home }),
     });
     // Naming no rule detects the object relative alone, which is what holds the pre-rules invocation stable.
     const candidates = detectRules(spans, ['reduced-object-relative']);
-    return { ok: true, root: input.root, candidates, summary: summarize({ candidates, scanned, skipped }) };
+    return {
+      ok: true,
+      root: input.root,
+      candidates,
+      summary: summarize({ candidates, scanned: scannedFiles.length, skipped }),
+    };
   } catch (error) {
     if (error instanceof NotARepositoryError) {
       return { ok: false, error: 'not-a-repository', message: error.message };
