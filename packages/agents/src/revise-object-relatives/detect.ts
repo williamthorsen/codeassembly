@@ -835,30 +835,17 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       last = Math.min(subjectIndex + EXTENDED_SUBJECT_WINDOW, tokens.length - 1);
       continue;
     }
-    if (NEGATORS.has(token.word) || FOCUS_ADVERBS.has(token.word) || isMannerAdverb(token.word)) {
+    if (skipsAsModifier(token.word)) {
       last = Math.min(last + 1, tokens.length - 1);
       continue;
     }
-    if (AUXILIARIES.has(token.word) && index >= first) {
-      const chain = resolveAuxiliaryChain(tokens, index);
-      if (chain.carriedIndex !== undefined) {
-        const carried = closeOnCarriedVerb(tokens, chain);
-        return carried !== undefined && crossedPreposition && !closesClause(tokens, carried) ? undefined : carried;
-      }
-      const lastAuxiliary = tokens[chain.lastAuxiliaryIndex]?.word ?? '';
-      if (BE_FORMS.has(lastAuxiliary) && closesOnCopula(tokens, chain.lastAuxiliaryIndex)) {
-        return chain.lastAuxiliaryIndex;
-      }
-      if (!MAIN_VERB_AUXILIARIES.has(lastAuxiliary)) continue;
-      if (crossedPreposition && !closesClause(tokens, chain.lastAuxiliaryIndex)) continue;
-      if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
-      return chain.lastAuxiliaryIndex;
-    }
-    if (index < first || !closesScannedClause(tokens, index, kind)) continue;
-    if (kind === 'demonstrative' && index === subjectIndex + 1 && isPluralNoun(token.word)) continue;
-    if (crossedPreposition && !closesClause(tokens, index)) continue;
-    if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
-    return index;
+
+    const step =
+      AUXILIARIES.has(token.word) && index >= first
+        ? resolveAuxiliaryStep({ tokens, index, kind, crossedPreposition })
+        : resolveScannedStep({ tokens, index, subjectIndex, first, kind, crossedPreposition });
+    if (step.outcome === 'close') return step.verbIndex;
+    if (step.outcome === 'stop') return undefined;
   }
   return undefined;
 }
@@ -871,6 +858,69 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 function resolveShape(kind: SubjectKind, subjectIndex: number, verbIndex: number): SubjectShape {
   if (kind !== 'demonstrative') return SHAPES_BY_KIND[kind];
   return verbIndex === subjectIndex + 1 ? 'pronoun' : 'definite';
+}
+
+/** What one scanned token does to the search: closes it on a verb, ends it, or leaves it running. */
+type ScanStep = { outcome: 'close'; verbIndex: number } | { outcome: 'continue' } | { outcome: 'stop' };
+
+/** Reports whether a word stands between a subject and its verb without being either. */
+function skipsAsModifier(word: string): boolean {
+  return NEGATORS.has(word) || FOCUS_ADVERBS.has(word) || isMannerAdverb(word);
+}
+
+/**
+ * Resolves what an auxiliary at `index` does to the search. A chain carrying a lexical verb closes on that verb or
+ * ends the search, since the chain it failed is the end of the subject; a chain carrying none closes on its last
+ * auxiliary where that reads as the clause's own verb, either as a copula at the end of its clause or as a main-verb
+ * auxiliary such as `has`.
+ */
+function resolveAuxiliaryStep(input: {
+  tokens: readonly Token[];
+  index: number;
+  kind: SubjectKind;
+  crossedPreposition: boolean;
+}): ScanStep {
+  const { tokens, index, kind, crossedPreposition } = input;
+  const chain = resolveAuxiliaryChain(tokens, index);
+
+  if (chain.carriedIndex !== undefined) {
+    const carried = closeOnCarriedVerb(tokens, chain);
+    if (carried === undefined) return { outcome: 'stop' };
+    if (crossedPreposition && !closesClause(tokens, carried)) return { outcome: 'stop' };
+    return { outcome: 'close', verbIndex: carried };
+  }
+
+  const lastAuxiliary = tokens[chain.lastAuxiliaryIndex]?.word ?? '';
+  if (BE_FORMS.has(lastAuxiliary) && closesOnCopula(tokens, chain.lastAuxiliaryIndex)) {
+    return { outcome: 'close', verbIndex: chain.lastAuxiliaryIndex };
+  }
+  if (!MAIN_VERB_AUXILIARIES.has(lastAuxiliary)) return { outcome: 'continue' };
+  if (crossedPreposition && !closesClause(tokens, chain.lastAuxiliaryIndex)) return { outcome: 'continue' };
+  if (kind === 'bare' && !agreesWithPluralSubject(tokens[index]?.word ?? '')) return { outcome: 'stop' };
+  return { outcome: 'close', verbIndex: chain.lastAuxiliaryIndex };
+}
+
+/**
+ * Resolves what a token reached by the scan rather than through an auxiliary does to the search. A bare subject that
+ * a verb disagrees with in number ends the search, since no other reading of that subject is available; everything
+ * else the tests reject leaves the scan running.
+ */
+function resolveScannedStep(input: {
+  tokens: readonly Token[];
+  index: number;
+  subjectIndex: number;
+  first: number;
+  kind: SubjectKind;
+  crossedPreposition: boolean;
+}): ScanStep {
+  const { tokens, index, subjectIndex, first, kind, crossedPreposition } = input;
+  const word = tokens[index]?.word ?? '';
+
+  if (index < first || !closesScannedClause(tokens, index, kind)) return { outcome: 'continue' };
+  if (kind === 'demonstrative' && index === subjectIndex + 1 && isPluralNoun(word)) return { outcome: 'continue' };
+  if (crossedPreposition && !closesClause(tokens, index)) return { outcome: 'continue' };
+  if (kind === 'bare' && !agreesWithPluralSubject(word)) return { outcome: 'stop' };
+  return { outcome: 'close', verbIndex: index };
 }
 
 /**
