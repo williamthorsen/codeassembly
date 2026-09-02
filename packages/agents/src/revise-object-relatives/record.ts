@@ -15,7 +15,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { z } from 'zod';
 
 import { RULE_IDS } from './rules.ts';
-import type { ProseRecord, RecordedRejection, RunFold } from './types.ts';
+import type { Candidate, ProseRecord, RecordedRejection, RunFold } from './types.ts';
 
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
@@ -47,6 +47,22 @@ export const ProseRecordSchema = z.object({
   rejections: z.array(RejectionSchema).default([]),
 });
 
+/** One rejection as a run reports it: no hash and no version, both of which the helper derives. */
+const FoldRejectionSchema = z.object({
+  rule: z.enum(RULE_IDS),
+  unit: z.string().min(1),
+  file: z.string().min(1),
+  phrase: z.string().min(1),
+  ground: z.string().min(1),
+});
+
+/** What one run reports back for recording. */
+export const RunFoldSchema = z.object({
+  sweptAt: DateSchema,
+  units: z.record(z.string(), z.object({ version: z.string().min(1), roots: z.array(z.string().min(1)).min(1) })),
+  rejections: z.array(FoldRejectionSchema).default([]),
+});
+
 /**
  * Merges a run's fold into the prior record and returns the result.
  *
@@ -62,12 +78,20 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
     units[unit] = { version: coverage.version, 'swept-at': fold.sweptAt, roots: [...coverage.roots].toSorted() };
   }
 
+  const recorded: RecordedRejection[] = fold.rejections.map((rejection) => {
+    const version = fold.units[rejection.unit]?.version;
+    if (version === undefined) {
+      throw new Error(`rejection names unit "${rejection.unit}", which the fold does not cover`);
+    }
+    return { ...rejection, 'unit-version': version, hash: hashPhrase(rejection.phrase) };
+  });
+
   const swept = new Set(Object.keys(fold.units));
   const carried = prior.rejections.filter(
     (rejection) => !swept.has(rejection.unit) || rejection['unit-version'] !== units[rejection.unit]?.version,
   );
 
-  return { units, rejections: sortRejections([...carried, ...fold.rejections]) };
+  return { units, rejections: sortRejections([...carried, ...recorded]) };
 }
 
 /**
@@ -107,6 +131,70 @@ export function parseRecord(content: string, sourceLabel: string = RECORD_PATH):
 }
 
 /**
+ * Applies the record's rejections to a candidate set: a candidate matching a rejection at its unit's current version
+ * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
+ * judgment for review rather than discarding it.
+ */
+export function applyRejections(
+  candidates: readonly Candidate[],
+  record: ProseRecord,
+  unitVersions: ReadonlyMap<string, string>,
+): Candidate[] {
+  const byKey = new Map(record.rejections.map((rejection) => [rejectionKey(rejection), rejection]));
+  const applied: Candidate[] = [];
+
+  for (const candidate of candidates) {
+    const rejection = byKey.get(`${candidate.rule}\u{0}${candidate.file}\u{0}${hashPhrase(candidate.phrase)}`);
+    if (rejection === undefined) {
+      applied.push(candidate);
+      continue;
+    }
+    if (isStaleRejection(rejection, unitVersions)) applied.push({ ...candidate, stale: true });
+  }
+
+  return applied;
+}
+
+/**
+ * Reports whether every named unit covers `file` at the version the run holds for it. A unit whose recorded version
+ * differs covers nothing, its sweep having been taken against a rule that has since changed.
+ */
+export function isCoveredAt(record: ProseRecord, unitVersions: ReadonlyMap<string, string>, file: string): boolean {
+  if (unitVersions.size === 0) return false;
+
+  for (const [unit, version] of unitVersions) {
+    const coverage = record.units[unit];
+    if (coverage === undefined || coverage.version !== version) return false;
+    if (coverage.roots.every((root) => !isUnderRoot(file, root))) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Parses a run's fold from the JSON the `record` command reads on standard input. A malformed fold throws rather than
+ * writing a partial record, the record being the only durable trace of what a sweep adjudicated.
+ */
+export function parseRunFold(json: string): RunFold {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch (error) {
+    throw new Error(`Invalid run fold: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const result = RunFoldSchema.safeParse(parsed);
+  if (!result.success) {
+    const detail = result.error.issues
+      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+      .join('; ');
+    throw new Error(`Invalid run fold: ${detail}`);
+  }
+
+  return result.data;
+}
+
+/**
  * Renders a record as YAML, with units keyed in sorted order and rejections sorted by rule, file, and hash. Re-writing
  * an unchanged record is byte-identical, which is what keeps the file out of a diff it did not earn.
  */
@@ -124,6 +212,16 @@ export function stringifyRecord(record: ProseRecord): string {
 }
 
 // region | Helpers
+
+/** Reports whether a repository-relative path lies under a recorded root, `.` covering the whole repository. */
+function isUnderRoot(file: string, root: string): boolean {
+  return root === '.' || file === root || file.startsWith(`${root}/`);
+}
+
+/** The key a candidate is matched against: its rule, its file, and the hash of its phrase. */
+function rejectionKey(rejection: RecordedRejection): string {
+  return `${rejection.rule}\u{0}${rejection.file}\u{0}${rejection.hash}`;
+}
 
 /** Orders rejections by rule, file, and hash, which is what makes a rewrite of unchanged content byte-identical. */
 function sortRejections(rejections: readonly RecordedRejection[]): RecordedRejection[] {

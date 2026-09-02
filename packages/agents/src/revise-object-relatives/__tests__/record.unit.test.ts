@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { composeRecord, hashPhrase, isStaleRejection, parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
-import type { ProseRecord, RecordedRejection, RunFold } from '../types.ts';
+import type { FoldRejection, ProseRecord, RecordedRejection, RunFold } from '../types.ts';
 
 const EMPTY: ProseRecord = { units: {}, rejections: [] };
 
@@ -82,16 +82,46 @@ describe(composeRecord, () => {
   });
 
   it("replaces a swept unit's rejections at the same version, a site not re-rejected being withdrawn", () => {
-    const kept = rejection({ unit: 'writing', 'unit-version': '2', file: 'docs/a.md', hash: '1111111111111111' });
-    const withdrawn = rejection({ unit: 'writing', 'unit-version': '2', file: 'docs/b.md', hash: '2222222222222222' });
+    const kept = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
+    const withdrawn = rejection({ file: 'docs/b.md', hash: hashPhrase('the level it is probed against') });
     const prior: ProseRecord = { units: {}, rejections: [kept, withdrawn] };
 
     const record = composeRecord(
       prior,
-      fold({ units: { writing: { version: '2', roots: ['.'] } }, rejections: [kept] }),
+      fold({
+        units: { writing: { version: '2', roots: ['.'] } },
+        rejections: [foldRejection({ file: 'docs/a.md' })],
+      }),
     );
 
     expect(record.rejections).toStrictEqual([kept]);
+  });
+
+  it('keys a recorded rejection by hashing the phrase the fold reports', () => {
+    const record = composeRecord(
+      { units: {}, rejections: [] },
+      fold({
+        units: { writing: { version: '2', roots: ['.'] } },
+        rejections: [foldRejection({ phrase: 'the ticket that the branch name encodes' })],
+      }),
+    );
+
+    expect(record.rejections[0]).toMatchObject({
+      hash: hashPhrase('the ticket that the branch name encodes'),
+      'unit-version': '2',
+    });
+  });
+
+  it('refuses a fold whose rejection names a unit it does not cover', () => {
+    expect(() =>
+      composeRecord(
+        { units: {}, rejections: [] },
+        fold({
+          units: { writing: { version: '2', roots: ['.'] } },
+          rejections: [foldRejection({ unit: 'plain-speech' })],
+        }),
+      ),
+    ).toThrow(/which the fold does not cover/);
   });
 
   it('keeps a rejection recorded at an older version, a bump being a review rather than a deletion', () => {
@@ -124,7 +154,7 @@ describe(stringifyRecord, () => {
       EMPTY,
       fold({
         units: { writing: { version: '2', roots: ['.'] } },
-        rejections: [rejection({ unit: 'writing', 'unit-version': '2' })],
+        rejections: [foldRejection()],
       }),
     );
 
@@ -157,7 +187,19 @@ function fold(overrides: Partial<RunFold>): RunFold {
   return { sweptAt: '2026-09-02', units: {}, rejections: [], ...overrides };
 }
 
-/** Builds a rejection, overriding whichever fields an assertion turns on. */
+/** Builds a fold rejection, which carries neither a hash nor a version; the helper derives both. */
+function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
+  return {
+    rule: 'reduced-object-relative',
+    unit: 'writing',
+    file: 'docs/guide.md',
+    phrase: 'the source that it names',
+    ground: 'a quoted exhibit of the construction',
+    ...overrides,
+  };
+}
+
+/** Builds a recorded rejection, overriding whichever fields an assertion turns on. */
 function rejection(overrides: Partial<RecordedRejection> = {}): RecordedRejection {
   return {
     rule: 'reduced-object-relative',
@@ -165,7 +207,7 @@ function rejection(overrides: Partial<RecordedRejection> = {}): RecordedRejectio
     'unit-version': '2',
     file: 'docs/guide.md',
     phrase: 'the source that it names',
-    hash: '0123456789abcdef',
+    hash: hashPhrase('the source that it names'),
     ground: 'a quoted exhibit of the construction',
     ...overrides,
   };
