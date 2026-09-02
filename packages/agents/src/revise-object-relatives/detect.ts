@@ -168,9 +168,10 @@ const BE_FORMS: ReadonlySet<string> = new Set(['am', 'are', 'be', 'been', 'being
 
 /**
  * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
- * relative's, which is what keeps a main clause out. The set holds the detector to the direct-object gap: a
- * prepositional-phrase gap under one of these verbs is suppressed with them, so `the set the entries belong to`
- * goes unreported.
+ * relative's, which is what keeps a main clause out. The set is read from both directions: {@link isFiniteVerb}
+ * rejects a member outright, and {@link isStrandedIntransitive} admits one back where a stranded preposition gives it
+ * a prepositional-phrase gap, so `the set the entries belong to` reports where `the entries belong to the set` does
+ * not.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
@@ -724,14 +725,15 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       const chain = resolveAuxiliaryChain(tokens, index);
       if (chain.carriedIndex !== undefined) {
         if (chain.isPassive && !hostsGap(tokens, chain.carriedIndex)) return undefined;
-        return chain.carriedIndex;
+        return closesCarriedClause(tokens, chain.carriedIndex) ? chain.carriedIndex : undefined;
       }
       if (chain.headsChain) return undefined;
       if (!MAIN_VERB_AUXILIARIES.has(token.word)) continue;
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
       return index;
     }
-    if (index < first || !isFiniteVerb(token.word)) continue;
+    if (index < first) continue;
+    if (!isFiniteVerb(token.word) && !isStrandedIntransitive(tokens, index)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
@@ -774,6 +776,24 @@ function resolveAuxiliaryChain(tokens: readonly Token[], auxiliaryIndex: number)
  */
 function isMannerAdverb(word: string): boolean {
   return word.length > 4 && word.endsWith('ly') && !BARE_VERBS.has(word) && !IRREGULAR_PAST_VERBS.has(word);
+}
+
+/**
+ * Reports whether a token an auxiliary carries can close a relative clause. The carried path admits whatever is not a
+ * function word, since a past participle carries no marker any lexicon here holds; an intransitive verb is the one
+ * exception, and closes a clause only where it strands a preposition.
+ */
+function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
+  return !INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') || hasStrandedPreposition(tokens, index);
+}
+
+/**
+ * Reports whether an intransitive verb at `index` strands a preposition. {@link isFiniteVerb} rejects every member of
+ * {@link INTRANSITIVE_VERBS}, since one closing a subject usually reads as the sentence's own verb; a stranded
+ * preposition gives it a gap and admits it back.
+ */
+function isStrandedIntransitive(tokens: readonly Token[], index: number): boolean {
+  return INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') && hasStrandedPreposition(tokens, index);
 }
 
 /**

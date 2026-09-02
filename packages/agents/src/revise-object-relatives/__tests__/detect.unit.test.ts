@@ -294,6 +294,32 @@ describe(detectCandidates, () => {
     });
   });
 
+  describe('intransitive verbs', () => {
+    it.each([
+      { sentence: 'The set the entries belong to is closed.', phrase: 'set the entries belong' },
+      { sentence: 'The levels systems depend on are fixed.', phrase: 'levels systems depend' },
+      { sentence: 'Reports the state it may depend on.', phrase: 'state it may depend' },
+    ])('reports one stranding a preposition: $phrase', ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+
+    it.each([
+      'The chain names mcp and factory depend on run-core.',
+      'The rule states code changes go in the src directory.',
+      'The convention holds qualifiers go in front.',
+    ])('passes over one whose preposition takes an object of its own: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('reads the same verb the same way bare and under an auxiliary', () => {
+      expect(detect('The levels systems depend on the parser are fixed.')).toStrictEqual([]);
+      expect(detect('Reports the state it may depend on the parser.')).toStrictEqual([]);
+    });
+  });
+
   describe('scope', () => {
     it.each(OUT_OF_SCOPE_HEADS)('passes over %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);
