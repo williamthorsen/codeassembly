@@ -335,8 +335,9 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
 
 /**
  * Words ending in `ly` that no reading takes as an adverb, which the morphological test in {@link isMannerAdverb}
- * would otherwise skip. An entry is needed only for a word neither verb lexicon holds, since that function consults
- * both: `apply` and `imply` are covered by {@link BARE_VERBS} and are absent here.
+ * would otherwise skip. An entry is needed only for a word of five characters or more that neither verb lexicon
+ * holds, since that function applies a length floor and consults both lexicons: `rely` is short enough for the floor
+ * to reject, and `apply` and `imply` are covered by {@link BARE_VERBS}, so none of the three needs an entry here.
  */
 const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
   'anomaly',
@@ -345,7 +346,6 @@ const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
   'family',
   'monopoly',
   'multiply',
-  'rely',
   'reply',
   'supply',
 ]);
@@ -783,8 +783,9 @@ function resolveAuxiliaryChain(tokens: readonly Token[], auxiliaryIndex: number)
 }
 
 /**
- * Reports whether a word reads as an adverb standing between an auxiliary and the verb it carries. An `ly` ending is
- * the only marker, so the three exclusion sets are what keep `apply`, `supply`, and their like out.
+ * Reports whether a word reads as an adverb standing between an auxiliary and the verb it carries. A length floor of
+ * five characters and an `ly` ending are the only markers, so the three exclusion sets are what keep `apply`,
+ * `supply`, and their like out. The floor covers every shorter word, `ally` and `rely` among them.
  */
 function isMannerAdverb(word: string): boolean {
   if (word.length <= 4 || !word.endsWith('ly')) return false;
@@ -831,9 +832,10 @@ function isStrandedIntransitive(tokens: readonly Token[], index: number): boolea
 }
 
 /**
- * Reports whether the token at `index` hosts a gap a head noun can fill. Three shapes do: a stranded preposition, an
- * infinitival complement whose own object is missing, and a ditransitive participle, whose verb promotes one object
- * and leaves the other open.
+ * Reports whether the token at `index` hosts a gap a head noun can fill. Three shapes do: a stranded preposition, a
+ * `to` followed by a token that is not a function word, and a ditransitive participle, whose verb promotes one object
+ * and leaves the other open. The second is looser than an infinitival test: It admits `written to disk` along with
+ * `meant to convey`, and the agent adjudicates the difference.
  */
 function hostsGap(tokens: readonly Token[], index: number): boolean {
   if (hasStrandedPreposition(tokens, index)) return true;
