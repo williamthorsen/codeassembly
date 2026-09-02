@@ -298,7 +298,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --i
 
 The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
 
-Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the Jira stub and the [no-remote fallback](#fallback-no-remote-platform), which save a snapshot with no ticket of record to copy.
+Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the [no-remote fallback](#fallback-no-remote-platform) alone, which saves a snapshot with no ticket of record to copy.
 
 ### 9. Save plan (if present)
 
@@ -308,11 +308,21 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 {YYYYMMDD-HHMMSSZ}_{slug}_plan.md
 ```
 
-Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
+Then attach it as a comment on the remote ticket, through the platform step 3 resolved.
+
+**GitHub.** Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
 
 ```bash
 gh issue comment {number} --body-file "$body_path"
 ```
+
+**Jira.** Comment through the client that created the work item, in the format {skill:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
+
+```bash
+acli jira workitem comment create --key "{ticket_id}" --body-file "$adf_path"
+```
+
+**Neither.** Where the client offers no comment surface, or the [no-remote fallback](#fallback-no-remote-platform) left nothing to comment on, the plan is saved locally alone. Report that in the completion output rather than passing over the attachment in silence.
 
 Plan comment format:
 
@@ -336,9 +346,10 @@ If remote ticket creation fails or no platform is available, fall back to an aut
 ## Completion
 
 ```
-Issue created: {URL}                       <- only if remote creation succeeded
+Remote ticket created: {URL}               <- only if remote creation succeeded; {ticket_id} where no URL resolved
 Ticket saved: {ticket artifact path}
 Plan saved: {plan artifact path}           <- only if plan existed
+Plan comment skipped: {reason}             <- only if a plan was saved but not attached
 Relationships: {list}                      <- only if any were created
 Relationships skipped: {list with reasons} <- only if any were skipped
 Branch association skipped: {reason}       <- only when the step-6 guard skipped the persist
