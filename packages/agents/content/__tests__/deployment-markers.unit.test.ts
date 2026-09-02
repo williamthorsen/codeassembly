@@ -29,13 +29,13 @@ const FIXTURE_SOURCE_URL = 'https://example.invalid/fixture.md';
 /** Stands in for a slug, so the lines a producer stamps can be found and rewritten into the placeholder the recipe uses. */
 const SENTINEL_SLUG = 'sentinel-artifact';
 
-/** The placeholder the recipe writes where a deployed marker contains an artifact's own slug. */
+/** The placeholder written by the recipe where a deployed marker contains an artifact's own slug. */
 const SLUG_PLACEHOLDER = '{slug}';
 
-/** Stands in for a declared version, so the line a producer stamps can be rewritten into the recipe's placeholder. */
+/** Stands in for a declared version, so the line stamped by a producer can be rewritten into the recipe's placeholder. */
 const SENTINEL_VERSION = 'sentinel-version';
 
-/** The placeholder the recipe writes where the version line contains a rulebook's own version. */
+/** The placeholder written by the recipe where the version line contains a rulebook's own version. */
 const VERSION_PLACEHOLDER = '{version}';
 
 describe('deployment markers', () => {

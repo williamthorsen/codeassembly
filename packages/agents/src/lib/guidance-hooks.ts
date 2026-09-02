@@ -84,7 +84,7 @@ export class GuidanceHookError extends Error {
 
 /**
  * One rulebook bound to a guidance hook: the slug its block is attributed to, its already-rendered body, and the
- * version its block names where it declares one.
+ * version named in its block where it declares one.
  */
 export interface GuidanceHookFill {
   readonly slug: string;

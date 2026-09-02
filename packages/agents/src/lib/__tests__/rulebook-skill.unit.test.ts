@@ -110,7 +110,7 @@ describe(resolveSkillName, () => {
   });
 });
 
-/** Builds a rulebook skill file's inputs, so a case names only the field it exercises. */
+/** Builds a rulebook skill file's inputs, so a case names only the field that it exercises. */
 function buildSkillFile(overrides: Partial<RulebookSkillFile>): RulebookSkillFile {
   return {
     body: 'Body.',
