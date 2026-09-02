@@ -238,6 +238,12 @@ describe(detectCandidates, () => {
 
       expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'file the parser may explicitly read' });
     });
+
+    it('reads a verb ending in `ly` as the verb rather than as the adverb it resembles', () => {
+      const candidates = detect('Drops an owned item the caller did not supply.');
+
+      expect(candidates[0]).toMatchObject({ verb: 'supply', phrase: 'item the caller did not supply' });
+    });
   });
 
   describe('voice', () => {
@@ -289,8 +295,18 @@ describe(detectCandidates, () => {
       expect(detect('Reports the phase the ticket was not approved.')).toStrictEqual([]);
     });
 
-    it('withholds the main-verb reading from an auxiliary heading a chain', () => {
+    it('withholds the main-verb reading where the chain ends on a verb that cannot be one', () => {
       expect(detect('Declares the version the consumer has been.')).toStrictEqual([]);
+    });
+
+    it.each([
+      { sentence: 'Names a file the producer does not have.', phrase: 'file the producer does not have' },
+      { sentence: 'Declares the version the consumer has had.', phrase: 'version the consumer has had' },
+    ])("closes the subject on the chain's own main verb: $phrase", ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
     });
   });
 

@@ -334,6 +334,23 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Words ending in `ly` that no reading takes as an adverb, which the morphological test in {@link isMannerAdverb}
+ * would otherwise skip. An entry is needed only for a word neither verb lexicon holds, since that function consults
+ * both: `apply` and `imply` are covered by {@link BARE_VERBS} and are absent here.
+ */
+const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
+  'anomaly',
+  'assembly',
+  'comply',
+  'family',
+  'monopoly',
+  'multiply',
+  'rely',
+  'reply',
+  'supply',
+]);
+
+/**
  * Auxiliaries that also serve as a clause's transitive main verb, which is what `the version the consumer has` turns
  * on. A `be` form is absent: a copula takes no object, so a clause it closes has no gap to find.
  */
@@ -536,8 +553,8 @@ interface AuxiliaryChain {
   carriedIndex: number | undefined;
   /** Whether the chain's last auxiliary is a `be` form carrying something other than an `-ing` form. */
   isPassive: boolean;
-  /** Whether a second auxiliary follows the first, which forecloses the main-verb reading. */
-  headsChain: boolean;
+  /** Index of the chain's last auxiliary, which is the clause's main verb where the chain carries none. */
+  lastAuxiliaryIndex: number;
 }
 
 /** One word of a span, with the offsets a report and a line lookup are computed from. */
@@ -704,9 +721,10 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
  * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
- * plural agreement, which is the only reading its own form supports. An auxiliary carrying no lexical verb closes the
- * subject itself where it is a {@link MAIN_VERB_AUXILIARIES} member and heads no chain, since there a main-verb
- * reading is what remains.
+ * plural agreement, which is the only reading its own form supports. A chain carrying no lexical verb closes the
+ * subject on its last auxiliary where that is a {@link MAIN_VERB_AUXILIARIES} member, since a main-verb reading is
+ * what remains: `the file the producer does not have` closes on `have`, and `the version the consumer has been` on
+ * nothing.
  *
  * An auxiliary chain the clause fails is the end of the subject rather than a token to scan past. Continuing would
  * let the morphological test reach the same participle a second time and report what the chain just rejected.
@@ -723,17 +741,12 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
     if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
     if (AUXILIARIES.has(token.word) && index >= first) {
       const chain = resolveAuxiliaryChain(tokens, index);
-      if (chain.carriedIndex !== undefined) {
-        if (chain.isPassive && !hostsGap(tokens, chain.carriedIndex)) return undefined;
-        return closesCarriedClause(tokens, chain.carriedIndex) ? chain.carriedIndex : undefined;
-      }
-      if (chain.headsChain) return undefined;
-      if (!MAIN_VERB_AUXILIARIES.has(token.word)) continue;
+      if (chain.carriedIndex !== undefined) return closeOnCarriedVerb(tokens, chain);
+      if (!MAIN_VERB_AUXILIARIES.has(tokens[chain.lastAuxiliaryIndex]?.word ?? '')) continue;
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
-      return index;
+      return chain.lastAuxiliaryIndex;
     }
-    if (index < first) continue;
-    if (!isFiniteVerb(token.word) && !isStrandedIntransitive(tokens, index)) continue;
+    if (index < first || !closesScannedClause(tokens, index)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
@@ -751,31 +764,43 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
  */
 function resolveAuxiliaryChain(tokens: readonly Token[], auxiliaryIndex: number): AuxiliaryChain {
   const last = Math.min(auxiliaryIndex + CARRIED_VERB_WINDOW, tokens.length - 1);
-  let lastAuxiliary = tokens[auxiliaryIndex]?.word ?? '';
-  let headsChain = false;
+  let lastAuxiliaryIndex = auxiliaryIndex;
 
   for (let index = auxiliaryIndex + 1; index <= last; index += 1) {
     const token = tokens[index];
     if (token === undefined || token.afterBreak) break;
     if (AUXILIARIES.has(token.word)) {
-      lastAuxiliary = token.word;
-      headsChain = true;
+      lastAuxiliaryIndex = index;
       continue;
     }
     if (NEGATORS.has(token.word) || isMannerAdverb(token.word)) continue;
     if (isFunctionWord(token.word)) break;
+    const lastAuxiliary = tokens[lastAuxiliaryIndex]?.word ?? '';
     const isPassive = BE_FORMS.has(lastAuxiliary) && !token.word.endsWith('ing');
-    return { carriedIndex: index, isPassive, headsChain };
+    return { carriedIndex: index, isPassive, lastAuxiliaryIndex };
   }
-  return { carriedIndex: undefined, isPassive: false, headsChain };
+  return { carriedIndex: undefined, isPassive: false, lastAuxiliaryIndex };
 }
 
 /**
- * Reports whether a word reads as an adverb standing between an auxiliary and the verb it carries. The lexical verbs
- * ending in `ly` are the ones the two verb lexicons already name, so excluding them keeps `apply` and `imply` out.
+ * Reports whether a word reads as an adverb standing between an auxiliary and the verb it carries. An `ly` ending is
+ * the only marker, so the three exclusion sets are what keep `apply`, `supply`, and their like out.
  */
 function isMannerAdverb(word: string): boolean {
-  return word.length > 4 && word.endsWith('ly') && !BARE_VERBS.has(word) && !IRREGULAR_PAST_VERBS.has(word);
+  if (word.length <= 4 || !word.endsWith('ly')) return false;
+  return !BARE_VERBS.has(word) && !IRREGULAR_PAST_VERBS.has(word) && !LY_FINAL_NON_ADVERBS.has(word);
+}
+
+/**
+ * Returns the index of the verb a chain carries where that verb closes a relative clause, or undefined where the
+ * clause has no gap for the head noun to fill. A passive has promoted its own object, so it closes one only where
+ * something else leaves a gap open; an intransitive verb closes one only where it strands a preposition.
+ */
+function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): number | undefined {
+  const { carriedIndex, isPassive } = chain;
+  if (carriedIndex === undefined) return undefined;
+  if (isPassive && !hostsGap(tokens, carriedIndex)) return undefined;
+  return closesCarriedClause(tokens, carriedIndex) ? carriedIndex : undefined;
 }
 
 /**
@@ -785,6 +810,15 @@ function isMannerAdverb(word: string): boolean {
  */
 function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
   return !INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') || hasStrandedPreposition(tokens, index);
+}
+
+/**
+ * Reports whether the token at `index`, reached by the scan rather than through an auxiliary, closes a relative
+ * clause. {@link isFiniteVerb} decides that on the word alone; an intransitive verb it rejects is admitted back where
+ * a stranded preposition gives the clause a gap.
+ */
+function closesScannedClause(tokens: readonly Token[], index: number): boolean {
+  return isFiniteVerb(tokens[index]?.word ?? '') || isStrandedIntransitive(tokens, index);
 }
 
 /**
