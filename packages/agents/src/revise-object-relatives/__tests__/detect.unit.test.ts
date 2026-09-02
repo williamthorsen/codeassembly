@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { detectCandidates } from '../detect.ts';
-import type { Candidate, SubjectShape } from '../types.ts';
+import type { ObjectRelativeCandidate, SubjectShape } from '../types.ts';
 
 /**
  * The sites williamthorsen/toolbelt@5dd0ad2 repaired, each paired with the wording that replaced it. The commit is the
@@ -668,7 +668,7 @@ describe(detectCandidates, () => {
 // region | Helpers
 
 /** Detects over one sentence held in a single span, which is how every lexical assertion below is phrased. */
-function detect(sentence: string): Candidate[] {
+function detect(sentence: string): ObjectRelativeCandidate[] {
   return detectCandidates([{ file: 'fixture.md', line: 1, text: sentence }]);
 }
 

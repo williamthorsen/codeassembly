@@ -17,11 +17,11 @@
  * verb reports only where it strands a preposition. A copula takes no object at all, and closes a clause only at the
  * end of one, where the head fills its complement slot.
  */
-import type { Candidate, ProseSpan, SubjectShape } from './types.ts';
+import type { ObjectRelativeCandidate, ProseSpan, SubjectShape } from './types.ts';
 
 /** Scans every span for the construction, returning one candidate per site in reading order. */
-export function detectCandidates(spans: readonly ProseSpan[]): Candidate[] {
-  const candidates: Candidate[] = [];
+export function detectCandidates(spans: readonly ProseSpan[]): ObjectRelativeCandidate[] {
+  const candidates: ObjectRelativeCandidate[] = [];
   for (const span of spans) {
     candidates.push(...detectInSpan(span));
   }
@@ -686,7 +686,7 @@ function buildCandidate(input: {
   subjectIndex: number;
   verbIndex: number;
   shape: SubjectShape;
-}): Candidate {
+}): ObjectRelativeCandidate {
   const { span, tokens, headIndex, subjectIndex, verbIndex, shape } = input;
   const head = tokens[headIndex];
   const verb = tokens[verbIndex];
@@ -698,6 +698,7 @@ function buildCandidate(input: {
     .join(' ');
 
   return {
+    rule: 'reduced-object-relative',
     file: span.file,
     line: span.line + countNewlinesBefore(span.text, head.start),
     shape,
@@ -730,9 +731,9 @@ function countNewlinesBefore(text: string, offset: number): number {
  * {@link opensDegreeAdverbial} secures: an anchor whose subject is adverbial takes the site's own subject as its
  * head, and would win on nearness alone.
  */
-function detectInSpan(span: ProseSpan): Candidate[] {
+function detectInSpan(span: ProseSpan): ObjectRelativeCandidate[] {
   const tokens = tokenize(span.text);
-  const candidates: Candidate[] = [];
+  const candidates: ObjectRelativeCandidate[] = [];
   let claimedThrough = -1;
 
   for (let index = 1; index < tokens.length; index += 1) {

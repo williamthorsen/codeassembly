@@ -4,12 +4,37 @@
 // The helper reports; it never writes. Repair selection is judgment, so the payload carries everything an adjudicator
 // needs to decide without reading the file: the sentence, the matched phrase, and the shape that ranks the cost.
 
-/** One over-inclusive site: a head noun whose relative clause may be missing its relativizer. */
-export interface Candidate {
+/** A detected site, discriminated on the rule whose detector reported it. */
+export type Candidate = EmDashCandidate | ObjectRelativeCandidate;
+
+/** What every candidate carries, whichever rule found it. */
+export interface CandidateBase {
+  /** The rule whose detector reported the site. */
+  rule: RuleId;
   /** Path to the source file, relative to the repository root. */
   file: string;
   /** 1-indexed line on which the sentence begins. */
   line: number;
+  /**
+   * The span a repair rewrites. Distinctive within its file, which is what lets a recorded rejection resolve to one
+   * site without a line number that the next edit invalidates.
+   */
+  phrase: string;
+  /** The whole sentence containing the phrase, so adjudication needs no file read. */
+  sentence: string;
+}
+
+/** One em-dash site. Its phrase is the whole sentence, a character being nothing a rejection could resolve against. */
+export interface EmDashCandidate extends CandidateBase {
+  rule: 'em-dash';
+}
+
+/**
+ * One over-inclusive site: a head noun whose relative clause may be missing its relativizer. Its phrase runs from the
+ * head noun through the verb.
+ */
+export interface ObjectRelativeCandidate extends CandidateBase {
+  rule: 'reduced-object-relative';
   /** The embedded subject's form, which ranks the construction's cost and points at the likeliest repair. */
   shape: SubjectShape;
   /** The head noun to which the gap belongs. */
@@ -18,11 +43,10 @@ export interface Candidate {
   subject: string;
   /** The finite verb on which the reading turns. */
   verb: string;
-  /** The head noun through the verb: the span rewritten by a repair. */
-  phrase: string;
-  /** The whole sentence containing the phrase, so adjudication needs no file read. */
-  sentence: string;
 }
+
+/** A rule the sweep detects. A rule has a detector; a unit, which the record tracks, need not. */
+export type RuleId = 'em-dash' | 'reduced-object-relative';
 
 /** Why a prose-bearing file was held out of the sweep. */
 export type SkipReason = 'generated' | 'machine-generated' | 'unreadable';
@@ -70,7 +94,9 @@ export interface CandidateSummary {
   filesSkipped: Readonly<Record<SkipReason, number>>;
   /** Per-file counts, descending by count and then by path. */
   byFile: readonly FileCount[];
-  /** Per-shape counts, keyed by every shape so an absent shape reads as zero. */
+  /** Per-rule counts, keyed by every rule so a rule the invocation did not name reads as zero. */
+  byRule: Readonly<Record<RuleId, number>>;
+  /** Per-shape counts over the object-relative candidates, keyed by every shape so an absent shape reads as zero. */
   byShape: Readonly<Record<SubjectShape, number>>;
 }
 

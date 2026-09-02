@@ -25,6 +25,7 @@ import type {
   DetectResult,
   FileCount,
   ParsedArgs,
+  RuleId,
   SkipReason,
   SubjectShape,
 } from './types.ts';
@@ -114,7 +115,7 @@ function isEntryPoint(): boolean {
 }
 
 /**
- * Counts a candidate set by file and by shape, alongside how many files the sweep read and how many it held out. A
+ * Counts a candidate set by file, by rule, and by shape, alongside how many files the sweep read and how many it held out. A
  * whole-repository sweep can return more candidates than one adjudication pass affords, and these counts are what a
  * caller reads to narrow the next run before paying for it. The skip counts keep an exclusion visible: a file never
  * opened by the sweep would otherwise leave the report looking clean.
@@ -127,10 +128,12 @@ function summarize(input: {
   const counts = new Map<string, number>();
   // Keyed in the order the rulebook ranks the shapes, so a shape carried by no candidate still reads as zero.
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
+  const byRule: Record<RuleId, number> = { 'em-dash': 0, 'reduced-object-relative': 0 };
 
   for (const candidate of input.candidates) {
     counts.set(candidate.file, (counts.get(candidate.file) ?? 0) + 1);
-    byShape[candidate.shape] += 1;
+    byRule[candidate.rule] += 1;
+    if (candidate.rule === 'reduced-object-relative') byShape[candidate.shape] += 1;
   }
 
   const byFile: FileCount[] = [...counts]
@@ -142,6 +145,7 @@ function summarize(input: {
     filesScanned: input.scanned,
     filesSkipped: input.skipped,
     byFile,
+    byRule,
     byShape,
   };
 }
