@@ -180,20 +180,27 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
 - **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and `fields.description` with `contentFormat: "markdown"`.
 - **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
-- **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file:
+- **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file.
+
+  Where step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` carries no `--parent` flag, so this is the only call that can set one, and a reference Jira rejects costs the work item rather than the relationship unless it is checked first:
 
   ```bash
-  key=$(acli jira workitem create \
+  acli jira workitem view "{parent}"
+  ```
+
+  A zero exit adds `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: create the work item without the flag, and report the parent as skipped per step 7.
+
+  ```bash
+  output=$(acli jira workitem create \
     --project "{project_key}" \
     --type "{issue_type}" \
     --summary "${ticket_title}" \
     --description-file "$adf_path" \
-    --json | python3 -c "import sys,json; print(json.load(sys.stdin).get('key',''))")
+    --json)
+  key=$(printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null)
   ```
 
-  Where `--json` yields no `key`, re-read the key from the command's default output, which names the created work item.
-
-  Where step 4 decided a parent, `--parent "{parent}"` joins this call; `acli` sets a parent nowhere else. Step 7's Jira path states the pre-flight that keeps a bad reference from costing the work item.
+  Capture the output before parsing it, as the snippet does. Where the parse yields no key, read the key out of `$output`, which still holds everything the one invocation returned. Never run the create command a second time to obtain the key: that creates a second work item.
 
 ##### Record the identifiers
 
@@ -223,7 +230,7 @@ Skip this step when step 4 decided none.
 
 Where no remote ticket exists (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
 
-Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket. One client forces the exception, and the Jira path below states what replaces the guarantee there.
+Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket. Jira's clients force an exception for the parent, and the Jira path below states what replaces the guarantee there.
 
 #### GitHub path
 
@@ -239,13 +246,7 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 #### Jira path
 
-**Parent.** `acli jira workitem edit` carries no `--parent` flag, so on `acli` the parent goes on the step-6 creation call rather than after it. Pre-flight the reference first, which restores the guarantee the after-creation rule exists for:
-
-```bash
-acli jira workitem view "{parent}"
-```
-
-A non-zero exit means the reference is bad. Drop `--parent` from the creation call, create the work item without it, and report the parent as skipped; a reference Jira rejects then costs the relationship alone. A connected creation tool sets the parent through its own parent field on the same call, and where it exposes no such field the parent is reported skipped.
+**Parent.** Both clients set a parent on the step-6 creation call, so nothing is applied here. A connected creation tool sets it through its own parent field, and reports the parent skipped where it exposes no such field. `acli` sets it with `--parent`, behind the pre-flight step 6 states; report the parent skipped where that pre-flight rejected the reference.
 
 **blocked-by and blocking.** Both are Jira links, and `acli` is the only client that creates one; a connected creation tool exposes no link surface. Where `acli` is installed, create each link after the work item exists, whichever client created it:
 
