@@ -11,8 +11,9 @@
  * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type. A word
  * carrying verbal morphology is read as a head noun only where a determiner makes it one, which is what keeps a main
  * clause and most participial phrases out. A bare-noun subject is held to plural agreement. And a clause with no gap
- * left to fill is rejected by voice: a passive has promoted its own object, so it reports only where a stranded
- * preposition, an infinitival complement, or a ditransitive leaves a second one open.
+ * left for the head noun to fill is rejected: a passive has promoted its own object, so it reports only where a
+ * stranded preposition, an infinitival complement, or a ditransitive leaves a second one open, and an intransitive
+ * verb reports only where it strands a preposition.
  */
 import type { Candidate, ProseSpan, SubjectShape } from './types.ts';
 
@@ -169,9 +170,8 @@ const BE_FORMS: ReadonlySet<string> = new Set(['am', 'are', 'be', 'been', 'being
 /**
  * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
  * relative's, which is what keeps a main clause out. The set is read from both directions: {@link isFiniteVerb}
- * rejects a member outright, and {@link isStrandedIntransitive} admits one back where a stranded preposition gives it
- * a prepositional-phrase gap, so `the set the entries belong to` reports where `the entries belong to the set` does
- * not.
+ * rejects a member outright, and the two clause-closing tests admit one back where a stranded preposition gives it a
+ * prepositional-phrase gap, so `the set the entries belong to` reports where `the entries belong to the set` does not.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
@@ -547,7 +547,7 @@ const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
   'yours',
 ]);
 
-/** The auxiliary chain opening at one auxiliary: what it carries, how that reads, and whether it stands alone. */
+/** The auxiliary chain opening at one auxiliary: what it carries, how that reads, and where the chain ends. */
 interface AuxiliaryChain {
   /** Index of the lexical verb the chain carries, or undefined where it carries none. */
   carriedIndex: number | undefined;
@@ -755,9 +755,9 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 
 /**
  * Resolves the auxiliary chain opening at `auxiliaryIndex`: the lexical verb it carries within
- * {@link CARRIED_VERB_WINDOW}, how that verb reads, and whether a second auxiliary follows the first. A modal is
- * always followed by a verb, which is what lets `the file the parser may read` be found where the morphological test
- * sees nothing on `read`; a further auxiliary, a negator, and an adverb between the two are skipped.
+ * {@link CARRIED_VERB_WINDOW}, how that verb reads, and which auxiliary ends the chain. A modal is always followed by
+ * a verb, which is what lets `the file the parser may read` be found where the morphological test sees nothing on
+ * `read`; a further auxiliary, a negator, and an adverb between the two are skipped.
  *
  * The voice is read off the chain's last auxiliary rather than its first, so `has been approved` is passive where
  * `has approved` is active. A `be` form carrying an `-ing` form is progressive, which leaves the object gap open.
