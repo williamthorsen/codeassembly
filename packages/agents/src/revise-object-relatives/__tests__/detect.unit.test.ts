@@ -232,6 +232,66 @@ describe(detectCandidates, () => {
       expect(detect('Reports the fields records have.')).toHaveLength(1);
       expect(detect('Reports the fields records has.')).toStrictEqual([]);
     });
+
+    it('reads through an adverb to the verb the auxiliary carries', () => {
+      const candidates = detect('Reports the file the parser may explicitly read.');
+
+      expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'file the parser may explicitly read' });
+    });
+  });
+
+  describe('voice', () => {
+    it.each([
+      'The library records some state transitions are recorded.',
+      'The library ships audio files are used.',
+      'The library names some release configurations are immutable.',
+    ])('passes over a passive whose object is already promoted: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it.each([
+      { sentence: 'Reports the source it was copied from.', phrase: 'source it was copied' },
+      { sentence: 'Reports the level it is probed against.', phrase: 'level it is probed' },
+    ])('reports a passive stranding a preposition: $phrase', ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+
+    it('reports a passive whose infinitival complement carries the gap', () => {
+      const candidates = detect('Hides the signal it was meant to convey.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'signal it was meant' });
+    });
+
+    it('reports a ditransitive passive, which promotes one object and leaves the other', () => {
+      const candidates = detect('Narrows the sweep to the paths it is given.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'paths it is given' });
+    });
+
+    it('reads a progressive as active, so its object gap survives the voice test', () => {
+      const candidates = detect('The message the console is writing is empty.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'message the console is writing' });
+    });
+
+    it("takes the voice from the chain's last auxiliary, not its first", () => {
+      expect(detect('Declares the version the consumer has approved.')).toHaveLength(1);
+      expect(detect('Reports the phase the ticket has been approved.')).toStrictEqual([]);
+    });
+
+    it('passes over a failed chain rather than letting the morphological test reach the participle', () => {
+      expect(detect('Reports the phase the ticket was not approved.')).toStrictEqual([]);
+    });
+
+    it('withholds the main-verb reading from an auxiliary heading a chain', () => {
+      expect(detect('Declares the version the consumer has been.')).toStrictEqual([]);
+    });
   });
 
   describe('scope', () => {
