@@ -15,6 +15,10 @@ describe(extractInstalledSlugs, () => {
   it('ignores an unpaired open marker', () => {
     expect(extractInstalledSlugs('<!-- rulebook:shell -->\nBody text\n')).toEqual([]);
   });
+
+  it('returns the slug of a block carrying a version line', () => {
+    expect(extractInstalledSlugs(injectRulebook('', 'shell', 'Body text', '3'))).toEqual(['shell']);
+  });
 });
 
 describe(injectRulebook, () => {
@@ -39,6 +43,28 @@ describe(injectRulebook, () => {
   it('when the same slug and body are re-inserted, leaves the document byte-identical', () => {
     const once = injectRulebook('# Title\n', 'shell', 'Body text');
     expect(injectRulebook(once, 'shell', 'Body text')).toBe(once);
+  });
+
+  it('writes the version line between the open marker and the body', () => {
+    expect(injectRulebook('', 'shell', 'Body text', '3')).toBe(
+      '<!-- rulebook:shell -->\n<!-- rulebook-version: 3 -->\nBody text\n<!-- /rulebook:shell -->\n',
+    );
+  });
+
+  it('when the rulebook declares no version, writes no version line', () => {
+    expect(injectRulebook('', 'shell', 'Body text', undefined)).toBe(injectRulebook('', 'shell', 'Body text'));
+  });
+
+  it('when the same slug, body, and version are re-inserted, leaves the document byte-identical', () => {
+    const once = injectRulebook('# Title\n', 'shell', 'Body text', '3');
+    expect(injectRulebook(once, 'shell', 'Body text', '3')).toBe(once);
+  });
+
+  it('replaces a versioned block when the version changes', () => {
+    const once = injectRulebook('# Title\n', 'shell', 'Body text', '3');
+    const updated = injectRulebook(once, 'shell', 'Body text', '4');
+
+    expect(updated).toBe(injectRulebook('# Title\n', 'shell', 'Body text', '4'));
   });
 
   it('trims surrounding whitespace from the body', () => {
@@ -79,6 +105,11 @@ describe(removeRulebook, () => {
 
   it('when the slug is absent, returns the content unchanged', () => {
     expect(removeRulebook('# Title\n', 'shell')).toBe('# Title\n');
+  });
+
+  it('removes a block carrying a version line together with the line', () => {
+    const once = injectRulebook('# Title\n', 'shell', 'Body text', '3');
+    expect(removeRulebook(once, 'shell')).toBe('# Title\n');
   });
 
   it('removes only the named block, leaving the others intact', () => {

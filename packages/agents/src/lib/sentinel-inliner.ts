@@ -4,6 +4,8 @@
  * Every function is a pure string transform with no filesystem access.
  */
 
+import { renderRulebookVersionLine } from './rulebook-version-line.ts';
+
 /** Returns the slugs whose blocks have a complete open/close marker pair, in document order. */
 export function extractInstalledSlugs(content: string): ReadonlyArray<string> {
   const pattern = /<!-- rulebook:([a-z0-9-]+) -->[\s\S]*?<!-- \/rulebook:\1 -->/g;
@@ -19,11 +21,11 @@ export function extractInstalledSlugs(content: string): ReadonlyArray<string> {
 
 /**
  * Inserts or replaces the sentinel block for `slug`. An existing block is replaced in place; otherwise the
- * block is appended, separated from preceding content by a single blank line. Re-inserting an identical slug
- * and body yields a byte-identical document, which is what keeps `sync` diff-free on re-run.
+ * block is appended, separated from preceding content by a single blank line. Re-inserting an identical slug,
+ * body, and version yields a byte-identical document, which is what keeps `sync` diff-free on re-run.
  */
-export function injectRulebook(content: string, slug: string, body: string): string {
-  const block = renderRulebookBlock(slug, body);
+export function injectRulebook(content: string, slug: string, body: string, version?: string): string {
+  const block = renderRulebookBlock(slug, body, version);
   const existing = blockPattern(slug);
 
   if (existing.test(content)) {
@@ -63,12 +65,14 @@ export function removeRulebook(content: string, slug: string): string {
 }
 
 /**
- * Renders the canonical block for a slug: open marker, trimmed body, close marker. Exported so every surface that
- * attributes inlined content to the rulebook it came from writes the one grammar, whether it manages a host document
- * or splices a guidance-hook fill.
+ * Renders the canonical block for a slug: open marker, the version line where the rulebook declares one, trimmed
+ * body, close marker. Exported so every surface that attributes inlined content to the rulebook it came from writes
+ * the one grammar, whether it manages a host document or splices a guidance-hook fill.
  */
-export function renderRulebookBlock(slug: string, body: string): string {
-  return `${openMarker(slug)}\n${body.trim()}\n${closeMarker(slug)}`;
+export function renderRulebookBlock(slug: string, body: string, version?: string): string {
+  const versionLine = renderRulebookVersionLine(version);
+  const lines = versionLine === '' ? [openMarker(slug)] : [openMarker(slug), versionLine];
+  return [...lines, body.trim(), closeMarker(slug)].join('\n');
 }
 
 /** Regex source matching a slug's full block (markers inclusive, body matched lazily). */

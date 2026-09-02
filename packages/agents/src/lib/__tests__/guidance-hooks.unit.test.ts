@@ -4,6 +4,7 @@ import {
   assertFilledAnchorsResolve,
   fillGuidanceHooks,
   GuidanceHookError,
+  type GuidanceHookFill,
   type GuidanceHookFills,
   isGuidanceHookName,
   listGuidanceHooks,
@@ -173,6 +174,22 @@ describe(fillGuidanceHooks, () => {
     expect(result.filled).toEqual([{ hook: 'impl', slugs: ['layout'] }]);
   });
 
+  it('names the version of a bound rulebook that declares one', () => {
+    const result = fillGuidanceHooks(
+      '<!-- guidance-hook: impl -->\n',
+      bind({ impl: [{ ...layout, version: '3' }] }),
+      'a.md',
+    );
+
+    expect(result.content).toContain('<!-- rulebook:layout -->\n<!-- rulebook-version: 3 -->\n## Layout');
+  });
+
+  it('names no version for a bound rulebook that declares none', () => {
+    const result = fillGuidanceHooks('<!-- guidance-hook: impl -->\n', bind({ impl: [layout] }), 'a.md');
+
+    expect(result.content).not.toContain('rulebook-version');
+  });
+
   it('removes an unbound directive, contributing nothing at all', () => {
     const result = fillGuidanceHooks(
       'Before.\n<!-- guidance-hook: impl -->\nAfter.\n',
@@ -283,7 +300,7 @@ const layout = { slug: 'layout', body: '# Layout\n\nGroup source by role.\n' };
 const types = { slug: 'types', body: '# Types\n\nExport by name.\n' };
 
 /** Builds the fills map from a plain object, so a test names bindings without constructing a Map inline. */
-function bind(bindings: Record<string, ReadonlyArray<{ slug: string; body: string }>>): GuidanceHookFills {
+function bind(bindings: Record<string, ReadonlyArray<GuidanceHookFill>>): GuidanceHookFills {
   return new Map(Object.entries(bindings));
 }
 
