@@ -73,7 +73,13 @@ function buildOwnershipMarkerCases(): ReadonlyArray<{ label: string; marker: str
     {
       label: 'rulebook skill',
       markerCount: 1,
-      rendered: renderSkillFile('fixture-skill', SENTINEL_SLUG, 'Fixture rulebook.', 'Body line.'),
+      rendered: renderSkillFile({
+        body: 'Body line.',
+        description: 'Fixture rulebook.',
+        skillName: 'fixture-skill',
+        slug: SENTINEL_SLUG,
+        version: undefined,
+      }),
     },
     // `injectRulebook` opens and closes the block, so both lines contain the slug and the recipe quotes both.
     { label: 'rulebook block', markerCount: 2, rendered: injectRulebook('', SENTINEL_SLUG, 'Body line.') },

@@ -603,12 +603,13 @@ async function reconcileDomain(
       await mkdir(skillDir, { recursive: true });
       await writeIfChanged(
         path.join(skillDir, 'SKILL.md'),
-        renderSkillFile(
-          rulebook.skillName,
-          rulebook.slug,
-          rulebook.description,
-          renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
-        ),
+        renderSkillFile({
+          body: renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
+          description: rulebook.description,
+          skillName: rulebook.skillName,
+          slug: rulebook.slug,
+          version: rulebook.version,
+        }),
       );
     }
   }

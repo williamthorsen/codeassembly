@@ -1,5 +1,18 @@
 import { stringify as stringifyYaml } from 'yaml';
 
+import { renderRulebookVersionLine } from './rulebook-version-line.ts';
+
+/** The inputs a rulebook skill file is rendered from. */
+export interface RulebookSkillFile {
+  /** The resolved skill name, which is the frontmatter `name` and the deployed directory. */
+  readonly skillName: string;
+  /** The rulebook's stable slug, carried in the ownership marker. */
+  readonly slug: string;
+  readonly description: string | undefined;
+  readonly body: string;
+  readonly version: string | undefined;
+}
+
 /** Returns the slug stamped in a skill file's sync ownership marker, or `undefined` when it carries none. */
 export function extractRulebookSkillSlug(content: string): string | undefined {
   return /<!-- codeassembly-rulebook:([a-z0-9-]+) -->/.exec(content)?.[1];
@@ -7,28 +20,26 @@ export function extractRulebookSkillSlug(content: string): string | undefined {
 
 /**
  * Renders a thin-wrapper skill file for a rulebook delivered in `skill` mode: standard skill frontmatter
- * (`name`, `description`, `user-invocable`), the sync ownership marker, and the rulebook's neutral body. The
- * frontmatter `name` is the resolved skill name (the display label); the ownership marker carries the stable
- * `slug`, so retraction can recover a rulebook's identity even when its skill name and directory differ. The
- * output is byte-deterministic — `lineWidth: 0` prevents the description from line-folding — so re-running
- * `sync` with unchanged content leaves the file untouched.
+ * (`name`, `description`, `user-invocable`), the sync ownership marker, the version line where the rulebook declares
+ * a version, and the rulebook's neutral body. The frontmatter `name` is the resolved skill name (the display label);
+ * the ownership marker carries the stable `slug`, so retraction can recover a rulebook's identity even when its skill
+ * name and directory differ. The output is byte-deterministic — `lineWidth: 0` prevents the description from
+ * line-folding — so re-running `sync` with unchanged content leaves the file untouched.
  *
  * `user-invocable` is always `true`: on-demand rulebook skills are meant to be invocable, and rulebook
  * frontmatter deliberately carries no per-rulebook opt-out.
  */
-export function renderSkillFile(
-  skillName: string,
-  slug: string,
-  description: string | undefined,
-  body: string,
-): string {
+export function renderSkillFile(file: RulebookSkillFile): string {
+  const { body, description, skillName, slug, version } = file;
   const frontmatter = {
     name: skillName,
     ...(description && { description }),
     'user-invocable': true,
   };
   const yaml = stringifyYaml(frontmatter, { lineWidth: 0 });
-  return `---\n${yaml}---\n${ownershipMarker(slug)}\n\n${body.trim()}\n`;
+  const versionLine = renderRulebookVersionLine(version);
+  const header = versionLine === '' ? ownershipMarker(slug) : `${ownershipMarker(slug)}\n${versionLine}`;
+  return `---\n${yaml}---\n${header}\n\n${body.trim()}\n`;
 }
 
 /**

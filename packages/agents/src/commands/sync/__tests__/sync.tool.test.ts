@@ -532,6 +532,17 @@ describe(syncCommand, () => {
     expect(skill).toContain('Gamma rules.');
   });
 
+  it('names the rulebook version directly below the ownership marker of a rulebook skill', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill\nversion: 5', 'Gamma rules.');
+    await declareRulebooks('gamma');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+
+    expect(await readFile(skillPath('consult-gamma'), 'utf8')).toContain(
+      '<!-- codeassembly-rulebook:gamma -->\n<!-- rulebook-version: 5 -->',
+    );
+  });
+
   it('delivers a hook-bearing rulebook body carrying no directive, in both delivery modes', async () => {
     await writeLibraryRulebook(
       'gamma',
