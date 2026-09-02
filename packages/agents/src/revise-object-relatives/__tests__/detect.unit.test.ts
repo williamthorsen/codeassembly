@@ -232,6 +232,150 @@ describe(detectCandidates, () => {
       expect(detect('Reports the fields records have.')).toHaveLength(1);
       expect(detect('Reports the fields records has.')).toStrictEqual([]);
     });
+
+    it('reads through an adverb to the verb the auxiliary carries', () => {
+      const candidates = detect('Reports the file the parser may explicitly read.');
+
+      expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'file the parser may explicitly read' });
+    });
+
+    it('reads a verb ending in `ly` as the verb rather than as the adverb it resembles', () => {
+      const candidates = detect('Drops an owned item the caller did not supply.');
+
+      expect(candidates[0]).toMatchObject({ verb: 'supply', phrase: 'item the caller did not supply' });
+    });
+  });
+
+  describe('voice', () => {
+    it.each([
+      'The library records some state transitions are recorded.',
+      'The library ships audio files are used.',
+      'The library names some release configurations are immutable.',
+    ])('passes over a passive whose object is already promoted: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it.each([
+      { sentence: 'Reports the source it was copied from.', phrase: 'source it was copied' },
+      { sentence: 'Reports the level it is probed against.', phrase: 'level it is probed' },
+    ])('reports a passive stranding a preposition: $phrase', ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+
+    it('reports a passive whose infinitival complement carries the gap', () => {
+      const candidates = detect('Hides the signal it was meant to convey.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'signal it was meant' });
+    });
+
+    it('reports a ditransitive passive, which promotes one object and leaves the other', () => {
+      const candidates = detect('Narrows the sweep to the paths it is given.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'paths it is given' });
+    });
+
+    it('reads a progressive as active, so its object gap survives the voice test', () => {
+      const candidates = detect('The message the console is writing is empty.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'message the console is writing' });
+    });
+
+    it("takes the voice from the chain's last auxiliary, not its first", () => {
+      expect(detect('Declares the version the consumer has approved.')).toHaveLength(1);
+      expect(detect('Reports the phase the ticket has been approved.')).toStrictEqual([]);
+    });
+
+    it('passes over a failed chain rather than letting the morphological test reach the participle', () => {
+      expect(detect('Reports the phase the ticket was not approved.')).toStrictEqual([]);
+    });
+
+    it('withholds the main-verb reading where the chain ends on a verb that cannot be one', () => {
+      expect(detect('Declares the version the consumer has been.')).toStrictEqual([]);
+    });
+
+    it.each([
+      { sentence: 'Names a file the producer does not have.', phrase: 'file the producer does not have' },
+      { sentence: 'Declares the version the consumer has had.', phrase: 'version the consumer has had' },
+    ])("closes the subject on the chain's own main verb: $phrase", ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+  });
+
+  describe('intransitive verbs', () => {
+    it.each([
+      { sentence: 'The set the entries belong to is closed.', phrase: 'set the entries belong' },
+      { sentence: 'The levels systems depend on are fixed.', phrase: 'levels systems depend' },
+      { sentence: 'Reports the state it may depend on.', phrase: 'state it may depend' },
+    ])('reports one stranding a preposition: $phrase', ({ sentence, phrase }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase });
+    });
+
+    it.each([
+      'The chain names mcp and factory depend on run-core.',
+      'The rule states code changes go in the src directory.',
+      'The convention holds qualifiers go in front.',
+    ])('passes over one whose preposition takes an object of its own: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('reads the same verb the same way bare and under an auxiliary', () => {
+      expect(detect('The levels systems depend on the parser are fixed.')).toStrictEqual([]);
+      expect(detect('Reports the state it may depend on the parser.')).toStrictEqual([]);
+    });
+  });
+
+  describe('non-head modifiers', () => {
+    it.each([
+      'The same rules apply to test files as to source.',
+      'All other files receive three comment lines.',
+      "Only the root's own artifacts are reported on.",
+      "A single artifact's normalized listing fields are attached.",
+    ])('passes over a modifier standing where a head noun would: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('still reads a head noun that a modifier precedes', () => {
+      const candidates = detect('Reports the same source it names.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'source', phrase: 'source it names' });
+    });
+  });
+
+  describe('agentive participles', () => {
+    it.each([
+      'Reads the direct dependency names declared by the project.',
+      'Counts the working-tree changes reported by the status command.',
+      'Address any assumption issues flagged by the architect.',
+    ])("passes over the rule's own passive-participle repair: %s", (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('keeps a site whose `by` does work other than naming an agent', () => {
+      const candidates = detect('The two clauses the author struck by name were probed.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'clauses the author struck' });
+    });
+
+    it('keeps a passive clause, whose participle an auxiliary carries', () => {
+      const candidates = detect('Reports the level it is probed against by the harness.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'level it is probed' });
+    });
   });
 
   describe('scope', () => {

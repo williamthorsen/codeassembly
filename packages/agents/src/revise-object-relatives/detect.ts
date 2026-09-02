@@ -7,10 +7,13 @@
  * bare-noun shape announces nothing, and is anchored on a plural subject instead.
  *
  * Detection is deliberately over-inclusive: precision is the agent's, which adjudicates each candidate with the
- * sentence in view. Three things are nonetheless decided here, because each is decidable without a reading. The
+ * sentence in view. Four things are nonetheless decided here, because each is decidable without a reading. The
  * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type. A word
  * carrying verbal morphology is read as a head noun only where a determiner makes it one, which is what keeps a main
- * clause and most participial phrases out. And a bare-noun subject is held to plural agreement.
+ * clause and most participial phrases out. A bare-noun subject is held to plural agreement. And a clause with no gap
+ * left for the head noun to fill is rejected: a passive has promoted its own object, so it reports only where a
+ * stranded preposition, an infinitival complement, or a ditransitive leaves a second one open, and an intransitive
+ * verb reports only where it strands a preposition.
  */
 import type { Candidate, ProseSpan, SubjectShape } from './types.ts';
 
@@ -159,10 +162,16 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Forms of `be`. A chain ending in one reads as passive or copular rather than active, which is what decides whether
+ * the clause that it closes still has an object gap to fill.
+ */
+const BE_FORMS: ReadonlySet<string> = new Set(['am', 'are', 'be', 'been', 'being', 'is', 'was', 'were']);
+
+/**
  * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
- * relative's, which is what keeps a main clause out. The set holds the detector to the direct-object gap: a
- * prepositional-phrase gap under one of these verbs is suppressed with them, so `the set the entries belong to`
- * goes unreported.
+ * relative's, which is what keeps a main clause out. The set is read from both directions: {@link isFiniteVerb}
+ * rejects a member outright, and the two clause-closing tests admit one back where a stranded preposition gives it a
+ * prepositional-phrase gap, so `the set the entries belong to` reports where `the entries belong to the set` does not.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
@@ -189,7 +198,7 @@ const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
  * Past-tense forms that no suffix marks as a verb, so nothing but a lexicon recognizes one. Admission follows the
  * rule {@link BARE_VERBS} states: every entry is a word that no reading takes as a noun, which keeps `cost`, `cut`,
  * `hit`, `put`, `run`, `saw`, `set`, `split`, and `spread` out. A past participle needs no entry, since
- * {@link findCarriedVerbIndex} admits whatever an auxiliary carries.
+ * {@link resolveAuxiliaryChain} admits whatever an auxiliary carries.
  */
 const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
   'began',
@@ -264,6 +273,25 @@ const DETERMINERS: ReadonlySet<string> = new Set([
   'your',
 ]);
 
+/**
+ * Participles whose verb takes two objects. A passive promotes one and leaves the other open, so a head noun can fill
+ * the gap that remains: `the paths it is given` is the construction where `the paths it is used` is not.
+ */
+const DITRANSITIVE_PARTICIPLES: ReadonlySet<string> = new Set([
+  'assigned',
+  'awarded',
+  'given',
+  'granted',
+  'handed',
+  'issued',
+  'offered',
+  'passed',
+  'sent',
+  'shown',
+  'taught',
+  'told',
+]);
+
 /** Adverbs that may sit between a head noun and the subject without licensing the join. */
 const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
   'almost',
@@ -306,8 +334,25 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Words ending in `ly` that no reading takes as an adverb, which the morphological test in {@link isMannerAdverb}
+ * would otherwise skip. An entry is needed only for a word of five characters or more that neither verb lexicon
+ * holds, since that function applies a length floor and consults both lexicons: `rely` is short enough for the floor
+ * to reject, and `apply` and `imply` are covered by {@link BARE_VERBS}, so none of the three needs an entry here.
+ */
+const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
+  'anomaly',
+  'assembly',
+  'comply',
+  'family',
+  'monopoly',
+  'multiply',
+  'reply',
+  'supply',
+]);
+
+/**
  * Auxiliaries that also serve as a clause's transitive main verb, which is what `the version the consumer has` turns
- * on. A `be` form is absent: a copula takes no object, so a clause it closes has no gap to find.
+ * on. A `be` form is absent: a copula takes no object, so a clause that it closes has no gap to find.
  */
 const MAIN_VERB_AUXILIARIES: ReadonlySet<string> = new Set(['did', 'do', 'does', 'had', 'has', 'have']);
 
@@ -329,6 +374,15 @@ const NUMERALS: ReadonlySet<string> = new Set([
 
 /** Negators, which sit between an auxiliary and its verb. */
 const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
+
+/**
+ * Modifiers that no reading takes as the head of a phrase they open. Each stands directly before the noun that it
+ * modifies, so {@link findHeadIndex} would otherwise read the modifier as the head and the noun as a bare subject,
+ * turning `the same rules apply` into a relative clause. Admission follows the rule {@link BARE_VERBS} states,
+ * narrowed to this position: a word that heads a phrase elsewhere, `former` and `latter` among them, is admitted
+ * only where no reading takes it as a noun with a noun following it.
+ */
+const NON_HEAD_MODIFIERS: ReadonlySet<string> = new Set(['other', 'own', 'same', 'single']);
 
 /**
  * Specifiers other than a numeral that require a plural head, which is what number agreement holds them to. Every
@@ -436,16 +490,19 @@ const QUANTIFIERS: ReadonlySet<string> = new Set([
   'such',
 ]);
 
-/** Relativizers. One between a head and a subject is the overt relativizer the rule asks for, so the site is clean. */
+/**
+ * Relativizers. One between a head and a subject is the overt relativizer that the rule asks for, so the site is
+ * clean.
+ */
 const RELATIVIZERS: ReadonlySet<string> = new Set(['that', 'when', 'where', 'which', 'who', 'whom', 'whose', 'why']);
 
 /** Subject pronouns opening the mildest shape. */
 const SUBJECT_PRONOUNS: ReadonlySet<string> = new Set(['he', 'i', 'it', 'one', 'she', 'they', 'we', 'you']);
 
 /**
- * The window each anchor's finite verb must fall in, counted in tokens from the subject's first word. A determiner,
- * a numeral, and a quantifier each specify a noun, so the verb may not sit directly on one; a pronoun subject is one
- * word, and so is a bare one, since nothing marks where a longer one would begin.
+ * The window in which each anchor's finite verb must fall, counted in tokens from the subject's first word. A
+ * determiner, a numeral, and a quantifier each specify a noun, so the verb may not sit directly on one; a pronoun
+ * subject is one word, and so is a bare one, since nothing marks where a longer one would begin.
  */
 const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }>> = {
   bare: { min: 1, max: 1 },
@@ -459,7 +516,7 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
 /** What opens an embedded subject, which decides its window. Several kinds report under one shape. */
 type SubjectKind = 'bare' | 'determiner' | 'numeral' | 'pronoun' | 'quantifier' | 'quantifier-pronoun';
 
-/** The shape each anchor reports under, in the rulebook's own vocabulary. */
+/** The shape under which each anchor reports, in the rulebook's own vocabulary. */
 const SHAPES_BY_KIND: Readonly<Record<SubjectKind, SubjectShape>> = {
   bare: 'bare',
   determiner: 'definite',
@@ -501,6 +558,16 @@ const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
   'yes',
   'yours',
 ]);
+
+/** The auxiliary chain opening at one auxiliary: what it carries, how that reads, and where the chain ends. */
+interface AuxiliaryChain {
+  /** Index of the lexical verb carried by the chain, or undefined where it carries none. */
+  carriedIndex: number | undefined;
+  /** Whether the chain's last auxiliary is a `be` form carrying something other than an `-ing` form. */
+  isPassive: boolean;
+  /** Index of the chain's last auxiliary, which is the clause's main verb where the chain carries none. */
+  lastAuxiliaryIndex: number;
+}
 
 /** One word of a span, with the offsets a report and a line lookup are computed from. */
 interface Token {
@@ -555,7 +622,9 @@ function buildCandidate(input: {
   };
 }
 
-/** Counts the newlines preceding `offset`, which is how a span's own line maps to the line a candidate sits on. */
+/**
+ * Counts the newlines preceding `offset`, which is how a span's own line maps to the line on which a candidate sits.
+ */
 function countNewlinesBefore(text: string, offset: number): number {
   let count = 0;
   for (let index = 0; index < offset && index < text.length; index += 1) {
@@ -616,7 +685,8 @@ function flattenWhitespace(text: string): string {
 
 /**
  * Returns the index of the head noun a subject at `subjectIndex` attaches to, or undefined where nothing there can be
- * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, or an adjunct head cannot.
+ * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
+ * modifier that no reading takes as a noun cannot.
  */
 function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number | undefined {
   let index = subjectIndex;
@@ -628,6 +698,7 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     if (head === undefined) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
     if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
+    if (NON_HEAD_MODIFIERS.has(head.word)) return undefined;
     if (isVerbPosition(tokens, index)) return undefined;
     return isDeterminedHead(tokens, index) ? index : undefined;
   }
@@ -666,8 +737,13 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
  * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
- * plural agreement, which is the only reading its own form supports. An auxiliary carrying no lexical verb closes the
- * subject itself where it is a {@link MAIN_VERB_AUXILIARIES} member, since there a main-verb reading is what remains.
+ * plural agreement, which is the only reading its own form supports. A chain carrying no lexical verb closes the
+ * subject on its last auxiliary where that is a {@link MAIN_VERB_AUXILIARIES} member, since a main-verb reading is
+ * what remains: `the file the producer does not have` closes on `have`, and `the version the consumer has been` on
+ * nothing.
+ *
+ * An auxiliary chain that the clause fails is the end of the subject rather than a token to scan past. Continuing
+ * would let the morphological test reach the same participle a second time and report what the chain just rejected.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
@@ -680,13 +756,13 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
     if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
     if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
     if (AUXILIARIES.has(token.word) && index >= first) {
-      const carried = findCarriedVerbIndex(tokens, index);
-      if (carried !== undefined) return carried;
-      if (!MAIN_VERB_AUXILIARIES.has(token.word)) continue;
+      const chain = resolveAuxiliaryChain(tokens, index);
+      if (chain.carriedIndex !== undefined) return closeOnCarriedVerb(tokens, chain);
+      if (!MAIN_VERB_AUXILIARIES.has(tokens[chain.lastAuxiliaryIndex]?.word ?? '')) continue;
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
-      return index;
+      return chain.lastAuxiliaryIndex;
     }
-    if (index < first || !isFiniteVerb(token.word)) continue;
+    if (index < first || !closesScannedClause(tokens, index, kind)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
@@ -694,21 +770,127 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 }
 
 /**
- * Returns the index of the lexical verb an auxiliary at `auxiliaryIndex` carries, or undefined where it carries none
- * within {@link CARRIED_VERB_WINDOW}. A modal is always followed by a verb, which is what lets `the file the parser
- * may read` be found where the morphological test sees nothing on `read`; a second auxiliary or a negator between the
- * two is skipped.
+ * Resolves the auxiliary chain opening at `auxiliaryIndex`: the lexical verb that it carries within
+ * {@link CARRIED_VERB_WINDOW}, how that verb reads, and which auxiliary ends the chain. A modal is always followed by
+ * a verb, which is what lets `the file the parser may read` be found where the morphological test sees nothing on
+ * `read`; a further auxiliary, a negator, and an adverb between the two are skipped.
+ *
+ * The voice is read off the chain's last auxiliary rather than its first, so `has been approved` is passive where
+ * `has approved` is active. A `be` form carrying an `-ing` form is progressive, which leaves the object gap open.
  */
-function findCarriedVerbIndex(tokens: readonly Token[], auxiliaryIndex: number): number | undefined {
+function resolveAuxiliaryChain(tokens: readonly Token[], auxiliaryIndex: number): AuxiliaryChain {
   const last = Math.min(auxiliaryIndex + CARRIED_VERB_WINDOW, tokens.length - 1);
+  let lastAuxiliaryIndex = auxiliaryIndex;
 
   for (let index = auxiliaryIndex + 1; index <= last; index += 1) {
     const token = tokens[index];
-    if (token === undefined || token.afterBreak) return undefined;
-    if (AUXILIARIES.has(token.word) || NEGATORS.has(token.word)) continue;
-    return isFunctionWord(token.word) ? undefined : index;
+    if (token === undefined || token.afterBreak) break;
+    if (AUXILIARIES.has(token.word)) {
+      lastAuxiliaryIndex = index;
+      continue;
+    }
+    if (NEGATORS.has(token.word) || isMannerAdverb(token.word)) continue;
+    if (isFunctionWord(token.word)) break;
+    const lastAuxiliary = tokens[lastAuxiliaryIndex]?.word ?? '';
+    const isPassive = BE_FORMS.has(lastAuxiliary) && !token.word.endsWith('ing');
+    return { carriedIndex: index, isPassive, lastAuxiliaryIndex };
   }
-  return undefined;
+  return { carriedIndex: undefined, isPassive: false, lastAuxiliaryIndex };
+}
+
+/**
+ * Reports whether a word reads as an adverb standing between an auxiliary and the verb that it carries. A length
+ * floor of five characters and an `ly` ending are the only markers, so the three exclusion sets are what keep
+ * `apply`, `supply`, and their like out. The floor covers every shorter word, `ally` and `rely` among them.
+ */
+function isMannerAdverb(word: string): boolean {
+  if (word.length <= 4 || !word.endsWith('ly')) return false;
+  return !BARE_VERBS.has(word) && !IRREGULAR_PAST_VERBS.has(word) && !LY_FINAL_NON_ADVERBS.has(word);
+}
+
+/**
+ * Returns the index of the verb carried by a chain where that verb closes a relative clause, or undefined where the
+ * clause has no gap for the head noun to fill. A passive has promoted its own object, so it closes one only where
+ * something else leaves a gap open; an intransitive verb closes one only where it strands a preposition.
+ */
+function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): number | undefined {
+  const { carriedIndex, isPassive } = chain;
+  if (carriedIndex === undefined) return undefined;
+  if (isPassive && !hostsGap(tokens, carriedIndex)) return undefined;
+  return closesCarriedClause(tokens, carriedIndex) ? carriedIndex : undefined;
+}
+
+/**
+ * Reports whether a token carried by an auxiliary can close a relative clause. The carried path admits whatever is
+ * not a function word, since a past participle carries no marker held by any lexicon here; an intransitive verb is
+ * the one exception, and closes a clause only where it strands a preposition.
+ */
+function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
+  return !INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') || hasStrandedPreposition(tokens, index);
+}
+
+/**
+ * Reports whether the token at `index`, reached by the scan rather than through an auxiliary, closes a relative
+ * clause. {@link isFiniteVerb} decides that on the word alone; an intransitive verb that it rejects is admitted back
+ * where a stranded preposition gives the clause a gap, and an agentive participle is rejected whatever it says.
+ */
+function closesScannedClause(tokens: readonly Token[], index: number, kind: SubjectKind): boolean {
+  if (kind === 'bare' && isAgentiveParticiple(tokens, index)) return false;
+  return isFiniteVerb(tokens[index]?.word ?? '') || isStrandedIntransitive(tokens, index);
+}
+
+/**
+ * Reports whether the token at `index` is a participle carrying an agentive `by`, which modifies the noun before it
+ * rather than closing a clause. That noun is what the scan took for a bare subject, so the reading is the rulebook's
+ * own passive-participle repair misread: admitting it reports a repaired site back as a defect. The test is held to
+ * the bare shape, since a longer subject means the `by` is doing other work, as in `the clauses the author struck by
+ * name`. An irregular participle needs a lexicon and has none here, no site in the corpus having called for one.
+ */
+function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean {
+  const word = tokens[index]?.word ?? '';
+  if (word.length <= 3 || !word.endsWith('ed')) return false;
+  const agent = tokens[index + 1];
+  return agent !== undefined && !agent.afterBreak && agent.word === 'by';
+}
+
+/**
+ * Reports whether an intransitive verb at `index` strands a preposition. {@link isFiniteVerb} rejects every member of
+ * {@link INTRANSITIVE_VERBS}, since one closing a subject usually reads as the sentence's own verb; a stranded
+ * preposition gives it a gap and admits it back.
+ */
+function isStrandedIntransitive(tokens: readonly Token[], index: number): boolean {
+  return INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') && hasStrandedPreposition(tokens, index);
+}
+
+/**
+ * Reports whether the token at `index` hosts a gap that a head noun can fill. Three shapes do: a stranded
+ * preposition, a `to` followed by a token that is not a function word, and a ditransitive participle, whose verb
+ * promotes one object and leaves the other open. The second is looser than an infinitival test: It admits
+ * `written to disk` along with `meant to convey`, and the agent adjudicates the difference.
+ */
+function hostsGap(tokens: readonly Token[], index: number): boolean {
+  if (hasStrandedPreposition(tokens, index)) return true;
+  if (DITRANSITIVE_PARTICIPLES.has(tokens[index]?.word ?? '')) return true;
+
+  const marker = tokens[index + 1];
+  if (marker === undefined || marker.afterBreak || marker.word !== 'to') return false;
+  const complement = tokens[index + 2];
+  return complement !== undefined && !complement.afterBreak && !isFunctionWord(complement.word);
+}
+
+/**
+ * Reports whether the token at `index` strands a preposition: one sits directly after it, and nothing in the clause
+ * fills that preposition's own object slot. What follows the preposition is what settles it, which is how `the store
+ * the events belong to` is told from `the events belong to the store`.
+ */
+function hasStrandedPreposition(tokens: readonly Token[], index: number): boolean {
+  const preposition = tokens[index + 1];
+  if (preposition === undefined || preposition.afterBreak || !PREPOSITIONS.has(preposition.word)) return false;
+
+  const next = tokens[index + 2];
+  if (next === undefined || next.afterBreak) return true;
+  if (DETERMINERS.has(next.word) || NUMERALS.has(next.word) || QUANTIFIERS.has(next.word)) return false;
+  return !SUBJECT_PRONOUNS.has(next.word) && isFunctionWord(next.word);
 }
 
 /** Returns the sentence enclosing the span offsets `start` through `end`, flattened onto one line for the report. */

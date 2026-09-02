@@ -8,15 +8,15 @@
 export interface Candidate {
   /** Path to the source file, relative to the repository root. */
   file: string;
-  /** 1-indexed line the sentence begins on. */
+  /** 1-indexed line on which the sentence begins. */
   line: number;
   /** The embedded subject's form, which ranks the construction's cost and points at the likeliest repair. */
   shape: SubjectShape;
-  /** The head noun the gap belongs to. */
+  /** The head noun to which the gap belongs. */
   head: string;
   /** The embedded subject, as matched. */
   subject: string;
-  /** The finite verb the reading turns on. */
+  /** The finite verb on which the reading turns. */
   verb: string;
   /** The head noun through the verb: the span rewritten by a repair. */
   phrase: string;
@@ -39,7 +39,7 @@ export type ProseKind = 'markdown' | 'script' | 'shell';
 export interface ProseSpan {
   /** Path to the source file, relative to the repository root. */
   file: string;
-  /** 1-indexed line the block begins on. */
+  /** 1-indexed line on which the block begins. */
   line: number;
   /** The prose, stripped of the syntax that delimited it. */
   text: string;
