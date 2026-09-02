@@ -310,7 +310,6 @@ const DEGREE_ADVERBIALS: ReadonlySet<string> = new Set([
   'most often',
   'most plausibly',
   'most recently',
-  'no further',
   'no longer',
 ]);
 
