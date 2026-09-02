@@ -13,7 +13,8 @@
  * clause and most participial phrases out. A bare-noun subject is held to plural agreement. And a clause with no gap
  * left for the head noun to fill is rejected: a passive has promoted its own object, so it reports only where a
  * stranded preposition, an infinitival complement, or a ditransitive leaves a second one open, and an intransitive
- * verb reports only where it strands a preposition.
+ * verb reports only where it strands a preposition. A copula takes no object at all, and closes a clause only at the
+ * end of one, where the head fills its complement slot.
  */
 import type { Candidate, ProseSpan, SubjectShape } from './types.ts';
 
@@ -721,12 +722,24 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     if (head === undefined) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
     if (PRO_FORM_HEADS.has(head.word)) return isFusedProForm(tokens, index) ? undefined : index;
+    if (isDegreePredicate(tokens, index)) return undefined;
     if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
     if (NON_HEAD_MODIFIERS.has(head.word)) return undefined;
     if (isVerbPosition(tokens, index)) return undefined;
     return isDeterminedHead(tokens, index) ? index : undefined;
   }
   return undefined;
+}
+
+/**
+ * Reports whether the token at `headIndex` is the predicate of a degree question, which `how` directly before it is
+ * what marks. The predicate is an adjective rather than a noun, so a clause-final copula after it closes no relative
+ * clause: `how big the problem is` is a question, not a head with a gap. A quantifier between the two heads a real
+ * noun phrase, so `how many files the parser reads` is untouched.
+ */
+function isDegreePredicate(tokens: readonly Token[], headIndex: number): boolean {
+  if (headIndex === 0 || tokens[headIndex]?.afterBreak === true) return false;
+  return tokens[headIndex - 1]?.word === 'how';
 }
 
 /**
@@ -782,6 +795,10 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * {@link EXTENDED_SUBJECT_WINDOW} so a subject holding one is still reachable. Precision then passes from the window
  * to {@link closesClause}: past a crossed preposition only a clause-closing verb closes the clause, which is what
  * tells the `lives` of `the sources this prose about the idioms lives in` from the `idioms` before it.
+ *
+ * An adverb or a negator between the subject and the verb raises the ceiling by one rather than spending a token of
+ * it, mirroring what {@link resolveAuxiliaryChain} reads through, so `the source it also names` reports as `the
+ * source it names` does.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
@@ -798,13 +815,21 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       last = Math.min(subjectIndex + EXTENDED_SUBJECT_WINDOW, tokens.length - 1);
       continue;
     }
+    if (NEGATORS.has(token.word) || FOCUS_ADVERBS.has(token.word) || isMannerAdverb(token.word)) {
+      last = Math.min(last + 1, tokens.length - 1);
+      continue;
+    }
     if (AUXILIARIES.has(token.word) && index >= first) {
       const chain = resolveAuxiliaryChain(tokens, index);
       if (chain.carriedIndex !== undefined) {
         const carried = closeOnCarriedVerb(tokens, chain);
         return carried !== undefined && crossedPreposition && !closesClause(tokens, carried) ? undefined : carried;
       }
-      if (!MAIN_VERB_AUXILIARIES.has(tokens[chain.lastAuxiliaryIndex]?.word ?? '')) continue;
+      const lastAuxiliary = tokens[chain.lastAuxiliaryIndex]?.word ?? '';
+      if (BE_FORMS.has(lastAuxiliary) && closesOnCopula(tokens, chain.lastAuxiliaryIndex)) {
+        return chain.lastAuxiliaryIndex;
+      }
+      if (!MAIN_VERB_AUXILIARIES.has(lastAuxiliary)) continue;
       if (crossedPreposition && !closesClause(tokens, chain.lastAuxiliaryIndex)) continue;
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
       return chain.lastAuxiliaryIndex;
@@ -899,6 +924,17 @@ function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean 
   if (word.length <= 3 || !word.endsWith('ed')) return false;
   const agent = tokens[index + 1];
   return agent !== undefined && !agent.afterBreak && agent.word === 'by';
+}
+
+/**
+ * Reports whether a copula at `index` closes a relative clause, which is what a predicate-nominal gap turns on. A
+ * copula takes no object, so only its position says whether the head fills its complement slot: one at the end of
+ * its clause has an unfilled one, as in `the throwing mock it is`, and a trailing negator does not fill it either.
+ */
+function closesOnCopula(tokens: readonly Token[], index: number): boolean {
+  if (isClauseFinal(tokens, index)) return true;
+  const next = tokens[index + 1];
+  return next !== undefined && !next.afterBreak && NEGATORS.has(next.word) && isClauseFinal(tokens, index + 1);
 }
 
 /**

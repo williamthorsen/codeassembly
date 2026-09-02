@@ -148,7 +148,7 @@ describe(detectCandidates, () => {
     );
 
     it('passes over a modal carrying no lexical verb', () => {
-      expect(detect('Reports whether the file the parser should be.')).toStrictEqual([]);
+      expect(detect('Reports whether the file the parser should.')).toStrictEqual([]);
     });
 
     it('holds a plural specifier to a plural head, so a numeral beside a participle licenses nothing', () => {
@@ -296,7 +296,10 @@ describe(detectCandidates, () => {
     });
 
     it('withholds the main-verb reading where the chain ends on a verb that cannot be one', () => {
-      expect(detect('Declares the version the consumer has been.')).toStrictEqual([]);
+      const candidates = detect('Declares the version the consumer has been.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb: 'been' });
     });
 
     it.each([
@@ -343,6 +346,53 @@ describe(detectCandidates, () => {
 
       expect(candidates).toHaveLength(1);
       expect(candidates[0]).toMatchObject({ verb });
+    });
+  });
+
+  describe('predicate-nominal gaps', () => {
+    it.each(['The double is the throwing mock it is.', 'The double is the throwing mock it also is.'])(
+      'closes a clause on a copula that ends it: %s',
+      (sentence) => {
+        const candidates = detect(sentence);
+
+        expect(candidates).toHaveLength(1);
+        expect(candidates[0]).toMatchObject({ head: 'mock', verb: 'is' });
+      },
+    );
+
+    it('reads a trailing negator as leaving the complement slot open', () => {
+      expect(detect('The double is the throwing mock it is not.')).toHaveLength(1);
+    });
+
+    it('passes over a copula that its own complement follows', () => {
+      expect(detect('The double is the throwing mock it is today.')).toStrictEqual([]);
+    });
+
+    it('passes over a degree question, whose predicate is no head noun', () => {
+      expect(detect('Nobody said how big the problem is.')).toStrictEqual([]);
+    });
+
+    it('keeps a head noun a quantifier separates from `how`', () => {
+      expect(detect('Nobody said how many files the parser reads.')).toHaveLength(1);
+    });
+
+    it('closes on a copula an auxiliary chain ends with', () => {
+      const candidates = detect('Reports whether the file the parser should be.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'file', verb: 'be' });
+    });
+  });
+
+  describe('adverbs between the subject and the verb', () => {
+    it.each([
+      { sentence: 'Audits every workspace bin against the source it also names.', verb: 'names' },
+      { sentence: 'Audits every workspace bin against the source it quietly names.', verb: 'names' },
+    ])('reads through one to the verb: $verb', ({ sentence, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'source', verb });
     });
   });
 
