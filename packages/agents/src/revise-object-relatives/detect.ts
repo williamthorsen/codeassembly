@@ -7,8 +7,9 @@
  * bare-noun shape announces nothing, and is anchored on a plural subject instead.
  *
  * Detection is deliberately over-inclusive: precision is the agent's, which adjudicates each candidate with the
- * sentence in view. Four things are nonetheless decided here, because each is decidable without a reading. The
- * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type. A word
+ * sentence in view. Five things are nonetheless decided here, because each is decidable without a reading. The
+ * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type, as is the
+ * predicate of a degree question, which no copula after it turns into a head noun. A word
  * carrying verbal morphology is read as a head noun only where a determiner makes it one, which is what keeps a main
  * clause and most participial phrases out. A bare-noun subject is held to plural agreement. And a clause with no gap
  * left for the head noun to fill is rejected: a passive has promoted its own object, so it reports only where a
