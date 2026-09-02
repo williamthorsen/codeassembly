@@ -540,7 +540,7 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
 
 /**
  * The ceiling a crossed preposition raises the subject window to, counted in tokens from the subject's first word. A
- * prepositional phrase inside a subject costs several tokens, and the clause-closing gate rather than the window is
+ * prepositional phrase inside a subject costs several tokens, and {@link closesClause} rather than the window is
  * what carries precision once one is crossed.
  */
 const EXTENDED_SUBJECT_WINDOW = 12;
@@ -809,8 +809,9 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  *
  * A preposition other than `of` opens a phrase inside the subject rather than ending it, and raises the ceiling to
  * {@link EXTENDED_SUBJECT_WINDOW} so a subject holding one is still reachable. Precision then passes from the window
- * to {@link closesClause}: past a crossed preposition only a clause-closing verb closes the clause, which is what
- * tells the `lives` of `the sources this prose about the idioms lives in` from the `idioms` before it.
+ * to {@link closesClause}: past a crossed preposition only a verb stranding a clause-final preposition closes the
+ * clause, which is what tells the `lives` of `the sources this prose about the idioms lives in` from the `idioms`
+ * before it. A direct-object gap behind such a subject is out of reach, the price of a window this wide.
  *
  * An adverb or a negator between the subject and the verb raises the ceiling by one rather than spending a token of
  * it, mirroring what {@link resolveAuxiliaryChain} reads through, so `the source it also names` reports as `the
@@ -968,12 +969,12 @@ function closesOnCopula(tokens: readonly Token[], index: number): boolean {
 }
 
 /**
- * Reports whether the token at `index` closes its clause, either as the clause's last token or by stranding a
- * preposition that is. This is what a subject holding a prepositional phrase is held to, a window wide enough to
- * reach past one being wide enough to reach a noun inside it.
+ * Reports whether the token at `index` closes its clause by stranding a preposition that ends it. This is what a
+ * subject holding a prepositional phrase is held to: a window wide enough to reach past one is wide enough to reach
+ * the noun that ends the sentence, and {@link isFiniteVerb} reads that noun as a verb. The stranded preposition is
+ * the one signature the raised window is raised for, so a clause-final token without one closes nothing.
  */
 function closesClause(tokens: readonly Token[], index: number): boolean {
-  if (isClauseFinal(tokens, index)) return true;
   return hasStrandedPreposition(tokens, index) && isClauseFinal(tokens, index + 1);
 }
 

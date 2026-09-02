@@ -427,17 +427,11 @@ describe(detectCandidates, () => {
       expect(candidates[0]).toMatchObject({ head: 'sources', verb: 'lives' });
     });
 
-    it('closes on a verb that ends its clause, the gap being a direct object', () => {
-      const candidates = detect('The sweep covers the sources this prose about the idioms lists.');
-
-      expect(candidates).toHaveLength(1);
-      expect(candidates[0]).toMatchObject({ head: 'sources', verb: 'lists' });
-    });
-
-    it('passes over a verb that neither ends its clause nor strands a preposition', () => {
-      expect(detect('The sweep covers the sources this prose about the idioms lists in the appendix.')).toStrictEqual(
-        [],
-      );
+    it.each([
+      'The sweep covers the sources this prose about the idioms lists.',
+      'The sweep covers the sources this prose about the idioms lists in the appendix.',
+    ])('passes over a verb stranding no clause-final preposition: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
     });
 
     it('holds a partitive `of` to neither the raised ceiling nor the gate that pays for it', () => {
