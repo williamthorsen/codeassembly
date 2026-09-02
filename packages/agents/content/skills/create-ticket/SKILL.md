@@ -29,9 +29,10 @@ Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comm
 
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
-- Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
+- Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `artifact_base_dir`, and `ticket_base_url` from the manifest JSON emitted on stdout
 - From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
+- From the same file, read `integrations.jira.project_key` and `integrations.jira.issue_types`. Both are optional, and both are consumed only by step 6's Jira path, which states what each falls back to.
 
 ### 2. Write ticket content
 
@@ -120,9 +121,11 @@ label_flags+=" --label \"{label_name}\""
 
 ### 6. Create remote ticket
 
-#### GitHub path
+Both platforms render the same title and persist the same branch association; only creation itself differs. Render the title, follow the path step 3 resolved, then finish at [Persist the branch association](#persist-the-branch-association).
 
-Render the ticket title using `describe-change.sh`. Note that ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
+#### Render the ticket title
+
+Render with `describe-change.sh`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
 json=$({harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
@@ -131,7 +134,9 @@ ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.loa
 
 Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Use `ticket_title` directly as the issue title; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+Use `ticket_title` directly as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+
+#### GitHub path
 
 Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
 
@@ -151,21 +156,64 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 - If `ticket_ref_prefix` is any other value (e.g., `MAC-`): `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., `MAC-` + `147` → `MAC-147`)
 - If no prefix: `ticket_id` = `{number}` (e.g., `147`)
 
-Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the bare issue `number` extracted above:
+#### Jira path
 
-- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch is already linked to this ticket), persist:
+##### Resolve the project key
+
+Take `integrations.jira.project_key` (step 1) where it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `THOR-` yields `THOR`. Where neither is configured there is no project to create in; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
+
+##### Resolve the issue type
+
+Read `integrations.jira.issue_types` (step 1) and stop at the first of these that yields a name:
+
+1. The entry keyed by the work type established in the conversation context, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` answers a `fix` work type, and one keyed `fix` answers a `bugfix` type.
+2. The map's `default` entry.
+3. The literal `Task`.
+
+Do not choose a type from the ticket's content. A team-managed project need not carry `Story` or `Bug`, and a name it does not carry fails the creation call.
+
+##### Create the work item
+
+Identify the client per {skill:update-jira-ticket}, which ranks the three client shapes and states the description format each one takes. Where it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
+
+Every client takes `ticket_title` as the summary, the resolved project key, the resolved issue type, and the step-2 body as the description in that skill's assigned format:
+
+- **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and `fields.description` with `contentFormat: "markdown"`.
+- **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
+- **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file:
+
+  ```bash
+  key=$(acli jira workitem create \
+    --project "{project_key}" \
+    --type "{issue_type}" \
+    --summary "${ticket_title}" \
+    --description-file "$adf_path" \
+    --json | python3 -c "import sys,json; print(json.load(sys.stdin).get('key',''))")
+  ```
+
+  Where `--json` yields no `key`, re-read the key from the command's default output, which names the created work item.
+
+##### Record the identifiers
+
+`ticket_id` is the returned key verbatim (e.g. `THOR-140`). The key already carries its project prefix, so the `ticket_ref_prefix` reconstruction the GitHub path performs does not apply here.
+
+`url` is the URL the client returns. Where the client returns none, join `ticket_base_url` (step 1) to the key. Where neither yields one, the work item still exists: report it created by key with no URL, and skip the persist below.
+
+#### Persist the branch association
+
+Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced:
+
+- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `ticket_id` (the branch is already linked to this ticket), persist:
 
   ```bash
   node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
   ```
 
-- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
+- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket {ticket_id} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
 
-Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` (or empty) `ticket_ref_prefix`, for which `branch_ticket_id` is the bare issue number and compares directly against `number`. The Jira path persists nothing, so this guard applies only to the GitHub path.
+Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare where `ticket_ref_prefix` is `#` or absent, prefixed where it is a project key. Comparing a bare number holds only in the first case and silently skips every persist in the second.
 
-#### Jira path (stub)
-
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub has no URL yet, so it persists nothing new, consistent with today.
+Skip this section entirely where no URL was resolved; there is nothing to store.
 
 ### 7. Apply relationships
 
