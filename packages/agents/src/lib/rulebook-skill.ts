@@ -1,6 +1,6 @@
 import { stringify as stringifyYaml } from 'yaml';
 
-import { renderRulebookVersionLine } from './rulebook-version-line.ts';
+import { renderRulebookVersionLines } from './rulebook-version-line.ts';
 
 /** The inputs a rulebook skill file is rendered from. */
 export interface RulebookSkillFile {
@@ -37,8 +37,7 @@ export function renderSkillFile(file: RulebookSkillFile): string {
     'user-invocable': true,
   };
   const yaml = stringifyYaml(frontmatter, { lineWidth: 0 });
-  const versionLine = renderRulebookVersionLine(version);
-  const header = versionLine === '' ? ownershipMarker(slug) : `${ownershipMarker(slug)}\n${versionLine}`;
+  const header = [ownershipMarker(slug), ...renderRulebookVersionLines(version)].join('\n');
   return `---\n${yaml}---\n${header}\n\n${body.trim()}\n`;
 }
 

@@ -8,7 +8,7 @@ import { makeArtifactMarker } from '../../src/lib/artifact-marker.ts';
 import { SOURCE_SUPPORT_DIR } from '../../src/lib/link-anchor.ts';
 import { injectProvenanceMarker } from '../../src/lib/marker-injector.ts';
 import { renderSkillFile } from '../../src/lib/rulebook-skill.ts';
-import { renderRulebookVersionLine } from '../../src/lib/rulebook-version-line.ts';
+import { renderRulebookVersionLines } from '../../src/lib/rulebook-version-line.ts';
 import { injectRulebook } from '../../src/lib/sentinel-inliner.ts';
 
 // The recipe quotes deployment markers verbatim so a reader can match one by sight, and nothing but this suite ties
@@ -58,7 +58,9 @@ describe('deployment markers', () => {
   });
 
   it('quotes the rulebook version line', () => {
-    const line = renderRulebookVersionLine(SENTINEL_VERSION).replaceAll(SENTINEL_VERSION, () => VERSION_PLACEHOLDER);
+    const line = renderRulebookVersionLines(SENTINEL_VERSION)
+      .join('')
+      .replaceAll(SENTINEL_VERSION, () => VERSION_PLACEHOLDER);
 
     expect(recipe).toContain(line);
   });

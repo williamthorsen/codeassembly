@@ -4,7 +4,7 @@
  * Every function is a pure string transform with no filesystem access.
  */
 
-import { renderRulebookVersionLine } from './rulebook-version-line.ts';
+import { renderRulebookVersionLines } from './rulebook-version-line.ts';
 
 /** Returns the slugs whose blocks have a complete open/close marker pair, in document order. */
 export function extractInstalledSlugs(content: string): ReadonlyArray<string> {
@@ -70,9 +70,7 @@ export function removeRulebook(content: string, slug: string): string {
  * the one grammar, whether it manages a host document or splices a guidance-hook fill.
  */
 export function renderRulebookBlock(slug: string, body: string, version?: string): string {
-  const versionLine = renderRulebookVersionLine(version);
-  const lines = versionLine === '' ? [openMarker(slug)] : [openMarker(slug), versionLine];
-  return [...lines, body.trim(), closeMarker(slug)].join('\n');
+  return [openMarker(slug), ...renderRulebookVersionLines(version), body.trim(), closeMarker(slug)].join('\n');
 }
 
 /** Regex source matching a slug's full block (markers inclusive, body matched lazily). */
