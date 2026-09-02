@@ -307,6 +307,13 @@ const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Quantifiers that fuse with a following `one`. Each has a single-word counterpart in {@link FUSED_HEADS}, which is
+ * what admits it here: `no one` reads as `nobody` and takes no relativizer. A partitive such as `another one` or
+ * `each one` has no such counterpart and stays in scope, since a relativizer restores to it.
+ */
+const FUSING_QUANTIFIERS: ReadonlySet<string> = new Set(['any', 'every', 'no', 'some']);
+
+/**
  * Fused heads: a head that is its own relative pronoun. The rulebook puts these outside the rule on head type
  * alone, since the head is not a lexical noun.
  */
@@ -449,6 +456,14 @@ const PREPOSITIONS: ReadonlySet<string> = new Set([
   'within',
   'without',
 ]);
+
+/**
+ * The anaphoric one-series, which heads a relative clause without being a lexical noun. A relativizer restores to it,
+ * which is what separates it from a fused head: `one that the spy carries` reads where `everything that I know` is
+ * already the fused form. Both members bypass the head tests, `one` because a numeral reading rejects it and `ones`
+ * because its `-s` would otherwise demand a specifier.
+ */
+const PRO_FORM_HEADS: ReadonlySet<string> = new Set(['one', 'ones']);
 
 /** Quantifiers that stand alone as a subject, taking no noun of their own. */
 const QUANTIFIER_PRONOUNS: ReadonlySet<string> = new Set([
@@ -686,7 +701,8 @@ function flattenWhitespace(text: string): string {
 /**
  * Returns the index of the head noun a subject at `subjectIndex` attaches to, or undefined where nothing there can be
  * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
- * modifier that no reading takes as a noun cannot.
+ * modifier that no reading takes as a noun cannot. A pro-form head is admitted ahead of those tests, since the
+ * numeral reading of `one` and the verbal reading of `ones` would each reject it.
  */
 function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number | undefined {
   let index = subjectIndex;
@@ -697,12 +713,22 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     const head = tokens[index];
     if (head === undefined) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
+    if (PRO_FORM_HEADS.has(head.word)) return isFusedProForm(tokens, index) ? undefined : index;
     if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
     if (NON_HEAD_MODIFIERS.has(head.word)) return undefined;
     if (isVerbPosition(tokens, index)) return undefined;
     return isDeterminedHead(tokens, index) ? index : undefined;
   }
   return undefined;
+}
+
+/**
+ * Reports whether a pro-form head at `headIndex` fuses with the quantifier before it, as `no one` does. A fused
+ * reading is its own relative pronoun and takes no relativizer, so the rule leaves it alone.
+ */
+function isFusedProForm(tokens: readonly Token[], headIndex: number): boolean {
+  if (headIndex === 0 || tokens[headIndex]?.afterBreak === true) return false;
+  return FUSING_QUANTIFIERS.has(tokens[headIndex - 1]?.word ?? '');
 }
 
 /**

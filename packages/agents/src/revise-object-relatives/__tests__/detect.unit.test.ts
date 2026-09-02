@@ -354,6 +354,37 @@ describe(detectCandidates, () => {
     });
   });
 
+  describe('pro-form heads', () => {
+    it.each([
+      'The failure is not one the spy carries.',
+      'The failure is not one it declares.',
+      'The report names the one the runner renders.',
+    ])('reads the anaphoric `one` as a head: %s', (sentence) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'one' });
+    });
+
+    it('reads the plural of the series the same way', () => {
+      const candidates = detect('The report lists the ones the runner renders.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'ones', phrase: 'ones the runner renders' });
+    });
+
+    it.each(['No one it names survives the sweep.', 'Every one it names survives the sweep.'])(
+      'passes over a quantifier fused with the series: %s',
+      (sentence) => {
+        expect(detect(sentence)).toStrictEqual([]);
+      },
+    );
+
+    it('keeps a partitive, which a relativizer restores to', () => {
+      expect(detect('Another one it names survives the sweep.')).toHaveLength(1);
+    });
+  });
+
   describe('agentive participles', () => {
     it.each([
       'Reads the direct dependency names declared by the project.',
