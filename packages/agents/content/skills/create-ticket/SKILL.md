@@ -246,7 +246,7 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 #### Jira path
 
-**Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, so a reference Jira rejects costs the relationship alone as this step's general rule intends. Report the parent skipped where the update tool exposes no parent field.
+**Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, which takes it as an object rather than a bare key: `"parent": { "key": "{parent}" }`. A reference Jira rejects then costs the relationship alone, as this step's general rule intends. Report the parent skipped where the update tool exposes no parent field.
 
 `acli` is the exception, and the only one: `acli jira workitem edit` carries no `--parent`, so the parent rides the step-6 creation call behind the pre-flight stated there. Report it skipped where that pre-flight rejected the reference.
 
