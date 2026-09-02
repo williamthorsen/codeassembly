@@ -473,6 +473,12 @@ const PREPOSITIONS: ReadonlySet<string> = new Set([
  */
 const PRO_FORM_HEADS: ReadonlySet<string> = new Set(['one', 'ones']);
 
+/**
+ * Object pronouns. One is no verb and no head, and one after a preposition fills that preposition's object slot,
+ * which is what keeps `the entries belong to them` from reading as a stranded preposition.
+ */
+const OBJECT_PRONOUNS: ReadonlySet<string> = new Set(['her', 'him', 'me', 'them', 'us']);
+
 /** Quantifiers that stand alone as a subject, taking no noun of their own. */
 const QUANTIFIER_PRONOUNS: ReadonlySet<string> = new Set([
   'anybody',
@@ -540,8 +546,8 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
 
 /**
  * The ceiling a crossed preposition raises the subject window to, counted in tokens from the subject's first word. A
- * prepositional phrase inside a subject costs several tokens, and {@link closesClause} rather than the window is
- * what carries precision once one is crossed.
+ * prepositional phrase inside a subject costs several tokens, and {@link strandsClauseFinalPreposition} rather than
+ * the window is what carries precision once one is crossed.
  */
 const EXTENDED_SUBJECT_WINDOW = 12;
 
@@ -580,6 +586,12 @@ const SUBORDINATORS: ReadonlySet<string> = new Set([
   'while',
   'yet',
 ]);
+
+/**
+ * Wh-words that put the phrase they open into a clause of their own. Each already binds whatever gap follows it, so
+ * a head inside that phrase has no relativizer to restore.
+ */
+const WH_MARKERS: ReadonlySet<string> = new Set(['how', 'however', 'whose']);
 
 /** Words ending in `s` that no reading takes as a verb, which the morphological test would otherwise admit. */
 const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
@@ -672,7 +684,9 @@ function countNewlinesBefore(text: string, offset: number): number {
 
 /**
  * Scans one span for every site that the construction may occupy. A later anchor whose head falls inside an accepted
- * phrase is that same site read from one word further in, so the scan resumes past the verb instead.
+ * phrase is that same site read from one word further in: where it closes on the same verb it replaces the reading
+ * before it, the nearer head being the tighter one, and where it closes elsewhere it is dropped. A distant head can
+ * reach a verb across a crossed preposition, so first found is not the reading to keep.
  */
 function detectInSpan(span: ProseSpan): Candidate[] {
   const tokens = tokenize(span.text);
@@ -681,7 +695,8 @@ function detectInSpan(span: ProseSpan): Candidate[] {
 
   for (let index = 1; index < tokens.length; index += 1) {
     const headIndex = findHeadIndex(tokens, index);
-    if (headIndex === undefined || headIndex <= claimedThrough) continue;
+    if (headIndex === undefined) continue;
+    const rereadsClaimedSite = headIndex <= claimedThrough;
 
     const kind = classifySubject(tokens, index);
     if (kind === undefined) continue;
@@ -689,10 +704,13 @@ function detectInSpan(span: ProseSpan): Candidate[] {
 
     const verbIndex = findVerbIndex(tokens, index, kind);
     if (verbIndex === undefined) continue;
+    if (rereadsClaimedSite && verbIndex !== claimedThrough) continue;
 
     claimedThrough = verbIndex;
-    const shape = resolveShape(kind, index, verbIndex);
-    candidates.push(buildCandidate({ span, tokens, headIndex, subjectIndex: index, verbIndex, shape }));
+    const shape = resolveShape({ tokens, kind, subjectIndex: index, verbIndex });
+    const candidate = buildCandidate({ span, tokens, headIndex, subjectIndex: index, verbIndex, shape });
+    if (rereadsClaimedSite) candidates[candidates.length - 1] = candidate;
+    else candidates.push(candidate);
   }
 
   return candidates;
@@ -725,8 +743,9 @@ function flattenWhitespace(text: string): string {
 /**
  * Returns the index of the head noun a subject at `subjectIndex` attaches to, or undefined where nothing there can be
  * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
- * modifier that no reading takes as a noun cannot. A pro-form head is admitted ahead of those tests, since the
- * numeral reading of `one` and the verbal reading of `ones` would each reject it.
+ * modifier that no reading takes as a noun cannot, and neither can a wh-word, which heads no noun phrase. A pro-form
+ * head is admitted ahead of those tests, since the numeral reading of `one` and the verbal reading of `ones` would
+ * each reject it.
  */
 function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number | undefined {
   let index = subjectIndex;
@@ -738,8 +757,9 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     if (head === undefined) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
     if (PRO_FORM_HEADS.has(head.word)) return isFusedProForm(tokens, index) ? undefined : index;
-    if (isDegreePredicate(tokens, index)) return undefined;
+    if (isWhMarkedHead(tokens, index)) return undefined;
     if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
+    if (WH_MARKERS.has(head.word)) return undefined;
     if (NON_HEAD_MODIFIERS.has(head.word)) return undefined;
     if (isVerbPosition(tokens, index)) return undefined;
     return isDeterminedHead(tokens, index) ? index : undefined;
@@ -748,14 +768,24 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
 }
 
 /**
- * Reports whether the token at `headIndex` is the predicate of a degree question, which `how` directly before it is
- * what marks. The predicate is an adjective rather than a noun, so a clause-final copula after it closes no relative
- * clause: `how big the problem is` is a question, not a head with a gap. A quantifier between the two heads a real
- * noun phrase, so `how many files the parser reads` is untouched.
+ * Reports whether a wh-word opens the phrase the token at `headIndex` heads. A fronted wh-phrase binds the gap after
+ * it, so no relativizer is restorable and the rule governs nothing there: `how big the problem is`, `whose call it
+ * is`, and `how many files the parser reads` are questions rather than heads with gaps.
+ *
+ * The walk crosses a quantifier or a numeral, which stays inside the wh-phrase, and stops at a determiner, which
+ * opens a phrase of its own. That is what leaves a genuine site nested in a wh-clause alone, as in `how the source it
+ * names got stale`. A wh-word two or more tokens out with a determiner between, as in `what kind of content it is`,
+ * is out of reach: reaching it needs a clause-level test, which would reject the nested sites too.
  */
-function isDegreePredicate(tokens: readonly Token[], headIndex: number): boolean {
-  if (headIndex === 0 || tokens[headIndex]?.afterBreak === true) return false;
-  return tokens[headIndex - 1]?.word === 'how';
+function isWhMarkedHead(tokens: readonly Token[], headIndex: number): boolean {
+  for (let index = headIndex - 1; index >= 0; index -= 1) {
+    const following = tokens[index + 1];
+    if (following === undefined || following.afterBreak) return false;
+    const word = tokens[index]?.word ?? '';
+    if (WH_MARKERS.has(word)) return true;
+    if (!QUANTIFIERS.has(word) && !NUMERALS.has(word)) return false;
+  }
+  return false;
 }
 
 /**
@@ -801,17 +831,18 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
  * plural agreement, which is the only reading its own form supports. A chain carrying no lexical verb closes the
  * subject on its last auxiliary where that is a {@link MAIN_VERB_AUXILIARIES} member, since a main-verb reading is
- * what remains: `the file the producer does not have` closes on `have`, and `the version the consumer has been` on
- * nothing.
+ * what remains: `the file the producer does not have` closes on `have`. A chain ending in a `be` form closes on that
+ * form instead, where {@link closesOnCopula} holds, so `the version the consumer has been` closes on `been`.
  *
  * An auxiliary chain that the clause fails is the end of the subject rather than a token to scan past. Continuing
  * would let the morphological test reach the same participle a second time and report what the chain just rejected.
  *
  * A preposition other than `of` opens a phrase inside the subject rather than ending it, and raises the ceiling to
  * {@link EXTENDED_SUBJECT_WINDOW} so a subject holding one is still reachable. Precision then passes from the window
- * to {@link closesClause}: past a crossed preposition only a verb stranding a clause-final preposition closes the
- * clause, which is what tells the `lives` of `the sources this prose about the idioms lives in` from the `idioms`
- * before it. A direct-object gap behind such a subject is out of reach, the price of a window this wide.
+ * to {@link strandsClauseFinalPreposition}: past a crossed preposition only a verb stranding a clause-final
+ * preposition closes the clause, which is what tells the `lives` of `the sources this prose about the idioms lives
+ * in` from the `idioms` before it. A direct-object gap behind such a subject is out of reach, the price of a window
+ * this wide.
  *
  * An adverb or a negator between the subject and the verb raises the ceiling by one rather than spending a token of
  * it, mirroring what {@link resolveAuxiliaryChain} reads through, so `the source it also names` reports as `the
@@ -852,12 +883,30 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 
 /**
  * Resolves the shape an anchor reports under. Every kind but the demonstrative has one of its own; a demonstrative
- * reports as a pronoun where it stands alone as the subject and as a definite noun phrase where it specifies a noun,
- * which is what the verb's distance from it says.
+ * reports as a pronoun where it stands alone as the subject and as a definite noun phrase where it specifies a noun.
+ * What separates the two is whether the scan crossed a noun rather than how far the verb sits, since
+ * {@link skipsAsModifier} moves the verb one token further for every adverb it reads through.
  */
-function resolveShape(kind: SubjectKind, subjectIndex: number, verbIndex: number): SubjectShape {
+function resolveShape(input: {
+  tokens: readonly Token[];
+  kind: SubjectKind;
+  subjectIndex: number;
+  verbIndex: number;
+}): SubjectShape {
+  const { tokens, kind, subjectIndex, verbIndex } = input;
   if (kind !== 'demonstrative') return SHAPES_BY_KIND[kind];
-  return verbIndex === subjectIndex + 1 ? 'pronoun' : 'definite';
+  return standsAlone(tokens, subjectIndex, verbIndex) ? 'pronoun' : 'definite';
+}
+
+/**
+ * Reports whether the subject opening at `subjectIndex` is that token alone, every token between it and the verb
+ * being a modifier the scan read through.
+ */
+function standsAlone(tokens: readonly Token[], subjectIndex: number, verbIndex: number): boolean {
+  for (let index = subjectIndex + 1; index < verbIndex; index += 1) {
+    if (!skipsAsModifier(tokens[index]?.word ?? '')) return false;
+  }
+  return true;
 }
 
 /** What one scanned token does to the search: closes it on a verb, ends it, or leaves it running. */
@@ -886,7 +935,7 @@ function resolveAuxiliaryStep(input: {
   if (chain.carriedIndex !== undefined) {
     const carried = closeOnCarriedVerb(tokens, chain);
     if (carried === undefined) return { outcome: 'stop' };
-    if (crossedPreposition && !closesClause(tokens, carried)) return { outcome: 'stop' };
+    if (crossedPreposition && !strandsClauseFinalPreposition(tokens, carried)) return { outcome: 'stop' };
     return { outcome: 'close', verbIndex: carried };
   }
 
@@ -895,7 +944,8 @@ function resolveAuxiliaryStep(input: {
     return { outcome: 'close', verbIndex: chain.lastAuxiliaryIndex };
   }
   if (!MAIN_VERB_AUXILIARIES.has(lastAuxiliary)) return { outcome: 'continue' };
-  if (crossedPreposition && !closesClause(tokens, chain.lastAuxiliaryIndex)) return { outcome: 'continue' };
+  if (crossedPreposition && !strandsClauseFinalPreposition(tokens, chain.lastAuxiliaryIndex))
+    return { outcome: 'continue' };
   if (kind === 'bare' && !agreesWithPluralSubject(tokens[index]?.word ?? '')) return { outcome: 'stop' };
   return { outcome: 'close', verbIndex: chain.lastAuxiliaryIndex };
 }
@@ -918,7 +968,7 @@ function resolveScannedStep(input: {
 
   if (index < first || !closesScannedClause(tokens, index, kind)) return { outcome: 'continue' };
   if (kind === 'demonstrative' && index === subjectIndex + 1 && isPluralNoun(word)) return { outcome: 'continue' };
-  if (crossedPreposition && !closesClause(tokens, index)) return { outcome: 'continue' };
+  if (crossedPreposition && !strandsClauseFinalPreposition(tokens, index)) return { outcome: 'continue' };
   if (kind === 'bare' && !agreesWithPluralSubject(word)) return { outcome: 'stop' };
   return { outcome: 'close', verbIndex: index };
 }
@@ -1019,12 +1069,12 @@ function closesOnCopula(tokens: readonly Token[], index: number): boolean {
 }
 
 /**
- * Reports whether the token at `index` closes its clause by stranding a preposition that ends it. This is what a
- * subject holding a prepositional phrase is held to: a window wide enough to reach past one is wide enough to reach
- * the noun that ends the sentence, and {@link isFiniteVerb} reads that noun as a verb. The stranded preposition is
- * the one signature the raised window is raised for, so a clause-final token without one closes nothing.
+ * Reports whether the token at `index` strands a preposition that ends its clause. This is what a subject holding a
+ * prepositional phrase is held to: a window wide enough to reach past one is wide enough to reach the noun that ends
+ * the sentence, and {@link isFiniteVerb} reads that noun as a verb. The stranded preposition is the one signature the
+ * raised window is raised for, so a clause-final token without one closes nothing.
  */
-function closesClause(tokens: readonly Token[], index: number): boolean {
+function strandsClauseFinalPreposition(tokens: readonly Token[], index: number): boolean {
   return hasStrandedPreposition(tokens, index) && isClauseFinal(tokens, index + 1);
 }
 
@@ -1074,7 +1124,7 @@ function hasStrandedPreposition(tokens: readonly Token[], index: number): boolea
   const next = tokens[index + 2];
   if (next === undefined || next.afterBreak) return true;
   if (DETERMINERS.has(next.word) || NUMERALS.has(next.word) || QUANTIFIERS.has(next.word)) return false;
-  return !SUBJECT_PRONOUNS.has(next.word) && isFunctionWord(next.word);
+  return !SUBJECT_PRONOUNS.has(next.word) && !OBJECT_PRONOUNS.has(next.word) && isFunctionWord(next.word);
 }
 
 /** Returns the sentence enclosing the span offsets `start` through `end`, flattened onto one line for the report. */
@@ -1115,6 +1165,7 @@ function isFunctionWord(word: string): boolean {
     DETERMINERS.has(word) ||
     FOCUS_ADVERBS.has(word) ||
     NUMERALS.has(word) ||
+    OBJECT_PRONOUNS.has(word) ||
     PREPOSITIONS.has(word) ||
     QUANTIFIERS.has(word) ||
     RELATIVIZERS.has(word) ||

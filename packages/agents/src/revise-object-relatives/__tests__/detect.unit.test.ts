@@ -295,7 +295,7 @@ describe(detectCandidates, () => {
       expect(detect('Reports the phase the ticket was not approved.')).toStrictEqual([]);
     });
 
-    it('withholds the main-verb reading where the chain ends on a verb that cannot be one', () => {
+    it('closes on the copula a chain ends with rather than on the auxiliary before it', () => {
       const candidates = detect('Declares the version the consumer has been.');
 
       expect(candidates).toHaveLength(1);
@@ -357,6 +357,13 @@ describe(detectCandidates, () => {
       expect(candidates[0]).toMatchObject({ head: 'body', verb: 'read', shape: 'pronoun' });
     });
 
+    it('keeps the pronoun shape where an adverb sits between the demonstrative and the verb', () => {
+      const candidates = detect('The reviewer opened a body this also read in full and found no throw in.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ verb: 'read', shape: 'pronoun' });
+    });
+
     it('reads a demonstrative specifying a noun as the definite shape', () => {
       const candidates = detect('Reports the version this package declares, not an ancestor manifest.');
 
@@ -395,8 +402,16 @@ describe(detectCandidates, () => {
       expect(detect('Nobody said how big the problem is.')).toStrictEqual([]);
     });
 
-    it('keeps a head noun a quantifier separates from `how`', () => {
-      expect(detect('Nobody said how many files the parser reads.')).toHaveLength(1);
+    it.each([
+      'Nobody said how many files the parser reads.',
+      'Before asking, settle whose call it is.',
+      'An ask is theirs however confident you are.',
+    ])('passes over a head a wh-word fronts, which binds its own gap: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('keeps a genuine site nested inside a wh-clause', () => {
+      expect(detect('Nobody said how the source it names got stale.')).toHaveLength(1);
     });
 
     it('closes on a copula an auxiliary chain ends with', () => {
@@ -432,6 +447,18 @@ describe(detectCandidates, () => {
       'The sweep covers the sources this prose about the idioms lists in the appendix.',
     ])('passes over a verb stranding no clause-final preposition: %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('holds a verb an auxiliary carries to the same gate', () => {
+      const stranded = detect('The sweep covers the sources this prose about the idioms has drawn on.');
+
+      expect(stranded).toHaveLength(1);
+      expect(stranded[0]).toMatchObject({ head: 'sources', verb: 'drawn' });
+      expect(detect('The sweep covers the sources this prose about the idioms has listed.')).toStrictEqual([]);
+    });
+
+    it('holds a main-verb auxiliary to the same gate', () => {
+      expect(detect('The sweep covers the sources this prose about the idioms has.')).toStrictEqual([]);
     });
 
     it('holds a partitive `of` to neither the raised ceiling nor the gate that pays for it', () => {
@@ -543,6 +570,35 @@ describe(detectCandidates, () => {
 
     it('reads a quantified bare-noun subject, whose head a quantifier specifies', () => {
       expect(detect('The library ships every idiom developers recognize.')).toHaveLength(1);
+    });
+  });
+
+  describe('competing anchors', () => {
+    it.each([
+      {
+        sentence: 'The next sync overwrites it, so the edit belongs to the source it was copied from.',
+        head: 'source',
+      },
+      {
+        sentence: 'Each pass renders its content for the harness it lands on.',
+        head: 'harness',
+      },
+    ])('keeps the tightest head closing on a verb: $head', ({ sentence, head }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head });
+    });
+
+    it("reads an object pronoun as neither the verb nor a stranded preposition's gap", () => {
+      const candidates = detect("Joins one kind's problems into the clause its error message reports them in.");
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'clause', verb: 'reports' });
+    });
+
+    it('keeps a filled preposition unstranded where an object pronoun fills it', () => {
+      expect(detect('The store the entries belong to them is closed.')).toStrictEqual([]);
     });
   });
 
