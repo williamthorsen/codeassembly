@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { DetectSuccess } from '../types.ts';
+
 /**
  * The deployed bundle, executed as a process.
  *
@@ -37,15 +39,14 @@ describe('the deployed bundle', () => {
   });
 
   it('sweeps and reports JSON on the pre-rules invocation', () => {
-    const result = run([]);
+    const result = sweepResult([]);
 
-    expect(result.ok).toBe(true);
     expect(result.summary.byRule).toStrictEqual({ 'em-dash': 0, 'reduced-object-relative': 1 });
     expect(result.batches.length).toBeGreaterThan(0);
   });
 
   it('detects the rules its invocation names', () => {
-    const result = run(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
+    const result = sweepResult(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
 
     expect(result.summary.byRule).toStrictEqual({ 'em-dash': 1, 'reduced-object-relative': 0 });
   });
@@ -69,8 +70,8 @@ describe('the deployed bundle', () => {
 
   // region | Helpers
 
-  /** Runs the bundle against the fixture repository and parses its stdout. */
-  function run(argv: readonly string[], stdin?: string) {
+  /** Runs the bundle against the fixture repository and parses its stdout, which is one JSON object. */
+  function run(argv: readonly string[], stdin?: string): unknown {
     const stdout = execFileSync('node', [BUNDLE, ...argv], {
       cwd: scratch,
       encoding: 'utf8',
@@ -80,5 +81,23 @@ describe('the deployed bundle', () => {
     return JSON.parse(stdout);
   }
 
+  /** Runs a sweep and narrows its result to the success arm, failing with the helper's own message when it is not. */
+  function sweepResult(argv: readonly string[]): DetectSuccess {
+    const result = run(argv);
+    if (!isSweepSuccess(result)) {
+      throw new Error(`expected a successful sweep, got ${JSON.stringify(result)}`);
+    }
+    return result;
+  }
+
   // endregion | Helpers
 });
+
+// region | Helpers
+
+/** Narrows the bundle's parsed stdout to a successful sweep, the process boundary offering no type of its own. */
+function isSweepSuccess(value: unknown): value is DetectSuccess {
+  return typeof value === 'object' && value !== null && 'ok' in value && value.ok === true && 'batches' in value;
+}
+
+// endregion | Helpers

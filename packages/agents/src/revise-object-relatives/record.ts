@@ -180,7 +180,7 @@ export function parseRunFold(json: string): RunFold {
   try {
     parsed = JSON.parse(json);
   } catch (error) {
-    throw new Error(`Invalid run fold: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Invalid run fold: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 
   const result = RunFoldSchema.safeParse(parsed);

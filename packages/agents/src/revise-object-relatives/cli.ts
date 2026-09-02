@@ -98,7 +98,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     const value = flag.value ?? '';
     if (flag.name === 'batch-budget') {
       budget = Number(value);
-      if (!Number.isInteger(budget) || budget <= 0) {
+      if (!Number.isSafeInteger(budget) || budget <= 0) {
         throw new Error(`--batch-budget must be a positive integer, got "${value}"`);
       }
       continue;
@@ -233,8 +233,11 @@ function readRecordFile(root: string): ProseRecord {
 
 /** Reads standard input to EOF, which is how the `record` command receives the run's fold. */
 async function readStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
+  const chunks: Uint8Array[] = [];
+  // The stream yields `any`, so each chunk is narrowed rather than asserted: a string arrives where an encoding is set.
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
+  }
   return Buffer.concat(chunks).toString('utf8');
 }
 

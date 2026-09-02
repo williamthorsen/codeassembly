@@ -32,7 +32,7 @@ export function planBatches(input: {
   budget?: number;
 }): Batch[] {
   const budget = input.budget ?? DEFAULT_BATCH_BUDGET;
-  if (!Number.isInteger(budget) || budget <= 0) {
+  if (!Number.isSafeInteger(budget) || budget <= 0) {
     throw new Error(`batch budget must be a positive integer, got ${budget}`);
   }
 
@@ -48,7 +48,8 @@ export function planBatches(input: {
   // A directory carries no indivisibility of its own, so one that outgrows the budget is split before packing; only a
   // component resists that, which is why the two go through different preparation.
   const ordinary = input.files.filter((file) => !recurring.has(file.file));
-  for (const run of packGroups(splitOversized(groupByDirectory(ordinary), budget), budget)) {
+  const directories = packGroups(splitOversized(groupByDirectory(ordinary), budget), budget);
+  for (const run of directories) {
     batches.push(composeBatch(batches.length, run, false));
   }
 
@@ -91,7 +92,10 @@ function findRecurringComponents(
     filesBySentence.set(candidate.sentence, files);
   }
 
-  const recurring = [...filesBySentence.values()].filter((files) => files.size >= 2);
+  const recurring = filesBySentence
+    .values()
+    .filter((files) => files.size >= 2)
+    .toArray();
   const parent = new Map<string, string>();
   for (const files of recurring) {
     for (const file of files) parent.set(file, file);
@@ -118,7 +122,7 @@ function findRecurringComponents(
     components.set(root, [...(components.get(root) ?? []), file]);
   }
 
-  return [...components.values()];
+  return components.values().toArray();
 }
 
 /** Splits the file list into consecutive runs sharing a directory, preserving the order the sweep resolved them in. */
