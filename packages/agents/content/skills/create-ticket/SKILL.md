@@ -193,6 +193,8 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
   Where `--json` yields no `key`, re-read the key from the command's default output, which names the created work item.
 
+  Where step 4 decided a parent, `--parent "{parent}"` joins this call; `acli` sets a parent nowhere else. Step 7's Jira path states the pre-flight that keeps a bad reference from costing the work item.
+
 ##### Record the identifiers
 
 `ticket_id` is the returned key verbatim (e.g. `THOR-140`). The key already carries its project prefix, so the `ticket_ref_prefix` reconstruction the GitHub path performs does not apply here.
@@ -219,9 +221,9 @@ Skip this section entirely where no URL was resolved; there is nothing to store.
 
 Skip this step when step 4 decided none.
 
-Where no remote ticket exists (the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+Where no remote ticket exists (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
 
-Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
+Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket. One client forces the exception, and the Jira path below states what replaces the guarantee there.
 
 #### GitHub path
 
@@ -234,6 +236,26 @@ gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --
 Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
 
 These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; reaching for that endpoint is the detour this note exists to prevent.
+
+#### Jira path
+
+**Parent.** `acli jira workitem edit` carries no `--parent` flag, so on `acli` the parent goes on the step-6 creation call rather than after it. Pre-flight the reference first, which restores the guarantee the after-creation rule exists for:
+
+```bash
+acli jira workitem view "{parent}"
+```
+
+A non-zero exit means the reference is bad. Drop `--parent` from the creation call, create the work item without it, and report the parent as skipped; a reference Jira rejects then costs the relationship alone. A connected creation tool sets the parent through its own parent field on the same call, and where it exposes no such field the parent is reported skipped.
+
+**blocked-by and blocking.** Both are Jira links, and `acli` is the only client that creates one; a connected creation tool exposes no link surface. Where `acli` is installed, create each link after the work item exists, whichever client created it:
+
+```bash
+acli jira workitem link create --out "{blocker}" --in "{blocked}" --type Blocks --yes
+```
+
+`--out` names the blocker, so the two relationships differ only in which side the new key occupies: blocked-by puts the referenced key in `--out`, and blocking puts the new key there. Reaching for `acli` here after creating through a connected tool costs nothing, because the creation client governs the description format and a link call carries no description.
+
+Where `acli` is absent, report each link as skipped, naming the creation client as the one that cannot express it.
 
 #### Other platforms
 
