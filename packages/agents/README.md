@@ -235,7 +235,7 @@ guidance-hooks:
       - williamthorsen-typescript-preferences
 ```
 
-A binding is also a dependency edge: a bound rulebook joins the deploy closure and still deploys by its own `delivery:`, so binding it and declaring it are one act. Bound bodies fill in declaration order, with their headings demoted one level so a rulebook's title nests under the host's structure, and the result is wrapped in `<!-- codeassembly-guidance-hook:<name>:start -->` / `:end` markers enclosing one `<!-- rulebook:<slug> -->` block per rulebook. A deployed file therefore says what filled it without being re-rendered.
+A binding is also a dependency edge: a bound rulebook joins the deploy closure and still deploys by its own `delivery:`, so binding it and declaring it are one act. Bound bodies fill in declaration order, with their headings demoted one level so a rulebook's title nests under the host's structure, and the result is wrapped in `<!-- codeassembly-guidance-hook:<name>:start -->` / `:end` markers enclosing one `<!-- rulebook:<slug> -->` block per rulebook, each naming the rulebook's version on a `<!-- rulebook-version: <version> -->` line where it declares one. A deployed file therefore says what filled it, and at which version, without being re-rendered.
 
 A hook nothing binds contributes nothing to deployed output, marker included. `install` reads no `guidance-hooks:` block, so every hook it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
 

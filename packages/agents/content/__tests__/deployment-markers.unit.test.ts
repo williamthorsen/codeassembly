@@ -8,6 +8,7 @@ import { makeArtifactMarker } from '../../src/lib/artifact-marker.ts';
 import { SOURCE_SUPPORT_DIR } from '../../src/lib/link-anchor.ts';
 import { injectProvenanceMarker } from '../../src/lib/marker-injector.ts';
 import { renderSkillFile } from '../../src/lib/rulebook-skill.ts';
+import { renderRulebookVersionLine } from '../../src/lib/rulebook-version-line.ts';
 import { injectRulebook } from '../../src/lib/sentinel-inliner.ts';
 
 // The recipe quotes deployment markers verbatim so a reader can match one by sight, and nothing but this suite ties
@@ -31,6 +32,12 @@ const SENTINEL_SLUG = 'sentinel-artifact';
 /** The placeholder the recipe writes where a deployed marker contains an artifact's own slug. */
 const SLUG_PLACEHOLDER = '{slug}';
 
+/** Stands in for a declared version, so the line a producer stamps can be rewritten into the recipe's placeholder. */
+const SENTINEL_VERSION = 'sentinel-version';
+
+/** The placeholder the recipe writes where the version line contains a rulebook's own version. */
+const VERSION_PLACEHOLDER = '{version}';
+
 describe('deployment markers', () => {
   let recipe: string;
 
@@ -48,6 +55,12 @@ describe('deployment markers', () => {
 
   it.each(buildRegionDelimiterCases())('quotes the $label region delimiter', ({ delimiter }) => {
     expect(recipe).toContain(delimiter);
+  });
+
+  it('quotes the rulebook version line', () => {
+    const line = renderRulebookVersionLine(SENTINEL_VERSION).replaceAll(SENTINEL_VERSION, () => VERSION_PLACEHOLDER);
+
+    expect(recipe).toContain(line);
   });
 
   it('names the source-support directory as deployment writes it', () => {
