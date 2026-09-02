@@ -29,9 +29,10 @@ Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comm
 
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
-- Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
+- Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `artifact_base_dir`, and `ticket_base_url` from the manifest JSON emitted on stdout
 - From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
+- From the same file, read `integrations.jira.project_key` and `integrations.jira.issue_types`. Both are optional, and both are consumed only by step 6's Jira path, which states what each falls back to.
 
 ### 2. Write ticket content
 
@@ -120,9 +121,11 @@ label_flags+=" --label \"{label_name}\""
 
 ### 6. Create remote ticket
 
-#### GitHub path
+Both platforms render the same title and persist the same branch association; only creation itself differs. Render the title, follow the path step 3 resolved, then finish at [Persist the branch association](#persist-the-branch-association).
 
-Render the ticket title using `describe-change.sh`. Note that ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
+#### Render the ticket title
+
+Render with `describe-change.sh`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
 json=$({harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
@@ -131,7 +134,9 @@ ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.loa
 
 Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Use `ticket_title` directly as the issue title; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+Use `ticket_title` directly as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+
+#### GitHub path
 
 Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
 
@@ -151,29 +156,81 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 - If `ticket_ref_prefix` is any other value (e.g., `MAC-`): `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., `MAC-` + `147` → `MAC-147`)
 - If no prefix: `ticket_id` = `{number}` (e.g., `147`)
 
-Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the bare issue `number` extracted above:
+#### Jira path
 
-- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch is already linked to this ticket), persist:
+##### Resolve the project key
+
+Take `integrations.jira.project_key` (step 1) where it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `THOR-` yields `THOR`. Where neither is configured there is no project to create in; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
+
+##### Resolve the issue type
+
+Read `integrations.jira.issue_types` (step 1) and stop at the first of these that yields a name:
+
+1. The entry keyed by the work type established in the conversation context, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` answers a `fix` work type, and one keyed `fix` answers a `bugfix` type.
+2. The map's `default` entry.
+3. The literal `Task`.
+
+Do not choose a type from the ticket's content. A team-managed project need not carry `Story` or `Bug`, and a name it does not carry fails the creation call.
+
+##### Create the work item
+
+Identify the client per {skill:update-jira-ticket}, which ranks the three client shapes and states the description format each one takes. Where it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
+
+Every client takes `ticket_title` as the summary, the resolved project key, the resolved issue type, and the step-2 body as the description in that skill's assigned format:
+
+- **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
+- **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
+- **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file.
+
+  Where step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` carries no `--parent` flag, so this is the only call that can set one, and a reference Jira rejects costs the work item rather than the relationship unless it is checked first:
+
+  ```bash
+  acli jira workitem view "{parent}"
+  ```
+
+  A zero exit adds `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: create the work item without the flag, and report the parent as skipped per step 7.
+
+  ```bash
+  output=$(acli jira workitem create \
+    --project "{project_key}" \
+    --type "{issue_type}" \
+    --summary "${ticket_title}" \
+    --description-file "$adf_path" \
+    --json)
+  key=$(printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null)
+  ```
+
+  Capture the output before parsing it, as the snippet does. Where the parse yields no key, read the key out of `$output`, which still holds everything the one invocation returned. Never run the create command a second time to obtain the key: that creates a second work item.
+
+##### Record the identifiers
+
+`ticket_id` is the returned key verbatim (e.g. `THOR-140`). The key already carries its project prefix, so the `ticket_ref_prefix` reconstruction the GitHub path performs does not apply here.
+
+`url` is the URL the client returns. Where the client returns none, join `ticket_base_url` (step 1) to the key. Where neither yields one, the work item still exists: report it created by key with no URL, and skip the persist below.
+
+#### Persist the branch association
+
+Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced:
+
+- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `ticket_id` (the branch is already linked to this ticket), persist:
 
   ```bash
   node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
   ```
 
-- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
+- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket {ticket_id} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
 
-Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` (or empty) `ticket_ref_prefix`, for which `branch_ticket_id` is the bare issue number and compares directly against `number`. The Jira path persists nothing, so this guard applies only to the GitHub path.
+Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare where `ticket_ref_prefix` is `#` or absent, prefixed where it is a project key. Comparing a bare number holds only in the first case and silently skips every persist in the second.
 
-#### Jira path (stub)
-
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Continue to step 7, which reports any confirmed relationship as skipped, then save locally with an auto-generated ticket ID at step 8. Full Jira API support deferred. The Jira stub has no URL yet, so it persists nothing new, consistent with today.
+Skip this section entirely where no URL was resolved; there is nothing to store.
 
 ### 7. Apply relationships
 
 Skip this step when step 4 decided none.
 
-Where no remote ticket exists (the Jira path above, or the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+Where no remote ticket exists (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
 
-Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket.
+Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket. Jira's clients force an exception for the parent, and the Jira path below states what replaces the guarantee there.
 
 #### GitHub path
 
@@ -186,6 +243,28 @@ gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --
 Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
 
 These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; reaching for that endpoint is the detour this note exists to prevent.
+
+#### Jira path
+
+**Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, which takes it as an object rather than a bare key: `"parent": { "key": "{parent}" }`. A reference Jira rejects then costs the relationship alone, as this step's general rule intends. Report the parent skipped where the update tool exposes no parent field.
+
+`acli` is the exception, and the only one: `acli jira workitem edit` carries no `--parent`, so the parent rides the step-6 creation call behind the pre-flight stated there. Report it skipped where that pre-flight rejected the reference.
+
+**blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool where one is available, `acli` next, a reported skip only where neither is. The link client need not be the one that created the work item, because a link call carries no description and the creation client's format contract does not reach it.
+
+Through a connected tool, use the link type named `Blocks`, falling back to a type whose outward description reads `blocks` where the site carries no type of that name; `getIssueLinkTypes` lists them. Place the blocker in `inwardIssue` and the blocked work item in `outwardIssue`, the mapping the tool's own argument documentation states and a live call confirms.
+
+The two clients take opposite argument orders for the same relationship: `acli --out` names the blocker, where a connected tool's `inwardIssue` does. A link type's inward and outward descriptions describe how Jira stores the link, and only `acli`'s argument names follow that orientation, so take each client's mapping from its own documentation and the descriptions only to select the type.
+
+Through `acli`:
+
+```bash
+acli jira workitem link create --out "{blocker}" --in "{blocked}" --type Blocks --yes
+```
+
+`--out` names the blocker, so the two relationships differ only in which side the new key occupies: blocked-by puts the referenced key in `--out`, and blocking puts the new key there.
+
+Where no client offers a link surface, report each link as skipped, naming the client.
 
 #### Other platforms
 
@@ -228,7 +307,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --i
 
 The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
 
-Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the Jira stub and the [no-remote fallback](#fallback-no-remote-platform), which save a snapshot with no ticket of record to copy.
+Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the [no-remote fallback](#fallback-no-remote-platform) alone, which saves a snapshot with no ticket of record to copy.
 
 ### 9. Save plan (if present)
 
@@ -238,11 +317,21 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 {YYYYMMDD-HHMMSSZ}_{slug}_plan.md
 ```
 
-Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
+Then attach it as a comment on the remote ticket, through the platform step 3 resolved.
+
+**GitHub.** Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
 
 ```bash
 gh issue comment {number} --body-file "$body_path"
 ```
+
+**Jira.** Comment through the client that created the work item, in the format {skill:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
+
+```bash
+acli jira workitem comment create --key "{ticket_id}" --body-file "$adf_path"
+```
+
+**Neither.** Where the client offers no comment surface, or the [no-remote fallback](#fallback-no-remote-platform) left nothing to comment on, the plan is saved locally alone. Report that in the completion output rather than passing over the attachment in silence.
 
 Plan comment format:
 
@@ -266,9 +355,10 @@ If remote ticket creation fails or no platform is available, fall back to an aut
 ## Completion
 
 ```
-Issue created: {URL}                       <- only if remote creation succeeded
+Remote ticket created: {URL}               <- only if remote creation succeeded; {ticket_id} where no URL resolved
 Ticket saved: {ticket artifact path}
 Plan saved: {plan artifact path}           <- only if plan existed
+Plan comment skipped: {reason}             <- only if a plan was saved but not attached
 Relationships: {list}                      <- only if any were created
 Relationships skipped: {list with reasons} <- only if any were skipped
 Branch association skipped: {reason}       <- only when the step-6 guard skipped the persist

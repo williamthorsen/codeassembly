@@ -62,6 +62,30 @@
     "integrations": {
       "type": "object",
       "description": "Per-integration configuration. Keys are integration names (e.g., `jira`, `github`, `linear`); each integration object must declare an `enabled` boolean.",
+      "properties": {
+        "jira": {
+          "type": "object",
+          "description": "Jira integration configuration. Beyond `enabled`, the keys here are read by the `create-ticket` skill's Jira creation path.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether the integration is enabled."
+            },
+            "issue_types": {
+              "type": "object",
+              "description": "Maps work-type keys and aliases (from the work-type taxonomy, e.g. `feat`, `fix`, `bugfix`) to Jira issue-type names, plus a `default` entry covering every unmapped work type. A created work item whose work type matches neither falls back to `Task`.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "project_key": {
+              "type": "string",
+              "description": "Key of the Jira project to create work items in (e.g., `MAC`). Overrides the key derived from `project.ticket_ref_prefix` minus its trailing separator."
+            }
+          },
+          "required": ["enabled"]
+        }
+      },
       "additionalProperties": {
         "type": "object",
         "properties": {

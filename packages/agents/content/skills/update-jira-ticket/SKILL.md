@@ -1,6 +1,6 @@
 ---
 name: update-jira-ticket
-description: 'Use whenever creating or updating a Jira issue description or comment, whether through acli, a contentFormat-based tool (createJiraIssue / editJiraIssue, taking fields.description plus contentFormat markdown/adf), or an HTML-based tool (create_jira_issue / update_jira_issue, taking description_html / comment_html). A Markdown or HTML body reaches Jira with its task-list syntax escaped, so checklists go in as plain bullets on those surfaces and as real task items through acli. The HTML tools additionally need the bundled pre-flight checker to catch INVALID_INPUT triggers (composition rules, named entities, Confluence macros, multi-line <pre>, disallowed elements) before any MCP round-trip; the contentFormat tools take Markdown directly, and acli takes plain text or ADF and parses Markdown as wiki markup.'
+description: 'Use whenever creating or updating a Jira issue description or comment, whether through acli, a contentFormat-based tool (createJiraIssue taking description, editJiraIssue taking fields.description, both with contentFormat markdown/adf), or an HTML-based tool (create_jira_issue / update_jira_issue, taking description_html / comment_html). A Markdown or HTML body reaches Jira with its task-list syntax escaped, so checklists go in as plain bullets on those surfaces and as real task items through acli. The HTML tools additionally need the bundled pre-flight checker to catch INVALID_INPUT triggers (composition rules, named entities, Confluence macros, multi-line <pre>, disallowed elements) before any MCP round-trip; the contentFormat tools take Markdown directly, and acli takes plain text or ADF and parses Markdown as wiki markup.'
 user-invocable: true
 ---
 
@@ -21,7 +21,7 @@ Artefact-sourced content is in scope, and is where this most often slips through
 Match your client to one of these shapes:
 
 - **`acli`**: `acli jira workitem create` / `acli jira workitem edit`, whose `--description` and `--description-file` are documented as plain text or ADF. A Markdown body is not merely left unrendered there: It is parsed as Jira wiki markup, so headings become nested ordered list items and punctuation comes back backslash-escaped. → Follow the [ADF path](#adf-path).
-- **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): takes `fields.description` together with `contentFormat: "markdown" | "adf"`. No HTML surface. → Follow the [Markdown path](#markdown-path).
+- **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): takes the description together with `contentFormat: "markdown" | "adf"` -- top-level on `createJiraIssue`, under `fields` on `editJiraIssue`. No HTML surface. → Follow the [Markdown path](#markdown-path).
 - **`description_html`-based tool**: `create_jira_issue` / `update_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
 
 Where more than one is available, prefer the `contentFormat` tool: It takes Markdown directly, where `acli` needs ADF, so `acli` is the fallback for a machine with no connected Jira server.
