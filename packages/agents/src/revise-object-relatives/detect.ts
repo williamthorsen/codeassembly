@@ -255,6 +255,28 @@ const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
  */
 const CARRIED_VERB_WINDOW = 3;
 
+/**
+ * Comparative adjectives. One before a pro-form makes that pro-form its phrase's head rather than a subject.
+ * Admission follows the rule {@link BARE_VERBS} states: every entry is a word that no reading takes as a noun, which
+ * keeps `header`, `parser`, and their like out.
+ */
+const COMPARATIVE_ADJECTIVES: ReadonlySet<string> = new Set([
+  'better',
+  'bigger',
+  'broader',
+  'earlier',
+  'larger',
+  'later',
+  'longer',
+  'narrower',
+  'newer',
+  'older',
+  'shorter',
+  'smaller',
+  'wider',
+  'worse',
+]);
+
 /** Coordinators. One inside a subject ends the noun phrase, so the verb scan stops there. */
 const COORDINATORS: ReadonlySet<string> = new Set(['and', 'but', 'nor', 'or']);
 
@@ -276,12 +298,21 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Adverbs a degree quantifier modifies. The pair is adverbial rather than a noun phrase, so `no longer` and `most
- * recently` open no subject; a manner adverb is recognized by its own suffix instead of being listed here. `more` and
- * `less` are absent: each reads as a quantifier far more often than as an adverb, and listing one would cost `the
- * entries no more sources hold` to reach the `no more` that no site in the corpus uses.
+ * Adverbial pairs a quantifier opens. Each is a phrase rather than a noun phrase, so it opens no subject. The set
+ * holds whole pairs because the second word alone decides nothing: `longer` and `later` are adjectives in `two longer
+ * digests` and `many later drafts`, and every `-ly` adverb has an adjectival twin in `early`, `likely`, and `timely`.
+ * Admission follows the rule {@link BARE_VERBS} states, applied to the pair: an entry is a pair that no reading takes
+ * as a noun phrase, which keeps `most likely` out, its `likely` heading one freely.
  */
-const DEGREE_ADVERBS: ReadonlySet<string> = new Set(['further', 'later', 'longer', 'often', 'sooner']);
+const DEGREE_ADVERBIALS: ReadonlySet<string> = new Set([
+  'more reliably',
+  'most notably',
+  'most often',
+  'most plausibly',
+  'most recently',
+  'no further',
+  'no longer',
+]);
 
 /**
  * Determiners that also stand alone as a subject. `that` is absent: between a head and a subject it is the overt
@@ -738,8 +769,8 @@ function classifySubject(tokens: readonly Token[], index: number): SubjectKind |
   if (token === undefined) return undefined;
   const { word } = token;
 
-  if (SUBJECT_PRONOUNS.has(word)) return 'pronoun';
-  if (isNumeral(word)) return opensDegreeAdverbial(tokens, index) ? undefined : 'numeral';
+  if (SUBJECT_PRONOUNS.has(word)) return closesComparativePhrase(tokens, index) ? undefined : 'pronoun';
+  if (isNumeral(word)) return 'numeral';
   if (QUANTIFIER_PRONOUNS.has(word)) return 'quantifier-pronoun';
   if (QUANTIFIERS.has(word)) return opensDegreeAdverbial(tokens, index) ? undefined : 'quantifier';
   if (DEMONSTRATIVES.has(word)) return 'demonstrative';
@@ -748,14 +779,27 @@ function classifySubject(tokens: readonly Token[], index: number): SubjectKind |
 }
 
 /**
- * Reports whether the quantifier or numeral at `index` opens an adverbial rather than a noun phrase, which the adverb
- * beside it is what marks. `the entries the sweep no longer holds` carries such a pair, and reading it as a subject
- * gives the site a second anchor whose head is the site's own subject.
+ * Reports whether the token at `index` closes a noun phrase a comparative adjective opens, which makes it that
+ * phrase's head rather than a subject: `an older one` in `a key an older one ignores`. Reading it as a subject gives
+ * the site a second anchor whose head is the adjective, and {@link PRO_FORM_HEADS} reads the same word as a head in
+ * that position, so the two treatments agree.
+ */
+function closesComparativePhrase(tokens: readonly Token[], index: number): boolean {
+  const token = tokens[index];
+  if (token === undefined || token.afterBreak) return false;
+  if (!PRO_FORM_HEADS.has(token.word)) return false;
+  return COMPARATIVE_ADJECTIVES.has(tokens[index - 1]?.word ?? '');
+}
+
+/**
+ * Reports whether the quantifier at `index` opens an adverbial rather than a noun phrase. `the entries the sweep no
+ * longer holds` carries such a pair, and reading it as a subject gives the site a second anchor whose head is the
+ * site's own subject.
  */
 function opensDegreeAdverbial(tokens: readonly Token[], index: number): boolean {
   const next = tokens[index + 1];
   if (next === undefined || next.afterBreak) return false;
-  return DEGREE_ADVERBS.has(next.word) || isMannerAdverb(next.word);
+  return DEGREE_ADVERBIALS.has(`${tokens[index]?.word ?? ''} ${next.word}`);
 }
 
 /** Collapses a phrase's own newlines and runs of spaces, so a wrapped site reads as one line in the report. */

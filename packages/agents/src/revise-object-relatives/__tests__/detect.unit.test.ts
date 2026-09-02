@@ -607,6 +607,33 @@ describe(detectCandidates, () => {
       expect(candidates[0]).toMatchObject({ head, verb });
     });
 
+    it.each([
+      'The suite lists the reports many early readers cited.',
+      'The suite lists the reports two likely readers cited.',
+      'The suite lists the reports two longer digests cited.',
+      'The suite lists the reports many later drafts cited.',
+      'The suite lists the reports no early readers cited.',
+    ])('keeps a quantified subject whose second word is an adjective: %s', (sentence) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'reports' });
+    });
+
+    it("reads a pro-form after a comparative as its phrase's head, not as a subject", () => {
+      const candidates = detect('A later tool can read a key an older one ignores.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'key', subject: 'an older one', verb: 'ignores' });
+    });
+
+    it('keeps a pro-form subject that no comparative precedes', () => {
+      const candidates = detect('The report names the source one names.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'source', subject: 'one', verb: 'names' });
+    });
+
     it('leaves a quantified subject that opens a real noun phrase to win on nearness', () => {
       const candidates = detect('Then retract the namespaces no source claims.');
 
