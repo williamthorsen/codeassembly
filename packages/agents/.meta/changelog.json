@@ -1,5 +1,68 @@
 [
   {
+    "version": "0.12.0",
+    "date": "2026-09-02",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "State the plain-speech rule as a reader test rather than a verb list (#1521)",
+            "body": "Restates the shared plain-speech rule in `_partials/plain-speech.md` as a reader test rather than a list of verb choices: A sentence passes when a reader who does not share the author's first language parses it on one pass. The test is structural rather than lexical, so a domain term stays, and the verb pairs remain as illustration.\n\nThe rule now states its scope: practical documentation, code comments, and chat, with presentational text as the one carve-out. It also outranks the register of the surrounding documents. `lede-drafter` includes the rule rather than restating it.",
+            "hash": "61dd3f12252a2f68da62fb9b4a5f00095d2a06ef"
+          },
+          {
+            "description": "Replace the create-ticket Jira stub with a work-item creation path (#1518)",
+            "body": "Adds Jira work-item creation to the `create-ticket` skill. It creates the work item through whichever Jira client the machine offers, records the relationships confirmed during the run, and attaches a saved plan as a comment; with no client available it saves the ticket locally.\r\n\r\nTwo new preferences keys move both per-run decisions into configuration: `integrations.jira.project_key` holds the key of the Jira project, and `integrations.jira.issue_types` maps work types to Jira issue-type names.",
+            "hash": "bb42812b0f2232d793371f6751e5f684038fc0e8"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Report git's own diagnostic rather than an inferred cause (#1506)",
+            "body": "Fixes an issue where the helper scripts blamed a missing ref or an absent repository whenever git failed for any reason. They now report git's own message, and distinguish a repository that git cannot read from the condition that each script checks.\n\nSeparately, `merge-bb-pr` stops issuing a redundant read after a Bitbucket merge, and the slug rule for artifact filenames is consolidated into `artifact-conventions.md`.",
+            "hash": "6843b263aa6a1073bf9d7cc74cdef167b00c91e2"
+          },
+          {
+            "description": "Fix the sweep's four blind spots and widen the rule to oblique gaps (#1513)",
+            "body": "Fixes the reduced-object-relative writing rule, which placed a gap in a prepositional phrase outside its scope. The rule now covers that gap. Also fixes an issue where the `revise-object-relatives` sweep missed four classes of target.",
+            "hash": "99268ea595a24a530604a83168a2f6fe773698bc"
+          },
+          {
+            "description": "Extend the Jira checkbox rule to issue creation and every client (#1514)",
+            "body": "Fixes an issue where the `update-jira-ticket` skill's checklist rule did not reach issue creation, so acceptance criteria written as `- [ ]` went into Jira as literal `\\[ \\]` brackets.\n\n`acli` is now listed with the other clients, on the Markdown path and ranked below a connected `contentFormat` tool.",
+            "hash": "e2f68233756d5e12f9fa43f3ca018b79c663244c"
+          },
+          {
+            "description": "Name what referenced a missing artifact (#1515)",
+            "body": "Fixes an issue where `sync` failed over a missing artifact without naming what referenced it: The error gave the slug and every location searched, and nothing more. Where the missing slug comes from a `codeassembly.yaml` declaration, the error now names the declaring tier, home or project, and the path of every chain file that declares it, so a committed declaration and its `.local` variant are distinguishable. Where it comes from a dependency, a collection member, or a body invocation token, the error names the referring artifact.",
+            "hash": "804160ccd9779856209d80e721102489e2027a85"
+          },
+          {
+            "description": "Route acli to an ADF path rather than one that authors Markdown (#1516)",
+            "body": "Fixes an issue where `update-jira-ticket` routed `acli` to the Markdown path, whose first step was to author Markdown. `acli` parses a Markdown description as Jira wiki markup, so `## Problem` arrives as a nested numbered item and punctuation comes back backslash-escaped. `acli` now has an ADF path of its own, which requires the authored Markdown to be converted to ADF and passed through `--description-file`.",
+            "hash": "be7c1654e0b969f8709f0f28fa4e1f2c3acb2a66"
+          },
+          {
+            "description": "Fix reporting of the prepositional-phrase gap in both directions (#1522)",
+            "body": "Fixes an issue where the `revise-object-relatives` sweep both over- and under-reported the prepositional-phrase gap. Additionally, two cases that should not have been reported are now removed from the sweep.",
+            "hash": "02f954daa316a4a5c18d04db2d1ccd373d24e4f1"
+          },
+          {
+            "description": "Close five blind spots in the reduced-object-relative sweep (#1528)",
+            "body": "Fixes an issue where the `revise-object-relatives` sweep missed five shapes that the rule covers.",
+            "hash": "f2ce1c8e74ed390160675a68726acb3fbbaa9431"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.11.0",
     "date": "2026-09-01",
     "sections": [

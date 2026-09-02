@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.12.0 — 2026-09-02
+
+### 🎉 Features
+
+- State the plain-speech rule as a reader test rather than a verb list (#1521)
+
+  Restates the shared plain-speech rule in `_partials/plain-speech.md` as a reader test rather than a list of verb choices: A sentence passes when a reader who does not share the author's first language parses it on one pass. The test is structural rather than lexical, so a domain term stays, and the verb pairs remain as illustration.
+
+  The rule now states its scope: practical documentation, code comments, and chat, with presentational text as the one carve-out. It also outranks the register of the surrounding documents. `lede-drafter` includes the rule rather than restating it.
+
+- Replace the create-ticket Jira stub with a work-item creation path (#1518)
+
+  Adds Jira work-item creation to the `create-ticket` skill. It creates the work item through whichever Jira client the machine offers, records the relationships confirmed during the run, and attaches a saved plan as a comment; with no client available it saves the ticket locally.
+
+  Two new preferences keys move both per-run decisions into configuration: `integrations.jira.project_key` holds the key of the Jira project, and `integrations.jira.issue_types` maps work types to Jira issue-type names.
+
+### 🐛 Bug fixes
+
+- Report git's own diagnostic rather than an inferred cause (#1506)
+
+  Fixes an issue where the helper scripts blamed a missing ref or an absent repository whenever git failed for any reason. They now report git's own message, and distinguish a repository that git cannot read from the condition that each script checks.
+
+  Separately, `merge-bb-pr` stops issuing a redundant read after a Bitbucket merge, and the slug rule for artifact filenames is consolidated into `artifact-conventions.md`.
+
+- Fix the sweep's four blind spots and widen the rule to oblique gaps (#1513)
+
+  Fixes the reduced-object-relative writing rule, which placed a gap in a prepositional phrase outside its scope. The rule now covers that gap. Also fixes an issue where the `revise-object-relatives` sweep missed four classes of target.
+
+- Extend the Jira checkbox rule to issue creation and every client (#1514)
+
+  Fixes an issue where the `update-jira-ticket` skill's checklist rule did not reach issue creation, so acceptance criteria written as `- [ ]` went into Jira as literal `\[ \]` brackets.
+
+  `acli` is now listed with the other clients, on the Markdown path and ranked below a connected `contentFormat` tool.
+
+- Name what referenced a missing artifact (#1515)
+
+  Fixes an issue where `sync` failed over a missing artifact without naming what referenced it: The error gave the slug and every location searched, and nothing more. Where the missing slug comes from a `codeassembly.yaml` declaration, the error now names the declaring tier, home or project, and the path of every chain file that declares it, so a committed declaration and its `.local` variant are distinguishable. Where it comes from a dependency, a collection member, or a body invocation token, the error names the referring artifact.
+
+- Route acli to an ADF path rather than one that authors Markdown (#1516)
+
+  Fixes an issue where `update-jira-ticket` routed `acli` to the Markdown path, whose first step was to author Markdown. `acli` parses a Markdown description as Jira wiki markup, so `## Problem` arrives as a nested numbered item and punctuation comes back backslash-escaped. `acli` now has an ADF path of its own, which requires the authored Markdown to be converted to ADF and passed through `--description-file`.
+
+- Fix reporting of the prepositional-phrase gap in both directions (#1522)
+
+  Fixes an issue where the `revise-object-relatives` sweep both over- and under-reported the prepositional-phrase gap. Additionally, two cases that should not have been reported are now removed from the sweep.
+
+- Close five blind spots in the reduced-object-relative sweep (#1528)
+
+  Fixes an issue where the `revise-object-relatives` sweep missed five shapes that the rule covers.
+
 ## 0.11.0 — 2026-09-01
 
 ### 🎉 Features
