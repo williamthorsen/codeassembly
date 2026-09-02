@@ -410,6 +410,13 @@ describe(detectCandidates, () => {
       expect(detect(sentence)).toStrictEqual([]);
     });
 
+    it.each(['Nobody said how twelve files the parser reads.', 'Nobody said how 12 files the parser reads.'])(
+      'crosses a numeral to the wh-word whichever way it is written: %s',
+      (sentence) => {
+        expect(detect(sentence)).toStrictEqual([]);
+      },
+    );
+
     it('keeps a genuine site nested inside a wh-clause', () => {
       expect(detect('Nobody said how the source it names got stale.')).toHaveLength(1);
     });
@@ -588,6 +595,23 @@ describe(detectCandidates, () => {
 
       expect(candidates).toHaveLength(1);
       expect(candidates[0]).toMatchObject({ head });
+    });
+
+    it.each([
+      { sentence: 'The report drops the entries the sweep no longer holds.', head: 'entries', verb: 'holds' },
+      { sentence: 'Compare it against the body the user most recently approved.', head: 'body', verb: 'approved' },
+    ])('passes over an adverbial that would win the site on nearness: $head', ({ sentence, head, verb }) => {
+      const candidates = detect(sentence);
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head, verb });
+    });
+
+    it('leaves a quantified subject that opens a real noun phrase to win on nearness', () => {
+      const candidates = detect('Then retract the namespaces no source claims.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'namespaces', subject: 'no source', shape: 'quantified' });
     });
 
     it("reads an object pronoun as neither the verb nor a stranded preposition's gap", () => {

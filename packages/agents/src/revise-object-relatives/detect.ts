@@ -276,6 +276,14 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Adverbs a degree quantifier modifies. The pair is adverbial rather than a noun phrase, so `no longer` and `most
+ * recently` open no subject; a manner adverb is recognized by its own suffix instead of being listed here. `more` and
+ * `less` are absent: each reads as a quantifier far more often than as an adverb, and listing one would cost `the
+ * entries no more sources hold` to reach the `no more` that no site in the corpus uses.
+ */
+const DEGREE_ADVERBS: ReadonlySet<string> = new Set(['further', 'later', 'longer', 'often', 'sooner']);
+
+/**
  * Determiners that also stand alone as a subject. `that` is absent: between a head and a subject it is the overt
  * relativizer the rule asks for, so a clause it opens is already clean.
  */
@@ -687,6 +695,10 @@ function countNewlinesBefore(text: string, offset: number): number {
  * phrase is that same site read from one word further in: where it closes on the same verb it replaces the reading
  * before it, the nearer head being the tighter one, and where it closes elsewhere it is dropped. A distant head can
  * reach a verb across a crossed preposition, so first found is not the reading to keep.
+ *
+ * The nearer head is the sounder one only where every competing anchor opens a real subject, which is what
+ * {@link opensDegreeAdverbial} secures: an anchor whose subject is adverbial takes the site's own subject as its
+ * head, and would win on nearness alone.
  */
 function detectInSpan(span: ProseSpan): Candidate[] {
   const tokens = tokenize(span.text);
@@ -727,12 +739,23 @@ function classifySubject(tokens: readonly Token[], index: number): SubjectKind |
   const { word } = token;
 
   if (SUBJECT_PRONOUNS.has(word)) return 'pronoun';
-  if (NUMERALS.has(word) || /^\d+$/.test(word)) return 'numeral';
+  if (isNumeral(word)) return opensDegreeAdverbial(tokens, index) ? undefined : 'numeral';
   if (QUANTIFIER_PRONOUNS.has(word)) return 'quantifier-pronoun';
-  if (QUANTIFIERS.has(word)) return 'quantifier';
+  if (QUANTIFIERS.has(word)) return opensDegreeAdverbial(tokens, index) ? undefined : 'quantifier';
   if (DEMONSTRATIVES.has(word)) return 'demonstrative';
   if (DETERMINERS.has(word)) return 'determiner';
   return isPluralNoun(word) ? 'bare' : undefined;
+}
+
+/**
+ * Reports whether the quantifier or numeral at `index` opens an adverbial rather than a noun phrase, which the adverb
+ * beside it is what marks. `the entries the sweep no longer holds` carries such a pair, and reading it as a subject
+ * gives the site a second anchor whose head is the site's own subject.
+ */
+function opensDegreeAdverbial(tokens: readonly Token[], index: number): boolean {
+  const next = tokens[index + 1];
+  if (next === undefined || next.afterBreak) return false;
+  return DEGREE_ADVERBS.has(next.word) || isMannerAdverb(next.word);
 }
 
 /** Collapses a phrase's own newlines and runs of spaces, so a wrapped site reads as one line in the report. */
@@ -783,7 +806,7 @@ function isWhMarkedHead(tokens: readonly Token[], headIndex: number): boolean {
     if (following === undefined || following.afterBreak) return false;
     const word = tokens[index]?.word ?? '';
     if (WH_MARKERS.has(word)) return true;
-    if (!QUANTIFIERS.has(word) && !NUMERALS.has(word)) return false;
+    if (!QUANTIFIERS.has(word) && !isNumeral(word)) return false;
   }
   return false;
 }
@@ -1187,6 +1210,11 @@ function isSpecifier(specifier: string, head: string): boolean {
     return specifier !== '1' && isPluralNoun(head);
   }
   return DETERMINERS.has(specifier) || QUANTIFIERS.has(specifier) || NUMERALS.has(specifier);
+}
+
+/** Reports whether a word is a numeral, spelled or in digits. */
+function isNumeral(word: string): boolean {
+  return NUMERALS.has(word) || /^\d+$/.test(word);
 }
 
 /** Reports whether a word reads as a plural noun, which is the only marker carried by a bare-noun subject. */
