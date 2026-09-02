@@ -528,6 +528,13 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
   'quantifier-pronoun': { min: 1, max: 1 },
 };
 
+/**
+ * The ceiling a crossed preposition raises the subject window to, counted in tokens from the subject's first word. A
+ * prepositional phrase inside a subject costs several tokens, and the clause-closing gate rather than the window is
+ * what carries precision once one is crossed.
+ */
+const EXTENDED_SUBJECT_WINDOW = 12;
+
 /** What opens an embedded subject, which decides its window. Several kinds report under one shape. */
 type SubjectKind = 'bare' | 'determiner' | 'numeral' | 'pronoun' | 'quantifier' | 'quantifier-pronoun';
 
@@ -770,25 +777,40 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  *
  * An auxiliary chain that the clause fails is the end of the subject rather than a token to scan past. Continuing
  * would let the morphological test reach the same participle a second time and report what the chain just rejected.
+ *
+ * A preposition other than `of` opens a phrase inside the subject rather than ending it, and raises the ceiling to
+ * {@link EXTENDED_SUBJECT_WINDOW} so a subject holding one is still reachable. Precision then passes from the window
+ * to {@link closesClause}: past a crossed preposition only a clause-closing verb closes the clause, which is what
+ * tells the `lives` of `the sources this prose about the idioms lives in` from the `idioms` before it.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
   const first = subjectIndex + window.min;
-  const last = Math.min(subjectIndex + window.max, tokens.length - 1);
+  let last = Math.min(subjectIndex + window.max, tokens.length - 1);
+  let crossedPreposition = false;
 
   for (let index = subjectIndex + 1; index <= last; index += 1) {
     const token = tokens[index];
     if (token === undefined || token.afterBreak) return undefined;
     if (COORDINATORS.has(token.word) || RELATIVIZERS.has(token.word)) return undefined;
-    if (PREPOSITIONS.has(token.word) && token.word !== 'of') return undefined;
+    if (PREPOSITIONS.has(token.word) && token.word !== 'of') {
+      crossedPreposition = true;
+      last = Math.min(subjectIndex + EXTENDED_SUBJECT_WINDOW, tokens.length - 1);
+      continue;
+    }
     if (AUXILIARIES.has(token.word) && index >= first) {
       const chain = resolveAuxiliaryChain(tokens, index);
-      if (chain.carriedIndex !== undefined) return closeOnCarriedVerb(tokens, chain);
+      if (chain.carriedIndex !== undefined) {
+        const carried = closeOnCarriedVerb(tokens, chain);
+        return carried !== undefined && crossedPreposition && !closesClause(tokens, carried) ? undefined : carried;
+      }
       if (!MAIN_VERB_AUXILIARIES.has(tokens[chain.lastAuxiliaryIndex]?.word ?? '')) continue;
+      if (crossedPreposition && !closesClause(tokens, chain.lastAuxiliaryIndex)) continue;
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
       return chain.lastAuxiliaryIndex;
     }
     if (index < first || !closesScannedClause(tokens, index, kind)) continue;
+    if (crossedPreposition && !closesClause(tokens, index)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
@@ -877,6 +899,22 @@ function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean 
   if (word.length <= 3 || !word.endsWith('ed')) return false;
   const agent = tokens[index + 1];
   return agent !== undefined && !agent.afterBreak && agent.word === 'by';
+}
+
+/**
+ * Reports whether the token at `index` closes its clause, either as the clause's last token or by stranding a
+ * preposition that is. This is what a subject holding a prepositional phrase is held to, a window wide enough to
+ * reach past one being wide enough to reach a noun inside it.
+ */
+function closesClause(tokens: readonly Token[], index: number): boolean {
+  if (isClauseFinal(tokens, index)) return true;
+  return hasStrandedPreposition(tokens, index) && isClauseFinal(tokens, index + 1);
+}
+
+/** Reports whether the token at `index` ends its clause: nothing follows it, or what follows opens a new one. */
+function isClauseFinal(tokens: readonly Token[], index: number): boolean {
+  const next = tokens[index + 1];
+  return next === undefined || next.afterBreak;
 }
 
 /**
