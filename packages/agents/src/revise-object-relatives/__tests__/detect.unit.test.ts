@@ -336,6 +336,48 @@ describe(detectCandidates, () => {
     });
   });
 
+  describe('non-head modifiers', () => {
+    it.each([
+      'The same rules apply to test files as to source.',
+      'All other files receive three comment lines.',
+      "Only the root's own artifacts are reported on.",
+      "A single artifact's normalized listing fields are attached.",
+    ])('passes over a modifier standing where a head noun would: %s', (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('still reads a head noun that a modifier precedes', () => {
+      const candidates = detect('Reports the same source it names.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ head: 'source', phrase: 'source it names' });
+    });
+  });
+
+  describe('agentive participles', () => {
+    it.each([
+      'Reads the direct dependency names declared by the project.',
+      'Counts the working-tree changes reported by the status command.',
+      'Address any assumption issues flagged by the architect.',
+    ])("passes over the rule's own passive-participle repair: %s", (sentence) => {
+      expect(detect(sentence)).toStrictEqual([]);
+    });
+
+    it('keeps a site whose `by` does work other than naming an agent', () => {
+      const candidates = detect('The two clauses the author struck by name were probed.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'clauses the author struck' });
+    });
+
+    it('keeps a passive clause, whose participle an auxiliary carries', () => {
+      const candidates = detect('Reports the level it is probed against by the harness.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({ phrase: 'level it is probed' });
+    });
+  });
+
   describe('scope', () => {
     it.each(OUT_OF_SCOPE_HEADS)('passes over %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);

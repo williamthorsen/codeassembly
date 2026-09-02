@@ -376,6 +376,15 @@ const NUMERALS: ReadonlySet<string> = new Set([
 const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
 
 /**
+ * Modifiers that no reading takes as the head of a phrase they open. Each stands directly before the noun that it
+ * modifies, so {@link findHeadIndex} would otherwise read the modifier as the head and the noun as a bare subject,
+ * turning `the same rules apply` into a relative clause. Admission follows the rule {@link BARE_VERBS} states,
+ * narrowed to this position: a word that heads a phrase elsewhere, `former` and `latter` among them, is admitted
+ * only where no reading takes it as a noun with a noun following it.
+ */
+const NON_HEAD_MODIFIERS: ReadonlySet<string> = new Set(['other', 'own', 'same', 'single']);
+
+/**
  * Specifiers other than a numeral that require a plural head, which is what number agreement holds them to. Every
  * numeral but `one` requires one too, and {@link isSpecifier} derives that half from {@link NUMERALS} rather than
  * restating it, so a numeral added there cannot specify differently from the ones beside it.
@@ -676,7 +685,8 @@ function flattenWhitespace(text: string): string {
 
 /**
  * Returns the index of the head noun a subject at `subjectIndex` attaches to, or undefined where nothing there can be
- * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, or an adjunct head cannot.
+ * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
+ * modifier that no reading takes as a noun cannot.
  */
 function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number | undefined {
   let index = subjectIndex;
@@ -688,6 +698,7 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     if (head === undefined) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
     if (isFunctionWord(head.word) || FUSED_HEADS.has(head.word) || ADJUNCT_HEADS.has(head.word)) return undefined;
+    if (NON_HEAD_MODIFIERS.has(head.word)) return undefined;
     if (isVerbPosition(tokens, index)) return undefined;
     return isDeterminedHead(tokens, index) ? index : undefined;
   }
@@ -751,7 +762,7 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
       return chain.lastAuxiliaryIndex;
     }
-    if (index < first || !closesScannedClause(tokens, index)) continue;
+    if (index < first || !closesScannedClause(tokens, index, kind)) continue;
     if (kind === 'bare' && !agreesWithPluralSubject(token.word)) return undefined;
     return index;
   }
@@ -821,10 +832,25 @@ function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
 /**
  * Reports whether the token at `index`, reached by the scan rather than through an auxiliary, closes a relative
  * clause. {@link isFiniteVerb} decides that on the word alone; an intransitive verb that it rejects is admitted back
- * where a stranded preposition gives the clause a gap.
+ * where a stranded preposition gives the clause a gap, and an agentive participle is rejected whatever it says.
  */
-function closesScannedClause(tokens: readonly Token[], index: number): boolean {
+function closesScannedClause(tokens: readonly Token[], index: number, kind: SubjectKind): boolean {
+  if (kind === 'bare' && isAgentiveParticiple(tokens, index)) return false;
   return isFiniteVerb(tokens[index]?.word ?? '') || isStrandedIntransitive(tokens, index);
+}
+
+/**
+ * Reports whether the token at `index` is a participle carrying an agentive `by`, which modifies the noun before it
+ * rather than closing a clause. That noun is what the scan took for a bare subject, so the reading is the rulebook's
+ * own passive-participle repair misread: admitting it reports a repaired site back as a defect. The test is held to
+ * the bare shape, since a longer subject means the `by` is doing other work, as in `the clauses the author struck by
+ * name`. An irregular participle needs a lexicon and has none here, no site in the corpus having called for one.
+ */
+function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean {
+  const word = tokens[index]?.word ?? '';
+  if (word.length <= 3 || !word.endsWith('ed')) return false;
+  const agent = tokens[index + 1];
+  return agent !== undefined && !agent.afterBreak && agent.word === 'by';
 }
 
 /**
