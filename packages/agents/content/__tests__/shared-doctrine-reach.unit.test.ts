@@ -46,11 +46,15 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   },
   'plain-speech': {
     // Headingless, because subagents inline it inside `<HARD-GATE>` blocks where a heading would be wrong.
-    headline: 'When writing practical documentation, speak plainly',
+    headline: 'Speak plainly in practical documentation',
+    // One phrase per statement that the rule makes operative, plus one of the verb pairs that the rule keeps as illustration.
     phrases: [
-      'Use the clearest verb',
+      "Write for a reader who does not share the author's first language",
+      'The test is about structure, not vocabulary',
+      'in code comments, and in chat',
+      'The one carve-out is presentational text',
+      'This rule outranks the register of the surrounding documents',
       'a tool **reports** its findings (not "the findings arrive")',
-      'persuasive documentation such as marketing and website copy',
     ],
   },
   'shell-commands': {
@@ -68,7 +72,7 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
   { heading: '## Interactive work', phrase: 'Invoke the `collaborate` skill when working interactively' },
   { heading: '## Style', phrase: 'Code style should adhere to' },
   { heading: '## Concision', phrase: 'then costs the reader attention and hides the signal' },
-  { heading: '## Plain speech', phrase: 'When writing practical documentation, speak plainly' },
+  { heading: '## Plain speech', phrase: 'Speak plainly in practical documentation' },
   { heading: '## Code descriptions', phrase: 'gets a brief description' },
   { heading: '## File access', phrase: 'When given an exact file path' },
   { heading: '## Shell commands', phrase: 'Compound `cd &&` commands' },

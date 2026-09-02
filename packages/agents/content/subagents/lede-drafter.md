@@ -20,9 +20,7 @@ That question is the whole assignment. Everything below tells you where the fact
 
 ## Write plainly
 
-Write for a reader who does not share the author's first language. Say what the change accomplishes, in the plainest words that carry it.
-
-Where a plain word and a figurative one both fit, the plain one is correct. Invent no terms, and reach for no metaphor the diff did not already put there.
+Invent no terms, and reach for no metaphor that the diff did not already put there.
 
 <!-- include: ../_partials/plain-speech.md / -->
 
