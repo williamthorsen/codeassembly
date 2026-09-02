@@ -246,17 +246,23 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 #### Jira path
 
-**Parent.** Both clients set a parent on the step-6 creation call, so nothing is applied here. A connected creation tool sets it through its own parent field, and reports the parent skipped where it exposes no such field. `acli` sets it with `--parent`, behind the pre-flight step 6 states; report the parent skipped where that pre-flight rejected the reference.
+**Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, so a reference Jira rejects costs the relationship alone as this step's general rule intends. Report the parent skipped where the update tool exposes no parent field.
 
-**blocked-by and blocking.** Both are Jira links, and `acli` is the only client that creates one; a connected creation tool exposes no link surface. Where `acli` is installed, create each link after the work item exists, whichever client created it:
+`acli` is the exception, and the only one: `acli jira workitem edit` carries no `--parent`, so the parent rides the step-6 creation call behind the pre-flight stated there. Report it skipped where that pre-flight rejected the reference.
+
+**blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool where one is available, `acli` next, a reported skip only where neither is. The link client need not be the one that created the work item, because a link call carries no description and the creation client's format contract does not reach it.
+
+Through a connected tool, select the link type whose outward description reads `blocks`, then place the two keys by that type's own inward and outward descriptions: the blocker takes the side the outward description names.
+
+Through `acli`:
 
 ```bash
 acli jira workitem link create --out "{blocker}" --in "{blocked}" --type Blocks --yes
 ```
 
-`--out` names the blocker, so the two relationships differ only in which side the new key occupies: blocked-by puts the referenced key in `--out`, and blocking puts the new key there. Reaching for `acli` here after creating through a connected tool costs nothing, because the creation client governs the description format and a link call carries no description.
+`--out` names the blocker, so the two relationships differ only in which side the new key occupies: blocked-by puts the referenced key in `--out`, and blocking puts the new key there.
 
-Where `acli` is absent, report each link as skipped, naming the creation client as the one that cannot express it.
+Where no client offers a link surface, report each link as skipped, naming the client.
 
 #### Other platforms
 
