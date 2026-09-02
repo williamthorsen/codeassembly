@@ -51,6 +51,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
     phrases: [
       "Write for a reader who does not share the author's first language",
       'The test is about structure, not vocabulary',
+      'in code comments, and in chat',
       'The one carve-out is presentational text',
       'This rule outranks the register of the surrounding documents',
       'a tool **reports** its findings (not "the findings arrive")',
