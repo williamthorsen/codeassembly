@@ -18,6 +18,8 @@ Read what appears left of the colon. A label (such as a short tag naming a field
 
 ## Em-dashes
 
+<!-- rule: em-dash -->
+
 Don't use em-dashes; use appropriate punctuation instead. A dash separating an identifier from its label is a delimiter rather than punctuation: Use a colon. Where an em-dash is genuinely best, write it as `--`.
 
 <!-- include: ../../_partials/reduced-object-relative.md / -->
