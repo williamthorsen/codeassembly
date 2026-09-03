@@ -5,6 +5,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
+import type { ContentDefect } from './content-defects.ts';
 import { resolveContentDir } from './content-resolver.ts';
 import {
   type ContentFormatProblem,
@@ -40,8 +41,7 @@ import {
 import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
-/** Which stage rejected an artifact, so a report can group by cause rather than presenting one undifferentiated list. */
-export type ContentDefectKind = 'collision' | 'dependency' | 'frontmatter' | 'render' | 'resolution' | 'root';
+export type { ContentDefect, ContentDefectKind } from './content-defects.ts';
 
 /**
  * The frontmatter key `supported-harnesses:` replaced. Nothing reads it any more, so a skill left declaring it deploys
@@ -55,13 +55,6 @@ const RETIRED_HARNESSES_KEY = 'harnesses';
  * frontmatter merge looks up by agent name and never reads it, so this pass is what tells a producer it is dead.
  */
 const RETIRED_TOOLS_KEY = '_tools';
-
-/** One rejected artifact: where it lives relative to the content root, which stage rejected it, and why. */
-export interface ContentDefect {
-  readonly file: string;
-  readonly kind: ContentDefectKind;
-  readonly detail: string;
-}
 
 /**
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
