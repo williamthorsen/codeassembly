@@ -28,9 +28,10 @@ This skill runs between receiving a code review and implementing fixes. The agen
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below.
 6. **Audit the diff** per [Diff audit](#diff-audit). Every fix you implemented is verified here, before any of it is written down.
-7. **Write response** per the output format
-8. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
-9. **Save** per the [Saving](#saving) section
+7. **Commit the fixes** per `{skill:create-commit}`, so the response narrates work already recorded. A response that REJECTed every finding implemented nothing and commits nothing; skip this step there rather than composing an empty commit.
+8. **Write response** per the output format
+9. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
+10. **Save** per the [Saving](#saving) section
 
 ## Frontmatter resolution
 
