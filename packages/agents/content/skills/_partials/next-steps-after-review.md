@@ -165,22 +165,24 @@ The option set depends on whether the review covers a pull request. Select the v
 
 | #   | Emoji | Option                                                      | Description                                                                                                              |
 | --- | ----- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 1   | 🚀    | Implement directly                                          | Fix the findings in this session                                                                                         |
+| 1   | 🚀    | Implement directly and commit                               | Fix the findings in this session and commit the fix                                                                      |
 | 2   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition                                                                          |
 | 3   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch                                                                   |
 | 4   | 🎫    | Create a follow-up ticket                                   | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule |
 
 #### Options: PR variant (review-pr)
 
-| #   | Emoji | Option                    | Description                                                                                                                                                                                                    |
-| --- | ----- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📋    | Post findings on the PR   | Post the findings as comments anchored to file and line. On Bitbucket, use the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md); GitHub has no posting mechanism yet (see #1018) |
-| 2   | 🚀    | Implement directly        | Fix the findings in this session                                                                                                                                                                               |
-| 3   | 🎫    | Create a follow-up ticket | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule                                                                                       |
+| #   | Emoji | Option                        | Description                                                                                                                                                                                                    |
+| --- | ----- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR       | Post the findings as comments anchored to file and line. On Bitbucket, use the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md); GitHub has no posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly and commit | Fix the findings in this session and commit the fix                                                                                                                                                            |
+| 3   | 🎫    | Create a follow-up ticket     | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule                                                                                       |
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Whenever an option would change source, which is every rendering of this sub-block that offers "Implement directly", the source delta renders above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default: Add a `➕` or `➖` line only when the specific findings present a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Whenever an option would change source, which is every rendering of this sub-block that offers "Implement directly and commit", the source delta renders above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default: Add a `➕` or `➖` line only when the specific findings present a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
+
+**What the commit records.** Selecting the option applies the previewed edits and commits them, composed per `{skill:create-commit}`, whose one-unit rule decides whether they form one commit or several. The commit is always a new one, never an amend: The separate commit is what keeps the fix visible as a diff and revertible while the branch lives, and a squash merge discards the history that an amend would tidy. Nothing is pushed, which matters most in the PR variant, where the branch belongs to someone else.
 
 **Naming the ticket's subset.** When only some open findings clear rule 1's spin-off bar, the follow-up-ticket line names the ones it would cover, as `Create a follow-up ticket for R2, S1`. Choosing it disposes of those findings alone. In this case the ticket option composes with the recommendation rather than replacing it: The cascade's remaining rules run on the findings the ticket does not cover, the option they select is the one marked, and answering with both numbers disposes of every open finding. A ticket option covering every open finding renders bare.
 
@@ -202,7 +204,7 @@ Proposed edits to the source:
 
 **S1: comment.** Replace the stale `@returns` line on `resolveBase` (`resolve.ts:88`) with a `todo:` naming what went stale.
 
-1. 🚀 ■■□ Implement directly
+1. 🚀 ■■□ Implement directly and commit
 2. 📋 ■□□ Ask the author to address the findings
 3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
 4. 🎫 ■□□ Create a follow-up ticket
@@ -221,7 +223,7 @@ Proposed edits to the source:
 
 **W2: source, author's choice.** `flush()` in `writer.ts:140` swallows the write error. Propagate it, or log and continue; which one turns on whether callers can recover.
 
-1. 🚀 ■□□ Implement directly
+1. 🚀 ■□□ Implement directly and commit
 2. 📋 ■■□ Ask the author to address the findings
 3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
 4. 🎫 ■□□ Create a follow-up ticket
@@ -246,7 +248,7 @@ Proposed edits to the source:
 
 **R2: source.** Extract the retry loop from `client.ts` into a helper the three callers share.
 
-1. 🚀 ■■□ Implement directly
+1. 🚀 ■■□ Implement directly and commit
 2. 📋 ■□□ Ask the author to address the findings
 3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
 4. 🎫 ■□□ Create a follow-up ticket for R2
@@ -254,7 +256,7 @@ Proposed edits to the source:
 If the author is an agent, run `respond-to-review` in that session.
 ```
 
-PR variant, rendered for the default case. "Implement directly" is on the menu, so the preview renders here too:
+PR variant, rendered for the default case. "Implement directly and commit" is on the menu, so the preview renders here too:
 
 ```
 Next steps:
@@ -268,7 +270,7 @@ Proposed edits to the source:
 **S1: test code.** Add the empty-input case to `parseRange.test.ts`.
 
 1. 📋 ■■□ Post findings on the PR
-2. 🚀 ■□□ Implement directly
+2. 🚀 ■□□ Implement directly and commit
 3. 🎫 ■□□ Create a follow-up ticket
 ```
 
@@ -282,7 +284,7 @@ Per the session-boundary rule, two options name a skill in the render:
 Both variants share one cascade. Check the rules in order and stop at the first match. Every rule states a firing condition, and no option is a default that fires for want of one: A conditionless option outranks a conditioned one in practice, however the conditions are worded.
 
 1. **Create a follow-up ticket**: Every open finding clears one of [`scope-and-deferral.md`](../_data/scope-and-deferral.md)'s affirmative reasons for spinning off, namely a genuinely separable concern, a materially different risk surface, size that would overwhelm the current change, or independent prioritization. "The ticket didn't mention it" is never such a reason. Absent an affirmative reason the fold-in default applies and the cascade continues.
-2. **Implement directly**: Every open finding names a single change rather than a choice among alternatives, which are the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) admits. Implementing forfeits the second look, and the single-change shape is what makes that acceptable: The fix's diff is the finding restated, so a reviewer would be re-reading text the review already contains. One finding leaving its choice to the author is enough to fail this rule, however small the alternatives look, since implementing would settle it on the author's behalf.
+2. **Implement directly and commit**: Every open finding names a single change rather than a choice among alternatives, which are the two shapes the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) admits. Implementing forfeits the second look, and the single-change shape is what makes that acceptable: The fix's diff is the finding restated, so a reviewer would be re-reading text the review already contains. One finding leaving its choice to the author is enough to fail this rule, however small the alternatives look, since implementing would settle it on the author's behalf.
 3. **Wait for the author to address the findings, then re-review**: The findings need judgment the author owns, and the fixes are substantial enough that the result needs another review pass. PR variant: Skip this rule.
 4. **Ask the author to address the findings**: residual. The reviewer surfaces; the author disposes. PR variant: **Post findings on the PR**, since the author is typically someone else and comments on the PR are how the findings reach them.
 
@@ -332,6 +334,6 @@ Proposed edits to the source:
 **S1: test code.** Add the unknown-directive case to `directives.test.ts`, asserting the failure.
 
 1. 📋 ■■□ Post findings on the PR
-2. 🚀 ■□□ Implement directly
+2. 🚀 ■□□ Implement directly and commit
 3. 🎫 ■□□ Create a follow-up ticket
 ```
