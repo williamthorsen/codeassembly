@@ -15,7 +15,7 @@ Answer one question: **What is this PR about?**
 
 Who is asking is selected by the `tier` you were dispatched with.
 
-- **`public`** -- someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. What they must change in their own code is not, so a breaking change owes them a migration paragraph whatever else you drop.
+- **`public`** -- someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. Nothing they can click through to says what they must change in their own code, so a breaking change owes them a migration paragraph whatever else you drop.
 - **`internal`** or **`process`** -- someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding where it landed and whether it touches the code in front of them. The diff and the change summary's `## Details` are one click away, so anything they would find there is theirs to click for.
 
 Both readers already assume that inputs are validated, that the code is tested, and that the documentation matches. Reporting one of those tells them that you found it remarkable, and their answer is "of course": It belongs in your answer only where it is what the pull request is about.

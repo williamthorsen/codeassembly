@@ -13,7 +13,7 @@ Two readers, and the change's work type decides which one is reading. A change w
 - Is deciding whether to upgrade, and what changes for them.
 - Already assumes that inputs are validated, that the code is tested, and that the documentation matches.
 - Reaches in one click: the documentation, the API, the tool itself.
-- Cannot reach what they must change in their own code. That is the one thing a lede owes them whatever else it drops, and it is why the migration paragraph survives every cut.
+- Has no page to click through to for the edits their own code needs. Only the lede states them, which is why the migration paragraph survives every cut.
 
 **The contributor**, at internal and process tiers.
 
@@ -31,7 +31,7 @@ A rule below names its reader wherever the two disagree, and holds for both wher
 
 Two facts govern both readers, and most of this file follows from them.
 
-**Interest tracks what the reader can act on.** The options that a caller may pass expand the reader's repertoire, so they are news; the grammatical tenses banned in a description are machinery behind an outcome that the reader meets as a result, "descriptions read consistently", so they are not. Neither the size of the change nor the effort that a fact cost to establish bears on this. Options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through. A clause that the reader derives from the clause before it gives them nothing: "a single run reports every defect it finds rather than stopping at the first" and "...so temporary files are no longer left behind" are the shape. A lede that explains the team's conventions or tutors the reader in a language feature has stopped reporting.
+**Interest tracks what the reader can act on.** What a new function lets the reader do is news; the versions a dependency moved between are not, since the reader needs to know what was upgraded and never types the numbers. Neither the size of the change nor the effort that a fact cost to establish bears on this, and neither does how specific the fact is. The test is this reader, in the seconds they give the entry. An exhaustive list of options with their usage, the output's shape, config keys, and the instances touched by a sweep are what the reader finds after clicking through. A clause that the reader derives from the clause before it gives them nothing: "a single run reports every defect it finds rather than stopping at the first" and "...so temporary files are no longer left behind" are the shape. A lede that explains the team's conventions or tutors the reader in a language feature has stopped reporting.
 
 **What is done as a matter of course is not news.** Inputs get validated, code gets tested, documentation gets updated. Reporting one tells the reader that you found it remarkable, and the answer is "of course". Such a fact is reportable only where it is the pull request's subject: A tests-only change reports tests and a docs-only change reports documentation; everywhere else they route to `## Details`. The same fact governs assurances. An invariant asserted against a harm that the reader had not suspected plants the doubt that it means to remove, so state one only where the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump and nowhere else.
 
