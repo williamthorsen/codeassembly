@@ -22,6 +22,7 @@ const REINFORCED_SKILLS: ReadonlyArray<string> = [
   'people-report',
   'plan-orchestrable-steps',
   'refine-plan',
+  'revise-prose',
   'update-project-guidance',
   'wrap-up',
 ];

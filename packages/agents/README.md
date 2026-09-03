@@ -790,15 +790,15 @@ editors:
 
 ## Prose sweep helper
 
-`src/revise-object-relatives/` holds the sweep that a prose-revision skill drives, bundled to `content/skills/revise-object-relatives/revise-object-relatives.mjs`. It reports and records; it revises nothing, so repairs land through the agent's own editing tool.
+`src/revise-prose/` holds the sweep that the `revise-prose` skill drives, bundled to `content/skills/revise-prose/revise-prose.mjs`. It reports and records; it revises nothing, so repairs land through the agent's own editing tool.
 
 One run covers one repository, resolved from the working directory through `git ls-files`.
 
 ### Commands
 
 ```bash
-revise-object-relatives.mjs [detect] [<path>...] [--rule <name>=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
-revise-object-relatives.mjs record < fold.json
+revise-prose.mjs [detect] [<path>...] [--rule <name>=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
+revise-prose.mjs record < fold.json
 ```
 
 `detect` is the default and may be omitted; a leading `detect` or `record` is read as the command, so a repository path colliding with either is written `./record`. Positional paths narrow the sweep, and with none it covers the repository.
@@ -838,7 +838,7 @@ rejections:
     ground: a quoted exhibit of the construction
 ```
 
-A unit's `roots` are the path roots the sweep covered, `.` meaning the repository. A rejection is keyed on its rule, its file, and `hash`: sha256 over the NFC-normalized, whitespace-collapsed phrase, truncated to sixteen hex characters. The helper derives the hash from the phrase the fold reports, so the key is a function of the phrase as it reads _after_ the run's edits; a repair under another rule in the same run therefore does not invalidate it.
+A unit's `roots` are the path roots that sweeps at this version have covered, `.` meaning the repository; `swept-at` dates the most recent of them. A rejection is keyed on its rule, its file, and `hash`: sha256 over the NFC-normalized, whitespace-collapsed phrase, truncated to sixteen hex characters. The helper derives the hash from the phrase that the fold reports, so the key is a function of the phrase as it reads _after_ the run's edits; a repair under another rule in the same run therefore does not invalidate it.
 
 On read, with units named:
 
@@ -866,7 +866,9 @@ On read, with units named:
 }
 ```
 
-A fold rejection carries neither a hash nor a version; the helper derives both. Merging is by unit: a unit the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded. A named unit's rejections at the current version are replaced by the fold's own, a site not re-rejected having been withdrawn, while rejections recorded at an older version survive.
+A fold rejection carries neither a hash nor a version; the helper derives both. Merging is by unit: a unit that the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded.
+
+For a unit that the fold does name, its roots join the recorded ones where the version matches and replace them where it moved, and a root that another one already contains is dropped. So a full sweep followed by a narrowed one still records the repository as covered, and a version bump starts the coverage over. That unit's rejections at the current version are replaced by the fold's own within the roots named for it, a site not re-rejected having been withdrawn. A rejection outside those roots was never revisited, so it is carried forward, and so is one recorded at an older version.
 
 ## Development
 

@@ -50,7 +50,7 @@ members:
     - review-permissions
     - review-pr
     - revise-comments
-    - revise-object-relatives
+    - revise-prose
     - save-artifact
     - save-plan
     - software-engineering
@@ -76,6 +76,7 @@ members:
     - plan-reviewer
     - plan-reviser
     - planner
+    - prose-reviser
     - savings-analyzer
 ---
 

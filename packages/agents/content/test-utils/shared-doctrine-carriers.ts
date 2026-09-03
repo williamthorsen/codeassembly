@@ -1,5 +1,8 @@
 import { listGovernedSubagents } from './list-governed-subagents.ts';
 
+/** Subagents whose tool grant names no shell, so guidance on writing a command is weight paid for no benefit. */
+const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'savings-analyzer']);
+
 /**
  * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section
  * `guidance/shared/AGENTS.md` keeps inline reaches no subagent and so appears here under no key.
@@ -15,7 +18,7 @@ export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<str
   'file-access': listGovernedSubagents(),
   'live-repo-writes': ['orchestrated-coder'],
   'plain-speech': listGovernedSubagents(),
-  'shell-commands': listGovernedSubagents().filter((slug) => slug !== 'savings-analyzer'),
+  'shell-commands': listGovernedSubagents().filter((slug) => !SHELL_LESS_SUBAGENTS.has(slug)),
   'technical-recommendations': listApproachChoosingSubagents(),
 };
 

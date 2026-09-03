@@ -14,8 +14,7 @@ import type { DetectSuccess } from '../types.ts';
  * Only a real invocation runs the top-level entry-point guard, so only this suite can catch a module-level declaration
  * ordered after it, or a bundling failure that leaves the entry point unable to run at all.
  */
-const BUNDLE = new URL('../../../content/skills/revise-object-relatives/revise-object-relatives.mjs', import.meta.url)
-  .pathname;
+const BUNDLE = new URL('../../../content/skills/revise-prose/revise-prose.mjs', import.meta.url).pathname;
 
 const FIXTURE_FILES: Readonly<Record<string, string>> = {
   'docs/guide.md': 'The helper reports the source it names.\n',

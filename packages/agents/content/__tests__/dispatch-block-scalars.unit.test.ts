@@ -25,7 +25,16 @@ const BLOCK_SCALAR_VALUE = /^[a-z][a-z0-9-]*: [|>][+-]?$/;
  * Every key a dispatch block may carry. The shape check alone admits a one-line `outcome:` sentence, which seeds the
  * drafter exactly as the block form does, so the closed set is what makes the check a guard rather than a formality.
  */
-const DECLARED_KEYS: ReadonlySet<string> = new Set(['rejection', 'ticket-source', 'tier', 'type']);
+const DECLARED_KEYS: ReadonlySet<string> = new Set([
+  'candidates',
+  'files',
+  'rejection',
+  'root',
+  'rules',
+  'ticket-source',
+  'tier',
+  'type',
+]);
 
 /** One line inside a dispatch block that is not a scalar. */
 interface Violation {

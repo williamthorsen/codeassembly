@@ -23,7 +23,7 @@ export const RECORD_PATH = '.agents/revise-prose.yaml';
 /** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
 
-/** A unit's coverage: the version swept, when, and the path roots the sweep covered. */
+/** A unit's coverage: the version swept, when it was last swept, and the path roots covered at that version. */
 const UnitCoverageSchema = z.object({
   version: z.string().min(1),
   'swept-at': DateSchema,
@@ -91,16 +91,24 @@ export function applyRejections(
 /**
  * Merges a run's fold into the prior record and returns the result.
  *
- * A unit the run did not name keeps its coverage and its rejections untouched, so a narrowed run never retracts what a
- * wider one recorded. For a unit the run did name, coverage is replaced with what the run covered, and its rejections
- * are replaced by the run's own: an adjudicator who did not re-reject a site at this version has withdrawn it.
- * Rejections recorded at an older version survive both, which is what makes a version bump a review rather than a
- * deletion.
+ * A unit that the run did not name keeps its coverage and its rejections untouched, so a narrowed run never retracts what a
+ * wider one recorded. For a unit that the run did name at the version already recorded, the run's roots join the recorded
+ * ones, both sweeps having happened; a version bump replaces them, the earlier sweep having been taken against a rule
+ * that has since changed.
+ *
+ * That unit's rejections under the roots swept by the run are replaced by the run's own: an adjudicator who did not
+ * re-reject a site at this version has withdrawn it. A rejection outside those roots was never revisited, so it is
+ * carried forward, which is what keeps a run narrowed to one directory from retracting the judgment recorded
+ * everywhere else. Rejections recorded at an older version survive both, which is what makes a version bump a review
+ * rather than a deletion.
  */
 export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
   const units = { ...prior.units };
   for (const [unit, coverage] of Object.entries(fold.units)) {
-    units[unit] = { version: coverage.version, 'swept-at': fold.sweptAt, roots: [...coverage.roots].toSorted() };
+    const priorCoverage = prior.units[unit];
+    const keptRoots =
+      priorCoverage !== undefined && priorCoverage.version === coverage.version ? priorCoverage.roots : [];
+    units[unit] = { version: coverage.version, 'swept-at': fold.sweptAt, roots: mergeRoots(keptRoots, coverage.roots) };
   }
 
   const recorded: RecordedRejection[] = fold.rejections.map((rejection) => {
@@ -111,15 +119,17 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
     return { ...rejection, 'unit-version': version, hash: hashPhrase(rejection.phrase) };
   });
 
-  const swept = new Set(Object.keys(fold.units));
   // A key the run re-recorded supersedes whatever the record held for it. Without this, a version bump followed by a
   // re-rejection leaves both entries, and which one suppresses a candidate would rest on the sort being stable.
   const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
-  const carried = prior.rejections.filter(
-    (rejection) =>
-      (!swept.has(rejection.unit) || rejection['unit-version'] !== units[rejection.unit]?.version) &&
-      !rerecorded.has(rejectionKey(rejection)),
-  );
+  const carried = prior.rejections.filter((rejection) => {
+    if (rerecorded.has(rejectionKey(rejection))) return false;
+
+    const coverage = fold.units[rejection.unit];
+    if (coverage === undefined || rejection['unit-version'] !== coverage.version) return true;
+
+    return coverage.roots.every((root) => !isUnderRoot(rejection.file, root));
+  });
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };
 }
@@ -226,6 +236,15 @@ function composeKey(rule: string, file: string, hash: string): string {
 /** Reports whether a repository-relative path lies under a recorded root, `.` covering the whole repository. */
 function isUnderRoot(file: string, root: string): boolean {
   return root === '.' || file === root || file.startsWith(`${root}/`);
+}
+
+/**
+ * Joins two root sets into the smallest set covering both, dropping a root that another one already contains, and
+ * returns it sorted. Without the containment drop, every narrowed sweep would append a root that `.` already covers.
+ */
+function mergeRoots(recorded: readonly string[], swept: readonly string[]): string[] {
+  const roots = [...new Set([...recorded, ...swept])];
+  return roots.filter((root) => roots.every((other) => other === root || !isUnderRoot(root, other))).toSorted();
 }
 
 /** The key a candidate is matched against: its rule, its file, and the hash of its phrase. */

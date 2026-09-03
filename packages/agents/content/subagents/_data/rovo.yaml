@@ -23,3 +23,8 @@ lede-drafter:
 plan-reviewer: {} # inherits _defaults
 
 plan-reviser: {} # inherits _defaults
+
+# Edits prose in place and creates nothing: `create_file` is dropped, and `bash` with it, the reviser having no
+# command to run.
+prose-reviser:
+  tools: [expand_code_chunks, expand_folder, find_and_replace_code, grep, open_files]
