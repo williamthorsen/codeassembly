@@ -107,7 +107,7 @@ units: {name}={version}, {name}={version}
 
 ### 6. `--dry-run`
 
-Run steps 1 and 2, emit the summary's per-batch table with the candidate counts alone, and stop. Dispatch no subagent, write no record, and edit nothing. One helper run is the whole cost, where a report-then-apply pair would pay for the sweep twice.
+Run steps 1 and 2, then emit the summary and one candidate table per file, and stop. Dispatch no subagent, write no record, and edit nothing. One helper run is the whole cost, where a report-then-apply pair would pay for the sweep twice.
 
 <!-- include: ../../_partials/plain-speech.md / -->
 
@@ -143,6 +143,15 @@ Present the questionables as one table grouped by ground, before the per-batch t
 ```
 
 Ask for the numbers to apply, and treat every unnamed row as rejected.
+
+Under `--dry-run` there is nothing yet to adjudicate, so the run reports the candidates instead: one table per file, ordered as the candidates arrived, with the rule, the line, and the phrase. Where the total is large, `byFile` and `byShape` are what the user reads to narrow the next run.
+
+```
+| Rule                    | Line | Phrase                              |
+| ----------------------- | ---- | ----------------------------------- |
+| reduced-object-relative | 14   | the ticket the branch name encodes  |
+| em-dash                 | 22   | Findings arrive as warnings -- ...  |
+```
 
 <!-- include: ../_partials/action-items.md / -->
 
