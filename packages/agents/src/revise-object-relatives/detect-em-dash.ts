@@ -2,10 +2,10 @@
  * Em-dash detection.
  *
  * The rule has an exact surface form, so unlike the object relative this detector is not over-inclusive: every site it
- * reports is one. The only judgment it makes is where a dash is punctuation at all, which is what the inline-code
- * exclusion below decides. A fenced block never reaches here; the extractor holds it out already.
+ * reports is one. The only judgment it makes is where a dash is punctuation at all, which the inline-code exclusion
+ * decides. A fenced block never reaches here; the extractor holds it out already.
  */
-import { countNewlinesBefore, findSentenceBounds, flattenWhitespace } from './span-text.ts';
+import { countNewlinesBefore, findCodeSpans, findSentenceBounds, flattenWhitespace } from './span-text.ts';
 import type { EmDashCandidate, ProseSpan } from './types.ts';
 
 /** Scans every span for em-dashes, returning one candidate per sentence that holds at least one, in reading order. */
@@ -51,41 +51,6 @@ function detectInSpan(span: ProseSpan): EmDashCandidate[] {
   }
 
   return candidates;
-}
-
-/** Advances `runs` to the next backtick run of exactly `length`, or returns null where the text holds none. */
-function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {
-  let candidate = runs.exec(text);
-  while (candidate !== null && candidate[0].length !== length) {
-    candidate = runs.exec(text);
-  }
-  return candidate;
-}
-
-/**
- * Returns the offsets covered by each inline code span, delimiters included. A run of backticks opens a span and the
- * next run of the same length closes it, which is Markdown's own rule and the reason a span may hold a backtick of its
- * own. An unclosed run delimits nothing and is passed over, leaving its backticks as ordinary text.
- */
-function findCodeSpans(text: string): ReadonlyArray<{ start: number; end: number }> {
-  const spans: Array<{ start: number; end: number }> = [];
-  const runs = /`+/g;
-  let opening = runs.exec(text);
-
-  while (opening !== null) {
-    const closing = findClosingRun(text, runs, opening[0].length);
-    if (closing === null) {
-      // The run closes nothing, so it is literal text. Resuming just past it keeps every later pair in view, where
-      // abandoning the scan would leave the rest of the span unmasked.
-      runs.lastIndex = opening.index + opening[0].length;
-      opening = runs.exec(text);
-      continue;
-    }
-    spans.push({ start: opening.index, end: closing.index + closing[0].length });
-    opening = runs.exec(text);
-  }
-
-  return spans;
 }
 
 // endregion | Helpers

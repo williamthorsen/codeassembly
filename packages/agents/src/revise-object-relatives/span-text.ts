@@ -1,9 +1,18 @@
 /**
- * Text operations over a prose span, shared by every rule's detector.
+ * Text operations over a prose span, shared by the extractor and every rule's detector.
  *
  * A span preserves its source's own newlines, so an offset within it maps back to a source line by counting the
  * newlines before it. Every function here reads offsets in that coordinate space.
  */
+
+/** Counts the newlines in `text`. */
+export function countNewlines(text: string): number {
+  let count = 0;
+  for (const char of text) {
+    if (char === '\n') count += 1;
+  }
+  return count;
+}
 
 /** Counts the newlines before an offset, which is how an offset within a span maps back to a source line. */
 export function countNewlinesBefore(text: string, offset: number): number {
@@ -12,6 +21,32 @@ export function countNewlinesBefore(text: string, offset: number): number {
     if (text[index] === '\n') count += 1;
   }
   return count;
+}
+
+/**
+ * Returns the offsets covered by each inline code span, delimiters included. A run of backticks opens a span and the
+ * next run of the same length closes it, which is Markdown's own rule and the reason a span may hold a backtick of its
+ * own. An unclosed run delimits nothing and is passed over, leaving its backticks as ordinary text.
+ */
+export function findCodeSpans(text: string): ReadonlyArray<{ start: number; end: number }> {
+  const spans: Array<{ start: number; end: number }> = [];
+  const runs = /`+/g;
+  let opening = runs.exec(text);
+
+  while (opening !== null) {
+    const closing = findClosingRun(text, runs, opening[0].length);
+    if (closing === null) {
+      // The run closes nothing, so it is literal text. Resuming just past it keeps every later pair in view, where
+      // abandoning the scan would leave the rest of the span unread.
+      runs.lastIndex = opening.index + opening[0].length;
+      opening = runs.exec(text);
+      continue;
+    }
+    spans.push({ start: opening.index, end: closing.index + closing[0].length });
+    opening = runs.exec(text);
+  }
+
+  return spans;
 }
 
 /** Returns the sentence containing the range `start` to `end`, with its whitespace flattened. */
@@ -51,3 +86,16 @@ export function findSentenceBounds(text: string, start: number, end: number): { 
 export function flattenWhitespace(text: string): string {
   return text.replaceAll(/\s+/g, ' ').trim();
 }
+
+// region | Helpers
+
+/** Advances `runs` to the next backtick run of exactly `length`, or returns null where the text holds none. */
+function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {
+  let candidate = runs.exec(text);
+  while (candidate !== null && candidate[0].length !== length) {
+    candidate = runs.exec(text);
+  }
+  return candidate;
+}
+
+// endregion | Helpers

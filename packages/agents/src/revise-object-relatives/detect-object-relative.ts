@@ -16,7 +16,11 @@
  * stranded preposition, an infinitival complement, or a ditransitive leaves a second one open, and an intransitive
  * verb reports only where it strands a preposition. A copula takes no object at all, and closes a clause only at the
  * end of one, where the head fills its complement slot.
+ *
+ * An inline code span arrives as one placeholder token, which heads no phrase, opens no subject, and closes no
+ * clause. It holds its slot all the same, so a site that a code span interrupts stays reachable.
  */
+import { CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
 import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
 import type { ObjectRelativeCandidate, ProseSpan, SubjectShape } from './types.ts';
 
@@ -759,6 +763,7 @@ function classifySubject(tokens: readonly Token[], index: number): SubjectKind |
   if (token === undefined) return undefined;
   const { word } = token;
 
+  if (word === CODE_SPAN_PLACEHOLDER_WORD) return undefined;
   if (SUBJECT_PRONOUNS.has(word)) return closesComparativePhrase(tokens, index) ? undefined : 'pronoun';
   if (isNumeral(word)) return 'numeral';
   if (QUANTIFIER_PRONOUNS.has(word)) return 'quantifier-pronoun';
@@ -807,6 +812,7 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
     index -= 1;
     const head = tokens[index];
     if (head === undefined) return undefined;
+    if (head.word === CODE_SPAN_PLACEHOLDER_WORD) return undefined;
     if (FOCUS_ADVERBS.has(head.word)) continue;
     if (PRO_FORM_HEADS.has(head.word)) return isFusedProForm(tokens, index) ? undefined : index;
     if (isWhMarkedHead(tokens, index)) return undefined;
@@ -922,6 +928,9 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       last = Math.min(last + 1, tokens.length - 1);
       continue;
     }
+    // The scan reads through the placeholder, which is what leaves the verb of a subject holding a code span in
+    // reach. It keeps its window slot, since it stands where a word of the subject stood.
+    if (token.word === CODE_SPAN_PLACEHOLDER_WORD) continue;
 
     const step =
       AUXILIARIES.has(token.word) && index >= first
