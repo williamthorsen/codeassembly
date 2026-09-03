@@ -4,7 +4,8 @@ import process from 'node:process';
 
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 
-import { type ContentDefect, validateContentRoot } from '../lib/content-validation.ts';
+import { formatContentDefects } from '../lib/content-defects.ts';
+import { validateContentRoot } from '../lib/content-validation.ts';
 import { ALL_HARNESS_IDS } from '../lib/harness.ts';
 import { findContentPath } from '../lib/package-sources.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
@@ -36,32 +37,11 @@ export async function validateCommand(options: ValidateOptions, cwd: string = pr
   }
 
   console.error(`\n❌ ${defects.length} defect(s) found:\n`);
-  console.error(formatDefects(defects));
+  console.error(formatContentDefects(defects));
   return false;
 }
 
 // region | Helpers
-
-/** Groups defects by file and renders each as an indented, kind-tagged block, ordered so two runs read alike. */
-function formatDefects(defects: ReadonlyArray<ContentDefect>): string {
-  const byFile = new Map<string, Array<ContentDefect>>();
-  for (const defect of defects) {
-    const group = byFile.get(defect.file) ?? [];
-    group.push(defect);
-    byFile.set(defect.file, group);
-  }
-
-  return Array.from(byFile.keys())
-    .toSorted()
-    .map((file) => {
-      const group = (byFile.get(file) ?? []).toSorted(
-        (a, b) => a.kind.localeCompare(b.kind) || a.detail.localeCompare(b.detail),
-      );
-      const lines = group.map((defect) => `  [${defect.kind}] ${defect.detail.replaceAll('\n', '\n    ')}`);
-      return `${file}\n${lines.join('\n')}`;
-    })
-    .join('\n\n');
-}
 
 /**
  * Resolves the content root to validate: the `--content` value when given, otherwise the `codeassembly.content` key

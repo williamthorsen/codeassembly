@@ -15,7 +15,7 @@ import { emitReport } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
-import { recordHomeProvenance } from '../lib/home-provenance.ts';
+import { recordFailedHomeAttempt, recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { listSupportEntries } from '../lib/library-catalog.ts';
@@ -65,7 +65,8 @@ export async function installCommand(
   baseDir?: string,
   contentDirOverride?: string,
 ): Promise<void> {
-  // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would.
+  // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would. The attempt is
+  // recorded only past this point, so an installation refused by the guard leaves the home domain's record untouched.
   await assertDesignatedWriter({
     command: 'install',
     homeDir: baseDir,
@@ -73,6 +74,22 @@ export async function installCommand(
     shouldOverrideWriter: options.shouldOverrideWriter,
   });
 
+  try {
+    await deployHomeDomain(options, baseDir, contentDirOverride);
+  } catch (error: unknown) {
+    if (!options.dryRun) {
+      await recordFailedHomeAttempt('install', { summary: describeError(error) }, baseDir);
+    }
+    throw error;
+  }
+}
+
+/** Deploys the home domain, past the designated-writer guard `installCommand` applies. */
+async function deployHomeDomain(
+  options: InstallOptions,
+  baseDir: string | undefined,
+  contentDirOverride: string | undefined,
+): Promise<void> {
   const homeDir = baseDir ?? homedir();
   const contentDir = contentDirOverride ?? resolveContentDir();
   // Resolve the home declaration's sources, which refuses an unusable source or a content root whose declared format

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { recordFailedHomeAttempt } from '../../lib/home-provenance.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
@@ -43,6 +44,37 @@ describe('statusCommand', () => {
     const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
     expect(output).toContain(`Home domain last written by ${readRunningPackageVersion()}`);
     expect(output).toContain('via `install`');
+  });
+
+  it('leads with a failed last attempt and dates the guidance still in effect', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await recordFailedHomeAttempt('sync --global', { summary: 'two rulebooks rejected', defectCount: 2 }, tempDir);
+
+    using silent = silenceConsole(['info', 'warn']);
+    await statusCommand({ harness: 'claude' }, tempDir);
+
+    const warned = silent.warn.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(warned).toContain('The last home-domain write attempt failed');
+    expect(warned).toContain('`sync --global`');
+    expect(warned).toContain('2 defect(s)');
+    const info = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(info).toContain('Home domain last written by');
+    expect(info).toContain('day(s) old');
+  });
+
+  it('reports a machine carrying a failed attempt and no recorded write', async () => {
+    await recordFailedHomeAttempt('install', { summary: 'rejected' }, tempDir);
+
+    using silent = silenceConsole(['info', 'warn']);
+    await statusCommand({ harness: 'claude' }, tempDir);
+
+    const warned = silent.warn.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(warned).toContain('The last home-domain write attempt failed');
+    const info = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(info).toContain('The home domain has no recorded write.');
   });
 
   it('stays silent about provenance when nothing has written the home domain', async () => {

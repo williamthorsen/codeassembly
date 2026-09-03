@@ -168,7 +168,7 @@ async function readAgentsVersion(input: {
     input.provenancePath === undefined
       ? await readHomeProvenance(input.home)
       : await readHomeProvenanceAt(input.provenancePath);
-  return provenance?.version ?? null;
+  return provenance?.lastWrite?.version ?? null;
 }
 
 /**
