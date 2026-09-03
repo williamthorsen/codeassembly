@@ -104,10 +104,17 @@ describe(collectProse, () => {
     expect(joinText(await sweep())).toContain('Bounded prose the sweep reads.');
   });
 
-  it('counts the files it read, so a silent exclusion cannot read as a clean sweep', async () => {
+  it('names the files it read, so a silent exclusion cannot read as a clean sweep', async () => {
     const collection = await sweep();
 
-    expect(collection.scanned).toBe(8);
+    expect(collection.scannedFiles).toHaveLength(8);
+  });
+
+  it('reports each scanned file with the byte length a batch budget is measured against', async () => {
+    const collection = await sweep();
+    const guide = collection.scannedFiles.find((scanned) => scanned.file === 'docs/guide.md');
+
+    expect(guide?.bytes).toBe(Buffer.byteLength(FIXTURE_FILES['docs/guide.md'] ?? '', 'utf8'));
   });
 
   it('yields nothing from a gitignored path', async () => {

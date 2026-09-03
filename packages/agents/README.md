@@ -788,6 +788,86 @@ editors:
     extensions: '*.md'
 ```
 
+## Prose sweep helper
+
+`src/revise-object-relatives/` holds the sweep that a prose-revision skill drives, bundled to `content/skills/revise-object-relatives/revise-object-relatives.mjs`. It reports and records; it revises nothing, so repairs land through the agent's own editing tool.
+
+One run covers one repository, resolved from the working directory through `git ls-files`.
+
+### Commands
+
+```bash
+revise-object-relatives.mjs [detect] [<path>...] [--rule <name>=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
+revise-object-relatives.mjs record < fold.json
+```
+
+`detect` is the default and may be omitted; a leading `detect` or `record` is read as the command, so a repository path colliding with either is written `./record`. Positional paths narrow the sweep, and with none it covers the repository.
+
+`--rule` names a rule to detect and the unit owning it. `--unit` names a unit in force and the version it is at. Both repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, a rule having one unit. Declaring no unit detects `reduced-object-relative` alone and neither reads nor writes the record, which is what holds the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule declares no unit unless it declares one on its own.
+
+A rule has a detector; a unit is a versioned document whose coverage the record tracks, and a unit may carry no detector at all. The helper reads no rule document: what a rule _says_ is the skill's to hold, and what a rule _finds_ is the registry's.
+
+The detectors are `em-dash` and `reduced-object-relative`.
+
+`--batch-budget` is the ceiling on a batch's combined file bytes, defaulting to 98304 (96 KiB), roughly 24k tokens of file content.
+
+### Batches
+
+A batch is whole files, because a subagent reads a file whole, and the batches cover the whole scanned set rather than the candidate-bearing subset, because a unit may carry no detector and its violations sit in files nominated by none.
+
+The recurring batches lead. Files linked by a shared sentence form a component that no batch boundary crosses, so every copy of one sentence is adjudicated together and no file reaches two writers. A component that outgrows the budget on its own becomes one oversized batch. The rest pack whole directories, so a batch boundary falls on a directory boundary except where one directory alone exceeds the budget.
+
+### The record
+
+`.agents/revise-prose.yaml` holds what a repository has been swept for. Only the `record` command writes it, which is what keeps its YAML deterministic rather than hand-edited into drift.
+
+```yaml
+units:
+  williamthorsen-writing-preferences:
+    version: '2'
+    swept-at: 2026-09-02
+    roots:
+      - .
+rejections:
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    unit-version: '2'
+    file: packages/agents/README.md
+    phrase: source it names
+    hash: 3f9c8a2100000000
+    ground: a quoted exhibit of the construction
+```
+
+A unit's `roots` are the path roots the sweep covered, `.` meaning the repository. A rejection is keyed on its rule, its file, and `hash`: sha256 over the NFC-normalized, whitespace-collapsed phrase, truncated to sixteen hex characters. The helper derives the hash from the phrase the fold reports, so the key is a function of the phrase as it reads _after_ the run's edits; a repair under another rule in the same run therefore does not invalidate it.
+
+On read, with units named:
+
+- A batch every file of which the record covers, for every named unit at that unit's current version, is skipped.
+- A candidate matching a rejection at its unit's current version is dropped.
+- A candidate matching a rejection recorded at an _older_ version is kept and marked `stale: true`, so a rule's revision re-opens the judgment for review rather than discarding it.
+
+### The fold
+
+`record` reads one run's fold as JSON on standard input:
+
+```json
+{
+  "sweptAt": "2026-09-02",
+  "units": { "williamthorsen-writing-preferences": { "version": "2", "roots": ["."] } },
+  "rejections": [
+    {
+      "rule": "reduced-object-relative",
+      "unit": "williamthorsen-writing-preferences",
+      "file": "packages/agents/README.md",
+      "phrase": "source it names",
+      "ground": "a quoted exhibit of the construction"
+    }
+  ]
+}
+```
+
+A fold rejection carries neither a hash nor a version; the helper derives both. Merging is by unit: a unit the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded. A named unit's rejections at the current version are replaced by the fold's own, a site not re-rejected having been withdrawn, while rejections recorded at an older version survive.
+
 ## Development
 
 ### Bin wrapper pattern

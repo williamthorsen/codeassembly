@@ -32,9 +32,11 @@ node "$(dirname "$SKILL_PATH")/revise-object-relatives.mjs"
 node "$(dirname "$SKILL_PATH")/revise-object-relatives.mjs" docs src/lib
 ```
 
-The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` that it swept, a `candidates` array, and a `summary` holding `total`, `filesScanned`, `filesSkipped`, `byFile`, and `byShape`. On failure it carries `ok: false` with `invalid-args` or `not-a-repository`, the latter because the sweep reads what git tracks and has nothing to read outside a working tree.
+The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` that it swept, a `candidates` array, a `batches` array, and a `summary` holding `total`, `filesScanned`, `filesSkipped`, `batchesPlanned`, `batchesSkipped`, `stale`, `byFile`, `byRule`, and `byShape`. On failure it carries `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree.
 
-Each candidate names its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` on which the reading turns, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
+This invocation declares no unit, so the helper detects the reduced object relative alone and neither reads nor writes the repository's record: `byRule` reports every other rule as zero, `batchesSkipped` and `stale` as zero. The helper's full surface, its `record` command, and the record's shape are documented in `packages/agents/README.md`.
+
+Each candidate names the `rule` that reported it, its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` on which the reading turns, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
 
 ### 2. Read the summary before the candidates
 
