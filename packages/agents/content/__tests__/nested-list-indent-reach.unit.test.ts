@@ -25,13 +25,16 @@ const RULE_PHRASES: ReadonlyArray<string> = [
   'the formatter in use sets the indent',
 ];
 
+/** The example's nesting, which a code fence protects from Prettier's normalization to the parent's column. */
+const RULE_EXAMPLE = '- parent\n    - child\n        - grandchild\n';
+
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A place here goes to a step that composes a body Bitbucket will render, plus the data entry both Bitbucket
-// delegates read. Branch commit bodies are absent by decision: Bitbucket renders a commit message too, but a squash
-// merge discards the branch's own commits, so the commit body that reaches the default branch is the merge body
-// `merge-pr` composes. The delegates are absent because they submit a body rather than compose one.
+// A place here goes to a step that composes a body rendered by Bitbucket, plus the data entry read by both
+// Bitbucket write delegates. Branch commit bodies are absent by decision: Bitbucket renders a commit message too,
+// but a squash merge discards the branch's own commits, so the commit body that reaches the default branch is the
+// merge body composed by `merge-pr`. The delegates are absent because they submit a body rather than compose one.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/_data/bitbucket-pr-access.md',
   'skills/merge-pr/SKILL.md',
@@ -51,6 +54,11 @@ describe('nested-list-indent reach', () => {
       const expanded = await expandCarrier(relativePath);
       expect(countOccurrences(expanded, RULE_HEADLINE)).toBe(1);
     });
+  });
+
+  it('shows the nesting at 4 and 8 spaces', async () => {
+    const partial = await readFile(path.join(CONTENT_ROOT, PARTIAL), 'utf8');
+    expect(partial).toContain(RULE_EXAMPLE);
   });
 
   it('is stated in no content file but the partial', async () => {
