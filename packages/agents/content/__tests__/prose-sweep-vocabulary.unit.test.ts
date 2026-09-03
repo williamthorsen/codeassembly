@@ -7,7 +7,7 @@ import { RULE_IDS } from '../../src/revise-prose/rules.ts';
 
 // Three hand-written surfaces must agree on which rule names exist: the helper's detector registry, the vocabulary
 // `prose-reviser` reports, and the fold `revise-prose` composes from that report. The helper validates a fold against
-// its registry and refuses a name outside it, so a report vocabulary the skill forwards unfiltered ends the run with
+// its registry and refuses a name outside it, so a report vocabulary forwarded unfiltered by the skill ends the run with
 // no record written. Nothing else holds the three together.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
@@ -16,12 +16,16 @@ const SUBAGENT = 'subagents/prose-reviser.md';
 
 /**
  * Rule names the subagent may report that the helper holds no detector for. The fold refuses them, so the skill has to
- * drop them; a name added here without that filter is the divergence this suite exists to catch.
+ * drop them; a name added here without that filter is the divergence that this suite exists to catch.
  */
 const NON_RECORDABLE: ReadonlyArray<string> = ['plain-speech'];
 
 /** The sentence in the skill that performs the drop. Pinned so a rewrite that loses it fails here. */
 const FOLD_FILTER = '**Fold only a rejection whose `rule` is one of the detector rules from step 1.**';
+
+/** The sentence stating what becomes of a dropped rejection. Pinned so a rewrite that loses it fails here. */
+const PLAIN_SPEECH_CONSEQUENCE =
+  'A `plain-speech` rejection is therefore reported to the user and re-adjudicated the next time its batch is swept.';
 
 /** Matches every `"rule": "<name>"` field in a JSON example, whose captured group is the name. */
 const REPORTED_RULE_REGEX = /"rule":\s*"([^"]+)"/g;
@@ -33,7 +37,7 @@ describe('prose-sweep rule vocabulary', () => {
   it('keeps the recordable and non-recordable names disjoint', () => {
     const overlap = NON_RECORDABLE.filter((name) => DETECTOR_RULES.has(name));
 
-    const message = `${overlap.join(', ')} is both a detector rule and one the skill drops from the fold; a detector rule is recordable, so drop it from NON_RECORDABLE and from the skill's filter`;
+    const message = `${overlap.join(', ')} is both a detector rule and one that the skill drops from the fold; a detector rule is recordable, so drop it from NON_RECORDABLE and from the skill's filter`;
     expect(overlap, message).toEqual([]);
   });
 
@@ -55,7 +59,7 @@ describe('prose-sweep rule vocabulary', () => {
     const body = await readContentFile(SUBAGENT);
     const missing = RULE_IDS.filter((rule) => !body.includes(rule));
 
-    const message = `${SUBAGENT} never names ${missing.join(', ')}, so the sweeper meets a candidate under a rule its own body does not describe`;
+    const message = `${SUBAGENT} never names ${missing.join(', ')}, so the sweeper meets a candidate under a rule not described by its own body`;
     expect(missing, message).toEqual([]);
   });
 
@@ -66,9 +70,7 @@ describe('prose-sweep rule vocabulary', () => {
       body,
       `${SKILL} no longer filters the fold; the helper refuses a non-detector rule and the run ends with no record`,
     ).toContain(FOLD_FILTER);
-    for (const name of NON_RECORDABLE) {
-      expect(body, `${SKILL} does not say what becomes of a ${name} rejection`).toContain(name);
-    }
+    expect(body, `${SKILL} does not say what becomes of a dropped rejection`).toContain(PLAIN_SPEECH_CONSEQUENCE);
   });
 });
 
