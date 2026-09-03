@@ -21,6 +21,14 @@ Every action takes `workspaceId` and `repoId`, both required, both accepting a s
 
 The second source exists because the tool exposes no "current repository" action and requires the pair on every call. It belongs here rather than in any skill: A skill states which source applies to it and links to this section, and never restates the parsing.
 
+## Composing Markdown for Bitbucket
+
+<!-- include: ../_partials/nested-list-indent.md / -->
+
+The renderer is Python-Markdown, which is where the 4-space requirement comes from: The divergence from GFM is a dialect difference rather than a defect in this client. The tool round-trips the submitted Markdown byte for byte in `description.raw`, so a body that reads correctly there and renders wrong in the browser locates the fault in the renderer.
+
+The same renderer reaches a merge commit message, since Bitbucket's commit list renders a commit message as Markdown. [BCLOUD-19083](https://jira.atlassian.com/browse/BCLOUD-19083) records that behavior, asking for a way to switch it off after Bitbucket displayed a `#`-prefixed commit title as a heading.
+
 ## Reading a pull request
 
 `action: "get"` with `prId` returns the Bitbucket REST pull-request object verbatim. The fields these skills read:
