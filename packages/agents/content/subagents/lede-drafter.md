@@ -40,7 +40,7 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
    Read the diffstat, and do not read the diff. Your question is what the change is about; someone reading hunks answers what it contains instead, and every fact found there arrives feeling load-bearing because it cost something to find. The caller holds the diff and checks your claims against it, so accuracy is covered without your reading it.
 
-4. **Exemplars.** `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type}` returns ledes the author approved, newest first. Read them for the altitude and register they hold, not for phrases to reuse. An empty list is a normal result; draft without them.
+4. **Exemplars.** `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type}` returns ledes the author approved, newest first. Read them for the level of detail and the register they hold, not for phrases to reuse. An empty list is a normal result; draft without them.
 
    Where your dispatch carries no `type`, run it with `--tier {tier}` instead and name the omission in your report. Never supply a `type` that you were not given: A guessed type draws exemplars written for the wrong reader.
 
