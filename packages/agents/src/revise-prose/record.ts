@@ -23,7 +23,7 @@ export const RECORD_PATH = '.agents/revise-prose.yaml';
 /** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
 
-/** A unit's coverage: the version swept, when, and the path roots the sweep covered. */
+/** A unit's coverage: the version swept, when it was last swept, and the path roots covered at that version. */
 const UnitCoverageSchema = z.object({
   version: z.string().min(1),
   'swept-at': DateSchema,

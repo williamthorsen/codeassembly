@@ -71,14 +71,14 @@ On a no-go, ask the user before reverting, then revert that batch's files and st
 
 Send up to four `{tool:Task}` calls with `subagent_type: prose-reviser` in one message. A harness that returns each before the next is the series case; attempt no detection of which one you are on.
 
-Before each dispatch, write that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `${TMPDIR:-/tmp}/revise-prose/batch-{index}.json`.
+Before each dispatch, write that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `{scratch}/revise-prose/batch-{index}.json`. `{scratch}` is `$TMPDIR`, or `/tmp` where the environment does not set it: Resolve it and write the absolute path in both places, since this write and the subagent's read both go through a file tool that expands no shell syntax.
 
 Dispatch each batch with this block:
 
 ```dispatch
 root: {root}
 files: {the batch's files, comma-separated}
-candidates: ${TMPDIR:-/tmp}/revise-prose/batch-{index}.json
+candidates: {scratch}/revise-prose/batch-{index}.json
 rules: {rule-id}, {rule-id}
 ```
 

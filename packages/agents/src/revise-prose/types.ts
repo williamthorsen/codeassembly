@@ -73,13 +73,13 @@ export interface ScannedFile {
   bytes: number;
 }
 
-/** What the record holds for one unit: the version swept, when, and the path roots the sweep covered. */
+/** What the record holds for one unit: the version swept, when it was last swept, and the path roots covered at that version. */
 export interface UnitCoverage {
   /** The unit's version at the time of the sweep, opaque and never parsed as semver. */
   version: string;
-  /** The ISO calendar date of the sweep. */
+  /** The ISO calendar date of the most recent sweep at this version. */
   'swept-at': string;
-  /** The path roots covered, `.` where the sweep covered the repository. */
+  /** The path roots that sweeps at this version have covered, `.` where one covered the repository. */
   roots: readonly string[];
 }
 
