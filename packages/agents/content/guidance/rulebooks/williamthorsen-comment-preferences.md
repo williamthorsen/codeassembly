@@ -2,7 +2,7 @@
 slug: williamthorsen-comment-preferences
 description: Grammatical register for agent-authored comments, covering the mood of an inline comment and the form of a doc description.
 delivery: [ambient, hook]
-version: 2
+version: '2'
 ---
 
 # William Thorsen's comment preferences

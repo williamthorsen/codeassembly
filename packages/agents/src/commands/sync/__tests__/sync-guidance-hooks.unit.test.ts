@@ -321,7 +321,7 @@ async function writeLibraryRulebook(
 ): Promise<void> {
   const dir = path.join(contentDir, 'guidance', 'rulebooks');
   await mkdir(dir, { recursive: true });
-  const versionLine = version === undefined ? '' : `version: ${version}\n`;
+  const versionLine = version === undefined ? '' : `version: '${version}'\n`;
   const frontmatter = `slug: ${slug}\ndescription: Fixture ${slug}\ndelivery: ${delivery}\n${versionLine}`;
   await writeFile(path.join(dir, `${slug}.md`), `---\n${frontmatter}---\n\n${body}`, 'utf8');
 }

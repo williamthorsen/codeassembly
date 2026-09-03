@@ -2,7 +2,7 @@
 slug: williamthorsen-collaboration-preferences
 description: William Thorsen's personal preferences for how an agent collaborates -- the persona it adopts, and the form its prompts take.
 delivery: ambient
-version: 3
+version: '3'
 ---
 
 # William Thorsen's collaboration preferences
