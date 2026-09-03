@@ -377,13 +377,19 @@ async function reconcileDomain(
 
   // Checked before the closure resolves so a typo names the hook that bound it or the file that declared it;
   // seeding alone would report only that some artifact went missing.
-  defects.add(await findUnresolvableBindingDefects(declaration.guidanceHooks, resolver));
+  const bound = await findUnresolvableBindingDefects(declaration.guidanceHooks, resolver);
+  defects.add(bound.defects);
   const declared = await findUnresolvableDeclaredArtifactDefects(
     declaration,
     domain.ambient === 'harness-home' ? 'home' : 'project',
     resolver,
   );
   defects.add(declared.defects);
+  // A binding seeds the closure, so a bound rulebook resolving from nowhere joins the declared set the walk skips.
+  const unresolvable: UnresolvableSlugs = {
+    ...declared.unresolvable,
+    rulebook: new Set([...declared.unresolvable.rulebook, ...bound.unresolvable]),
+  };
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
@@ -402,7 +408,7 @@ async function reconcileDomain(
         { rulebook: [...new Set(declaration.guidanceHooks.values().toArray().flat())] },
         ...packageCatalogs,
       ]),
-      declared.unresolvable,
+      unresolvable,
     ),
     resolver,
   );
@@ -721,7 +727,8 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
 
 /**
  * Describes a failed home-domain sync for the provenance record, carrying the whole defect report where the failure
- * has one, so `status` says what broke without the reader re-running the command.
+ * has one. The report is held for a reader who opens the stamp; `status` prints the count alone, because a stored
+ * report describes the content as it stood at the attempt rather than as it stands now.
  */
 function describeSyncFailure(error: unknown): HomeFailure {
   return isSyncValidationError(error)
@@ -799,22 +806,25 @@ interface OwnedTarget {
 async function findUnresolvableBindingDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
   resolver: SourceResolver,
-): Promise<ReadonlyArray<ContentDefect>> {
+): Promise<{ defects: ReadonlyArray<ContentDefect>; unresolvable: ReadonlySet<string> }> {
   const defects: Array<ContentDefect> = [];
+  const unresolvable = new Set<string>();
   for (const [hook, slugs] of bindings) {
     for (const slug of slugs) {
-      if ((await resolver.resolve('rulebook', slug)) === undefined) {
-        defects.push({
-          file: artifactFrontmatterPath('rulebook', slug),
-          kind: 'resolution',
-          detail:
-            `Guidance hook "${hook}" binds rulebook "${slug}", which was not found in any of: ` +
-            describeSearchedLocations(resolver, 'rulebook', slug),
-        });
+      if ((await resolver.resolve('rulebook', slug)) !== undefined) {
+        continue;
       }
+      unresolvable.add(slug);
+      defects.push({
+        file: artifactFrontmatterPath('rulebook', slug),
+        kind: 'resolution',
+        detail:
+          `Guidance hook "${hook}" binds rulebook "${slug}", which was not found in any of: ` +
+          describeSearchedLocations(resolver, 'rulebook', slug),
+      });
     }
   }
-  return defects;
+  return { defects, unresolvable };
 }
 
 /**

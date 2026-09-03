@@ -85,6 +85,15 @@ describe('syncCommand pre-write validation', () => {
     expect(defects[0]?.detail).toMatch(/declares rulebook "ghost", which was not found/);
   });
 
+  it('reports a bound rulebook that resolves from nowhere just once', async () => {
+    await declareRaw(projectRoot, 'guidance-hooks:\n  demo-hook:\n    use:\n      - ghost\n');
+
+    const defects = await collectDefects(projectRoot, contentDir, homeDir);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.detail).toMatch(/Guidance hook "demo-hook" binds rulebook "ghost"/);
+  });
+
   it('leaves a valid declaration untouched by the collecting gates', async () => {
     await writeLibraryRulebook(contentDir, 'alpha', "version: '1'");
     await declareRulebooks(projectRoot, 'alpha');
