@@ -57,11 +57,13 @@ An empty `batches` array ends the run: Report the summary in one line and stop. 
 
 **Under `--dry-run`, the run ends here.** Emit the summary and one candidate table per file, per [Summary format](#summary-format), and stop. Dispatch no subagent, write no record, and edit nothing. One helper run is the whole cost, where a report-then-apply pair would pay for the sweep twice.
 
+**An apply run needs a clean tree.** Where `git status --porcelain` reports anything, stop and report it. Step 4's gate reads `git diff --name-only` as the wave's own work, so an edit already in the tree either trips that gate or, where it sits inside a batch's file list, rides into that batch's commit under the sweep's message. `--dry-run` returns above and edits nothing, so this stop holds only for an apply run.
+
 ### 3. Pilot the first batch
 
 Run the pilot where `.agents/revise-prose.yaml` is absent, or where its `units:` block names none of this run's units. A rerun skips this step and goes to step 4.
 
-Dispatch batch 0 alone, per step 4's dispatch shape, and run step 4's checks over it as a wave of one. Then show the user its report and `git diff --stat`, and ask for a go-ahead before committing that batch and before dispatching anything else.
+Dispatch batch 0 alone, per step 4's dispatch shape, and run step 4's checks over it as a wave of one. Accumulate its `rejected` and `questionable` entries for step 5, as step 4 does for every later wave, so the pilot's questionables reach the closing table. Then show the user its report and `git diff --stat`, and ask for a go-ahead before committing that batch and before dispatching anything else.
 
 On a no-go, ask the user before reverting, then revert that batch's files and stop. A miscalibrated subagent is worth catching once per repository, which is the whole reason the first batch runs alone.
 
