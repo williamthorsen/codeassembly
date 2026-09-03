@@ -76,6 +76,7 @@ members:
     - plan-reviewer
     - plan-reviser
     - planner
+    - prose-reviser
     - savings-analyzer
 ---
 
