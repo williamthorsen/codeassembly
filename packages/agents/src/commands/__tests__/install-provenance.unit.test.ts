@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -52,6 +52,24 @@ describe('install (home provenance)', () => {
     await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
 
     expect(existsSync(getHomeProvenancePath(tempDir))).toBe(false);
+  });
+
+  it('records the failed attempt when the run cannot deploy, keeping any earlier write', async () => {
+    await installCommand(makeOptions(), tempDir, contentDir);
+    const written = (await readHomeProvenance(tempDir))?.lastWrite;
+    await mkdir(path.join(tempDir, '.agents'), { recursive: true });
+    await writeFile(path.join(tempDir, '.agents', 'not-a-dir'), 'not a dir\n', 'utf8');
+    await writeFile(
+      path.join(tempDir, '.agents', 'codeassembly.yaml'),
+      'sources:\n  - name: bad-source\n    path: ./not-a-dir\n',
+      'utf8',
+    );
+
+    await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(/bad-source/);
+
+    const stamp = await readHomeProvenance(tempDir);
+    expect(stamp?.lastAttempt).toMatchObject({ command: 'install', outcome: 'failed' });
+    expect(stamp?.lastWrite).toEqual(written);
   });
 
   it('records the running package version in the harness manifest', async () => {

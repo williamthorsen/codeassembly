@@ -9,7 +9,12 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../../lib/artifact-types.ts';
 import { type ResolvedDeclaration, resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
-import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from '../../lib/content-defects.ts';
+import {
+  type ContentDefect,
+  foldHarnessDefects,
+  formatContentDefects,
+  type HarnessDefect,
+} from '../../lib/content-defects.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import {
   createSourceResolver,
@@ -26,7 +31,7 @@ import { findGuidanceHookDeclarers, type GuidanceHookDeclarers } from '../../lib
 import { type GuidanceHookFill, type GuidanceHookFills, listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
-import { recordHomeProvenance } from '../../lib/home-provenance.ts';
+import { type HomeFailure, recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
 import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
@@ -76,7 +81,7 @@ import {
   skillMarker,
   subagentMarker,
 } from './owned-artifacts.ts';
-import { SyncValidationError } from './sync-validation-error.ts';
+import { isSyncValidationError, SyncValidationError } from './sync-validation-error.ts';
 
 /** The line an ambient region opens with, so a reader who finds generated guidance knows an edit there is lost. */
 const ambientRegionNote =
@@ -289,13 +294,23 @@ export async function syncGlobalCommand(
   if (!existsSync(declarationPath)) {
     return { kind: 'no-declaration', declarationPath, scope: 'global' };
   }
-  const outcome = await reconcileDomain(
-    options,
-    { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' },
-    homeDir,
-    contentDirOverride,
-  );
-  const retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
+  let outcome: SyncOutcome;
+  let retirement: Retirement | undefined;
+  try {
+    outcome = await reconcileDomain(
+      options,
+      { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' },
+      homeDir,
+      contentDirOverride,
+    );
+    retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
+  } catch (error: unknown) {
+    // Recorded past the designated-writer guard above, so an installation the guard refuses touches no home state.
+    if (!options.dryRun) {
+      await recordFailedHomeAttempt('sync --global', describeSyncFailure(error), homeDir);
+    }
+    throw error;
+  }
 
   if (!options.dryRun) {
     await recordHomeProvenance('sync --global', homeDir);
@@ -704,10 +719,20 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
   return merged;
 }
 
+/**
+ * Describes a failed home-domain sync for the provenance record, carrying the whole defect report where the failure
+ * has one, so `status` says what broke without the reader re-running the command.
+ */
+function describeSyncFailure(error: unknown): HomeFailure {
+  return isSyncValidationError(error)
+    ? { summary: formatContentDefects(error.defects), defectCount: error.defects.length }
+    : { summary: describeError(error) };
+}
+
 /** Collects the defects a sync's pre-write gates report, so the run fails once on the whole list. */
 interface DefectCollector {
-  add(found: ReadonlyArray<ContentDefect>): void;
   readonly found: ReadonlyArray<ContentDefect>;
+  add(found: ReadonlyArray<ContentDefect>): void;
 }
 
 /** Builds the collector every pre-write gate reports into. */
