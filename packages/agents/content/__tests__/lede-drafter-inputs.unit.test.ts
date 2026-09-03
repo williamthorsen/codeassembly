@@ -20,8 +20,17 @@ const DOCTRINE_FILENAME = 'lede-voice.md';
 /** A `git diff` invocation that returns hunks: the bare form, or any form whose flags omit `--stat`. */
 const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 
-/** Phrases naming each reader, which a rewrite dropping the audience would lose. */
+/**
+ * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so a doctrine bullet's
+ * opening capital still matches.
+ */
 const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not work on it', 'works in this codebase'];
+
+/** Each file stating the reader specification. The drafter never reads the doctrine, so each carries its own copy. */
+const READER_SOURCES: ReadonlyArray<string> = [
+  path.join('skills', '_data', DOCTRINE_FILENAME),
+  path.join('subagents', 'lede-drafter.md'),
+];
 
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'lede-drafter.md'), CONTENT_ROOT);
 
@@ -33,13 +42,14 @@ describe('lede-drafter inputs', () => {
     expect(await EXPANDED, message).toContain(ASSIGNMENT_QUESTION);
   });
 
-  it('names both readers', async () => {
-    const expanded = await EXPANDED;
-    const missing = READER_PHRASES.filter((phrase) => !expanded.includes(phrase));
+  it.each(READER_SOURCES)('names both readers in %s', async (relativePath) => {
+    const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
+    const missing = READER_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'Each tier the drafter is dispatched with names a reader, and the reader decides what the entry reports. ' +
-      `These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'The reader decides what the entry reports, and the doctrine and the drafter each state the readers, since ' +
+      'the drafter never reads the doctrine. Revising one leaves the other naming a superseded reader. These ' +
+      `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
