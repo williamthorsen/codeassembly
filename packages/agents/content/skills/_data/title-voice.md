@@ -23,7 +23,7 @@ The bound measures the authored string rather than any rendering. The templates 
 
 ## Voice
 
-**Imperative, task-oriented.** "Add…", "Fix…", "Prevent…", "Enable…", describing what the author did. The title appears next to the pull-request number in release notes; it reads as the task. Distinct from the lede voice, which is declarative ("Adds…", "Fixes…"); see [`lede-voice.md`](./lede-voice.md).
+**Imperative, task-oriented.** "Add…", "Fix…", "Prevent…", "Enable…", describing what the author did. The title appears next to the pull-request number in release notes; it reads as the task. Distinct from the lede's reporting sentences, which are declarative ("Adds…", "Fixes…"); see [`lede-voice.md`](./lede-voice.md), where a migration step is the one part of a lede that is imperative.
 
 The mood is what separates a title from a label. "Enable playback at different speeds" states the task; "Different playback speeds" only names the topic.
 
