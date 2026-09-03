@@ -73,7 +73,7 @@ On the gap:
 
 **Name things, up to the altitude.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule acted on by the change, backticked. An identifier never consumed by the reader -- an internal function, the lint rule that fired, a config key that the change happens to read -- is mechanism with a name attached, and backticking it does not raise it to the altitude. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). At public focus, define any term that the audience may not share.
 
-**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog. The lede is not reference documentation: options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through. A migration step is the one thing they cannot click through to, so it stays, held to the size bound under "The migration paragraph" below.
+**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog. The lede is not reference documentation: Options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through. A migration step is the one thing they cannot click through to, so it stays, held to the size bound under "The migration paragraph" below.
 
 **Claims match the diff.** A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
@@ -88,7 +88,7 @@ Opener discipline is positional. Each form has a place, and the places are not i
 
 ## Form
 
-- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. The third-person rule governs the sentences that report the change; a migration step is a different speech act and is imperative. Never address the reader as "you": that ban holds across the whole lede.
+- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. The third-person rule governs the sentences that report the change; a migration step is a different speech act and is imperative. Never address the reader as "you": That ban holds across the whole lede.
 - A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one, written per "The migration paragraph" below. Three or more parallel items may be bulleted.
 - A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
 
@@ -98,7 +98,7 @@ A `Migration:` paragraph tells the consumer what to do. It is not a labelled rec
 
 - **The reader test.** What does the reader type differently tomorrow? A sentence describing the resulting state fails it whatever its grammatical person. "So consumers quote what they declare" names a disposition, not an edit.
 - **The label is literal.** The paragraph opens with `Migration:`. Only `## What` reaches the merge-commit body and the changelog, so this paragraph is the whole channel to a consumer whose build just broke.
-- **The mood is imperative.** The second person stays banned, and an imperative needs no pronoun. Form's third-person rule governs the sentences that report the change: a migration clause can satisfy it and still name no edit, which is the failure this section exists to catch.
+- **The mood is imperative.** The second person stays banned, and an imperative needs no pronoun. Form's third-person rule governs the sentences that report the change: A migration clause can satisfy it and still name no edit, which is the failure this section exists to catch.
 - **Any work type can carry one.** A `fix` that tightens validation imposes a migration as surely as a `drop` does. The paragraph follows the burden, not the type.
 - **Name the edit, and any trap the replacement introduces.** A hazard the new path carries and the old one did not -- a filter the predecessor did not need, an exception the replacement throws where the predecessor returned -- appears nowhere in the diff, so nothing else will surface it.
 - **The size bound.** The edit and the trap, not a worked example per call shape. A migration that overruns it links the package's versioned upgrade guide where the package has one, and otherwise stays at the bound. The README describes current state and is not that guide.
