@@ -3,8 +3,8 @@ import { type ContentDefect, formatContentDefects } from '../../lib/content-defe
 /**
  * Every defect a sync's pre-write validation found, raised once so a run reports the whole list rather than its first
  * entry. The message carries the grouped report, so any consumer reading the error alone still sees what to fix; the
- * defects travel alongside it for the CLI, which renders them without the top-level `Error:` prefix a finding list
- * must not wear.
+ * defects travel alongside it for the CLI, which renders them without the top-level `Error:` prefix that a finding
+ * list must not wear.
  */
 export class SyncValidationError extends Error {
   readonly defects: ReadonlyArray<ContentDefect>;

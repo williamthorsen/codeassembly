@@ -305,7 +305,7 @@ export async function syncGlobalCommand(
     );
     retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
   } catch (error: unknown) {
-    // Recorded past the designated-writer guard above, so an installation the guard refuses touches no home state.
+    // Recorded past the designated-writer guard above, so an installation refused by the guard touches no home state.
     if (!options.dryRun) {
       await recordFailedHomeAttempt('sync --global', describeSyncFailure(error), homeDir);
     }
@@ -729,7 +729,7 @@ function describeSyncFailure(error: unknown): HomeFailure {
     : { summary: describeError(error) };
 }
 
-/** Collects the defects a sync's pre-write gates report, so the run fails once on the whole list. */
+/** Collects the defects reported by a sync's pre-write gates, so the run fails once on the whole list. */
 interface DefectCollector {
   readonly found: ReadonlyArray<ContentDefect>;
   add(found: ReadonlyArray<ContentDefect>): void;
@@ -868,7 +868,7 @@ function findBoundRulebookHookDefects(
   const bySlug = indexRulebooksBySlug(resolved);
   for (const [hook, slugs] of bindings) {
     for (const slug of slugs) {
-      // A bound rulebook the resolution pass rejected is absent from the closure, and its own defect already names it.
+      // A bound rulebook rejected by the resolution pass is absent from the closure, and its own defect already names it.
       const bound = bySlug.get(slug);
       if (bound === undefined) {
         continue;
@@ -907,7 +907,7 @@ function buildGuidanceHookFills(
     fills.set(
       hook,
       slugs.flatMap((slug) => {
-        // A bound rulebook the resolution or render gate rejected is left out rather than raised again here: its own
+        // A bound rulebook rejected by the resolution or render gate is left out rather than raised again here: its own
         // defect names it, and the run fails on the collected list before anything is written.
         const rulebook = bySlug.get(slug);
         if (rulebook === undefined) {

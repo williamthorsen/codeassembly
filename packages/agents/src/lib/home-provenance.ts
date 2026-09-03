@@ -38,8 +38,8 @@ export interface HomeFailure {
 
 /**
  * The home-domain stamp: what last wrote it, and what was last attempted against it. The two are separate because a
- * failed attempt writes nothing, and a reader that sees only the write cannot tell a current deployment from one an
- * abandoned run left behind.
+ * failed attempt writes nothing, and a reader that sees only the write cannot tell a current deployment from one
+ * left behind by an abandoned run.
  *
  * The version-1 write fields are still mirrored at the top level, so a `codeassembly` predating `lastWrite` reads the
  * stamp rather than rejecting it and reporting nothing. Every worktree carries a binary of its own, so a machine

@@ -66,7 +66,7 @@ export async function installCommand(
   contentDirOverride?: string,
 ): Promise<void> {
   // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would. The attempt is
-  // recorded only past this point, so an installation the guard refuses leaves the home domain's record untouched.
+  // recorded only past this point, so an installation refused by the guard leaves the home domain's record untouched.
   await assertDesignatedWriter({
     command: 'install',
     homeDir: baseDir,

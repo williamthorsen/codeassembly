@@ -1,7 +1,7 @@
 import type { HarnessId } from './types.ts';
 
 /**
- * One rejected artifact: the path the defect is attributed to, which stage rejected it, and why. The path is
+ * One rejected artifact: the path to which the defect is attributed, which stage rejected it, and why. The path is
  * relative to the content root for an artifact, and absolute for a deploy target, which sits outside any root.
  */
 export interface ContentDefect {
@@ -21,7 +21,7 @@ export interface HarnessDefect {
 }
 
 /**
- * Collapses per-harness render defects into one list. A defect every validated harness raised is emitted once, since
+ * Collapses per-harness render defects into one list. A defect raised by every validated harness is emitted once, since
  * it is a property of the source rather than of any harness; one raised by a subset keeps the harnesses in its detail,
  * because that subset is the finding.
  */

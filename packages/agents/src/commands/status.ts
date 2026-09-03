@@ -67,7 +67,7 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
 
 /**
  * Reports which installation last wrote the home domain, and leads with the last attempt where it failed. A write
- * timestamp alone cannot separate a current deployment from one an abandoned run left behind, so the failed attempt
+ * timestamp alone cannot separate a current deployment from one left behind by an abandoned run, so the failed attempt
  * is what says the deployed guidance is stale rather than merely old. Stays silent where no stamp exists, since a
  * home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
  */

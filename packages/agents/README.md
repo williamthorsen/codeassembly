@@ -495,7 +495,7 @@ With the setting absent the commands behave as they always have, so a fresh mach
 
 Every non-dry-run `install` and `sync --global` records what it wrote to `~/.codeassembly/home-provenance.json` under `lastWrite`: the version of the package whose binary ran, its source path, the commit that source sat on where one is resolvable, the command, and a timestamp. A dry run leaves the file untouched, so the stamp reports what wrote rather than what was previewed.
 
-The same commands record the attempt under `lastAttempt`, on a failure as well as on a success: its command, a timestamp, the outcome, and, where the run failed, the rendered failure and the number of defects it carried. A failed attempt writes nothing else, so `lastWrite` keeps naming the deployment still in effect. The attempt is what separates a current deployment from one an abandoned run left behind: a write timestamp alone reads the same on a machine that has not needed a sync and on one whose sync has been failing for a fortnight. The attempt is recorded only past the designated-writer guard, so an installation the guard refuses leaves the home domain's record untouched.
+The same commands record the attempt under `lastAttempt`, on a failure as well as on a success: its command, a timestamp, the outcome, and, where the run failed, the rendered failure and how many defects it carried. A failed attempt writes nothing else, so `lastWrite` keeps naming the deployment still in effect. The attempt is what separates a current deployment from one an abandoned run left behind: a write timestamp alone reads the same on a machine that has not needed a sync and on one whose sync has been failing for a fortnight. The attempt is recorded only past the designated-writer guard, so an installation refused by the guard leaves the home domain's record untouched.
 
 The write fields are also mirrored at the top level of the file, which is where a `codeassembly` predating `lastWrite` reads them. Every repository and worktree carries a binary of its own, so a machine part-way through an upgrade is the ordinary case rather than an edge one.
 
@@ -533,7 +533,7 @@ A home domain last written by a build predating the stamp has no line to show, a
 }
 ```
 
-A failed `sync` reports every defect its pre-write gates found, grouped by file the way `validate` reports a content root, and says that nothing was written and that the previously deployed guidance remains in effect. One run therefore names every rejected artifact rather than sending the author back for another run per file, and neither posture leaves a reader to guess whether part of the deployment landed.
+A failed `sync` reports every defect found by its pre-write gates, grouped by file the way `validate` reports a content root, and says that nothing was written and that the previously deployed guidance remains in effect. One run therefore names every rejected artifact rather than sending the author back for another run per file, and neither posture leaves a reader to guess whether part of the deployment landed.
 
 `--warn-only` reports a failure and exits 0, and it belongs on this trigger specifically. `sync` fails closed on an unusable declared source, an unresolvable slug, a foreign-owned target, or a damaged ambient region; without the flag, any of those aborts `pnpm install` for everything downstream, which costs far more than the stale guidance it guards against. `pnpm install --ignore-scripts` skips the hook, so a tree installed that way carries whatever the last sync left.
 
