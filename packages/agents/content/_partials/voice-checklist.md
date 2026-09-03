@@ -7,6 +7,7 @@ Before saving, answer the question that your reader is asking, then audit the dr
 - **Type.** The per-type section for this work type was applied -- for `perf`, `sec`, `deprecate`, and `ci`, the host section named there.
 - **Names.** Every package, command, flag, file, or rule consumed by the reader is named and backticked. An identifier that they never consume is mechanism, and naming it does not make it admissible.
 - **Claims.** Each sentence reports an effect of the diff, and no claim goes beyond what the diff supports.
-- **Cuts.** No empty contrast, no assurance against an unsuspected harm, no process narration, no second person.
+- **Migration.** A `Migration:` paragraph, where the change carries one, names the edit the consumer makes. A sentence describing the resulting state fails whatever its grammatical person.
+- **Cuts.** No empty contrast, no assurance against an unsuspected harm, no process narration, no second person. An imperative migration step is neither the second person nor a cut.
 
 This list tests a draft; it does not replace the doctrine. Read `{harness_home_dir}/skills/_data/lede-voice.md` in full before drafting.

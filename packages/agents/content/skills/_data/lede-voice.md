@@ -39,6 +39,8 @@ Shipped:
 >
 > Migration: `unindent` no longer exists, and nullish and object values are now compile errors.
 
+**That migration line is a counter-example.** It predates the instruct rule, and it recaps the removal without naming an edit, so it fails the reader test under "The migration paragraph" below. Do not model one on it. What this exemplar teaches is altitude, and that lesson stands.
+
 On the gap:
 
 > A change of altitude, not a better ranking. The author's framing -- "a lede is an overview, an introduction, it hits the highlights" -- moved the question from "which of these facts matter most?" to "what kind of change is this?". Answered at that altitude the lede writes itself: a rename, a correctness fix, a new sibling function, a breaking migration. No specific finding appears, however important, because findings sit one level below the altitude the lede occupies.
@@ -71,7 +73,7 @@ On the gap:
 
 **Name things, up to the altitude.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule acted on by the change, backticked. An identifier never consumed by the reader -- an internal function, the lint rule that fired, a config key that the change happens to read -- is mechanism with a name attached, and backticking it does not raise it to the altitude. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). At public focus, define any term that the audience may not share.
 
-**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog. The lede is not reference documentation and not a migration guide. Options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through.
+**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog. The lede is not reference documentation: Options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through. A migration step is the one thing they cannot click through to, so it stays, held to the size bound under "The migration paragraph" below.
 
 **Claims match the diff.** A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
@@ -86,9 +88,28 @@ Opener discipline is positional. Each form has a place, and the places are not i
 
 ## Form
 
-- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. Never address the reader as "you"; migration steps are third person ("Consumers import `defineConfig` from the `/config` subpath instead"), not imperatives.
-- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one ("Migration: ..."). Three or more parallel items may be bulleted.
+- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. The third-person rule governs the sentences that report the change; a migration step is a different speech act and is imperative. Never address the reader as "you": That ban holds across the whole lede.
+- A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one, written per "The migration paragraph" below. Three or more parallel items may be bulleted.
 - A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
+
+## The migration paragraph
+
+A `Migration:` paragraph tells the consumer what to do. It is not a labelled recap of the change; the sentences above it already reported that.
+
+- **The reader test.** What does the reader type differently tomorrow? A sentence describing the resulting state fails it whatever its grammatical person. "So consumers quote what they declare" names a disposition, not an edit.
+- **The label is literal.** The paragraph opens with `Migration:`. Only `## What` reaches the merge-commit body and the changelog, so this paragraph is the whole channel to a consumer whose build just broke.
+- **The mood is imperative.** The second person stays banned, and an imperative needs no pronoun. Form's third-person rule governs the sentences that report the change: A migration clause can satisfy it and still name no edit, which is the failure this section exists to catch.
+- **Any work type can carry one.** A `fix` that tightens validation imposes a migration as surely as a `drop` does. The paragraph follows the burden, not the type.
+- **Name the edit, and any trap the replacement introduces.** A hazard the new path carries and the old one did not -- a filter the predecessor did not need, an exception the replacement throws where the predecessor returned -- appears nowhere in the diff, so nothing else will surface it.
+- **The size bound.** The edit and the trap, not a worked example per call shape. A migration that overruns it links the package's versioned upgrade guide where the package has one, and otherwise stays at the bound. The README describes current state and is not that guide.
+
+Drafted:
+
+> Migration: A rulebook declaring an unquoted `version` is now rejected rather than deployed with digits lost, so consumers quote what they declare.
+
+Shipped, after the author's correction:
+
+> Migration: Change any unquoted version numbers in rulebooks to quoted strings.
 
 ## What each kind of change reports
 
@@ -110,7 +131,7 @@ A change matching two kinds opens with the higher-stakes pattern: sec, then fix,
   > Upgrades several dependencies, most notably `nmr` to v0.24. That upgrade changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. [...] The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
 - **tests / tooling / ci** -- the operation performed on the pipeline or configuration. Name the tool that the change acted on; the rule enabled, the option set, and the severity raised are mechanism.
   > Fixes deferred violations of Vitest lint rules in the `readyup` package and restores the severity of the associated rules to `error` when a strict-lint check is run.
-- **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration sentence; unpublished or never-released surface needs none -- no headline, no breaking-change framing. When unsure, include the migration sentence. A removal whose surface moved is stated as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."). A deprecation reports the same facts in advance: The surface still works, the replacement is named, and the removal horizon is stated when it is known.
+- **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration paragraph; unpublished or never-released surface needs none -- no headline, no breaking-change framing. When unsure, include it. A removal whose surface only moved is reported as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."), and the migration paragraph names the edit that follows from it. A removal with no drop-in replacement still owes the reader the path to the replacement API and any trap it introduces. A deprecation reports the same facts in advance: The surface still works, the replacement is named, and the removal horizon is stated when it is known.
   > Removes `@williamthorsen/eslint-config-basic`; no further versions will be published. No remaining package lints Markdown, while `@williamthorsen/eslint-config-typescript` continues to cover JavaScript, JSON, YAML, and `package.json`.
 - **revert** -- the change undone and what is restored. The PR number may accompany the name, never substitute for it. A revert takes the work type of the change being undone; `revert` is not itself a key in `work-types.json`.
 
