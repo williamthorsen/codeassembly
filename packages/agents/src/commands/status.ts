@@ -6,6 +6,9 @@ import { detectDrift, getManifestPath, readManifest } from '../lib/manifest.ts';
 import type { HarnessId, InstallOptions } from '../lib/types.ts';
 import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
 
+/** Divisor turning a timestamp delta into whole days, for the deployed guidance's reported age. */
+const MILLISECONDS_PER_DAY = 86_400_000;
+
 /**
  * Executes the status command, showing the current state of installed items.
  */
@@ -63,7 +66,9 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
 }
 
 /**
- * Reports which installation last wrote the home domain, as one line. Stays silent where no stamp exists, since a
+ * Reports which installation last wrote the home domain, and leads with the last attempt where it failed. A write
+ * timestamp alone cannot separate a current deployment from one an abandoned run left behind, so the failed attempt
+ * is what says the deployed guidance is stale rather than merely old. Stays silent where no stamp exists, since a
  * home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
  */
 async function reportHomeProvenance(baseDir?: string): Promise<void> {
@@ -72,11 +77,36 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
     return;
   }
 
-  const commit = provenance.sourceCommit === undefined ? '' : ` @ ${provenance.sourceCommit.slice(0, 7)}`;
+  const { lastAttempt, lastWrite } = provenance;
+  if (lastAttempt?.outcome === 'failed') {
+    const defects = lastAttempt.defectCount === undefined ? '' : ` with ${lastAttempt.defectCount} defect(s),`;
+    console.warn(
+      `⚠️ The last home-domain write attempt failed: \`${lastAttempt.command}\` on ${lastAttempt.attemptedAt},` +
+        `${defects} writing nothing.`,
+    );
+  }
+
+  if (lastWrite === undefined) {
+    console.info('The home domain has no recorded write.');
+    return;
+  }
+
+  const age = countDaysSince(lastWrite.writtenAt);
+  const staleness = lastAttempt?.outcome === 'failed' && age !== undefined ? ` (${age} day(s) old)` : '';
+  const commit = lastWrite.sourceCommit === undefined ? '' : ` @ ${lastWrite.sourceCommit.slice(0, 7)}`;
   console.info(
-    `Home domain last written by ${provenance.version} at ${provenance.sourcePath}${commit} ` +
-      `via \`${provenance.command}\` on ${provenance.writtenAt}`,
+    `Home domain last written by ${lastWrite.version} at ${lastWrite.sourcePath}${commit} ` +
+      `via \`${lastWrite.command}\` on ${lastWrite.writtenAt}${staleness}`,
   );
+}
+
+/** Counts whole days from an ISO timestamp to now, or `undefined` where the timestamp cannot be read. */
+function countDaysSince(timestamp: string): number | undefined {
+  const written = Date.parse(timestamp);
+  if (Number.isNaN(written)) {
+    return undefined;
+  }
+  return Math.floor((Date.now() - written) / MILLISECONDS_PER_DAY);
 }
 
 /**
