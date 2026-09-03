@@ -838,7 +838,7 @@ rejections:
     ground: a quoted exhibit of the construction
 ```
 
-A unit's `roots` are the path roots that sweeps at this version have covered, `.` meaning the repository; `swept-at` dates the most recent of them. A rejection is keyed on its rule, its file, and `hash`: sha256 over the NFC-normalized, whitespace-collapsed phrase, truncated to sixteen hex characters. The helper derives the hash from the phrase the fold reports, so the key is a function of the phrase as it reads _after_ the run's edits; a repair under another rule in the same run therefore does not invalidate it.
+A unit's `roots` are the path roots that sweeps at this version have covered, `.` meaning the repository; `swept-at` dates the most recent of them. A rejection is keyed on its rule, its file, and `hash`: sha256 over the NFC-normalized, whitespace-collapsed phrase, truncated to sixteen hex characters. The helper derives the hash from the phrase that the fold reports, so the key is a function of the phrase as it reads _after_ the run's edits; a repair under another rule in the same run therefore does not invalidate it.
 
 On read, with units named:
 
