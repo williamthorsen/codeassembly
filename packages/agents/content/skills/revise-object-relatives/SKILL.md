@@ -38,6 +38,8 @@ This invocation declares no unit, so the helper detects the reduced object relat
 
 Each candidate names the `rule` that reported it, its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` on which the reading turns, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
 
+An inline code span reaches the report as `«codespan»`, which stands for content elided by the helper so its tokens never read as prose. Repair the site around the placeholder; the source keeps the code. Where the elided token decides the reading, read the source line: that is the one exception to adjudicating from the candidate alone.
+
 ### 2. Read the summary before the candidates
 
 A whole-repository sweep can return more candidates than one pass affords to adjudicate. `byFile` and `byShape` are what you read first: where the total is large, tell the user the count and narrow the next run with paths rather than adjudicating the whole set at once. `byShape` ranks the cost, so the quantified and definite shapes are where a narrowed pass pays best.

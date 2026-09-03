@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { extractProse } from '../collect-prose.ts';
+import { CODE_SPAN_PLACEHOLDER } from '../mask-code-spans.ts';
 
 describe(extractProse, () => {
   describe('markdown', () => {
@@ -136,6 +137,36 @@ describe(extractProse, () => {
         },
         { file: 'fixture.md', line: 5, text: 'A trailing note.' },
       ]);
+    });
+  });
+
+  describe('inline code', () => {
+    it('masks a span in Markdown body prose', () => {
+      const spans = extract('The root `tsconfig.json` names it.\n', 'markdown');
+
+      expect(joinText(spans)).not.toContain('tsconfig');
+      expect(joinText(spans)).toContain(CODE_SPAN_PLACEHOLDER);
+    });
+
+    it('masks a span in a Markdown table cell', () => {
+      const spans = extract('| Head |\n| ---- |\n| the `sync` command |\n', 'markdown');
+
+      expect(joinText(spans)).not.toContain('sync');
+      expect(joinText(spans)).toContain(CODE_SPAN_PLACEHOLDER);
+    });
+
+    it('masks a span in a script comment', () => {
+      const spans = extract('// The root `tsconfig.json` names it.\n', 'script');
+
+      expect(joinText(spans)).not.toContain('tsconfig');
+      expect(joinText(spans)).toContain(CODE_SPAN_PLACEHOLDER);
+    });
+
+    it('masks a span in a shell comment', () => {
+      const spans = extract('#!/usr/bin/env bash\n# The root `tsconfig.json` names it.\n', 'shell');
+
+      expect(joinText(spans)).not.toContain('tsconfig');
+      expect(joinText(spans)).toContain(CODE_SPAN_PLACEHOLDER);
     });
   });
 });

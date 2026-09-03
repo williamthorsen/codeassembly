@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { detectObjectRelatives } from '../detect-object-relative.ts';
+import { CODE_SPAN_PLACEHOLDER, maskCodeSpans } from '../mask-code-spans.ts';
 import type { ObjectRelativeCandidate, SubjectShape } from '../types.ts';
 
 /**
@@ -653,6 +654,42 @@ describe(detectObjectRelatives, () => {
     });
   });
 
+  describe('inline code', () => {
+    it('reports no head noun drawn from a code span', () => {
+      expect(detectMasked('Supplies the `_defaults` the subagent frontmatter merge applies.')).toStrictEqual([]);
+    });
+
+    it('reports no verb drawn from a code span', () => {
+      expect(detectMasked('The directive uses `include` for that.')).toStrictEqual([]);
+    });
+
+    it('reports no embedded subject drawn from a code span', () => {
+      expect(detectMasked("A note's `tags` include the store.")).toStrictEqual([]);
+    });
+
+    it('leaves a site lying wholly inside a code span alone', () => {
+      expect(detectMasked('The rulebook rejects `the source it names` as an exhibit.')).toStrictEqual([]);
+    });
+
+    it('still reports a site that a code span interrupts, with the placeholder standing in the span', () => {
+      const candidates = detectMasked('Audits the kit the `codeassembly` package publishes.');
+
+      expect(candidates).toHaveLength(1);
+      expect(candidates[0]).toMatchObject({
+        head: 'kit',
+        subject: `the ${CODE_SPAN_PLACEHOLDER} package`,
+        verb: 'publishes',
+        phrase: `kit the ${CODE_SPAN_PLACEHOLDER} package publishes`,
+      });
+    });
+
+    it("keeps the placeholder's delimiters in the subject, which a bare token would lose", () => {
+      const candidates = detectMasked("Names the source the user's `codeassembly.yaml` declares.");
+
+      expect(candidates[0]?.subject).toBe(`the user's ${CODE_SPAN_PLACEHOLDER}`);
+    });
+  });
+
   describe('location', () => {
     it('reports the line the site sits on within a wrapped block', () => {
       const candidates = detectObjectRelatives([
@@ -670,6 +707,11 @@ describe(detectObjectRelatives, () => {
 /** Detects over one sentence held in a single span, which is how every lexical assertion below is phrased. */
 function detect(sentence: string): ObjectRelativeCandidate[] {
   return detectObjectRelatives([{ file: 'fixture.md', line: 1, text: sentence }]);
+}
+
+/** Detects over one sentence masked as the extractor masks it, which is the form the detector reads in a sweep. */
+function detectMasked(sentence: string): ObjectRelativeCandidate[] {
+  return detect(maskCodeSpans(sentence));
 }
 
 // endregion | Helpers

@@ -14,6 +14,8 @@ import path from 'node:path';
 import { DEFAULT_ARTIFACT_BASE_DIR, resolveArtifactBaseDir } from '../derive-session-context/compose-manifest.ts';
 import { readPreferences } from '../derive-session-context/read-preferences.ts';
 import { HARNESSES } from '../lib/harness.ts';
+import { maskCodeSpans } from './mask-code-spans.ts';
+import { countNewlines } from './span-text.ts';
 import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 
 /** A resolved sweep: what it read, what it held out, and every block of prose that it yielded. */
@@ -79,16 +81,12 @@ export async function collectProse(input: {
   return { files, scannedFiles, skipped, spans };
 }
 
-/** Extracts every block of prose from one file's content, each carrying the line on which it begins. */
+/**
+ * Extracts every block of prose from one file's content, each carrying the line on which it begins. Inline code spans
+ * are masked on the way out, so no detector reads a span's content as words whatever kind the file is.
+ */
 export function extractProse(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
-  switch (input.kind) {
-    case 'markdown':
-      return extractMarkdownProse(input.file, input.content);
-    case 'script':
-      return extractScriptProse(input.file, input.content);
-    case 'shell':
-      return extractShellProse(input.file, input.content);
-  }
+  return extractByKind(input).map((span) => ({ ...span, text: maskCodeSpans(span.text) }));
 }
 
 /**
@@ -225,25 +223,26 @@ function classifyByShebang(content: string): ProseKind | undefined {
   return /^#![^\n]*\b(?:ba|z|k)?sh\b/.test(content) ? 'shell' : undefined;
 }
 
-/** Counts the newlines in `text`, which is how an offset within a span maps back to a source line. */
-function countNewlines(text: string): number {
-  let count = 0;
-  for (const char of text) {
-    if (char === '\n') count += 1;
-  }
-  return count;
-}
-
 /** Counts the word-like tokens in a string literal, which is how prose is told from data. */
 function countWords(text: string): number {
   return text.split(/\s+/).filter((word) => /[a-z]{2}/i.test(word)).length;
 }
 
+/** Dispatches to the extractor that reads `kind`. */
+function extractByKind(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
+  switch (input.kind) {
+    case 'markdown':
+      return extractMarkdownProse(input.file, input.content);
+    case 'script':
+      return extractScriptProse(input.file, input.content);
+    case 'shell':
+      return extractShellProse(input.file, input.content);
+  }
+}
+
 /**
  * Extracts Markdown body prose: paragraphs, list items, headings, and table cells. Frontmatter, fenced code, HTML
  * comments, and link definitions are dropped, and a link is reduced to its own text so no URL reaches the detector.
- * Inline code keeps its content, whose tokens read as opaque nouns and so preserve the adjacency on which a repair
- * turns.
  */
 function extractMarkdownProse(file: string, content: string): ProseSpan[] {
   const lines = content.split('\n');
