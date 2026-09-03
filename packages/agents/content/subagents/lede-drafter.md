@@ -67,7 +67,7 @@ A dispatch carrying a `rejection` scalar is a redispatch: an earlier draft faile
 
 - **`voice`** -- a figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
 - **`subject`** -- the opening described the system's state rather than what the change did. Open verb-first with the change: "Adds", "Fixes", "Removes".
-- **`unsupported-claim`** -- a sentence claimed more than the diff supports. Restate it at the strength the diff carries, or drop it.
+- **`unsupported-claim`** -- a sentence claimed more than its sources carry. Claim only what the commit log and the diffstat support, and drop a sentence that reaches past them.
 
 ## What you return
 
