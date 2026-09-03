@@ -141,7 +141,7 @@ Most types need no rule of their own, because the readers section already decide
 
 ## Don't
 
-- **The recency trap.** A fact is admitted on the effort spent establishing it rather than on its worth to the reader, and the most recently verified facts feel the most load-bearing. Diagnostic symptom: The fact appears in both `## What` and `## Details`, because the section that it legitimately belongs to already has it. The correction is deleting the fact, never compressing the sentence that states it.
+- **The recency trap.** A fact is admitted on the effort spent establishing it rather than on its worth to the reader, and the most recently verified facts feel the most load-bearing. The correction is deleting the fact, never compressing the sentence that states it.
 - **State description that hides the change.** The "X now does Y" form hides the change where the state is an aggregate of operations that the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals what was done, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
 - **An invented beneficiary.** "Finding a module in the `readyup` package now means asking what role it plays" dramatizes a hypothetical reader; the shipped lede reports the operation.
 - **Process narration.** Review mechanics, ticket numbers, finding IDs, test and CI runs, and roads not taken are not part of the change.
