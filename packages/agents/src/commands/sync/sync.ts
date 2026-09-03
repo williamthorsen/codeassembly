@@ -385,7 +385,7 @@ async function reconcileDomain(
     resolver,
   );
   defects.add(declared.defects);
-  // A binding seeds the closure, so a bound rulebook resolving from nowhere joins the declared set the walk skips.
+  // A binding seeds the closure, so a bound rulebook resolving from nowhere joins the declared set skipped by the walk.
   const unresolvable: UnresolvableSlugs = {
     ...declared.unresolvable,
     rulebook: new Set([...declared.unresolvable.rulebook, ...bound.unresolvable]),
