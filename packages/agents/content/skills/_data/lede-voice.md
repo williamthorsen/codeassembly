@@ -88,7 +88,7 @@ Opener discipline is positional. Each form has a place, and the places are not i
 
 ## Form
 
-- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. Never address the reader as "you". This governs the sentences that report the change; a migration step is a different speech act and is imperative.
+- Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. The third-person rule governs the sentences that report the change; a migration step is a different speech act and is imperative. Never address the reader as "you": that ban holds across the whole lede.
 - A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one, written per "The migration paragraph" below. Three or more parallel items may be bulleted.
 - A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
 
@@ -101,11 +101,13 @@ A `Migration:` paragraph tells the consumer what to do. It is not a labelled rec
 - **The mood is imperative.** The second person stays banned, and an imperative needs no pronoun. Form's third-person rule governs the sentences that report the change: a migration clause can satisfy it and still name no edit, which is the failure this section exists to catch.
 - **Any work type can carry one.** A `fix` that tightens validation imposes a migration as surely as a `drop` does. The paragraph follows the burden, not the type.
 - **Name the edit, and any trap the replacement introduces.** A hazard the new path carries and the old one did not -- a filter the predecessor did not need, an exception the replacement throws where the predecessor returned -- appears nowhere in the diff, so nothing else will surface it.
-- **The size bound.** The edit and the trap, not a worked example per call shape. A migration that overruns it links the package's versioned upgrade guide, which is versioned for exactly this reason; the README describes current state and is not that guide.
+- **The size bound.** The edit and the trap, not a worked example per call shape. A migration that overruns it links the package's versioned upgrade guide where the package has one, and otherwise stays at the bound. The README describes current state and is not that guide.
 
-Drafted, then shipped after the author's correction:
+Drafted:
 
 > Migration: A rulebook declaring an unquoted `version` is now rejected rather than deployed with digits lost, so consumers quote what they declare.
+
+Shipped, after the author's correction:
 
 > Migration: Change any unquoted version numbers in rulebooks to quoted strings.
 
