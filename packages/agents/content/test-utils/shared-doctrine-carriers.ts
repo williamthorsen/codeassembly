@@ -1,6 +1,6 @@
 import { listGovernedSubagents } from './list-governed-subagents.ts';
 
-/** Subagents whose tool grant names no shell, so guidance on writing a command is weight they pay for nothing. */
+/** Subagents whose tool grant names no shell, so guidance on writing a command is weight paid for no benefit. */
 const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'savings-analyzer']);
 
 /**

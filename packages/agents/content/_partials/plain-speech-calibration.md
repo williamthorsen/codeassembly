@@ -19,15 +19,15 @@ Passive voice is not a defect on its own, and case 3 is no licence to convert it
 
 ### Worked example
 
-The first paragraph of "Skill-local reinforcement" in the CodeAssembly content specification. Before:
+A paragraph of this library's own guidance. Before:
 
 > Behavioural rules that govern an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. Where the boundary below calls for a restatement, it lands at the step that produces the output. An agent follows a rule more reliably when it sits beside the action it governs than when it must be fetched through a link.
 
 After:
 
-> Behavioural rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. Where the boundary below requires a restatement, put it at the step that produces the output. An agent follows a rule more reliably when the rule appears next to the action it applies to than when the agent must follow a link to read it.
+> Behavioural rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. Where the boundary below requires a restatement, put it at the step that produces the output. An agent follows a rule more reliably when the rule appears next to the action that it governs than when the agent must follow a link to read it.
 
-Six edits fall under cases 1 and 2, and one under case 3: "must be fetched" drops the agent, and which party fetches is the sentence's point. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them.
+Six edits fall under cases 1 and 2, and one under case 3: "must be fetched" drops the agent, and which party fetches is the sentence's point. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. One edit belongs to no case here: The relativizer restored in "the action that it governs" comes from the writing preferences, which a sweep applies in the same pass.
 
 ### Shapes to look for
 
