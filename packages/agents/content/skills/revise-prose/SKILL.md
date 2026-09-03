@@ -132,10 +132,11 @@ revise-prose summary
 | 1     | 9     | 18      | 1        | 0            |
 
 Recorded in `.agents/revise-prose.yaml`: plain-speech 1, williamthorsen-writing-preferences 2.
+3 plain-speech rejections were not recorded; the next sweep of their batches re-adjudicates them.
 2 files held out: 1 generated, 1 machine-generated.
 ```
 
-Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result.
+Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. Give the unrecorded-rejection line only where the fold dropped one.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 
