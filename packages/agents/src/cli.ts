@@ -4,8 +4,6 @@ import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { formatContentDefects } from './lib/content-defects.ts';
-
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand, initGlobalCommand } from './commands/init.ts';
@@ -13,10 +11,11 @@ import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
 import { renderDryRunReport, renderSyncReport } from './commands/sync/report.ts';
-import { isSyncValidationError } from './commands/sync/sync-validation-error.ts';
 import { syncCommand, syncGlobalCommand } from './commands/sync/sync.ts';
+import { isSyncValidationError } from './commands/sync/sync-validation-error.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
+import { formatContentDefects } from './lib/content-defects.ts';
 import { emitReport } from './lib/emit-report.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';

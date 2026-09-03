@@ -188,30 +188,6 @@ function isHomeWrite(value: unknown): value is HomeWrite {
   );
 }
 
-/**
- * Normalizes a parsed stamp into the current shape, or `undefined` where it carries neither a write nor an attempt.
- * A version-1 file has its flat write fields lifted into `lastWrite`, so an existing machine keeps its stamp.
- */
-function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
-  if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
-    return undefined;
-  }
-  const lastWrite = isHomeWrite(parsed.lastWrite)
-    ? parsed.lastWrite
-    : isHomeWrite(parsed)
-      ? liftWrite(parsed)
-      : undefined;
-  const lastAttempt = isHomeAttempt(parsed.lastAttempt) ? parsed.lastAttempt : undefined;
-  if (lastWrite === undefined && lastAttempt === undefined) {
-    return undefined;
-  }
-  return {
-    schemaVersion: parsed.schemaVersion,
-    ...(lastWrite !== undefined && { lastWrite, ...lastWrite }),
-    ...(lastAttempt !== undefined && { lastAttempt }),
-  };
-}
-
 /** Reads the version-1 write fields off a stamp that carries them at the top level. */
 function liftWrite(parsed: HomeWrite): HomeWrite {
   return {
@@ -220,6 +196,25 @@ function liftWrite(parsed: HomeWrite): HomeWrite {
     ...(parsed.sourceCommit !== undefined && { sourceCommit: parsed.sourceCommit }),
     command: parsed.command,
     writtenAt: parsed.writtenAt,
+  };
+}
+
+/**
+ * Normalizes a parsed stamp into the current shape, or `undefined` where it carries neither a write nor an attempt.
+ */
+function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
+  if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
+    return undefined;
+  }
+  const lastWrite = resolveLastWrite(parsed);
+  const lastAttempt = isHomeAttempt(parsed.lastAttempt) ? parsed.lastAttempt : undefined;
+  if (lastWrite === undefined && lastAttempt === undefined) {
+    return undefined;
+  }
+  return {
+    schemaVersion: parsed.schemaVersion,
+    ...(lastWrite !== undefined && { lastWrite, ...lastWrite }),
+    ...(lastAttempt !== undefined && { lastAttempt }),
   };
 }
 
@@ -237,6 +232,17 @@ async function readSourceCommit(packageRoot: string): Promise<string | undefined
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Reads a stamp's write block, from `lastWrite` or from the version-1 fields a stamp predating it carries at the top
+ * level, so an existing machine keeps its stamp.
+ */
+function resolveLastWrite(parsed: Record<string, unknown>): HomeWrite | undefined {
+  if (isHomeWrite(parsed.lastWrite)) {
+    return parsed.lastWrite;
+  }
+  return isHomeWrite(parsed) ? liftWrite(parsed) : undefined;
 }
 
 /** Writes the stamp, mirroring the write block's fields at the top level for a reader predating `lastWrite`. */
