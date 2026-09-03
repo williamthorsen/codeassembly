@@ -19,7 +19,7 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 | `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                     |
 | `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                       |
 
-Each takes ticket references in the project's own form (`#1163`, `MAC-42`), comma-separated where more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
+Each takes ticket references in the project's own form (`#123`, `ABC-123`), comma-separated where more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
 
 <!-- guidance-hook: ticketing-preferences -->
 
@@ -152,15 +152,15 @@ number=$(echo "$url" | grep -oE '[0-9]+$')
 
 Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
-- If `ticket_ref_prefix` is `#`: `ticket_id` = `{number}`; the `#` is display-only and is added only when forming `ticket_ref` (step 8), e.g. `147` → `#147`
-- If `ticket_ref_prefix` is any other value (e.g., `MAC-`): `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., `MAC-` + `147` → `MAC-147`)
-- If no prefix: `ticket_id` = `{number}` (e.g., `147`)
+- If `ticket_ref_prefix` is `#`: `ticket_id` = `{number}`; the `#` is display-only and is added only when forming `ticket_ref` (step 8), e.g. `123` → `#123`
+- If `ticket_ref_prefix` is any other value (e.g., `ABC-`): `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., `ABC-` + `123` → `ABC-123`)
+- If no prefix: `ticket_id` = `{number}` (e.g., `123`)
 
 #### Jira path
 
 ##### Resolve the project key
 
-Take `integrations.jira.project_key` (step 1) where it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `THOR-` yields `THOR`. Where neither is configured there is no project to create in; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
+Take `integrations.jira.project_key` (step 1) where it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `ABC-` yields `ABC`. Where neither is configured there is no project to create in; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
 
 ##### Resolve the issue type
 
@@ -204,7 +204,7 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
 ##### Record the identifiers
 
-`ticket_id` is the returned key verbatim (e.g. `THOR-140`). The key already carries its project prefix, so the `ticket_ref_prefix` reconstruction the GitHub path performs does not apply here.
+`ticket_id` is the returned key verbatim (e.g. `ABC-123`). The key already carries its project prefix, so the `ticket_ref_prefix` reconstruction the GitHub path performs does not apply here.
 
 `url` is the URL the client returns. Where the client returns none, join `ticket_base_url` (step 1) to the key. Where neither yields one, the work item still exists: report it created by key with no URL, and skip the persist below.
 
