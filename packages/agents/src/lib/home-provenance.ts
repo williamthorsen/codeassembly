@@ -24,7 +24,7 @@ export interface HomeAttempt {
   readonly command: HomeWriteCommand;
   readonly attemptedAt: string;
   readonly outcome: 'failed' | 'succeeded';
-  /** Rendered failure text, so a reader sees what broke without re-running the command. Absent on a success. */
+  /** Rendered failure text, for a reader who opens the stamp. Absent on a success. */
   readonly failureSummary?: string;
   /** How many defects the failure carried, where it carried a list of them. */
   readonly defectCount?: number;

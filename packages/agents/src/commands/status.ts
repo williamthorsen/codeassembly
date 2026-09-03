@@ -65,6 +65,15 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
   }
 }
 
+/** Counts whole days from an ISO timestamp to now, or `undefined` where the timestamp cannot be read. */
+function countDaysSince(timestamp: string): number | undefined {
+  const written = Date.parse(timestamp);
+  if (Number.isNaN(written)) {
+    return undefined;
+  }
+  return Math.floor((Date.now() - written) / MILLISECONDS_PER_DAY);
+}
+
 /**
  * Reports which installation last wrote the home domain, and leads with the last attempt where it failed. A write
  * timestamp alone cannot separate a current deployment from one left behind by an abandoned run, so the failed attempt
@@ -98,15 +107,6 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
     `Home domain last written by ${lastWrite.version} at ${lastWrite.sourcePath}${commit} ` +
       `via \`${lastWrite.command}\` on ${lastWrite.writtenAt}${staleness}`,
   );
-}
-
-/** Counts whole days from an ISO timestamp to now, or `undefined` where the timestamp cannot be read. */
-function countDaysSince(timestamp: string): number | undefined {
-  const written = Date.parse(timestamp);
-  if (Number.isNaN(written)) {
-    return undefined;
-  }
-  return Math.floor((Date.now() - written) / MILLISECONDS_PER_DAY);
 }
 
 /**
