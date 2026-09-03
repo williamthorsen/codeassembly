@@ -25,7 +25,7 @@ Two readers, and the change's work type decides which one is reading. A change w
 
 Public-tier text serves both. Write it for the user, the more external of the two.
 
-Every rule below names the reader that it answers to. A rule that names none has no force, and where the two readers disagree, the tier decides.
+A rule below names its reader wherever the two disagree, and holds for both where it names none. Two rules disagree, and both are in "The stance": what counts as mechanism, and which identifiers a lede may name.
 
 ## What the reader wants
 
@@ -81,15 +81,15 @@ On the gap:
 
 ## The stance
 
-**The change is the subject.** Both readers. A lede reports what the pull request did, not a portrait of the system afterwards and not the deliberation that led to the change. The opening names the artifact or subsystem changed, the package, command, file, or rule, before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" orients the reader in four words; a scenario clause that delays the name makes the reader read on to find out what is under discussion.
+**The change is the subject.** A lede reports what the pull request did, not a portrait of the system afterwards and not the deliberation that led to the change. The opening names the artifact or subsystem changed, the package, command, file, or rule, before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" orients the reader in four words; a scenario clause that delays the name makes the reader read on to find out what is under discussion.
 
-**Every sentence reports an effect of the diff.** Both readers. The symptom ended by a fix, the purpose served by a change, and the invariant preserved by a risky change are effects, even when no hunk states them. The deliberation that produced the diff, the options weighed, the review history, and what the ticket asked for are not. The pull request is written on its own merits, not the ticket's.
+**Every sentence reports an effect of the diff.** The symptom ended by a fix, the purpose served by a change, and the invariant preserved by a risky change are effects, even when no hunk states them. The deliberation that produced the diff, the options weighed, the review history, and what the ticket asked for are not. The pull request is written on its own merits, not the ticket's.
 
 **Mechanism is the accomplishment for the contributor.** The operation performed, the rename, the upgrade, the extraction, the new check, is usually what a change at internal or process tier accomplished, so naming it is the news rather than implementation detail. For the user it is rare, and belongs only where it explains the visible change. Mechanism describing how the accomplishment works internally sits below the line for both readers.
 
 **Name what the reader consumes.** The identifier is often the most informative word in the sentence, backticked. Which identifiers qualify is the thing the two readers disagree about. For the user, an internal function, the lint rule that fired, or a config key that the change happens to read is mechanism with a name attached, and backticking it does not admit it. For the contributor those same names are the subject: A refactor is reported by the modules that it moved. Prefer the category only where identity does not matter ("the maintainer's personal rulebooks", not the two filenames), and never talk around a name the reader is owed: "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. If the reader would have to open the diff to learn what is meant, name it. At public tier, define any term that the audience may not share.
 
-**Claims match the diff.** Both readers. A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial, since unframed placeholder behavior reads as a bug, and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
+**Claims match the diff.** A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial, since unframed placeholder behavior reads as a bug, and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
 ## Openers
 
