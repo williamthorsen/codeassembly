@@ -12,8 +12,8 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
  * `SmokeTestInvocation` that sweeps it. Exercises the git listing, the prose extraction, and the detection pipeline
  * end to end. `HOME` is overridden to the fixture dir so the dev's own preferences do not reach the run.
  */
-export function makeReviseObjectRelativesSmokeTest(): SmokeTestInvocation {
-  const fixtureDir = mkdtempSync(path.join(tmpdir(), 'revise-object-relatives-smoke-'));
+export function makeReviseProseSmokeTest(): SmokeTestInvocation {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), 'revise-prose-smoke-'));
   execFileSync('git', ['-C', fixtureDir, 'init', '--quiet']);
   writeFileSync(path.join(fixtureDir, 'guide.md'), 'Finds the ticket a branch name encodes.\n', 'utf8');
 
@@ -21,7 +21,7 @@ export function makeReviseObjectRelativesSmokeTest(): SmokeTestInvocation {
     args: [],
     cwd: fixtureDir,
     env: { ...process.env, HOME: fixtureDir },
-    assertResult: assertReviseObjectRelativesSmokeResult,
+    assertResult: assertReviseProseSmokeResult,
   };
 }
 
@@ -32,9 +32,9 @@ export function makeReviseObjectRelativesSmokeTest(): SmokeTestInvocation {
  * the construction, so a working pipeline always reports it; its absence means the listing or the extraction found
  * nothing, which must fail here rather than pass as a clean report.
  */
-function assertReviseObjectRelativesSmokeResult(result: unknown): void {
+function assertReviseProseSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
-    throw new TypeError('expected object result from revise-object-relatives');
+    throw new TypeError('expected object result from revise-prose');
   }
   if (result.ok !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);

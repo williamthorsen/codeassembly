@@ -1,4 +1,4 @@
-// Shapes for the revise-object-relatives helper: the prose extracted, the candidates detected, and the JSON payload
+// Shapes for the revise-prose helper: the prose extracted, the candidates detected, and the JSON payload
 // written to stdout.
 //
 // The helper reports; it never writes. Repair selection is judgment, so the payload carries everything an adjudicator

@@ -121,7 +121,7 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
     const coverage = fold.units[rejection.unit];
     if (coverage === undefined || rejection['unit-version'] !== coverage.version) return true;
 
-    return !coverage.roots.some((root) => isUnderRoot(rejection.file, root));
+    return coverage.roots.every((root) => !isUnderRoot(rejection.file, root));
   });
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };

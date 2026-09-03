@@ -37,7 +37,7 @@ describe(collectProse, () => {
   let scratch: string;
 
   beforeEach(async () => {
-    scratch = await mkdtemp(path.join(tmpdir(), 'revise-object-relatives-'));
+    scratch = await mkdtemp(path.join(tmpdir(), 'revise-prose-'));
     execFileSync('git', ['-C', scratch, 'init', '--quiet']);
     for (const [file, content] of Object.entries(FIXTURE_FILES)) {
       await mkdir(path.join(scratch, path.dirname(file)), { recursive: true });
@@ -131,7 +131,7 @@ describe(collectProse, () => {
   });
 
   it('refuses a directory git does not track', async () => {
-    const outside = await mkdtemp(path.join(tmpdir(), 'revise-object-relatives-bare-'));
+    const outside = await mkdtemp(path.join(tmpdir(), 'revise-prose-bare-'));
     try {
       await expect(collectProse({ root: outside, home: outside })).rejects.toThrow(NotARepositoryError);
     } finally {

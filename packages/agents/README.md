@@ -790,15 +790,15 @@ editors:
 
 ## Prose sweep helper
 
-`src/revise-object-relatives/` holds the sweep that a prose-revision skill drives, bundled to `content/skills/revise-object-relatives/revise-object-relatives.mjs`. It reports and records; it revises nothing, so repairs land through the agent's own editing tool.
+`src/revise-prose/` holds the sweep that the `revise-prose` skill drives, bundled to `content/skills/revise-prose/revise-prose.mjs`. It reports and records; it revises nothing, so repairs land through the agent's own editing tool.
 
 One run covers one repository, resolved from the working directory through `git ls-files`.
 
 ### Commands
 
 ```bash
-revise-object-relatives.mjs [detect] [<path>...] [--rule <name>=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
-revise-object-relatives.mjs record < fold.json
+revise-prose.mjs [detect] [<path>...] [--rule <name>=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
+revise-prose.mjs record < fold.json
 ```
 
 `detect` is the default and may be omitted; a leading `detect` or `record` is read as the command, so a repository path colliding with either is written `./record`. Positional paths narrow the sweep, and with none it covers the repository.

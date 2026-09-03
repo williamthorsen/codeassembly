@@ -8,6 +8,8 @@ user-invocable: true
 
 Apply the comment-discipline audit to a target file set, editing comments in place. The default workflow is `{skill:revise-comments}` after a feature is implemented; explicit paths support cleaning up legacy code.
 
+Where the `revise-prose` sweep is wanted on the same files, run this skill first: It decides whether a comment exists at all, and it may delete the very comment that the prose sweep would otherwise polish.
+
 ## Invocation
 
 - `{skill:revise-comments}`: Default target is files committed on the current branch relative to the default branch. To audit uncommitted work, pass explicit paths (`{skill:revise-comments} .` covers the working tree).

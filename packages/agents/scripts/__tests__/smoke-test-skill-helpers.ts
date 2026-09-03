@@ -31,7 +31,7 @@ import { makeKbEditSmokeTest } from '../test-utils/make-kb-edit-smoke-test.ts';
 import { makeKbRetrieveEventsSmokeTest } from '../test-utils/make-kb-retrieve-events-smoke-test.ts';
 import { makeKbUpdateEventsSmokeTest } from '../test-utils/make-kb-update-events-smoke-test.ts';
 import { makeRelayHookEventSmokeTest } from '../test-utils/make-relay-hook-event-smoke-test.ts';
-import { makeReviseObjectRelativesSmokeTest } from '../test-utils/make-revise-object-relatives-smoke-test.ts';
+import { makeReviseProseSmokeTest } from '../test-utils/make-revise-prose-smoke-test.ts';
 import { makeSelectLedeExemplarsSmokeTest } from '../test-utils/make-select-lede-exemplars-smoke-test.ts';
 import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ticket-smoke-test.ts';
 import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts';
@@ -49,7 +49,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
   'src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
   'src/relay-hook-event/cli.ts': makeRelayHookEventSmokeTest(),
-  'src/revise-object-relatives/cli.ts': makeReviseObjectRelativesSmokeTest(),
+  'src/revise-prose/cli.ts': makeReviseProseSmokeTest(),
   'src/select-lede-exemplars/cli.ts': makeSelectLedeExemplarsSmokeTest(),
   'src/update-jira-ticket/cli.ts': makeUpdateJiraTicketSmokeTest(),
 };

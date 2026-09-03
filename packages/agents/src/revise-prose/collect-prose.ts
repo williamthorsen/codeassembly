@@ -1,5 +1,5 @@
 /**
- * Target-set resolution and prose extraction for the revise-object-relatives sweep.
+ * Target-set resolution and prose extraction for the revise-prose sweep.
  *
  * The sweep reads what git tracks plus what git would track, which respects `.gitignore` and so keeps `node_modules/`
  * and `dist/` out for free. Extraction is per file type: Markdown body text, comments and multi-word string literals
