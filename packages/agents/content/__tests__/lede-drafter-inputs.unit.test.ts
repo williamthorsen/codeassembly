@@ -44,7 +44,10 @@ describe('lede-drafter inputs', () => {
   });
 
   it('sends the drafter to no command returning diff hunks', async () => {
-    const found = [...(await EXPANDED).matchAll(HUNK_RETURNING_DIFF)].map((match) => match[0]);
+    const found = (await EXPANDED)
+      .matchAll(HUNK_RETURNING_DIFF)
+      .map((match) => match[0])
+      .toArray();
 
     const message =
       'The drafter reads a diffstat, never the diff. A drafter holding the hunks answers what the change contains ' +

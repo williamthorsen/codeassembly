@@ -293,7 +293,8 @@ function resolveRequest(
     return { ok: true, request: { kind: 'type', workType } };
   }
 
-  const declared = [...new Set([...workTypes.values()].map((workType) => workType.tier))].sort();
+  const tiers = new Set(workTypes.values().map((workType) => workType.tier));
+  const declared = tiers.values().toArray().toSorted();
   if (!declared.includes(args.tier)) {
     return {
       ok: false,

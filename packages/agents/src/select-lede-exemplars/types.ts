@@ -4,8 +4,8 @@
 // The payload is a discriminated union on `ok`. An exhausted corpus is a success carrying a diagnostic rather than a
 // failure: a drafter degrades to no exemplars, and is never blocked by their absence.
 
-import type { WorkType } from '../lib/work-types.ts';
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
+import type { WorkType } from '../lib/work-types.ts';
 
 /**
  * What a selection matches on. A caller that resolved the change's work type selects on it; one that could not
