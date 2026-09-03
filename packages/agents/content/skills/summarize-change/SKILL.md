@@ -40,12 +40,13 @@ Check commit messages for additional context.
 
 6. **Save** per the [Saving](#saving) section.
 
-**Audit before saving.** This audit applies to the `## What` returned in step 5, before step 6 writes the artifact. Read the draft in full and judge it on two counts: the test below, and the three rejection codes beneath it. What you may edit is bounded by the test alone.
+**Verify and audit before saving.** Both apply to the `## What` returned in step 5, before step 6 writes the artifact. The drafter composed from the commit log and the diffstat and never read the diff, so this is where the draft meets it.
 
-- **The test.** No fact appears in both `## What` and `## Details`.
-- **The repair.** Cut the fact from `## What`. Where the fact appears nowhere else, move it into `## Details` instead of deleting it. Deleting and moving down are the whole of your authority.
+- **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed.
+- **The duplication test.** No fact appears in both `## What` and `## Details`.
+- **The repair.** Cut the fact from `## What`. Where the fact appears nowhere else, move it into `## Details` instead of deleting it. Never cut `## Details` to satisfy the test: The lede is the side that gives way, and a session that trimmed `## Details` instead hollowed out the section that exists to hold the detail.
 
-Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
+Striking, correcting, and moving down are the whole of your authority. Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
 
 Redispatch at most twice. After a second redispatch fails, save the artifact with the last draft and report the unresolved code to the developer.
 
@@ -62,7 +63,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The lede, returned by the `lede-drafter` dispatch in Process step 5. Repair it by deleting a duplicated fact or moving it into `## Details`; redispatch for anything else.}
+{The lede, returned by the `lede-drafter` dispatch in Process step 5. Repair it by striking or correcting a claim the diff does not carry, by deleting a duplicated fact, or by moving that fact into `## Details`; redispatch for anything else.}
 
 ## Why
 
