@@ -2691,10 +2691,15 @@ describe(syncGlobalCommand, () => {
     await mkdir(target, { recursive: true });
     await writeFile(path.join(target, 'SKILL.md'), '---\nname: people-report\n---\n\n# Hand-authored\n', 'utf8');
 
-    const error = await syncGlobalCommand(makeOptions(), homeDir, contentDir).catch((raised: unknown) => raised);
+    let raised: unknown;
+    try {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+    } catch (error: unknown) {
+      raised = error;
+    }
 
-    expect(isSyncValidationError(error)).toBe(true);
-    expect(isSyncValidationError(error) && error.defects).toEqual([
+    expect(isSyncValidationError(raised)).toBe(true);
+    expect(isSyncValidationError(raised) && raised.defects).toEqual([
       { file: path.join(target, 'SKILL.md'), kind: 'target', detail: expect.stringMatching(/not owned by sync/i) },
     ]);
     expect(await readFile(path.join(target, 'SKILL.md'), 'utf8')).toContain('Hand-authored');

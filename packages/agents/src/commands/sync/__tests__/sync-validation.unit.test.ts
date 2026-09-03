@@ -103,13 +103,15 @@ async function collectDefects(
   contentDir: string,
   homeDir: string,
 ): Promise<ReadonlyArray<ContentDefect>> {
-  const raised: unknown = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir).catch(
-    (error: unknown) => error,
-  );
-  if (!isSyncValidationError(raised)) {
-    throw new Error(`Expected a SyncValidationError, got: ${String(raised)}`);
+  try {
+    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+  } catch (error: unknown) {
+    if (isSyncValidationError(error)) {
+      return error.defects;
+    }
+    throw error;
   }
-  return raised.defects;
+  throw new Error('Expected sync to fail validation, but it succeeded.');
 }
 
 /** Writes the project-scope declaration verbatim. */
