@@ -93,9 +93,10 @@ export function applyRejections(
  *
  * A unit the run did not name keeps its coverage and its rejections untouched, so a narrowed run never retracts what a
  * wider one recorded. For a unit the run did name, coverage is replaced with what the run covered, and its rejections
- * are replaced by the run's own: an adjudicator who did not re-reject a site at this version has withdrawn it.
- * Rejections recorded at an older version survive both, which is what makes a version bump a review rather than a
- * deletion.
+ * under the roots the run swept are replaced by the run's own: an adjudicator who did not re-reject a site at this
+ * version has withdrawn it. A rejection outside those roots was never revisited, so it is carried forward, which is
+ * what keeps a run narrowed to one directory from retracting the judgment recorded everywhere else. Rejections
+ * recorded at an older version survive both, which is what makes a version bump a review rather than a deletion.
  */
 export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
   const units = { ...prior.units };
@@ -111,15 +112,17 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
     return { ...rejection, 'unit-version': version, hash: hashPhrase(rejection.phrase) };
   });
 
-  const swept = new Set(Object.keys(fold.units));
   // A key the run re-recorded supersedes whatever the record held for it. Without this, a version bump followed by a
   // re-rejection leaves both entries, and which one suppresses a candidate would rest on the sort being stable.
   const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
-  const carried = prior.rejections.filter(
-    (rejection) =>
-      (!swept.has(rejection.unit) || rejection['unit-version'] !== units[rejection.unit]?.version) &&
-      !rerecorded.has(rejectionKey(rejection)),
-  );
+  const carried = prior.rejections.filter((rejection) => {
+    if (rerecorded.has(rejectionKey(rejection))) return false;
+
+    const coverage = fold.units[rejection.unit];
+    if (coverage === undefined || rejection['unit-version'] !== coverage.version) return true;
+
+    return !coverage.roots.some((root) => isUnderRoot(rejection.file, root));
+  });
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };
 }

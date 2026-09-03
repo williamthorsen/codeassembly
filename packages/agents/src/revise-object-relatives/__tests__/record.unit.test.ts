@@ -137,6 +137,26 @@ describe(composeRecord, () => {
     expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
   });
 
+  it('carries forward a rejection outside the roots the run swept, which the run never revisited', () => {
+    const inside = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
+    const outside = rejection({ file: 'src/b.ts', hash: hashPhrase('the level it is probed against') });
+    const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
+
+    const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['docs'] } } }));
+
+    expect(record.rejections).toStrictEqual([outside]);
+  });
+
+  it('withdraws a rejection anywhere in the repository when the run swept the whole of it', () => {
+    const inside = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
+    const outside = rejection({ file: 'src/b.ts', hash: hashPhrase('the level it is probed against') });
+    const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
+
+    const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['.'] } } }));
+
+    expect(record.rejections).toStrictEqual([]);
+  });
+
   it('keeps a rejection recorded at an older version, a bump being a review rather than a deletion', () => {
     const older = rejection({ unit: 'writing', 'unit-version': '1' });
     const prior: ProseRecord = { units: {}, rejections: [older] };
