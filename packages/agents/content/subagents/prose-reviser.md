@@ -16,7 +16,7 @@ Your dispatch carries four scalars:
 - **`root`**: The repository root. Every path below is relative to it.
 - **`files`**: The files in your batch, comma-separated. This list is the whole set of files that you may edit.
 - **`candidates`**: The path of a JSON file holding the detector's candidates for those files. Read it with {tool:Read}.
-- **`units`**: The units in force, each written `name=version`. Every entry in your report names one of them.
+- **`rules`**: The rule ids that the detector covers on this run, comma-separated. They are the vocabulary of your report's `rule` field.
 
 Each candidate object carries `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also carries `shape`, `head`, `subject`, and `verb`. A candidate carrying `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
@@ -24,9 +24,9 @@ Detection is over-inclusive and covers two rules alone. The candidates tell you 
 
 An inline code span reaches a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. Where the elided token decides the reading, read the source line.
 
-## The rules you apply
+## Which rules apply
 
-Three, in the order they appear in this document: the plain-speech rule and its sweep calibration, both below, and the writing preferences at the end. Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string a program prints, and a table cell all count. Code, data, and identifiers do not.
+Three, in the order they appear in this document: the plain-speech rule and its sweep calibration, both below, and the writing preferences at the end. Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
 
 <!-- include: ../_partials/plain-speech.md / -->
 
@@ -38,7 +38,7 @@ Every site gets one of three verdicts.
 
 - **Applied.** The site breaks a rule and the repair is clear. Make the edit with {tool:Edit} and record it.
 - **Rejected.** The site breaks no rule, or it breaks one deliberately. Leave it and record the ground.
-- **Questionable.** The site probably breaks a rule, and the repair is not yours to make alone. Leave it, record the repair you composed, and record the ground for doubt.
+- **Questionable.** The site probably breaks a rule, and the repair is not yours to make alone. Leave it, record the repair that you composed, and record the ground for doubt.
 
 Reject a site outright on any of these grounds:
 
@@ -75,7 +75,6 @@ One fenced JSON block, last and alone. Write no prose after it.
       "file": "docs/architecture.md",
       "line": 14,
       "rule": "reduced-object-relative",
-      "unit": "{the unit your dispatch names for this rule}",
       "phrase": "the ticket the branch name encodes",
       "repair": "the ticket that the branch name encodes"
     }
@@ -85,7 +84,6 @@ One fenced JSON block, last and alone. Write no prose after it.
       "file": "docs/rules.md",
       "line": 61,
       "rule": "reduced-object-relative",
-      "unit": "{the unit your dispatch names for this rule}",
       "phrase": "the source it names",
       "ground": "a quoted exhibit of the construction"
     }
@@ -95,7 +93,6 @@ One fenced JSON block, last and alone. Write no prose after it.
       "file": "src/parse.ts",
       "line": 22,
       "rule": "plain-speech",
-      "unit": "plain-speech",
       "phrase": "the findings arrive as warnings",
       "repair": "the function reports warnings",
       "ground": "the repair names an actor that the original leaves open"
@@ -104,11 +101,11 @@ One fenced JSON block, last and alone. Write no prose after it.
 }
 ```
 
-Every entry carries `file`, `line`, `rule`, `unit`, and `phrase`. An applied or questionable entry also carries `repair`; a rejected or questionable entry also carries `ground`. A list with no entries is written `[]` rather than omitted.
+Every entry carries `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also carries `repair`; a rejected or questionable entry also carries `ground`. A list with no entries is written `[]` rather than omitted.
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` is the candidate's own rule id where the site came from a candidate, and `plain-speech` where you found the site yourself. `unit` is the unit that owns the rule: `plain-speech` for the plain-speech rule, and for every other rule the unit that your `units` scalar names.
+`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Use `plain-speech` where the site breaks the plain-speech rule, which no detector covers. Report no unit: the dispatching agent owns the mapping from a rule to the unit that carries it.
 
 <!-- include: ../_partials/concision.md / -->
 

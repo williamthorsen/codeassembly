@@ -30,10 +30,10 @@ const DECLARED_KEYS: ReadonlySet<string> = new Set([
   'files',
   'rejection',
   'root',
+  'rules',
   'ticket-source',
   'tier',
   'type',
-  'units',
 ]);
 
 /** One line inside a dispatch block that is not a scalar. */
