@@ -4,9 +4,12 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+import { describeError } from '@williamthorsen/toolbelt.errors';
+
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
-import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
+import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../../lib/artifact-types.ts';
 import { type ResolvedDeclaration, resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
+import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from '../../lib/content-defects.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import {
   createSourceResolver,
@@ -15,7 +18,7 @@ import {
   type SourceResolver,
 } from '../../lib/content-sources.ts';
 import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
-import { type DirectArtifacts, resolveClosure } from '../../lib/dependency-resolver.ts';
+import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
@@ -73,6 +76,7 @@ import {
   skillMarker,
   subagentMarker,
 } from './owned-artifacts.ts';
+import { SyncValidationError } from './sync-validation-error.ts';
 
 /** The line an ambient region opens with, so a reader who finds generated guidance knows an edit there is lost. */
 const ambientRegionNote =
@@ -352,36 +356,65 @@ async function reconcileDomain(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
   );
 
+  // Every gate in this phase reports into one collector rather than throwing, so a run reports every defect it found
+  // instead of its first. The list is raised below, before the first call that writes.
+  const defects = createDefectCollector();
+
   // Checked before the closure resolves so a typo names the hook that bound it or the file that declared it;
   // seeding alone would report only that some artifact went missing.
-  await assertBindingsResolve(declaration.guidanceHooks, resolver);
-  await assertDeclaredArtifactsResolve(declaration, domain.ambient === 'harness-home' ? 'home' : 'project', resolver);
+  defects.add(await findUnresolvableBindingDefects(declaration.guidanceHooks, resolver));
+  const declared = await findUnresolvableDeclaredArtifactDefects(
+    declaration,
+    domain.ambient === 'harness-home' ? 'home' : 'project',
+    resolver,
+  );
+  defects.add(declared.defects);
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
-  const closure = await resolveClosure(
-    mergeSeeds([
-      {
-        rulebook: declaration.rulebooks,
-        skill: declaration.skills,
-        subagent: declaration.subagents,
-        collection: declaration.collections,
-      },
-      // A binding is a dependency edge: a bound rulebook deploys per its own `delivery:` without being declared twice.
-      { rulebook: [...new Set(declaration.guidanceHooks.values().toArray().flat())] },
-      ...packageCatalogs,
-    ]),
+  // The walk runs one seed at a time, so a bad edge is attributed to the artifact that owns it and every remaining
+  // seed still resolves. A seed already reported as unresolvable is dropped, so it is not reported twice.
+  const seeded = await resolveSeedClosures(
+    dropUnresolvableSeeds(
+      mergeSeeds([
+        {
+          rulebook: declaration.rulebooks,
+          skill: declaration.skills,
+          subagent: declaration.subagents,
+          collection: declaration.collections,
+        },
+        // A binding is a dependency edge: a bound rulebook deploys per its own `delivery:` without being declared twice.
+        { rulebook: [...new Set(declaration.guidanceHooks.values().toArray().flat())] },
+        ...packageCatalogs,
+      ]),
+      declared.unresolvable,
+    ),
     resolver,
   );
+  defects.add(seeded.defects);
+  const closure = seeded.closure;
   const declaredRulebooks = closure.rulebooks;
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
-  // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
-  const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, resolver)));
-  assertNoSkillNameCollisions(resolved);
-  assertBoundRulebooksDeclareNoHook(declaration.guidanceHooks, resolved);
-  const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, resolver)));
-  const resolvedSubagents = await Promise.all(closure.subagents.map((slug) => resolveDeclaredSubagent(slug, resolver)));
+  // file, invalid frontmatter, or a still-`install` artifact is reported rather than leaving a partial sync. Each pass
+  // resolves what it can: an artifact reported here is simply absent from the passes below.
+  const rulebookResolution = await resolveEachArtifact('rulebook', declaredRulebooks, (slug) =>
+    resolveRulebook(slug, resolver),
+  );
+  const resolved = rulebookResolution.resolved;
+  defects.add(rulebookResolution.defects);
+  defects.add(findSkillNameCollisionDefects(resolved));
+  defects.add(findBoundRulebookHookDefects(declaration.guidanceHooks, resolved));
+  const skillResolution = await resolveEachArtifact('skill', closure.skills, (slug) =>
+    resolveDeclaredSkill(slug, resolver),
+  );
+  const resolvedSkills = skillResolution.resolved;
+  defects.add(skillResolution.defects);
+  const subagentResolution = await resolveEachArtifact('subagent', closure.subagents, (slug) =>
+    resolveDeclaredSubagent(slug, resolver),
+  );
+  const resolvedSubagents = subagentResolution.resolved;
+  defects.add(subagentResolution.defects);
 
   // Maps each skill-delivery rulebook's stable slug to the directory its skill currently belongs in. Retraction
   // compares this against what each owned directory's marker reports, so a renamed skill retracts its old dir.
@@ -397,7 +430,7 @@ async function reconcileDomain(
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
   // delivery namespaces would clobber, so reject the overlap before any write.
-  assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
+  defects.add(findCrossNamespaceCollisionDefects(desiredSkillDirs.values().toArray(), declaredSkillSet));
 
   // Every delivery pass below targets this one set of harnesses, and each renders its content for the harness it
   // lands on, so the set is resolved once and threaded rather than re-derived per pass.
@@ -502,31 +535,48 @@ async function reconcileDomain(
   // Before any write or delete, fail closed on any skill or subagent target that already exists without this sync's
   // ownership marker — an install-managed or hand-authored file. The marker-gated retraction scans keep such files
   // from being deleted; this keeps them from being overwritten. Runs in dry-run too, so a preview surfaces the conflict.
-  await assertNoForeignOwnedTargets(
-    collectOwnedTargets(harnessSkillTargets, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
+  defects.add(
+    await findForeignOwnedTargetDefects(
+      collectOwnedTargets(harnessSkillTargets, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
+    ),
   );
 
   // Render every declared skill against every targeted harness up front, so a broken include or an unmapped tool
   // placeholder fails the whole run — dry-run included — before any file is written. The rendered output is discarded
   // here; `deploySkill` re-renders it at write time.
-  await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills, resolveAnchorContext);
+  defects.add(await findDeclaredSkillRenderDefects(harnessSkillTargets, resolvedSkills, resolveAnchorContext));
 
   // Same gate for each source's support entries, whose defects would otherwise surface only at the write below. The
   // rendered result is carried to the preview and the delivery pass rather than rendered again by each.
-  const sourceSupportPlans = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
+  const sourceSupport = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
+  const sourceSupportPlans = sourceSupport.plans;
+  defects.add(sourceSupport.defects);
 
   // Same gate for subagents, whose deploy is the last write pass: Without it a render failure lands after the ambient
   // host and every skill file are already on disk.
-  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents, resolveAnchorContext, resolveOverlay);
+  defects.add(
+    await findDeclaredSubagentRenderDefects(
+      harnessSubagentTargets,
+      resolvedSubagents,
+      resolveAnchorContext,
+      resolveOverlay,
+    ),
+  );
 
   // Same gate for rulebooks: A link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
-  assertRulebooksRender(harnessIds, resolved, resolveRulebookContext);
+  defects.add(findRulebookRenderDefects(harnessIds, resolved, resolveRulebookContext));
 
   // Reject a sync-owned ambient host whose region is half-written before anything is written, dry-run included.
   // Appending beside a stray marker is the one path in this command that can destroy hand-authored content.
   const ambientHosts = resolveAmbientHosts(harnessIds, domain);
-  await assertAmbientHostsWritable(ambientHosts, domain, resolved);
+  defects.add(await findDamagedAmbientHostDefects(ambientHosts, domain, resolved));
+
+  // Every gate above has reported. Raised here, ahead of `retireRetiredOutputs`, which is the first call in this
+  // phase that writes, so a failing run leaves the previously deployed guidance exactly as it found it.
+  if (defects.found.length > 0) {
+    throw new SyncValidationError(defects.found);
+  }
 
   // Attribute each deployed artifact to the source it resolved from, flagging any that shadows a same-slug library
   // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
@@ -654,6 +704,62 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
   return merged;
 }
 
+/** Collects the defects a sync's pre-write gates report, so the run fails once on the whole list. */
+interface DefectCollector {
+  add(found: ReadonlyArray<ContentDefect>): void;
+  readonly found: ReadonlyArray<ContentDefect>;
+}
+
+/** Builds the collector every pre-write gate reports into. */
+function createDefectCollector(): DefectCollector {
+  const collected: Array<ContentDefect> = [];
+  return {
+    add(found) {
+      collected.push(...found);
+    },
+    get found() {
+      return collected;
+    },
+  };
+}
+
+/** Declared slugs per type that resolve from nowhere, so the closure walk can skip a seed already reported. */
+type UnresolvableSlugs = Record<ArtifactType, ReadonlySet<string>>;
+
+/**
+ * Drops every seed already reported as unresolvable, so the closure walk does not report the same slug a second time
+ * as a missing edge. A slug reachable only through a dropped seed is unreported here, and the dropped seed's own
+ * defect is what sends the reader to it.
+ */
+function dropUnresolvableSeeds(seeds: DirectArtifacts, unresolvable: UnresolvableSlugs): DirectArtifacts {
+  const kept: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };
+  for (const type of ARTIFACT_TYPE_VALUES) {
+    kept[type] = (seeds[type] ?? []).filter((slug) => !unresolvable[type].has(slug));
+  }
+  return kept;
+}
+
+/**
+ * Resolves each slug, reporting the ones that fail rather than abandoning the rest. What resolved is what the passes
+ * below run over, so an artifact reported here is absent from them rather than carried forward half-resolved.
+ */
+async function resolveEachArtifact<T>(
+  type: ArtifactType,
+  slugs: ReadonlyArray<string>,
+  resolve: (slug: string) => Promise<T>,
+): Promise<{ resolved: ReadonlyArray<T>; defects: ReadonlyArray<ContentDefect> }> {
+  const resolved: Array<T> = [];
+  const defects: Array<ContentDefect> = [];
+  for (const slug of slugs) {
+    try {
+      resolved.push(await resolve(slug));
+    } catch (error: unknown) {
+      defects.push({ file: artifactFrontmatterPath(type, slug), kind: 'resolution', detail: describeError(error) });
+    }
+  }
+  return { resolved, defects };
+}
+
 /** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
 interface OwnedTarget {
   readonly filePath: string;
@@ -661,73 +767,102 @@ interface OwnedTarget {
 }
 
 /**
- * Throws when a guidance-hook binding names a rulebook that resolves from no declared source or the library, naming
+ * Reports each guidance-hook binding naming a rulebook that resolves from no declared source or the library, naming
  * both the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an anonymous
  * missing reference: the hook name is the half that says where to go and fix it.
  */
-async function assertBindingsResolve(
+async function findUnresolvableBindingDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
   resolver: SourceResolver,
-): Promise<void> {
+): Promise<ReadonlyArray<ContentDefect>> {
+  const defects: Array<ContentDefect> = [];
   for (const [hook, slugs] of bindings) {
     for (const slug of slugs) {
       if ((await resolver.resolve('rulebook', slug)) === undefined) {
-        throw new Error(
-          `Guidance hook "${hook}" binds rulebook "${slug}", which was not found in any of: ` +
+        defects.push({
+          file: artifactFrontmatterPath('rulebook', slug),
+          kind: 'resolution',
+          detail:
+            `Guidance hook "${hook}" binds rulebook "${slug}", which was not found in any of: ` +
             describeSearchedLocations(resolver, 'rulebook', slug),
-        );
+        });
       }
     }
   }
+  return defects;
 }
 
 /**
- * Throws when a declaration's own `use:` list names an artifact that resolves from no declared source or the
+ * Reports each artifact a declaration's own `use:` list names that resolves from no declared source or the
  * library, naming the chain files that declare it alongside the slug. The closure catches the same slug, but only
  * as an anonymous missing reference: The declaring file is the half that says where to go and fix it, and a path
  * derived from the domain cannot supply it, since either tier of the chain could have named the slug.
  */
-async function assertDeclaredArtifactsResolve(
+async function findUnresolvableDeclaredArtifactDefects(
   declaration: ResolvedDeclaration,
   scope: 'home' | 'project',
   resolver: SourceResolver,
-): Promise<void> {
+): Promise<{ defects: ReadonlyArray<ContentDefect>; unresolvable: UnresolvableSlugs }> {
+  const defects: Array<ContentDefect> = [];
+  const unresolvable: Record<ArtifactType, Set<string>> = {
+    rulebook: new Set(),
+    skill: new Set(),
+    subagent: new Set(),
+    collection: new Set(),
+  };
   for (const type of ARTIFACT_TYPE_VALUES) {
     const declared = declaration.declaredIn[type];
     for (const [slug, declaredIn] of declared) {
-      if ((await resolver.resolve(type, slug)) === undefined) {
-        throw new Error(
-          `The ${scope} declaration (${declaredIn.join(', ')}) declares ${type} "${slug}", which was not found ` +
-            `in any of: ${describeSearchedLocations(resolver, type, slug)}`,
-        );
+      if ((await resolver.resolve(type, slug)) !== undefined) {
+        continue;
       }
+
+      unresolvable[type].add(slug);
+      defects.push({
+        file: artifactFrontmatterPath(type, slug),
+        kind: 'resolution',
+        detail:
+          `The ${scope} declaration (${declaredIn.join(', ')}) declares ${type} "${slug}", which was not found ` +
+          `in any of: ${describeSearchedLocations(resolver, type, slug)}`,
+      });
     }
   }
+  return { defects, unresolvable };
 }
 
 /**
- * Throws when a bound rulebook's own body declares a guidance hook. Bound guidance is spliced as rendered, so a hook
+ * Reports each bound rulebook whose own body declares a guidance hook. Bound guidance is spliced as rendered, so a hook
  * inside it has no pass left that could fill it. Checked here, against the unrendered body, because the rulebook
  * renderer strips the directive and the evidence is gone by the time a fill is built.
  */
-function assertBoundRulebooksDeclareNoHook(
+function findBoundRulebookHookDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
   resolved: ReadonlyArray<ResolvedRulebook>,
-): void {
+): ReadonlyArray<ContentDefect> {
+  const defects: Array<ContentDefect> = [];
   const bySlug = indexRulebooksBySlug(resolved);
   for (const [hook, slugs] of bindings) {
     for (const slug of slugs) {
-      const declared = listGuidanceHooks(readBoundRulebook(bySlug, slug, hook).body, `guidance/rulebooks/${slug}.md`);
+      // A bound rulebook the resolution pass rejected is absent from the closure, and its own defect already names it.
+      const bound = bySlug.get(slug);
+      if (bound === undefined) {
+        continue;
+      }
+      const declared = listGuidanceHooks(bound.body, `guidance/rulebooks/${slug}.md`);
       if (declared.length > 0) {
         const names = declared.map((declaration) => declaration.name).join(', ');
-        throw new Error(
-          `Rulebook "${slug}", bound to guidance hook "${hook}", declares a guidance hook of its own (${names}). ` +
+        defects.push({
+          file: artifactFrontmatterPath('rulebook', slug),
+          kind: 'frontmatter',
+          detail:
+            `Rulebook "${slug}", bound to guidance hook "${hook}", declares a guidance hook of its own (${names}). ` +
             'Bound guidance is spliced as rendered, so nothing can fill a hook inside it: remove the directive, or ' +
             'bind a rulebook that carries none.',
-        );
+        });
       }
     }
   }
+  return defects;
 }
 
 /**
@@ -746,10 +881,19 @@ function buildGuidanceHookFills(
   for (const [hook, slugs] of bindings) {
     fills.set(
       hook,
-      slugs.map((slug) => {
-        const rulebook = readBoundRulebook(bySlug, slug, hook);
-        const context = resolveRulebookContext(harnessId, rulebook.source);
-        return { slug, body: renderRulebookBody(rulebook.body, slug, context), version: rulebook.version };
+      slugs.flatMap((slug) => {
+        // A bound rulebook the resolution or render gate rejected is left out rather than raised again here: its own
+        // defect names it, and the run fails on the collected list before anything is written.
+        const rulebook = bySlug.get(slug);
+        if (rulebook === undefined) {
+          return [];
+        }
+        try {
+          const context = resolveRulebookContext(harnessId, rulebook.source);
+          return [{ slug, body: renderRulebookBody(rulebook.body, slug, context), version: rulebook.version }];
+        } catch {
+          return [];
+        }
       }),
     );
   }
@@ -832,12 +976,14 @@ function readBoundRulebook(
 }
 
 /**
- * Throws when any planned target already exists without this sync's ownership marker — an install-managed or
+ * Reports every planned target that already exists without this sync's ownership marker — an install-managed or
  * hand-authored file. Failing here, before any write or delete, is what keeps a same-named foreign file from being
  * overwritten; the marker-gated retraction scans separately keep it from being deleted. Absent targets are safe.
  */
-async function assertNoForeignOwnedTargets(targets: ReadonlyArray<OwnedTarget>): Promise<void> {
-  const foreign: Array<string> = [];
+async function findForeignOwnedTargetDefects(
+  targets: ReadonlyArray<OwnedTarget>,
+): Promise<ReadonlyArray<ContentDefect>> {
+  const defects: Array<ContentDefect> = [];
   for (const target of targets) {
     let content: string;
     try {
@@ -849,15 +995,16 @@ async function assertNoForeignOwnedTargets(targets: ReadonlyArray<OwnedTarget>):
       throw error;
     }
     if (!target.isOwned(content)) {
-      foreign.push(target.filePath);
+      defects.push({
+        file: target.filePath,
+        kind: 'target',
+        detail:
+          'Refusing to overwrite a file not owned by sync (install-managed or hand-authored). Rename or remove it, ' +
+          'or retire the conflicting install artifact, then re-run.',
+      });
     }
   }
-  if (foreign.length > 0) {
-    throw new Error(
-      `Refusing to overwrite ${foreign.length} file(s) not owned by sync (install-managed or hand-authored): ` +
-        `${foreign.join(', ')}. Rename or remove them, or retire the conflicting install artifact, then re-run.`,
-    );
-  }
+  return defects;
 }
 
 /**
@@ -903,36 +1050,36 @@ function collectOwnedTargets(
 }
 
 /**
- * Throws when a rulebook-skill directory name and a declared-skill directory name collide, which would let the two
+ * Reports each rulebook-skill directory name colliding with a declared-skill directory name, which would let the two
  * delivery namespaces clobber each other in a shared project-local skills dir. Failing here, before any write,
  * forces the conflict to be resolved by renaming one side rather than letting the last write win.
  */
-function assertNoCrossNamespaceCollisions(
+function findCrossNamespaceCollisionDefects(
   rulebookSkillDirs: ReadonlyArray<string>,
   declaredSkillSlugs: ReadonlySet<string>,
-): void {
-  const collisions = findCrossNamespaceCollisions(rulebookSkillDirs, declaredSkillSlugs);
-  if (collisions.length > 0) {
-    throw new Error(
-      `Skill directory name collision across delivery namespaces: ${collisions.join(', ')} ` +
-        'is delivered as both a rulebook skill and a declared skill. Rename one so they no longer share a directory.',
-    );
-  }
+): ReadonlyArray<ContentDefect> {
+  return findCrossNamespaceCollisions(rulebookSkillDirs, declaredSkillSlugs).map((name) => ({
+    file: artifactFrontmatterPath('skill', name),
+    kind: 'collision',
+    detail:
+      `Skill directory name collision across delivery namespaces: ${name} is delivered as both a rulebook skill ` +
+      'and a declared skill. Rename one so they no longer share a directory.',
+  }));
 }
 
 /**
- * Throws when two skill-delivery rulebooks resolve to the same skill name, which would share one directory and
+ * Reports every pair of skill-delivery rulebooks resolving to the same skill name, which would share one directory and
  * clobber each other. Failing here, before any write, forces the conflict to be resolved with a `skill-name`
  * override rather than silently letting the last write win.
  */
-function assertNoSkillNameCollisions(resolved: ReadonlyArray<ResolvedRulebook>): void {
-  const collision = findSkillNameCollisions(resolved)[0];
-  if (collision !== undefined) {
-    throw new Error(
+function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRulebook>): ReadonlyArray<ContentDefect> {
+  return findSkillNameCollisions(resolved).map((collision) => ({
+    file: artifactFrontmatterPath('rulebook', collision.slugs[0] ?? collision.skillName),
+    kind: 'collision',
+    detail:
       `Skill name collision: rulebooks ${collision.slugs.join(', ')} all resolve to skill "${collision.skillName}". ` +
-        'Give all but one a distinct `skill-name`.',
-    );
-  }
+      'Give all but one a distinct `skill-name`.',
+  }));
 }
 
 /**
@@ -1035,16 +1182,26 @@ async function renderSourceSupportPlans(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
   resolveAnchorContext: ResolveAnchorContext,
-): Promise<ReadonlyArray<SourceSupportPlan>> {
+): Promise<{ plans: ReadonlyArray<SourceSupportPlan>; defects: ReadonlyArray<ContentDefect> }> {
   const plans: Array<SourceSupportPlan> = [];
+  const raised: Array<HarnessDefect> = [];
   for (const target of targets) {
     const sourcesRoot = path.join(target.skillsDir, SOURCE_SUPPORT_DIR);
     for (const source of sources) {
       const destDir = path.join(sourcesRoot, source.name);
-      const entries = await renderSourceSupport(source.dir, {
-        ...target.deployContext,
-        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
-      });
+      let entries: ReadonlyArray<RenderedSkillEntry>;
+      try {
+        entries = await renderSourceSupport(source.dir, {
+          ...target.deployContext,
+          anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
+        });
+      } catch (error: unknown) {
+        raised.push({
+          harnessId: target.harnessId,
+          defect: { file: path.join(source.dir, SOURCE_SUPPORT_DIR), kind: 'render', detail: describeError(error) },
+        });
+        continue;
+      }
       plans.push({
         sourcesRoot,
         name: source.name,
@@ -1054,7 +1211,13 @@ async function renderSourceSupportPlans(
       });
     }
   }
-  return plans;
+  return {
+    plans,
+    defects: foldHarnessDefects(
+      raised,
+      targets.map((target) => target.harnessId),
+    ),
+  };
 }
 
 /** Names what delivery does at a namespace directory, given whether its source ships content and whether it exists. */
@@ -1081,66 +1244,98 @@ async function planSourceSupportRetractions(
   return retractions;
 }
 
+/** Builds one artifact's render defect, holding the harness so the fold can tell a body-local failure from a scoped one. */
+function describeRenderDefect(type: ArtifactType, slug: string, harnessId: HarnessId, error: unknown): HarnessDefect {
+  return {
+    harnessId,
+    defect: { file: artifactFrontmatterPath(type, slug), kind: 'render', detail: describeError(error) },
+  };
+}
+
 /**
  * Renders every declared skill against every targeted harness, discarding the output, so a broken include or an
- * unmapped tool placeholder throws before any file is written. The deploy pass re-renders at write time; this pass
- * exists only to fail the run closed, including under `--dry-run`.
+ * unmapped tool placeholder is reported before any file is written. The deploy pass re-renders at write time; this
+ * pass exists only to fail the run closed, including under `--dry-run`.
  */
-async function assertDeclaredSkillsRender(
+async function findDeclaredSkillRenderDefects(
   targets: ReadonlyArray<HarnessSkillTarget>,
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
   resolveAnchorContext: ResolveAnchorContext,
-): Promise<void> {
+): Promise<ReadonlyArray<ContentDefect>> {
+  const raised: Array<HarnessDefect> = [];
   for (const target of targets) {
     for (const skill of resolvedSkills) {
       if (!skillTargetsHarness(skill, target.harnessId)) {
         continue;
       }
-      await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, {
-        ...target.deployContext,
-        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
-      });
+      try {
+        await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, {
+          ...target.deployContext,
+          anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
+        });
+      } catch (error: unknown) {
+        raised.push(describeRenderDefect('skill', skill.slug, target.harnessId, error));
+      }
     }
   }
+  return foldHarnessDefects(
+    raised,
+    targets.map((target) => target.harnessId),
+  );
 }
 
 /**
  * Renders every declared subagent against every targeted harness, discarding the output, so an unmapped tool
- * placeholder or a rulebook token throws before any file is written. `reconcileDeclaredSubagents` re-renders at write
+ * placeholder or a rulebook token is reported before any file is written. `reconcileDeclaredSubagents` re-renders at write
  * time; this pass exists only to fail the run closed, including under `--dry-run`.
  */
-async function assertDeclaredSubagentsRender(
+async function findDeclaredSubagentRenderDefects(
   targets: ReadonlyArray<HarnessSubagentTarget>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
   resolveAnchorContext: ResolveAnchorContext,
   resolveOverlay: ResolveOverlay,
-): Promise<void> {
+): Promise<ReadonlyArray<ContentDefect>> {
+  const raised: Array<HarnessDefect> = [];
   for (const target of targets) {
     for (const subagent of resolvedSubagents) {
-      await renderSubagent(subagent, {
-        ...target.deployContext,
-        anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
-        overlayYaml: await resolveOverlay(target.harnessId, subagent.contentRoot),
-      });
+      try {
+        await renderSubagent(subagent, {
+          ...target.deployContext,
+          anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+          overlayYaml: await resolveOverlay(target.harnessId, subagent.contentRoot),
+        });
+      } catch (error: unknown) {
+        raised.push(describeRenderDefect('subagent', subagent.slug, target.harnessId, error));
+      }
     }
   }
+  return foldHarnessDefects(
+    raised,
+    targets.map((target) => target.harnessId),
+  );
 }
 
 /**
  * Renders every resolved rulebook against every targeted harness, discarding the output, so a link target the
- * delivery pipeline cannot honor throws before any file is written. Both delivery passes re-render at write time;
+ * delivery pipeline cannot honor is reported before any file is written. Both delivery passes re-render at write time;
  * this pass exists only to fail the run closed, including under `--dry-run`.
  */
-function assertRulebooksRender(
+function findRulebookRenderDefects(
   harnessIds: ReadonlyArray<HarnessId>,
   resolved: ReadonlyArray<ResolvedRulebook>,
   resolveRulebookContext: ResolveRulebookContext,
-): void {
+): ReadonlyArray<ContentDefect> {
+  const raised: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
     for (const rulebook of resolved) {
-      renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
+      try {
+        renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
+      } catch (error: unknown) {
+        raised.push(describeRenderDefect('rulebook', rulebook.slug, harnessId, error));
+      }
     }
   }
+  return foldHarnessDefects(raised, harnessIds);
 }
 
 /**
@@ -1263,33 +1458,33 @@ async function probeAmbientHost(hostPath: string): Promise<AmbientHostState> {
 }
 
 /**
- * Throws when a host `sync` would write already carries a damaged region — an unmatched marker, or more than one.
+ * Reports every host `sync` would write that already carries a damaged region — an unmatched marker, or more than one.
  * Only the sync-owned project-local host can be appended to, so only it needs the guard; the harness-home path skips
  * such a file with a warning instead. Runs before any write so a dry-run surfaces the conflict with nothing changed.
  */
-async function assertAmbientHostsWritable(
+async function findDamagedAmbientHostDefects(
   hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
-): Promise<void> {
+): Promise<ReadonlyArray<ContentDefect>> {
   // Asks whether anything would be delivered, which is a property of the declaration alone. Rendering could answer it
   // too, but rendering can now fail on a bad link, and this guard is about region damage rather than link validity.
   if (domain.ambient !== 'project-local' || resolved.every((rulebook) => !rulebook.ambient)) {
-    return;
+    return [];
   }
-  const malformed: Array<string> = [];
+  const defects: Array<ContentDefect> = [];
   for (const { hostPath } of hosts) {
     if ((await probeAmbientHost(hostPath)).status === 'malformed') {
-      malformed.push(hostPath);
+      defects.push({
+        file: hostPath,
+        kind: 'target',
+        detail:
+          'Refusing to deliver ambient guidance into a file carrying a damaged ambient region (an unmatched marker, ' +
+          'or more than one region). Repair the codeassembly-ambient markers, then re-run.',
+      });
     }
   }
-  if (malformed.length > 0) {
-    throw new Error(
-      `Refusing to deliver ambient guidance into ${malformed.length} file(s) carrying a damaged ambient region ` +
-        `(an unmatched marker, or more than one region): ${malformed.join(', ')}. Repair the codeassembly-ambient ` +
-        'markers, then re-run.',
-    );
-  }
+  return defects;
 }
 
 /**

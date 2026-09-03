@@ -4,8 +4,8 @@ import path from 'node:path';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
-import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
-import type { ContentDefect } from './content-defects.ts';
+import { ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
+import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from './content-defects.ts';
 import { resolveContentDir } from './content-resolver.ts';
 import {
   type ContentFormatProblem,
@@ -13,7 +13,7 @@ import {
   findContentFormatProblem,
 } from './content-root-manifest.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
-import { type DirectArtifacts, resolveClosure, type ResolvedClosure } from './dependency-resolver.ts';
+import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from './fs-helpers.ts';
@@ -119,12 +119,6 @@ interface ResolvedArtifacts {
   readonly skills: ReadonlyArray<ResolvedSkill>;
   readonly subagents: ReadonlyArray<ResolvedSubagent>;
   readonly defects: ReadonlyArray<ContentDefect>;
-}
-
-/** A render defect paired with the harness whose render raised it, before harness-invariant ones are collapsed. */
-interface HarnessDefect {
-  readonly harnessId: HarnessId;
-  readonly defect: ContentDefect;
 }
 
 /**
@@ -261,33 +255,6 @@ async function findRetiredOverlayKeyDefects(
     }
   }
   return defects;
-}
-
-/**
- * Collapses per-harness render defects into one list. A defect every validated harness raised is emitted once, since
- * it is a property of the source rather than of any harness; one raised by a subset keeps the harnesses in its detail,
- * because that subset is the finding.
- */
-function foldHarnessDefects(
-  raised: ReadonlyArray<HarnessDefect>,
-  harnessIds: ReadonlyArray<HarnessId>,
-): ReadonlyArray<ContentDefect> {
-  const byDefect = new Map<string, { defect: ContentDefect; harnesses: Array<HarnessId> }>();
-  for (const { harnessId, defect } of raised) {
-    const key = JSON.stringify([defect.file, defect.kind, defect.detail]);
-    const entry = byDefect.get(key);
-    if (entry === undefined) {
-      byDefect.set(key, { defect, harnesses: [harnessId] });
-    } else if (!entry.harnesses.includes(harnessId)) {
-      entry.harnesses.push(harnessId);
-    }
-  }
-
-  return Array.from(byDefect.values(), ({ defect, harnesses }) =>
-    harnesses.length === harnessIds.length
-      ? defect
-      : { ...defect, detail: `${defect.detail} (${harnesses.join(', ')})` },
-  );
 }
 
 /** True when an artifact resolved from the content root rather than from the built-in library behind it. */
@@ -461,53 +428,6 @@ async function resolveArtifacts(closure: ResolvedClosure, resolver: SourceResolv
   }
 
   return { rulebooks, skills, subagents, defects };
-}
-
-/**
- * Walks the dependency closure one seed at a time and unions what each reaches. `resolveClosure` throws on the first
- * bad edge, so seeding it with the whole catalog would report one defect and abandon every artifact behind it; per-seed
- * makes each failure attributable to the artifact that owns the edge and lets the remaining seeds resolve.
- */
-async function resolveSeedClosures(
-  seeds: DirectArtifacts,
-  resolver: SourceResolver,
-): Promise<{ closure: ResolvedClosure; defects: ReadonlyArray<ContentDefect> }> {
-  const defects: Array<ContentDefect> = [];
-  const reached = { rulebook: new Set<string>(), skill: new Set<string>(), subagent: new Set<string>() };
-
-  for (const type of ARTIFACT_TYPE_VALUES) {
-    const slugs = seeds[type] ?? [];
-    for (const slug of slugs) {
-      const seed: DirectArtifacts = { [type]: [slug] };
-      try {
-        const closure = await resolveClosure(seed, resolver);
-        for (const reachedSlug of closure.rulebooks) {
-          reached.rulebook.add(reachedSlug);
-        }
-        for (const reachedSlug of closure.skills) {
-          reached.skill.add(reachedSlug);
-        }
-        for (const reachedSlug of closure.subagents) {
-          reached.subagent.add(reachedSlug);
-        }
-      } catch (error: unknown) {
-        defects.push({
-          file: artifactFrontmatterPath(type, slug),
-          kind: 'dependency',
-          detail: describeError(error),
-        });
-      }
-    }
-  }
-
-  return {
-    closure: {
-      rulebooks: Array.from(reached.rulebook).toSorted(),
-      skills: Array.from(reached.skill).toSorted(),
-      subagents: Array.from(reached.subagent).toSorted(),
-    },
-    defects,
-  };
 }
 
 // endregion | Helpers

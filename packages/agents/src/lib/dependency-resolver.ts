@@ -1,7 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { describeError } from '@williamthorsen/toolbelt.errors';
+
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
+import type { ContentDefect } from './content-defects.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import {
   type ArtifactDependencies,
@@ -75,6 +78,53 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
     rulebooks: [...reached.rulebook],
     skills: [...reached.skill],
     subagents: [...reached.subagent],
+  };
+}
+
+/**
+ * Walks the dependency closure one seed at a time and unions what each reaches. `resolveClosure` throws on the first
+ * bad edge, so seeding it with the whole catalog would report one defect and abandon every artifact behind it; per-seed
+ * makes each failure attributable to the artifact that owns the edge and lets the remaining seeds resolve.
+ */
+export async function resolveSeedClosures(
+  seeds: DirectArtifacts,
+  resolver: SourceResolver,
+): Promise<{ closure: ResolvedClosure; defects: ReadonlyArray<ContentDefect> }> {
+  const defects: Array<ContentDefect> = [];
+  const reached = { rulebook: new Set<string>(), skill: new Set<string>(), subagent: new Set<string>() };
+
+  for (const type of ARTIFACT_TYPE_VALUES) {
+    const slugs = seeds[type] ?? [];
+    for (const slug of slugs) {
+      const seed: DirectArtifacts = { [type]: [slug] };
+      try {
+        const closure = await resolveClosure(seed, resolver);
+        for (const reachedSlug of closure.rulebooks) {
+          reached.rulebook.add(reachedSlug);
+        }
+        for (const reachedSlug of closure.skills) {
+          reached.skill.add(reachedSlug);
+        }
+        for (const reachedSlug of closure.subagents) {
+          reached.subagent.add(reachedSlug);
+        }
+      } catch (error: unknown) {
+        defects.push({
+          file: artifactFrontmatterPath(type, slug),
+          kind: 'dependency',
+          detail: describeError(error),
+        });
+      }
+    }
+  }
+
+  return {
+    closure: {
+      rulebooks: Array.from(reached.rulebook).toSorted(),
+      skills: Array.from(reached.skill).toSorted(),
+      subagents: Array.from(reached.subagent).toSorted(),
+    },
+    defects,
   };
 }
 
