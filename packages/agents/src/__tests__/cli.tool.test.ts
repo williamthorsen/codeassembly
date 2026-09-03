@@ -155,12 +155,13 @@ describe('CLI sync --warn-only', () => {
     expect(result.stderr).toContain('bad-source');
   });
 
-  it('when --warn-only is passed, exits 0 and warns that guidance may be stale', async () => {
+  it('when --warn-only is passed, exits 0 and says the previous guidance remains in effect', async () => {
     const result = await runCliIn(projectRoot, 'sync', '--warn-only');
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toContain('bad-source');
-    expect(result.stderr).toContain('may be stale');
+    expect(result.stderr).toContain('Nothing was written');
+    expect(result.stderr).toContain('previously deployed guidance remains in effect');
   });
 
   it('lists --warn-only in --help', async () => {
@@ -168,5 +169,60 @@ describe('CLI sync --warn-only', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('--warn-only');
+  });
+});
+
+describe('CLI sync failure reporting', () => {
+  let projectRoot: string;
+  let sourceDir: string;
+
+  beforeEach(async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    projectRoot = path.join(tmpdir(), `agents-test-sync-report-proj-${stamp}`);
+    sourceDir = path.join(tmpdir(), `agents-test-sync-report-src-${stamp}`);
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await mkdir(path.join(sourceDir, 'guidance', 'rulebooks'), { recursive: true });
+    // Unquoted, `version` reaches the schema as a number and the rulebook is rejected: two of them, so one run has
+    // more than one defect to report.
+    for (const slug of ['alpha', 'beta']) {
+      await writeFile(
+        path.join(sourceDir, 'guidance', 'rulebooks', `${slug}.md`),
+        `---\nslug: ${slug}\ndelivery: ambient\nversion: 1\n---\n\n# ${slug}\n\nGuidance.\n`,
+        'utf8',
+      );
+    }
+    await writeFile(
+      path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+      `sources:\n  - name: org\n    path: ${sourceDir}\nrulebooks:\n  use:\n    - alpha\n    - beta\n`,
+      'utf8',
+    );
+  });
+
+  afterEach(async () => {
+    await rm(projectRoot, { recursive: true, force: true });
+    await rm(sourceDir, { recursive: true, force: true });
+  });
+
+  it('reports every invalid rulebook in one run, grouped by file', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--harness', 'claude');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('sync found 2 defect(s)');
+    expect(result.stderr).toContain('guidance/rulebooks/alpha.md');
+    expect(result.stderr).toContain('guidance/rulebooks/beta.md');
+  });
+
+  it('renders the defect list as its own block rather than behind the `Error:` prefix', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--harness', 'claude');
+
+    expect(result.stderr).not.toMatch(/^Error:/m);
+  });
+
+  it('states that nothing was written and the previous guidance remains in effect', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--harness', 'claude');
+
+    expect(result.stderr).toContain('Nothing was written');
+    expect(result.stderr).toContain('previously deployed guidance remains in effect');
+    expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(false);
   });
 });

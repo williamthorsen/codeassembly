@@ -4,6 +4,8 @@ import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { formatContentDefects } from './lib/content-defects.ts';
+
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand, initGlobalCommand } from './commands/init.ts';
@@ -11,6 +13,7 @@ import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
 import { renderDryRunReport, renderSyncReport } from './commands/sync/report.ts';
+import { isSyncValidationError } from './commands/sync/sync-validation-error.ts';
 import { syncCommand, syncGlobalCommand } from './commands/sync/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
@@ -26,6 +29,9 @@ const VALID_HARNESS_IDS: ReadonlySet<string> = new Set(HARNESS_ARG_VALUES);
 
 /** The accepted `--harness` values, rendered for the help and error text that must list them. */
 const HARNESS_ARG_LIST = HARNESS_ARG_VALUES.join(', ');
+
+/** What a failed sync leaves behind, stated on both failure paths so neither reads as a partial write. */
+const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidance remains in effect.';
 
 /**
  * Main CLI entry point.
@@ -270,6 +276,20 @@ Options:
   --help, -h         Show this help message`);
 }
 
+/**
+ * Reports a failed sync and what the failure leaves in effect. A defect list is rendered as its own block: it is a
+ * list of findings rather than one failure, and the `Error:` prefix would present it as the latter.
+ */
+function reportSyncFailure(error: unknown): void {
+  if (isSyncValidationError(error)) {
+    console.error(`\n❌ sync found ${error.defects.length} defect(s):\n`);
+    console.error(formatContentDefects(error.defects));
+  } else {
+    console.error(`Error: ${describeError(error)}`);
+  }
+  console.error(`\n${SYNC_FAILURE_EFFECT}`);
+}
+
 /** Dispatches a `generate` target, printing that command's usage and exiting non-zero when the target is unknown. */
 async function runGenerate(subcommand: string, options: InstallOptions): Promise<void> {
   if (subcommand !== 'label-map') {
@@ -293,18 +313,20 @@ async function runLibrary(subcommand: string): Promise<void> {
 /**
  * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
  * the posture a package-manager lifecycle hook needs, where aborting the install costs far more than stale guidance.
- * The default rethrows, so an explicitly invoked sync still fails closed on every guard the command raises.
+ * The default exits 1, so an explicitly invoked sync still fails closed on every guard the command raises. Both paths
+ * report here rather than through the top-level handler, which prefixes `Error:` and would wear it over a finding list.
  */
 async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {
   try {
     const outcome = await (global ? syncGlobalCommand(options) : syncCommand(options));
     emitReport(options.dryRun ? renderDryRunReport(outcome) : renderSyncReport(outcome));
   } catch (error: unknown) {
-    if (!warnOnly) {
-      throw error;
+    if (warnOnly) {
+      console.warn(`⚠️ sync failed: ${describeError(error)}\n   ${SYNC_FAILURE_EFFECT}`);
+      return;
     }
-    const message = describeError(error);
-    console.warn(`⚠️ sync failed: ${message}\n   Deployed guidance may be stale.`);
+    reportSyncFailure(error);
+    process.exit(1);
   }
 }
 
