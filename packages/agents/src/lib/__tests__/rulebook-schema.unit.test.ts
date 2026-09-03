@@ -88,7 +88,7 @@ describe(parseRulebookFile, () => {
 
   it.each([
     ['blank', "version: '   '"],
-    ['multi-line', 'version: "1\\n2"'],
+    ['multi-line', String.raw`version: "1\n2"`],
     ['closing the comment it is rendered into', "version: 'a --> b'"],
   ])('throws on a %s version, naming the shape the deployed line requires', (_label, declaration) => {
     expect(() => parseRulebookFile(rulebookFile(`slug: x\n${declaration}`))).toThrow(VERSION_SHAPE_MESSAGE);
