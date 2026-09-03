@@ -38,7 +38,7 @@ This invocation declares no unit, so the helper detects the reduced object relat
 
 Each candidate names the `rule` that reported it, its `file` and `line`, the `shape` of the embedded subject, the `head`, `subject`, and `verb` on which the reading turns, the `phrase` rewritten by a repair, and the whole `sentence` around it. Adjudicate from the candidate; a file read buys nothing the sentence does not already carry.
 
-An inline code span reaches the report as `«codespan»`, which stands for content elided by the helper so its tokens never read as prose. Repair the site around the placeholder; the source keeps the code.
+An inline code span reaches the report as `«codespan»`, which stands for content elided by the helper so its tokens never read as prose. Repair the site around the placeholder; the source keeps the code. Where the elided token decides the reading, read the source line: that is the one exception to adjudicating from the candidate alone.
 
 ### 2. Read the summary before the candidates
 

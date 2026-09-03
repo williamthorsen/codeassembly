@@ -677,9 +677,16 @@ describe(detectObjectRelatives, () => {
       expect(candidates).toHaveLength(1);
       expect(candidates[0]).toMatchObject({
         head: 'kit',
+        subject: `the ${CODE_SPAN_PLACEHOLDER} package`,
         verb: 'publishes',
         phrase: `kit the ${CODE_SPAN_PLACEHOLDER} package publishes`,
       });
+    });
+
+    it("keeps the placeholder's delimiters in the subject, which a bare token would lose", () => {
+      const candidates = detectMasked("Names the source the user's `codeassembly.yaml` declares.");
+
+      expect(candidates[0]?.subject).toBe(`the user's ${CODE_SPAN_PLACEHOLDER}`);
     });
   });
 

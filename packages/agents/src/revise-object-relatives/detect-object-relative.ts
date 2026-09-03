@@ -20,7 +20,7 @@
  * An inline code span arrives as one placeholder token, which heads no phrase, opens no subject, and closes no
  * clause. It holds its slot all the same, so a site that a code span interrupts stays reachable.
  */
-import { CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
+import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
 import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
 import type { ObjectRelativeCandidate, ProseSpan, SubjectShape } from './types.ts';
 
@@ -697,9 +697,10 @@ function buildCandidate(input: {
   const verb = tokens[verbIndex];
   if (head === undefined || verb === undefined) throw new Error('candidate resolved outside its token run');
 
+  // A token's `raw` has its delimiters stripped, which would report the placeholder as an ordinary word.
   const subject = tokens
     .slice(subjectIndex, verbIndex)
-    .map((token) => token.raw)
+    .map((token) => (token.word === CODE_SPAN_PLACEHOLDER_WORD ? CODE_SPAN_PLACEHOLDER : token.raw))
     .join(' ');
 
   return {

@@ -3,7 +3,8 @@
  *
  * The rule has an exact surface form, so unlike the object relative this detector is not over-inclusive: every site it
  * reports is one. The only judgment it makes is where a dash is punctuation at all, which the inline-code exclusion
- * decides. A fenced block never reaches here; the extractor holds it out already.
+ * decides. A sweep never reaches that judgment: the extractor holds a fenced block out and masks an inline code span
+ * before a span arrives. The exclusion holds for a caller that builds its own spans.
  */
 import { countNewlinesBefore, findCodeSpans, findSentenceBounds, flattenWhitespace } from './span-text.ts';
 import type { EmDashCandidate, ProseSpan } from './types.ts';
