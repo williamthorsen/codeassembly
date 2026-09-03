@@ -11,9 +11,9 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { loadWorkTypes } from '../lib/work-types.ts';
+import { loadWorkTypes, type WorkType } from '../lib/work-types.ts';
 import { selectExemplars } from './select-exemplars.ts';
-import type { SelectResult } from './types.ts';
+import type { ExemplarRequest, SelectErrorCode, SelectResult } from './types.ts';
 
 /** The flags this helper accepts; it reads nothing from stdin. */
 const FLAGS: readonly FlagSpec[] = [
@@ -21,6 +21,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'data-dir', takesValue: true },
   { name: 'min-quality', takesValue: true },
   { name: 'store', takesValue: true },
+  { name: 'tier', takesValue: true },
   { name: 'type', takesValue: true },
 ];
 
@@ -36,10 +37,12 @@ const LEDE_DECISION_STORE = 'codeassembly';
  */
 const DEFAULT_COUNT = 5;
 
+/** What the invocation selects on, as spelled, before the taxonomy resolves it. */
+export type RequestArgs = { kind: 'type'; type: string } | { kind: 'tier'; tier: string };
+
 /** Parsed command-line invocation of the select-lede-exemplars helper. */
 export interface ParsedArgs {
-  /** The requested work type, as spelled: a canonical key or a declared alias. */
-  type: string;
+  request: RequestArgs;
   count: number;
   /** Lowest rating a record may carry and still be selected; `null` reads every record, rated or not. */
   minQuality: LedeQuality | null;
@@ -66,11 +69,13 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv. `--type` is required, because the exemplars a drafter needs are the ones its own work type
- * was written under. `--count`, `--min-quality`, `--store`, and `--data-dir` each fall back to a default; an absent
- * `--min-quality` reads every record, so a corpus whose ratings are still sparse is not filtered down to nothing. The `@default` sentinel is
- * refused: it names whichever store a machine defaults to rather than this corpus, and reading the wrong corpus yields
- * plausible exemplars drawn from nothing relevant.
+ * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: the exemplars a drafter needs are the
+ * ones its own work type was written under, and `--tier` serves a caller whose dispatch resolved no type, so that the
+ * fallback is a narrower request rather than an invented type. `--count`, `--min-quality`, `--store`, and `--data-dir`
+ * each fall back to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
+ * sparse is not filtered down to nothing. The `@default` sentinel is refused: it names whichever store a machine
+ * defaults to rather than this corpus, and reading the wrong corpus yields plausible exemplars drawn from nothing
+ * relevant.
  *
  * @internal - Exported to allow testing.
  */
@@ -92,13 +97,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     );
   }
 
-  const type = raw.type;
-  if (type === undefined) {
-    throw new Error('--type is required');
-  }
-
   return {
-    type,
+    request: parseRequest({ type: raw.type, tier: raw.tier }),
     count: parseCount(raw.count),
     minQuality: parseMinQuality(raw['min-quality']),
     store: raw.store ?? LEDE_DECISION_STORE,
@@ -107,7 +107,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, resolves the requested type through the installed taxonomy, resolves the
+ * Runs the helper end to end: parses args, resolves the request through the installed taxonomy, resolves the
  * corpus by registry name, and selects the exemplars.
  *
  * An exhausted corpus returns `ok: true` with an empty list and a diagnostic; only an unusable request or an
@@ -137,14 +137,11 @@ export async function runSelect(input: {
     return { ok: false, error: 'no-taxonomy', message: `no readable work-types.json under ${dataDir}` };
   }
 
-  const requested = workTypes.get(args.type);
-  if (requested === undefined) {
-    return {
-      ok: false,
-      error: 'unknown-type',
-      message: `work type "${args.type}" is not declared in work-types.json, so its tier cannot be resolved`,
-    };
+  const resolved = resolveRequest(args.request, workTypes);
+  if (!resolved.ok) {
+    return { ok: false, error: resolved.error, message: resolved.message };
   }
+  const request = resolved.request;
 
   const corpus = await resolveCorpus({ name: args.store, ...(input.home !== undefined && { home: input.home }) });
   if (!corpus.ok) {
@@ -154,15 +151,15 @@ export async function runSelect(input: {
   const selection = await selectExemplars({
     storePath: corpus.store.path,
     workTypes,
-    requested,
+    request,
     count: args.count,
     ...(args.minQuality !== null && { minQuality: args.minQuality }),
   });
 
   return {
     ok: true,
-    type: requested.key,
-    tier: requested.tier,
+    ...(request.kind === 'type' && { type: request.workType.key }),
+    tier: request.kind === 'type' ? request.workType.tier : request.tier,
     widening: selection.widening,
     minQuality: args.minQuality ?? 'none',
     exemplars: selection.exemplars,
@@ -228,6 +225,23 @@ function parseMinQuality(value: string | undefined): LedeQuality | null {
 }
 
 /**
+ * Reads the alternation between `--type` and `--tier`, throwing a usage-style message when neither or both is given.
+ * Accepting both would leave the narrower one silently unused.
+ */
+function parseRequest(raw: { type: string | undefined; tier: string | undefined }): RequestArgs {
+  if (raw.type !== undefined && raw.tier !== undefined) {
+    throw new Error('--type and --tier are alternatives; name one');
+  }
+  if (raw.type !== undefined) {
+    return { kind: 'type', type: raw.type };
+  }
+  if (raw.tier !== undefined) {
+    return { kind: 'tier', tier: raw.tier };
+  }
+  throw new Error('one of --type and --tier is required');
+}
+
+/**
  * Resolves the corpus by registry name alone: no `.kb/` discovery and no ancestor walk, so a project-local store the
  * invocation happened to sit inside cannot stand in for the corpus. A store marked `readonly` resolves like any other,
  * since that marker refuses writes and nothing here writes.
@@ -257,6 +271,37 @@ async function resolveCorpus(input: {
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');
+}
+
+/**
+ * Resolves a parsed request against the taxonomy. A tier is checked against the tiers the taxonomy declares, so a
+ * misspelt one is refused rather than returning an empty list that reads as an exhausted corpus.
+ */
+function resolveRequest(
+  args: RequestArgs,
+  workTypes: ReadonlyMap<string, WorkType>,
+): { ok: true; request: ExemplarRequest } | { ok: false; error: SelectErrorCode; message: string } {
+  if (args.kind === 'type') {
+    const workType = workTypes.get(args.type);
+    if (workType === undefined) {
+      return {
+        ok: false,
+        error: 'unknown-type',
+        message: `work type "${args.type}" is not declared in work-types.json, so its tier cannot be resolved`,
+      };
+    }
+    return { ok: true, request: { kind: 'type', workType } };
+  }
+
+  const declared = [...new Set([...workTypes.values()].map((workType) => workType.tier))].sort();
+  if (!declared.includes(args.tier)) {
+    return {
+      ok: false,
+      error: 'unknown-tier',
+      message: `tier "${args.tier}" is not declared in work-types.json; declared tiers are ${declared.join(', ')}`,
+    };
+  }
+  return { ok: true, request: { kind: 'tier', tier: args.tier } };
 }
 
 // endregion | Helpers

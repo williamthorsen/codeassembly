@@ -35,7 +35,7 @@ describe(parseArgs, () => {
     ]);
 
     expect(parsed).toStrictEqual({
-      type: 'feat',
+      request: { kind: 'type', type: 'feat' },
       count: 3,
       minQuality: 'strong',
       store: OTHER_STORE_NAME,
@@ -59,8 +59,16 @@ describe(parseArgs, () => {
     expect(parseArgs(['--type', 'feat']).store).toBe(STORE_NAME);
   });
 
-  it('requires --type, since exemplars are calibrated to a work type', () => {
-    expect(() => parseArgs([])).toThrow('--type is required');
+  it('requires one of --type and --tier, since exemplars are calibrated to a reader', () => {
+    expect(() => parseArgs([])).toThrow('one of --type and --tier is required');
+  });
+
+  it('reads --tier as a request of its own, for a caller whose dispatch resolved no type', () => {
+    expect(parseArgs(['--tier', 'internal']).request).toStrictEqual({ kind: 'tier', tier: 'internal' });
+  });
+
+  it('refuses --type and --tier together, which would leave the narrower one unused', () => {
+    expect(() => parseArgs(['--type', 'feat', '--tier', 'public'])).toThrow('--type and --tier are alternatives');
   });
 
   it.each([['0'], ['-1'], ['two'], ['1.5']])('refuses a --count of %s', (count) => {
@@ -148,6 +156,25 @@ describe(runSelect, () => {
     const result = await run({ argv: ['--type', 'invented'], fixture });
 
     expect(expectFailure(result)).toBe('unknown-type');
+  });
+
+  it('reports a tier the taxonomy does not declare, which would otherwise read as an exhausted corpus', async () => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await run({ argv: ['--tier', 'pubic'], fixture });
+
+    expect(expectFailure(result)).toBe('unknown-tier');
+  });
+
+  it('omits the type it reports back on a tier request, which named none', async () => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await run({ argv: ['--tier', 'public', '--count', '2'], fixture });
+
+    const success = expectSuccess(result);
+    expect(success.type).toBeUndefined();
+    expect(success.tier).toBe('public');
+    expect(success.exemplars).toHaveLength(2);
   });
 
   it('reports a corpus registered under no name', async () => {
