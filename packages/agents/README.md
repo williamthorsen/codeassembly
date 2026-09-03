@@ -866,7 +866,9 @@ On read, with units named:
 }
 ```
 
-A fold rejection carries neither a hash nor a version; the helper derives both. Merging is by unit: a unit the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded. A named unit's rejections at the current version are replaced by the fold's own within the roots the fold names for that unit, a site not re-rejected having been withdrawn. A rejection outside those roots was never revisited, so it is carried forward, and so is one recorded at an older version.
+A fold rejection carries neither a hash nor a version; the helper derives both. Merging is by unit: a unit that the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded.
+
+For a unit that the fold does name, its roots join the recorded ones where the version matches and replace them where it moved, and a root that another one already contains is dropped. So a full sweep followed by a narrowed one still records the repository as covered, and a version bump starts the coverage over. That unit's rejections at the current version are replaced by the fold's own within the roots named for it, a site not re-rejected having been withdrawn. A rejection outside those roots was never revisited, so it is carried forward, and so is one recorded at an older version.
 
 ## Development
 

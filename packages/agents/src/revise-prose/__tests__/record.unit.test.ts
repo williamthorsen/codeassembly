@@ -69,6 +69,39 @@ describe(composeRecord, () => {
     expect(record.units['writing']?.roots).toStrictEqual(['docs', 'src']);
   });
 
+  it("joins a narrowed run's roots onto those already recorded at the same version", () => {
+    const prior: ProseRecord = {
+      units: { writing: { version: '2', 'swept-at': '2026-09-01', roots: ['docs'] } },
+      rejections: [],
+    };
+
+    const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['src'] } } }));
+
+    expect(record.units['writing']).toStrictEqual({ version: '2', 'swept-at': '2026-09-02', roots: ['docs', 'src'] });
+  });
+
+  it('drops a joined root that another one already contains', () => {
+    const prior: ProseRecord = {
+      units: { writing: { version: '2', 'swept-at': '2026-09-01', roots: ['.'] } },
+      rejections: [],
+    };
+
+    const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['docs'] } } }));
+
+    expect(record.units['writing']?.roots).toStrictEqual(['.']);
+  });
+
+  it('replaces the recorded roots when the version moves, the earlier sweep covering a rule that has changed', () => {
+    const prior: ProseRecord = {
+      units: { writing: { version: '1', 'swept-at': '2026-09-01', roots: ['.'] } },
+      rejections: [],
+    };
+
+    const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['docs'] } } }));
+
+    expect(record.units['writing']?.roots).toStrictEqual(['docs']);
+  });
+
   it('leaves a unit the run did not name untouched', () => {
     const prior: ProseRecord = {
       units: { 'plain-speech': { version: '1', 'swept-at': '2026-01-01', roots: ['.'] } },
@@ -137,7 +170,7 @@ describe(composeRecord, () => {
     expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
   });
 
-  it('carries forward a rejection outside the roots the run swept, which the run never revisited', () => {
+  it('carries forward a rejection outside the roots swept by the run, which the run never revisited', () => {
     const inside = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
     const outside = rejection({ file: 'src/b.ts', hash: hashPhrase('the level it is probed against') });
     const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
