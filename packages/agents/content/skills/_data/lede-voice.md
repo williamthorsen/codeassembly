@@ -2,26 +2,44 @@
 
 This file defines how to write a lede: the `## What` section of a change summary and pull request, the changelog or release-notes entry rendered from it, and the opening of a commit or merge-commit body.
 
-The reader is glancing through entries asking "what did this change do?" and deciding in a few seconds whether to keep reading.
+## The readers
 
-## Altitude and focus
+Two readers, and the change's work type decides which one is reading. A change whose work type is in the public tier of [work-types.json](./work-types.json) reaches release notes and the changelog; a change in any other tier reaches the changelog alone.
 
-A lede has two axes. One never varies; the other is set by the change's work type.
+**The user**, at public tier.
 
-**Altitude is constant, at the accomplishment level.** The lede says what the change accomplished, not how it works internally. A finding established during the work, a count of instances touched, an internal causal chain, and the before-and-after syntax of an edit belong in `## Details` or the diff. Test each clause: Would the reader's next move -- such as clicking into the details or using the product -- change if it were absent? A clause that the decision does not turn on is padding.
+- Uses the package and does not work on it.
+- Meets the text in release notes, scanning a list of entries and giving each a few seconds.
+- Is deciding whether to upgrade, and what changes for them.
+- Already assumes that inputs are validated, that the code is tested, and that the documentation matches.
+- Reaches in one click: the documentation, the API, the tool itself.
+- Cannot reach what they must change in their own code. That is the one thing a lede owes them whatever else it drops, and it is why the migration paragraph survives every cut.
 
-**Focus is keyed to tier.** A change appears in release notes when its work type is in the public tier of [work-types.json](./work-types.json); a change in any other tier goes no further than the changelog.
+**The contributor**, at internal and process tiers.
 
-- **Public tier** -- the reader is a user of the package, and the lede answers what the product now does.
-- **Internal and process tiers** -- the reader is a developer, and the lede answers what was done to the code.
+- Works in this codebase.
+- Meets the text in the changelog, scanning to place a change.
+- Is deciding where a change landed and whether it touches the code in front of them.
+- Assumes the same baseline as the user.
+- Reaches in one click: the diff, and the change summary's `## Details`.
 
-Where one text serves both, write at the register of the most external realistic reader.
+Public-tier text serves both. Write it for the user, the more external of the two.
+
+Every rule below names the reader that it answers to. A rule that names none has no force, and where the two readers disagree, the tier decides.
+
+## What the reader wants
+
+Two facts govern both readers, and most of this file follows from them.
+
+**Interest tracks what the reader can act on.** The options that a caller may pass expand the reader's repertoire, so they are news; the grammatical tenses banned in a description are machinery behind an outcome that the reader meets as a result, "descriptions read consistently", so they are not. Neither the size of the change nor the effort that a fact cost to establish bears on this. Options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through. A clause that the reader derives from the clause before it gives them nothing: "a single run reports every defect it finds rather than stopping at the first" and "...so temporary files are no longer left behind" are the shape. A lede that explains the team's conventions or tutors the reader in a language feature has stopped reporting.
+
+**What is done as a matter of course is not news.** Inputs get validated, code gets tested, documentation gets updated. Reporting one tells the reader that you found it remarkable, and the answer is "of course". Such a fact is reportable only where it is the pull request's subject: A tests-only change reports tests and a docs-only change reports documentation; everywhere else they route to `## Details`. The same fact governs assurances. An invariant asserted against a harm that the reader had not suspected plants the doubt that it means to remove, so state one only where the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump and nowhere else.
 
 ## Worked exemplars
 
 Two changes whose ledes the author rewrote. Each records what was drafted, what shipped, and what the author said about the distance between them.
 
-### Public focus: a rename and five correctness fixes
+### The user reading: a rename and five correctness fixes
 
 Drafted:
 
@@ -39,15 +57,13 @@ Shipped:
 >
 > Migration: `unindent` no longer exists, and nullish and object values are now compile errors.
 
-**That migration line is a counter-example.** It predates the instruct rule, and it recaps the removal without naming an edit, so it fails the reader test under "The migration paragraph" below. Do not model one on it. What this exemplar teaches is altitude, and that lesson stands.
+**That migration line is a counter-example.** It recaps the removal without naming an edit, so it fails the reader test under "The migration paragraph" below. Do not model one on it.
 
 On the gap:
 
 > A change of altitude, not a better ranking. The author's framing -- "a lede is an overview, an introduction, it hits the highlights" -- moved the question from "which of these facts matter most?" to "what kind of change is this?". Answered at that altitude the lede writes itself: a rename, a correctness fix, a new sibling function, a breaking migration. No specific finding appears, however important, because findings sit one level below the altitude the lede occupies.
 
-> The two clauses the author struck by name, byte-order mark and CRLF, were precisely the ones most recently probed against the built output.
-
-### Internal focus: an import source moved
+### The contributor reading: an import source moved
 
 Drafted:
 
@@ -65,17 +81,15 @@ On the gap:
 
 ## The stance
 
-**The change is the subject.** A lede reports what the pull request did -- not a portrait of the system afterwards, and not the deliberation that led to the change. The opening names the artifact or subsystem changed -- the package, command, file, or rule -- before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" orients the reader in four words; a scenario clause that delays the name makes the reader read on to find out what is under discussion.
+**The change is the subject.** Both readers. A lede reports what the pull request did, not a portrait of the system afterwards and not the deliberation that led to the change. The opening names the artifact or subsystem changed, the package, command, file, or rule, before the reader has to absorb what the change did to it. "Modifies the `release-kit` and `nmr` ReadyUp kits [...]" orients the reader in four words; a scenario clause that delays the name makes the reader read on to find out what is under discussion.
 
-**Every sentence reports an effect of the diff.** The symptom ended by a fix, the purpose served by a change, and the invariant preserved by a risky change are effects, even when no hunk states them. The deliberation that produced the diff -- options weighed, review history, what the ticket asked for -- is not. The PR is written on its own merits, not the ticket's.
+**Every sentence reports an effect of the diff.** Both readers. The symptom ended by a fix, the purpose served by a change, and the invariant preserved by a risky change are effects, even when no hunk states them. The deliberation that produced the diff, the options weighed, the review history, and what the ticket asked for are not. The pull request is written on its own merits, not the ticket's.
 
-**Mechanism is substance where it is the accomplishment.** The operation performed -- the rename, the upgrade, the extraction, the new check -- is usually what a change at developer focus accomplished, so naming it is the news rather than implementation detail. At public focus it is rare, and belongs only where it explains the visible change. Mechanism describing how the accomplishment works internally is below the altitude at either focus.
+**Mechanism is the accomplishment for the contributor.** The operation performed, the rename, the upgrade, the extraction, the new check, is usually what a change at internal or process tier accomplished, so naming it is the news rather than implementation detail. For the user it is rare, and belongs only where it explains the visible change. Mechanism describing how the accomplishment works internally sits below the line for both readers.
 
-**Name things, up to the altitude.** The identifier is often the most informative word in the sentence: the package, command, flag, file, or rule acted on by the change, backticked. An identifier never consumed by the reader -- an internal function, the lint rule that fired, a config key that the change happens to read -- is mechanism with a name attached, and backticking it does not raise it to the altitude. Prefer the category only when identity does not matter ("the maintainer's personal rulebooks", not the two filenames). At public focus, define any term that the audience may not share.
+**Name what the reader consumes.** The identifier is often the most informative word in the sentence, backticked. Which identifiers qualify is the thing the two readers disagree about. For the user, an internal function, the lint rule that fired, or a config key that the change happens to read is mechanism with a name attached, and backticking it does not admit it. For the contributor those same names are the subject: A refactor is reported by the modules that it moved. Prefer the category only where identity does not matter ("the maintainer's personal rulebooks", not the two filenames), and never talk around a name the reader is owed: "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. If the reader would have to open the diff to learn what is meant, name it. At public tier, define any term that the audience may not share.
 
-**Emphasize the highlights.** Decide what matters most and lead with it; everything else belongs in `## Details` or the diff. A lede is a summary with a point of view, not a catalog. The lede is not reference documentation: Options and their usage, output shape, config keys, version numbers, and the instances touched by a sweep are what the reader finds after clicking through. A migration step is the one thing they cannot click through to, so it stays, held to the size bound under "The migration paragraph" below.
-
-**Claims match the diff.** A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial -- unframed placeholder behavior reads as a bug -- and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
+**Claims match the diff.** Both readers. A mitigation is not a fix. Give the true actor the agency: Violations fail the build; rules only classify. A promise that holds only on some version or configuration states that condition. A first increment is framed as initial, since unframed placeholder behavior reads as a bug, and a roadmap sentence ("Substitution of actual content for the hook will come later.") is welcome where it prevents that misreading.
 
 ## Openers
 
@@ -83,14 +97,14 @@ Opener discipline is positional. Each form has a place, and the places are not i
 
 - **The opening sentence reports the change, verb-first.** The implied subject is the pull request: "Adds", "Fixes", "Upgrades", "Reorganizes", "Removes".
 - **A state description's place is the follow-up sentence.** It elaborates what the opening reported rather than standing in for it.
-- **The temporal-marker opener is reserved for a sentence that is itself the whole delta**, one that the reader recovers by negating it: "`nmr prepush` now runs the audit first." Where the state is an aggregate of operations that the reader cannot recover, the form hides the change instead.
+- **The temporal-marker opener is reserved for a sentence that is itself the whole delta**, one that the reader recovers by negating it: "`nmr prepush` now runs the audit first."
 - **A fix opens with what was fixed**: "Fixes an issue where doing X failed to Y." Opening with the repaired state leaves the reader unable to tell what was wrong.
 
 ## Form
 
 - Third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural. The third-person rule governs the sentences that report the change; a migration step is a different speech act and is imperative. Never address the reader as "you": That ban holds across the whole lede.
 - A second concern gets its own short paragraph, often marked ("Separately, ..."). Migration or breaking info that needs a paragraph gets a labeled one, written per "The migration paragraph" below. Three or more parallel items may be bulleted.
-- A PR that repeats a recognized routine operation -- a deferred-lint cleanup, a fleet-wide upgrade -- reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
+- A pull request that repeats a recognized routine operation, a deferred-lint cleanup or a fleet-wide upgrade, reuses the series' established lede rather than fresh prose; the change summary or the repo's changelog supplies it. A repo-wide change reports the repo-level operation, naming individual packages only when they are few and load-bearing.
 
 ## The migration paragraph
 
@@ -100,7 +114,7 @@ A `Migration:` paragraph tells the consumer what to do. It is not a labelled rec
 - **The label is literal.** The paragraph opens with `Migration:`. Only `## What` reaches the merge-commit body and the changelog, so this paragraph is the whole channel to a consumer whose build just broke.
 - **The mood is imperative.** The second person stays banned, and an imperative needs no pronoun. Form's third-person rule governs the sentences that report the change: A migration clause can satisfy it and still name no edit, which is the failure this section exists to catch.
 - **Any work type can carry one.** A `fix` that tightens validation imposes a migration as surely as a `drop` does. The paragraph follows the burden, not the type.
-- **Name the edit, and any trap the replacement introduces.** A hazard the new path carries and the old one did not -- a filter the predecessor did not need, an exception the replacement throws where the predecessor returned -- appears nowhere in the diff, so nothing else will surface it.
+- **Name the edit, and any trap the replacement introduces.** A hazard the new path carries and the old one did not, a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned, appears nowhere in the diff, so nothing else will surface it.
 - **The size bound.** The edit and the trap, not a worked example per call shape. A migration that overruns it links the package's versioned upgrade guide where the package has one, and otherwise stays at the bound. The README describes current state and is not that guide.
 
 Drafted:
@@ -115,34 +129,19 @@ Shipped, after the author's correction:
 
 A change matching two kinds opens with the higher-stakes pattern: sec, then fix, then feat, then drop, then deps, then the rest. A fix delivered by refactoring is a fix; the operation is its mechanism.
 
-- **feat, perf** -- the capability, named, and the surface that exposes it. A performance change names the effect and its size where it was measured ("cuts cold-start time roughly in half"); "improves performance" names nothing.
-  > Adds two status labels (`status:blocked` and `status:on-hold`) to the common preset and removes descriptions from other scoped labels (`priority:` and `value:`) to keep scoped groups compact in the GitHub UI.
-- **fix** -- the symptom that no longer occurs, then the fix; mechanism welcome.
-  > Fixes an issue where lede decisions could be saved into the wrong store. Decisions are now saved by default into the `codeassembly` store, and a call to save them to `--store @default` (which could point to any arbitrary store) is refused. [...]
-- **sec** -- the class of vulnerability closed and the surface that exposed it, then the fix; the fix pattern applies, or the deps pattern when an upgrade delivers it. State enough that a reader can tell whether they were exposed, and no more -- a lede is not a reproduction.
-- **refactor** -- the operation performed on the code: what was reorganized, extracted, renamed, consolidated, or deleted. The restructuring is the outcome; external behavior needs no mention unless it changed. One line is the default for a routine restructuring ("Aligns property names with in-house naming conventions."), not a floor to build up from.
-  > Reorganizes the files in the `readyup` package for better usability and maintainability. Functions are now grouped by domain.
-- **internal** -- a capability or restructuring of unpublished surface; the feat or refactor pattern applies, at developer register.
-- **docs** -- the edit made to the document: what was added, removed, moved, or corrected.
-  > Tightens comments by removing narration of development history and focusing them on the code itself. Function descriptions are now aligned with house style.
-- **ai** (agent guidance) -- the edit made to the guidance: the artifact named, plus the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it. Skills instruct; agents are instructed.
-  > Revises the code-review guidance to limit the circumstances under which the agent should offer to revise the acceptance criteria (AC). [...]
-- **deps** -- the version delta, and the consequence that matters; a routine bump with none is one sentence.
-  > Upgrades several dependencies, most notably `nmr` to v0.24. That upgrade changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. [...] The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
-- **tests / tooling / ci** -- the operation performed on the pipeline or configuration. Name the tool that the change acted on; the rule enabled, the option set, and the severity raised are mechanism.
-  > Fixes deferred violations of Vitest lint rules in the `readyup` package and restores the severity of the associated rules to `error` when a strict-lint check is run.
-- **drop, deprecate** -- what was removed and what survives or replaces it. Published surface is presumed used and gets the migration paragraph; unpublished or never-released surface needs none -- no headline, no breaking-change framing. When unsure, include it. A removal whose surface only moved is reported as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."), and the migration paragraph names the edit that follows from it. A removal with no drop-in replacement still owes the reader the path to the replacement API and any trap it introduces. A deprecation reports the same facts in advance: The surface still works, the replacement is named, and the removal horizon is stated when it is known.
-  > Removes `@williamthorsen/eslint-config-basic`; no further versions will be published. No remaining package lints Markdown, while `@williamthorsen/eslint-config-typescript` continues to cover JavaScript, JSON, YAML, and `package.json`.
-- **revert** -- the change undone and what is restored. The PR number may accompany the name, never substitute for it. A revert takes the work type of the change being undone; `revert` is not itself a key in `work-types.json`.
+Most types need no rule of their own, because the readers section already decides what the entry says. These carry something that it does not supply.
+
+- **feat, perf** -- a performance change names the effect and its size where it was measured ("cuts cold-start time roughly in half"); "improves performance" names nothing.
+- **sec** -- state enough that a reader can tell whether they were exposed, and no more. A lede is not a reproduction.
+- **refactor** -- one line is the default for a routine restructuring ("Aligns property names with in-house naming conventions."), not a floor to build up from. External behavior needs no mention unless it changed.
+- **ai** (agent guidance) -- the artifact named, plus the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it: Skills instruct; agents are instructed.
+- **deps** -- the version delta and the consequence that matters; a routine bump with none is one sentence.
+- **drop, deprecate** -- published surface is presumed used and gets the migration paragraph; unpublished or never-released surface needs none, with no headline and no breaking-change framing. When unsure, include it. A removal whose surface only moved is reported as the move ("`defineConfig` is now imported from `@williamthorsen/nmr/config` instead of the bare package."), and one with no drop-in replacement still owes the reader the path to the replacement API and any trap that it introduces. A deprecation reports the same facts in advance, with the removal horizon where it is known.
+- **revert** -- the change undone and what is restored. The pull-request number may accompany the name, never substitute for it. A revert takes the work type of the change being undone; `revert` is not itself a key in `work-types.json`.
 
 ## Don't
 
-- **The recency trap.** The writer admits a fact into the lede on the effort spent establishing it rather than on its worth to the reader, and the most recently verified facts are the ones that feel most load-bearing. Diagnostic symptom: The fact appears in both `## What` and `## Details`, because the section that it legitimately belongs to already has it. The correction is deleting the fact, never compressing the sentence that states it -- one lede's first correction dropped every enumeration and kept the mechanism, a term of art, and an explanatory tail, and the author rejected that draft too.
-- **State description that hides the change.** The "X now does Y" form hides the change where the state is an aggregate of operations that the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals the change, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
-- **An invented beneficiary.** "Finding a module in the `readyup` package now means asking what role it plays" dramatizes a hypothetical reader; the shipped lede reports the operation (see the refactor exemplar).
-- **The catalog.** Enumerating every delta at equal weight hides the one that matters. Status tallies ("Twelve rules remain deferred"), edge-case inventories, and doc-update mentions are body content at best; never mention that documentation was updated unless documentation is the subject of the PR.
-- **Teaching instead of reporting.** A lede that explains the team's conventions, tutors the reader in a new language feature, or walks through the rule content touched by the diff has stopped reporting. Name what changed; the document itself does the teaching.
-- **Empty contrast.** In "a single run reports every defect it finds rather than stopping at the first", the second clause is the negation of the first. Use "rather than" / "instead of" only when the contrast informs ("inspectable rather than flattened into text"). The same test cuts self-evident corollaries ("...so temporary files are no longer left behind").
-- **Unearned assurance.** A guarantee against an unsuspected harm creates the doubt that it means to remove. State an invariant only when the change gives real grounds to fear it broke: "Published output is unchanged" belongs in the lede after a compiler-target bump. A "previously" sentence passes the same test when it does motivation or migration work, and fails it when it merely restates the change's negation.
-- **Talking around the name.** "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. If the reader would have to open the diff to learn what you mean, name it.
+- **The recency trap.** A fact is admitted on the effort spent establishing it rather than on its worth to the reader, and the most recently verified facts feel the most load-bearing. Diagnostic symptom: The fact appears in both `## What` and `## Details`, because the section that it legitimately belongs to already has it. The correction is deleting the fact, never compressing the sentence that states it.
+- **State description that hides the change.** The "X now does Y" form hides the change where the state is an aggregate of operations that the reader cannot recover: "Every lint rule in the shared configuration is now enforced in every package" conceals what was done, which was "Fixes all outstanding lint issues and removes the cap that downgraded the severity of associated rules during strict-lint runs."
+- **An invented beneficiary.** "Finding a module in the `readyup` package now means asking what role it plays" dramatizes a hypothetical reader; the shipped lede reports the operation.
 - **Process narration.** Review mechanics, ticket numbers, finding IDs, test and CI runs, and roads not taken are not part of the change.
