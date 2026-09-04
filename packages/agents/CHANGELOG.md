@@ -2,6 +2,80 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.13.0 — 2026-09-04
+
+### 🎉 Features
+
+- Name each rulebook's version in its deployed output (#1532)
+
+  Adds a `<!-- rulebook-version: <version> -->` line to every deployed rulebook, directly below the marker that names its slug. `sync` writes the line on all three delivery routes: the ambient block in a harness guidance file, the guidance-hook fill spliced into a skill or subagent body, and the rulebook skill file. The line is not added if the source rulebook does not declare a version.
+
+- Add em-dash detection, batching, and a sweep record to the prose helper (#1533)
+
+  Extends the prose-sweep helper behind the `revise-object-relatives` skill with em-dash detection, batching, and a per-repository record. `--rule` names each rule to detect and `--unit` the versioned document that owns it, so one run covers every rule to which a repository is bound.
+
+  The sweep now partitions the whole scanned file set into batches sized to what one agent context holds, each batch whole files cut on a directory boundary. Files linked by a shared sentence form a single batch, and those batches lead the run, so every copy of a recurring passage is adjudicated once.
+
+  A new `record` command folds a run's outcome into `.agents/revise-prose.yaml`, which holds each unit's version, sweep date, and covered path roots alongside every rejection settled during the run. A later run skips a batch already covered at the current unit versions and drops a candidate matching a rejection at those versions; a rejection recorded against an older version comes back marked stale, so a revised rule re-opens the judgment rather than discarding it.
+
+- 🚨 **Breaking:** Replace revise-object-relatives with revise-prose, a full rule-set sweep (#1543)
+
+  Adds the `revise-prose` skill, which sweeps a repository's prose against the plain-speech rule and the writing rules that the repository's own rulebooks declare, then repairs what it finds. The skill packs the prose-bearing files into batches, dispatches a new `prose-reviser` subagent per batch (four at a time), commits each batch once its subagent returns, and then asks the user about the sites that the subagents would not decide alone. It records the sweep in `.agents/revise-prose.yaml`, so a later run skips what is already covered at each rule's current version. On a repository's first sweep, the first batch runs alone, and the skill shows its report and its diff before committing anything.
+
+  Applying repairs is the default. `--dry-run` reports the candidates and writes nothing.
+
+  Also adds the plain-speech sweep calibration, a versioned document that both the skill and the subagent inline.
+
+  Migration: Invoke `revise-prose` in place of `revise-object-relatives`, which is removed. Drop `--apply`, which no longer exists, and add `--dry-run` to any invocation that relied on the old report-only default.
+
+- Commit review fixes in the step that implements them (#1548)
+
+  Renames the review next-steps menu's `Implement directly` option to `Implement directly and commit`. The commit is composed per `create-commit` and is always a new commit rather than an amend, and nothing is pushed.
+
+  `respond-to-review` commits its fixes on the same terms.
+
+### 🐛 Bug fixes
+
+- Deploy each rulebook version exactly as it is declared (#1534)
+
+  Fixes an issue where a rulebook's `version` could be altered when included in deployed output: YAML reads an unquoted `1.10` as the number `1.1`, so the shortened value is what landed on the `<!-- rulebook-version: ... -->` line. A `version` is now accepted only as a quoted string.
+
+  Migration: Change any unquoted version numbers in rulebooks to quoted strings.
+
+- Mask inline code spans so the prose sweep stops reporting code tokens (#1535)
+
+  Fixes an issue where the `revise-object-relatives` sweep read the content of an inline code span as prose. Every inline code span is now replaced with a single placeholder, `«codespan»`, before a detector reads the text, in every kind of file that the sweep reads.
+
+- Require 4-space list nesting where a Bitbucket body is composed (#1541)
+
+  Fixes an issue where a nested bullet flattened in a Bitbucket pull-request description: Bitbucket Cloud renders with Python-Markdown, which reads a 2-space indent as a sibling of its parent rather than a child. `summarize-change` and `merge-pr` now require a nested list item to be indented 4 spaces. GitHub accepts either width, so the one rule covers both hosts.
+
+- Report every defect found by a failed sync, and record the attempt (#1547)
+
+  Fixes an issue where a failed `codeassembly sync --global` left the previously deployed guidance in effect with no signal outside the run. A failed sync now reports every defect that its pre-write gates found and announces that nothing was written. The home-domain provenance record now carries the last attempt as well as the last write. `codeassembly status` reports the failed attempt and the age of the deployed guidance.
+
+- Replace the bound-ambient sync advisory with a content-test guard (#1551)
+
+  Removes the `bound-ambient` advisory from `codeassembly sync`. It warned that a rulebook reaching a session through both `ambient` delivery and a guidance-hook fill delivers its text twice, and told the reader to drop one of the two routes. Neither route can be dropped where a skill parses what the fill delivers, so the warning appeared on every run with no remedy the reader could apply.
+
+### 🤖 Agentic support
+
+- Provide migration instructions instead of recap (#1538)
+
+  Revises `lede-voice.md` to make the `Migration:` paragraph an instruction rather than a labelled recap of the change. Guidance on how to write the paragraph is added, and conflicting rules have been corrected.
+
+  The voice-audit checklist, the `title-voice.md` artifact, and the `summarize-change` skill are adjusted to align with the changes.
+
+- Draft ledes from a reader and a question instead of the diff (#1545)
+
+  Rewrites the `lede-drafter` subagent's assignment as one question: "What is this PR about?" The subagent is asked to answer that question for a given reader: the package's user at public tier, or a contributor at internal and process tiers.
+
+  Rebuilds `lede-voice.md` around those two readers, deriving its content rules from them and cutting the per-type rules that they already supply.
+
+  `summarize-change` gains a verification pass that checks the draft's claims, with authority to strike or correct a claim but not to add one. Its audit requires the "Details" section to cover every fact the lede reports, where it previously required that no fact appear in both.
+
+  Separately, `select-lede-exemplars` accepts `--tier` as an alternative to `--type`, for a dispatch that resolved no work type.
+
 ## 0.12.0 — 2026-09-02
 
 ### 🎉 Features
