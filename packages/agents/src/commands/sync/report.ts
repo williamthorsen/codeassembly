@@ -5,10 +5,9 @@ import { describeMissingSource } from '../../lib/declared-sources.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
 import { skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
+import type { AmbientHostPlan, AmbientSkipReason } from './ambient-hosts.ts';
 import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
 import type {
-  AmbientHostPlan,
-  AmbientSkipReason,
   GuidanceHookAdvisory,
   MissingDeclaration,
   ResolutionEntry,
