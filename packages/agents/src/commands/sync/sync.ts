@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, rmdir } from 'node:fs/promises';
+import { readFile, rm, rmdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -31,18 +31,13 @@ import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
-import { extractRulebookSkillSlug, renderSkillFile } from '../../lib/rulebook-skill.ts';
+import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody } from '../../lib/rulebook-transform.ts';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import { extractInstalledSlugs, removeRulebook } from '../../lib/sentinel-inliner.ts';
-import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { renderSkillDirectory } from '../../lib/skill-transform.ts';
-import {
-  deploySubagent,
-  renderSubagent,
-  resolveDeclaredSubagent,
-  type ResolvedSubagent,
-} from '../../lib/subagent-deploy.ts';
+import { renderSubagent, resolveDeclaredSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { type ResolvedHarnessTargets, resolveTargetHarnesses } from '../../lib/target-harnesses.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
 import type { HarnessId, InstallOptions } from '../../lib/types.ts';
@@ -66,6 +61,7 @@ import {
   probeAmbientHosts,
   type ProbedAmbientHost,
 } from './ambient-hosts.ts';
+import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookSkills } from './artifact-delivery.ts';
 import { buildGuidanceHookFills, findGuidanceHookAdvisories, type GuidanceHookAdvisory } from './hook-bindings.ts';
 import {
   planSourceSupportRetractions,
@@ -549,32 +545,9 @@ async function reconcileDomain(
 
   await deliverAmbient(ambientHostPlans);
 
-  // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
-  // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
-  // before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
-  // of the write being clobbered by a later retract.
-  for (const { harnessId, skillsDir, orphans } of skillOrphansByDir) {
-    for (const dir of orphans) {
-      await rm(path.join(skillsDir, dir), { recursive: true, force: true });
-    }
-    for (const rulebook of resolved) {
-      if (!rulebook.skill) {
-        continue;
-      }
-      const skillDir = path.join(skillsDir, rulebook.skillName);
-      await mkdir(skillDir, { recursive: true });
-      await writeIfChanged(
-        path.join(skillDir, 'SKILL.md'),
-        renderSkillFile({
-          body: renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
-          description: rulebook.description,
-          skillName: rulebook.skillName,
-          slug: rulebook.slug,
-          version: rulebook.version,
-        }),
-      );
-    }
-  }
+  // Reconcile rulebook-delivered skill files per targeted harness, ahead of the declared-skill pass that shares
+  // those dirs. The collision gate has already proven the two namespaces disjoint.
+  await reconcileRulebookSkills(skillOrphansByDir, resolved, resolveRulebookContext);
 
   // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
@@ -885,61 +858,6 @@ function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRulebook>
       `Skill name collision: rulebooks ${collision.slugs.join(', ')} all resolve to skill "${collision.skillName}". ` +
       'Give all but one a distinct `skill-name`.',
   }));
-}
-
-/**
- * Retracts owned subagent files no longer declared, then deploys each declared subagent into every targeted harness's
- * subagents dir. Orphans were computed against the pre-write filesystem, so retracting before writing lets a slug
- * freed in one dir be re-created in the same sync rather than clobbered by a later retract.
- */
-async function reconcileDeclaredSubagents(
-  targets: ReadonlyArray<HarnessSubagentTarget>,
-  orphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>,
-  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
-  resolveAnchorContext: ResolveAnchorContext,
-  resolveOverlay: ResolveOverlay,
-): Promise<void> {
-  for (const target of targets) {
-    const orphans = orphansByDir.find((entry) => entry.subagentsDir === target.subagentsDir)?.orphans ?? [];
-    for (const file of orphans) {
-      await rm(path.join(target.subagentsDir, file), { force: true });
-    }
-    for (const subagent of resolvedSubagents) {
-      await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), {
-        ...target.deployContext,
-        anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
-        overlayYaml: await resolveOverlay(target.harnessId, subagent.contentRoot),
-      });
-    }
-  }
-}
-
-/**
- * Retracts owned declared-skill dirs no longer declared, then deploys each declared skill into every targeted harness's
- * skills dir with that harness's transform applied. Orphans were computed against the pre-write filesystem, so
- * retracting before writing lets a slug freed in one dir be re-created in the same sync rather than clobbered.
- */
-async function reconcileDeclaredSkills(
-  targets: ReadonlyArray<HarnessSkillTarget>,
-  orphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
-  resolvedSkills: ReadonlyArray<ResolvedSkill>,
-  resolveAnchorContext: ResolveAnchorContext,
-): Promise<void> {
-  for (const target of targets) {
-    const orphans = orphansByDir.find((entry) => entry.skillsDir === target.skillsDir)?.orphans ?? [];
-    for (const dir of orphans) {
-      await rm(path.join(target.skillsDir, dir), { recursive: true, force: true });
-    }
-    for (const skill of resolvedSkills) {
-      if (!skillTargetsHarness(skill, target.harnessId)) {
-        continue;
-      }
-      await deploySkill(skill, path.join(target.skillsDir, skill.slug), {
-        ...target.deployContext,
-        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
-      });
-    }
-  }
 }
 
 /** Builds one artifact's render defect, holding the harness so the fold can tell a body-local failure from a scoped one. */
