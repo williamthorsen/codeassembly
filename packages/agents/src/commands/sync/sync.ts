@@ -16,16 +16,16 @@ import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
-import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import { resolveDeclaredSkill, type ResolvedSkill } from '../../lib/skill-deploy.ts';
 import { resolveDeclaredSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { resolveTargetHarnesses } from '../../lib/target-harnesses.ts';
 import type { InstallOptions } from '../../lib/types.ts';
-import { planDroppedHarnessRetractions, retractDroppedHarnesses } from './harness-retraction.ts';
-import { listOwnedDeclaredSkills, listOwnedSkills, listOwnedSubagents } from './owned-artifacts.ts';
 import { deliverAmbient, findUnignoredHosts, planAmbientHosts, probeAmbientHosts } from './ambient-hosts.ts';
 import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookSkills } from './artifact-delivery.ts';
+import { planDroppedHarnessRetractions, retractDroppedHarnesses } from './harness-retraction.ts';
 import { buildGuidanceHookFills, findGuidanceHookAdvisories } from './hook-bindings.ts';
 import { retireAmbientHost, type Retirement, retireRetiredOutputs } from './legacy-retirement.ts';
+import { findDeclaredSkillOrphans, findRulebookSkillOrphans, findSubagentOrphans } from './owned-artifacts.ts';
 import {
   collectOwnedTargets,
   createDefectCollector,
@@ -44,8 +44,6 @@ import {
   type UnresolvableSlugs,
 } from './pre-write-gates.ts';
 import { refreshPromptsYml, resolvePromptsYmlPaths } from './prompts-index.ts';
-import type { ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';
-import { planSourceSupportRetractions, reconcileSourceSupport, renderSourceSupportPlans } from './source-support.ts';
 import {
   buildRulebookInvocationCatalog,
   createAnchorContextResolver,
@@ -54,7 +52,9 @@ import {
   resolveSkillTarget,
   resolveSubagentTarget,
 } from './render-contexts.ts';
+import { planSourceSupportRetractions, reconcileSourceSupport, renderSourceSupportPlans } from './source-support.ts';
 import type { SyncDomain } from './sync-domain.ts';
+import type { ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';
 import { describeSyncFailure, SyncValidationError } from './sync-validation-error.ts';
 
 /**
@@ -281,10 +281,6 @@ async function reconcileDomain(
   );
   const resolveRulebookContext = createRulebookContextResolver(resolved, resolveAnchorContext);
 
-  // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
-  // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
-  // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
-  // tool-name/link rewriting, and the harness id each rulebook body renders for.
   // Rendered per harness, because a bound body carries that harness's link targets, sigils, and home dir. Built once
   // here so the skill pass and the subagent pass splice the same guidance.
   const fillsByHarness = new Map(
@@ -309,45 +305,12 @@ async function reconcileDomain(
   // rather than one per subagent.
   const resolveOverlay = createOverlayLoader();
 
-  // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
-  // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
-  // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
-  const skillOrphansByDir = await Promise.all(
-    harnessSkillTargets.map(async ({ harnessId, skillsDir }) => ({
-      harnessId,
-      skillsDir,
-      orphans: (await listOwnedSkills(skillsDir))
-        .filter(({ dir, slug }) => desiredSkillDirs.get(slug) !== dir)
-        .map(({ dir }) => dir),
-    })),
-  );
-  // Declared-skill orphans reconcile per harness, reading only the declared-skill marker so the two namespaces never
-  // consider each other's dirs. An owned declared-skill dir in a harness is an orphan once its slug is no longer among
-  // the declared skills that target that harness — covering both an undeclared skill and one that dropped this harness.
-  const declaredSkillOrphansByDir = await Promise.all(
-    harnessSkillTargets.map(async ({ skillsDir, harnessId }) => {
-      const targetedSlugs = new Set(
-        resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
-      );
-      return {
-        skillsDir,
-        orphans: (await listOwnedDeclaredSkills(skillsDir))
-          .filter(({ slug }) => !targetedSlugs.has(slug))
-          .map(({ dir }) => dir),
-      };
-    }),
-  );
-  // Declared subagents reconcile file-based (flat `.md` files, not directories): An owned subagent file is one whose
-  // content carries the `codeassembly-subagent:` marker. It is an orphan once its slug is no longer declared. A
-  // marker-less hand-authored file is never claimed, so it survives untouched.
-  const subagentOrphansByDir = await Promise.all(
-    harnessSubagentTargets.map(async (target) => ({
-      subagentsDir: target.subagentsDir,
-      orphans: (await listOwnedSubagents(target.subagentsDir))
-        .filter(({ slug }) => !declaredSubagentSet.has(slug))
-        .map(({ file }) => file),
-    })),
-  );
+  // Scanned against the pre-write filesystem, so each delivery pass below can retract before it writes and free a
+  // name for reuse within the same run. The two skill namespaces share these dirs and are scanned separately, each
+  // reading only its own marker, so neither ever claims the other's.
+  const skillOrphansByDir = await findRulebookSkillOrphans(harnessSkillTargets, desiredSkillDirs);
+  const declaredSkillOrphansByDir = await findDeclaredSkillOrphans(harnessSkillTargets, resolvedSkills);
+  const subagentOrphansByDir = await findSubagentOrphans(harnessSubagentTargets, declaredSubagentSet);
 
   // Before any write or delete, fail closed on any skill or subagent target that already exists without this sync's
   // ownership marker — an install-managed or hand-authored file. The marker-gated retraction scans keep such files

@@ -1,4 +1,4 @@
-import { type GuidanceHookFill, type GuidanceHookFills } from '../../lib/guidance-hooks.ts';
+import type { GuidanceHookFill, GuidanceHookFills } from '../../lib/guidance-hooks.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { renderRulebookBody } from '../../lib/rulebook-transform.ts';
 import type { HarnessId } from '../../lib/types.ts';

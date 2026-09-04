@@ -1,4 +1,4 @@
-import { type GuidanceHookFills } from '../../lib/guidance-hooks.ts';
+import type { GuidanceHookFills } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
 import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
