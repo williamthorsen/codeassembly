@@ -207,18 +207,11 @@ export interface SyncPlan {
  * delivery is written by its author and a binding by its consumer, so a mismatch is not always the consumer's to fix
  * and never fails their run.
  *
- * `bound-ambient` carries the skills whose declaration of the hook creates the overlap, since they are what the
- * reader has to look at to choose between the two routes. `bound-unreached` is keyed on the hook rather than a
- * rulebook, because one mistyped hook name strands every rulebook bound under it at once.
+ * `bound-unreached` is keyed on the hook rather than a rulebook, because one mistyped hook name strands every
+ * rulebook bound under it at once.
  */
 export type GuidanceHookAdvisory =
   | { readonly kind: 'bound-undeclared'; readonly slug: string; readonly hook: string }
-  | {
-      readonly kind: 'bound-ambient';
-      readonly slug: string;
-      readonly hook: string;
-      readonly skills: ReadonlyArray<string>;
-    }
   | { readonly kind: 'bound-unreached'; readonly hook: string }
   | { readonly kind: 'declared-unbound'; readonly slug: string };
 
@@ -940,11 +933,6 @@ function buildGuidanceHookFills(
  * No disagreement throws: Each reaches the reader as a report line, because a binding and a `delivery` are written by
  * different people and a run whose output is correct must not fail over their disagreement.
  *
- * `declarers` is what separates a real overlap from a pairing that only looks like one. Ambient delivery lands in the
- * harness guidance file a session loads, and a hook fill lands in the body declaring it, so a rulebook taking both
- * routes reaches an agent twice only where a skill declares the hook. A subagent's context never carries the ambient
- * region, so there the two routes are the only way to reach both audiences.
- *
  * Order is fixed so both reports render alike: The bound findings follow the bindings in declaration order, each
  * hook's own finding ahead of its rulebooks', and the unbound ones follow `resolved`, whose order the closure walk
  * fixes.
@@ -964,17 +952,11 @@ function findGuidanceHookAdvisories(
     if (declaring === undefined) {
       advisories.push({ kind: 'bound-unreached', hook });
     }
-    const declaringSkills = declaring?.skills ?? [];
     for (const slug of slugs) {
       boundSlugs.add(slug);
       const rulebook = readBoundRulebook(bySlug, slug, hook);
-      // Both can hold at once, and both are reported: One says the rulebook was never authored for the splice, the
-      // other that its text now reaches a session twice. Neither remedy resolves the other.
       if (!rulebook.hook) {
         advisories.push({ kind: 'bound-undeclared', slug, hook });
-      }
-      if (rulebook.ambient && declaringSkills.length > 0) {
-        advisories.push({ kind: 'bound-ambient', slug, hook, skills: declaringSkills });
       }
     }
   }
