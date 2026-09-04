@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { extractProse } from '../collect-prose.ts';
+import { UnparsableYamlError } from '../extract-yaml.ts';
 import { CODE_SPAN_PLACEHOLDER } from '../mask-code-spans.ts';
+import type { ProseKind } from '../types.ts';
 
 describe(extractProse, () => {
   describe('markdown', () => {
@@ -140,6 +142,49 @@ describe(extractProse, () => {
     });
   });
 
+  describe('yaml', () => {
+    const YAML_DOC = [
+      '# A comment about the file the sweep reads.',
+      '# Its continuation line.',
+      'name: fixture-value',
+      'description: Reports the branch a worktree checks out.',
+      'prompt: |',
+      '  A block scalar line the reader reads.',
+      '  A second line with a # that is content.',
+      'folded: >-',
+      '  A folded line that wraps',
+      '  onto the next source line.',
+      'quoted: "a # inside a quoted scalar value"',
+      'tail: 1 # A trailing note.',
+    ].join('\n');
+
+    it('yields comments, block scalars, and multi-word values, each at its own source line', () => {
+      expect(extract(YAML_DOC, 'yaml')).toStrictEqual([
+        { file: 'fixture.md', line: 1, text: 'A comment about the file the sweep reads.\nIts continuation line.' },
+        { file: 'fixture.md', line: 4, text: 'Reports the branch a worktree checks out.' },
+        {
+          file: 'fixture.md',
+          line: 6,
+          text: 'A block scalar line the reader reads.\nA second line with a # that is content.',
+        },
+        { file: 'fixture.md', line: 9, text: 'A folded line that wraps\nonto the next source line.' },
+        { file: 'fixture.md', line: 11, text: 'a # inside a quoted scalar value' },
+        { file: 'fixture.md', line: 12, text: 'A trailing note.' },
+      ]);
+    });
+
+    it('yields no mapping key and no single-token value', () => {
+      const text = joinText(extract(YAML_DOC, 'yaml'));
+
+      expect(text).not.toContain('description');
+      expect(text).not.toContain('fixture-value');
+    });
+
+    it('refuses a document the parser cannot read, so no sweep counts it clean', () => {
+      expect(() => extract('aliases:\n  git: [vcs, version-control\n', 'yaml')).toThrow(UnparsableYamlError);
+    });
+  });
+
   describe('inline code', () => {
     it('masks a span in Markdown body prose', () => {
       const spans = extract('The root `tsconfig.json` names it.\n', 'markdown');
@@ -168,13 +213,20 @@ describe(extractProse, () => {
       expect(joinText(spans)).not.toContain('tsconfig');
       expect(joinText(spans)).toContain(CODE_SPAN_PLACEHOLDER);
     });
+
+    it('masks a span in a YAML comment', () => {
+      const spans = extract('# The root `tsconfig.json` names it.\n', 'yaml');
+
+      expect(joinText(spans)).not.toContain('tsconfig');
+      expect(joinText(spans)).toContain(CODE_SPAN_PLACEHOLDER);
+    });
   });
 });
 
 // region | Helpers
 
 /** Extracts prose from a fixture body under one kind, holding the file name constant so assertions read cleanly. */
-function extract(content: string, kind: 'markdown' | 'script' | 'shell') {
+function extract(content: string, kind: ProseKind) {
   return extractProse({ file: 'fixture.md', content, kind });
 }
 

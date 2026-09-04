@@ -3,8 +3,9 @@
  *
  * The sweep reads what git tracks plus what git would track, which respects `.gitignore` and so keeps `node_modules/`
  * and `dist/` out for free. Extraction is per file type: Markdown body text, comments and multi-word string literals
- * in TypeScript and JavaScript, and `#` comments in shell. Everything mechanical about scope is decided here, so the
- * detector sees prose alone and the agent never adjudicates a candidate from a file that it may not edit.
+ * in TypeScript and JavaScript, `#` comments in shell, and comments, block scalars, and multi-word values in YAML.
+ * Everything mechanical about scope is decided here, so the detector sees prose alone and the agent never adjudicates
+ * a candidate from a file that it may not edit.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -14,8 +15,10 @@ import path from 'node:path';
 import { DEFAULT_ARTIFACT_BASE_DIR, resolveArtifactBaseDir } from '../derive-session-context/compose-manifest.ts';
 import { readPreferences } from '../derive-session-context/read-preferences.ts';
 import { HARNESSES } from '../lib/harness.ts';
+import { extractYamlProse, UnparsableYamlError } from './extract-yaml.ts';
+import { findHashCommentStart } from './hash-comments.ts';
 import { maskCodeSpans } from './mask-code-spans.ts';
-import { countNewlines } from './span-text.ts';
+import { countNewlines, isProseLiteral } from './span-text.ts';
 import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 
 /** A resolved sweep: what it read, what it held out, and every block of prose that it yielded. */
@@ -80,8 +83,17 @@ export async function collectProse(input: {
       continue;
     }
 
+    let extracted: ProseSpan[];
+    try {
+      extracted = extractProse({ file, content, kind });
+    } catch (error) {
+      if (!(error instanceof UnparsableYamlError)) throw error;
+      skipped.unreadable += 1;
+      continue;
+    }
+
     scannedFiles.push({ file, bytes: Buffer.byteLength(content, 'utf8') });
-    spans.push(...extractProse({ file, content, kind }));
+    spans.push(...extracted);
   }
 
   return { files, scannedFiles, skipped, spans };
@@ -141,6 +153,8 @@ const PROSE_KINDS_BY_EXTENSION: Readonly<Record<string, ProseKind>> = {
   '.sh': 'shell',
   '.ts': 'script',
   '.tsx': 'script',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
   '.zsh': 'shell',
 };
 
@@ -167,6 +181,7 @@ const GENERATOR_MARKERS: Readonly<Record<ProseKind, readonly RegExp[]>> = {
   markdown: buildGeneratorMarkers(`<!--`),
   script: buildGeneratorMarkers(String.raw`\/\/|\/\*+|\*`),
   shell: buildGeneratorMarkers(`#`),
+  yaml: buildGeneratorMarkers(`#`),
 };
 
 /**
@@ -175,9 +190,6 @@ const GENERATOR_MARKERS: Readonly<Record<ProseKind, readonly RegExp[]>> = {
  * one line is the house convention, not a signal.
  */
 const MACHINE_LINE_WIDTH = 1_000;
-
-/** Fewest words a string literal must carry to read as prose rather than as data. */
-const MIN_LITERAL_WORDS = 3;
 
 /** Characters the script scanner passes over between tokens. */
 const SCRIPT_SPACING: ReadonlySet<string> = new Set([' ', '\t', '\r']);
@@ -229,11 +241,6 @@ function classifyByShebang(content: string): ProseKind | undefined {
   return /^#![^\n]*\b(?:ba|z|k)?sh\b/.test(content) ? 'shell' : undefined;
 }
 
-/** Counts the word-like tokens in a string literal, which is how prose is told from data. */
-function countWords(text: string): number {
-  return text.split(/\s+/).filter((word) => /[a-z]{2}/i.test(word)).length;
-}
-
 /** Dispatches to the extractor that reads `kind`. */
 function extractByKind(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
   switch (input.kind) {
@@ -243,6 +250,8 @@ function extractByKind(input: { file: string; content: string; kind: ProseKind }
       return extractScriptProse(input.file, input.content);
     case 'shell':
       return extractShellProse(input.file, input.content);
+    case 'yaml':
+      return extractYamlProse(input);
   }
 }
 
@@ -372,7 +381,7 @@ function extractScriptProse(file: string, content: string): ProseSpan[] {
     if (STRING_DELIMITERS.has(char)) {
       const end = findStringEnd(content, index, char);
       const body = content.slice(index + 1, Math.min(end, content.length));
-      if (countWords(body) >= MIN_LITERAL_WORDS) {
+      if (isProseLiteral(body)) {
         spans.push({ file, line, text: body });
       }
       line += countNewlines(body);
@@ -399,7 +408,7 @@ function extractShellProse(file: string, content: string): ProseSpan[] {
   }
 
   for (const [index, raw] of content.split('\n').entries()) {
-    const start = index === 0 && raw.startsWith('#!') ? -1 : findShellCommentStart(raw);
+    const start = index === 0 && raw.startsWith('#!') ? -1 : findHashCommentStart(raw);
     if (start === -1) {
       flush();
       continue;
@@ -421,30 +430,6 @@ function extractShellProse(file: string, content: string): ProseSpan[] {
 function findLineEnd(content: string, index: number): number {
   const end = content.indexOf('\n', index);
   return end === -1 ? content.length : end;
-}
-
-/** Returns the index of `#` opening a shell comment, or -1 where the line carries none outside a quoted string. */
-function findShellCommentStart(line: string): number {
-  let quote: string | undefined;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === '\\' && quote !== "'") {
-      index += 1;
-      continue;
-    }
-    if (quote !== undefined) {
-      if (char === quote) quote = undefined;
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      quote = char;
-      continue;
-    }
-    if (char === '#' && (index === 0 || /\s/.test(line[index - 1] ?? ''))) {
-      return index;
-    }
-  }
-  return -1;
 }
 
 /** Returns the index of the quote closing the literal opened at `start`, or the content length where none does. */

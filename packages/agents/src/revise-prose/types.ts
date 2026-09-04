@@ -134,10 +134,11 @@ export interface RunFold {
 export type SkipReason = 'generated' | 'ineligible' | 'machine-generated' | 'unreadable';
 
 /** How a file's prose is delimited, which decides how the extractor reads it. */
-export type ProseKind = 'markdown' | 'script' | 'shell';
+export type ProseKind = 'markdown' | 'script' | 'shell' | 'yaml';
 
 /**
- * A block of prose lifted out of a file: a Markdown paragraph, a comment, a string literal, or a table cell.
+ * A block of prose lifted out of a file: a Markdown paragraph, a comment, a string literal, a block scalar, or a
+ * table cell.
  *
  * `text` preserves the source's own newlines, so the line holding any offset within it is `line` plus the newlines
  * preceding that offset. Every transformation applied by the extractor is line-preserving for that reason.
