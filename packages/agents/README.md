@@ -248,24 +248,23 @@ The library declares four hook names:
 | `comment-preferences`        | the register of comments written into source | the coder subagent and the five reviewer subagents                                    |
 | `implementation-preferences` | how code is written and judged               | the implementing and reviewing skills, the coder, and the five plan-shaping subagents |
 | `ticketing-preferences`      | how work is split across tickets             | the ticket-composing skills and `planner`                                             |
-| `writing-preferences`        | how agent-authored prose reads               | every subagent but the deployment canary                                              |
+| `writing-preferences`        | how agent-authored prose reads               | every subagent but the deployment canary, and `revise-prose`                          |
 
 A binding fills a hook with the whole of the bound rulebook's body, and there is no way to bind part of one. A rulebook bound to a hook that only subagents declare is spliced entire into every declaring subagent, and none of the reports below can see that it carries guidance those subagents have no use for. Keep such a rulebook coherent for its narrowest consumer: once it mixes session-only guidance with the subagent-relevant kind, split it rather than binding the whole.
 
 Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
 
-Four further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
+Three further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
 
-| Reported          | Condition                                                                                 | Level   |
-| ----------------- | ----------------------------------------------------------------------------------------- | ------- |
-| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                                  | warning |
-| Bound and ambient | a bound rulebook's `delivery` also names `ambient` and a deployed skill declares the hook | warning |
-| Bound, unreached  | a binding names a hook no deployed skill or subagent declares, so it delivers nothing     | advice  |
-| Declared, unbound | a rulebook names `hook` and no binding uses it                                            | advice  |
-
-"Bound and ambient" turns on the skill because that is where the two routes overlap: ambient delivery lands in the guidance file a session loads, so a skill spliced with the same rulebook hands that session a second copy. A hook only subagents declare is silent, and deliberately so: A subagent's context never carries the ambient region, so the pairing is how one rulebook reaches a session and a subagent both.
+| Reported          | Condition                                                                             | Level   |
+| ----------------- | ------------------------------------------------------------------------------------- | ------- |
+| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                              | warning |
+| Bound, unreached  | a binding names a hook no deployed skill or subagent declares, so it delivers nothing | advice  |
+| Declared, unbound | a rulebook names `hook` and no binding uses it                                        | advice  |
 
 The last two are not defects. A collection can carry a hook-declaring rulebook into a project that never binds it, and a home-tier binding can outrun a project that declares few skills and no subagents, so each line names an affordance going unused rather than something broken. A binding that reaches nothing is also how a mistyped hook name surfaces, since nothing else would say so.
+
+A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them. Ambient delivery lands in the guidance file a session loads, so a skill spliced with the same rulebook hands that session a second copy. The author who wrote both routes into `delivery` has already weighed that, though, and a skill declaring the hook may be parsing what the fill delivers rather than only carrying it, as `revise-prose` does. `content/__tests__/guidance-hook-reach.unit.test.ts` holds the library's record of which skills may.
 
 A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance every consumer of the library should get is a partial; guidance one user or one project wants is a hook. See `content/_partials/README.md`.
 
