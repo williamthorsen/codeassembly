@@ -10,7 +10,7 @@ import type { DroppedHarnessRetraction, HostRetraction } from './harness-retract
 import type { GuidanceHookAdvisory } from './hook-bindings.ts';
 import type { Retirement } from './legacy-retirement.ts';
 import type { SourceSupportPlan } from './source-support.ts';
-import type { MissingDeclaration, ResolutionEntry, SyncOutcome, SyncPlan } from './sync.ts';
+import type { MissingDeclaration, ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';
 
 /** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
 const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {

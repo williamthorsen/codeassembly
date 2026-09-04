@@ -1,6 +1,6 @@
 import type { ReportLine } from '../../../lib/report-line.ts';
 import { renderDryRunReport, renderSyncReport } from '../report.ts';
-import type { SyncOutcome } from '../sync.ts';
+import type { SyncOutcome } from '../sync-plan.ts';
 
 /**
  * The lines one sync outcome reports. `dryRun` picks the renderer the CLI would pick, and `level` narrows to a single
