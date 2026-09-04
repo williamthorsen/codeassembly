@@ -4,11 +4,11 @@ packages:
 catalog:
   '@testing-library/dom': '10.4.1'
   '@testing-library/jest-dom': '7.0.1'
-  '@testing-library/react': '16.3.2'
+  '@testing-library/react': '16.3.3'
   '@types/node': '24.13.3'
   '@types/react': '19.2.18'
   '@types/react-dom': '19.2.5'
-  '@vitejs/plugin-react': '6.1.0'
+  '@vitejs/plugin-react': '6.1.1'
   '@williamthorsen/nmr': '0.35.0'
   '@williamthorsen/toolbelt.errors': '0.6.3'
   '@williamthorsen/toolbelt.testing': '0.5.0'
