@@ -55,7 +55,7 @@ export async function collectProse(input: {
   const scannedFiles: ScannedFile[] = [];
 
   for (const file of files) {
-    // The extension decides whether a file is worth reading at all, so a lockfile or an image is never pulled into
+    // The extension decides whether a file is worth reading at all, so an image or an archive is never pulled into
     // a string. Only an extensionless file falls through to the read, where a shebang is the one remaining signal.
     const extensionKind = classifyByExtension(file);
     if (extensionKind === undefined && path.extname(file) !== '') {
@@ -106,7 +106,8 @@ export async function collectProse(input: {
 
 /**
  * Extracts every block of prose from one file's content, each carrying the line on which it begins. Inline code spans
- * are masked on the way out, so no detector reads a span's content as words whatever kind the file is.
+ * are masked on the way out, so no detector reads a span's content as words whatever kind the file is. Throws
+ * {@link UnparsableYamlError} where the content is YAML that the parser cannot read.
  */
 export function extractProse(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
   return extractByKind(input).map((span) => ({ ...span, text: maskCodeSpans(span.text) }));
@@ -257,6 +258,25 @@ function extractByKind(input: { file: string; content: string; kind: ProseKind }
       return extractShellProse(input.file, input.content);
     case 'yaml':
       return extractYamlProse(input);
+  }
+}
+
+/**
+ * Extracts a Markdown file's frontmatter through the YAML extractor, each span carrying the source line it sits on.
+ * A block the parser cannot read yields nothing rather than failing the file, whose body is prose whatever its
+ * frontmatter holds.
+ */
+function extractFrontmatterProse(file: string, lines: readonly string[], bodyStart: number): ProseSpan[] {
+  if (bodyStart === 0) return [];
+  try {
+    // The block opens on the line after the delimiter, which is the offset each span's own line advances by.
+    return extractYamlProse({ file, content: lines.slice(1, bodyStart - 1).join('\n') }).map((span) => ({
+      ...span,
+      line: span.line + 1,
+    }));
+  } catch (error) {
+    if (error instanceof UnparsableYamlError) return [];
+    throw error;
   }
 }
 
@@ -573,25 +593,6 @@ function skipFencedBlock(lines: readonly string[], start: number, fence: string)
     if (closer.test(lines[index] ?? '')) return index + 1;
   }
   return lines.length;
-}
-
-/**
- * Extracts a Markdown file's frontmatter through the YAML extractor, each span carrying the source line it sits on.
- * A block the parser cannot read yields nothing rather than failing the file, whose body is prose whatever its
- * frontmatter holds.
- */
-function extractFrontmatterProse(file: string, lines: readonly string[], bodyStart: number): ProseSpan[] {
-  if (bodyStart === 0) return [];
-  try {
-    // The block opens on the line after the delimiter, which is the offset each span's own line advances by.
-    return extractYamlProse({ file, content: lines.slice(1, bodyStart - 1).join('\n') }).map((span) => ({
-      ...span,
-      line: span.line + 1,
-    }));
-  } catch (error) {
-    if (error instanceof UnparsableYamlError) return [];
-    throw error;
-  }
 }
 
 /** Returns the index of the first line past a YAML frontmatter block, or 0 where the file opens with none. */
