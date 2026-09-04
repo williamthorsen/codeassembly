@@ -14,6 +14,7 @@ import {
   listGuidanceHooks,
 } from '../../src/lib/guidance-hooks.ts';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
+import { isSkippedSkillEntry } from '../../src/lib/skill-transform.ts';
 import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
@@ -32,6 +33,12 @@ const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
 interface BoundRulebook {
   readonly slug: string;
   readonly rule: string;
+}
+
+/** One reason a skill's hook declaration overlaps an ambient route: the hook, and the ambient rulebooks bound to it. */
+interface AmbientHookBinding {
+  readonly ambientSlugs: ReadonlyArray<string>;
+  readonly hook: string;
 }
 
 /** A body declaring a hook: the slug naming it in a test title, and its path under the content root. */
@@ -213,20 +220,12 @@ describe('reviewer-subagent carrier', () => {
 // what caught `revise-prose`, and only on a machine whose declaration binds the hook.
 describe('ambient-bound hook declarations', () => {
   it('permits no unrecorded skill to declare a hook bound to an ambient rulebook', async () => {
-    const offenders: Array<string> = [];
-
-    for (const { boundRulebooks, hook } of HOOK_GUARDS) {
-      const ambientSlugs = await filterAmbientRulebooks(boundRulebooks);
-      if (ambientSlugs.length === 0) {
-        continue;
-      }
-      const declaringSkills = await listSkillSlugsDeclaring(hook);
-      for (const slug of declaringSkills) {
-        if (!AMBIENT_FILL_READERS.has(slug)) {
-          offenders.push(`${slug} declares "${hook}", bound to ambient-delivering ${ambientSlugs.join(', ')}`);
-        }
-      }
-    }
+    const declarers = await listAmbientFillDeclarers();
+    const offenders = declarers
+      .entries()
+      .filter(([slug]) => !AMBIENT_FILL_READERS.has(slug))
+      .map(([slug, bindings]) => `${slug} declares ${bindings.map(describeAmbientBinding).join(' and ')}`)
+      .toArray();
 
     const message =
       `A session running these skills reads the rulebook twice, once from the ambient region and once from the ` +
@@ -235,18 +234,24 @@ describe('ambient-bound hook declarations', () => {
     expect(offenders, message).toEqual([]);
   });
 
-  it.each(AMBIENT_FILL_READERS.entries().toArray())(
-    '%s still declares the hook its exemption covers',
-    async (slug, reason) => {
-      const declared = listGuidanceHooks(await expandBody(`skills/${slug}/SKILL.md`), slug).map(({ name }) => name);
+  // The inverse of the assertion above, over the same population: an exemption naming a skill that no longer
+  // declares an ambient-bound hook silences nothing and would outlive the reason it was granted for.
+  it.each(AMBIENT_FILL_READERS.entries().toArray())('%s still declares an ambient-bound hook', async (slug, reason) => {
+    const declarers = await listAmbientFillDeclarers();
 
-      const message = `${slug} is exempt because it ${reason}, but it declares no hook, so the exemption is stale`;
-      expect(declared, message).not.toHaveLength(0);
-    },
-  );
+    const message =
+      `${slug} is exempt because it ${reason}, but it declares no hook bound to an ambient rulebook, ` +
+      'so the exemption is stale';
+    expect(declarers.has(slug), message).toBe(true);
+  });
 });
 
 // region | Helpers
+
+/** Renders one ambient binding for a failure message: the hook, and the ambient rulebooks a fill would duplicate. */
+function describeAmbientBinding({ ambientSlugs, hook }: AmbientHookBinding): string {
+  return `"${hook}", bound to ambient-delivering ${ambientSlugs.join(', ')}`;
+}
 
 /** Returns the slugs among `boundRulebooks` whose delivery names `ambient`, so a fill duplicates the ambient copy. */
 async function filterAmbientRulebooks(boundRulebooks: ReadonlyArray<BoundRulebook>): Promise<ReadonlyArray<string>> {
@@ -260,16 +265,50 @@ async function filterAmbientRulebooks(boundRulebooks: ReadonlyArray<BoundRuleboo
   return ambient;
 }
 
-/** Returns every skill slug declaring `hook` in any Markdown body its deploy walk reaches, as `sync` reads them. */
+/**
+ * Maps each skill declaring a hook whose bound rulebooks deliver `ambient` to the bindings that make it one. Both
+ * assertions above read this one population, so neither can drift from the other's notion of declaring.
+ */
+async function listAmbientFillDeclarers(): Promise<ReadonlyMap<string, ReadonlyArray<AmbientHookBinding>>> {
+  const declarers = new Map<string, Array<AmbientHookBinding>>();
+
+  for (const { boundRulebooks, hook } of HOOK_GUARDS) {
+    const ambientSlugs = await filterAmbientRulebooks(boundRulebooks);
+    if (ambientSlugs.length === 0) {
+      continue;
+    }
+    const declaringSkills = await listSkillSlugsDeclaring(hook);
+    for (const slug of declaringSkills) {
+      const bindings = declarers.get(slug);
+      if (bindings === undefined) {
+        declarers.set(slug, [{ ambientSlugs, hook }]);
+      } else {
+        bindings.push({ ambientSlugs, hook });
+      }
+    }
+  }
+
+  return declarers;
+}
+
+/**
+ * Returns every skill slug declaring `hook` in a Markdown body the deploy walk reaches. `isSkippedSkillEntry` is what
+ * `sync` applies, so a directive in a skill-local partial counts here only where a deployed body inlines it, as there.
+ */
 async function listSkillSlugsDeclaring(hook: string): Promise<ReadonlyArray<string>> {
   const slugs: Array<string> = [];
   const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
   for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith('_')) {
+    // `_data` joins the skipped names here: a support entry is no skill, and the support route renders fills dropped.
+    if (!entry.isDirectory() || entry.name.startsWith('_') || isSkippedSkillEntry(entry.name)) {
       continue;
     }
-    const files = await listMarkdownFiles(path.join(SKILLS_ROOT, entry.name));
+    const skillRoot = path.join(SKILLS_ROOT, entry.name);
+    const files = await listMarkdownFiles(skillRoot);
     for (const filePath of files) {
+      if (path.relative(skillRoot, filePath).split(path.sep).some(isSkippedSkillEntry)) {
+        continue;
+      }
       const relativePath = path.relative(CONTENT_ROOT, filePath);
       const declared = listGuidanceHooks(await expandBody(relativePath), relativePath);
       if (declared.some(({ name }) => name === hook)) {
