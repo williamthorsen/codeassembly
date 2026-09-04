@@ -189,12 +189,6 @@ function describeDamagedRegion(hostPath: string): string {
   return `${hostPath} carries a damaged ambient region.`;
 }
 
-/** Names the skills whose declaration of a hook overlaps an ambient route, as the relative clause the line embeds. */
-function describeDeclaringSkills(skills: ReadonlyArray<string>): string {
-  const quoted = skills.map((slug) => `"${slug}"`).join(', ');
-  return skills.length === 1 ? `skill ${quoted} declares` : `skills ${quoted} declare`;
-}
-
 /** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
 function describeDeliveries(plan: SyncPlan): string {
   const skillFilesWritten = plan.resolved.filter((rulebook) => rulebook.skill).length * plan.harnessSkillTargets.length;
@@ -267,14 +261,6 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
         text:
           `⚠️ Guidance hook "${advisory.hook}" binds rulebook "${advisory.slug}", whose delivery does not name ` +
           "`hook`. Add `hook` to the rulebook's delivery, or drop the binding.",
-      };
-    case 'bound-ambient':
-      return {
-        level: 'warn',
-        text:
-          `⚠️ Rulebook "${advisory.slug}" is bound to guidance hook "${advisory.hook}", which ` +
-          `${describeDeclaringSkills(advisory.skills)}, and also delivers \`ambient\`, so a session loading such a ` +
-          'skill receives its text twice. Drop one of the two routes.',
       };
     case 'bound-unreached':
       return {
