@@ -9,12 +9,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../../lib/artifact-types.ts';
 import { type ResolvedDeclaration, resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
-import {
-  type ContentDefect,
-  foldHarnessDefects,
-  formatContentDefects,
-  type HarnessDefect,
-} from '../../lib/content-defects.ts';
+import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from '../../lib/content-defects.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import {
   createSourceResolver,
@@ -31,7 +26,7 @@ import { checkGitIgnored } from '../../lib/git-ignore.ts';
 import { type GuidanceHookFill, type GuidanceHookFills, listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
-import { type HomeFailure, recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
+import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
 import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
@@ -45,7 +40,7 @@ import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
-import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
+import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug, renderSkillFile } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../../lib/rulebook-transform.ts';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
@@ -81,7 +76,7 @@ import {
   skillMarker,
   subagentMarker,
 } from './owned-artifacts.ts';
-import { isSyncValidationError, SyncValidationError } from './sync-validation-error.ts';
+import { describeSyncFailure, SyncValidationError } from './sync-validation-error.ts';
 
 /** The line an ambient region opens with, so a reader who finds generated guidance knows an edit there is lost. */
 const ambientRegionNote =
@@ -718,17 +713,6 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
   return merged;
 }
 
-/**
- * Describes a failed home-domain sync for the provenance record, carrying the whole defect report where the failure
- * has one. The report is held for a reader who opens the stamp; `status` prints the count alone, because a stored
- * report describes the content as it stood at the attempt rather than as it stands now.
- */
-function describeSyncFailure(error: unknown): HomeFailure {
-  return isSyncValidationError(error)
-    ? { summary: formatContentDefects(error.defects), defectCount: error.defects.length }
-    : { summary: describeError(error) };
-}
-
 /** Collects the defects reported by a sync's pre-write gates, so the run fails once on the whole list. */
 interface DefectCollector {
   readonly found: ReadonlyArray<ContentDefect>;
@@ -968,11 +952,6 @@ function findGuidanceHookAdvisories(
   }
 
   return advisories;
-}
-
-/** Indexes resolved rulebooks by slug, so a binding reaches its body without rescanning the list per lookup. */
-function indexRulebooksBySlug(resolved: ReadonlyArray<ResolvedRulebook>): ReadonlyMap<string, ResolvedRulebook> {
-  return new Map(resolved.map((rulebook) => [rulebook.slug, rulebook]));
 }
 
 /**
