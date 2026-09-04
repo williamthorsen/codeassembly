@@ -76,6 +76,7 @@ import {
   skillMarker,
   subagentMarker,
 } from './owned-artifacts.ts';
+import type { SyncDomain } from './sync-domain.ts';
 import { describeSyncFailure, SyncValidationError } from './sync-validation-error.ts';
 
 /** The line an ambient region opens with, so a reader who finds generated guidance knows an edit there is lost. */
@@ -214,23 +215,6 @@ export type GuidanceHookAdvisory =
 export type Retirement =
   | { readonly kind: 'ambient-host'; readonly hostPath: string; readonly emptied: boolean }
   | { readonly kind: 'neutral-rulebooks'; readonly dir: string };
-
-/** The one per-domain difference: the base dir to resolve and deploy under, and where ambient blocks land. */
-export interface SyncDomain {
-  readonly baseDir: string;
-  /**
-   * Which guidance file hosts this domain's ambient region. Both domains inject into a per-harness region; they
-   * differ only in the host and in who creates it — `install` renders the harness-home region, while `sync` owns
-   * the project-local one because `install` does not manage user-local files.
-   */
-  readonly ambient: AmbientHostKind;
-  /**
-   * Root that rendered links to this domain's own deployed trees are written under: `~` for the home domain, the
-   * absolute project root for the project domain. Without it a project-deployed artifact addresses the home harness
-   * dir, which a project sync never populates.
-   */
-  readonly anchorBase: string;
-}
 
 /**
  * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
