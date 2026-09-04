@@ -24,7 +24,7 @@ export interface ProseCollection {
   files: readonly string[];
   /** The files the sweep read prose from, in the target set's own order, each with the bytes a batch budget reads. */
   scannedFiles: readonly ScannedFile[];
-  /** Prose-bearing files held out, by the reason each was held out, so no exclusion is silent. */
+  /** Files held out, by the reason each was held out, so no exclusion is silent. */
   skipped: Readonly<Record<SkipReason, number>>;
   spans: readonly ProseSpan[];
 }
@@ -47,14 +47,17 @@ export async function collectProse(input: {
   const files = resolveTargetFiles({ root: input.root, paths: input.paths ?? [], artifactBaseDir });
 
   const spans: ProseSpan[] = [];
-  const skipped: Record<SkipReason, number> = { generated: 0, 'machine-generated': 0, unreadable: 0 };
+  const skipped: Record<SkipReason, number> = { generated: 0, ineligible: 0, 'machine-generated': 0, unreadable: 0 };
   const scannedFiles: ScannedFile[] = [];
 
   for (const file of files) {
     // The extension decides whether a file is worth reading at all, so a lockfile or an image is never pulled into
     // a string. Only an extensionless file falls through to the read, where a shebang is the one remaining signal.
     const extensionKind = classifyByExtension(file);
-    if (extensionKind === undefined && path.extname(file) !== '') continue;
+    if (extensionKind === undefined && path.extname(file) !== '') {
+      skipped.ineligible += 1;
+      continue;
+    }
 
     const content = readFileSafely(path.join(input.root, file));
     if (content === undefined) {
@@ -63,7 +66,10 @@ export async function collectProse(input: {
     }
 
     const kind = extensionKind ?? classifyByShebang(content);
-    if (kind === undefined) continue;
+    if (kind === undefined) {
+      skipped.ineligible += 1;
+      continue;
+    }
 
     if (isGeneratedContent(content, kind)) {
       skipped.generated += 1;
