@@ -1,4 +1,23 @@
+import { describeError } from '@williamthorsen/toolbelt.errors';
+
 import { type ContentDefect, formatContentDefects } from '../../lib/content-defects.ts';
+import type { HomeFailure } from '../../lib/home-provenance.ts';
+
+/**
+ * Describes a failed home-domain sync for the provenance record, carrying the whole defect report where the failure
+ * has one. The report is held for a reader who opens the stamp; `status` prints the count alone, because a stored
+ * report describes the content as it stood at the attempt rather than as it stands now.
+ */
+export function describeSyncFailure(error: unknown): HomeFailure {
+  return isSyncValidationError(error)
+    ? { summary: formatContentDefects(error.defects), defectCount: error.defects.length }
+    : { summary: describeError(error) };
+}
+
+/** Narrows a caught error to the aggregate a pre-write validation raises. */
+export function isSyncValidationError(error: unknown): error is SyncValidationError {
+  return error instanceof SyncValidationError;
+}
 
 /**
  * Every defect a sync's pre-write validation found, raised once so a run reports the whole list rather than its first
@@ -14,9 +33,4 @@ export class SyncValidationError extends Error {
     this.name = 'SyncValidationError';
     this.defects = defects;
   }
-}
-
-/** Narrows a caught error to the aggregate a pre-write validation raises. */
-export function isSyncValidationError(error: unknown): error is SyncValidationError {
-  return error instanceof SyncValidationError;
 }

@@ -1,4 +1,4 @@
-import type { SyncPlan } from '../sync.ts';
+import type { SyncPlan } from '../sync-plan.ts';
 
 /** A sync plan holding nothing, so a test states only the fields its assertion turns on. */
 export function buildSyncPlan(overrides: Partial<SyncPlan> = {}): SyncPlan {

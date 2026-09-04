@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { renderDryRunReport, renderSyncReport } from '../report.ts';
-import type { SyncOutcome, SyncPlan } from '../sync.ts';
+import type { SyncOutcome, SyncPlan } from '../sync-plan.ts';
 import { buildSyncPlan } from '../test-utils/build-sync-plan.ts';
 
 const HOME_HOST = '/home/.claude/CLAUDE.md';

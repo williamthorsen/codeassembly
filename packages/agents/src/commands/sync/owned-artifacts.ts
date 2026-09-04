@@ -10,10 +10,71 @@ import path from 'node:path';
 
 import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
+import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
+import type { HarnessId } from '../../lib/types.ts';
 
-export const skillMarker = makeArtifactMarker('skill');
-export const subagentMarker = makeArtifactMarker('subagent');
+/**
+ * Lists the owned declared-skill dirs each targeted harness no longer declares, so delivery retracts them before it
+ * writes. A dir is an orphan once its slug is no longer among the declared skills targeting that harness, which
+ * covers both an undeclared skill and one that dropped this harness.
+ */
+export async function findDeclaredSkillOrphans(
+  targets: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string }>,
+  resolvedSkills: ReadonlyArray<ResolvedSkill>,
+): Promise<ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>> {
+  return Promise.all(
+    targets.map(async ({ harnessId, skillsDir }) => {
+      const targetedSlugs = new Set(
+        resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+      );
+      return {
+        skillsDir,
+        orphans: (await listOwnedDeclaredSkills(skillsDir))
+          .filter(({ slug }) => !targetedSlugs.has(slug))
+          .map(({ dir }) => dir),
+      };
+    }),
+  );
+}
+
+/**
+ * Lists the owned rulebook-skill dirs each targeted harness no longer wants, keyed against the directory each stable
+ * slug currently belongs in. A dir is an orphan once its marker slug no longer maps to it — because the rulebook is
+ * no longer skill-delivered, or because its resolved skill name changed.
+ */
+export async function findRulebookSkillOrphans(
+  targets: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string }>,
+  desiredSkillDirs: ReadonlyMap<string, string>,
+): Promise<ReadonlyArray<{ harnessId: HarnessId; skillsDir: string; orphans: ReadonlyArray<string> }>> {
+  return Promise.all(
+    targets.map(async ({ harnessId, skillsDir }) => ({
+      harnessId,
+      skillsDir,
+      orphans: (await listOwnedSkills(skillsDir))
+        .filter(({ dir, slug }) => desiredSkillDirs.get(slug) !== dir)
+        .map(({ dir }) => dir),
+    })),
+  );
+}
+
+/**
+ * Lists the owned subagent files each targeted harness no longer declares. A marker-less hand-authored file is never
+ * claimed, so it survives untouched.
+ */
+export async function findSubagentOrphans(
+  targets: ReadonlyArray<{ subagentsDir: string }>,
+  declaredSlugs: ReadonlySet<string>,
+): Promise<ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>> {
+  return Promise.all(
+    targets.map(async ({ subagentsDir }) => ({
+      subagentsDir,
+      orphans: (await listOwnedSubagents(subagentsDir))
+        .filter(({ slug }) => !declaredSlugs.has(slug))
+        .map(({ file }) => file),
+    })),
+  );
+}
 
 /**
  * Lists the declared skills sync owns under `skillsDir` as `{ dir, slug }` pairs — those whose `SKILL.md` carries the
@@ -130,3 +191,6 @@ export async function listOwnedSubagents(subagentsDir: string): Promise<Readonly
   }
   return owned;
 }
+
+export const skillMarker = makeArtifactMarker('skill');
+export const subagentMarker = makeArtifactMarker('subagent');

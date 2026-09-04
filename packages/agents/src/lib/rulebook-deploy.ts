@@ -7,6 +7,11 @@ import { parseRulebookFile } from './rulebook-schema.ts';
 import { resolveSkillName } from './rulebook-skill.ts';
 import { isEnoent } from './type-guards.ts';
 
+/** Indexes resolved rulebooks by slug, so a lookup reaches a body without rescanning the list per call. */
+export function indexRulebooksBySlug(resolved: ReadonlyArray<ResolvedRulebook>): ReadonlyMap<string, ResolvedRulebook> {
+  return new Map(resolved.map((rulebook) => [rulebook.slug, rulebook]));
+}
+
 /** A declared rulebook resolved against its owning source: its neutral body and which delivery modes it requests. */
 export interface ResolvedRulebook {
   readonly slug: string;

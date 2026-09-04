@@ -6,7 +6,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../../lib/types.ts';
-import { type GuidanceHookAdvisory, syncCommand } from '../sync.ts';
+import type { GuidanceHookAdvisory } from '../hook-bindings.ts';
+import { syncCommand } from '../sync.ts';
 
 describe('syncCommand with guidance-hook bindings', () => {
   let projectRoot: string;
