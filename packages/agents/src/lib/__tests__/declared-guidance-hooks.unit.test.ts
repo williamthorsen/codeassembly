@@ -4,18 +4,18 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { findGuidanceHookDeclarers } from '../guidance-hook-declarers.ts';
+import { listDeclaredGuidanceHooks } from '../declared-guidance-hooks.ts';
 import type { ResolvedSkill } from '../skill-deploy.ts';
 import type { ResolvedSubagent } from '../subagent-deploy.ts';
 import type { HarnessId } from '../types.ts';
 
 const HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude'];
 
-describe(findGuidanceHookDeclarers, () => {
+describe(listDeclaredGuidanceHooks, () => {
   let contentDir: string;
 
   beforeEach(async () => {
-    contentDir = path.join(tmpdir(), `hook-declarers-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    contentDir = path.join(tmpdir(), `declared-hooks-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(contentDir, { recursive: true });
   });
 
@@ -26,35 +26,26 @@ describe(findGuidanceHookDeclarers, () => {
   it('lists a skill that declares a hook', async () => {
     const skill = await writeSkill(contentDir, 'implement-plan', 'Write the code.\n\n<!-- guidance-hook: impl -->\n');
 
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
 
-    expect(declarers.get('impl')).toEqual({ skills: ['implement-plan'], subagents: [] });
+    expect(declared.has('impl')).toBe(true);
   });
 
   it('lists a subagent that declares a hook', async () => {
     const subagent = await writeSubagent(contentDir, 'coder', 'Write the code.\n\n<!-- guidance-hook: impl -->\n');
 
-    const declarers = await findGuidanceHookDeclarers([], [subagent], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([], [subagent], HARNESS_IDS);
 
-    expect(declarers.get('impl')).toEqual({ skills: [], subagents: ['coder'] });
-  });
-
-  it('lists both kinds under one hook when both declare it', async () => {
-    const skill = await writeSkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
-    const subagent = await writeSubagent(contentDir, 'coder', '<!-- guidance-hook: impl -->\n');
-
-    const declarers = await findGuidanceHookDeclarers([skill], [subagent], HARNESS_IDS);
-
-    expect(declarers.get('impl')).toEqual({ skills: ['implement-plan'], subagents: ['coder'] });
+    expect(declared.has('impl')).toBe(true);
   });
 
   it('finds a hook a body declares through an included partial', async () => {
     await writePartial(contentDir, 'shared.md', 'Shared guidance.\n\n<!-- guidance-hook: impl -->\n');
     const skill = await writeSkill(contentDir, 'implement-plan', '<!-- include: ../../_partials/shared.md / -->\n');
 
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
 
-    expect(declarers.get('impl')).toEqual({ skills: ['implement-plan'], subagents: [] });
+    expect(declared.has('impl')).toBe(true);
   });
 
   // Every Markdown file the skill walk reaches is filled, so a nested body declares as much as the entry does.
@@ -62,18 +53,9 @@ describe(findGuidanceHookDeclarers, () => {
     const skill = await writeSkill(contentDir, 'orchestrate', 'Run the pipeline.\n');
     await writeSkillFile(contentDir, 'orchestrate', 'modules/review-cycle.md', '<!-- guidance-hook: impl -->\n');
 
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
 
-    expect(declarers.get('impl')).toEqual({ skills: ['orchestrate'], subagents: [] });
-  });
-
-  it('names a skill once when two of its bodies declare the same hook', async () => {
-    const skill = await writeSkill(contentDir, 'orchestrate', '<!-- guidance-hook: impl -->\n');
-    await writeSkillFile(contentDir, 'orchestrate', '_data/context.md', '<!-- guidance-hook: impl -->\n');
-
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
-
-    expect(declarers.get('impl')).toEqual({ skills: ['orchestrate'], subagents: [] });
+    expect(declared.has('impl')).toBe(true);
   });
 
   it('ignores a declaration in a file the skill walk passes over', async () => {
@@ -81,25 +63,25 @@ describe(findGuidanceHookDeclarers, () => {
     await writeSkillFile(contentDir, 'orchestrate', '_partials/fragment.md', '<!-- guidance-hook: impl -->\n');
     await writeSkillFile(contentDir, 'orchestrate', '__tests__/case.md', '<!-- guidance-hook: other -->\n');
 
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
 
-    expect(declarers.size).toBe(0);
+    expect(declared.size).toBe(0);
   });
 
   it('skips a skill that targets no harness the run deploys to', async () => {
     const skill = await writeSkill(contentDir, 'rovo-only', '<!-- guidance-hook: impl -->\n', ['rovo']);
 
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
 
-    expect(declarers.has('impl')).toBe(false);
+    expect(declared.has('impl')).toBe(false);
   });
 
   it('omits a hook no deployed body declares', async () => {
     const skill = await writeSkill(contentDir, 'implement-plan', 'Write the code.\n');
 
-    const declarers = await findGuidanceHookDeclarers([skill], [], HARNESS_IDS);
+    const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
 
-    expect(declarers.size).toBe(0);
+    expect(declared.size).toBe(0);
   });
 });
 

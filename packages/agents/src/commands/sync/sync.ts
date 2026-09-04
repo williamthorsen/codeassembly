@@ -22,12 +22,12 @@ import {
   hasLibraryArtifact,
   type SourceResolver,
 } from '../../lib/content-sources.ts';
+import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts';
 import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
-import { findGuidanceHookDeclarers, type GuidanceHookDeclarers } from '../../lib/guidance-hook-declarers.ts';
 import { type GuidanceHookFill, type GuidanceHookFills, listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
@@ -605,7 +605,7 @@ async function reconcileDomain(
 
   // Read after the render gates above, which is what leaves a malformed directive to fail from the gate that can
   // name its body and line rather than from this pass.
-  const guidanceHookDeclarers = await findGuidanceHookDeclarers(resolvedSkills, resolvedSubagents, harnessIds);
+  const declaredHooks = await listDeclaredGuidanceHooks(resolvedSkills, resolvedSubagents, harnessIds);
 
   const retirements = await retireRetiredOutputs(options, domain);
 
@@ -638,7 +638,7 @@ async function reconcileDomain(
       [...declaration.packages, ...declaration.declinedPackages],
       domain.baseDir,
     ),
-    guidanceHookAdvisories: findGuidanceHookAdvisories(declaration.guidanceHooks, resolved, guidanceHookDeclarers),
+    guidanceHookAdvisories: findGuidanceHookAdvisories(declaration.guidanceHooks, resolved, declaredHooks),
   };
 
   if (options.dryRun) {
@@ -940,16 +940,15 @@ function buildGuidanceHookFills(
 function findGuidanceHookAdvisories(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
   resolved: ReadonlyArray<ResolvedRulebook>,
-  declarers: ReadonlyMap<string, GuidanceHookDeclarers>,
+  declaredHooks: ReadonlySet<string>,
 ): ReadonlyArray<GuidanceHookAdvisory> {
   const bySlug = indexRulebooksBySlug(resolved);
   const advisories: Array<GuidanceHookAdvisory> = [];
   const boundSlugs = new Set<string>();
 
   for (const [hook, slugs] of bindings) {
-    const declaring = declarers.get(hook);
     // Reported once for the hook rather than per rulebook: The binding delivers nothing, whatever it names.
-    if (declaring === undefined) {
+    if (!declaredHooks.has(hook)) {
       advisories.push({ kind: 'bound-unreached', hook });
     }
     for (const slug of slugs) {
