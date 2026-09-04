@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readFile, rm, rmdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -20,21 +20,16 @@ import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts'
 import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
-import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
-import { resolveHarnessPaths } from '../../lib/harness.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
-import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
-import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody } from '../../lib/rulebook-transform.ts';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
-import { extractInstalledSlugs, removeRulebook } from '../../lib/sentinel-inliner.ts';
 import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { renderSkillDirectory } from '../../lib/skill-transform.ts';
 import { renderSubagent, resolveDeclaredSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
@@ -63,6 +58,8 @@ import {
 } from './ambient-hosts.ts';
 import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookSkills } from './artifact-delivery.ts';
 import { buildGuidanceHookFills, findGuidanceHookAdvisories, type GuidanceHookAdvisory } from './hook-bindings.ts';
+import { retireAmbientHost, type Retirement, retireRetiredOutputs } from './legacy-retirement.ts';
+import { refreshPromptsYml, resolvePromptsYmlPaths } from './prompts-index.ts';
 import {
   planSourceSupportRetractions,
   reconcileSourceSupport,
@@ -142,11 +139,6 @@ export interface SyncPlan {
   /** Disagreements between the declaration's guidance-hook bindings and what those bindings reach. */
   readonly guidanceHookAdvisories: ReadonlyArray<GuidanceHookAdvisory>;
 }
-
-/** A retired legacy output, and whether the host it names held nothing but retired blocks. */
-export type Retirement =
-  | { readonly kind: 'ambient-host'; readonly hostPath: string; readonly emptied: boolean }
-  | { readonly kind: 'neutral-rulebooks'; readonly dir: string };
 
 /**
  * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
@@ -982,127 +974,6 @@ function findDamagedAmbientHostDefects(
     }
   }
   return defects;
-}
-
-/**
- * Retires a former ambient host: removes the sync-owned rulebook blocks it carries and writes back the stripped
- * remainder, so hand-authored content survives. Ambient delivery targets the harness regions now, and a lingering
- * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing — right for
- * one sync created itself, wrong for a hand-authored file like the project's own `AGENTS.md`, which is never
- * deleted. A missing host, and one carrying nothing to retire, are both no-ops.
- */
-async function retireAmbientHost(
-  options: InstallOptions,
-  hostPath: string,
-  deleteWhenEmpty: boolean,
-): Promise<Retirement | undefined> {
-  let content: string;
-  try {
-    content = await readFile(hostPath, 'utf8');
-  } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      return undefined;
-    }
-    throw error;
-  }
-
-  let stripped = content;
-  for (const slug of extractInstalledSlugs(content)) {
-    stripped = removeRulebook(stripped, slug);
-  }
-  const deletable = deleteWhenEmpty && stripped.trim() === '';
-  if (stripped === content && !deletable) {
-    return undefined;
-  }
-
-  if (!options.dryRun) {
-    await (deletable ? rm(hostPath, { force: true }) : writeIfChanged(hostPath, stripped));
-  }
-  return { kind: 'ambient-host', hostPath, emptied: deletable };
-}
-
-/**
- * Retires the neutral rulebook tree at `<baseDir>/.agents/rulebooks/`. Nothing reads it, so it is removed rather than
- * maintained. Only the `.md` files sync materialized are deleted, and the directory itself only once nothing else
- * remains in it, so anything a user placed alongside them survives. A missing directory is a no-op.
- */
-async function retireNeutralRulebooks(options: InstallOptions, baseDir: string): Promise<Retirement | undefined> {
-  const neutralDir = path.join(baseDir, '.agents', 'rulebooks');
-  if (!existsSync(neutralDir)) {
-    return undefined;
-  }
-
-  if (!options.dryRun) {
-    const entries = await readDirEntries(neutralDir);
-    for (const entry of entries) {
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        await rm(path.join(neutralDir, entry.name), { force: true });
-      }
-    }
-    if ((await readDirEntries(neutralDir)).length === 0) {
-      await rmdir(neutralDir);
-    }
-  }
-  return { kind: 'neutral-rulebooks', dir: neutralDir };
-}
-
-/**
- * Retires the outputs this domain no longer produces: the neutral rulebook tree in both domains, and, in the project
- * domain, the rulebook blocks the hand-authored project guidance used to host. Runs on every sync that has a
- * declaration to act on, so a project picks the retirement up on its next run rather than needing a migration step.
- *
- * Both guidance locations are swept. A project that renames `.agents/PROJECT.md` to the repository-root `AGENTS.md`
- * before its next sync would otherwise carry the stale blocks into the new location for good.
- */
-async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain): Promise<ReadonlyArray<Retirement>> {
-  const legacyHosts =
-    domain.ambient === 'project-local'
-      ? [path.join(domain.baseDir, '.agents', 'PROJECT.md'), path.join(domain.baseDir, 'AGENTS.md')]
-      : [];
-  const retirements = [await retireNeutralRulebooks(options, domain.baseDir)];
-  for (const hostPath of legacyHosts) {
-    retirements.push(await retireAmbientHost(options, hostPath, false));
-  }
-  return retirements.filter((retirement) => retirement !== undefined);
-}
-
-/**
- * Reconciles the Rovo Dev `prompts.yml` index so it lists the user-invocable skills currently in the harness skills
- * dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file, preserving any
- * foreign entries; when no skills remain, the region is stripped — and the file deleted when nothing foreign is left. A
- * no-op for non-Rovo Dev harnesses and for a file carrying no codeassembly region. Both domains share this one path, so
- * the home file is merged rather than whole-file overwritten, matching the repo file's non-clobbering shape.
- */
-async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): Promise<void> {
-  for (const harnessId of harnessIds) {
-    if (harnessId !== 'rovo') {
-      continue;
-    }
-    const { harnessHome, skillsDir } = resolveHarnessPaths(harnessId, domain.baseDir);
-    const promptsPath = path.join(harnessHome, 'prompts.yml');
-    const entries = await collectPromptEntries(skillsDir);
-    const existing = await readFileOrEmpty(promptsPath);
-
-    if (entries !== undefined && entries.length > 0) {
-      await writeIfChanged(promptsPath, injectPromptsRegion(existing, renderPromptEntries(entries)));
-      continue;
-    }
-
-    // No skills remain: strip our region, deleting the file when nothing foreign survives. A file we never owned (no
-    // region) is left untouched.
-    if (!hasPromptsRegion(existing)) {
-      continue;
-    }
-    const stripped = removePromptsRegion(existing);
-    await (stripped.trim() === '' ? rm(promptsPath, { force: true }) : writeIfChanged(promptsPath, stripped));
-  }
-}
-
-/** Lists the Rovo Dev `prompts.yml` paths a sync of `domain` would reconcile — one per targeted Rovo Dev harness. */
-function resolvePromptsYmlPaths(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): ReadonlyArray<string> {
-  return harnessIds
-    .filter((harnessId) => harnessId === 'rovo')
-    .map((harnessId) => path.join(resolveHarnessPaths(harnessId, domain.baseDir).harnessHome, 'prompts.yml'));
 }
 
 /**
