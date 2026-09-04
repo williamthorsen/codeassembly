@@ -18,6 +18,7 @@ import { HARNESSES } from '../lib/harness.ts';
 import { extractYamlProse, UnparsableYamlError } from './extract-yaml.ts';
 import { findHashCommentStart } from './hash-comments.ts';
 import { maskCodeSpans } from './mask-code-spans.ts';
+import { RECORD_PATH } from './record.ts';
 import { countNewlines, isProseLiteral } from './span-text.ts';
 import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 
@@ -91,6 +92,10 @@ export async function collectProse(input: {
       skipped.unreadable += 1;
       continue;
     }
+
+    // YAML spans data as readily as prose, and a batch covers the scanned set rather than the candidate-bearing
+    // subset, so a file carrying no prose at all would hand a subagent a lockfile to read for nothing.
+    if (kind === 'yaml' && extracted.length === 0) continue;
 
     scannedFiles.push({ file, bytes: Buffer.byteLength(content, 'utf8') });
     spans.push(...extracted);
@@ -462,9 +467,12 @@ function isBlockStart(line: string): boolean {
 
 /**
  * Reports whether `file` is outside what the sweep may edit: a harness's deployed `skills/` or `scripts/` tree, whose
- * source lives elsewhere, or the artifact tree, whose files record a moment and stay as written.
+ * source lives elsewhere, the artifact tree, whose files record a moment and stay as written, or the sweep's own
+ * record, which the helper writes and whose grounds are no subagent's to rewrite.
  */
 function isExcludedPath(input: { file: string; root: string; artifactBaseDir: string }): boolean {
+  if (input.file === RECORD_PATH) return true;
+
   const segments = input.file.split('/');
   for (const config of Object.values(HARNESSES)) {
     const homeIndex = segments.indexOf(config.homeDir);
