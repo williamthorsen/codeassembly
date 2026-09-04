@@ -38,13 +38,30 @@ describe(extractProse, () => {
       expect(spans).toContainEqual({ file: 'fixture.md', line: 7, text: 'Body prose in a paragraph.' });
     });
 
-    it('drops frontmatter, fenced code, HTML comments, and link definitions', () => {
+    it('drops fenced code, HTML comments, and link definitions', () => {
       const text = joinText(extract(MARKDOWN, 'markdown'));
 
       expect(text).not.toContain('fencedCodeProse');
-      expect(text).not.toContain('name: fixture');
       expect(text).not.toContain('commented aside');
       expect(text).not.toContain('example.invalid');
+    });
+
+    it('yields frontmatter prose at its own source line', () => {
+      const spans = extract('---\ndescription: Reports the branch a worktree checks out.\n---\n\nBody.\n', 'markdown');
+
+      expect(spans).toContainEqual({ file: 'fixture.md', line: 2, text: 'Reports the branch a worktree checks out.' });
+    });
+
+    it('yields no frontmatter key and no single-token frontmatter value', () => {
+      const text = joinText(extract(MARKDOWN, 'markdown'));
+
+      expect(text).not.toContain('name: fixture');
+    });
+
+    it('yields body prose where the frontmatter cannot be parsed', () => {
+      const spans = extract('---\naliases:\n  git: [vcs, version-control\n---\n\nBody prose survives.\n', 'markdown');
+
+      expect(joinText(spans)).toContain('Body prose survives.');
     });
 
     it('keeps a link label and drops its URL', () => {

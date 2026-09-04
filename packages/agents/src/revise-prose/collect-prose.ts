@@ -256,14 +256,15 @@ function extractByKind(input: { file: string; content: string; kind: ProseKind }
 }
 
 /**
- * Extracts Markdown body prose: paragraphs, list items, headings, and table cells. Frontmatter, fenced code, HTML
- * comments, and link definitions are dropped, and a link is reduced to its own text so no URL reaches the detector.
+ * Extracts Markdown prose: the frontmatter's own prose, then body paragraphs, list items, headings, and table cells.
+ * Fenced code, HTML comments, and link definitions are dropped, and a link is reduced to its own text so no URL
+ * reaches the detector.
  */
 function extractMarkdownProse(file: string, content: string): ProseSpan[] {
   const lines = content.split('\n');
-  const spans: ProseSpan[] = [];
 
   let index = skipFrontmatter(lines);
+  const spans: ProseSpan[] = extractFrontmatterProse(file, lines, index);
   let block: { line: number; texts: string[] } | undefined;
 
   function flush(): void {
@@ -564,6 +565,25 @@ function skipFencedBlock(lines: readonly string[], start: number, fence: string)
     if (closer.test(lines[index] ?? '')) return index + 1;
   }
   return lines.length;
+}
+
+/**
+ * Extracts a Markdown file's frontmatter through the YAML extractor, each span carrying the source line it sits on.
+ * A block the parser cannot read yields nothing rather than failing the file, whose body is prose whatever its
+ * frontmatter holds.
+ */
+function extractFrontmatterProse(file: string, lines: readonly string[], bodyStart: number): ProseSpan[] {
+  if (bodyStart === 0) return [];
+  try {
+    // The block opens on the line after the delimiter, which is the offset each span's own line advances by.
+    return extractYamlProse({ file, content: lines.slice(1, bodyStart - 1).join('\n') }).map((span) => ({
+      ...span,
+      line: span.line + 1,
+    }));
+  } catch (error) {
+    if (error instanceof UnparsableYamlError) return [];
+    throw error;
+  }
 }
 
 /** Returns the index of the first line past a YAML frontmatter block, or 0 where the file opens with none. */
