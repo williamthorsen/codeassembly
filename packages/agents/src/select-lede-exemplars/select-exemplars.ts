@@ -10,7 +10,7 @@ import { isLedeQuality, type LedeQuality, meetsQualityFloor } from '../lede-corp
 import { extractApprovedLede, LEDE_DECISION_TAG } from '../lede-corpus/lede-sections.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import type { WorkType } from '../lib/work-types.ts';
-import type { ExemplarSelection, LedeExemplar, Widening } from './types.ts';
+import type { ExemplarRequest, ExemplarSelection, LedeExemplar, Widening } from './types.ts';
 
 /** An exemplar paired with the taxonomy entry its recorded work type resolves to; `null` for an undeclared type. */
 interface Candidate {
@@ -30,25 +30,26 @@ type RecordOutcome =
   | { kind: 'skip' };
 
 /**
- * Selects author-approved ledes of a requested work type from a store's event records, widening to the type's
- * tier-mates and then to any type to make up a shortfall.
+ * Selects author-approved ledes matching a request from a store's event records, widening to make up a shortfall: a
+ * type request widens to the type's tier-mates and then to any type, and a tier request, having no type to widen away
+ * from, widens straight to any tier.
  *
  * The scan runs over `content/events/` in descending filename order. Filenames are ULID stems, so that order is
- * newest-first without reading a byte, and the scan stops as soon as the requested type has filled the count: only a
- * type too scarce to fill it pays for a full pass. The assembled result is then ordered by each record's own
+ * newest-first without reading a byte, and the scan stops as soon as the request's own matches have filled the count:
+ * only a request too scarce to fill it pays for a full pass. The assembled result is then ordered by each record's own
  * `captured-at`, so a stem that is not a ULID cannot silently reorder what is emitted.
  *
- * Each of the three buckets is capped at `count`, and the fill takes the exact type first, so widening only ever makes
- * up a shortfall and never displaces an exact match with a newer tier-mate.
+ * Each of the three buckets is capped at `count`, and the fill takes the exact matches first, so widening only ever
+ * makes up a shortfall and never displaces an exact match with a newer tier-mate.
  *
- * A `minQuality` floor filters candidates before they reach a bucket, so a type left short by the floor widens exactly
- * as a scarce type does. Filtering the filled buckets instead would return fewer than `count` while qualifying
+ * A `minQuality` floor filters candidates before they reach a bucket, so a request left short by the floor widens
+ * exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while qualifying
  * tier-mates went untaken.
  */
 export async function selectExemplars(input: {
   storePath: string;
   workTypes: ReadonlyMap<string, WorkType>;
-  requested: WorkType;
+  request: ExemplarRequest;
   count: number;
   minQuality?: LedeQuality;
 }): Promise<ExemplarSelection> {
@@ -59,7 +60,7 @@ export async function selectExemplars(input: {
   const warnings: string[] = [];
 
   for (const filename of filenames) {
-    // Only the exact-type bucket can satisfy the count on its own, so a full one ends the scan.
+    // Only the exact-match bucket can satisfy the count on its own, so a full one ends the scan.
     if (buckets.none.length >= input.count) {
       break;
     }
@@ -75,7 +76,7 @@ export async function selectExemplars(input: {
     if (!clearsFloor({ candidate: outcome.candidate, floor: input.minQuality })) {
       continue;
     }
-    const bucket = buckets[classifyWidening({ candidate: outcome.candidate, requested: input.requested })];
+    const bucket = buckets[classifyWidening({ candidate: outcome.candidate, request: input.request })];
     if (bucket.length < input.count) {
       bucket.push(outcome.candidate.exemplar);
     }
@@ -100,13 +101,19 @@ export async function selectExemplars(input: {
 
 // region | Helpers
 
-/** Reports which bucket a candidate belongs to: its own type, a tier-mate of it, or neither. */
-function classifyWidening(input: { candidate: Candidate; requested: WorkType }): Widening {
+/**
+ * Reports which bucket a candidate belongs to. A type request grades a candidate as its own type, a tier-mate, or
+ * neither; a tier request has only the two outcomes, since every type of the requested tier is an exact match for it.
+ */
+function classifyWidening(input: { candidate: Candidate; request: ExemplarRequest }): Widening {
   const { exemplar, resolved } = input.candidate;
-  if (resolved?.key === input.requested.key) {
+  if (input.request.kind === 'tier') {
+    return exemplar.tier === input.request.tier ? 'none' : 'any';
+  }
+  if (resolved?.key === input.request.workType.key) {
     return 'none';
   }
-  return exemplar.tier === input.requested.tier ? 'tier' : 'any';
+  return exemplar.tier === input.request.workType.tier ? 'tier' : 'any';
 }
 
 /**

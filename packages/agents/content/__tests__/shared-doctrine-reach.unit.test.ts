@@ -15,6 +15,10 @@ import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers
 // creeping back into either.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
+// One section per entry in SECTIONS runs the restatement check, and each pass reads every authored Markdown file in
+// the tree. Reading them once here holds the whole suite to a single pass.
+const CONTENT_FILES = readContentFiles();
+
 /** Each extracted section: the string counted for single-statement checks, and phrases a gutted partial would lose. */
 const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArray<string> }>> = {
   'code-descriptions': {
@@ -163,13 +167,11 @@ async function expandSubagent(slug: string): Promise<string> {
 /** Returns `file -> phrase` for every content file but the partial that states one of the phrases. */
 async function findRestatements(partialPath: string, phrases: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
   const violations: Array<string> = [];
-  const files = await listMarkdownFiles(CONTENT_ROOT);
+  const files = await CONTENT_FILES;
 
-  for (const file of files) {
-    const relativePath = path.relative(CONTENT_ROOT, file);
+  for (const { relativePath, content } of files) {
     if (relativePath === partialPath) continue;
 
-    const content = await readFile(file, 'utf8');
     for (const phrase of phrases) {
       if (content.includes(phrase)) {
         violations.push(`${relativePath} -> ${phrase}`);
@@ -178,6 +180,17 @@ async function findRestatements(partialPath: string, phrases: ReadonlyArray<stri
   }
 
   return violations;
+}
+
+/** Reads every authored content Markdown file, pairing each with its content-root-relative path. */
+async function readContentFiles(): Promise<ReadonlyArray<{ relativePath: string; content: string }>> {
+  const files = await listMarkdownFiles(CONTENT_ROOT);
+  return Promise.all(
+    files.map(async (file) => ({
+      relativePath: path.relative(CONTENT_ROOT, file),
+      content: await readFile(file, 'utf8'),
+    })),
+  );
 }
 
 // endregion | Helpers

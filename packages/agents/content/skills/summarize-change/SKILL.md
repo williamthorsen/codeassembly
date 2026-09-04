@@ -24,7 +24,7 @@ Check commit messages for additional context.
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before the audit can run.
+4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before the checks below can run.
 
 5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the change's work type (inferred per [Consumer-field inference](#consumer-field-inference)) in [work-types.json](../_data/work-types.json); where the type could not be inferred, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -40,12 +40,12 @@ Check commit messages for additional context.
 
 6. **Save** per the [Saving](#saving) section.
 
-**Audit before saving.** This audit applies to the `## What` returned in step 5, before step 6 writes the artifact. Read the draft in full and judge it on two counts: the test below, and the three rejection codes beneath it. What you may edit is bounded by the test alone.
+**Verify before saving.** Both checks apply to the `## What` returned in step 5, before step 6 writes the artifact. The drafter composed from the commit log and the diffstat and never read the diff, so this is where the draft meets it.
 
-- **The test.** No fact appears in both `## What` and `## Details`.
-- **The repair.** Cut the fact from `## What`. Where the fact appears nowhere else, move it into `## Details` instead of deleting it. Deleting and moving down are the whole of your authority.
+- **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed.
+- **Coverage.** Every fact the lede reports appears in `## Details` too, carrying the mechanics the lede left out. Add to `## Details` what is missing there. Overlap between the two sections is progressive disclosure working, so neither section is trimmed to remove it: A reader meets the summary first and the full story second, and both cover the same ground at different depths.
 
-Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
+Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
 
 Redispatch at most twice. After a second redispatch fails, save the artifact with the last draft and report the unresolved code to the developer.
 
@@ -62,7 +62,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The lede, returned by the `lede-drafter` dispatch in Process step 5. Repair it by deleting a duplicated fact or moving it into `## Details`; redispatch for anything else.}
+{The lede, returned by the `lede-drafter` dispatch in Process step 5. Repair it by striking or correcting a claim the diff does not carry; redispatch for anything else.}
 
 ## Why
 

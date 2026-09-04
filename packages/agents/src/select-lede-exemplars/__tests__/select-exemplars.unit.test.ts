@@ -153,7 +153,7 @@ describe(selectExemplars, () => {
     const selection = await selectExemplars({
       storePath: '/no/such/store',
       workTypes,
-      requested: requireType(workTypes, 'feat'),
+      request: { kind: 'type', workType: requireType(workTypes, 'feat') },
       count: 5,
     });
 
@@ -248,6 +248,36 @@ describe(selectExemplars, () => {
   });
 });
 
+describe('selectExemplars, on a tier request', () => {
+  it('treats every type of the requested tier as an exact match', async () => {
+    const selection = await selectByTier({ decisions: CORPUS, tier: 'public', count: 3 });
+
+    // `E` and `A` are feat, `B` is fix; all three are public, so none of them counts as a widening.
+    expect(selection.exemplars.map((exemplar) => exemplar.type)).toStrictEqual(['feat', 'fix', 'feat']);
+    expect(selection.widening).toBe('none');
+  });
+
+  it('widens straight past the tier when it cannot fill the count', async () => {
+    const selection = await selectByTier({ decisions: CORPUS, tier: 'internal', count: 3 });
+
+    // One record is internal, so the other two are made up from other tiers with no middle step.
+    expect(selection.widening).toBe('any');
+    expect(selection.exemplars.map((exemplar) => exemplar.type)).toContain('refactor');
+    expect(selection.exemplars).toHaveLength(3);
+  });
+
+  it('widens to another tier when the requested tier has no record', async () => {
+    const selection = await selectByTier({
+      decisions: [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' }],
+      tier: 'process',
+      count: 2,
+    });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.tier)).toStrictEqual(['public']);
+    expect(selection.widening).toBe('any');
+  });
+});
+
 // region | Helpers
 
 /** Loads the fixture taxonomy, failing the test when it does not load. */
@@ -285,9 +315,26 @@ async function select(input: {
   return selectExemplars({
     storePath: fixture.storePath,
     workTypes,
-    requested: requireType(workTypes, input.type),
+    request: { kind: 'type', workType: requireType(workTypes, input.type) },
     count: input.count,
     ...(input.minQuality !== undefined && { minQuality: input.minQuality }),
+  });
+}
+
+/** Runs a tier-keyed selection over a fresh fixture corpus. */
+async function selectByTier(input: {
+  decisions: readonly DecisionSpec[];
+  tier: string;
+  count: number;
+}): Promise<ExemplarSelection> {
+  const fixture = await createCorpusFixture({ decisions: input.decisions });
+  const workTypes = await loadTaxonomy(fixture);
+
+  return selectExemplars({
+    storePath: fixture.storePath,
+    workTypes,
+    request: { kind: 'tier', tier: input.tier },
+    count: input.count,
   });
 }
 

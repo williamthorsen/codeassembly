@@ -5,6 +5,15 @@
 // failure: a drafter degrades to no exemplars, and is never blocked by their absence.
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
+import type { WorkType } from '../lib/work-types.ts';
+
+/**
+ * What a selection matches on. A caller that resolved the change's work type selects on it; one that could not
+ * selects on the tier alone, which is what the dispatched tier already names, so a drafter never has to invent a type
+ * to make a request.
+ */
+export type ExemplarRequest =
+  { readonly kind: 'type'; readonly workType: WorkType } | { readonly kind: 'tier'; readonly tier: string };
 
 /** One author-approved lede, with the change identity a drafter calibrates a new lede against. */
 export interface LedeExemplar {
@@ -20,8 +29,9 @@ export interface LedeExemplar {
 }
 
 /**
- * How far selection reached past the requested type: `none` drew on that type alone, `tier` also drew on its
- * tier-mates, and `any` also drew on types of other tiers.
+ * How far selection reached past what was requested: `none` drew on the request's own match alone, `tier` also drew on
+ * the requested type's tier-mates, and `any` also drew on other tiers. A tier request matches every type of its tier,
+ * so it reports `none` or `any` and never the middle step.
  */
 export type Widening = 'none' | 'tier' | 'any';
 
@@ -37,13 +47,13 @@ export interface ExemplarSelection {
 export type AppliedFloor = LedeQuality | 'none';
 
 /** Every categorical reason a request fails without an unexpected throw. */
-export type SelectErrorCode = 'invalid-args' | 'no-taxonomy' | 'store-not-registered' | 'unknown-type';
+export type SelectErrorCode = 'invalid-args' | 'no-taxonomy' | 'store-not-registered' | 'unknown-tier' | 'unknown-type';
 
 /** The stdout payload for a completed selection. */
 export interface SelectSuccess {
   ok: true;
-  /** Canonical key of the requested work type, whichever spelling the request used. */
-  type: string;
+  /** Canonical key of the requested work type, whichever spelling the request used; absent for a tier request. */
+  type?: string;
   tier: string;
   widening: Widening;
   /** The rating floor the request applied; `none` when it named none and read every record. */
