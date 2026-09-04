@@ -8,14 +8,8 @@ import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
 import type { AmbientHostPlan, AmbientSkipReason } from './ambient-hosts.ts';
 import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
 import type { GuidanceHookAdvisory } from './hook-bindings.ts';
-import type {
-  MissingDeclaration,
-  ResolutionEntry,
-  Retirement,
-  SourceSupportPlan,
-  SyncOutcome,
-  SyncPlan,
-} from './sync.ts';
+import type { SourceSupportPlan } from './source-support.ts';
+import type { MissingDeclaration, ResolutionEntry, Retirement, SyncOutcome, SyncPlan } from './sync.ts';
 
 /** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
 const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
