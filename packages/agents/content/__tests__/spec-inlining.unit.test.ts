@@ -165,6 +165,9 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
     // findings turned out to be, so the marker carries no information about how clear the call was.
     "The selected option's marker follows how cleanly its rule matched",
+    // The clause that fixes what the implement option's commit is. Without it the option's name is the only thing
+    // saying a commit happens, and an amend takes back the diff and the revert point the separate commit exists for.
+    'The commit is always a new one, never an amend',
   ],
 };
 
