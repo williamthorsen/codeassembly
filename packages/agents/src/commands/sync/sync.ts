@@ -24,35 +24,26 @@ import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../../lib/git-ignore.ts';
 import { type GuidanceHookFill, type GuidanceHookFills, listGuidanceHooks } from '../../lib/guidance-hooks.ts';
-import { HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
-import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { resolveAmbientHostPath, resolveHarnessPaths } from '../../lib/harness.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
-import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
-import {
-  createContentRootLinkAnchor,
-  createSkillLinkAnchor,
-  type LinkAnchorContext,
-  SOURCE_SUPPORT_DIR,
-} from '../../lib/link-anchor.ts';
+import { createContentRootLinkAnchor, createSkillLinkAnchor, SOURCE_SUPPORT_DIR } from '../../lib/link-anchor.ts';
 import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
-import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import { collectPromptEntries, renderPromptEntries } from '../../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../../lib/prompts-yml-region.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug, renderSkillFile } from '../../lib/rulebook-skill.ts';
-import { renderRulebookBody, type RulebookRenderContext } from '../../lib/rulebook-transform.ts';
+import { renderRulebookBody } from '../../lib/rulebook-transform.ts';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
-import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../../lib/skill-transform.ts';
+import { type RenderedSkillEntry, renderSkillDirectory } from '../../lib/skill-transform.ts';
 import {
   deploySubagent,
   renderSubagent,
   resolveDeclaredSubagent,
   type ResolvedSubagent,
-  type SubagentDeployContext,
 } from '../../lib/subagent-deploy.ts';
 import {
   deploySourceSupport,
@@ -76,6 +67,19 @@ import {
   skillMarker,
   subagentMarker,
 } from './owned-artifacts.ts';
+import {
+  buildRulebookInvocationCatalog,
+  createAnchorContextResolver,
+  createOverlayLoader,
+  createRulebookContextResolver,
+  type HarnessSkillTarget,
+  type HarnessSubagentTarget,
+  type ResolveAnchorContext,
+  type ResolveOverlay,
+  type ResolveRulebookContext,
+  resolveSkillTarget,
+  resolveSubagentTarget,
+} from './render-contexts.ts';
 import type { SyncDomain } from './sync-domain.ts';
 import { describeSyncFailure, SyncValidationError } from './sync-validation-error.ts';
 
@@ -95,39 +99,11 @@ export interface ResolutionEntry {
   readonly shadowsLibrary: boolean;
 }
 
-/** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
-export interface HarnessSubagentTarget {
-  readonly harnessId: HarnessId;
-  readonly subagentsDir: string;
-  /** Everything but the anchor and the overlay, which the owning source decides and so are supplied per subagent. */
-  readonly deployContext: Omit<SubagentDeployContext, 'anchor' | 'overlayYaml'>;
-}
-
 /** One targeted harness's ambient host, paired with the harness id whose paths its rulebook bodies render for. */
 interface AmbientHostTarget {
   readonly harnessId: HarnessId;
   readonly hostPath: string;
 }
-
-/**
- * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so the pre-write gate,
- * ambient delivery, and skill delivery all render a rulebook body against the same anchor.
- */
-type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string | undefined) => RulebookRenderContext;
-
-/**
- * Resolves the anchor inputs for one harness and one owning source (`undefined` = the built-in library). The owner is
- * a per-artifact input rather than a per-harness one, because only it distinguishes a link into a source's own support
- * tree from the same target written by a library artifact.
- */
-type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
-
-/**
- * Reads the frontmatter overlay one harness applies to subagents resolved from `contentRoot`. Source-scoped rather
- * than per-harness: a subagent merges against the overlay of the root it came from, so a source shipping none merges
- * against nothing.
- */
-type ResolveOverlay = (harnessId: HarnessId, contentRoot: string) => Promise<string>;
 
 /**
  * One source's support entries rendered for one harness, paired with the namespace directory they deploy into and
@@ -141,14 +117,6 @@ export interface SourceSupportPlan {
   readonly destDir: string;
   readonly entries: ReadonlyArray<RenderedSkillEntry>;
   readonly kind: 'deliver' | 'retract' | 'none';
-}
-
-/** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
-export interface HarnessSkillTarget {
-  readonly harnessId: HarnessId;
-  readonly skillsDir: string;
-  /** Everything but the anchor, which the owning source decides and so is supplied per skill. */
-  readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
 }
 
 /** A scope carrying no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
@@ -433,29 +401,12 @@ async function reconcileDomain(
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
   // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
   // everything this run writes into a domain skills dir, and the collision gate has already proven them disjoint.
-  const resolveAnchorContext: ResolveAnchorContext = (harnessId, supportNamespace) => {
-    const config = HARNESSES[harnessId];
-    return {
-      supportNamespace,
-      // Declared skills are filtered per harness because a skill may target only some; rulebook-delivered skill names
-      // are not, because every skill-delivery rulebook is written to every targeted harness.
-      deployedSkillDirs: new Set([
-        ...resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
-        ...desiredSkillDirs.values(),
-      ]),
-      domainBase: domain.anchorBase,
-      guidanceFileName: config.guidanceFileName,
-      homeDir: config.homeDir,
-      skillsDirName: config.skillsDirName,
-    };
-  };
-
-  const resolveRulebookContext: ResolveRulebookContext = (harnessId, supportNamespace) =>
-    buildRulebookRenderContext(
-      harnessId,
-      resolved,
-      createContentRootLinkAnchor(resolveAnchorContext(harnessId, supportNamespace)),
-    );
+  const resolveAnchorContext = createAnchorContextResolver(
+    resolvedSkills,
+    desiredSkillDirs.values().toArray(),
+    domain.anchorBase,
+  );
+  const resolveRulebookContext = createRulebookContextResolver(resolved, resolveAnchorContext);
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
@@ -1578,37 +1529,6 @@ function renderAmbientBody(
 }
 
 /**
- * The per-harness inputs a rulebook render depends on: the harness config's own segments and sigils, the anchor its
- * link targets resolve through, and the deployed rulebooks indexed by slug, so a `{rulebook:<slug>}` token renders the
- * skill name its target deploys under.
- */
-function buildRulebookRenderContext(
-  harnessId: HarnessId,
-  resolved: ReadonlyArray<ResolvedRulebook>,
-  anchor: ResolveLinkAnchor,
-): RulebookRenderContext {
-  const config = HARNESSES[harnessId];
-  return {
-    anchor,
-    guidanceFileName: config.guidanceFileName,
-    homeDir: config.homeDir,
-    harnessId: config.id,
-    skillSigil: config.skillSigil,
-    subagentSigil: config.subagentSigil,
-    rulebooks: buildRulebookInvocationCatalog(resolved),
-  };
-}
-
-/**
- * Indexes the deployed rulebooks by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys
- * under. Harness-invariant, unlike the render contexts that carry it: What a rulebook deploys as does not vary by
- * harness.
- */
-function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedRulebook>): RulebookInvocationCatalog {
-  return new Map(resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]));
-}
-
-/**
  * Lists the guidance files whose ambient regions a sync of `domain` targets — one per targeted harness, each paired
  * with the harness id its content is rendered for.
  */
@@ -1689,79 +1609,6 @@ async function buildResolutionReport(
         artifact.source !== undefined && (await hasLibraryArtifact(resolver, artifact.type, artifact.slug)),
     })),
   );
-}
-
-/**
- * Builds a memoized reader of the subagent frontmatter overlay, keyed on the harness and the content root a subagent
- * resolved from. Memoized because every subagent from one source reads the same overlay, and the pre-write render
- * gate reads each of them a second time.
- */
-function createOverlayLoader(): ResolveOverlay {
-  const cache = new Map<string, Promise<string>>();
-  return (harnessId, contentRoot) => {
-    const key = `${harnessId}\u{0}${contentRoot}`;
-    const cached = cache.get(key);
-    if (cached !== undefined) {
-      return cached;
-    }
-    const loading = loadHarnessOverlay(contentRoot, HARNESSES[harnessId]);
-    cache.set(key, loading);
-    return loading;
-  };
-}
-
-/**
- * Resolves one harness's project-local subagents dir together with the per-harness inputs the deploy transform needs:
- * the link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
- * project-scoped, matching the skill passes.
- */
-function resolveSubagentTarget(
-  harnessId: HarnessId,
-  projectRoot: string,
-  rulebooks: RulebookInvocationCatalog,
-  guidanceHookFills: GuidanceHookFills | undefined,
-): HarnessSubagentTarget {
-  const harnessConfig = HARNESSES[harnessId];
-  return {
-    harnessId,
-    subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
-    deployContext: {
-      guidanceFileName: harnessConfig.guidanceFileName,
-      homeDir: harnessConfig.homeDir,
-      harnessId: harnessConfig.id,
-      skillSigil: harnessConfig.skillSigil,
-      subagentSigil: harnessConfig.subagentSigil,
-      rulebooks,
-      guidanceHookFills,
-    },
-  };
-}
-
-/**
- * Resolves one harness's project-local skills dir together with the per-harness inputs the skill transform needs: the
- * link anchor, the home-dir segment, and the harness ID. Passing `projectRoot` as the base keeps delivery
- * project-scoped.
- */
-function resolveSkillTarget(
-  harnessId: HarnessId,
-  projectRoot: string,
-  rulebooks: RulebookInvocationCatalog,
-  guidanceHookFills: GuidanceHookFills | undefined,
-): HarnessSkillTarget {
-  const harnessConfig = HARNESSES[harnessId];
-  return {
-    harnessId,
-    skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
-    deployContext: {
-      guidanceFileName: harnessConfig.guidanceFileName,
-      homeDir: harnessConfig.homeDir,
-      harnessId: harnessConfig.id,
-      skillSigil: harnessConfig.skillSigil,
-      subagentSigil: harnessConfig.subagentSigil,
-      rulebooks,
-      guidanceHookFills,
-    },
-  };
 }
 
 // endregion | Helpers
