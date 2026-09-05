@@ -21,18 +21,22 @@ export class UnparsableYamlError extends Error {}
  */
 export function extractYamlProse(input: { file: string; content: string }): ProseSpan[] {
   const lineCounter = new LineCounter();
-  const documents = parseAllDocuments(input.content, { lineCounter });
+  // `uniqueKeys` is off because a duplicate key leaves every scalar's bounds intact; the refusal below is for the
+  // errors that do not.
+  const documents = parseAllDocuments(input.content, { lineCounter, uniqueKeys: false });
   const failure = documents.flatMap((document) => document.errors)[0];
   if (failure !== undefined) throw new UnparsableYamlError(failure.message);
 
   const spans: ProseSpan[] = [];
-  // Every line a scalar continues onto, which the comment pass skips: a `#` there is content the scalar carries.
+  // Every line onto which a scalar continues, which the comment pass skips: a `#` there is content that the scalar
+  // carries.
   const continued = new Set<number>();
 
   for (const document of documents) {
     visit(document, {
       Scalar(key, node) {
-        // A mapping key names a field rather than reading as prose, and it opens no region a comment could hide in.
+        // A mapping key names a field rather than reading as prose, and it opens no region in which a comment could
+        // hide.
         if (key === 'key') return;
         const span = buildScalarSpan({ file: input.file, content: input.content, node, lineCounter, continued });
         if (span !== undefined) spans.push(span);
@@ -47,9 +51,9 @@ export function extractYamlProse(input: { file: string; content: string }): Pros
 // region | Helpers
 
 /**
- * Builds one span from a scalar, recording the lines it continues onto whether or not it yields prose. A scalar on one
- * source line contributes its parsed value; one spanning several contributes its source slice, whose newlines are the
- * source's own and so keep the span's line mapping true where a folded scalar's parsed value would not.
+ * Builds one span from a scalar, recording the lines onto which it continues whether or not it yields prose. A scalar
+ * on one source line contributes its parsed value; one spanning several contributes its source slice, whose newlines
+ * are the source's own and so keep the span's line mapping true where a folded scalar's parsed value would not.
  */
 function buildScalarSpan(input: {
   file: string;
@@ -69,7 +73,9 @@ function buildScalarSpan(input: {
   for (let line = startLine + 1; line <= endLine; line += 1) input.continued.add(line);
 
   if (!isProseLiteral(node.value)) return undefined;
-  if (startLine === endLine) return { file: input.file, line: startLine, text: node.value };
+  // A newline in a one-line scalar's value came from an escape rather than from the source, and leaving it in would
+  // put a later offset on a line that the file does not have.
+  if (startLine === endLine) return { file: input.file, line: startLine, text: node.value.replaceAll('\n', ' ') };
 
   if (node.type === Scalar.BLOCK_LITERAL || node.type === Scalar.BLOCK_FOLDED) {
     // The header line carries the indicator rather than prose, so the span opens on the line after it.
@@ -109,7 +115,7 @@ function extractComments(input: { file: string; content: string }, continued: Re
   return spans;
 }
 
-/** Removes the indentation a block scalar's body shares, which is the syntax holding it under its key. */
+/** Removes the indentation shared by a block scalar's body, which is the syntax holding it under its key. */
 function stripCommonIndent(body: string): string {
   const lines = body.split('\n');
   const indents = lines.filter((line) => line.trim() !== '').map((line) => /^[ \t]*/.exec(line)?.[0].length ?? 0);

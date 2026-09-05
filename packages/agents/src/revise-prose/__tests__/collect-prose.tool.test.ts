@@ -12,6 +12,7 @@ const FIXTURE_FILES: Readonly<Record<string, string>> = {
   '.agents/revise-prose.yaml': 'units: {}\nrejections:\n  - ground: Recorded prose the sweep may not edit.\n',
   '.claude/skills/deployed/SKILL.md': 'Deployed prose the sweep may not edit.\n',
   '.gitignore': 'ignored/\n',
+  blob: `A binary body that the sweep cannot read: ${String.fromCodePoint(0)}.\n`,
   'broken.malformed.yaml': 'aliases:\n  git: [vcs, version-control\n',
   'config.yaml': '# Configured prose the sweep reads.\nprompt: |\n  Blocked prose the sweep reads.\n',
   'data.json': '{ "prose": "Data the sweep never opens." }\n',
@@ -96,7 +97,7 @@ describe(collectProse, () => {
     expect(text).toContain('Blocked prose the sweep reads.');
   });
 
-  it('counts a YAML document the parser cannot read as unreadable, leaving it unscanned', async () => {
+  it('counts a YAML document that the parser cannot read as unreadable, leaving it unscanned', async () => {
     const collection = await sweep(['broken.malformed.yaml']);
 
     expect(collection.skipped.unreadable).toBe(1);
@@ -117,10 +118,17 @@ describe(collectProse, () => {
     expect(joinText(collection)).not.toContain('Recorded prose');
   });
 
-  it('counts a file of an extension no extractor reads as ineligible', async () => {
+  it('counts a file whose extension is read by no extractor as ineligible', async () => {
     const collection = await sweep(['data.json']);
 
     expect(collection.skipped.ineligible).toBe(1);
+    expect(collection.scannedFiles).toHaveLength(0);
+  });
+
+  it('counts an extensionless file it cannot read as unreadable', async () => {
+    const collection = await sweep(['blob']);
+
+    expect(collection.skipped.unreadable).toBe(1);
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
@@ -131,7 +139,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('counts nothing ineligible where every path it is given is read', async () => {
+  it('counts nothing ineligible where every path that it is given is read', async () => {
     expect((await sweep(['docs/guide.md'])).skipped.ineligible).toBe(0);
   });
 

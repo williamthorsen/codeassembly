@@ -197,7 +197,35 @@ describe(extractProse, () => {
       expect(text).not.toContain('fixture-value');
     });
 
-    it('refuses a document the parser cannot read, so no sweep counts it clean', () => {
+    it('wraps a plain scalar and a quoted scalar across source lines, each at the line on which it opens', () => {
+      const wrapped = [
+        'plain: A plain scalar that wraps',
+        '  onto a second source line.',
+        'quoted: "A quoted scalar that wraps',
+        '  onto a second source line."',
+      ].join('\n');
+
+      expect(extract(wrapped, 'yaml')).toStrictEqual([
+        { file: 'fixture.md', line: 1, text: 'A plain scalar that wraps\nonto a second source line.' },
+        { file: 'fixture.md', line: 3, text: 'A quoted scalar that wraps\nonto a second source line.' },
+      ]);
+    });
+
+    it('flattens an escaped newline, which the source line on which it sits does not carry', () => {
+      const spans = extract(String.raw`text: "First sentence here.\nA second one the reader reads."`, 'yaml');
+
+      expect(spans).toStrictEqual([
+        { file: 'fixture.md', line: 1, text: 'First sentence here. A second one the reader reads.' },
+      ]);
+    });
+
+    it('reads a document whose duplicate key leaves every scalar bound', () => {
+      const duplicated = 'name: one\ntext: Reports the branch a worktree checks out.\nname: two\n';
+
+      expect(joinText(extract(duplicated, 'yaml'))).toContain('Reports the branch a worktree checks out.');
+    });
+
+    it('refuses a document that the parser cannot read, so no sweep counts it clean', () => {
       expect(() => extract('aliases:\n  git: [vcs, version-control\n', 'yaml')).toThrow(UnparsableYamlError);
     });
   });

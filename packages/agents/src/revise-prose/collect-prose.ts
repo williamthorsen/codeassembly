@@ -65,7 +65,7 @@ export async function collectProse(input: {
 
     const content = readFileSafely(path.join(input.root, file));
     if (content === undefined) {
-      if (extensionKind !== undefined) skipped.unreadable += 1;
+      skipped.unreadable += 1;
       continue;
     }
 
@@ -262,14 +262,14 @@ function extractByKind(input: { file: string; content: string; kind: ProseKind }
 }
 
 /**
- * Extracts a Markdown file's frontmatter through the YAML extractor, each span carrying the source line it sits on.
- * A block the parser cannot read yields nothing rather than failing the file, whose body is prose whatever its
- * frontmatter holds.
+ * Extracts a Markdown file's frontmatter through the YAML extractor, each span carrying the source line on which it
+ * sits. A block that the parser cannot read yields nothing rather than failing the file, whose body is prose whatever
+ * its frontmatter holds.
  */
 function extractFrontmatterProse(file: string, lines: readonly string[], bodyStart: number): ProseSpan[] {
   if (bodyStart === 0) return [];
   try {
-    // The block opens on the line after the delimiter, which is the offset each span's own line advances by.
+    // The block opens on the line after the delimiter, which is the offset by which each span's own line advances.
     return extractYamlProse({ file, content: lines.slice(1, bodyStart - 1).join('\n') }).map((span) => ({
       ...span,
       line: span.line + 1,

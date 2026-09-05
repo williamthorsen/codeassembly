@@ -138,7 +138,7 @@ Recorded in `.agents/revise-prose.yaml`: plain-speech 1, williamthorsen-writing-
 5 files held out: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
-Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, every image, lockfile, and data file in the repository being one; a narrowed sweep reports the files it was given and could not read. Give the unrecorded-rejection line only where the fold dropped one.
+Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, every image, lockfile, and data file in the repository being one; a narrowed sweep reports the files that it was given and could not read. Give the unrecorded-rejection line only where the fold dropped one.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 

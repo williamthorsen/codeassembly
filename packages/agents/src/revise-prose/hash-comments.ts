@@ -2,7 +2,7 @@
  * The scan that locates a `#` comment on one line, shared by the shell and YAML extractors.
  *
  * Both kinds open a comment the same way: a `#` at the start of a line or preceded by whitespace, outside any quoted
- * string. What differs is the region the scan runs over, which each extractor decides for itself.
+ * string. What differs is the region over which the scan runs, which each extractor decides for itself.
  */
 
 /** Returns the index of the `#` opening a comment, or -1 where the line carries none outside a quoted string. */
