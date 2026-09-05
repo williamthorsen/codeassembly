@@ -1,8 +1,8 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it } from 'vitest';
 
-import type { LogicalAgentState, LogicalArtifactState, LogicalOrchestratorState } from '../../shared/types.js';
-import { GOVERNOR_ZONE, ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
+import type { LogicalAgentState, LogicalArtifactState, LogicalOrchestratorState } from '../../shared/types.ts';
+import { GOVERNOR_ZONE, ZONE_DEFINITIONS } from '../constants/zone-definitions.ts';
 import {
   assignAgentToZone,
   assignArtifactToZone,
@@ -10,8 +10,8 @@ import {
   computeReviewerIndices,
   deriveOrchestratorAssignment,
   deriveZoneStates,
-} from '../mappers/agent-zone-assignments.js';
-import type { OfficeAgentState } from '../types.js';
+} from '../mappers/agent-zone-assignments.ts';
+import type { OfficeAgentState } from '../types.ts';
 
 /** Minimal agent factory. */
 function agent(overrides: Partial<LogicalAgentState> & { id: string }): LogicalAgentState {

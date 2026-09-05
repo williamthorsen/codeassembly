@@ -1,8 +1,8 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { UserSettings } from '../../../shared/types/settings.js';
-import { createSettingsRouter, type SettingsProvider } from '../settings.js';
+import type { UserSettings } from '../../../shared/types/settings.ts';
+import { createSettingsRouter, type SettingsProvider } from '../settings.ts';
 import { createMockResponse, getHandler, type MockResponse } from './route-test-helpers.ts';
 
 function createMockStore(settings: UserSettings): SettingsProvider {

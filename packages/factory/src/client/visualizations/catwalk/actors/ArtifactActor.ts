@@ -1,8 +1,8 @@
 import { Actor, BaseAlign, Color, Font, GraphicsGroup, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import { ACTIVE_OPACITY } from '../constants/animation.js';
-import { ART_H, ART_W } from '../constants/dimensions.js';
-import { PAUSE_DURATION } from '../constants/timing.js';
+import { ACTIVE_OPACITY } from '../constants/animation.ts';
+import { ART_H, ART_W } from '../constants/dimensions.ts';
+import { PAUSE_DURATION } from '../constants/timing.ts';
 
 export interface ArtifactActorConfig {
   label: string;

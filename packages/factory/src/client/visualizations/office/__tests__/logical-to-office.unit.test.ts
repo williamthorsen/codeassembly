@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { LogicalAgentState, LogicalArtifactState, LogicalSceneState } from '../../shared/types.js';
-import { mapLogicalToOffice } from '../mappers/logical-to-office.js';
+import type { LogicalAgentState, LogicalArtifactState, LogicalSceneState } from '../../shared/types.ts';
+import { mapLogicalToOffice } from '../mappers/logical-to-office.ts';
 
 /** Build a minimal LogicalSceneState. */
 function logicalScene(overrides: Partial<LogicalSceneState> = {}): LogicalSceneState {

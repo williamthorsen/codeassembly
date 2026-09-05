@@ -5,8 +5,8 @@ import type {
   ArtifactListResponse,
   ProjectIndex,
   RunEventsResponse,
-} from '../../shared/types/api.js';
-import type { UserSettings } from '../../shared/types/settings.js';
+} from '../../shared/types/api.ts';
+import type { UserSettings } from '../../shared/types/settings.ts';
 
 const API_BASE = '/api';
 

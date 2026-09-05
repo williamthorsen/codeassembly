@@ -10,7 +10,7 @@ import type {
   OrchestratorConfig,
   OrchestratorDiff,
   StationArtifactConfig,
-} from '../types.js';
+} from '../types.ts';
 
 /** Compare two orchestrator configs and return position/working/celebrating/carried/badge changes. */
 export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorConfig): OrchestratorDiff {

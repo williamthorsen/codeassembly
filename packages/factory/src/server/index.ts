@@ -2,12 +2,12 @@ import { resolveProjectsDir } from 'codeassembly-run-core/config';
 import cors from 'cors';
 import express, { type ErrorRequestHandler } from 'express';
 
-import { createProjectsRouter } from './routes/projects.js';
-import { createRunsRouter } from './routes/runs.js';
-import { createSettingsRouter } from './routes/settings.js';
-import { ProjectScanner } from './services/project-scanner.js';
-import { ProjectWatcher } from './services/project-watcher.js';
-import { SettingsStore } from './services/settings-store.js';
+import { createProjectsRouter } from './routes/projects.ts';
+import { createRunsRouter } from './routes/runs.ts';
+import { createSettingsRouter } from './routes/settings.ts';
+import { ProjectScanner } from './services/project-scanner.ts';
+import { ProjectWatcher } from './services/project-watcher.ts';
+import { SettingsStore } from './services/settings-store.ts';
 
 const port = 5_181;
 

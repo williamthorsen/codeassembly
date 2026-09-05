@@ -1,9 +1,9 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CatwalkLayoutResult, ChuteEndpoints, Position } from '../../layout/catwalk-layout.js';
-import type { CatwalkDiff, OrchestratorDiff, StationArtifactConfig } from '../../types.js';
-import type { SceneRefs } from '../chute-choreographer.js';
+import type { CatwalkLayoutResult, ChuteEndpoints, Position } from '../../layout/catwalk-layout.ts';
+import type { CatwalkDiff, OrchestratorDiff, StationArtifactConfig } from '../../types.ts';
+import type { SceneRefs } from '../chute-choreographer.ts';
 
 vi.mock('excalibur', () => {
   class MockActor {
@@ -81,7 +81,7 @@ vi.mock('excalibur', () => {
   };
 });
 
-const { choreograph } = await import('../chute-choreographer.js');
+const { choreograph } = await import('../chute-choreographer.ts');
 
 /** Create a minimal orchestrator diff. */
 function orchestratorDiff(overrides: Partial<OrchestratorDiff> = {}): OrchestratorDiff {

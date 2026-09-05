@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProjectIndex } from '../../../shared/types/api.js';
-import { flattenProjectIndex } from '../flatten-project-index.js';
+import type { ProjectIndex } from '../../../shared/types/api.ts';
+import { flattenProjectIndex } from '../flatten-project-index.ts';
 
 function createProjectIndex(): ProjectIndex {
   return {

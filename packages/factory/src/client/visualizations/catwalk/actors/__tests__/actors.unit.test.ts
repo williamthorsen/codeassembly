@@ -90,17 +90,17 @@ vi.mock('excalibur', () => {
   };
 });
 
-vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
+vi.mock('../../sprites/catwalk-sprite-loader.ts', () => ({
   getAnimation: mockGetAnimation,
 }));
 
-const { OrchestratorActor } = await import('../OrchestratorActor.js');
-const { StationAgentActor } = await import('../StationAgentActor.js');
-const { CatwalkStationActor } = await import('../CatwalkStationActor.js');
-const { ArtifactActor } = await import('../ArtifactActor.js');
-const { FlyingArtifactActor } = await import('../FlyingArtifactActor.js');
-const { GateActor } = await import('../GateActor.js');
-const { ChuteActor } = await import('../ChuteActor.js');
+const { OrchestratorActor } = await import('../OrchestratorActor.ts');
+const { StationAgentActor } = await import('../StationAgentActor.ts');
+const { CatwalkStationActor } = await import('../CatwalkStationActor.ts');
+const { ArtifactActor } = await import('../ArtifactActor.ts');
+const { FlyingArtifactActor } = await import('../FlyingArtifactActor.ts');
+const { GateActor } = await import('../GateActor.ts');
+const { ChuteActor } = await import('../ChuteActor.ts');
 const { vec } = await import('excalibur');
 const {
   ACTIVE_OPACITY,
@@ -112,8 +112,8 @@ const {
   ORCH_IDLE_OPACITY,
   ORCH_WAITING_OPACITY,
   RESTING_OPACITY,
-} = await import('../../constants/animation.js');
-const { ORCH_SPRITE_BOTTOM_PADDING_PX, SPRITE_SIZE } = await import('../../constants/dimensions.js');
+} = await import('../../constants/animation.ts');
+const { ORCH_SPRITE_BOTTOM_PADDING_PX, SPRITE_SIZE } = await import('../../constants/dimensions.ts');
 
 describe('OrchestratorActor', () => {
   beforeEach(() => {

@@ -2,8 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PlaybackSource } from '../../playback/playback-controller.js';
-import { usePlayback } from '../usePlayback.js';
+import type { PlaybackSource } from '../../playback/playback-controller.ts';
+import { usePlayback } from '../usePlayback.ts';
 
 function makeSnapshot(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
   return {

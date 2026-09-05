@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatRunId } from '../format-run-id.js';
+import { formatRunId } from '../format-run-id.ts';
 
 describe('formatRunId', () => {
   it('strips the -orchestrated suffix', () => {

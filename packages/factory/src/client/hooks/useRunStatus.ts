@@ -2,7 +2,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { useEffect, useRef, useState } from 'react';
 
-import { fetchRunStatus } from '../api/client.js';
+import { fetchRunStatus } from '../api/client.ts';
 
 interface UseRunStatusResult {
   data: CanonicalRunStatus | null;

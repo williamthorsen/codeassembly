@@ -6,9 +6,9 @@ import {
   createInProgressReviewPhases,
   createMockRunStatus,
   emptyPhases,
-} from '../../../../test-utils/fixtures.js';
-import { mapRunToLogicalScene } from '../run-to-logical-scene.js';
-import type { LogicalSceneState } from '../types.js';
+} from '../../../../test-utils/fixtures.ts';
+import { mapRunToLogicalScene } from '../run-to-logical-scene.ts';
+import type { LogicalSceneState } from '../types.ts';
 
 // region | Helpers
 

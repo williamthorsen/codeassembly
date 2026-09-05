@@ -1,13 +1,13 @@
-import type { LogicalSceneState } from '../../shared/types.js';
-import { ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
-import type { OfficeAgentState, OfficeSceneConfig } from '../types.js';
+import type { LogicalSceneState } from '../../shared/types.ts';
+import { ZONE_DEFINITIONS } from '../constants/zone-definitions.ts';
+import type { OfficeAgentState, OfficeSceneConfig } from '../types.ts';
 import {
   assignAgentToZone,
   buildArtifactStates,
   computeReviewerIndices,
   deriveOrchestratorAssignment,
   deriveZoneStates,
-} from './agent-zone-assignments.js';
+} from './agent-zone-assignments.ts';
 
 /**
  * Transform a visualization-agnostic LogicalSceneState into an office-specific

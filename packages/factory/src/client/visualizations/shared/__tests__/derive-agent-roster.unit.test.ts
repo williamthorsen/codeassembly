@@ -5,8 +5,8 @@ import {
   createInProgressReviewPhases,
   createMockRunStatus,
   emptyPhases,
-} from '../../../../test-utils/fixtures.js';
-import { deriveAgentRoster } from '../derive-agent-roster.js';
+} from '../../../../test-utils/fixtures.ts';
+import { deriveAgentRoster } from '../derive-agent-roster.ts';
 
 // -- deriveAgentRoster --
 

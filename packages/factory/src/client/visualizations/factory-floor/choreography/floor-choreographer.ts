@@ -1,11 +1,11 @@
 import { type Actor, vec } from 'excalibur';
 
-import { FlyingArtifactActor } from '../../catwalk/actors/FlyingArtifactActor.js';
-import type { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';
-import type { StationAgentActor } from '../../catwalk/actors/StationAgentActor.js';
-import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.js';
-import type { FactoryFloorLayoutResult } from '../layout/factory-floor-layout.js';
-import type { FactoryFloorDiff, StationArtifactConfig } from '../types.js';
+import { FlyingArtifactActor } from '../../catwalk/actors/FlyingArtifactActor.ts';
+import type { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.ts';
+import type { StationAgentActor } from '../../catwalk/actors/StationAgentActor.ts';
+import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.ts';
+import type { FactoryFloorLayoutResult } from '../layout/factory-floor-layout.ts';
+import type { FactoryFloorDiff, StationArtifactConfig } from '../types.ts';
 
 /** Callbacks the scene provides for the choreographer to spawn actors and track artifacts. */
 export interface FloorSceneRefs {

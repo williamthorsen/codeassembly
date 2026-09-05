@@ -20,8 +20,8 @@ import {
   STATION_GAP,
   STATION_LABEL_BELOW_GROUND,
   SUBAGENT_SPRITE_BOTTOM_PADDING_PX,
-} from '../../constants/dimensions.js';
-import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry } from '../catwalk-layout.js';
+} from '../../constants/dimensions.ts';
+import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry } from '../catwalk-layout.ts';
 
 // Derived constants (matching the module's internal values) for relational assertions
 const AGENT_SPACING = AGENT_RADIUS * 2 + 20;

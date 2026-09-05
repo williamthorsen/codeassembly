@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { PlaybackControls, PlaybackState } from '../playback/playback-controller.js';
+import type { PlaybackControls, PlaybackState } from '../playback/playback-controller.ts';
 
 import './PlayerPanel.css';
 

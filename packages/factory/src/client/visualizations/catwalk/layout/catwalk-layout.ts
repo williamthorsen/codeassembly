@@ -19,7 +19,7 @@ import {
   STATION_GAP,
   STATION_LABEL_BELOW_GROUND,
   SUBAGENT_SPRITE_BOTTOM_PADDING_PX,
-} from '../constants/dimensions.js';
+} from '../constants/dimensions.ts';
 
 export interface StationLayoutEntry {
   agentCount: number;

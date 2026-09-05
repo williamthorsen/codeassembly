@@ -1,6 +1,6 @@
-import { TILE_SIZE } from '../constants/dimensions.js';
-import { ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
-import type { FacilityLayout, Position, SlotDefinition, SlotType, TileCoord, ZoneDefinition } from '../types.js';
+import { TILE_SIZE } from '../constants/dimensions.ts';
+import { ZONE_DEFINITIONS } from '../constants/zone-definitions.ts';
+import type { FacilityLayout, Position, SlotDefinition, SlotType, TileCoord, ZoneDefinition } from '../types.ts';
 
 /** Convert a tile coordinate to pixel-space center position. */
 function tileToPixel(tile: TileCoord): Position {

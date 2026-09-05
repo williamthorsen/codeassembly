@@ -1,7 +1,7 @@
 import type { PhaseName, RoleType } from 'codeassembly-run-core';
 
-import type { CarriedArtifact, CodeBadge } from '../shared/orchestrator-utils.js';
-import type { AgentStatus, ArtifactStatus, OrchestratorStatus } from '../shared/types.js';
+import type { CarriedArtifact, CodeBadge } from '../shared/orchestrator-utils.ts';
+import type { AgentStatus, ArtifactStatus, OrchestratorStatus } from '../shared/types.ts';
 
 // -- Spatial primitives --
 
@@ -207,7 +207,7 @@ export interface TransitionPlan {
 }
 
 // Re-export visualization-agnostic status types from shared
-export { type CarriedArtifact, type CodeBadge } from '../shared/orchestrator-utils.js';
-export { type AgentStatus, type ArtifactStatus, type OrchestratorStatus } from '../shared/types.js';
+export { type CarriedArtifact, type CodeBadge } from '../shared/orchestrator-utils.ts';
+export { type AgentStatus, type ArtifactStatus, type OrchestratorStatus } from '../shared/types.ts';
 
 // endregion | Transition plan types

@@ -7,11 +7,11 @@ vi.mock('excalibur', () => {
   };
 });
 
-const { computeDirection, executeTransitions } = await import('../transitions/transition-executor.js');
-const { DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_UP } = await import('../sprites/sprite-definitions.js');
+const { computeDirection, executeTransitions } = await import('../transitions/transition-executor.ts');
+const { DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_UP } = await import('../sprites/sprite-definitions.ts');
 
-import type { TransitionContext } from '../transitions/transition-executor.js';
-import type { FacilityLayout, OfficeSceneConfig, Position, TransitionPlan } from '../types.js';
+import type { TransitionContext } from '../transitions/transition-executor.ts';
+import type { FacilityLayout, OfficeSceneConfig, Position, TransitionPlan } from '../types.ts';
 
 // region | Test helpers
 

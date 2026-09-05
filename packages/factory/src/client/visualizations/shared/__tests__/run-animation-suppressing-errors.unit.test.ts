@@ -1,7 +1,7 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it } from 'vitest';
 
-import { runAnimationSuppressingErrors } from '../run-animation-suppressing-errors.js';
+import { runAnimationSuppressingErrors } from '../run-animation-suppressing-errors.ts';
 
 describe('runAnimationSuppressingErrors', () => {
   it('resolves once the animation resolves', async () => {

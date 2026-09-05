@@ -57,8 +57,8 @@ const {
   getWallImageSource,
   getShadowImageSource,
   getOfficeImageSource,
-} = await import('../office-sprite-loader.js');
-const { ROOM_SHEET_URLS, CHARACTER_URLS, SINGLE_ASSET_URLS } = await import('../sprite-sheet-urls.js');
+} = await import('../office-sprite-loader.ts');
+const { ROOM_SHEET_URLS, CHARACTER_URLS, SINGLE_ASSET_URLS } = await import('../sprite-sheet-urls.ts');
 
 describe('office-sprite-loader', () => {
   beforeEach(() => {

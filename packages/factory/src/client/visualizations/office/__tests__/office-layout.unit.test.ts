@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { TILE_SIZE } from '../constants/dimensions.js';
-import { ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
-import { createOfficeLayout } from '../layout/office-layout.js';
+import { TILE_SIZE } from '../constants/dimensions.ts';
+import { ZONE_DEFINITIONS } from '../constants/zone-definitions.ts';
+import { createOfficeLayout } from '../layout/office-layout.ts';
 
 describe(createOfficeLayout, () => {
   const layout = createOfficeLayout();

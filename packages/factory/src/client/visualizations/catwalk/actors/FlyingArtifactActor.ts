@@ -1,8 +1,8 @@
 import { Actor, BaseAlign, Color, Font, GraphicsGroup, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import { ART_H, ART_W } from '../constants/dimensions.js';
-import { CHUTE_DURATION } from '../constants/timing.js';
-import type { ChuteEndpoints } from '../layout/catwalk-layout.js';
+import { ART_H, ART_W } from '../constants/dimensions.ts';
+import { CHUTE_DURATION } from '../constants/timing.ts';
+import type { ChuteEndpoints } from '../layout/catwalk-layout.ts';
 
 export interface FlyingArtifactConfig {
   label: string;

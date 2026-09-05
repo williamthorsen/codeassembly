@@ -25,8 +25,8 @@ import {
   UPPER_LEFT_MARGIN,
   UPPER_PLATFORM_Y,
   UPPER_STATION_GAP,
-} from '../constants/dimensions.js';
-import type { Zone } from '../types.js';
+} from '../constants/dimensions.ts';
+import type { Zone } from '../types.ts';
 
 export interface StationLayoutEntry {
   agentCount: number;

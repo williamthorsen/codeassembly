@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 
-import type { UserSettings } from '../../shared/types/settings.js';
-import { userSettingsSchema } from '../adapters/schemas/settings-schema.js';
+import type { UserSettings } from '../../shared/types/settings.ts';
+import { userSettingsSchema } from '../adapters/schemas/settings-schema.ts';
 
 /** Public interface consumed by the settings route. */
 export interface SettingsProvider {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createOfficeLayout } from '../layout/office-layout.js';
-import { resolvePositions } from '../layout/position-resolver.js';
-import type { OfficeSceneConfig } from '../types.js';
+import { createOfficeLayout } from '../layout/office-layout.ts';
+import { resolvePositions } from '../layout/position-resolver.ts';
+import type { OfficeSceneConfig } from '../types.ts';
 
 describe(resolvePositions, () => {
   const layout = createOfficeLayout();

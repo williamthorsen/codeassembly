@@ -5,7 +5,7 @@ import {
   CHARACTER_FRAME_ROWS,
   CHARACTER_SPRITE_H,
   CHARACTER_SPRITE_W,
-} from './sprite-definitions.js';
+} from './sprite-definitions.ts';
 import {
   CHARACTER_URLS,
   type CharacterName,
@@ -13,7 +13,7 @@ import {
   type RoomSheetKey,
   SINGLE_ASSET_URLS,
   type SingleAssetKey,
-} from './sprite-sheet-urls.js';
+} from './sprite-sheet-urls.ts';
 
 // -- Cache --
 

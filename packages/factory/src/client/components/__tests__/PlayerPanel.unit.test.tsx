@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { PlaybackControls } from '../../playback/playback-controller.js';
+import type { PlaybackControls } from '../../playback/playback-controller.ts';
 
 vi.mock('../PlayerPanel.css', () => ({}));
 
-const { PlayerPanel } = await import('../PlayerPanel.js');
+const { PlayerPanel } = await import('../PlayerPanel.tsx');
 
 function createControls(): PlaybackControls {
   return {

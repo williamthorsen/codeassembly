@@ -45,7 +45,7 @@ const {
   WORKING_DURATION,
   WORKING_FRAME_COORDINATES,
   WORKING_STRATEGY,
-} = await import('../sprite-definitions.js');
+} = await import('../sprite-definitions.ts');
 
 const { AnimationStrategy } = await import('excalibur');
 

@@ -1,7 +1,7 @@
-import { CatwalkCanvas } from '../components/CatwalkCanvas.js';
-import { FactoryFloorCanvas } from '../components/FactoryFloorCanvas.js';
-import { OfficeCanvas } from '../components/OfficeCanvas.js';
-import type { VisualizationComponent } from './types.js';
+import { CatwalkCanvas } from '../components/CatwalkCanvas.tsx';
+import { FactoryFloorCanvas } from '../components/FactoryFloorCanvas.tsx';
+import { OfficeCanvas } from '../components/OfficeCanvas.tsx';
+import type { VisualizationComponent } from './types.ts';
 
 /** Registry mapping visualization names to their React components. */
 export const visualizationRegistry: Record<string, VisualizationComponent> = {

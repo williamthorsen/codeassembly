@@ -1,6 +1,6 @@
 import { type CanonicalRunStatus, PHASE_NAMES, type PhaseName, type Phases } from 'codeassembly-run-core';
 
-import { isPhaseEvaluated, isPhasePresentInData } from '../../../shared/phase-inference.js';
+import { isPhaseEvaluated, isPhasePresentInData } from '../../../shared/phase-inference.ts';
 
 // -- Agent animation state --
 

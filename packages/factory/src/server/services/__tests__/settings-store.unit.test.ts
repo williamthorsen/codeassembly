@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SettingsStore } from '../settings-store.js';
+import { SettingsStore } from '../settings-store.ts';
 
 describe('SettingsStore', () => {
   let tempDir: string;

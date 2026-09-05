@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEMO_RECORDINGS } from '../index.js';
-import { moderatelyComplexRun } from '../recordings/moderately-complex-run.js';
+import { DEMO_RECORDINGS } from '../index.ts';
+import { moderatelyComplexRun } from '../recordings/moderately-complex-run.ts';
 
 describe('DEMO_RECORDINGS', () => {
   it('has at least one recording', () => {

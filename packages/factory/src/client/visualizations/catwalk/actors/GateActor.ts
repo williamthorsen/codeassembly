@@ -1,8 +1,8 @@
 import { Actor, Color, Rectangle, vec, type Vector } from 'excalibur';
 
-import { GATE_OPACITY } from '../constants/animation.js';
-import { GATE_W, ORCH_RADIUS } from '../constants/dimensions.js';
-import { PAUSE_DURATION } from '../constants/timing.js';
+import { GATE_OPACITY } from '../constants/animation.ts';
+import { GATE_W, ORCH_RADIUS } from '../constants/dimensions.ts';
+import { PAUSE_DURATION } from '../constants/timing.ts';
 
 const ORCH_COLOR = '#FFD700';
 const GATE_H = Math.round(ORCH_RADIUS * 1.6);

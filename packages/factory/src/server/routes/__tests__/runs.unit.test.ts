@@ -4,8 +4,8 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { RunDataParseError } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProjectIndex } from '../../../shared/types/api.js';
-import { createRunsRouter } from '../runs.js';
+import type { ProjectIndex } from '../../../shared/types/api.ts';
+import { createRunsRouter } from '../runs.ts';
 import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
 const { mockedReaddir, mockedReadFile, mockedParseRunData, mockedParseRunRawData } = vi.hoisted(() => ({

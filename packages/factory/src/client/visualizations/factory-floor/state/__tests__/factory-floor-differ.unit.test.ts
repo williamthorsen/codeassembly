@@ -6,8 +6,8 @@ import type {
   OrchestratorConfig,
   StationArtifactConfig,
   StationConfig,
-} from '../../types.js';
-import { artifactKey, diffFactoryFloorConfig } from '../factory-floor-differ.js';
+} from '../../types.ts';
+import { artifactKey, diffFactoryFloorConfig } from '../factory-floor-differ.ts';
 
 function defaultOrchestrator(overrides: Partial<OrchestratorConfig> = {}): OrchestratorConfig {
   return {

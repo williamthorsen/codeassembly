@@ -1,8 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { moderatelyComplexRun } from '../../demo/recordings/moderately-complex-run.js';
-import { useDemoMode } from '../useDemoMode.js';
+import { moderatelyComplexRun } from '../../demo/recordings/moderately-complex-run.ts';
+import { useDemoMode } from '../useDemoMode.ts';
 
 describe('useDemoMode', () => {
   beforeEach(() => {

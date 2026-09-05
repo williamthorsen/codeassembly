@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { ProjectIndex } from '../../shared/types/api.js';
+import type { ProjectIndex } from '../../shared/types/api.ts';
 
 import './RunSelector.css';
 

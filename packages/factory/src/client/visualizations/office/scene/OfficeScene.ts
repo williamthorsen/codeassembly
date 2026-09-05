@@ -1,14 +1,14 @@
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { Actor, Canvas, Color, type ImageSource, Rectangle, Scene, vec } from 'excalibur';
 
-import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
-import { mapRunToLogicalScene } from '../../shared/run-to-logical-scene.js';
-import type { LogicalSceneState } from '../../shared/types.js';
-import { CANVAS_HEIGHT_PX, CANVAS_WIDTH_PX, TILE_SIZE } from '../constants/dimensions.js';
-import { GOVERNOR_ZONE, PREP_ZONE, WORKSHOP_ZONE } from '../constants/zone-definitions.js';
-import { createOfficeLayout } from '../layout/office-layout.js';
-import { resolvePositions } from '../layout/position-resolver.js';
-import { mapLogicalToOffice } from '../mappers/logical-to-office.js';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.ts';
+import { mapRunToLogicalScene } from '../../shared/run-to-logical-scene.ts';
+import type { LogicalSceneState } from '../../shared/types.ts';
+import { CANVAS_HEIGHT_PX, CANVAS_WIDTH_PX, TILE_SIZE } from '../constants/dimensions.ts';
+import { GOVERNOR_ZONE, PREP_ZONE, WORKSHOP_ZONE } from '../constants/zone-definitions.ts';
+import { createOfficeLayout } from '../layout/office-layout.ts';
+import { resolvePositions } from '../layout/position-resolver.ts';
+import { mapLogicalToOffice } from '../mappers/logical-to-office.ts';
 import {
   getCharacterSprite,
   getFloorImageSource,
@@ -17,11 +17,11 @@ import {
   getSingleSprite,
   getWallImageSource,
   loadOfficeSprites,
-} from '../sprites/office-sprite-loader.js';
-import { DIR_DOWN, DIR_UP, FURNITURE_MANIFEST, resolveCharacterName } from '../sprites/sprite-definitions.js';
-import { diffOfficeConfigs } from '../state/office-differ.js';
-import { type AnimationHandle, executeTransitions } from '../transitions/transition-executor.js';
-import { planTransitions } from '../transitions/transition-planner.js';
+} from '../sprites/office-sprite-loader.ts';
+import { DIR_DOWN, DIR_UP, FURNITURE_MANIFEST, resolveCharacterName } from '../sprites/sprite-definitions.ts';
+import { diffOfficeConfigs } from '../state/office-differ.ts';
+import { type AnimationHandle, executeTransitions } from '../transitions/transition-executor.ts';
+import { planTransitions } from '../transitions/transition-planner.ts';
 import type {
   EntityKind,
   FacilityLayout,
@@ -29,7 +29,7 @@ import type {
   OfficeSceneConfig,
   Position,
   ResolvedPositions,
-} from '../types.js';
+} from '../types.ts';
 
 // -- Visual constants --
 
@@ -349,7 +349,7 @@ export class OfficeScene extends Scene {
   private buildTransitionContext(
     nextConfig: OfficeSceneConfig,
     nextPositions: ResolvedPositions,
-  ): import('../transitions/transition-executor.js').TransitionContext {
+  ): import('../transitions/transition-executor.ts').TransitionContext {
     return {
       findActor: (entityId, entityKind) => this.findActor(entityId, entityKind),
       createAgent: (agentId, pos, phase) => this.placeAgent(agentId, phase, pos),

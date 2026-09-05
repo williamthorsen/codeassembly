@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isRecord } from '../type-guards.js';
+import { isRecord } from '../type-guards.ts';
 
 describe(isRecord, () => {
   it('accepts a plain object', () => {

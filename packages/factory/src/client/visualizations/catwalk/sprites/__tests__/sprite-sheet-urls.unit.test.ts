@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SPRITE_SHEET_URLS } from '../sprite-sheet-urls.js';
+import { SPRITE_SHEET_URLS } from '../sprite-sheet-urls.ts';
 
 describe('SPRITE_SHEET_URLS', () => {
   it('exports a subagent URL string', () => {

@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from 'express';
 
-import type { ProjectIndexProvider } from '../../shared/types/api.js';
+import type { ProjectIndexProvider } from '../../shared/types/api.ts';
 
 export function createProjectsRouter(scanner: ProjectIndexProvider): Router {
   const router = Router();

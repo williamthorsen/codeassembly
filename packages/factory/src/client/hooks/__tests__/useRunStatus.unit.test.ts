@@ -1,14 +1,14 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../../test-utils/fixtures.js';
-import { useRunStatus } from '../useRunStatus.js';
+import { createMockRunStatus } from '../../../test-utils/fixtures.ts';
+import { useRunStatus } from '../useRunStatus.ts';
 
-vi.mock('../../api/client.js', () => ({
+vi.mock('../../api/client.ts', () => ({
   fetchRunStatus: vi.fn(),
 }));
 
-const { fetchRunStatus } = await import('../../api/client.js');
+const { fetchRunStatus } = await import('../../api/client.ts');
 const mockedFetchRunStatus = vi.mocked(fetchRunStatus);
 
 describe('useRunStatus', () => {

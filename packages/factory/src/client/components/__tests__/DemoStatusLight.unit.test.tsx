@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { PlaybackState } from '../../playback/playback-controller.js';
+import type { PlaybackState } from '../../playback/playback-controller.ts';
 
 vi.mock('../DemoStatusLight.css', () => ({}));
 
-const { DemoStatusLight } = await import('../DemoStatusLight.js');
+const { DemoStatusLight } = await import('../DemoStatusLight.tsx');
 
 describe('DemoStatusLight', () => {
   afterEach(() => {

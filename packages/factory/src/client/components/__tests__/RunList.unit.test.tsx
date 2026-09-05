@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { FlatRunInfo } from '../../../shared/types/api.js';
+import type { FlatRunInfo } from '../../../shared/types/api.ts';
 
 vi.mock('../RunList.css', () => ({}));
 
-const { RunList } = await import('../RunList.js');
+const { RunList } = await import('../RunList.tsx');
 
 function createRuns(): FlatRunInfo[] {
   return [

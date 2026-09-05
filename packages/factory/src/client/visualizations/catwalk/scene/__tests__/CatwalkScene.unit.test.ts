@@ -1,13 +1,13 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../../test-utils/fixtures.js';
+import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../../test-utils/fixtures.ts';
 
 const { mockLoadAllCatwalkSprites } = vi.hoisted(() => ({
   mockLoadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
+vi.mock('../../sprites/catwalk-sprite-loader.ts', () => ({
   loadAllCatwalkSprites: mockLoadAllCatwalkSprites,
   getAnimation: vi.fn().mockReturnValue({ type: 'animation' }),
 }));
@@ -68,7 +68,7 @@ vi.mock('excalibur', () => {
 });
 
 // Mock each actor module to avoid pulling in real Excalibur dependencies
-vi.mock('../../actors/ArtifactActor.js', () => ({
+vi.mock('../../actors/ArtifactActor.ts', () => ({
   ArtifactActor: class MockArtifactActor {
     updateConfig = vi.fn();
     fadeIn = vi.fn();
@@ -79,7 +79,7 @@ vi.mock('../../actors/ArtifactActor.js', () => ({
   },
 }));
 
-vi.mock('../../actors/CatwalkStationActor.js', () => ({
+vi.mock('../../actors/CatwalkStationActor.ts', () => ({
   CatwalkStationActor: class MockCatwalkStationActor {
     updateConfig = vi.fn();
     constructor(
@@ -89,7 +89,7 @@ vi.mock('../../actors/CatwalkStationActor.js', () => ({
   },
 }));
 
-vi.mock('../../actors/ChuteActor.js', () => ({
+vi.mock('../../actors/ChuteActor.ts', () => ({
   ChuteActor: class MockChuteActor {
     updateConfig = vi.fn();
     constructor(
@@ -99,7 +99,7 @@ vi.mock('../../actors/ChuteActor.js', () => ({
   },
 }));
 
-vi.mock('../../actors/FlyingArtifactActor.js', () => ({
+vi.mock('../../actors/FlyingArtifactActor.ts', () => ({
   FlyingArtifactActor: class MockFlyingArtifactActor {
     ascend = vi.fn().mockResolvedValue(undefined);
     descend = vi.fn().mockResolvedValue(undefined);
@@ -112,7 +112,7 @@ vi.mock('../../actors/FlyingArtifactActor.js', () => ({
   },
 }));
 
-vi.mock('../../actors/GateActor.js', () => ({
+vi.mock('../../actors/GateActor.ts', () => ({
   GateActor: class MockGateActor {
     updateConfig = vi.fn();
     animateOpen = vi.fn();
@@ -123,7 +123,7 @@ vi.mock('../../actors/GateActor.js', () => ({
   },
 }));
 
-vi.mock('../../actors/OrchestratorActor.js', () => ({
+vi.mock('../../actors/OrchestratorActor.ts', () => ({
   OrchestratorActor: class MockOrchestratorActor {
     animateMoveTo = vi.fn().mockResolvedValue(undefined);
     fadeOut = vi.fn();
@@ -141,7 +141,7 @@ vi.mock('../../actors/OrchestratorActor.js', () => ({
   },
 }));
 
-vi.mock('../../actors/StationAgentActor.js', () => ({
+vi.mock('../../actors/StationAgentActor.ts', () => ({
   StationAgentActor: class MockStationAgentActor {
     animateToState = vi.fn();
     fadeIn = vi.fn();
@@ -152,15 +152,15 @@ vi.mock('../../actors/StationAgentActor.js', () => ({
   },
 }));
 
-const { CatwalkScene } = await import('../CatwalkScene.js');
-const { ArtifactActor } = await import('../../actors/ArtifactActor.js');
-const { ChuteActor } = await import('../../actors/ChuteActor.js');
-const { GateActor } = await import('../../actors/GateActor.js');
-const { OrchestratorActor } = await import('../../actors/OrchestratorActor.js');
-const { StationAgentActor } = await import('../../actors/StationAgentActor.js');
-const { mapRunToCatwalk } = await import('../../mappers/run-to-catwalk.js');
-const { computeCatwalkLayout } = await import('../../layout/catwalk-layout.js');
-const { artifactKey } = await import('../../state/catwalk-differ.js');
+const { CatwalkScene } = await import('../CatwalkScene.ts');
+const { ArtifactActor } = await import('../../actors/ArtifactActor.ts');
+const { ChuteActor } = await import('../../actors/ChuteActor.ts');
+const { GateActor } = await import('../../actors/GateActor.ts');
+const { OrchestratorActor } = await import('../../actors/OrchestratorActor.ts');
+const { StationAgentActor } = await import('../../actors/StationAgentActor.ts');
+const { mapRunToCatwalk } = await import('../../mappers/run-to-catwalk.ts');
+const { computeCatwalkLayout } = await import('../../layout/catwalk-layout.ts');
+const { artifactKey } = await import('../../state/catwalk-differ.ts');
 
 /** Type guard for objects that have a `config` property (all mock actors do). */
 function hasConfig(value: unknown): value is { config: Record<string, unknown> } {

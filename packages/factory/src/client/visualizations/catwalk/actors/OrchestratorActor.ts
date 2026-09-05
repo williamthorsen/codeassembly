@@ -1,6 +1,6 @@
 import { Actor, BaseAlign, Color, Font, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY, ORCH_WAITING_OPACITY } from '../constants/animation.js';
+import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY, ORCH_WAITING_OPACITY } from '../constants/animation.ts';
 import {
   BADGE_OFFSET_Y,
   CARRIED_ART_GAP,
@@ -8,10 +8,10 @@ import {
   CARRIED_ART_W,
   ORCH_SPRITE_BOTTOM_PADDING_PX,
   SPRITE_SIZE,
-} from '../constants/dimensions.js';
-import { PAUSE_DURATION, WALK_SPEED } from '../constants/timing.js';
-import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
-import type { CarriedArtifactConfig } from '../types.js';
+} from '../constants/dimensions.ts';
+import { PAUSE_DURATION, WALK_SPEED } from '../constants/timing.ts';
+import { getAnimation } from '../sprites/catwalk-sprite-loader.ts';
+import type { CarriedArtifactConfig } from '../types.ts';
 
 export interface OrchestratorActorConfig {
   working: boolean;

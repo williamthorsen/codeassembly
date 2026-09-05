@@ -4,8 +4,8 @@ import { dirname, join } from 'node:path';
 
 import { isEnoent } from 'codeassembly-run-core';
 
-import type { UserSettings } from '../../shared/types/settings.js';
-import { userSettingsSchema } from '../adapters/schemas/settings-schema.js';
+import type { UserSettings } from '../../shared/types/settings.ts';
+import { userSettingsSchema } from '../adapters/schemas/settings-schema.ts';
 
 function defaultSettings(): UserSettings {
   return { dismissedRuns: {} };

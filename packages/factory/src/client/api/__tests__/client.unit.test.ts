@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchArtifactContent, fetchArtifacts, fetchProjects, fetchRunStatus } from '../client.js';
+import { fetchArtifactContent, fetchArtifacts, fetchProjects, fetchRunStatus } from '../client.ts';
 
 const mockFetch = vi.fn();
 

@@ -8,11 +8,11 @@ import {
   RESTING_OPACITY,
   SCALE_PULSE_MAX,
   SCALE_PULSE_MIN,
-} from '../constants/animation.js';
-import { ACCENT_BAR_H, SPRITE_SIZE, SUBAGENT_SPRITE_BOTTOM_PADDING_PX } from '../constants/dimensions.js';
-import { PAUSE_DURATION } from '../constants/timing.js';
-import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
-import type { AgentAnimationState } from '../types.js';
+} from '../constants/animation.ts';
+import { ACCENT_BAR_H, SPRITE_SIZE, SUBAGENT_SPRITE_BOTTOM_PADDING_PX } from '../constants/dimensions.ts';
+import { PAUSE_DURATION } from '../constants/timing.ts';
+import { getAnimation } from '../sprites/catwalk-sprite-loader.ts';
+import type { AgentAnimationState } from '../types.ts';
 
 export interface StationAgentActorConfig {
   id: string;

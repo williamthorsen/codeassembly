@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // Stub CSS import
 vi.mock('../StatusBar.css', () => ({}));
 
-const { StatusBar } = await import('../StatusBar.js');
+const { StatusBar } = await import('../StatusBar.tsx');
 
 function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
   return {

@@ -1,4 +1,4 @@
-import type { Zone } from '../types.js';
+import type { Zone } from '../types.ts';
 
 // -- Canvas / engine dimensions (4:3 aspect ratio) --
 

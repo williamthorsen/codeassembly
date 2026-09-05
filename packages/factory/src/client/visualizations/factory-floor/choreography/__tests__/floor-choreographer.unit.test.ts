@@ -1,9 +1,9 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ChuteEndpoints, FactoryFloorLayoutResult, Position } from '../../layout/factory-floor-layout.js';
-import type { FactoryFloorDiff, OrchestratorDiff, StationArtifactConfig, Zone } from '../../types.js';
-import type { FloorSceneRefs } from '../floor-choreographer.js';
+import type { ChuteEndpoints, FactoryFloorLayoutResult, Position } from '../../layout/factory-floor-layout.ts';
+import type { FactoryFloorDiff, OrchestratorDiff, StationArtifactConfig, Zone } from '../../types.ts';
+import type { FloorSceneRefs } from '../floor-choreographer.ts';
 
 vi.mock('excalibur', () => {
   class MockActor {
@@ -81,7 +81,7 @@ vi.mock('excalibur', () => {
   };
 });
 
-const { choreographFloor } = await import('../floor-choreographer.js');
+const { choreographFloor } = await import('../floor-choreographer.ts');
 
 /** Create a minimal orchestrator diff with optional overrides. */
 function orchestratorDiff(overrides: Partial<OrchestratorDiff> = {}): OrchestratorDiff {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { toRunKey } from '../run-key.js';
+import { toRunKey } from '../run-key.ts';
 
 describe('toRunKey', () => {
   it('constructs key in projectSlug/ticketId/runId format', () => {

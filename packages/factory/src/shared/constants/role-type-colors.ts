@@ -1,6 +1,6 @@
 import { ROLE_TYPES, type RoleType } from 'codeassembly-run-core';
 
-import { PALETTE } from './palette.js';
+import { PALETTE } from './palette.ts';
 
 const ROLE_TYPE_SET: ReadonlySet<string> = new Set(ROLE_TYPES);
 

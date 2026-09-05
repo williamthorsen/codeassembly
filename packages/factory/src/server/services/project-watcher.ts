@@ -1,6 +1,6 @@
 import { type FSWatcher, watch } from 'node:fs';
 
-import type { ProjectIndex } from '../../shared/types/api.js';
+import type { ProjectIndex } from '../../shared/types/api.ts';
 
 export interface Scannable {
   scan(): Promise<ProjectIndex>;
