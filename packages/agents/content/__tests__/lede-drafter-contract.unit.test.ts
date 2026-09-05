@@ -8,9 +8,9 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 // defeat that question, and both look like diligence when a later edit restores them: the diff, which makes every
 // fact it holds feel load-bearing, and the doctrine, which turns the question into a rule list answered by
 // including whatever it does not forbid. The form is defeated by a prescribed phrase, which the model emits
-// wherever guidance names one, and by an unrated exemplar, every one of which is paragraph-form. None of these
-// failures shows up at runtime -- each yields a plausible lede that catalogs the change -- so the guard has to be
-// here.
+// wherever guidance names one, and by an exemplar below the floor, every one of which is paragraph-form. None of
+// these failures shows up at runtime -- each yields a plausible lede that catalogs the change -- so the guard has
+// to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
@@ -19,7 +19,7 @@ const ASSIGNMENT_QUESTION = 'What is this PR about?';
 /** The doctrine, written for the author and the auditor who read the draft rather than for the drafter. */
 const DOCTRINE_FILENAME = 'lede-voice.md';
 
-/** The exemplar call's quality floor, below which the corpus also returns the unrated records. */
+/** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
 
 /**
@@ -37,7 +37,10 @@ const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
 /** A `git diff` invocation that returns hunks: the bare form, or any form whose flags omit `--stat`. */
 const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 
-/** A connective no lede prescribes, pinned as a literal because a rewording is how the prescription returns. */
+/** The rule stating what a lede leaves out, which the drafter carries in place of the shared concision rule. */
+const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
+
+/** A connective the drafter prescribes nowhere, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
 
 /**
@@ -51,6 +54,9 @@ const READER_SOURCES: ReadonlyArray<string> = [
   path.join('skills', '_data', DOCTRINE_FILENAME),
   path.join('subagents', 'lede-drafter.md'),
 ];
+
+/** The flag the exemplar call falls back to where the dispatch carries no type. */
+const TIER_FALLBACK_FLAG = '--tier {tier}';
 
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'lede-drafter.md'), CONTENT_ROOT);
 
@@ -94,11 +100,23 @@ describe('lede-drafter contract', () => {
     expect(await EXPANDED, message).not.toContain(DOCTRINE_FILENAME);
   });
 
-  it('draws exemplars from rated ledes alone', async () => {
+  it('draws exemplars from ledes at the floor alone', async () => {
     const message =
-      `The exemplar call filters to \`${EXEMPLAR_QUALITY_FLOOR}\`. Without the floor the unrated records calibrate ` +
-      'the draft alongside the rated ones, and every unrated record is paragraph-form.';
+      `The exemplar call filters to \`${EXEMPLAR_QUALITY_FLOOR}\`. Without the floor every record beneath it ` +
+      'calibrates the draft, rated and unrated alike, and each of those is paragraph-form.';
     expect(await EXPANDED, message).toContain(EXEMPLAR_QUALITY_FLOOR);
+  });
+
+  it('keeps the floor on the fallback invocation', async () => {
+    const found = (await EXPANDED)
+      .split('\n')
+      .filter((line) => line.includes(TIER_FALLBACK_FLAG) && !line.includes('--min-quality'));
+
+    const message =
+      `A dispatch carrying \`tier\` and no \`type\` is one \`summarize-change\` produces, so the fallback runs. A ` +
+      `line naming \`${TIER_FALLBACK_FLAG}\` without the floor reads as the whole argument list, which returns the ` +
+      `records the floor excludes. These lines drop it:\n  ${found.join('\n  ')}`;
+    expect(found, message).toEqual([]);
   });
 
   it('states the bullet contract', async () => {
@@ -109,6 +127,13 @@ describe('lede-drafter contract', () => {
       'The drafter is the only file that binds the writer, so a drafter that states no bullet contract drafts the ' +
       `paragraph the exemplars were rewritten out of. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
+  });
+
+  it('states the rule for leaving true facts out', async () => {
+    const message =
+      'The drafter carries no shared concision rule, so this section is the whole of what tells it to drop a fact. ' +
+      'Deleting it leaves a drafter with no leave-out rule at all, and every suite stays green.';
+    expect(await EXPANDED, message).toContain(LEAVE_OUT_RULE_PHRASE);
   });
 
   it('prescribes no connective phrase', async () => {

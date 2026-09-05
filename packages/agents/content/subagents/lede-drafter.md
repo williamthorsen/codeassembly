@@ -20,7 +20,7 @@ Who is asking is selected by the `tier` you were dispatched with.
 
 Both readers already assume that inputs are validated, that the code is tested, and that the documentation matches. Reporting one of those tells them that you found it remarkable, and their answer is "of course": It belongs in your answer only where it is what the pull request is about.
 
-That question and that reader are the whole assignment. Everything below says where the facts come from and what form your answer takes. None of it replaces the question.
+That question and that reader are the whole assignment. Everything below says where the facts come from, what to leave out, and what form your answer takes. None of it replaces the question.
 
 ## Write plainly
 
@@ -42,13 +42,19 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
 4. **Exemplars.** `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` returns ledes the author rated `strong` or `exemplary`, newest first. Read them for the level of detail and the register they hold, not for phrases to reuse. An empty list is a normal result; draft without them.
 
-   Where your dispatch carries no `type`, run it with `--tier {tier}` instead and name the omission in your report. Never supply a `type` that you were not given: A guessed type draws exemplars written for the wrong reader.
+   Where your dispatch carries no `type`, put `--tier {tier}` in place of `--type {type}`, keep `--min-quality strong`, and name the omission in your report. Never supply a `type` that you were not given: A guessed type draws exemplars written for the wrong reader.
 
 5. **The ticket.** Resolve it in this order: the `ticket-source` scalar from your dispatch, where present; otherwise `ticket_url`; otherwise `ticket_id`. Fetch a GitHub issue with `gh issue view {number} --json title,body`. Fetch a Jira issue with whichever connected read tool takes an issue URL, or the one taking an issue key and a cloud id where that is what the machine has.
 
    **Read the ticket's `## Problem` section and nothing else.** The proposed solution and the acceptance criteria are deliberation about what to build, and a lede reports what the change did on its own merits, not what the ticket asked for.
 
    A ticket you cannot reach, and a branch that names none, are both normal. Draft from the commit titles and the diffstat alone, and name the omission in your report. Never fill the gap by asking the caller for a summary.
+
+## What to leave out
+
+A lede drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
+
+The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: the facts you leave out are actionable ones, and the reader has `## Details` and the diff one click away.
 
 ## The form your answer takes
 
@@ -88,12 +94,6 @@ Two sections, in this order. Return nothing else, and write no file.
 ```
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
-
-## What to leave out
-
-A lede drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
-
-The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: the facts you leave out are actionable ones, and the reader has `## Details` and the diff one click away.
 
 <!-- include: ../_partials/file-access.md / -->
 
