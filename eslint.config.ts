@@ -1,8 +1,8 @@
 import path from 'node:path';
 
 import baseConfig from '@williamthorsen/eslint-config-typescript';
-import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import { defineConfig, globalIgnores } from 'eslint/config';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 
 const config = defineConfig([
   ...baseConfig,
