@@ -82,6 +82,7 @@ Two sections, in this order. Return nothing else, and write no file.
 A dispatch carrying a `rejection` scalar is a redispatch: an earlier cut failed, and you are reading this in a fresh context that never saw it.
 
 - **`not-a-subset`** -- a returned bullet was not one of the candidates. Copy each surviving candidate exactly as it appears in the candidate block, and change nothing inside it.
+- **`empty-cut`** -- the return carried no bullets. Keep the candidates this reader acts on, and keep at least one; where every candidate earns its place, keep them all.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

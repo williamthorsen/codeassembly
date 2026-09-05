@@ -37,6 +37,9 @@ const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 /** The rule that keeps a cut usable by its caller, which `merge-pr` reads as a thin body when it is lost. */
 const NONEMPTY_RULE_PHRASE = 'Return at least one candidate';
 
+/** Every code the caller redispatches under, each of which the cutter has to be able to act on. */
+const REJECTION_CODES: ReadonlyArray<string> = ['not-a-subset', 'empty-cut'];
+
 /**
  * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so a sentence's opening
  * capital still matches.
@@ -88,6 +91,16 @@ describe('lede-cutter contract', () => {
       `\`${NONEMPTY_RULE_PHRASE}\` is what keeps the cut usable. \`merge-pr\` reads a \`## What\` under 30 ` +
       'characters as thin and composes a fresh body from the diff, so an emptied lede is rewritten by the auditor.';
     expect(await EXPANDED, message).toContain(NONEMPTY_RULE_PHRASE);
+  });
+
+  it('names every rejection code the caller redispatches under', async () => {
+    const text = await EXPANDED;
+    const missing = REJECTION_CODES.filter((code) => !text.includes(`\`${code}\``));
+
+    const message =
+      'A redispatch hands the cutter a code and nothing else, so a code the caller sends and this file does not ' +
+      `explain reaches a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
   });
 
   it('sends the cutter to no command returning diff hunks', async () => {

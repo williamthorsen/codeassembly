@@ -59,7 +59,7 @@ Check commit messages for additional context.
    - {the second bullet}
    ```
 
-   Copy each candidate from the verified draft character for character, one per line, and number none of them: the cutter returns the survivors verbatim, and anything added here has to be stripped back out. Add `rejection: not-a-subset` on a redispatch and on no other dispatch.
+   Copy each candidate from the verified draft character for character, one per line, and number none of them: the cutter returns the survivors verbatim, and anything added here has to be stripped back out. Add `rejection: {code}` on a redispatch and on no other dispatch, taking the code from the check that failed below.
 
    **The migration paragraph is not a candidate.** Where the lede carries one, hold it aside and re-attach it below the surviving bullets. Only `## What` reaches the merge commit and the changelog, so that paragraph is the whole channel to a consumer whose build just broke, and it survives every cut.
 
@@ -71,9 +71,13 @@ Check commit messages for additional context.
    grep -Fxv -f "$candidates_file" "$returned_file"
    ```
 
-   Each line it prints is a bullet the cutter wrote rather than kept. Redispatch with `rejection: not-a-subset`, at most twice; after a second failure, take the verified draft uncut and report the failure to the developer.
+   Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status.
 
-   Take the surviving bullets as the content of `## What`, in the order they were sent.
+   **Count the returned bullets too.** The empty set is a subset, so the comparison above passes a return carrying no bullets at all. An empty `## What` reaches `merge-pr`, which reads a body under 30 characters as thin and composes a fresh one from the diff, so the pipeline's output is discarded without a word.
+
+   Redispatch on either failure -- `rejection: not-a-subset` for a bullet the cutter wrote, `rejection: empty-cut` for a return carrying none -- at most twice across the two; after a second failure, take the verified draft uncut and report the failure to the developer.
+
+   Take the surviving bullets as the content of `## What`, in the order they were sent, and read the cutter's `## Report` for what it dropped. Relay that to the developer: this is the one step that removes content, and the saved summary shows only what survived it.
 
 8. **Save** per the [Saving](#saving) section.
 
