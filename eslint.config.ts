@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import baseConfig from '@williamthorsen/eslint-config-typescript';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 const config = defineConfig([
@@ -22,25 +23,24 @@ const config = defineConfig([
   ]),
   {
     settings: {
-      // Without a resolver, `import/extensions` cannot tell a `.js` specifier from the `.ts` file it names.
-      'import/resolver': {
-        typescript: {
+      // `import-x/extensions` needs a resolver to tell a `.js` specifier from the `.ts` file it names.
+      'import-x/resolver-next': [
+        createTypeScriptImportResolver({
           noWarnOnMultipleProjects: true,
           // Name the tsconfigs explicitly; the resolver's cwd-relative default misses packages when lint runs per workspace.
           project: [
             path.join(import.meta.dirname, 'tsconfig.json'),
             path.join(import.meta.dirname, 'packages/*/tsconfig.json'),
           ],
-        },
-      },
+        }),
+      ],
     },
   },
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {
-      // The rule resolves specifiers itself rather than through the `import/resolver` settings above, so
-      // factory's `.js` specifiers naming `.ts` files and fleet's `source`-only export condition all report
-      // as missing.
+      // The rule resolves specifiers itself rather than through the resolver settings above, so fleet's
+      // `source`-only export condition reports as missing.
       'n/no-missing-import': 'off',
     },
   },
