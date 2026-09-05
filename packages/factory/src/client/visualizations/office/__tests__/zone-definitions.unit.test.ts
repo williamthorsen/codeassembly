@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { GOVERNOR_ZONE, PREP_ZONE, WORKSHOP_ZONE, ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
-import type { TileRect } from '../types.js';
+import { GOVERNOR_ZONE, PREP_ZONE, WORKSHOP_ZONE, ZONE_DEFINITIONS } from '../constants/zone-definitions.ts';
+import type { TileRect } from '../types.ts';
 
 describe('ZONE_DEFINITIONS', () => {
   it('contains exactly 3 zones', () => {

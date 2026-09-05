@@ -8,8 +8,8 @@ import {
   type RoleType,
 } from 'codeassembly-run-core';
 
-import { findPhaseDecision } from '../../../shared/phase-inference.js';
-import { extractReviewerNames, isPresent, PHASE_AGENT_ID } from './artifact-utils.js';
+import { findPhaseDecision } from '../../../shared/phase-inference.ts';
+import { extractReviewerNames, isPresent, PHASE_AGENT_ID } from './artifact-utils.ts';
 
 // -- Agent roster entry --
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { PlaybackState } from '../playback/playback-controller.js';
+import type { PlaybackState } from '../playback/playback-controller.ts';
 
 import './DemoStatusLight.css';
 

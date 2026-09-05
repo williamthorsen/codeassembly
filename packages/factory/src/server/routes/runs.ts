@@ -6,7 +6,7 @@ import { parseRunData, parseRunRawData } from 'codeassembly-run-core/parsers';
 import { type Request, type Response, Router } from 'express';
 import { marked } from 'marked';
 
-import type { ProjectIndexProvider } from '../../shared/types/api.js';
+import type { ProjectIndexProvider } from '../../shared/types/api.ts';
 
 interface RunParams {
   projectSlug: string;

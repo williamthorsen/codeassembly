@@ -2,9 +2,9 @@ import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { DisplayMode, Engine } from 'excalibur';
 import React, { useEffect, useRef } from 'react';
 
-import { useContainerResize } from '../hooks/useContainerResize.js';
-import { CANVAS_HEIGHT_PX, CANVAS_WIDTH_PX } from '../visualizations/office/constants/dimensions.js';
-import { OfficeScene } from '../visualizations/office/scene/OfficeScene.js';
+import { useContainerResize } from '../hooks/useContainerResize.ts';
+import { CANVAS_HEIGHT_PX, CANVAS_WIDTH_PX } from '../visualizations/office/constants/dimensions.ts';
+import { OfficeScene } from '../visualizations/office/scene/OfficeScene.ts';
 
 import './canvas.css';
 

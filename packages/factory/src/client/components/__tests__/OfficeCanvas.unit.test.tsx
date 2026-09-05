@@ -1,7 +1,7 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../../test-utils/fixtures.js';
+import { createMockRunStatus } from '../../../test-utils/fixtures.ts';
 
 const {
   mockEngineConstructor,
@@ -50,13 +50,13 @@ vi.mock('excalibur', () => {
   };
 });
 
-vi.mock('../../visualizations/office/scene/OfficeScene.js', () => ({
+vi.mock('../../visualizations/office/scene/OfficeScene.ts', () => ({
   OfficeScene: class MockOfficeScene {
     updateStatus = mockUpdateStatus;
   },
 }));
 
-vi.mock('../../visualizations/office/constants/dimensions.js', () => ({
+vi.mock('../../visualizations/office/constants/dimensions.ts', () => ({
   CANVAS_WIDTH_PX: 1_152,
   CANVAS_HEIGHT_PX: 704,
   TILE_SIZE: 32,
@@ -64,8 +64,8 @@ vi.mock('../../visualizations/office/constants/dimensions.js', () => ({
 
 vi.mock('../canvas.css', () => ({}));
 
-const { OfficeCanvas } = await import('../OfficeCanvas.js');
-const { OfficeScene } = await import('../../visualizations/office/scene/OfficeScene.js');
+const { OfficeCanvas } = await import('../OfficeCanvas.tsx');
+const { OfficeScene } = await import('../../visualizations/office/scene/OfficeScene.ts');
 
 describe('OfficeCanvas', () => {
   beforeEach(() => {

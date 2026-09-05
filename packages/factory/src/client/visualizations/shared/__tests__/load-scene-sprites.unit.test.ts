@@ -1,7 +1,7 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { describe, expect, it } from 'vitest';
 
-import { loadSceneSprites } from '../load-scene-sprites.js';
+import { loadSceneSprites } from '../load-scene-sprites.ts';
 
 describe('loadSceneSprites', () => {
   it('resolves once the load resolves', async () => {

@@ -1,7 +1,7 @@
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../../test-utils/fixtures.js';
+import { createMockRunStatus } from '../../../test-utils/fixtures.ts';
 
 const {
   mockEngineConstructor,
@@ -50,21 +50,21 @@ vi.mock('excalibur', () => {
   };
 });
 
-vi.mock('../../visualizations/catwalk/scene/CatwalkScene.js', () => ({
+vi.mock('../../visualizations/catwalk/scene/CatwalkScene.ts', () => ({
   CatwalkScene: class MockCatwalkScene {
     updateStatus = mockUpdateStatus;
   },
 }));
 
-vi.mock('../../visualizations/catwalk/constants/dimensions.js', () => ({
+vi.mock('../../visualizations/catwalk/constants/dimensions.ts', () => ({
   ENGINE_WIDTH: 1_200,
   ENGINE_HEIGHT: 600,
 }));
 
 vi.mock('../canvas.css', () => ({}));
 
-const { CatwalkCanvas } = await import('../CatwalkCanvas.js');
-const { CatwalkScene } = await import('../../visualizations/catwalk/scene/CatwalkScene.js');
+const { CatwalkCanvas } = await import('../CatwalkCanvas.tsx');
+const { CatwalkScene } = await import('../../visualizations/catwalk/scene/CatwalkScene.ts');
 
 describe('CatwalkCanvas', () => {
   beforeEach(() => {

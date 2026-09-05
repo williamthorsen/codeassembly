@@ -1,4 +1,4 @@
-import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.js';
+import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.ts';
 
 /** Flattens a nested ProjectIndex into a flat array of runs sorted by startedAt descending (most recent first). */
 export function flattenProjectIndex(index: ProjectIndex | null): FlatRunInfo[] {

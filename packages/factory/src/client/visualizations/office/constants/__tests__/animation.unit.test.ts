@@ -9,7 +9,7 @@ import {
   STATE_CHANGE_PULSE_HALF_MS,
   STATE_CHANGE_PULSE_OPACITY,
   WALK_SPEED_PX_PER_SEC,
-} from '../animation.js';
+} from '../animation.ts';
 
 describe('animation constants', () => {
   it('exports positive walk speed', () => {

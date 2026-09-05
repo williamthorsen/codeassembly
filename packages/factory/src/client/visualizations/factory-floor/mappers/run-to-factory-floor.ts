@@ -7,15 +7,15 @@ import {
   type Phases,
 } from 'codeassembly-run-core';
 
-import { ARTIFACT_COLORS } from '../../../../shared/constants/artifact-colors.js';
-import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.js';
+import { ARTIFACT_COLORS } from '../../../../shared/constants/artifact-colors.ts';
+import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.ts';
 import {
   findCurrentPhase,
   findPhaseDecision,
   isPhaseEvaluated,
   isPhasePresentInData,
-} from '../../../../shared/phase-inference.js';
-import { extractReviewerNames } from '../../shared/artifact-utils.js';
+} from '../../../../shared/phase-inference.ts';
+import { extractReviewerNames } from '../../shared/artifact-utils.ts';
 import type {
   AgentAnimationState,
   AgentConfig,
@@ -24,7 +24,7 @@ import type {
   OrchestratorConfig,
   StationArtifactConfig,
   StationConfig,
-} from '../types.js';
+} from '../types.ts';
 
 /** Maps run-index artifact type names to shared ARTIFACT_COLORS keys. */
 const ARTIFACT_TYPE_COLOR_KEY: Record<string, keyof typeof ARTIFACT_COLORS> = {

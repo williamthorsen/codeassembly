@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProjectIndex } from '../../../shared/types/api.js';
+import type { ProjectIndex } from '../../../shared/types/api.ts';
 
 // Stub CSS import
 vi.mock('../RunSelector.css', () => ({}));
 
-const { RunSelector } = await import('../RunSelector.js');
+const { RunSelector } = await import('../RunSelector.tsx');
 
 function createProjectIndex(): ProjectIndex {
   return {

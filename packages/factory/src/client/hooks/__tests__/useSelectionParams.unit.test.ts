@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSelectionParams } from '../useSelectionParams.js';
+import { useSelectionParams } from '../useSelectionParams.ts';
 
 describe('useSelectionParams', () => {
   const replaceStateSpy = vi.spyOn(globalThis.history, 'replaceState');

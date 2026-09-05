@@ -12,7 +12,7 @@ import {
   RESTING_OPACITY,
   SCALE_PULSE_MAX,
   SCALE_PULSE_MIN,
-} from '../animation.js';
+} from '../animation.ts';
 
 describe('animation constants', () => {
   it('exports agent state opacities in ascending order', () => {

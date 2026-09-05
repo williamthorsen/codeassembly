@@ -1,8 +1,8 @@
 import type { CanonicalRunStatus, Phases } from 'codeassembly-run-core';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AnimationHandle, TransitionContext } from '../transitions/transition-executor.js';
-import type { TransitionPlan } from '../types.js';
+import type { AnimationHandle, TransitionContext } from '../transitions/transition-executor.ts';
+import type { TransitionPlan } from '../types.ts';
 
 // Actors added/removed through the mock scene, and the transition plans handed to executeTransitions
 const recorded: { actorCount: number; plans: TransitionPlan[] } = { actorCount: 0, plans: [] };
@@ -11,8 +11,8 @@ const mockExecuteTransitions = vi.fn((plan: TransitionPlan, _context: Transition
   return { cancel: vi.fn() };
 });
 
-vi.mock('../transitions/transition-executor.js', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../transitions/transition-executor.js')>();
+vi.mock('../transitions/transition-executor.ts', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../transitions/transition-executor.ts')>();
   return {
     ...original,
     executeTransitions: (plan: TransitionPlan, context: TransitionContext): AnimationHandle =>
@@ -105,7 +105,7 @@ vi.mock('excalibur', () => {
 });
 
 // Mock sprite loader to avoid real image loads
-vi.mock('../sprites/office-sprite-loader.js', () => ({
+vi.mock('../sprites/office-sprite-loader.ts', () => ({
   loadOfficeSprites: vi.fn().mockResolvedValue(undefined),
   getFloorSheet: vi.fn().mockReturnValue({
     getSprite: vi.fn().mockReturnValue({ type: 'sprite', draw: vi.fn() }),
@@ -128,7 +128,7 @@ vi.mock('../sprites/office-sprite-loader.js', () => ({
 }));
 
 // Import after mocking
-const { OfficeScene } = await import('../scene/OfficeScene.js');
+const { OfficeScene } = await import('../scene/OfficeScene.ts');
 
 /** Build empty phases with all required keys set to undefined. */
 function emptyPhases(overrides: Partial<Phases> = {}): Phases {

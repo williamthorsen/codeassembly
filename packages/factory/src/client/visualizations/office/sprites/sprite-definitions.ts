@@ -1,4 +1,4 @@
-import type { CharacterName, SingleAssetKey } from './sprite-sheet-urls.js';
+import type { CharacterName, SingleAssetKey } from './sprite-sheet-urls.ts';
 
 // -- Character sprite layout --
 

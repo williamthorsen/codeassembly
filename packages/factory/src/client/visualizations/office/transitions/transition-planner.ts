@@ -1,5 +1,5 @@
-import { TRANSITION_STAGGER_MS } from '../constants/dimensions.js';
-import type { FacilityLayout, OfficeDiff, Position, ResolvedPositions, Transition, TransitionPlan } from '../types.js';
+import { TRANSITION_STAGGER_MS } from '../constants/dimensions.ts';
+import type { FacilityLayout, OfficeDiff, Position, ResolvedPositions, Transition, TransitionPlan } from '../types.ts';
 
 /**
  * Convert an OfficeDiff into an ordered list of transition instructions

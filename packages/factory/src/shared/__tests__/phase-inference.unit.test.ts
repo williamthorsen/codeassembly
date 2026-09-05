@@ -1,8 +1,8 @@
 import type { PhaseDecision, Phases } from 'codeassembly-run-core';
 import { describe, expect, it } from 'vitest';
 
-import { createInProgressReviewPhases, emptyPhases } from '../../test-utils/fixtures.js';
-import { findCurrentPhase, findPhaseDecision, isPhaseEvaluated, isPhasePresentInData } from '../phase-inference.js';
+import { createInProgressReviewPhases, emptyPhases } from '../../test-utils/fixtures.ts';
+import { findCurrentPhase, findPhaseDecision, isPhaseEvaluated, isPhasePresentInData } from '../phase-inference.ts';
 
 /** Helper to create a phase decision entry. */
 function decision(run: boolean): PhaseDecision {

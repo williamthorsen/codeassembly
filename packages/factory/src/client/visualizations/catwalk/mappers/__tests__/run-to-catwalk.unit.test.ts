@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTIFACT_COLORS } from '../../../../../shared/constants/artifact-colors.js';
+import { ARTIFACT_COLORS } from '../../../../../shared/constants/artifact-colors.ts';
 import {
   createCompletedRunPhases,
   createInProgressReviewPhases,
   createMockRunStatus,
   emptyPhases,
-} from '../../../../../test-utils/fixtures.js';
-import { mapRunToCatwalk } from '../run-to-catwalk.js';
+} from '../../../../../test-utils/fixtures.ts';
+import { mapRunToCatwalk } from '../run-to-catwalk.ts';
 
 describe('mapRunToCatwalk', () => {
   describe('empty in_progress run', () => {

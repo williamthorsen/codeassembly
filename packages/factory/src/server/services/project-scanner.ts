@@ -1,7 +1,7 @@
 import { discoverRunDirectories, validateRunDirectory } from 'codeassembly-run-core/scanners';
 
-import { factoryConfig } from '../../config.js';
-import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.js';
+import { factoryConfig } from '../../config.ts';
+import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.ts';
 
 export class ProjectScanner {
   private basePath: string;

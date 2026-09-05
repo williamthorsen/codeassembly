@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CHUTE_DURATION, PAUSE_DURATION, WALK_SPEED, WORK_DURATION } from '../timing.js';
+import { CHUTE_DURATION, PAUSE_DURATION, WALK_SPEED, WORK_DURATION } from '../timing.ts';
 
 describe('timing constants', () => {
   it('has WALK_SPEED equal to 400 pixels per second', () => {

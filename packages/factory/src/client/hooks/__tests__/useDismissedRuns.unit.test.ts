@@ -2,15 +2,15 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { UserSettings } from '../../../shared/types/settings.js';
-import { useDismissedRuns } from '../useDismissedRuns.js';
+import type { UserSettings } from '../../../shared/types/settings.ts';
+import { useDismissedRuns } from '../useDismissedRuns.ts';
 
-vi.mock('../../api/client.js', () => ({
+vi.mock('../../api/client.ts', () => ({
   fetchSettings: vi.fn(),
   patchSettings: vi.fn(),
 }));
 
-const { fetchSettings, patchSettings } = await import('../../api/client.js');
+const { fetchSettings, patchSettings } = await import('../../api/client.ts');
 const mockedFetchSettings = vi.mocked(fetchSettings);
 const mockedPatchSettings = vi.mocked(patchSettings);
 

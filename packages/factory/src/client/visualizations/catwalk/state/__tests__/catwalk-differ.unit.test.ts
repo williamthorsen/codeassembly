@@ -7,8 +7,8 @@ import type {
   OrchestratorConfig,
   StationArtifactConfig,
   StationConfig,
-} from '../../types.js';
-import { diffAgents, diffArtifacts, diffCatwalkConfig, diffGates, diffOrchestrator } from '../catwalk-differ.js';
+} from '../../types.ts';
+import { diffAgents, diffArtifacts, diffCatwalkConfig, diffGates, diffOrchestrator } from '../catwalk-differ.ts';
 
 /** Minimal orchestrator config factory. */
 function orchestrator(overrides: Partial<OrchestratorConfig> = {}): OrchestratorConfig {

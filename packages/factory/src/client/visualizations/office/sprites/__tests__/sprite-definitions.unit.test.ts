@@ -12,7 +12,7 @@ import {
   DIR_UP,
   FURNITURE_MANIFEST,
   resolveCharacterName,
-} from '../sprite-definitions.js';
+} from '../sprite-definitions.ts';
 
 describe('sprite dimension constants', () => {
   it('defines a 4-column x 1-row character sprite layout', () => {

@@ -1,7 +1,7 @@
 import { Actor, Color, Rectangle, vec } from 'excalibur';
 
-import { CHUTE_DIMMED_OPACITY, CHUTE_OPACITY } from '../constants/animation.js';
-import type { ChuteEndpoints } from '../layout/catwalk-layout.js';
+import { CHUTE_DIMMED_OPACITY, CHUTE_OPACITY } from '../constants/animation.ts';
+import type { ChuteEndpoints } from '../layout/catwalk-layout.ts';
 
 export interface ChuteActorConfig {
   dimmed: boolean;

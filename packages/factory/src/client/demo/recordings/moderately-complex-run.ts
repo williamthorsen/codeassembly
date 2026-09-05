@@ -1,7 +1,7 @@
 import type { RunEvent, RunHeader } from 'codeassembly-run-core';
 
-import { generateSnapshots } from '../../playback/generate-snapshots.js';
-import type { DemoRecording } from '../index.js';
+import { generateSnapshots } from '../../playback/generate-snapshots.ts';
+import type { DemoRecording } from '../index.ts';
 
 // Source data: header + events define the raw run log. These are used once at
 // module load time to pre-generate the curated snapshot sequence below.

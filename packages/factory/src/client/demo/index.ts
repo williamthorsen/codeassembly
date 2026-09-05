@@ -1,6 +1,6 @@
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 
-import { moderatelyComplexRun } from './recordings/moderately-complex-run.js';
+import { moderatelyComplexRun } from './recordings/moderately-complex-run.ts';
 
 export interface DemoRecording {
   name: string;

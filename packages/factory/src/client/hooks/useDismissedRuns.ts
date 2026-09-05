@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { DismissedRunEntry } from '../../shared/types/settings.js';
-import { fetchSettings, patchSettings } from '../api/client.js';
+import type { DismissedRunEntry } from '../../shared/types/settings.ts';
+import { fetchSettings, patchSettings } from '../api/client.ts';
 
 interface UseDismissedRunsResult {
   dismissed: Readonly<Record<string, DismissedRunEntry>>;

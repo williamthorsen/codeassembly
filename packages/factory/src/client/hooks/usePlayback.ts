@@ -6,7 +6,7 @@ import {
   type PlaybackControls,
   type PlaybackSource,
   type PlaybackState,
-} from '../playback/playback-controller.js';
+} from '../playback/playback-controller.ts';
 
 export interface UsePlaybackResult {
   data: CanonicalRunStatus | null;

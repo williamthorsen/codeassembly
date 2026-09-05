@@ -3,8 +3,8 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.js';
-import { createMockRunStatus } from '../../test-utils/fixtures.js';
+import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.ts';
+import { createMockRunStatus } from '../../test-utils/fixtures.ts';
 
 const {
   mockUseRunStatus,
@@ -32,47 +32,47 @@ const {
   };
 });
 
-vi.mock('../hooks/useRunStatus.js', () => ({
+vi.mock('../hooks/useRunStatus.ts', () => ({
   useRunStatus: mockUseRunStatus,
 }));
 
-vi.mock('../components/RunSelector.js', () => ({
+vi.mock('../components/RunSelector.tsx', () => ({
   RunSelector: mockRunSelector,
 }));
 
-vi.mock('../components/StatusBar.js', () => ({
+vi.mock('../components/StatusBar.tsx', () => ({
   StatusBar: mockStatusBar,
 }));
 
-vi.mock('../visualizations/registry.js', () => ({
+vi.mock('../visualizations/registry.ts', () => ({
   visualizationRegistry: { catwalk: mockCatwalkCanvas, 'factory-floor': mockFactoryFloorCanvas },
   DEFAULT_VIS: 'catwalk',
 }));
 
-vi.mock('../api/client.js', () => ({
+vi.mock('../api/client.ts', () => ({
   fetchProjects: mockFetchProjects,
 }));
 
-vi.mock('../helpers/flatten-project-index.js', () => ({
+vi.mock('../helpers/flatten-project-index.ts', () => ({
   flattenProjectIndex: mockFlattenProjectIndex,
 }));
 
-vi.mock('../hooks/useDismissedRuns.js', () => ({
+vi.mock('../hooks/useDismissedRuns.ts', () => ({
   useDismissedRuns: mockUseDismissedRuns,
 }));
 
-vi.mock('../components/RunList.js', () => ({
+vi.mock('../components/RunList.tsx', () => ({
   RunList: mockRunList,
 }));
 
-vi.mock('../hooks/useSelectionParams.js', () => ({
+vi.mock('../hooks/useSelectionParams.ts', () => ({
   useSelectionParams: mockUseSelectionParams,
 }));
 
 // Stub CSS import
 vi.mock('../App.css', () => ({}));
 
-const { App } = await import('../App.js');
+const { App } = await import('../App.tsx');
 
 interface RunSelectorMockProps {
   index: ProjectIndex | null;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatRunTimestamp } from '../format-run-timestamp.js';
+import { formatRunTimestamp } from '../format-run-timestamp.ts';
 
 describe('formatRunTimestamp', () => {
   it('formats a valid ISO timestamp', () => {

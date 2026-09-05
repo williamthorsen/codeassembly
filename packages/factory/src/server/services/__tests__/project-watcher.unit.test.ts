@@ -1,7 +1,7 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProjectWatcher } from '../project-watcher.js';
+import { ProjectWatcher } from '../project-watcher.ts';
 
 // Mock fs.watch
 const mockClose = vi.fn();

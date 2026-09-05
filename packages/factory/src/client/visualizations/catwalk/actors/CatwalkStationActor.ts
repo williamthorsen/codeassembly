@@ -1,6 +1,6 @@
 import { Actor, BaseAlign, Color, Font, Text, vec, type Vector } from 'excalibur';
 
-import { ACTIVE_OPACITY, IDLE_OPACITY } from '../constants/animation.js';
+import { ACTIVE_OPACITY, IDLE_OPACITY } from '../constants/animation.ts';
 
 export interface CatwalkStationActorConfig {
   phase: string;

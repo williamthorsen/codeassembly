@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { userSettingsSchema } from '../settings-schema.js';
+import { userSettingsSchema } from '../settings-schema.ts';
 
 describe('userSettingsSchema', () => {
   it('accepts empty dismissedRuns', () => {

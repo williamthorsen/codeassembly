@@ -12,7 +12,7 @@ import {
   ORCH_RADIUS,
   RAIL_Y,
   STATION_GAP,
-} from '../dimensions.js';
+} from '../dimensions.ts';
 
 describe('canvas dimensions', () => {
   it('has CANVAS_W equal to 1400', () => {

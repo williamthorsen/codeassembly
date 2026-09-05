@@ -1,6 +1,6 @@
 import { type CanonicalRunStatus, PHASE_NAMES, type PhaseName } from 'codeassembly-run-core';
 
-import { isPresent, lookupArtifactColor } from './artifact-utils.js';
+import { isPresent, lookupArtifactColor } from './artifact-utils.ts';
 
 // region | Types
 

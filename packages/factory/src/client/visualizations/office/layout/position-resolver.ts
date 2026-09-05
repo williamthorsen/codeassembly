@@ -1,4 +1,4 @@
-import type { FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } from '../types.js';
+import type { FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } from '../types.ts';
 
 /**
  * Resolve pixel-space positions for all entities in an OfficeSceneConfig

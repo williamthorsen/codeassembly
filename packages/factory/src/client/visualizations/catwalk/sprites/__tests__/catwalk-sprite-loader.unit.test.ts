@@ -6,7 +6,7 @@ import {
   ORCH_WORKING_STRATEGY,
   WORKING_DURATION,
   WORKING_FRAME_COORDINATES,
-} from '../sprite-definitions.js';
+} from '../sprite-definitions.ts';
 
 const { mockImageSourceConstructor, mockImageSourceLoad, mockSpriteSheetFromImageSource, mockAnimationFromCoords } =
   vi.hoisted(() => {
@@ -58,8 +58,8 @@ vi.mock('excalibur', () => {
   };
 });
 
-const { loadAllCatwalkSprites, getAnimation, clearCatwalkSpriteCache } = await import('../catwalk-sprite-loader.js');
-const { SPRITE_SHEET_URLS } = await import('../sprite-sheet-urls.js');
+const { loadAllCatwalkSprites, getAnimation, clearCatwalkSpriteCache } = await import('../catwalk-sprite-loader.ts');
+const { SPRITE_SHEET_URLS } = await import('../sprite-sheet-urls.ts');
 
 describe('catwalk-sprite-loader', () => {
   beforeEach(() => {

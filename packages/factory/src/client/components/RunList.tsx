@@ -1,11 +1,11 @@
 import type { RunStatus } from 'codeassembly-run-core';
 import React from 'react';
 
-import { PALETTE } from '../../shared/constants/palette.js';
-import type { FlatRunInfo } from '../../shared/types/api.js';
-import { formatRunId } from '../helpers/format-run-id.js';
-import { formatRunTimestamp } from '../helpers/format-run-timestamp.js';
-import { toRunKey } from '../helpers/run-key.js';
+import { PALETTE } from '../../shared/constants/palette.ts';
+import type { FlatRunInfo } from '../../shared/types/api.ts';
+import { formatRunId } from '../helpers/format-run-id.ts';
+import { formatRunTimestamp } from '../helpers/format-run-timestamp.ts';
+import { toRunKey } from '../helpers/run-key.ts';
 
 import './RunList.css';
 

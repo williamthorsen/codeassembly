@@ -1,21 +1,21 @@
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { Actor, Color, Rectangle, Scene, vec } from 'excalibur';
 
-import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.js';
-import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
-import { ArtifactActor } from '../actors/ArtifactActor.js';
-import { CatwalkStationActor } from '../actors/CatwalkStationActor.js';
-import { ChuteActor } from '../actors/ChuteActor.js';
-import { GateActor } from '../actors/GateActor.js';
-import { OrchestratorActor } from '../actors/OrchestratorActor.js';
-import { StationAgentActor } from '../actors/StationAgentActor.js';
-import { choreograph, type SceneRefs } from '../choreography/chute-choreographer.js';
-import { CAMERA_TOP_MARGIN, DIVIDER_WIDTH, ENGINE_HEIGHT, ENGINE_WIDTH, RAIL_Y } from '../constants/dimensions.js';
-import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
-import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
-import { loadAllCatwalkSprites } from '../sprites/catwalk-sprite-loader.js';
-import { artifactKey, diffCatwalkConfig } from '../state/catwalk-differ.js';
-import type { CatwalkDiff, CatwalkSceneConfig, StationArtifactConfig } from '../types.js';
+import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.ts';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.ts';
+import { ArtifactActor } from '../actors/ArtifactActor.ts';
+import { CatwalkStationActor } from '../actors/CatwalkStationActor.ts';
+import { ChuteActor } from '../actors/ChuteActor.ts';
+import { GateActor } from '../actors/GateActor.ts';
+import { OrchestratorActor } from '../actors/OrchestratorActor.ts';
+import { StationAgentActor } from '../actors/StationAgentActor.ts';
+import { choreograph, type SceneRefs } from '../choreography/chute-choreographer.ts';
+import { CAMERA_TOP_MARGIN, DIVIDER_WIDTH, ENGINE_HEIGHT, ENGINE_WIDTH, RAIL_Y } from '../constants/dimensions.ts';
+import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.ts';
+import { mapRunToCatwalk } from '../mappers/run-to-catwalk.ts';
+import { loadAllCatwalkSprites } from '../sprites/catwalk-sprite-loader.ts';
+import { artifactKey, diffCatwalkConfig } from '../state/catwalk-differ.ts';
+import type { CatwalkDiff, CatwalkSceneConfig, StationArtifactConfig } from '../types.ts';
 
 const RAIL_HEIGHT = 3;
 const RAIL_OPACITY = 0.6;

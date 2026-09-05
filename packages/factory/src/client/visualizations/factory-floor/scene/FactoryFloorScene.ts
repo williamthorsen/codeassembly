@@ -1,22 +1,22 @@
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { Actor, BaseAlign, Color, Font, Rectangle, Scene, Text, vec } from 'excalibur';
 
-import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.js';
-import { ChuteActor } from '../../catwalk/actors/ChuteActor.js';
-import { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';
-import { StationAgentActor } from '../../catwalk/actors/StationAgentActor.js';
-import { loadAllCatwalkSprites } from '../../catwalk/sprites/catwalk-sprite-loader.js';
-import { loadSceneSprites } from '../../shared/load-scene-sprites.js';
-import { choreographFloor, type FloorSceneRefs } from '../choreography/floor-choreographer.js';
-import { ENGINE_HEIGHT, ENGINE_WIDTH, LABEL_Y_OFFSET } from '../constants/dimensions.js';
+import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-type-colors.ts';
+import { ChuteActor } from '../../catwalk/actors/ChuteActor.ts';
+import { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.ts';
+import { StationAgentActor } from '../../catwalk/actors/StationAgentActor.ts';
+import { loadAllCatwalkSprites } from '../../catwalk/sprites/catwalk-sprite-loader.ts';
+import { loadSceneSprites } from '../../shared/load-scene-sprites.ts';
+import { choreographFloor, type FloorSceneRefs } from '../choreography/floor-choreographer.ts';
+import { ENGINE_HEIGHT, ENGINE_WIDTH, LABEL_Y_OFFSET } from '../constants/dimensions.ts';
 import {
   computeFactoryFloorLayout,
   type FactoryFloorLayoutResult,
   type StationLayoutEntry,
-} from '../layout/factory-floor-layout.js';
-import { mapRunToFactoryFloor } from '../mappers/run-to-factory-floor.js';
-import { artifactKey, diffFactoryFloorConfig } from '../state/factory-floor-differ.js';
-import type { FactoryFloorDiff, FactoryFloorSceneConfig, StationArtifactConfig } from '../types.js';
+} from '../layout/factory-floor-layout.ts';
+import { mapRunToFactoryFloor } from '../mappers/run-to-factory-floor.ts';
+import { artifactKey, diffFactoryFloorConfig } from '../state/factory-floor-differ.ts';
+import type { FactoryFloorDiff, FactoryFloorSceneConfig, StationArtifactConfig } from '../types.ts';
 
 const RAIL_HEIGHT = 3;
 const RAIL_OPACITY = 0.6;

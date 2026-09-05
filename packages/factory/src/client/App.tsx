@@ -1,23 +1,23 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { ProjectIndex } from '../shared/types/api.js';
-import { fetchProjects } from './api/client.js';
-import { DemoStatusLight } from './components/DemoStatusLight.js';
-import { PlayerPanel, type PlayerPanelProps } from './components/PlayerPanel.js';
-import { RunList } from './components/RunList.js';
-import { RunSelector } from './components/RunSelector.js';
-import { StatusBar } from './components/StatusBar.js';
-import type { DemoRecording } from './demo/index.js';
-import { flattenProjectIndex } from './helpers/flatten-project-index.js';
-import { toRunKey } from './helpers/run-key.js';
-import { useDemoMode } from './hooks/useDemoMode.js';
-import { useDismissedRuns } from './hooks/useDismissedRuns.js';
-import { useRunPlayback } from './hooks/useRunPlayback.js';
-import { useRunStatus } from './hooks/useRunStatus.js';
-import { useSelectionParams } from './hooks/useSelectionParams.js';
-import type { PlaybackControls, PlaybackState } from './playback/playback-controller.js';
-import { DEFAULT_VIS, visualizationRegistry } from './visualizations/registry.js';
+import type { ProjectIndex } from '../shared/types/api.ts';
+import { fetchProjects } from './api/client.ts';
+import { DemoStatusLight } from './components/DemoStatusLight.tsx';
+import { PlayerPanel, type PlayerPanelProps } from './components/PlayerPanel.tsx';
+import { RunList } from './components/RunList.tsx';
+import { RunSelector } from './components/RunSelector.tsx';
+import { StatusBar } from './components/StatusBar.tsx';
+import type { DemoRecording } from './demo/index.ts';
+import { flattenProjectIndex } from './helpers/flatten-project-index.ts';
+import { toRunKey } from './helpers/run-key.ts';
+import { useDemoMode } from './hooks/useDemoMode.ts';
+import { useDismissedRuns } from './hooks/useDismissedRuns.ts';
+import { useRunPlayback } from './hooks/useRunPlayback.ts';
+import { useRunStatus } from './hooks/useRunStatus.ts';
+import { useSelectionParams } from './hooks/useSelectionParams.ts';
+import type { PlaybackControls, PlaybackState } from './playback/playback-controller.ts';
+import { DEFAULT_VIS, visualizationRegistry } from './visualizations/registry.ts';
 
 import './App.css';
 

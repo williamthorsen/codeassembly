@@ -5,9 +5,9 @@ import type {
   LogicalArtifactState,
   LogicalOrchestratorState,
   OrchestratorStatus,
-} from '../../shared/types.js';
-import { GOVERNOR_ZONE } from '../constants/zone-definitions.js';
-import type { OfficeAgentState, OfficeArtifactState, OfficeZoneState, ZoneDefinition } from '../types.js';
+} from '../../shared/types.ts';
+import { GOVERNOR_ZONE } from '../constants/zone-definitions.ts';
+import type { OfficeAgentState, OfficeArtifactState, OfficeZoneState, ZoneDefinition } from '../types.ts';
 
 /** Number of storage slots in the governor zone, used for cycling delivered artifacts. */
 const GOVERNOR_STORAGE_SLOT_COUNT = GOVERNOR_ZONE.slots.filter((s) => s.type === 'storage').length;

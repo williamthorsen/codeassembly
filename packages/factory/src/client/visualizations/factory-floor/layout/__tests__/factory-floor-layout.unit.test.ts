@@ -19,12 +19,12 @@ import {
   UPPER_LEFT_MARGIN,
   UPPER_PLATFORM_Y,
   UPPER_STATION_GAP,
-} from '../../constants/dimensions.js';
+} from '../../constants/dimensions.ts';
 import {
   computeFactoryFloorLayout,
   type FactoryFloorLayoutConfig,
   type StationLayoutEntry,
-} from '../factory-floor-layout.js';
+} from '../factory-floor-layout.ts';
 
 /** Height of an agent visual (sprite + accent bar minus bottom padding). */
 const AGENT_VISUAL_HEIGHT = SPRITE_SIZE + ACCENT_BAR_H - SUBAGENT_SPRITE_BOTTOM_PADDING_PX;

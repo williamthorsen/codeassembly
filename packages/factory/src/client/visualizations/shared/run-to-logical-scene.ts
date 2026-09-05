@@ -1,10 +1,10 @@
 import type { CanonicalRunStatus, PhaseName } from 'codeassembly-run-core';
 
-import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.js';
-import { type AgentAnimationState, resolveAgentState } from './agent-state-resolver.js';
-import { isPresent, lookupArtifactColor } from './artifact-utils.js';
-import { type AgentRosterEntry, deriveAgentRoster } from './derive-agent-roster.js';
-import { buildCarriedArtifacts, buildCodeBadge, DATA_PHASE_TO_PHASE_NAME } from './orchestrator-utils.js';
+import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.ts';
+import { type AgentAnimationState, resolveAgentState } from './agent-state-resolver.ts';
+import { isPresent, lookupArtifactColor } from './artifact-utils.ts';
+import { type AgentRosterEntry, deriveAgentRoster } from './derive-agent-roster.ts';
+import { buildCarriedArtifacts, buildCodeBadge, DATA_PHASE_TO_PHASE_NAME } from './orchestrator-utils.ts';
 import type {
   AgentStatus,
   ArtifactStatus,
@@ -13,7 +13,7 @@ import type {
   LogicalOrchestratorState,
   LogicalSceneState,
   OrchestratorStatus,
-} from './types.js';
+} from './types.ts';
 
 // -- Animation state to agent status mapping --
 

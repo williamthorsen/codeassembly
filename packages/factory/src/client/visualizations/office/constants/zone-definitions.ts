@@ -1,4 +1,4 @@
-import type { ZoneDefinition } from '../types.js';
+import type { ZoneDefinition } from '../types.ts';
 
 /**
  * Prep area zone: architecture and planning agents work here.

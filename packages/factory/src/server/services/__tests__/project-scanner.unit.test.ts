@@ -2,7 +2,7 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProjectScanner } from '../project-scanner.js';
+import { ProjectScanner } from '../project-scanner.ts';
 
 const { mockedDiscover, mockedValidate } = vi.hoisted(() => ({
   mockedDiscover: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('codeassembly-run-core/scanners', () => ({
 }));
 
 // Reset the config module so each test can set its own env var
-vi.mock('../../../config.js', () => ({
+vi.mock('../../../config.ts', () => ({
   factoryConfig: {
     get logInvalidRuns() {
       return process.env.FACTORY_LOG_INVALID_RUNS === 'true';

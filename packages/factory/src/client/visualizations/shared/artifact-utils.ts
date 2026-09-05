@@ -1,7 +1,7 @@
 import type { ParallelReviewPhase } from 'codeassembly-run-core';
 
-import { ARTIFACT_COLORS } from '../../../shared/constants/artifact-colors.js';
-import { isRecord } from './type-guards.js';
+import { ARTIFACT_COLORS } from '../../../shared/constants/artifact-colors.ts';
+import { isRecord } from './type-guards.ts';
 
 // region | Type guards
 

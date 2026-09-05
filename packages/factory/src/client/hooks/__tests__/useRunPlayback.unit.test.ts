@@ -3,13 +3,13 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import type { RunEvent, RunHeader } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useRunPlayback } from '../useRunPlayback.js';
+import { useRunPlayback } from '../useRunPlayback.ts';
 
 const { mockedFetchRunEvents } = vi.hoisted(() => ({
   mockedFetchRunEvents: vi.fn(),
 }));
 
-vi.mock('../../api/client.js', () => ({
+vi.mock('../../api/client.ts', () => ({
   fetchRunEvents: mockedFetchRunEvents,
 }));
 

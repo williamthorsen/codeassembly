@@ -1,12 +1,12 @@
 import { type Actor, vec } from 'excalibur';
 
-import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.js';
-import { FlyingArtifactActor } from '../actors/FlyingArtifactActor.js';
-import type { GateActor } from '../actors/GateActor.js';
-import type { OrchestratorActor } from '../actors/OrchestratorActor.js';
-import type { StationAgentActor } from '../actors/StationAgentActor.js';
-import type { CatwalkLayoutResult } from '../layout/catwalk-layout.js';
-import type { CatwalkDiff, StationArtifactConfig } from '../types.js';
+import { runAnimationSuppressingErrors } from '../../shared/run-animation-suppressing-errors.ts';
+import { FlyingArtifactActor } from '../actors/FlyingArtifactActor.ts';
+import type { GateActor } from '../actors/GateActor.ts';
+import type { OrchestratorActor } from '../actors/OrchestratorActor.ts';
+import type { StationAgentActor } from '../actors/StationAgentActor.ts';
+import type { CatwalkLayoutResult } from '../layout/catwalk-layout.ts';
+import type { CatwalkDiff, StationArtifactConfig } from '../types.ts';
 
 /** Callbacks that the scene provides so the choreographer can spawn temporary actors and add artifacts. */
 export interface SceneRefs {

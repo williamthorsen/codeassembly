@@ -1,10 +1,10 @@
 import type { PhaseName, RoleType, RunStatus } from 'codeassembly-run-core';
 
-import type { CarriedArtifact, CodeBadge } from './orchestrator-utils.js';
+import type { CarriedArtifact, CodeBadge } from './orchestrator-utils.ts';
 
 // Re-export visualization-agnostic types from shared utilities
-export type { AgentAnimationState } from './agent-state-resolver.js';
-export type { CarriedArtifact, CodeBadge } from './orchestrator-utils.js';
+export type { AgentAnimationState } from './agent-state-resolver.ts';
+export type { CarriedArtifact, CodeBadge } from './orchestrator-utils.ts';
 
 // -- Agent status --
 

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { TRANSITION_STAGGER_MS } from '../constants/dimensions.js';
-import { createOfficeLayout } from '../layout/office-layout.js';
-import { planTransitions } from '../transitions/transition-planner.js';
-import type { OfficeDiff, Position, ResolvedPositions } from '../types.js';
+import { TRANSITION_STAGGER_MS } from '../constants/dimensions.ts';
+import { createOfficeLayout } from '../layout/office-layout.ts';
+import { planTransitions } from '../transitions/transition-planner.ts';
+import type { OfficeDiff, Position, ResolvedPositions } from '../types.ts';
 
 const layout = createOfficeLayout();
 

@@ -4,8 +4,8 @@ import {
   createCompletedRunPhases,
   createInProgressReviewPhases,
   createMockRunStatus,
-} from '../../../../../test-utils/fixtures.js';
-import { mapRunToFactoryFloor } from '../run-to-factory-floor.js';
+} from '../../../../../test-utils/fixtures.ts';
+import { mapRunToFactoryFloor } from '../run-to-factory-floor.ts';
 
 describe(mapRunToFactoryFloor, () => {
   describe('stations', () => {

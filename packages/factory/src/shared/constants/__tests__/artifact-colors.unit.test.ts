@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTIFACT_COLORS, type ArtifactColorKey } from '../artifact-colors.js';
+import { ARTIFACT_COLORS, type ArtifactColorKey } from '../artifact-colors.ts';
 
 const EXPECTED_KEYS: readonly ArtifactColorKey[] = [
   'reqs',

@@ -8,8 +8,8 @@ import {
   STATE_CHANGE_PULSE_HALF_MS,
   STATE_CHANGE_PULSE_OPACITY,
   WALK_SPEED_PX_PER_SEC,
-} from '../constants/animation.js';
-import { DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_UP } from '../sprites/sprite-definitions.js';
+} from '../constants/animation.ts';
+import { DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_UP } from '../sprites/sprite-definitions.ts';
 import type {
   Direction,
   EntityKind,
@@ -19,7 +19,7 @@ import type {
   ResolvedPositions,
   Transition,
   TransitionPlan,
-} from '../types.js';
+} from '../types.ts';
 
 // -- TransitionContext — the scene-provided callbacks the executor depends on --
 

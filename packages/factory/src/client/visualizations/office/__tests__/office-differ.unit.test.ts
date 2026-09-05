@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { diffOfficeConfigs } from '../state/office-differ.js';
-import type { OfficeAgentState, OfficeArtifactState, OfficeSceneConfig, OfficeZoneState } from '../types.js';
+import { diffOfficeConfigs } from '../state/office-differ.ts';
+import type { OfficeAgentState, OfficeArtifactState, OfficeSceneConfig, OfficeZoneState } from '../types.ts';
 
 /** Build a minimal OfficeSceneConfig. */
 function config(overrides: Partial<OfficeSceneConfig> = {}): OfficeSceneConfig {

@@ -1,7 +1,7 @@
 import type { Router } from 'express';
 import { vi } from 'vitest';
 
-import type { ProjectIndex, ProjectIndexProvider } from '../../../shared/types/api.js';
+import type { ProjectIndex, ProjectIndexProvider } from '../../../shared/types/api.ts';
 
 // -- Mock response --
 

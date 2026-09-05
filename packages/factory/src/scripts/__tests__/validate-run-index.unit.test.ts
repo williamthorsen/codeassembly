@@ -1,7 +1,7 @@
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { findRunIndexFiles, main, reportResults, validateFile, type ValidationResult } from '../validate-run-index.js';
+import { findRunIndexFiles, main, reportResults, validateFile, type ValidationResult } from '../validate-run-index.ts';
 
 const { mockedReadFile, mockedReaddir, mockedStat } = vi.hoisted(() => ({
   mockedReadFile: vi.fn(),

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { ProjectIndex } from '../../../shared/types/api.js';
-import { createProjectsRouter } from '../projects.js';
+import type { ProjectIndex } from '../../../shared/types/api.ts';
+import { createProjectsRouter } from '../projects.ts';
 import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
 describe('createProjectsRouter', () => {

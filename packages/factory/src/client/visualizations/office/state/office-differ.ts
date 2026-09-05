@@ -9,7 +9,7 @@ import type {
   OfficeSceneConfig,
   OfficeZoneState,
   ZoneDiffEntry,
-} from '../types.js';
+} from '../types.ts';
 
 /** Compare two orchestrator states and return zone/status/waiting/carried/badge changes. */
 function diffOrchestrator(prev: OfficeOrchestratorState, next: OfficeOrchestratorState): OfficeOrchestratorDiff {
