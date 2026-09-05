@@ -33,6 +33,7 @@ const DECLARED_KEYS: ReadonlySet<string> = new Set([
   'rules',
   'ticket-source',
   'tier',
+  'title',
   'type',
 ]);
 
