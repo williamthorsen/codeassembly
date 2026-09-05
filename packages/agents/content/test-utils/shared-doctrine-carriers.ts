@@ -4,6 +4,14 @@ import { listGovernedSubagents } from './list-governed-subagents.ts';
 const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'savings-analyzer']);
 
 /**
+ * Subagents whose genre is served by dropping true facts, which the shared concision rule forbids: it tells a writer
+ * to keep every decision, constraint, and actionable fact and to compose tight rather than trim. A lede is selected
+ * from a change whose facts are nearly all accurate and nearly all beneath the reader's notice, so the rule reaches
+ * `lede-drafter` as a licence to keep them. The drafter states its own rule in "What to leave out" instead.
+ */
+const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['lede-drafter']);
+
+/**
  * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section
  * `guidance/shared/AGENTS.md` keeps inline reaches no subagent and so appears here under no key.
  *
@@ -14,7 +22,7 @@ const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'sav
 export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<string>>> = {
   'code-descriptions': listCodeFacingSubagents(),
   'code-style': listCodeFacingSubagents(),
-  concision: listGovernedSubagents(),
+  concision: listGovernedSubagents().filter((slug) => !CUTTING_SUBAGENTS.has(slug)),
   'file-access': listGovernedSubagents(),
   'live-repo-writes': ['orchestrated-coder'],
   'plain-speech': listGovernedSubagents(),
