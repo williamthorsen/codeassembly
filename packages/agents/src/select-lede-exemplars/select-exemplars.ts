@@ -215,7 +215,7 @@ async function readDecision(input: {
     candidate: {
       exemplar: {
         lede,
-        ...(pair ?? {}),
+        ...pair,
         type: resolved?.key ?? type,
         tier,
         scope,
