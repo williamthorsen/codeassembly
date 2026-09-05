@@ -211,7 +211,7 @@ describe(extractProse, () => {
       ]);
     });
 
-    it('flattens an escaped newline, which the source line on which it sits does not carry', () => {
+    it('flattens an escaped newline, which its one source line does not carry', () => {
       const spans = extract(String.raw`text: "First sentence here.\nA second one the reader reads."`, 'yaml');
 
       expect(spans).toStrictEqual([

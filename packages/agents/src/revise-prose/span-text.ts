@@ -89,7 +89,7 @@ export function flattenWhitespace(text: string): string {
 
 /**
  * Reports whether a string literal carries enough words to read as prose rather than as data. This is the one test
- * applied by every extractor to a literal, so a help string and a YAML scalar are judged alike.
+ * applied to a literal by every extractor, so a help string and a YAML scalar are judged alike.
  */
 export function isProseLiteral(text: string): boolean {
   return countWords(text) >= MIN_LITERAL_WORDS;

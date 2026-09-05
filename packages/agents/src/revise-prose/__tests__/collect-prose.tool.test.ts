@@ -125,7 +125,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('counts an extensionless file it cannot read as unreadable', async () => {
+  it('counts an extensionless file that it cannot read as unreadable', async () => {
     const collection = await sweep(['blob']);
 
     expect(collection.skipped.unreadable).toBe(1);
