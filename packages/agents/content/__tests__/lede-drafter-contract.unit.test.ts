@@ -43,6 +43,9 @@ const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
 /** A connective the drafter prescribes nowhere, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
 
+/** The statement that the writer composes against a title the reader has already read. */
+const TITLE_PHRASE = 'The title is already on the page';
+
 /**
  * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so a doctrine bullet's
  * opening capital still matches.
@@ -134,6 +137,16 @@ describe('lede-drafter contract', () => {
       'The drafter carries no shared concision rule, so this section is the whole of what tells it to drop a fact. ' +
       'Deleting it leaves a drafter with no leave-out rule at all, and every suite stays green.';
     expect(await EXPANDED, message).toContain(LEAVE_OUT_RULE_PHRASE);
+  });
+
+  it.each(READER_SOURCES)('states that the title is already on the page in %s', async (relativePath) => {
+    const text = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+
+    const message =
+      "Every surface renders the change title above the lede, so a sentence restating it spends the reader's " +
+      'opening seconds on what they already know. The doctrine and the drafter each state this, since the drafter ' +
+      'never reads the doctrine, and a deletion-only cut cannot repair a bullet that opens by restating the title.';
+    expect(text, message).toContain(TITLE_PHRASE);
   });
 
   it('prescribes no connective phrase', async () => {
