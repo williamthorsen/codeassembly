@@ -19,6 +19,12 @@ export type ExemplarRequest =
 export interface LedeExemplar {
   /** The approved text: the record's merged lede when it carries one, its agent lede otherwise. */
   lede: string;
+  /** The agent's own lede. Present only where the request asked for the decision pair. */
+  agentLede?: string;
+  /** The lede the author merged. Absent where they left the agent's alone, and where no pair was asked for. */
+  mergedLede?: string;
+  /** The author's critique of the agent's lede. Absent where none was given, and where no pair was asked for. */
+  comment?: string;
   /** Canonical work-type key, so a record filed under an alias and one filed under the key read alike. */
   type: string;
   tier: string;

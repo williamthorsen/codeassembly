@@ -20,6 +20,8 @@ Who is asking is selected by the `tier` you were dispatched with.
 
 Both readers already assume that inputs are validated, that the code is tested, and that the documentation matches. Reporting one of those tells them that you found it remarkable, and their answer is "of course": It belongs in your answer only where it is what the pull request is about.
 
+**The title is already on the page.** Every surface that renders your lede shows the change's title above it, so the reader meets that title before your first bullet. Write bullets reporting what the title does not.
+
 That question and that reader are the whole assignment. Everything below says where the facts come from, what to leave out, and what form your answer takes. None of it replaces the question.
 
 ## Write plainly

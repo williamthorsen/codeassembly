@@ -24,7 +24,7 @@ Check commit messages for additional context.
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before the checks below can run.
+4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before step 6 can run.
 
 5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the change's work type (inferred per [Consumer-field inference](#consumer-field-inference)) in [work-types.json](../_data/work-types.json); where the type could not be inferred, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -38,16 +38,48 @@ Check commit messages for additional context.
 
    Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
 
-6. **Save** per the [Saving](#saving) section.
+6. **Verify the draft against the diff.** Both checks apply to the `## What` returned in step 5. The drafter composed from the commit log and the diffstat and never read the diff, so this is where the draft meets it.
 
-**Verify before saving.** Both checks apply to the `## What` returned in step 5, before step 6 writes the artifact. The drafter composed from the commit log and the diffstat and never read the diff, so this is where the draft meets it.
+   - **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed.
+   - **Coverage.** Every fact the lede reports appears in `## Details` too, carrying the mechanics the lede left out. Add to `## Details` what is missing there. Overlap between the two sections is progressive disclosure working, so neither section is trimmed to remove it: A reader meets the summary first and the full story second, and both cover the same ground at different depths.
 
-- **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed.
-- **Coverage.** Every fact the lede reports appears in `## Details` too, carrying the mechanics the lede left out. Add to `## Details` what is missing there. Overlap between the two sections is progressive disclosure working, so neither section is trimmed to remove it: A reader meets the summary first and the full story second, and both cover the same ground at different depths.
+   Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
 
-Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
+   Redispatch at most twice. After a second redispatch fails, carry the last draft into step 7 and report the unresolved code to the developer.
 
-Redispatch at most twice. After a second redispatch fails, save the artifact with the last draft and report the unresolved code to the developer.
+7. **Cut `## What` via `lede-cutter`**: The verified draft reports every fact the drafter judged worth writing; a lede carries only the ones its reader acts on. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
+
+   ```dispatch
+   title: {the title composed in step 3, without the ticket reference}
+   tier: {the tier resolved in step 5}
+   ```
+
+   ```candidates
+   - {the first bullet of the verified draft}
+   - {the second bullet}
+   ```
+
+   Copy each candidate from the verified draft character for character, one per line, and number none of them: the cutter returns the survivors verbatim, and anything added here has to be stripped back out. Add `rejection: {code}` on a redispatch and on no other dispatch, taking the code from the check that failed below.
+
+   **The migration paragraph is not a candidate.** Where the lede carries one, hold it aside and re-attach it below the surviving bullets. Only `## What` reaches the merge commit and the changelog, so that paragraph is the whole channel to a consumer whose build just broke, and it survives every cut.
+
+   **A single-bullet lede skips the dispatch.** The cut leaves at least one bullet, so a lede that already has one has nothing to give up.
+
+   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them:
+
+   ```bash
+   grep -Fxv -f "$candidates_file" "$returned_file"
+   ```
+
+   Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status.
+
+   **Count the returned bullets too.** The empty set is a subset, so the comparison above passes a return carrying no bullets at all. An empty `## What` reaches `merge-pr`, which reads a body under 30 characters as thin and composes a fresh one from the diff, so the pipeline's output is discarded without a word.
+
+   Redispatch on either failure -- `rejection: not-a-subset` for a bullet the cutter wrote, `rejection: empty-cut` for a return carrying none -- at most twice across the two; after a second failure, take the verified draft uncut and report the failure to the developer.
+
+   Take the surviving bullets as the content of `## What`, in the order they were sent, and read the cutter's `## Report` for what it dropped. Relay that to the developer: this is the one step that removes content, and the saved summary shows only what survived it.
+
+8. **Save** per the [Saving](#saving) section.
 
 If expected information is missing, stop and ask the developer.
 
@@ -62,7 +94,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The lede, returned by the `lede-drafter` dispatch in Process step 5. Repair it by striking or correcting a claim the diff does not carry; redispatch for anything else.}
+{The lede: drafted in Process step 5, verified in step 6, and cut to its surviving bullets in step 7.}
 
 ## Why
 

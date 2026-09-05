@@ -194,6 +194,62 @@ describe(selectExemplars, () => {
     });
   });
 
+  it('reports the agent lede, the merged lede, and the comment when the request asks for the pair', async () => {
+    const decisions = [
+      {
+        id: 'A',
+        type: 'feat',
+        capturedAt: '2026-01-01T00:00:00Z',
+        mergedLede: 'The lede that merged.',
+        comment: 'Three times the length for no added value.',
+      },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', count: 1, withPair: true });
+
+    expect(selection.exemplars[0]).toMatchObject({
+      lede: 'The lede that merged.',
+      agentLede: agentLedeFor('A'),
+      mergedLede: 'The lede that merged.',
+      comment: 'Three times the length for no added value.',
+    });
+  });
+
+  it('omits the merged lede and the comment for a record carrying neither', async () => {
+    const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' }];
+
+    const selection = await select({ decisions, type: 'feat', count: 1, withPair: true });
+
+    const exemplar = selection.exemplars[0];
+    expect(exemplar?.agentLede).toBe(agentLedeFor('A'));
+    expect(exemplar).not.toHaveProperty('mergedLede');
+    expect(exemplar).not.toHaveProperty('comment');
+  });
+
+  it('selects the same records whether or not the pair is asked for', async () => {
+    const withoutPair = await select({ decisions: CORPUS, type: 'feat', count: 3 });
+    const withPair = await select({ decisions: CORPUS, type: 'feat', count: 3, withPair: true });
+
+    expect(withPair.exemplars.map((exemplar) => exemplar.pr)).toStrictEqual(
+      withoutPair.exemplars.map((exemplar) => exemplar.pr),
+    );
+    expect(withPair.widening).toBe(withoutPair.widening);
+  });
+
+  it('reports a record whose body carries no agent lede when the pair is asked for', async () => {
+    const files = {
+      'Z.md':
+        '---\nrecordType: event\nid: Z\ncaptured-at: 2026-09-01T00:00:00Z\ncwd: /repo\nsummary: Decision\n' +
+        "tags: [lede-decision]\ntype: feat\ntier: public\nscope: agents\npr: '9'\n---\n\n" +
+        '## Merged lede\n\nThe lede that merged.\n',
+    };
+
+    const selection = await select({ decisions: [], files, type: 'feat', count: 1, withPair: true });
+
+    expect(selection.warnings).toStrictEqual(['Z.md: carries no agent lede, so its decision pair cannot be read']);
+    expect(selection.exemplars[0]).not.toHaveProperty('agentLede');
+  });
+
   it('passes over an event that is not a lede decision without reporting it', async () => {
     const files = {
       'Z.md':
@@ -305,6 +361,7 @@ async function select(input: {
   type: string;
   count: number;
   minQuality?: LedeQuality;
+  withPair?: boolean;
 }): Promise<ExemplarSelection> {
   const fixture = await createCorpusFixture({
     decisions: input.decisions,
@@ -318,6 +375,7 @@ async function select(input: {
     request: { kind: 'type', workType: requireType(workTypes, input.type) },
     count: input.count,
     ...(input.minQuality !== undefined && { minQuality: input.minQuality }),
+    ...(input.withPair !== undefined && { withPair: input.withPair }),
   });
 }
 

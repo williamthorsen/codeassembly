@@ -23,6 +23,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'store', takesValue: true },
   { name: 'tier', takesValue: true },
   { name: 'type', takesValue: true },
+  { name: 'with-pair', takesValue: false },
 ];
 
 /**
@@ -50,6 +51,8 @@ export interface ParsedArgs {
   store: string;
   /** Directory holding `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
   dataDir: string | null;
+  /** Whether each exemplar also reports the agent lede, the merged lede, and the author's comment. */
+  withPair: boolean;
 }
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -71,7 +74,9 @@ if (isEntryPoint()) {
 /**
  * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: the exemplars a drafter needs are the
  * ones its own work type was written under, and `--tier` serves a caller whose dispatch resolved no type, so that the
- * fallback is a narrower request rather than an invented type. `--count`, `--min-quality`, `--store`, and `--data-dir`
+ * fallback is a narrower request rather than an invented type. `--with-pair` widens what each exemplar reports to the
+ * agent lede, the merged lede, and the author's comment, for a caller calibrating an edit rather than a draft; it
+ * changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir`
  * each fall back to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
  * sparse is not filtered down to nothing. The `@default` sentinel is refused: it names whichever store a machine
  * defaults to rather than this corpus, and reading the wrong corpus yields plausible exemplars drawn from nothing
@@ -103,6 +108,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     minQuality: parseMinQuality(raw['min-quality']),
     store: raw.store ?? LEDE_DECISION_STORE,
     dataDir: raw['data-dir'] ?? null,
+    withPair: flags.some((flag) => flag.name === 'with-pair'),
   };
 }
 
@@ -154,6 +160,7 @@ export async function runSelect(input: {
     request,
     count: args.count,
     ...(args.minQuality !== null && { minQuality: args.minQuality }),
+    withPair: args.withPair,
   });
 
   return {

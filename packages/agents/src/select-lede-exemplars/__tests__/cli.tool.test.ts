@@ -40,7 +40,12 @@ describe(parseArgs, () => {
       minQuality: 'strong',
       store: OTHER_STORE_NAME,
       dataDir: '/_data',
+      withPair: false,
     });
+  });
+
+  it('reports --with-pair as the boolean flag it is', () => {
+    expect(parseArgs(['--type', 'feat', '--with-pair']).withPair).toBe(true);
   });
 
   it('reads every record when --min-quality names no floor', () => {
@@ -91,6 +96,32 @@ describe(runSelect, () => {
     const result = await run({ argv: ['--type', 'feature', '--count', '1'], fixture });
 
     expect(expectSuccess(result)).toMatchObject({ type: 'feat', tier: 'public', store: STORE_NAME });
+  });
+
+  it('carries the decision pair into the payload when --with-pair is passed', async () => {
+    const decisions = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', mergedLede: 'Merged.', comment: 'Too long.' },
+    ];
+    const fixture = await createCorpusFixture({ decisions });
+
+    const result = await run({ argv: ['--type', 'feat', '--count', '1', '--with-pair'], fixture });
+
+    expect(expectSuccess(result).exemplars[0]).toMatchObject({
+      agentLede: agentLedeFor('A'),
+      mergedLede: 'Merged.',
+      comment: 'Too long.',
+    });
+  });
+
+  it('leaves the decision pair out of the payload when --with-pair is not passed', async () => {
+    const decisions = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', mergedLede: 'Merged.', comment: 'Too long.' },
+    ];
+    const fixture = await createCorpusFixture({ decisions });
+
+    const result = await run({ argv: ['--type', 'feat', '--count', '1'], fixture });
+
+    expect(expectSuccess(result).exemplars[0]).not.toHaveProperty('agentLede');
   });
 
   it('returns the exemplars and the widening that reached them', async () => {
