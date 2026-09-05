@@ -87,7 +87,23 @@ export function flattenWhitespace(text: string): string {
   return text.replaceAll(/\s+/g, ' ').trim();
 }
 
+/**
+ * Reports whether a string literal carries enough words to read as prose rather than as data. This is the one test
+ * applied to a literal by every extractor, so a help string and a YAML scalar are judged alike.
+ */
+export function isProseLiteral(text: string): boolean {
+  return countWords(text) >= MIN_LITERAL_WORDS;
+}
+
 // region | Helpers
+
+/** Fewest words a string literal must carry to read as prose rather than as data. */
+const MIN_LITERAL_WORDS = 3;
+
+/** Counts the word-like tokens in a string literal, which is how prose is told from data. */
+function countWords(text: string): number {
+  return text.split(/\s+/).filter((word) => /[a-z]{2}/i.test(word)).length;
+}
 
 /** Advances `runs` to the next backtick run of exactly `length`, or returns null where the text holds none. */
 function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {

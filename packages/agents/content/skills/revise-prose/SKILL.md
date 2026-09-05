@@ -51,7 +51,7 @@ Pass one `--unit` per unit from step 1 and one `--rule` per marker. Add `--batch
 
 The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` that it swept, a `candidates` array, a `batches` array, and a `summary`. On failure it carries `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
-Read `summary` before anything else. `filesSkipped` counts the prose-bearing files that the sweep held out, keyed by the reason for each; `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its unit.
+Read `summary` before anything else. `filesSkipped` counts the files that the sweep held out, keyed by the reason for each: `generated` and `machine-generated` for output whose edit belongs to its source, `unreadable` for a file whose prose cannot be read, and `ineligible` for one that no extractor reads at all. `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its unit.
 
 An empty `batches` array ends the run: Report the summary in one line and stop. The repository is already swept at every unit's current version.
 
@@ -135,10 +135,10 @@ revise-prose summary
 
 Recorded in `.agents/revise-prose.yaml`: plain-speech 1, williamthorsen-writing-preferences 2.
 3 plain-speech rejections were not recorded; the next sweep of their batches re-adjudicates them.
-2 files held out: 1 generated, 1 machine-generated.
+5 files held out: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
-Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. Give the unrecorded-rejection line only where the fold dropped one.
+Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, every image, lockfile, and data file in the repository being one; a narrowed sweep reports the files that it was given and could not read. Give the unrecorded-rejection line only where the fold dropped one.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 

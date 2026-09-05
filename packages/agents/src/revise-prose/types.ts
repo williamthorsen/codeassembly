@@ -130,14 +130,15 @@ export interface RunFold {
   rejections: readonly FoldRejection[];
 }
 
-/** Why a prose-bearing file was held out of the sweep. */
-export type SkipReason = 'generated' | 'machine-generated' | 'unreadable';
+/** Why a file was held out of the sweep. */
+export type SkipReason = 'generated' | 'ineligible' | 'machine-generated' | 'unreadable';
 
 /** How a file's prose is delimited, which decides how the extractor reads it. */
-export type ProseKind = 'markdown' | 'script' | 'shell';
+export type ProseKind = 'markdown' | 'script' | 'shell' | 'yaml';
 
 /**
- * A block of prose lifted out of a file: a Markdown paragraph, a comment, a string literal, or a table cell.
+ * A block of prose lifted out of a file: a Markdown paragraph, a comment, a string literal, a block scalar, or a
+ * table cell.
  *
  * `text` preserves the source's own newlines, so the line holding any offset within it is `line` plus the newlines
  * preceding that offset. Every transformation applied by the extractor is line-preserving for that reason.
@@ -178,7 +179,7 @@ export interface CandidateSummary {
   total: number;
   /** Files whose prose the sweep read. */
   filesScanned: number;
-  /** Prose-bearing files held out of the sweep, by the reason each was held out. */
+  /** Files held out of the sweep, by the reason each was held out. */
   filesSkipped: Readonly<Record<SkipReason, number>>;
   /** Batches the run planned, before the record's coverage removed any. */
   batchesPlanned: number;
