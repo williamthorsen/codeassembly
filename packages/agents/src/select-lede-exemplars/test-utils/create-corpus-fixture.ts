@@ -20,6 +20,8 @@ export interface DecisionSpec {
   capturedAt: string;
   /** Merged lede, written to the section a revised decision carries; absent leaves the record with the agent lede alone. */
   mergedLede?: string;
+  /** Author's critique, written to the section a commented decision carries; absent leaves the record without one. */
+  comment?: string;
   scope?: string;
   pr?: string;
   /** Tier as the record recorded it; defaults to the tier the fixture taxonomy declares for `type`. */
@@ -96,6 +98,9 @@ export function renderDecision(spec: DecisionSpec): string {
   const sections = [`## Agent lede\n\n${agentLedeFor(spec.id)}`];
   if (spec.mergedLede !== undefined) {
     sections.push(`## Merged lede\n\n${spec.mergedLede}`);
+  }
+  if (spec.comment !== undefined) {
+    sections.push(`## Comment\n\n${spec.comment}`);
   }
 
   return [

@@ -7,7 +7,7 @@ import { parseEvent } from '@williamthorsen/kb/records';
 
 import { extractString, readStringList } from '../kb-shared/note-helpers.ts';
 import { isLedeQuality, type LedeQuality, meetsQualityFloor } from '../lede-corpus/lede-quality.ts';
-import { extractApprovedLede, LEDE_DECISION_TAG } from '../lede-corpus/lede-sections.ts';
+import { extractApprovedLede, extractDecisionPair, LEDE_DECISION_TAG } from '../lede-corpus/lede-sections.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import type { WorkType } from '../lib/work-types.ts';
 import type { ExemplarRequest, ExemplarSelection, LedeExemplar, Widening } from './types.ts';
@@ -45,6 +45,9 @@ type RecordOutcome =
  * A `minQuality` floor filters candidates before they reach a bucket, so a request left short by the floor widens
  * exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while qualifying
  * tier-mates went untaken.
+ *
+ * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: a
+ * record is admitted on its rating and its type alone, so the same request returns the same records either way.
  */
 export async function selectExemplars(input: {
   storePath: string;
@@ -52,6 +55,7 @@ export async function selectExemplars(input: {
   request: ExemplarRequest;
   count: number;
   minQuality?: LedeQuality;
+  withPair?: boolean;
 }): Promise<ExemplarSelection> {
   const eventsDir = resolveEventsDir(input.storePath);
   const filenames = await readEventFilenames(eventsDir);
@@ -64,7 +68,11 @@ export async function selectExemplars(input: {
     if (buckets.none.length >= input.count) {
       break;
     }
-    const outcome = await readDecision({ filePath: path.join(eventsDir, filename), workTypes: input.workTypes });
+    const outcome = await readDecision({
+      filePath: path.join(eventsDir, filename),
+      workTypes: input.workTypes,
+      withPair: input.withPair ?? false,
+    });
     if (outcome.kind === 'warning') {
       warnings.push(outcome.warning);
       continue;
@@ -146,6 +154,7 @@ function compareDescending(left: string, right: string): number {
 async function readDecision(input: {
   filePath: string;
   workTypes: ReadonlyMap<string, WorkType>;
+  withPair: boolean;
 }): Promise<RecordOutcome> {
   const basename = path.basename(input.filePath);
   const { fields, body, error } = readNoteContent(await readFile(input.filePath, 'utf8'));
@@ -195,10 +204,24 @@ async function readDecision(input: {
       ? [`${basename}: carries quality "${rawQuality}", which the scale does not declare`]
       : [];
 
+  // A decision `capture-lede-decision` wrote always carries an agent lede, so a body without one was edited by hand.
+  const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
+  if (input.withPair && pair === null) {
+    warnings.push(`${basename}: carries no agent lede, so its decision pair cannot be read`);
+  }
+
   return {
     kind: 'candidate',
     candidate: {
-      exemplar: { lede, type: resolved?.key ?? type, tier, scope, pr, capturedAt: parsed.record.capturedAt },
+      exemplar: {
+        lede,
+        ...(pair ?? {}),
+        type: resolved?.key ?? type,
+        tier,
+        scope,
+        pr,
+        capturedAt: parsed.record.capturedAt,
+      },
       resolved,
       quality,
     },

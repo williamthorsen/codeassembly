@@ -16,6 +16,14 @@ export const LEDE_DECISION_TAG = 'lede-decision';
 /** Heading of the section carrying the lede that reached the merge commit, written only when the two texts differ. */
 export const MERGED_LEDE_HEADING = 'Merged lede';
 
+/** A decision record's two ledes and the author's critique of the first, each absent where its section is. */
+export interface LedeDecisionPair {
+  agentLede: string;
+  /** Absent where the author left the agent's lede alone, which is what marks the edit as null. */
+  mergedLede?: string;
+  comment?: string;
+}
+
 /**
  * Reads the author-approved lede from a decision record's body: the merged lede when the record carries one, the
  * agent's lede otherwise. Yields `null` when neither heading appears.
@@ -30,4 +38,26 @@ export function extractApprovedLede(body: string): string | null {
     extractSection({ text: body, heading: MERGED_LEDE_HEADING }) ??
     extractSection({ text: body, heading: AGENT_LEDE_HEADING })
   );
+}
+
+/**
+ * Reads a decision record's body as the pair an author's edit produced. Yields `null` for a body carrying no agent
+ * lede, which is the one section every decision has.
+ *
+ * Presence decides here too: an absent merged lede marks the edit as null, so a reader tells a lede the author left
+ * alone from one they rewrote without consulting the verdict.
+ */
+export function extractDecisionPair(body: string): LedeDecisionPair | null {
+  const agentLede = extractSection({ text: body, heading: AGENT_LEDE_HEADING });
+  if (agentLede === null) {
+    return null;
+  }
+  const mergedLede = extractSection({ text: body, heading: MERGED_LEDE_HEADING });
+  const comment = extractSection({ text: body, heading: COMMENT_HEADING });
+
+  return {
+    agentLede,
+    ...(mergedLede !== null && { mergedLede }),
+    ...(comment !== null && { comment }),
+  };
 }
