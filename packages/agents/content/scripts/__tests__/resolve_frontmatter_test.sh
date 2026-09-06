@@ -34,8 +34,7 @@ End
 
 Describe "resolve_manifest_path"
 setup_repo() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
+  enter_tmpdir || return 1
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
   git config user.name "Test"
@@ -43,18 +42,7 @@ setup_repo() {
 }
 
 cleanup_repo() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
-}
-
-setup_no_repo() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
-}
-
-cleanup_no_repo() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 Context "inside a git repository"
@@ -88,8 +76,8 @@ End
 End
 
 Context "outside a git repository"
-BeforeEach "setup_no_repo"
-AfterEach "cleanup_no_repo"
+BeforeEach "enter_tmpdir"
+AfterEach "leave_tmpdir"
 
 It "returns non-zero with empty stdout outside a git repository"
 When call resolve_manifest_path "main"
@@ -177,18 +165,8 @@ End
 End
 
 Describe "resolve_run_id"
-setup_tmpdir() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
-}
-
-cleanup_tmpdir() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
-}
-
-BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+BeforeEach "enter_tmpdir"
+AfterEach "leave_tmpdir"
 
 It "returns empty when no breadcrumb exists"
 When call resolve_run_id
@@ -680,18 +658,8 @@ End
 End
 
 Describe "main"
-setup_main_validation() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
-}
-
-cleanup_main_validation() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
-}
-
-BeforeEach "setup_main_validation"
-AfterEach "cleanup_main_validation"
+BeforeEach "enter_tmpdir"
+AfterEach "leave_tmpdir"
 
 It "exits non-zero with a diagnostic when --skill is missing in yaml mode"
 When run main --format yaml --interactive true
@@ -719,8 +687,7 @@ End
 
 Context "when git cannot read the repository"
 setup_unreadable_repo() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
+  enter_tmpdir || return 1
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
   git config user.name "Test"
@@ -728,8 +695,7 @@ setup_unreadable_repo() {
 }
 
 cleanup_unreadable_repo() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 BeforeEach "setup_unreadable_repo"
@@ -751,16 +717,14 @@ End
 
 Context "when git cannot resolve the branch"
 setup_unborn_head() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
+  enter_tmpdir || return 1
   # No commit: `git rev-parse --git-dir` answers while `--abbrev-ref HEAD` fails, which is the only
   # condition that reaches the branch diagnostic past the readability probe.
   git init --quiet --initial-branch=main .
 }
 
 cleanup_unborn_head() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 BeforeEach "setup_unborn_head"
@@ -778,8 +742,7 @@ End
 
 Describe "main missing manifest invokes the bundled deriver"
 setup_missing_manifest() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
+  enter_tmpdir || return 1
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
   git config user.name "Test"
@@ -797,8 +760,7 @@ setup_missing_manifest() {
 
 cleanup_missing_manifest() {
   unset RESOLVE_FRONTMATTER_BUNDLE_PATH RESOLVE_FRONTMATTER_BUNDLE_ARGS
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 BeforeEach "setup_missing_manifest"
@@ -859,8 +821,7 @@ End
 
 Describe "main end-to-end"
 setup_main_e2e() {
-  tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null || exit
+  enter_tmpdir || return 1
   # Initialize a minimal git repository so `current_branch` and `git rev-parse --short HEAD` succeed.
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
@@ -879,8 +840,7 @@ JSON
 }
 
 cleanup_main_e2e() {
-  popd >/dev/null || exit
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 BeforeEach "setup_main_e2e"

@@ -128,16 +128,8 @@ End
 End
 
 Describe "read_ticket_ref_prefix"
-setup_tmpdir() {
-  tmpdir=$(mktemp -d)
-}
-
-cleanup_tmpdir() {
-  rm -rf "$tmpdir"
-}
-
-BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+BeforeEach "make_tmpdir"
+AfterEach "remove_tmpdir"
 
 It "returns the value of a single-quoted prefix"
 write_yaml() {
@@ -335,22 +327,16 @@ Describe "extract_ticket_id (end-to-end via main)"
 script="$PROJECT_ROOT/content/scripts/get-ticket-id.sh"
 
 setup_tmpdir() {
-  tmpdir=$(mktemp -d)
-  original_pwd="$PWD"
-  mkdir -p "$tmpdir/workdir/.agents"
+  enter_tmpdir || return 1
+  mkdir -p workdir/.agents
   # Make workdir a real repo so the resolver anchors there and the not-a-repo diagnostic stays
   # silent; cases that need the not-a-repo path run from a separate uninitialized directory.
-  git -C "$tmpdir/workdir" init --quiet
-  cd "$tmpdir/workdir"
-}
-
-cleanup_tmpdir() {
-  cd "$original_pwd"
-  rm -rf "$tmpdir"
+  git -C workdir init --quiet
+  cd workdir || return 1
 }
 
 BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+AfterEach "leave_tmpdir"
 
 # Each end-to-end case runs the script as a child process so the
 # preferences-file lookup honors the resolved repo root.
