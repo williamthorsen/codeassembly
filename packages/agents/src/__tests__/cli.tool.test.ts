@@ -35,10 +35,14 @@ interface CliResult {
   readonly exitCode: number;
 }
 
-/** Runs the CLI via tsx in an optional working directory, capturing stdout, stderr, and exit code. */
+/** Runs the CLI under the running Node in an optional working directory, capturing stdout, stderr, and exit code. */
 async function runCliIn(cwd: string | undefined, ...args: Array<string>): Promise<CliResult> {
   try {
-    const { stdout, stderr } = await execFileAsync('tsx', [CLI_PATH, ...args], cwd === undefined ? {} : { cwd });
+    const { stdout, stderr } = await execFileAsync(
+      process.execPath,
+      [CLI_PATH, ...args],
+      cwd === undefined ? {} : { cwd },
+    );
     return { stdout, stderr, exitCode: 0 };
   } catch (error: unknown) {
     if (isExecError(error)) {
@@ -48,7 +52,7 @@ async function runCliIn(cwd: string | undefined, ...args: Array<string>): Promis
   }
 }
 
-/** Runs the CLI via tsx in the default working directory. */
+/** Runs the CLI under the running Node in the default working directory. */
 async function runCli(...args: Array<string>): Promise<CliResult> {
   return runCliIn(undefined, ...args);
 }

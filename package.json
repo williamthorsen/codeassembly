@@ -21,7 +21,7 @@
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "scripts": {
-    "agents:install": "tsx packages/agents/src/cli.ts install",
+    "agents:install": "node packages/agents/src/cli.ts install",
     "agents:install-launchers": "bash packages/agents/scripts/install-launchers.sh",
     "agents:sync": "node packages/agents/bin/codeassembly.js sync",
     "bootstrap": "nmr build && pnpm run agents:sync",
