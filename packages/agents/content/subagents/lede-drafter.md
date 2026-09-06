@@ -83,7 +83,7 @@ A `rejected` fence comes with it, listing one per line the passages that failed,
 
 - **`voice`** -- a figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
 - **`subject`** -- a bullet carried a verb that the pull request does not perform. Apply the subject test in "The form your answer takes" to every passage you send back.
-- **`unsupported-claim`** -- a sentence claimed more than its sources carry. Claim only what the commit log and the diffstat support, and drop a sentence that reaches past them.
+- **`unsupported-claim`** -- a sentence claimed more than its sources carry. Restate the passage within what the commit log and the diffstat support. Returning nothing for it is not the repair: a return short of one replacement per passage cannot be placed.
 - **`unmatched-return`** -- the return carried a different number of passages than the fence sent, so the caller could place none of them. Return exactly one replacement per passage, in the order the fence listed them.
 
 ## What you return
