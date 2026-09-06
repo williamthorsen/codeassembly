@@ -16,7 +16,7 @@ import { type EnumeratedNote, enumerateNotes } from './enumerate.ts';
 export interface CheckResult {
   /** The effective `KbConfig` the run used — loaded from `.kb/config.yaml`, or `defaultKbConfig` when absent. */
   config: KbConfig;
-  /** Every note enumerated under the store's `config.targets`, in walk order. */
+  /** Every note that the store's `config.targets` and, inside a git working tree, its git scope admit, in walk order. */
   notes: readonly EnumeratedNote[];
   /**
    * Findings from whole-vault integrity (unresolved links, basename collisions), taxonomy drift, and the tag-alias and
@@ -30,6 +30,9 @@ export interface CheckResult {
  * enumerate notes under the config's `targets`/`exclude`, and compose whole-vault integrity and taxonomy drift with
  * the type-blind per-note lints across them. Frontmatter validity is owned by the record types at write time, so no
  * frontmatter re-validation runs here.
+ *
+ * Inside a git working tree the enumeration narrows to what git accounts for, so a note the repository ignores is
+ * neither checked nor available as a wikilink target; see {@link enumerateNotes} for the rule.
  *
  * Returns the effective config alongside the enumerated notes and findings, so a consumer (e.g. `kb-curate`) can layer
  * its own detectors over the same enumeration without walking the tree twice, and can read the resolved
