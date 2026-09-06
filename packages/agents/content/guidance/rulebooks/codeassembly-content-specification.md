@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '13'
+version: '14'
 ---
 
 # CodeAssembly content specification
@@ -136,6 +136,12 @@ A vetted collection is closed under its dependency edges, which is what makes th
 A subagent's tool grant is either named or inherited. `tools` names the grant outright; omitting it inherits the harness's whole subagent tool pool, and `disallowedTools` then removes names from whatever pool results. Reach for inheritance where the subagent needs a tool no allowlist can name -- an MCP tool whose name varies by machine -- and weigh what that costs: a denylist names tools the same way an allowlist does, so it removes the names it lists and nothing else. The residual grant is whatever the machine supplies, and the subagent's own instructions bound the rest. Choose inheritance where that residual is acceptable, and name a `tools` allowlist where it is not. Claude honors the denylist; Rovo does not read it, and its overlay names a `tools` allowlist for every subagent, so a subagent relying on inheritance states its Rovo grant in that overlay. _(Convention; not enforced.)_
 
 Only the rulebook row is validated on parse; a `members:` block is validated wherever it appears. The other rows are read leniently: A field a deploy pass consumes takes effect, and an absent one falls back to a default rather than failing, so a skill with no `description` appears in Rovo's prompt index with an empty one. _(Convention; not enforced.)_
+
+### Version bumps
+
+A rulebook's `version` tracks the operative content of its deployed body: Bump it wherever an edit changes what the rulebook asks of an agent, and leave it where the edit was cosmetic. Two different bodies reporting one version is what the field exists to prevent, and `revise-prose` keys a repository's sweep coverage on the value, so an un-bumped change leaves every repository recorded as swept against rule text that has since moved.
+
+The deployed body is the body after includes expand. Editing a partial is therefore a content change for every rulebook that includes it, and the version moves although the rulebook's own file is untouched. A file that the body links to rather than inlines, such as a `_data/` reference, sits outside the body and bumps nothing. _(Enforced by `rulebook-version-pins.unit.test.ts`.)_
 
 ## Naming
 
