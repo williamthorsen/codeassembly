@@ -24,8 +24,10 @@ export function listGitScope(input: { root: string }): ReadonlySet<string> | und
   if (!unignored.ok) return undefined;
 
   const scope = new Set<string>();
-  for (const path of [...splitRecords(tracked.stdout), ...splitRecords(unignored.stdout)]) {
-    scope.add(path.normalize('NFC'));
+  for (const stdout of [tracked.stdout, unignored.stdout]) {
+    for (const path of stdout.split('\0')) {
+      if (path !== '') scope.add(path.normalize('NFC'));
+    }
   }
   return scope;
 }
@@ -34,16 +36,5 @@ export function listGitScope(input: { root: string }): ReadonlySet<string> | und
 
 /** Output cap for one `git ls-files`, sized past the listing a large store produces. */
 const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
-
-/**
- * The NUL byte separating `git ls-files -z` records. Built rather than written as an escape, because the formatter
- * rewrites an escape into the byte itself, and a literal NUL in a source file makes `grep` treat it as binary.
- */
-const NUL = String.fromCodePoint(0);
-
-/** Splits NUL-delimited `git ls-files -z` output into its non-empty records. */
-function splitRecords(stdout: string): string[] {
-  return stdout.split(NUL).filter((record) => record !== '');
-}
 
 // endregion | Helpers
