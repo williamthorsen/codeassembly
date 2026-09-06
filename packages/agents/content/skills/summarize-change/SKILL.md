@@ -42,7 +42,7 @@ Check commit messages for additional context.
    - {the first passage that failed}
    ```
 
-   Copy each passage character for character from the draft it came from, one per line, and send only the passages that failed: a bullet the drafter never sees is one it cannot change, which is what keeps a bullet that passed from coming back changed. The migration paragraph travels the same way where it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage it replaces, and take every other bullet from the draft unchanged. Where the return carries a different number of passages than you sent, none of them can be placed: redispatch with `rejection: unmatched-return`.
+   Copy each passage character for character from the draft it came from, one per line, and send only the passages that failed: a bullet the drafter never sees is one it cannot change, which is what keeps a bullet that passed from coming back changed. The migration paragraph travels the same way where it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage it replaces, and take every other bullet from the draft unchanged. Where the return carries a different number of passages than you sent, none of them can be placed: redispatch with `rejection: unmatched-return`, which counts against the two step 6 allows. After a second, carry the draft as it stood before the unplaceable return and report the failure to the developer.
 
    Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
 
