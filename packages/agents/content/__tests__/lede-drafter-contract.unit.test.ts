@@ -46,6 +46,9 @@ const PRESCRIBED_CONNECTIVE = 'Separately,';
 /** The statement that the writer composes against a title the reader has already read. */
 const TITLE_PHRASE = 'The title is already on the page';
 
+/** Every code the caller redispatches under, each of which the drafter has to be able to act on. */
+const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
+
 /**
  * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so a doctrine bullet's
  * opening capital still matches.
@@ -55,6 +58,31 @@ const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not wo
 /** Each file stating the reader specification. The drafter never reads the doctrine, so each carries its own copy. */
 const READER_SOURCES: ReadonlyArray<string> = [
   path.join('skills', '_data', DOCTRINE_FILENAME),
+  path.join('subagents', 'lede-drafter.md'),
+];
+
+/**
+ * Phrases binding a redispatch to the passages it was handed. Lowercased, so a sentence's opening capital still
+ * matches.
+ */
+const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
+  '`rejected` fence',
+  'one replacement per passage',
+  'revise those passages and nothing else',
+];
+
+/**
+ * Phrases stating the subject test, which decides a bullet's subject without the doctrine. Lowercased, so a
+ * sentence's opening capital still matches.
+ */
+const SUBJECT_TEST_PHRASES: ReadonlyArray<string> = [
+  '"this pull request" in front of it',
+  'the verb names what the system does rather than what the change did',
+];
+
+/** Each file stating the subject test: the drafter applies it, and the caller audits the draft against it. */
+const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
+  path.join('skills', 'summarize-change', 'SKILL.md'),
   path.join('subagents', 'lede-drafter.md'),
 ];
 
@@ -129,6 +157,39 @@ describe('lede-drafter contract', () => {
     const message =
       'The drafter is the only file that binds the writer, so a drafter that states no bullet contract drafts the ' +
       `paragraph the exemplars were rewritten out of. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it.each(SUBJECT_TEST_SOURCES)('states the subject test in %s', async (relativePath) => {
+    const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
+    const missing = SUBJECT_TEST_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The subject test decides a bullet without the doctrine. The drafter applies it and the caller audits the ' +
+      'draft against it, and neither reads the other, so revising one leaves the other testing something else. ' +
+      'Where it is gone, a bullet opens with a verb the pull request does not perform and the draft reads as ' +
+      `correct, because every claim in it is true of the artifact the change added:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('names every rejection code the caller redispatches under', async () => {
+    const text = await EXPANDED;
+    const missing = REJECTION_CODES.filter((code) => !text.includes(`\`${code}\``));
+
+    const message =
+      'A redispatch hands the drafter a code and the passages that failed, so a code the caller sends and this ' +
+      `file does not explain reaches a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('binds a redispatch to the passages it is handed', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = REVISION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'A redispatch hands the drafter the passages that failed and takes one replacement for each. A drafter told ' +
+      'only that a draft failed redrafts every bullet in a context that never saw the last one, which is how a ' +
+      `bullet that passed comes back changed. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 

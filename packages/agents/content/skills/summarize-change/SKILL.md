@@ -36,16 +36,28 @@ Check commit messages for additional context.
 
    **The block carries scalars only, and only these keys.** Omit `type` and `ticket-source` where they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: the drafter gathers every fact itself, and a sentence written here would seed the draft with this session's weighting, which is the failure the fresh context exists to avoid. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set, so a new flag is added deliberately rather than by a passing test.
 
+   **A redispatch carries the passages that failed, in a fence below the block.** Step 6 decides which:
+
+   ```rejected
+   - {the first passage that failed}
+   ```
+
+   Copy each passage character for character from the draft it came from, one per line, and send only the passages that failed: a bullet the drafter never sees is one it cannot change, which is what keeps a bullet that passed from coming back changed. The migration paragraph travels the same way where it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage it replaces, and take every other bullet from the draft unchanged. Where the return carries a different number of passages than you sent, none of them can be placed: redispatch with `rejection: unmatched-return`, which counts against the two step 6 allows and exits where step 6 does.
+
    Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
 
-6. **Verify the draft against the diff.** Both checks apply to the `## What` returned in step 5. The drafter composed from the commit log and the diffstat and never read the diff, so this is where the draft meets it.
+6. **Audit the draft.** Four checks apply to the `## What` returned in step 5, and each names the rejection code its failure raises, where a redispatch is the repair rather than an edit of your own. The drafter composed from the commit log and the diffstat and never read the diff, so this is also where the draft meets it.
 
-   - **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed.
+   - **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed. A sentence that reaches past the commit log and the diffstat without the diff contradicting it is not one to strike: `rejection: unsupported-claim`.
    - **Coverage.** Every fact the lede reports appears in `## Details` too, carrying the mechanics the lede left out. Add to `## Details` what is missing there. Overlap between the two sections is progressive disclosure working, so neither section is trimmed to remove it: A reader meets the summary first and the full story second, and both cover the same ground at different depths.
+   - **Subject.** Read each bullet with "This pull request" in front of it. Where that sentence is false, the verb names what the system does rather than what the change did: `rejection: subject`. A change that adds something which itself acts, a command, a check, a rule, a hook, is where this fails most often, because the added thing's behavior is true, interesting, and reads as a correct lede while standing in for the change.
+   - **Voice.** A figurative verb, or an invented term where a plain one exists: `rejection: voice`.
 
-   Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Repeat step 5 with `rejection:` set to the code that names the failure -- `voice` for a figurative verb or an invented term, `subject` for an opening that describes the system's state rather than the change, `unsupported-claim` for a sentence claiming more than the diff supports. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
+   Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
 
-   Redispatch at most twice. After a second redispatch fails, carry the last draft into step 7 and report the unresolved code to the developer.
+   Repeat step 5 with `rejection:` set to the code the failed check names, and with the passages that failed in the `rejected` fence that step describes.
+
+   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then carry `## What` into step 7. A return you could never place leaves each passage as the fence carried it, which is what the developer is shown. A passage the audit rejected reaches step 7 only once the developer has been asked.
 
 7. **Cut `## What` via `lede-cutter`**: The verified draft reports every fact the drafter judged worth writing; a lede carries only the ones its reader acts on. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
@@ -94,7 +106,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The lede: drafted in Process step 5, verified in step 6, and cut to its surviving bullets in step 7.}
+{The lede: drafted in Process step 5, audited in step 6, and cut to its surviving bullets in step 7.}
 
 ## Why
 

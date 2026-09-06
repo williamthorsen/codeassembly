@@ -65,6 +65,8 @@ Mechanical, and none of it decides what goes in.
 - The lede is a bullet list, one bullet per change. A second concern is a second bullet.
 - A bullet is one sentence. A change that needs two is either two changes or one you have not finished reducing.
 - A bullet opens with its verb, third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural.
+- The subject is the pull request, and it stays unwritten. Read a bullet with "This pull request" in front of it: where that sentence is false, the verb names what the system does rather than what the change did, and the bullet fails. "This pull request ends quietly when the reader closes the pipe" is false; "This pull request stops `foo` from crashing with an unhandled `EPIPE`" is true.
+- Where the change adds something that itself acts, a command, a check, a rule, a hook, that thing's behavior is the interesting content and it competes for the main verb. The change keeps the main verb, and the artifact's behavior goes in a subordinate clause.
 - The verb is whichever one names the act plainly. No opener and no connective phrase is prescribed, and there is no menu of verbs to choose from.
 - A bullet names the artifact the reader consumes, backticked: the package, command, flag, file, or rule. An enumeration of the instances touched is not that artifact.
 - Where a bullet names an operation whose benefit the operation does not make evident, it states the benefit.
@@ -77,9 +79,12 @@ Do not go looking for the lede doctrine, and do not work from a remembered rule 
 
 A dispatch carrying a `rejection` scalar is a redispatch: an earlier draft failed, and you are reading this in a fresh context that never saw it. The code names what failed and what to do differently.
 
+A `rejected` fence comes with it, listing one per line the passages that failed, copied from that draft. Revise those passages and nothing else. The bullets outside the fence passed; the caller holds them and puts your replacements back in their places, so this pass cannot reach them.
+
 - **`voice`** -- a figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
-- **`subject`** -- a bullet described the system's state rather than what the change did. Open each bullet with the verb that names what the change did to the artifact it names.
-- **`unsupported-claim`** -- a sentence claimed more than its sources carry. Claim only what the commit log and the diffstat support, and drop a sentence that reaches past them.
+- **`subject`** -- a bullet carried a verb that the pull request does not perform. Apply the subject test in "The form your answer takes" to every passage you send back.
+- **`unsupported-claim`** -- a sentence claimed more than its sources carry. Restate the passage within what the commit log and the diffstat support. Returning nothing for it is not the repair: a return short of one replacement per passage cannot be placed.
+- **`unmatched-return`** -- the return carried a different number of passages than the fence sent, so the caller could place none of them. Return exactly one replacement per passage, in the order the fence listed them.
 
 ## What you return
 
@@ -94,6 +99,8 @@ Two sections, in this order. Return nothing else, and write no file.
 
 {One line per source you could not reach, naming the source and what you drafted from instead. `None.` where you reached them all.}
 ```
+
+On a redispatch, `## Lede` carries one replacement per passage in the `rejected` fence, in the order the fence listed them, and nothing else. The caller places each one.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 
