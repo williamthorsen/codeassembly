@@ -62,16 +62,12 @@ End
 
 Describe "collect_lookup_keys"
 setup_tmpdir() {
-  tmpdir=$(mktemp -d)
+  make_tmpdir || return 1
   lookup="$tmpdir/lookup.md"
 }
 
-cleanup_tmpdir() {
-  rm -rf "$tmpdir"
-}
-
 BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+AfterEach "remove_tmpdir"
 
 It "returns keys in declaration order"
 test_keys() {
@@ -118,7 +114,7 @@ End
 
 Describe "extract_section_body"
 setup_tmpdir() {
-  tmpdir=$(mktemp -d)
+  make_tmpdir || return 1
   lookup="$tmpdir/lookup.md"
   cat >"$lookup" <<'MD'
 ## pkg-a
@@ -130,12 +126,8 @@ Body B only line.
 MD
 }
 
-cleanup_tmpdir() {
-  rm -rf "$tmpdir"
-}
-
 BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+AfterEach "remove_tmpdir"
 
 It "returns the body of a matching section, trailing blank lines stripped"
 When call extract_section_body "pkg-a"
@@ -157,9 +149,7 @@ End
 
 Describe "end-to-end script behavior"
 setup_workspace() {
-  tmpdir=$(mktemp -d)
-  original_pwd="$PWD"
-  cd "$tmpdir"
+  enter_tmpdir || return 1
   mkdir -p src
 
   cat >lookup.md <<'MD'
@@ -171,13 +161,8 @@ Second gotcha.
 MD
 }
 
-cleanup_workspace() {
-  cd "$original_pwd"
-  rm -rf "$tmpdir"
-}
-
 BeforeEach "setup_workspace"
-AfterEach "cleanup_workspace"
+AfterEach "leave_tmpdir"
 
 script="$PROJECT_ROOT/content/scripts/resolve-reviewer-context.sh"
 

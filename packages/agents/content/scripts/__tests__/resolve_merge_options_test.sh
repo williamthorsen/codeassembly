@@ -102,13 +102,9 @@ End
 
 Describe "collect_label_candidates"
 setup_tmpdir() {
-  tmpdir=$(mktemp -d)
+  make_tmpdir || return 1
   pr_labels=()
   label_map="$tmpdir/label-map.json"
-}
-
-cleanup_tmpdir() {
-  rm -rf "$tmpdir"
 }
 
 write_label_map() {
@@ -128,7 +124,7 @@ JSON
 }
 
 BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+AfterEach "remove_tmpdir"
 
 It "returns empty when the label-map file is missing"
 test_collect() {
@@ -202,9 +198,7 @@ End
 
 Describe "collect_commit_tally"
 setup_repo() {
-  tmpdir=$(mktemp -d)
-  original_pwd="$PWD"
-  cd "$tmpdir" || exit
+  enter_tmpdir || return 1
   git init -q -b main
   git config user.email "t@t"
   git config user.name "t"
@@ -214,13 +208,8 @@ setup_repo() {
   ticket_ref=""
 }
 
-cleanup_repo() {
-  cd "$original_pwd" || exit
-  rm -rf "$tmpdir"
-}
-
 BeforeEach "setup_repo"
-AfterEach "cleanup_repo"
+AfterEach "leave_tmpdir"
 
 It "tallies a single type across one commit"
 test_tally() {
@@ -341,9 +330,7 @@ End
 
 Describe "resolve_dimension"
 setup_repo() {
-  tmpdir=$(mktemp -d)
-  original_pwd="$PWD"
-  cd "$tmpdir" || exit
+  enter_tmpdir || return 1
   git init -q -b main
   git config user.email "t@t"
   git config user.name "t"
@@ -361,13 +348,8 @@ setup_repo() {
 JSON
 }
 
-cleanup_repo() {
-  cd "$original_pwd"
-  rm -rf "$tmpdir"
-}
-
 BeforeEach "setup_repo"
-AfterEach "cleanup_repo"
+AfterEach "leave_tmpdir"
 
 It "uses the CLI override when provided, even if labels and commits disagree"
 test_resolve() {
@@ -448,9 +430,7 @@ End
 
 Describe "end-to-end JSON output"
 setup_repo() {
-  tmpdir=$(mktemp -d)
-  original_pwd="$PWD"
-  cd "$tmpdir" || exit
+  enter_tmpdir || return 1
   git init -q -b main
   git config user.email "t@t"
   git config user.name "t"
@@ -464,13 +444,8 @@ setup_repo() {
 JSON
 }
 
-cleanup_repo() {
-  cd "$original_pwd" || exit
-  rm -rf "$tmpdir"
-}
-
 BeforeEach "setup_repo"
-AfterEach "cleanup_repo"
+AfterEach "leave_tmpdir"
 
 script="$PROJECT_ROOT/content/scripts/resolve-merge-options.sh"
 

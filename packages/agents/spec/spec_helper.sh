@@ -6,3 +6,23 @@ shellspec_spec_helper_configure() {
   export GIT_CONFIG_GLOBAL=/dev/null
   export GIT_CONFIG_SYSTEM=/dev/null
 }
+
+# Creates a temporary directory and assigns its path to `tmpdir`.
+make_tmpdir() {
+  tmpdir=$(mktemp -d) && [ -d "$tmpdir" ]
+}
+
+# Removes the temporary directory created by `make_tmpdir`.
+remove_tmpdir() {
+  rm -rf "$tmpdir"
+}
+
+# Creates a temporary directory and makes it the working directory, saving the previous one in `original_pwd`.
+enter_tmpdir() {
+  make_tmpdir && original_pwd="$PWD" && cd "$tmpdir"
+}
+
+# Restores the working directory and removes the temporary directory.
+leave_tmpdir() {
+  cd "$original_pwd" && rm -rf "$tmpdir"
+}

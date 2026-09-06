@@ -4,16 +4,8 @@
 Include "$PROJECT_ROOT/content/scripts/describe-change.sh"
 
 Describe "parse_title_format"
-setup_tmpdir() {
-  tmpdir=$(mktemp -d)
-}
-
-cleanup_tmpdir() {
-  rm -rf "$tmpdir"
-}
-
-BeforeEach "setup_tmpdir"
-AfterEach "cleanup_tmpdir"
+BeforeEach "make_tmpdir"
+AfterEach "remove_tmpdir"
 
 It "returns FOUND:{value} when title_format key is present"
 write_yaml() {
@@ -223,20 +215,18 @@ End
 
 Describe "resolve_title_format"
 setup_tmpdir() {
-  tmpdir=$(mktemp -d)
+  enter_tmpdir || return 1
   # Override HOME and working directory to isolate preference resolution.
   original_home="$HOME"
-  original_pwd="$PWD"
   export HOME="$tmpdir/home"
   mkdir -p "$HOME/.agents"
-  mkdir -p "$tmpdir/workdir/.agents"
-  cd "$tmpdir/workdir"
+  mkdir -p workdir/.agents
+  cd workdir || return 1
 }
 
 cleanup_tmpdir() {
   export HOME="$original_home"
-  cd "$original_pwd"
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 BeforeEach "setup_tmpdir"
@@ -513,22 +503,20 @@ End
 
 Describe "end-to-end JSON output"
 setup_tmpdir() {
-  tmpdir=$(mktemp -d)
+  enter_tmpdir || return 1
   original_home="$HOME"
-  original_pwd="$PWD"
   export HOME="$tmpdir/home"
   mkdir -p "$HOME/.agents"
-  mkdir -p "$tmpdir/workdir/.agents"
+  mkdir -p workdir/.agents
   # Make workdir a real repo so the resolver anchors there and the not-a-repo diagnostic stays
   # silent; cases that need the not-a-repo path run from a separate uninitialized directory.
-  git -C "$tmpdir/workdir" init --quiet
-  cd "$tmpdir/workdir"
+  git -C workdir init --quiet
+  cd workdir || return 1
 }
 
 cleanup_tmpdir() {
   export HOME="$original_home"
-  cd "$original_pwd"
-  rm -rf "$tmpdir"
+  leave_tmpdir
 }
 
 BeforeEach "setup_tmpdir"

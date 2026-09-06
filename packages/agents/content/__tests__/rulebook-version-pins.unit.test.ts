@@ -38,7 +38,7 @@ const PINS = new Map<string, RulebookPin>([
     'live-worktree-conventions',
     { bodyHash: '0b9f8190358a3303d96dbb290428b9d125fb8472eea0410b62b56c8a203eae26', version: '1' },
   ],
-  ['shell-conventions', { bodyHash: '10cf0e9139ab3bfe6d53b74cafdf61d9966a51c9ced376ead2235cd338253cf7', version: '1' }],
+  ['shell-conventions', { bodyHash: 'db4b63b590313eb149f1f1e0c65fe626b9d8db073461a96d21f4a0c22d52ecf2', version: '2' }],
   [
     'understanding-codeassembly',
     { bodyHash: 'b62a7d57b23bf9f94e4525b3c22268d394248933c790238e3b2e6d6e5fd8760a', version: '1' },
