@@ -5,7 +5,7 @@ import process from 'node:process';
 import { describe, expect, it } from 'vitest';
 
 import { pathExists } from '../../filesystem/exists.ts';
-import { ALIASES_FILE, CONFIG_FILE, CONTENT_DIR, EVENTS_DIR } from '../../layout/index.ts';
+import { ALIASES_FILE, CONFIG_FILE, CONTENT_DIR, EVENTS_DIR, PRETTIER_CONFIG_FILE } from '../../layout/index.ts';
 import { makeStore } from '../../test-utils/make-store.ts';
 import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
 import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
@@ -18,7 +18,7 @@ describe('kb scaffold', () => {
     const result = await run({ argv: ['scaffold'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    for (const path of [CONFIG_FILE, ALIASES_FILE, CONTENT_DIR, EVENTS_DIR]) {
+    for (const path of [CONFIG_FILE, ALIASES_FILE, PRETTIER_CONFIG_FILE, CONTENT_DIR, EVENTS_DIR]) {
       expect(await pathExists(join(store, path))).toBe(true);
     }
   });
@@ -32,6 +32,7 @@ describe('kb scaffold', () => {
       `Scaffolded knowledge base at ${store}\n` +
         `  present  ${CONFIG_FILE}\n` +
         `  created  ${ALIASES_FILE}\n` +
+        `  created  ${PRETTIER_CONFIG_FILE}\n` +
         `  created  ${CONTENT_DIR}/\n` +
         `  created  ${EVENTS_DIR}/\n`,
     );
