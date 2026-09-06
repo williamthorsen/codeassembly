@@ -72,6 +72,11 @@
       "types": "./dist/esm/records/index.d.ts",
       "import": "./dist/esm/records/index.js"
     },
+    "./scaffold": {
+      "source": "./src/scaffold/index.ts",
+      "types": "./dist/esm/scaffold/index.d.ts",
+      "import": "./dist/esm/scaffold/index.js"
+    },
     "./tags": {
       "source": "./src/tags/index.ts",
       "types": "./dist/esm/tags/index.d.ts",
