@@ -5,6 +5,9 @@ import { defaultKbConfig } from '../../../config/config-schema.ts';
 import { makeTree } from '../../../test-utils/make-tree.ts';
 import { selectNotes } from '../select-notes.ts';
 
+/** `Cafe.md` with a combining acute after the `e`: the decomposed form macOS returns from `readdir`. */
+const DECOMPOSED_NAME = 'Cafe\u{301}.md';
+
 const NOTE =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
@@ -106,6 +109,33 @@ describe(selectNotes, () => {
     const result = await selectNotes({ notes, patterns: ['content/Draft[v2].md'], storeRoot: root });
 
     expect(result.selected.map((entry) => entry.relativePath)).toEqual(['content/Draft[v2].md']);
+    expect(result.unmatched).toEqual([]);
+  });
+
+  it('selects a decomposed note name given the composed form that git supplies', async () => {
+    const root = await makeTree({ [`content/${DECOMPOSED_NAME}`]: NOTE });
+    const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
+
+    const result = await selectNotes({
+      notes,
+      patterns: [`content/${DECOMPOSED_NAME}`.normalize('NFC')],
+      storeRoot: root,
+    });
+
+    expect(result.selected.map((entry) => entry.relativePath)).toEqual([`content/${DECOMPOSED_NAME}`]);
+    expect(result.unmatched).toEqual([]);
+  });
+
+  it('selects only the literal note when a decomposed name also carries glob metacharacters', async () => {
+    const root = await makeTree({
+      [`content/Draft[v2]${DECOMPOSED_NAME}`]: NOTE,
+      [`content/Draft2${DECOMPOSED_NAME}`]: NOTE,
+    });
+    const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
+
+    const result = await selectNotes({ notes, patterns: [`content/Draft[v2]${DECOMPOSED_NAME}`], storeRoot: root });
+
+    expect(result.selected.map((entry) => entry.relativePath)).toEqual([`content/Draft[v2]${DECOMPOSED_NAME}`]);
     expect(result.unmatched).toEqual([]);
   });
 });

@@ -32,7 +32,7 @@ export async function selectNotes(input: {
   storeRoot: string;
 }): Promise<SelectionResult> {
   const { notes, storeRoot } = input;
-  const relativePaths = new Set(notes.map((entry) => entry.relativePath));
+  const pathsByComposedForm = new Map(notes.map((entry) => [entry.relativePath.normalize('NFC'), entry.relativePath]));
   const selectedPaths = new Set<string>();
   const unmatched: string[] = [];
 
@@ -41,9 +41,11 @@ export async function selectNotes(input: {
 
     // An exact note-path match wins, so a literal path is matched verbatim — even one carrying glob
     // metacharacters (a `--vs` git path or a shell-expanded name like `content/Draft[v2].md`), which
-    // as a pattern would over-match its character-class siblings.
-    if (relativePaths.has(pattern)) {
-      selectedPaths.add(pattern);
+    // as a pattern would over-match its character-class siblings. Both sides compare in composed form,
+    // since git reports a path composed where the walk reports it decomposed.
+    const exactPath = pathsByComposedForm.get(pattern.normalize('NFC'));
+    if (exactPath !== undefined) {
+      selectedPaths.add(exactPath);
       continue;
     }
 
