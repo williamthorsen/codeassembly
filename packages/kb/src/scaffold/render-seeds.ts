@@ -2,8 +2,9 @@ import { stringify } from 'yaml';
 
 import { defaultKbConfig } from '../config/config-schema.ts';
 
-// Renders the textual contents of a store's seed files. Every value is serialized from an in-package constant so a
-// generated store can never drift from the bundled default; only the explanatory comment prose is hand-authored.
+// Renders the textual contents of a store's seed files. A value that kb also holds as a constant is serialized from
+// it, so a generated store can never drift from the bundled default; the explanatory comment prose and the
+// `.editorconfig` body are hand-authored.
 
 const ALIASES_HEADER = `# Tag aliases for this knowledge store.
 #
@@ -21,27 +22,40 @@ const CONFIG_HEADER = `# Check configuration for this knowledge store.
 #
 `;
 
+const EDITORCONFIG_SEED = `root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+max_line_length = 120
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+`;
+
 const PRETTIER_HEADER = `# Formatting configuration for this knowledge store.
 #
-# Neither option is stylistic. Each one prevents a specific failure, so read this before removing either.
+# The single option here is not stylistic. It prevents a specific failure, so read this before removing it.
 #
 # \`embeddedLanguageFormatting: off\` leaves a note's YAML frontmatter unformatted. Formatted, a long \`tags\` or
 # \`addressed-by\` list breaks across several lines, which the note writer puts back onto one the next time it writes
-# the note — so the formatter and the writer would rewrite each other's output without end.
+# the note, so the formatter and the writer would rewrite each other's output without end.
 #
-# \`printWidth\` fixes the width rather than leaving it inherited. Prettier reads \`.editorconfig\` where a store has
-# one and falls back to 80 where it does not, and this file outranks both.
+# Width, indentation, and line endings are set in \`.editorconfig\`, which Prettier reads and every editor reads too.
 #
 `;
 
 /**
- * The formatting options every store carries. Held here rather than in the seed prose, so that the file that a store
- * receives cannot diverge from the values that kb documents. See {@link renderPrettierSeed}'s header for what each
- * option prevents.
+ * The formatting option every store carries that `.editorconfig` cannot express. Held here rather than in the seed
+ * prose, so that the file that a store receives cannot diverge from the value that kb documents. See
+ * {@link renderPrettierSeed}'s header for what it prevents.
  */
 export const canonicalPrettierConfig = {
   embeddedLanguageFormatting: 'off',
-  printWidth: 120,
 };
 
 /** Renders `.kb/tag-aliases.yaml`: an empty `aliases: {}` map under an explanatory header. */
@@ -54,7 +68,12 @@ export function renderConfigSeed(): string {
   return `${CONFIG_HEADER}${commentBlock(stringify(defaultKbConfig))}\n`;
 }
 
-/** Renders `.prettierrc.yaml`: the canonical formatting options under a header explaining why each one is set. */
+/** Renders `.editorconfig`: the editor and formatter settings every store shares. */
+export function renderEditorconfigSeed(): string {
+  return EDITORCONFIG_SEED;
+}
+
+/** Renders `.prettierrc.yaml`: the canonical formatting option under a header explaining why it is set. */
 export function renderPrettierSeed(): string {
   return `${PRETTIER_HEADER}${stringify(canonicalPrettierConfig)}`;
 }

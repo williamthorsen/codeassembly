@@ -8,6 +8,7 @@ import {
   ALIASES_FILE,
   CONFIG_FILE,
   CONTENT_DIR,
+  EDITORCONFIG_FILE,
   EVENTS_DIR,
   PRETTIER_CONFIG_FILE,
   resolveKbDir,
@@ -23,13 +24,14 @@ describe(scaffold, () => {
     const entries = await scaffold({ storePath });
 
     expect(entries).toEqual([
+      { path: EDITORCONFIG_FILE, action: 'created' },
       { path: CONFIG_FILE, action: 'created' },
       { path: ALIASES_FILE, action: 'created' },
       { path: PRETTIER_CONFIG_FILE, action: 'created' },
       { path: `${CONTENT_DIR}/`, action: 'created' },
       { path: `${EVENTS_DIR}/`, action: 'created' },
     ]);
-    for (const path of [CONFIG_FILE, ALIASES_FILE, PRETTIER_CONFIG_FILE, CONTENT_DIR, EVENTS_DIR]) {
+    for (const path of [EDITORCONFIG_FILE, CONFIG_FILE, ALIASES_FILE, PRETTIER_CONFIG_FILE, CONTENT_DIR, EVENTS_DIR]) {
       expect(await pathExists(join(storePath, path))).toBe(true);
     }
   });
@@ -48,6 +50,7 @@ describe(scaffold, () => {
     const entries = await scaffold({ storePath });
 
     expect(entries).toEqual([
+      { path: EDITORCONFIG_FILE, action: 'created' },
       { path: CONFIG_FILE, action: 'present' },
       { path: ALIASES_FILE, action: 'created' },
       { path: PRETTIER_CONFIG_FILE, action: 'created' },
@@ -69,7 +72,7 @@ describe(scaffold, () => {
 
     const entries = await scaffold({ storePath, force: true });
 
-    expect(entries[0]).toEqual({ path: CONFIG_FILE, action: 'replaced' });
+    expect(entries).toContainEqual({ path: CONFIG_FILE, action: 'replaced' });
     expect(await readFile(join(storePath, CONFIG_FILE), 'utf8')).toBe(renderConfigSeed());
   });
 
@@ -91,7 +94,14 @@ describe(scaffold, () => {
     await scaffold({ storePath });
     const entries = await scaffold({ storePath });
 
-    expect(entries.map((entry) => entry.action)).toEqual(['present', 'present', 'present', 'present', 'present']);
+    expect(entries.map((entry) => entry.action)).toEqual([
+      'present',
+      'present',
+      'present',
+      'present',
+      'present',
+      'present',
+    ]);
   });
 });
 

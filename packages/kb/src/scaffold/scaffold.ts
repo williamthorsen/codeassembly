@@ -3,8 +3,15 @@ import { dirname, join } from 'node:path';
 
 import { pathExists } from '../filesystem/exists.ts';
 import { writeAtomic } from '../filesystem/write-atomic.ts';
-import { ALIASES_FILE, CONFIG_FILE, CONTENT_DIR, EVENTS_DIR, PRETTIER_CONFIG_FILE } from '../layout/index.ts';
-import { renderAliasesSeed, renderConfigSeed, renderPrettierSeed } from './render-seeds.ts';
+import {
+  ALIASES_FILE,
+  CONFIG_FILE,
+  CONTENT_DIR,
+  EDITORCONFIG_FILE,
+  EVENTS_DIR,
+  PRETTIER_CONFIG_FILE,
+} from '../layout/index.ts';
+import { renderAliasesSeed, renderConfigSeed, renderEditorconfigSeed, renderPrettierSeed } from './render-seeds.ts';
 
 /**
  * What {@link scaffold} did about one canonical path: `created` where it was absent, `present` where it was left as
@@ -67,6 +74,7 @@ const CANONICAL_DIRECTORIES: readonly string[] = [CONTENT_DIR, EVENTS_DIR];
 
 /** The files every store holds, each paired with the seed it is written from. */
 const CANONICAL_FILES: readonly { path: string; render: () => string }[] = [
+  { path: EDITORCONFIG_FILE, render: renderEditorconfigSeed },
   { path: CONFIG_FILE, render: renderConfigSeed },
   { path: ALIASES_FILE, render: renderAliasesSeed },
   { path: PRETTIER_CONFIG_FILE, render: renderPrettierSeed },

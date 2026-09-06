@@ -20,6 +20,7 @@ When the registry has no default knowledge base, the new store becomes the defau
 If other knowledge bases are already registered, you are prompted to choose one (or set it later with "kb set-default").
 
 Creates:
+  .editorconfig          editor and formatter settings (width, indent, line endings)
   .kb/config.yaml        check configuration (commented; defaults apply)
   .kb/tag-aliases.yaml   tag-alias map (empty)
   .prettierrc.yaml       formatting configuration (commented)

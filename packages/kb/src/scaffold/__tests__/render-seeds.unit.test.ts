@@ -7,12 +7,18 @@ import { parse } from 'yaml';
 
 import { defaultKbConfig } from '../../config/config-schema.ts';
 import { loadKbConfig } from '../../config/load-config.ts';
-import { PRETTIER_CONFIG_FILE } from '../../layout/index.ts';
+import { EDITORCONFIG_FILE, PRETTIER_CONFIG_FILE } from '../../layout/index.ts';
 import { renderNote } from '../../note-io/write-note.ts';
 import { loadAliases } from '../../tags/load-aliases.ts';
 import { makeKbRoot } from '../../test-utils/kb-root.ts';
 import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
-import { canonicalPrettierConfig, renderAliasesSeed, renderConfigSeed, renderPrettierSeed } from '../render-seeds.ts';
+import {
+  canonicalPrettierConfig,
+  renderAliasesSeed,
+  renderConfigSeed,
+  renderEditorconfigSeed,
+  renderPrettierSeed,
+} from '../render-seeds.ts';
 
 describe(renderConfigSeed, () => {
   it('produces a fully-commented config that loads back to the default config', async () => {
@@ -42,6 +48,18 @@ describe(renderAliasesSeed, () => {
   });
 });
 
+describe(renderEditorconfigSeed, () => {
+  it('supplies the width, indent, and line endings that Prettier resolves', async () => {
+    const storePath = await makeSeededStore();
+
+    const resolved = await resolveConfig(join(storePath, 'note.md'), { editorconfig: true });
+
+    // Prettier maps these from `.editorconfig` rather than from `.prettierrc.yaml`, which is what lets one file serve
+    // the editor and the formatter alike. Without it the width would fall back to Prettier's default of 80.
+    expect(resolved).toMatchObject({ endOfLine: 'lf', printWidth: 120, tabWidth: 2, useTabs: false });
+  });
+});
+
 describe(renderPrettierSeed, () => {
   it('produces a commented config that parses back to the canonical options', () => {
     const parsed: unknown = parse(renderPrettierSeed());
@@ -62,7 +80,7 @@ describe(renderPrettierSeed, () => {
     const storePath = await makeSeededStore();
     const notePath = join(storePath, 'note.md');
     const note = await readFile(notePath, 'utf8');
-    const options = { ...(await resolveConfig(notePath)), filepath: notePath };
+    const options = { ...(await resolveConfig(notePath, { editorconfig: true })), filepath: notePath };
 
     const formatted = await format(note, options);
 
@@ -73,9 +91,12 @@ describe(renderPrettierSeed, () => {
 
 // region | Helpers
 
-/** Creates a temp store holding the rendered Prettier seed and one note whose `tags` list exceeds the print width. */
+/**
+ * Creates a temp store holding both rendered formatting seeds and one note whose `tags` list exceeds the print width.
+ */
 async function makeSeededStore(): Promise<string> {
   const storePath = await makeTempDir('kb-prettier-');
+  await writeFile(join(storePath, EDITORCONFIG_FILE), renderEditorconfigSeed());
   await writeFile(join(storePath, PRETTIER_CONFIG_FILE), renderPrettierSeed());
   const fields = {
     recordType: 'event',

@@ -16,6 +16,7 @@ created before a given file existed can acquire it. An existing file is left
 untouched unless --force is given.
 
 Writes:
+  .editorconfig          editor and formatter settings (width, indent, line endings)
   .kb/config.yaml        check configuration (commented; defaults apply)
   .kb/tag-aliases.yaml   tag-alias map (empty)
   .prettierrc.yaml       formatting configuration (commented)
