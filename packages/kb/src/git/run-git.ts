@@ -4,7 +4,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isRecord } from '../type-guards.ts';
 
-/** The outcome of one git invocation: its stdout, or the message it failed with. */
+/** The outcome of one git invocation: its stdout, or git's failure message. */
 export type GitResult = { ok: true; stdout: string } | { ok: false; message: string };
 
 /**
