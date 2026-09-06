@@ -63,6 +63,18 @@ describe(listGitScope, () => {
     expect(scope?.has(`content/${DECOMPOSED_NAME}`.normalize('NFC'))).toBe(true);
   });
 
+  it('returns store-relative paths for a store nested below the repository root', async () => {
+    const repo = await makeTree({ 'store/content/Kept.md': 'x\n', 'outside.md': 'x\n' });
+    initGitRepo(repo);
+    commitAll(repo, 'base');
+
+    const scope = listGitScope({ root: join(repo, 'store') });
+
+    expect(scope?.has('content/Kept.md')).toBe(true);
+    expect(scope?.has('store/content/Kept.md')).toBe(false);
+    expect(scope?.has('outside.md')).toBe(false);
+  });
+
   it('returns undefined outside a git working tree', async () => {
     const root = await makeTempDir('kb-no-repo-');
 
