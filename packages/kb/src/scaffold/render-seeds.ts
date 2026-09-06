@@ -13,6 +13,14 @@ const ALIASES_HEADER = `# Tag aliases for this knowledge store.
 # The \`aliases:\` key is required even when empty.
 `;
 
+const CONFIG_HEADER = `# Check configuration for this knowledge store.
+#
+# Both keys are optional and fall back to the defaults shown below; an absent file uses these defaults too. Uncomment
+# and edit to override. \`targets\` selects which notes \`kb check\` enumerates and \`exclude\` removes matches;
+# patterns are slash-separated and relative to the store root.
+#
+`;
+
 const PRETTIER_HEADER = `# Formatting configuration for this knowledge store.
 #
 # Neither option is stylistic. Each one prevents a specific failure, so read this before removing either.
@@ -26,17 +34,10 @@ const PRETTIER_HEADER = `# Formatting configuration for this knowledge store.
 #
 `;
 
-const CONFIG_HEADER = `# Check configuration for this knowledge store.
-#
-# Both keys are optional and fall back to the defaults shown below; an absent file uses these defaults too. Uncomment
-# and edit to override. \`targets\` selects which notes \`kb check\` enumerates and \`exclude\` removes matches;
-# patterns are slash-separated and relative to the store root.
-#
-`;
-
 /**
- * The formatting options every store carries. Held here rather than in the seed prose so the file a store receives and
- * the values kb documents cannot diverge. See {@link renderPrettierSeed}'s header for what each one prevents.
+ * The formatting options every store carries. Held here rather than in the seed prose, so that the file that a store
+ * receives cannot diverge from the values that kb documents. See {@link renderPrettierSeed}'s header for what each
+ * option prevents.
  */
 export const canonicalPrettierConfig = {
   embeddedLanguageFormatting: 'off',
