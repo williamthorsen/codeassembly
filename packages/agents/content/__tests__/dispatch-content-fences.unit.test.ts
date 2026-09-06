@@ -57,7 +57,7 @@ describe('content fences', () => {
 
   it('declare every info string that carries placeholders', async () => {
     const violations = (await FENCES)
-      .filter((fence) => !DECLARED_FENCES.has(fence.info) && fence.lines.every((text) => PLACEHOLDER_LINE.test(text)))
+      .filter((fence) => !DECLARED_FENCES.has(fence.info) && isPlaceholderFence(fence))
       .map((fence) => ({ line: fence.firstLine - 1, relativePath: fence.relativePath, text: fence.info }));
 
     const message =
@@ -128,6 +128,11 @@ function findFences(content: string, relativePath: string): ReadonlyArray<Fence>
   }
 
   return fences;
+}
+
+/** Reports whether every line a fence carries, blank lines aside, is a placeholder bullet. */
+function isPlaceholderFence(fence: Fence): boolean {
+  return fence.lines.filter((text) => text !== '').every((text) => PLACEHOLDER_LINE.test(text));
 }
 
 // endregion | Helpers
