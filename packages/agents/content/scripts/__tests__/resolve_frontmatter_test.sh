@@ -687,19 +687,13 @@ End
 
 Context "when git cannot read the repository"
 setup_unreadable_repo() {
-  enter_tmpdir || return 1
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
 }
 
-cleanup_unreadable_repo() {
-  leave_tmpdir
-}
-
 BeforeEach "setup_unreadable_repo"
-AfterEach "cleanup_unreadable_repo"
 
 It "names the unreadable repository rather than an unresolvable branch"
 # `GIT_DIR` points nowhere while the working directory is a healthy repository, which is the shape a
@@ -717,18 +711,12 @@ End
 
 Context "when git cannot resolve the branch"
 setup_unborn_head() {
-  enter_tmpdir || return 1
   # No commit: `git rev-parse --git-dir` answers while `--abbrev-ref HEAD` fails, which is the only
   # condition that reaches the branch diagnostic past the readability probe.
   git init --quiet --initial-branch=main .
 }
 
-cleanup_unborn_head() {
-  leave_tmpdir
-}
-
 BeforeEach "setup_unborn_head"
-AfterEach "cleanup_unborn_head"
 
 It "quotes git's diagnostic rather than naming a cause"
 When run main --skill foo --interactive true
