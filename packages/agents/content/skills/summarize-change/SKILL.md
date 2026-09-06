@@ -106,7 +106,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The lede: drafted in Process step 5, verified in step 6, and cut to its surviving bullets in step 7.}
+{The lede: drafted in Process step 5, audited in step 6, and cut to its surviving bullets in step 7.}
 
 ## Why
 
