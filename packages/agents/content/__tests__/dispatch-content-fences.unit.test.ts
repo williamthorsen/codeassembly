@@ -31,7 +31,7 @@ const FENCES = collectFences();
 describe('content fences', () => {
   it('exist for every declared info string', async () => {
     const found = new Set((await FENCES).map((fence) => fence.info));
-    const missing = [...DECLARED_FENCES].filter((info) => !found.has(info));
+    const missing = [...DECLARED_FENCES.difference(found)];
 
     const message =
       'Each declared info string names a channel some skill sends. One that no fence carries makes its half of the ' +
