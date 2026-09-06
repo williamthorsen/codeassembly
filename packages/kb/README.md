@@ -213,9 +213,10 @@ It creates these files and directories:
 | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `.kb/config.yaml`             | A fully-commented check config; the bundled defaults apply as-is                                          |
 | `.kb/tag-aliases.yaml`        | An empty `aliases: {}` map                                                                                |
+| `.prettierrc.yaml`            | The canonical formatting config; see [Formatting a knowledge base](#formatting-a-knowledge-base)          |
 | `content/`, `content/events/` | The note tree; `capture-event` writes events to `content/events/`, `kb-update-events` edits them in place |
 
-The config seed is serialized from the in-package `defaultKbConfig`, so a new store cannot drift from the bundled default.
+Each seed is serialized from an in-package constant — `defaultKbConfig` for the check config, `canonicalPrettierConfig` for the formatting config — so a new store cannot drift from the bundled values.
 
 The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, so a registry that has drifted out of order is tidied as stores are added. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered. Use `kb scaffold` to add canonical files to a store that already exists.
 
@@ -294,6 +295,48 @@ kb taxonomy init --merge     # add only the domains an existing taxonomy omits
 Every derived domain lands under `provisional:` with no description: the command cannot invent descriptions, and provisional already means "declared, not yet reviewed". Because the derivation reads the same enumeration `kb check` does, a back-filled store reports no taxonomy drift.
 
 Without `--merge`, a store that already declares a taxonomy is left untouched and the command exits 2.
+
+## Formatting a knowledge base
+
+A knowledge base is formatted by Prettier, invoked directly. kb owns the configuration and scaffolds it; it does not run the formatter and does not bundle one. A store therefore needs Prettier available on the machine and the `.prettierrc.yaml` that `kb create` and `kb scaffold` write, and nothing else — no `package.json`, no lockfile, and no linter or TypeScript configuration.
+
+```bash
+prettier --write .   # format the store
+prettier --check .   # report drift without writing
+```
+
+Prettier 3 reads `.gitignore` and `.prettierignore` by default, so neither command needs a flag to skip what the repository ignores, and it loads a config file from a directory holding no `package.json`.
+
+### The canonical options
+
+```yaml
+embeddedLanguageFormatting: off
+printWidth: 120
+```
+
+Neither is stylistic, and the scaffolded file carries this reasoning in its own header so it travels with the store.
+
+`embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. Formatted, a long `tags` or `addressed-by` list breaks across several lines, which `writeFrontmatter` puts back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note carrying a list past the print width churns on each pass.
+
+`printWidth: 120` fixes the width rather than leaving it inherited. Prettier reads `.editorconfig` where a store has one, and falls back to 80 where it does not; this file outranks both, so the width does not depend on which files a store happens to carry.
+
+A store that must keep a file it cannot format — a lockfile, or a fixture whose defect is the point — names it in a `.prettierignore`. That file is the escape hatch and is not scaffolded, since a fresh store has nothing to put in it.
+
+### Migrating a store off a `package.json` toolchain
+
+A store that carries a `package.json` only to obtain Prettier can retire it.
+
+1. Install Prettier where the store is edited, if it is not already there: `pnpm add --global prettier`.
+2. Run `kb scaffold` in the store to write `.prettierrc.yaml`.
+3. Delete `package.json`, the lockfile, `pnpm-workspace.yaml`, `.npmrc`, and any `eslint.config.*`, `tsconfig.json`, and dependency-upgrade config. Delete the superseded `.prettierrc.*` too; keep `.prettierignore` if it names anything still present.
+4. Keep `.editorconfig`. Prettier does not consult it once `printWidth` is set here, but editors do.
+5. Repoint the pre-commit hook. A hook running `pnpm exec prettier --write {staged_files}` becomes `prettier --write {staged_files}`. Under lefthook, `stage_fixed: true` continues to apply. Note that lefthook was installed by `package.json`'s `prepare` script, so it now needs installing on the machine and enabling in the store with `lefthook install`.
+6. Repoint CI. A workflow calling `pnpm run check` needs a command that assumes no `package.json`: `prettier --check .`, plus `kb check` for the store's own rules.
+7. Format once: `prettier --write .`. Commit the result on its own, so the reformatting does not obscure later diffs.
+
+A store carrying its own note checker deserves one more step before it is retired: compare its rules against what `kb check` covers, and port anything missing. `kb check` validates wikilinks, tag aliases, hardcoded home paths, and taxonomy drift, and deliberately leaves frontmatter validity to the record types that own it at write time.
+
+A store with no `package.json` skips to step 2: it has nothing to retire, only the config to adopt and a first `prettier --write .` to run.
 
 ## Error and exception model
 
