@@ -235,7 +235,9 @@ Agent-specific modules belong in `agents/functions/`:
 
 The strict-mode rule above governs a standalone script. A shellspec hook is a function in a file that shellspec sources, and it cannot use `set -e`: The option is shell-global, so setting it inside a hook changes shellspec's own behavior for the rest of the run.
 
-Guard each fallible step instead. A hook without a guard continues to its next statement after a failed one, and shellspec reports the hook's status only once every statement has run, so the writes have already happened by the time the failure is reported.
+Guard the step whose failure would let a later one act on bad state. A hook without a guard continues to its next statement after a failed one, and shellspec reports the hook's status only once every statement has run, so the writes have already happened by the time the failure is reported.
+
+That step is usually the one establishing the workspace. Once it succeeds, a later failure is contained inside the temporary directory, so the example below guards the first step and no other.
 
 ```bash
 # Bad: a failed mktemp leaves `tmpdir` empty, and the writes land in the invoking directory
