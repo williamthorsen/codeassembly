@@ -61,13 +61,21 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 7. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
 
-8. **Report completion.** Summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
+8. **Report completion.** Route each fact surfaced by the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
 
 9. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
 <!-- include: ../../_partials/diff-audit-checklist.md / -->
+
+## Fact routing
+
+The audience decides where a fact goes. A fact that the user acts on, such as a decision that is theirs or a divergence that they must weigh, belongs in the response. A fact that a reviewer acts on belongs in the commit body, the pull-request description, or a comment in the source. A fact needed by both goes in the artifact and may be summarized in the response; the artifact is never skipped.
+
+The failure that this prevents is phrasing-shaped, so it has a tell: Any wording that casts the reader as an intermediary, such as "worth a reviewer's attention", "flag this in review", or "mention that...", marks a fact that belongs in an artifact. Where one surfaces after the artifact is written, amend the artifact rather than narrate the gap.
+
+None of this suppresses the closing report. Reporting what was built, which acceptance criteria are met, and what diverged from the plan is owed to the user, whose call it is what happens next.
 
 <!-- guidance-hook: implementation-preferences -->
 
