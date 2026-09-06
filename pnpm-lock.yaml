@@ -155,6 +155,9 @@ catalogs:
     jsdom:
       specifier: 30.0.1
       version: 30.0.1
+    prettier:
+      specifier: 3.9.6
+      version: 3.9.6
     react:
       specifier: 19.2.8
       version: 19.2.8
@@ -251,7 +254,7 @@ importers:
         specifier: 2.1.12
         version: 2.1.12
       prettier:
-        specifier: 3.9.6
+        specifier: 'catalog:'
         version: 3.9.6
       readyup:
         specifier: 'catalog:'
@@ -522,6 +525,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 10.9.1(jiti@2.7.0)(supports-color@7.2.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.9.6
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@24.13.3)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.26))(tsx@4.23.13)(yaml@2.9.0))
