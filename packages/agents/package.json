@@ -35,13 +35,13 @@
     "dist"
   ],
   "scripts": {
-    "build:post": "tsx scripts/bundle-skill-helpers.ts && tsx scripts/copy-content.ts && rdy compile",
+    "build:post": "node scripts/bundle-skill-helpers.ts && node scripts/copy-content.ts && rdy compile",
     "build:pre": "rdy verify",
-    "check-bundles": "tsx scripts/bundle-skill-helpers.ts --check",
+    "check-bundles": "node scripts/bundle-skill-helpers.ts --check",
     "prepublishOnly": "nmr build",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",
-    "test:smoke": "tsx scripts/__tests__/smoke-test-skill-helpers.ts"
+    "test:smoke": "node scripts/__tests__/smoke-test-skill-helpers.ts"
   },
   "dependencies": {
     "@williamthorsen/kb": "workspace:*",
