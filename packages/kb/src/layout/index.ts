@@ -12,6 +12,7 @@ export {
   CONTENT_DIR,
   EVENTS_DIR,
   KB_DIR,
+  PRETTIER_CONFIG_FILE,
   resolveAssertionsDir,
   resolveEventPath,
   resolveEventsDir,

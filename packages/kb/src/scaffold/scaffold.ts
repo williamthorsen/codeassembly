@@ -3,8 +3,8 @@ import { dirname, join } from 'node:path';
 
 import { pathExists } from '../filesystem/exists.ts';
 import { writeAtomic } from '../filesystem/write-atomic.ts';
-import { ALIASES_FILE, CONFIG_FILE, CONTENT_DIR, EVENTS_DIR } from '../layout/index.ts';
-import { renderAliasesSeed, renderConfigSeed } from './render-seeds.ts';
+import { ALIASES_FILE, CONFIG_FILE, CONTENT_DIR, EVENTS_DIR, PRETTIER_CONFIG_FILE } from '../layout/index.ts';
+import { renderAliasesSeed, renderConfigSeed, renderPrettierSeed } from './render-seeds.ts';
 
 /**
  * What {@link scaffold} did about one canonical path: `created` where it was absent, `present` where it was left as
@@ -38,7 +38,7 @@ export async function scaffold(input: { storePath: string; force?: boolean }): P
       entries.push({ path: file.path, action: 'present' });
       continue;
     }
-    // The file's parent is `.kb/`, which a store already holds but a directory that `create` is scaffolding does not.
+    // A canonical file's parent is either the store root or `.kb/`; `create` scaffolds a directory holding neither.
     await mkdir(dirname(absolutePath), { recursive: true });
     await writeAtomic(absolutePath, file.render());
     entries.push({ path: file.path, action: exists ? 'replaced' : 'created' });
@@ -69,6 +69,7 @@ const CANONICAL_DIRECTORIES: readonly string[] = [CONTENT_DIR, EVENTS_DIR];
 const CANONICAL_FILES: readonly { path: string; render: () => string }[] = [
   { path: CONFIG_FILE, render: renderConfigSeed },
   { path: ALIASES_FILE, render: renderAliasesSeed },
+  { path: PRETTIER_CONFIG_FILE, render: renderPrettierSeed },
 ];
 
 // endregion | Helpers

@@ -2,9 +2,8 @@ import { stringify } from 'yaml';
 
 import { defaultKbConfig } from '../config/config-schema.ts';
 
-// Renders the textual contents of the two `.kb/` seed files for a new store. The config values are serialized from the
-// in-package `defaultKbConfig` constant so a generated store can never drift from the bundled default; only the
-// explanatory comment prose is hand-authored.
+// Renders the textual contents of a store's seed files. Every value is serialized from an in-package constant so a
+// generated store can never drift from the bundled default; only the explanatory comment prose is hand-authored.
 
 const ALIASES_HEADER = `# Tag aliases for this knowledge store.
 #
@@ -12,6 +11,19 @@ const ALIASES_HEADER = `# Tag aliases for this knowledge store.
 #   aliases:
 #     typescript: [ts, type-script]
 # The \`aliases:\` key is required even when empty.
+`;
+
+const PRETTIER_HEADER = `# Formatting configuration for this knowledge store.
+#
+# Neither option is stylistic. Each one prevents a specific failure, so read this before removing either.
+#
+# \`embeddedLanguageFormatting: off\` leaves a note's YAML frontmatter unformatted. Formatted, a long \`tags\` or
+# \`addressed-by\` list breaks across several lines, which the note writer puts back onto one the next time it writes
+# the note — so the formatter and the writer would rewrite each other's output without end.
+#
+# \`printWidth\` fixes the width rather than leaving it inherited. Prettier reads \`.editorconfig\` where a store has
+# one and falls back to 80 where it does not, and this file outranks both.
+#
 `;
 
 const CONFIG_HEADER = `# Check configuration for this knowledge store.
@@ -22,6 +34,15 @@ const CONFIG_HEADER = `# Check configuration for this knowledge store.
 #
 `;
 
+/**
+ * The formatting options every store carries. Held here rather than in the seed prose so the file a store receives and
+ * the values kb documents cannot diverge. See {@link renderPrettierSeed}'s header for what each one prevents.
+ */
+export const canonicalPrettierConfig = {
+  embeddedLanguageFormatting: 'off',
+  printWidth: 120,
+};
+
 /** Renders `.kb/tag-aliases.yaml`: an empty `aliases: {}` map under an explanatory header. */
 export function renderAliasesSeed(): string {
   return `${ALIASES_HEADER}aliases: {}\n`;
@@ -30,6 +51,11 @@ export function renderAliasesSeed(): string {
 /** Renders `.kb/config.yaml`: a fully-commented stub whose example values are the live `defaultKbConfig`. */
 export function renderConfigSeed(): string {
   return `${CONFIG_HEADER}${commentBlock(stringify(defaultKbConfig))}\n`;
+}
+
+/** Renders `.prettierrc.yaml`: the canonical formatting options under a header explaining why each one is set. */
+export function renderPrettierSeed(): string {
+  return `${PRETTIER_HEADER}${stringify(canonicalPrettierConfig)}`;
 }
 
 // region | Helpers
