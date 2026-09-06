@@ -320,7 +320,7 @@ Neither is stylistic, and the scaffolded file carries this reasoning in its own 
 
 `printWidth: 120` fixes the width rather than leaving it inherited. Prettier reads `.editorconfig` where a store has one, and falls back to 80 where it does not; this file outranks both, so the width does not depend on which files a store happens to carry.
 
-A store that must keep a file it cannot format — a lockfile, or a fixture whose defect is the point — names it in a `.prettierignore`. That file is the escape hatch and is not scaffolded, since a fresh store has nothing to put in it.
+A store that must keep a file that it cannot format — a lockfile, or a fixture whose defect is the point — names it in a `.prettierignore`. That file is the escape hatch and is not scaffolded, since a fresh store has nothing to put in it.
 
 ### Migrating a store off a `package.json` toolchain
 
@@ -329,14 +329,14 @@ A store that carries a `package.json` only to obtain Prettier can retire it.
 1. Install Prettier where the store is edited, if it is not already there: `pnpm add --global prettier`.
 2. Run `kb scaffold` in the store to write `.prettierrc.yaml`.
 3. Delete `package.json`, the lockfile, `pnpm-workspace.yaml`, `.npmrc`, and any `eslint.config.*`, `tsconfig.json`, and dependency-upgrade config. Delete the superseded `.prettierrc.*` too; keep `.prettierignore` if it names anything still present.
-4. Keep `.editorconfig`. Prettier does not consult it once `printWidth` is set here, but editors do.
+4. Keep `.editorconfig`. `.prettierrc.yaml` overrides `printWidth` alone; Prettier still reads `.editorconfig` for the keys the Prettier config leaves unset, `indent_style`, `indent_size`, and `end_of_line` among them. Two stores whose `.editorconfig` files disagree will format differently under the same canonical config.
 5. Repoint the pre-commit hook. A hook running `pnpm exec prettier --write {staged_files}` becomes `prettier --write {staged_files}`. Under lefthook, `stage_fixed: true` continues to apply. Note that lefthook was installed by `package.json`'s `prepare` script, so it now needs installing on the machine and enabling in the store with `lefthook install`.
 6. Repoint CI. A workflow calling `pnpm run check` needs a command that assumes no `package.json`: `prettier --check .`, plus `kb check` for the store's own rules.
 7. Format once: `prettier --write .`. Commit the result on its own, so the reformatting does not obscure later diffs.
 
 A store carrying its own note checker deserves one more step before it is retired: compare its rules against what `kb check` covers, and port anything missing. `kb check` validates wikilinks, tag aliases, hardcoded home paths, and taxonomy drift, and deliberately leaves frontmatter validity to the record types that own it at write time.
 
-A store with no `package.json` skips to step 2: it has nothing to retire, only the config to adopt and a first `prettier --write .` to run.
+A store with no `package.json` runs steps 1, 2, and 7, and skips 3 through 6: it has nothing to retire, only Prettier to install, the config to adopt, and a first format to run.
 
 ## Error and exception model
 
