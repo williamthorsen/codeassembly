@@ -18,6 +18,7 @@ untouched unless --force is given.
 Writes:
   .kb/config.yaml        check configuration (commented; defaults apply)
   .kb/tag-aliases.yaml   tag-alias map (empty)
+  .prettierrc.yaml       formatting configuration (commented)
   content/, content/events/
 
 .kb/taxonomy.yaml is not part of this set: "kb taxonomy init" derives it from

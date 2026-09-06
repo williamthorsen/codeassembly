@@ -22,6 +22,7 @@ If other knowledge bases are already registered, you are prompted to choose one 
 Creates:
   .kb/config.yaml        check configuration (commented; defaults apply)
   .kb/tag-aliases.yaml   tag-alias map (empty)
+  .prettierrc.yaml       formatting configuration (commented)
   content/, content/events/
 
 Options:
