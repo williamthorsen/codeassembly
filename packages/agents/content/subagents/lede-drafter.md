@@ -79,9 +79,12 @@ Do not go looking for the lede doctrine, and do not work from a remembered rule 
 
 A dispatch carrying a `rejection` scalar is a redispatch: an earlier draft failed, and you are reading this in a fresh context that never saw it. The code names what failed and what to do differently.
 
+A `rejected` fence comes with it, listing one per line the passages that failed, copied from that draft. Revise those passages and nothing else. The bullets outside the fence passed; the caller holds them and puts your replacements back in their places, so this pass cannot reach them.
+
 - **`voice`** -- a figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
 - **`subject`** -- a bullet carried a verb that the pull request does not perform. Apply the subject test in "The form your answer takes" to every passage you send back.
 - **`unsupported-claim`** -- a sentence claimed more than its sources carry. Claim only what the commit log and the diffstat support, and drop a sentence that reaches past them.
+- **`unmatched-return`** -- the return carried a different number of passages than the fence sent, so the caller could place none of them. Return exactly one replacement per passage, in the order the fence listed them.
 
 ## What you return
 
@@ -96,6 +99,8 @@ Two sections, in this order. Return nothing else, and write no file.
 
 {One line per source you could not reach, naming the source and what you drafted from instead. `None.` where you reached them all.}
 ```
+
+On a redispatch, `## Lede` carries one replacement per passage in the `rejected` fence, in the order the fence listed them, and nothing else. The caller places each one.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

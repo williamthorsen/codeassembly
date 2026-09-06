@@ -58,6 +58,19 @@ const READER_SOURCES: ReadonlyArray<string> = [
   path.join('subagents', 'lede-drafter.md'),
 ];
 
+/**
+ * Phrases binding a redispatch to the passages it was handed. Lowercased, so a sentence's opening capital still
+ * matches.
+ */
+const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
+  '`rejected` fence',
+  'one replacement per passage',
+  'revise those passages and nothing else',
+];
+
+/** The test that decides a bullet's subject, which the drafter carries because it never reads the doctrine. */
+const SUBJECT_TEST_PHRASE = 'The subject is the pull request';
+
 /** The flag the exemplar call falls back to where the dispatch carries no type. */
 const TIER_FALLBACK_FLAG = '--tier {tier}';
 
@@ -129,6 +142,25 @@ describe('lede-drafter contract', () => {
     const message =
       'The drafter is the only file that binds the writer, so a drafter that states no bullet contract drafts the ' +
       `paragraph the exemplars were rewritten out of. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('states the subject test', async () => {
+    const message =
+      "The subject test is the whole of what decides a bullet's subject inside the drafter, which never reads the " +
+      'doctrine that states it. Without it a bullet opens with a verb the pull request does not perform, and the ' +
+      'draft reads as correct because every claim in it is true of the artifact the change added.';
+    expect(await EXPANDED, message).toContain(SUBJECT_TEST_PHRASE);
+  });
+
+  it('binds a redispatch to the passages it is handed', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = REVISION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'A redispatch hands the drafter the passages that failed and takes one replacement for each. A drafter told ' +
+      'only that a draft failed redrafts every bullet in a context that never saw the last one, which is how a ' +
+      `bullet that passed comes back changed. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
