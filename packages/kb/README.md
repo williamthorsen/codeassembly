@@ -8,7 +8,7 @@ It underpins the knowledge-base skills — among them `kb-retrieve` (assertion r
 
 ## Exports
 
-The package exposes twelve subpath entries plus a root barrel:
+The package exposes thirteen subpath entries plus a root barrel:
 
 | Entry               | Description                                                                    |
 | ------------------- | ------------------------------------------------------------------------------ |
@@ -22,6 +22,7 @@ The package exposes twelve subpath entries plus a root barrel:
 | `./layout`          | The store's on-disk layout: every path inside a `.kb/` store derives from here |
 | `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
 | `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
+| `./scaffold`        | The canonical set held by a store, and the idempotent writer over it           |
 | `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
 | `./taxonomy`        | `.kb/taxonomy.yaml` loading, comment-preserving declaration, and path mapping  |
 | `./vault-integrity` | Type-blind `[[link]]` resolution and basename-uniqueness over a note set       |
@@ -187,7 +188,7 @@ A domain counts as used when any note lives at or beneath it, so a grouping doma
 
 ## The `kb` command
 
-The package ships a `kb` bin with four subcommands: `check`, `create`, `set-default`, and `taxonomy`.
+The package ships a `kb` bin with five subcommands: `check`, `create`, `scaffold`, `set-default`, and `taxonomy`.
 
 ### kb create
 
@@ -210,9 +211,25 @@ It creates these files and directories:
 
 The config seed is serialized from the in-package `defaultKbConfig`, so a new store cannot drift from the bundled default.
 
-The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, so a registry that has drifted out of order is tidied as stores are added. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
+The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, so a registry that has drifted out of order is tidied as stores are added. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered. Use `kb scaffold` to add canonical files to a store that already exists.
 
 `kb create` also keeps a default knowledge base set. When the registry's top-level `default_kb` pointer is unset and the new store is the only registered KB, it becomes the default. When other KBs are already registered with no default, `kb create` prompts you to choose one on an interactive terminal — or, when stdin is not interactive, points you to `kb set-default`. An existing `default_kb` is never overwritten.
+
+### kb scaffold
+
+`kb scaffold` writes into an existing knowledge base any canonical file that it lacks, so a store created before a given file existed can acquire it.
+
+```bash
+kb scaffold                  # back-fill the nearest ancestor .kb/ store
+kb scaffold --kb coding      # back-fill the named store from the kb.yaml registry
+kb scaffold --force          # replace every canonical file with a fresh seed
+```
+
+The canonical set is the one that `kb create` writes, defined once and shared by both commands so neither can drift from the other. `.kb/taxonomy.yaml` is not part of it: `kb taxonomy init` derives that file's content from the notes a store already holds rather than writing a fixed template.
+
+An existing file is left untouched unless `--force` is given, which replaces it with a fresh seed and discards any edits. A directory has no content to replace, so `--force` governs files alone. The command reports each canonical path as `created`, `present`, or `replaced`.
+
+Store resolution matches `kb check`: the nearest ancestor `.kb/` directory, or a `--kb <name>` entry in the merged `kb.yaml` registry. Three grounds exit 2: no store resolves, the registry marks the resolved store `readonly`, or the resolved path holds no `.kb/`. The last keeps the command to back-filling a store rather than creating one, which is `kb create`'s job; a registry entry names a path without proving a store is there.
 
 ### kb set-default
 

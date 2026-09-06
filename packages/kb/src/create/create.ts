@@ -112,8 +112,8 @@ function nameRegisteredMessage(name: string, registryPath: string): string {
 }
 
 /**
- * Writes the canonical set into a store being created, returning the store-relative paths it created. A path already
- * present in the target directory is left out, so the report names what this call put there.
+ * Writes the canonical set into a store being created, returning the store-relative paths that it created. A path
+ * already present in the target directory is left out, so the report names what this call put there.
  */
 async function writeCanonicalSet(storePath: string): Promise<readonly string[]> {
   const entries = await scaffold({ storePath });

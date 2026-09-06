@@ -38,7 +38,7 @@ export async function scaffold(input: { storePath: string; force?: boolean }): P
       entries.push({ path: file.path, action: 'present' });
       continue;
     }
-    // The file's parent is `.kb/`, which a store already holds but a directory `create` is scaffolding does not.
+    // The file's parent is `.kb/`, which a store already holds but a directory that `create` is scaffolding does not.
     await mkdir(dirname(absolutePath), { recursive: true });
     await writeAtomic(absolutePath, file.render());
     entries.push({ path: file.path, action: exists ? 'replaced' : 'created' });
