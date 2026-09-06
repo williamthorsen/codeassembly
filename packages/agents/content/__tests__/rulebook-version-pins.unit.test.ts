@@ -16,7 +16,7 @@ import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '..
 
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
-/** A line of `_partials/voice-checklist.md` that `commit-conventions` reaches only by including the partial. */
+/** A phrase of `_partials/voice-checklist.md` that `commit-conventions` reaches only by including the partial. */
 const INCLUDED_PARTIAL_MARKER = '**Matter of course.**';
 
 interface RulebookPin {
@@ -126,8 +126,8 @@ describe('rulebook version pins', () => {
     expect(drifted, `${DRIFT_MESSAGE}\n  ${drifted.join('\n  ')}`).toEqual([]);
   });
 
-  // The pin table cannot show that partial content is inside what it hashes, and that reach is the whole reason this
-  // suite exists: without it, the one case an author cannot see for themselves is the one case left uncovered.
+  // The pin table cannot show that partial content is inside what it hashes, and that reach covers the one case an
+  // author cannot see for themselves: a rulebook whose body moved while its own file stayed as it was.
   it('hashes the content of an included partial', async () => {
     const message =
       `commit-conventions reaches ${INCLUDED_PARTIAL_MARKER} only through an include, so its absence means the ` +
