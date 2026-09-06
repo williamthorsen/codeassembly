@@ -42,7 +42,7 @@ Check commit messages for additional context.
    - {the first passage that failed}
    ```
 
-   Copy each passage character for character from the draft it came from, one per line, and send only the passages that failed: a bullet the drafter never sees is one it cannot change, which is what keeps a bullet that passed from coming back changed. The migration paragraph travels the same way where it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage it replaces, and take every other bullet from the draft unchanged. Where the return carries a different number of passages than you sent, none of them can be placed: redispatch with `rejection: unmatched-return`, which counts against the two step 6 allows. After a second, carry the draft as it stood before the unplaceable return and report the failure to the developer.
+   Copy each passage character for character from the draft it came from, one per line, and send only the passages that failed: a bullet the drafter never sees is one it cannot change, which is what keeps a bullet that passed from coming back changed. The migration paragraph travels the same way where it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage it replaces, and take every other bullet from the draft unchanged. Where the return carries a different number of passages than you sent, none of them can be placed: redispatch with `rejection: unmatched-return`, which counts against the two step 6 allows and exits where step 6 does.
 
    Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
 
@@ -57,7 +57,7 @@ Check commit messages for additional context.
 
    Repeat step 5 with `rejection:` set to the code the failed check names, and with the passages that failed in the `rejected` fence that step describes.
 
-   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of the last draft; place the answer, then carry `## What` into step 7. A passage the audit rejected reaches step 7 only once the developer has been asked.
+   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then carry `## What` into step 7. A return you could never place leaves each passage as the fence carried it, which is what the developer is shown. A passage the audit rejected reaches step 7 only once the developer has been asked.
 
 7. **Cut `## What` via `lede-cutter`**: The verified draft reports every fact the drafter judged worth writing; a lede carries only the ones its reader acts on. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
