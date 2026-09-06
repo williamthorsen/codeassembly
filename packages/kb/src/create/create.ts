@@ -1,21 +1,12 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 
 import { loadKbRegistry } from '../discovery/load-registry.ts';
 import { registerStore } from '../discovery/register-store.ts';
 import { setDefaultKb } from '../discovery/set-default-kb.ts';
 import { pathExists } from '../filesystem/exists.ts';
-import {
-  ALIASES_FILE,
-  CONFIG_FILE,
-  CONTENT_DIR,
-  EVENTS_DIR,
-  KB_DIR,
-  resolveEventsDir,
-  resolveKbDir,
-} from '../layout/index.ts';
+import { KB_DIR, resolveKbDir } from '../layout/index.ts';
+import { scaffold } from '../scaffold/scaffold.ts';
 import type { KbRegistry } from '../types.ts';
-import { renderAliasesSeed, renderConfigSeed } from './render-seeds.ts';
 
 /**
  * What `create` did about the registry's `default_kb` pointer when registering a store:
@@ -69,7 +60,7 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
   }
 
   if (!input.register) {
-    const created = await scaffold(storePath);
+    const created = await writeCanonicalSet(storePath);
     return { ok: true, created: { name, storePath, registered: false, created } };
   }
 
@@ -80,7 +71,7 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
     return { ok: false, reason: 'name-registered', message: nameRegisteredMessage(name, registryPath) };
   }
 
-  const created = await scaffold(storePath);
+  const created = await writeCanonicalSet(storePath);
 
   const described = input.description !== undefined && { description: input.description };
   const result = await registerStore({ registryPath, name, storePath, ...described });
@@ -120,15 +111,13 @@ function nameRegisteredMessage(name: string, registryPath: string): string {
   return `a store named "${name}" is already registered in ${registryPath}`;
 }
 
-/** Writes the `.kb/` seed files and the content directories, returning the store-relative paths created. */
-async function scaffold(storePath: string): Promise<readonly string[]> {
-  await mkdir(resolveKbDir(storePath), { recursive: true });
-  await writeFile(join(storePath, CONFIG_FILE), renderConfigSeed(), 'utf8');
-  await writeFile(join(storePath, ALIASES_FILE), renderAliasesSeed(), 'utf8');
-
-  await mkdir(resolveEventsDir(storePath), { recursive: true });
-
-  return [CONFIG_FILE, ALIASES_FILE, `${CONTENT_DIR}/`, `${EVENTS_DIR}/`];
+/**
+ * Writes the canonical set into a store being created, returning the store-relative paths it created. A path already
+ * present in the target directory is left out, so the report names what this call put there.
+ */
+async function writeCanonicalSet(storePath: string): Promise<readonly string[]> {
+  const entries = await scaffold({ storePath });
+  return entries.filter((entry) => entry.action !== 'present').map((entry) => entry.path);
 }
 
 // endregion | Helpers
