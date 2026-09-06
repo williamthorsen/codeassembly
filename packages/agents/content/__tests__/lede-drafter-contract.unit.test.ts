@@ -46,6 +46,9 @@ const PRESCRIBED_CONNECTIVE = 'Separately,';
 /** The statement that the writer composes against a title the reader has already read. */
 const TITLE_PHRASE = 'The title is already on the page';
 
+/** Every code the caller redispatches under, each of which the drafter has to be able to act on. */
+const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
+
 /**
  * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so a doctrine bullet's
  * opening capital still matches.
@@ -166,6 +169,16 @@ describe('lede-drafter contract', () => {
       'draft against it, and neither reads the other, so revising one leaves the other testing something else. ' +
       'Where it is gone, a bullet opens with a verb the pull request does not perform and the draft reads as ' +
       `correct, because every claim in it is true of the artifact the change added:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('names every rejection code the caller redispatches under', async () => {
+    const text = await EXPANDED;
+    const missing = REJECTION_CODES.filter((code) => !text.includes(`\`${code}\``));
+
+    const message =
+      'A redispatch hands the drafter a code and the passages that failed, so a code the caller sends and this ' +
+      `file does not explain reaches a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
