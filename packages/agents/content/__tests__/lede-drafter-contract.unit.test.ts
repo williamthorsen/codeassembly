@@ -68,8 +68,20 @@ const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'revise those passages and nothing else',
 ];
 
-/** The test that decides a bullet's subject, which the drafter carries because it never reads the doctrine. */
-const SUBJECT_TEST_PHRASE = 'The subject is the pull request';
+/**
+ * Phrases stating the subject test, which decides a bullet's subject without the doctrine. Lowercased, so a
+ * sentence's opening capital still matches.
+ */
+const SUBJECT_TEST_PHRASES: ReadonlyArray<string> = [
+  '"this pull request" in front of it',
+  'the verb names what the system does rather than what the change did',
+];
+
+/** Each file stating the subject test: the drafter applies it, and the caller audits the draft against it. */
+const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
+  path.join('skills', 'summarize-change', 'SKILL.md'),
+  path.join('subagents', 'lede-drafter.md'),
+];
 
 /** The flag the exemplar call falls back to where the dispatch carries no type. */
 const TIER_FALLBACK_FLAG = '--tier {tier}';
@@ -145,12 +157,16 @@ describe('lede-drafter contract', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('states the subject test', async () => {
+  it.each(SUBJECT_TEST_SOURCES)('states the subject test in %s', async (relativePath) => {
+    const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
+    const missing = SUBJECT_TEST_PHRASES.filter((phrase) => !text.includes(phrase));
+
     const message =
-      "The subject test is the whole of what decides a bullet's subject inside the drafter, which never reads the " +
-      'doctrine that states it. Without it a bullet opens with a verb the pull request does not perform, and the ' +
-      'draft reads as correct because every claim in it is true of the artifact the change added.';
-    expect(await EXPANDED, message).toContain(SUBJECT_TEST_PHRASE);
+      'The subject test decides a bullet without the doctrine. The drafter applies it and the caller audits the ' +
+      'draft against it, and neither reads the other, so revising one leaves the other testing something else. ' +
+      'Where it is gone, a bullet opens with a verb the pull request does not perform and the draft reads as ' +
+      `correct, because every claim in it is true of the artifact the change added:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
   });
 
   it('binds a redispatch to the passages it is handed', async () => {
