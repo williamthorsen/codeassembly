@@ -2,7 +2,7 @@
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
 delivery: skill
-version: '1'
+version: '2'
 ---
 
 # Shell script conventions
@@ -230,6 +230,31 @@ Agent-specific modules belong in `agents/functions/`:
 | `project-slug.sh` | `resolve_project_slug`, `derive_slug_from_remote`, `persist_project_slug` |
 
 **Extend rather than inline.** If you write a utility that could be reused across scripts, add it to an existing module or create a new one in `functions/`.
+
+## Shellspec hooks
+
+The strict-mode rule above governs a standalone script. A shellspec hook is a function in a file that shellspec sources, and it cannot use `set -e`: The option is shell-global, so setting it inside a hook changes shellspec's own behavior for the rest of the run.
+
+Guard each fallible step instead. A hook without a guard continues to its next statement after a failed one, and shellspec reports the hook's status only once every statement has run, so the writes have already happened by the time the failure is reported.
+
+```bash
+# Bad: a failed mktemp leaves `tmpdir` empty, and the writes land in the invoking directory
+setup_workspace() {
+  tmpdir=$(mktemp -d)
+  cd "$tmpdir"
+  mkdir -p src
+}
+
+# Good: the hook returns at the failed step, and shellspec aborts the example before any write
+setup_workspace() {
+  enter_tmpdir || return 1
+  mkdir -p src
+}
+```
+
+Return non-zero rather than calling `exit`: `return` is what shellspec reads as a failed hook. A failed `BeforeEach` aborts the example body, and `AfterEach` does not run after one, so a cleanup helper never sees a half-built workspace.
+
+Build the workspace through the shared helpers in `spec/spec_helper.sh` rather than calling `mktemp` in the hook. `make_tmpdir` and `remove_tmpdir` create and remove a temporary directory; `enter_tmpdir` and `leave_tmpdir` additionally make it the working directory and restore the previous one.
 
 ## Common mistakes
 
