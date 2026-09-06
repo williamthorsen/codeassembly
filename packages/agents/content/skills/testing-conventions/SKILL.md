@@ -6,40 +6,42 @@ user-invocable: false
 
 # Testing conventions
 
+## What a test is for
+
+A test guards a behavior against accidental breakage. A **behavior** is an outcome that a caller or a user relies on: what a function returns, what a user can do, what the system refuses. A **value** is a thing that the code holds today while producing it: the text of a message, the contents of a config, the members of a list. A test that pins a value fails on every intended change to that value and catches nothing, so each such change is made twice.
+
+Before writing a test, ask what would go uncaught if it did not exist. Three answers rule the test out.
+
+- **A change that someone would have to make on purpose.** Rewording a message, editing a config, adding a member to a list: Each is a decision, and review already guards decisions. A test earns its place by catching an accident, a change made without intending to touch this outcome, such as a route added without its guard or a refactor that drops a case. A scenario constructed so that the test has something to catch is not an accident.
+- **Nothing that this repository authored.** Machine state, the user's environment, and a dependency's behavior are not under test, and enabling a dependency's feature does not make that feature's behavior ours. Where the right response to red would be a bug report upstream, the test is not ours.
+- **A difference that costs nothing until noticed.** A relaxed lint rule, a setting that drifts from its best value, a directory that departs from convention: A standing test costs more than the moment that it saves. A caught failure has to cost more than noticing it: a wrong answer returned, a task that a user cannot finish, data lost or exposed.
+
+Then ask where the expected result comes from. A specification, a format, or a rule that someone could state without opening the code makes it an expectation. Where pasting in whatever the code now produces would make the test pass again, the test pins a value, whatever its name says. Where a test compares two sets, derive the expected one from its source; a set typed into the test drifts.
+
+Three cases recur. Configuration is verified by the tool that reads it, which the build and lint gates run; where an accident is real and the tool is silent, prevent it at the tool rather than detect it in a test. Wording is asserted only where the text is the sole thing that distinguishes two code paths that exist, and then by a durable fragment. A process that this repository does not author is replaced by a stub.
+
+Where a rule above forbids a test and the case seems exceptional, stop before writing it, state the case in one sentence, and wait.
+
 ## When tests are required
 
-**Default rule:** Every code change that creates or modifies testable behavior must include tests that cover that behavior. The burden is on justifying the exception, not the rule.
+Every change to a behavior, as defined above, is covered by a test. A change that adds no runtime behavior needs no new test: a deletion, a type consumed only within this compile, prose, styling.
 
-**Carve-outs**: The following categories are exempt from the test requirement:
+A test that guards a behavior still has to clear two checks:
 
-- **Generated CSS classes and pure visual styling**: Output is non-deterministic or meaningful only visually
-- **Static configuration files**: JSON/YAML/TOML files with no runtime logic
-- **Type-only changes**: type definitions, interfaces, and type aliases that produce no runtime code
-- **Markdown and documentation content**: prose files with no executable behavior
-- **Build scripts and tooling**: scripts whose correctness is verified by the build or lint pipeline rather than unit tests, and that expose no independently testable API surface
-- **Removal-only changes**: A change that only deletes code, text, or behavior introduces no new positive behavior to cover, so it needs no new test.
+1. **Nothing else fails first.** Where the compiler, the linter, or a gate that already manufactures the failure condition on every run would catch the regression, that gate is the guard, and a narrower test is a weaker and more brittle duplicate. A gate that merely exercises the same area does not qualify; it has to reproduce the condition.
+2. **It would catch the failure that it guards against.** Run it against what it rejects: Break the guarded thing, watch the test fail, restore it. A test that still passes is not a guard. Where reaching the cause means replicating a dependency's private shape, the test breaks or silently stops testing at the next upgrade.
 
-If a change does not fall into one of these categories, it requires tests, and each of those tests must earn its place by the bar in [whether a test earns its place](#whether-a-test-earns-its-place).
+Where a change needs coverage and no candidate test clears these sections, it ships without one; say which answer ruled the candidate out.
 
-## Whether a test earns its place
+## Do not test that removed things stay removed
 
-Needing coverage does not make any particular test worth writing. The two questions are separate: The default rule above says a change needs tests, and this bar says whether the test in front of you is one of them. Put every test through these filters before writing or recommending it.
-
-1. **It can fail on code this repo authored.** The behavior asserted is ours, not a framework's, a dependency's, or the language's own contract. Diagnostic: If the test can fail only when a dependency changes, and not when our code changes, don't write it.
-2. **Nothing else fails first.** Diagnostic: If this behavior regressed, what would fail first? Where the answer is the compiler, the linter, or a gate that already manufactures the failure condition on every run, that gate is the guard, and a narrower test is a weaker and more brittle duplicate. A gate that merely exercises the same area does not qualify; it has to reproduce the condition.
-3. **It would catch the failure it guards.** A test aimed at a cause it cannot reach guards nothing. Where reaching that cause means replicating a dependency's private shape, the test breaks or silently stops testing at the next upgrade.
-4. **Its expectation comes from somewhere other than the implementation.** Diagnostic: Could this assertion be satisfied by pasting in the new value? An expected constant copied from the code under test, or an assertion that today's file set, settings, or wording stays as it is, is a change-detector with no independent oracle. The tell is unboundedness: The same reasoning would justify unlimited similar tests anywhere.
-5. **It can fail in future for a reason that matters.** A check with no future failure mode is a one-time verification wearing a test's clothes. An absence assertion qualifies where it encodes a live invariant a realistic future change could violate (no route registers without an auth guard), and fails where it only re-confirms a completed migration.
-
-Absence of a test is not by itself a gap to fill. Where a change needs coverage and no candidate test clears the bar, it ships without one; say which filter ruled the candidate out. A test that clears every filter and a test that clears none both look like diligence; only the first one is.
-
-### Do not test that removed things stay removed
-
-This is the commonest way a test fails the last filter. When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
+This is the commonest test that guards a decision. When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
 
 Diagnostic: Would this test exist if the deleted code had never existed? If no, don't write it.
 
 Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Verification step), not a standing test. This applies to any change that removes something, not only removal-only changes.
+
+Where a test guards that a set is closed, the witness is an arbitrary non-member, never a member that was removed. The removed name guards nothing that the arbitrary one does not, and it records history.
 
 ## Loosen a test broken by a wording-only change
 
