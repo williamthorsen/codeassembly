@@ -53,7 +53,7 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  * full walk. Excludes are honored during descent so an excluded subtree is never entered.
  *
  * Where the store sits in a git working tree, scope narrows further to what git accounts for: tracked notes plus
- * untracked ones that no ignore rule covers. A note the repository ignores is therefore neither enumerated nor available
+ * untracked ones that no ignore rule covers. A note that the repository ignores is therefore neither enumerated nor available
  * as a wikilink target, so a link pointing at one resolves to nothing. A store outside a working tree, or a machine
  * carrying no git, keeps the walk's own scope.
  *
@@ -124,7 +124,7 @@ function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string>
   return dirs;
 }
 
-/** A note the walk selected, before its content is read. */
+/** A note that the walk selected, before its content is read. */
 interface NoteLocation {
   /** Absolute path the note sits at. */
   path: string;
