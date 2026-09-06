@@ -59,8 +59,7 @@
     "typescript-eslint": "8.68.0",
     "v11y-check": "0.15.8",
     "vite": "catalog:",
-    "vitest": "catalog:",
-    "yaml": "catalog:"
+    "vitest": "catalog:"
   },
   "packageManager": "pnpm@11.24.0",
   "engines": {
