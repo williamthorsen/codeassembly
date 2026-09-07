@@ -27,8 +27,13 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
   'tool performs no shell expansion',
 ];
 
-/** The body-file flags the guarded CLIs take; `acli` names the description one on its create call. */
-const BODY_FILE_FLAGS: ReadonlyArray<string> = ['--body-file', '--description-file'];
+/**
+ * A body-file argument and the variable it passes; `acli` names the description flag on its create call. Capturing the
+ * variable is what ties the guard to the path the call actually passes, rather than to any guard the block happens to
+ * carry: a carrier arrives by copying an existing block, and a renamed path with an un-renamed guard is the drift that
+ * copying produces.
+ */
+const BODY_FILE_ARGUMENT = /--(?:body|description)-file "\$(\w+)"/g;
 
 /** The guard itself, which is what turns a missing or empty body file into a refusal. */
 const GUARD = '[ -s "$body_path" ]';
@@ -73,12 +78,13 @@ describe('gh-body-file reach', () => {
     for (const relativePath of CARRIERS) {
       const content = await readFile(path.join(CONTENT_ROOT, relativePath), 'utf8');
       for (const block of listShellBlocks(content)) {
-        if (BODY_FILE_FLAGS.every((flag) => !block.includes(flag))) continue;
-        if (/\[ -s "\$\w+" \]/.test(block)) continue;
-        violations.push(relativePath);
+        for (const variable of listBodyFileVariables(block)) {
+          if (block.includes(`[ -s "$${variable}" ]`)) continue;
+          violations.push(`${relativePath} -> $${variable}`);
+        }
       }
     }
-    const message = `An unguarded body-file call publishes the platform's default body when the path is unset; these blocks carry no guard:\n  ${violations.join('\n  ')}`;
+    const message = `An unguarded body-file call publishes the platform's default body when the path is unset; these paths reach a CLI without a guard on the variable the call passes:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 
@@ -106,6 +112,16 @@ describe('gh-body-file reach', () => {
 /** Returns a carrier's include-expanded body, what the install pipeline goes on to rewrite and write out. */
 async function expandCarrier(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+}
+
+/** Returns the variable each of a block's body-file arguments passes, one entry per argument. */
+function listBodyFileVariables(block: string): Array<string> {
+  const variables: Array<string> = [];
+  for (const match of block.matchAll(BODY_FILE_ARGUMENT)) {
+    const variable = match[1];
+    if (variable !== undefined) variables.push(variable);
+  }
+  return variables;
 }
 
 /** Returns the bodies of a Markdown file's fenced `bash` blocks, indented ones inside list items included. */
