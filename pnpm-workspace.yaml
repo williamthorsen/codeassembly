@@ -18,6 +18,7 @@ catalog:
   eslint-plugin-react: '7.37.5'
   hono: '4.13.5'
   jsdom: '30.0.1'
+  prettier: '3.9.6'
   react: '19.2.8'
   react-dom: '19.2.8'
   readyup: '0.35.0'

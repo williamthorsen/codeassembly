@@ -114,6 +114,7 @@
     "@types/node": "catalog:",
     "@types/picomatch": "4.0.3",
     "eslint": "catalog:",
+    "prettier": "catalog:",
     "vitest": "catalog:"
   },
   "engines": {
