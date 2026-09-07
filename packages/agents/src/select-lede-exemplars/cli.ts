@@ -289,12 +289,13 @@ function resolveRequest(
   workTypes: ReadonlyMap<string, WorkType>,
 ): { ok: true; request: ExemplarRequest } | { ok: false; error: SelectErrorCode; message: string } {
   if (args.kind === 'type') {
-    const workType = workTypes.get(args.type);
+    const key = stripBreakingMarker(args.type);
+    const workType = workTypes.get(key);
     if (workType === undefined) {
       return {
         ok: false,
         error: 'unknown-type',
-        message: `work type "${args.type}" is not declared in work-types.json, so its tier cannot be resolved`,
+        message: `work type "${key}" is not declared in work-types.json, so its tier cannot be resolved`,
       };
     }
     return { ok: true, request: { kind: 'type', workType } };
@@ -310,6 +311,14 @@ function resolveRequest(
     };
   }
   return { ok: true, request: { kind: 'tier', tier: args.tier } };
+}
+
+/**
+ * Removes the breaking-change marker that a work type carries in a commit or pull-request title, so `feat!` resolves
+ * against the `feat` the taxonomy declares. The taxonomy holds bare keys; the marker is title rendering.
+ */
+function stripBreakingMarker(type: string): string {
+  return type.endsWith('!') ? type.slice(0, -1) : type;
 }
 
 // endregion | Helpers
