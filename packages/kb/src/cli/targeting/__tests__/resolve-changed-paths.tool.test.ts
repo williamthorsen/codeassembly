@@ -4,9 +4,9 @@ import { dirname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { commitAll, initGitRepo, runGitInFixture } from '../../../test-utils/git-repo.ts';
 import { makeStore } from '../../../test-utils/make-store.ts';
 import { makeTempDir } from '../../../test-utils/make-temp-dir.ts';
-import { commitAll, initGitRepo, runGit } from '../../test-utils/git-repo.ts';
 import { resolveChangedPaths } from '../resolve-changed-paths.ts';
 
 const NOTE =
@@ -33,7 +33,7 @@ describe(resolveChangedPaths, () => {
     initGitRepo(root);
     const base = commitAll(root, 'base');
 
-    runGit(root, 'mv', 'content/Old.md', 'content/New.md');
+    runGitInFixture(root, 'mv', 'content/Old.md', 'content/New.md');
 
     const result = resolveChangedPaths({ storeRoot: root, ref: base });
 
@@ -46,7 +46,7 @@ describe(resolveChangedPaths, () => {
     initGitRepo(root);
     const base = commitAll(root, 'base');
 
-    runGit(root, 'rm', '--quiet', 'content/Remove.md');
+    runGitInFixture(root, 'rm', '--quiet', 'content/Remove.md');
 
     const result = resolveChangedPaths({ storeRoot: root, ref: base });
 

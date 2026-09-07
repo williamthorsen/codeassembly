@@ -125,7 +125,7 @@ const findings = checkVaultIntegrity(notes);
 
 ## Checking a store
 
-`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes the config selects, and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
+`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes that the config selects (narrowed by [the git dimension](#the-git-dimension) inside a working tree), and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
 
 ```ts
 import { check } from '@williamthorsen/kb/check';
@@ -155,6 +155,12 @@ exclude:
 | `exclude` | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches           |
 
 Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@williamthorsen/kb/config`.
+
+#### The git dimension
+
+Where the store sits in a git working tree, `targets`/`exclude` is not the whole of note scope: what git accounts for narrows it further. A note is enumerated when git tracks it, or when git would track it, meaning no ignore rule covers it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: such a link is broken for every clone but the author's. This is what lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
+
+A store outside a git working tree, or a machine carrying no git, keeps the filesystem walk alone. Where git accounts for none of the notes that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting a clean bill over an empty note set.
 
 ### The declared structure: `.kb/taxonomy.yaml`
 
@@ -260,7 +266,7 @@ kb check --vs=main             # check only the notes changed since a ref
 
 **Targeting.** Path arguments and `--vs` each scope the run to a subset of notes; they are mutually exclusive, and both compose with `--kb` and `--json`. Cross-note rules always resolve against the whole vault, so a targeted run never false-flags a link to an unselected note; only the report and the exit code narrow to the selection.
 
-- **`[paths...]`**: one or more glob patterns, files, or directories (store-root-relative). The command expands globs itself, so a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that matches no note is a usage error, unless it names a real non-note (a README, a triage note, or an excluded file), which is skipped silently.
+- **`[paths...]`**: one or more glob patterns, files, or directories (store-root-relative). The command expands globs itself, so a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that matches no note is a usage error, unless it names a real non-note (a README, a triage note, or a file that `exclude` or git rules out), which is skipped silently.
 - **`--vs <ref>`**: the notes changed between the working tree and the merge-base of `<ref>` and HEAD. The diff follows renames (checking the destination), includes uncommitted edits to tracked notes, and excludes deletions, so a `git mv`-heavy migration batch reports the notes it actually touched.
 
 Because the exit code reflects only the selected notes, a per-batch or pre-commit gate can pass while the rest of the vault still carries a migration backlog.

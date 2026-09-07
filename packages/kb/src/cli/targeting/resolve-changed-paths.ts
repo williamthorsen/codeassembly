@@ -1,10 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-import { describeError } from '@williamthorsen/toolbelt.errors';
-
-import { isRecord } from '../../type-guards.ts';
+import { runGit } from '../../git/run-git.ts';
 
 /** The outcome of resolving a `--vs` ref to its changed-note paths: the store-relative paths, or a failure message. */
 export type ChangedPathsResult = { ok: true; paths: string[] } | { ok: false; message: string };
@@ -21,12 +18,12 @@ export type ChangedPathsResult = { ok: true; paths: string[] } | { ok: false; me
 export function resolveChangedPaths(input: { storeRoot: string; ref: string }): ChangedPathsResult {
   const { storeRoot, ref } = input;
 
-  const mergeBase = tryGit(storeRoot, ['merge-base', ref, 'HEAD']);
+  const mergeBase = runGit({ cwd: storeRoot, args: ['merge-base', ref, 'HEAD'] });
   if (!mergeBase.ok) {
     return { ok: false, message: `could not resolve ref "${ref}": ${mergeBase.message}` };
   }
 
-  const toplevel = tryGit(storeRoot, ['rev-parse', '--show-toplevel']);
+  const toplevel = runGit({ cwd: storeRoot, args: ['rev-parse', '--show-toplevel'] });
   if (!toplevel.ok) {
     return { ok: false, message: toplevel.message };
   }
@@ -34,16 +31,10 @@ export function resolveChangedPaths(input: { storeRoot: string; ref: string }): 
   // `-z` emits NUL-delimited, unquoted paths so names with non-ASCII bytes survive verbatim (git's default
   // octal-quoting would otherwise corrupt them); `-- .` limits the diff to the store subtree when the store is
   // nested below the repository root.
-  const diff = tryGit(storeRoot, [
-    'diff',
-    '--name-only',
-    '-z',
-    '--diff-filter=AMR',
-    '--find-renames',
-    mergeBase.stdout.trim(),
-    '--',
-    '.',
-  ]);
+  const diff = runGit({
+    cwd: storeRoot,
+    args: ['diff', '--name-only', '-z', '--diff-filter=AMR', '--find-renames', mergeBase.stdout.trim(), '--', '.'],
+  });
   if (!diff.ok) {
     return { ok: false, message: diff.message };
   }
@@ -57,31 +48,3 @@ export function resolveChangedPaths(input: { storeRoot: string; ref: string }): 
 
   return { ok: true, paths };
 }
-
-// region | Helpers
-
-/** Extracts git's stderr from a thrown `execFileSync` error, falling back to the error's own message. */
-function extractGitErrorMessage(error: unknown): string {
-  if (isRecord(error) && typeof error.stderr === 'string' && error.stderr.trim() !== '') {
-    return error.stderr.trim();
-  }
-  return describeError(error);
-}
-
-/** Runs `git -C storeRoot <args>`, returning its stdout or a failure carrying git's stderr. */
-function tryGit(
-  storeRoot: string,
-  args: readonly string[],
-): { ok: true; stdout: string } | { ok: false; message: string } {
-  try {
-    const stdout = execFileSync('git', ['-C', storeRoot, ...args], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    return { ok: true, stdout };
-  } catch (error) {
-    return { ok: false, message: extractGitErrorMessage(error) };
-  }
-}
-
-// endregion | Helpers

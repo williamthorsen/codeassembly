@@ -33,7 +33,7 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 
 `--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone: No `.kb/` discovery walk runs, so a project-local `.kb/` the helper happened to be invoked near is never in scope. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
 
-Within each knowledge base, recall is limited to the notes the store declares, the files matching its configured `targets`/`exclude` (the same note set `kb check` enforces; `content/**/*.md` by default). Markdown outside that set, such as a root `README.md` or an excluded draft, is not recalled even when it contains the query terms.
+Within each knowledge base, recall is limited to the notes the store declares, the files matching its configured `targets`/`exclude` (the same note set `kb check` enforces; `content/**/*.md` by default). Inside a git working tree, that set also excludes every note that the repository ignores. Markdown outside that set, such as a root `README.md` or an excluded draft, is not recalled even when it contains the query terms.
 
 ## Runtime dependencies
 

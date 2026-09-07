@@ -6,6 +6,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';
+import { listGitScope } from '../git/list-git-scope.ts';
 import { readNoteContent } from '../note-io/read-note.ts';
 import { isGlobSegment } from './glob-segments.ts';
 
@@ -51,6 +52,11 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  * (`content/**` descends only into `content/`); a target with no leading literal (e.g. `**\/*.md`) falls back to a
  * full walk. Excludes are honored during descent so an excluded subtree is never entered.
  *
+ * Where the store sits in a git working tree, scope narrows further to what git accounts for: tracked notes plus
+ * untracked ones that no ignore rule covers. A note that the repository ignores is therefore neither enumerated nor available
+ * as a wikilink target, so a link pointing at one resolves to nothing. A store outside a working tree, or a machine
+ * carrying no git, keeps the walk's own scope.
+ *
  * Notes with malformed or absent frontmatter are kept — `readNoteContent` records the parse error in `error` and
  * returns an empty field map rather than throwing, so they remain valid wikilink targets. A note that cannot be read,
  * or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk. Each
@@ -82,35 +88,43 @@ export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }
 
 // region | Helpers
 
-/** Walks a KB root and collects every note the config's `targets`/`exclude` select, in walk order. */
+/** Walks a KB root and collects every note that the config's `targets`/`exclude` and the store's git scope admit, in walk order. */
 async function collectNoteLocations(input: { kbRoot: string; config: KbConfig }): Promise<NoteLocation[]> {
   const { kbRoot, config } = input;
   const matcher = createNoteScopeMatcher(config);
   const topLevelDirs = leadingLiteralSegments(config.targets);
 
-  const locations: NoteLocation[] = [];
-  await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: locations });
+  const candidates: NoteLocation[] = [];
+  await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: candidates });
+
+  const gitScope = listGitScope({ root: kbRoot });
+  if (gitScope === undefined) return candidates;
+
+  const locations = candidates.filter((candidate) => gitScope.has(candidate.relativePath.normalize('NFC')));
+  if (candidates.length > 0 && locations.length === 0) {
+    process.stderr.write(`kb: warning: git ignores every note under ${kbRoot}, so nothing was checked\n`);
+  }
   return locations;
 }
 
 /**
  * Derives the top-level directory names to descend into from the targets' leading literal segments. A target whose
  * first segment is a literal (`content/**\/*.md` → `content`) contributes that name; a target with no leading literal
- * (a glob-first pattern like `**\/*.md` or `*.md`) forces a full walk, signalled by returning `null`.
+ * (a glob-first pattern like `**\/*.md` or `*.md`) forces a full walk, signalled by returning `undefined`.
  */
-function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string> | null {
+function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string> | undefined {
   const dirs = new Set<string>();
   for (const target of targets) {
     const firstSegment = target.split('/', 1)[0] ?? '';
     if (firstSegment === '' || isGlobSegment(firstSegment)) {
-      return null;
+      return undefined;
     }
     dirs.add(firstSegment);
   }
   return dirs;
 }
 
-/** A note the walk selected, before its content is read. */
+/** A note that the walk selected, before its content is read. */
 interface NoteLocation {
   /** Absolute path the note sits at. */
   path: string;
@@ -122,8 +136,8 @@ async function walk(input: {
   root: string;
   dir: string;
   matcher: NoteScopeMatcher;
-  /** Top-level directory names to descend into, or `null` to walk the entire tree. */
-  topLevelDirs: ReadonlySet<string> | null;
+  /** Top-level directory names to descend into, or `undefined` to walk the entire tree. */
+  topLevelDirs: ReadonlySet<string> | undefined;
   out: NoteLocation[];
 }): Promise<void> {
   const { root, dir, matcher, topLevelDirs, out } = input;
@@ -143,7 +157,7 @@ async function walk(input: {
 
     if (entry.isDirectory()) {
       // Prune to the targets' leading literal segments at the top level; deeper levels always descend.
-      if (atRoot && topLevelDirs !== null && !topLevelDirs.has(entry.name)) continue;
+      if (atRoot && topLevelDirs !== undefined && !topLevelDirs.has(entry.name)) continue;
       if (matcher.isExcluded(relativePath)) continue;
       await walk({ root, dir: absolutePath, matcher, topLevelDirs, out });
       continue;

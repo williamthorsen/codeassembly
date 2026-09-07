@@ -138,12 +138,8 @@ export function resolveTargetFiles(input: {
 
 // region | Helpers
 
-/**
- * The NUL byte, which separates `git ls-files -z` records and marks a file as binary. Built rather than written as an
- * escape, because the formatter rewrites an escape into the byte itself, and a literal NUL in a source file makes
- * `grep` treat that file as binary and skip it.
- */
-const NUL = String.fromCodePoint(0);
+/** The NUL byte, which separates `git ls-files -z` records and, inside a file's content, marks that file as binary. */
+const NUL = '\0';
 
 /** File extensions whose prose the sweep reads, mapped to the extractor that reads them. */
 const PROSE_KINDS_BY_EXTENSION: Readonly<Record<string, ProseKind>> = {
