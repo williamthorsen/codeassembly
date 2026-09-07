@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '14'
+version: '15'
 ---
 
 # CodeAssembly content specification
@@ -146,6 +146,8 @@ The deployed body is the body after includes expand. Editing a partial is theref
 ## Naming
 
 A `delivery: skill` rulebook ships as `consult-<slug>`.
+
+A rulebook slug's final segment names the kind of document rather than its subject. This library uses `-conventions`, `-policy`, `-preferences`, and `-specification`; other content roots add `-guidance`, `-guide`, `-references`, and `-settings`. The set is open, and `-rulebook` is the fallback where no kind noun fits. _(Convention; not enforced.)_
 
 Skill names are verb-led. Order list members and frontmatter lists alphabetically unless there is a reason to group otherwise. _(Conventions; not enforced.)_
 

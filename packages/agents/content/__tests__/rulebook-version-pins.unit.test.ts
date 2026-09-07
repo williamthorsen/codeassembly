@@ -28,21 +28,21 @@ interface RulebookPin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: '6e63bd0730a9c89127bd2a9f289363bd88768d8c16358c1be2dab9f989f075d6', version: '14' },
+    { bodyHash: 'e6b8a98505f8ff0b7c11682ac6f1575eea1fc1a26021518722a09d7e71f1bfa7', version: '15' },
   ],
   [
     'commit-conventions',
     { bodyHash: 'dcc72e017ea6692f3b0f408ff81ad5f5bdd7c962f377db11e754227e19f927d1', version: '2' },
   ],
   [
+    'generated-content-policy',
+    { bodyHash: '2448d32434c2545e9dd8433bb153eb72ca6f35fca0db4702ed5a0198cebac942', version: '1' },
+  ],
+  [
     'live-worktree-conventions',
     { bodyHash: '0b9f8190358a3303d96dbb290428b9d125fb8472eea0410b62b56c8a203eae26', version: '1' },
   ],
   ['shell-conventions', { bodyHash: 'db4b63b590313eb149f1f1e0c65fe626b9d8db073461a96d21f4a0c22d52ecf2', version: '2' }],
-  [
-    'understanding-codeassembly',
-    { bodyHash: 'b62a7d57b23bf9f94e4525b3c22268d394248933c790238e3b2e6d6e5fd8760a', version: '1' },
-  ],
   [
     'williamthorsen-code-layout-preferences',
     { bodyHash: '24e2dd3891ca3f5bd8bbc30d6cb9c08cffd67df94748a049385d7c82924c47e0', version: '3' },
