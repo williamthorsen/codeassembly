@@ -241,7 +241,7 @@ Invocation surface:
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 ```
 
-The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
+The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). One case rewrites on a cached read: A default-branch manifest holding a `ticket_url` or `pr_url` is repaired, once, per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
 
 When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first: The deriver is the single derivation surface and is safe to call from any context.
 
