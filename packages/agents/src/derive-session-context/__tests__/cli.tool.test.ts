@@ -4,13 +4,19 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { deriveSessionContext, parseArgs } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
 
 const NOW = new Date('2026-05-26T02:07:41Z');
+
+/**
+ * A branch that is not the default one, so a stored URL is allowed on it. Its name encodes no
+ * ticket, the case the default-branch invariant must leave alone.
+ */
+const WORKING_BRANCH = 'add-cache';
 
 describe(parseArgs, () => {
   it('returns null fields and no mutations when no args are supplied', () => {
@@ -279,14 +285,14 @@ describe(deriveSessionContext, () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const set = await deriveSessionContext({
       cwd: workDir,
-      branch: 'main',
+      branch: WORKING_BRANCH,
       now: NOW,
       home: workDir,
       mutations: [{ field, value: url }],
     });
     expect(set[field]).toBe(url);
 
-    const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const reread = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
     expect(reread[field]).toBe(url);
   });
 
@@ -297,14 +303,14 @@ describe(deriveSessionContext, () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     await deriveSessionContext({
       cwd: workDir,
-      branch: 'main',
+      branch: WORKING_BRANCH,
       now: NOW,
       home: workDir,
       mutations: [{ field, value: url }],
     });
     const cleared = await deriveSessionContext({
       cwd: workDir,
-      branch: 'main',
+      branch: WORKING_BRANCH,
       now: NOW,
       home: workDir,
       mutations: [{ field, value: null }],
@@ -320,14 +326,14 @@ describe(deriveSessionContext, () => {
     // Seed a stale manifest (missing the required `scm` field) that nonetheless carries stored
     // URLs. The next derive recomposes because the manifest fails the schema check; carry-forward
     // must rescue the URLs from the prior file.
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    const manifestPath = path.join(workDir, '.agents', `${WORKING_BRANCH}.branch-manifest.json`);
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
       ticket_id: null,
       ticket_ref: null,
       project_slug: 'seeded',
       default_branch: 'origin/main',
-      branch_name: 'main',
+      branch_name: WORKING_BRANCH,
       artifact_base_dir: '/tmp/seeded',
       artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
       created_at: '2025-01-01T00:00:00Z',
@@ -336,7 +342,7 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
 
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBe(ticketUrl);
     expect(recomposed.pr_url).toBe(prUrl);
@@ -504,7 +510,179 @@ describe(deriveSessionContext, () => {
   });
 });
 
+describe('default-branch invariant', () => {
+  let workDir: string;
+
+  beforeEach(async () => {
+    workDir = await mkdtemp(path.join(tmpdir(), 'derive-session-context-default-branch-'));
+  });
+
+  afterEach(async () => {
+    await rm(workDir, { recursive: true, force: true });
+  });
+
+  it.each([
+    { flag: '--set-ticket-url', field: 'ticket_url', url: 'https://github.com/owner/repo/issues/783' },
+    { flag: '--set-pr-url', field: 'pr_url', url: 'https://github.com/owner/repo/pull/42' },
+  ] as const)('refuses $flag on the default branch and reports it', async ({ field, url }) => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await deriveSessionContext({
+        cwd: workDir,
+        branch: 'main',
+        now: NOW,
+        home: workDir,
+        mutations: [{ field, value: url }],
+      });
+      expect(result[field]).toBeNull();
+      expect(findStderrLine(stderrSpy, 'refusing to store')).toMatch(
+        new RegExp(`refusing to store ${field} on default branch main`),
+      );
+    } finally {
+      stderrSpy.mockRestore();
+    }
+
+    const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(reread[field]).toBeNull();
+  });
+
+  it('leaves a clean default-branch manifest untouched when a set is refused', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const before = await readFile(manifestPath, 'utf8');
+
+    await deriveSessionContext({
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field: 'ticket_url', value: 'https://github.com/owner/repo/issues/783' }],
+    });
+
+    expect(await readFile(manifestPath, 'utf8')).toBe(before);
+  });
+
+  it.each([
+    { flag: '--clear-ticket-url', field: 'ticket_url' },
+    { flag: '--clear-pr-url', field: 'pr_url' },
+  ] as const)('still accepts $flag on the default branch', async ({ field }) => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const cleared = await deriveSessionContext({
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field, value: null }],
+    });
+    expect(cleared[field]).toBeNull();
+  });
+
+  it('repairs a default-branch manifest that already holds stored URLs, in the file', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    const polluted = {
+      ticket_id: null,
+      ticket_ref: null,
+      project_slug: 'seeded',
+      scm: 'github',
+      default_branch: 'origin/main',
+      branch_name: 'main',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      ticket_url: 'https://github.com/owner/repo/issues/411',
+      pr_url: 'https://github.com/owner/repo/pull/42',
+    };
+    await writeFile(manifestPath, JSON.stringify(polluted), 'utf8');
+
+    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(result.ticket_url).toBeNull();
+    expect(result.pr_url).toBeNull();
+
+    // The repair is durable, not a mask over the emitted JSON: the file no longer holds the values.
+    const onDisk: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
+    expect(onDisk).toMatchObject({ ticket_url: null, pr_url: null });
+  });
+
+  it('drops stored URLs on the default branch rather than carrying them forward', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    // Stale (missing the required `scm`), so the read fails the schema check and forces a recompose.
+    // Carry-forward would rescue the URLs on any other branch; the invariant outranks it here.
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    const stale = {
+      ticket_id: null,
+      ticket_ref: null,
+      project_slug: 'seeded',
+      default_branch: 'origin/main',
+      branch_name: 'main',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      ticket_url: 'https://github.com/owner/repo/issues/411',
+      pr_url: 'https://github.com/owner/repo/pull/42',
+    };
+    await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
+
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(recomposed.ticket_url).toBeNull();
+    expect(recomposed.pr_url).toBeNull();
+  });
+
+  it('follows the configured default branch rather than the literal main', async () => {
+    await writeProjectPrefs(
+      workDir,
+      'project:\n  slug: my-project\nrepository:\n  default_remote:\n    default_branch: trunk\n',
+    );
+    const url = 'https://github.com/owner/repo/issues/783';
+
+    const onTrunk = await deriveSessionContext({
+      cwd: workDir,
+      branch: 'trunk',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field: 'ticket_url', value: url }],
+    });
+    expect(onTrunk.ticket_url).toBeNull();
+
+    const onMain = await deriveSessionContext({
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field: 'ticket_url', value: url }],
+    });
+    expect(onMain.ticket_url).toBe(url);
+  });
+
+  it('strips only the remote from a slashed default branch', async () => {
+    await writeProjectPrefs(
+      workDir,
+      'project:\n  slug: my-project\nrepository:\n  default_remote:\n    default_branch: release/2.x\n',
+    );
+    const result = await deriveSessionContext({
+      cwd: workDir,
+      branch: 'release/2.x',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field: 'ticket_url', value: 'https://github.com/owner/repo/issues/783' }],
+    });
+    expect(result.default_branch).toBe('origin/release/2.x');
+    expect(result.ticket_url).toBeNull();
+  });
+});
+
 // region | Helpers
+
+/** Returns the first line a stderr spy captured containing `needle`, or undefined when none does. */
+function findStderrLine(spy: MockInstance<typeof process.stderr.write>, needle: string): string | undefined {
+  return spy.mock.calls
+    .map((call) => call[0])
+    .find((arg): arg is string => typeof arg === 'string' && arg.includes(needle));
+}
 
 async function writeProjectPrefs(workDir: string, body: string): Promise<void> {
   const agentsDir = path.join(workDir, '.agents');

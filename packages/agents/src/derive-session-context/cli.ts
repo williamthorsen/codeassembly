@@ -11,6 +11,10 @@
  * - Single mutation point: the `--set-*` / `--clear-*` flags read-or-compose a manifest, apply the
  *   mutation, write the file atomically, and emit the updated JSON. With no mutation flag the
  *   read-or-compose behavior is unchanged.
+ * - Default-branch invariant: a manifest whose branch is the default branch carries no `ticket_url`
+ *   and no `pr_url`. The default branch is derived from no ticket and belongs to no pull request, so
+ *   a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. It is the one
+ *   thing that makes a cache hit write: an already-stored value is cleared from the file, once.
  * - Writes JSON to stdout, diagnostics to stderr. Exit 0 on success; exit 1 on hard failures
  *   (detached HEAD, no git, schema-validation error).
  *
@@ -23,7 +27,9 @@
  *   --home <path>        Override home directory for `~/.agents/preferences.yaml` lookup.
  *                        Defaults to `os.homedir()`.
  *   --set-ticket-url <url>  Store `url` as the manifest's `ticket_url` (write-through overwrite).
+ *                           Refused on the default branch, where it reports and leaves the field null.
  *   --set-pr-url <url>      Store `url` as the manifest's `pr_url` (write-through overwrite).
+ *                           Refused on the default branch, as `--set-ticket-url` is.
  *   --clear-ticket-url      Reset the manifest's `ticket_url` to `null`.
  *   --clear-pr-url          Reset the manifest's `pr_url` to `null`.
  */
@@ -60,12 +66,18 @@ const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
   'created_at',
 ];
 
+/** The manifest fields the mutation flags write, and the ones the default-branch invariant governs. */
+const STORED_URL_FIELDS = ['ticket_url', 'pr_url'] as const;
+
+/** One of the stored-URL fields. Derived from `STORED_URL_FIELDS` so the two cannot drift apart. */
+type StoredUrlField = (typeof STORED_URL_FIELDS)[number];
+
 /**
  * A request to set or clear one stored URL field. `value` is the new value: a string for a
  * `--set-*` flag, `null` for a `--clear-*` flag.
  */
 interface ManifestMutation {
-  readonly field: 'ticket_url' | 'pr_url';
+  readonly field: StoredUrlField;
   readonly value: string | null;
 }
 
@@ -104,7 +116,9 @@ async function main(): Promise<void> {
  * current-schema manifest or composes and writes a fresh one. With `mutations`, obtains the base
  * manifest the same way, applies the set/clear operations, and writes the result atomically. A
  * fresh compose carries previously stored URLs forward from any prior file so a required-field
- * bump never silently drops them.
+ * bump never silently drops them. The default-branch invariant is enforced last, over whatever the
+ * earlier steps produced, so it covers a refused mutation, a carry-forward, and an already-stored
+ * value read from cache alike.
  *
  * @internal Exported for testing.
  */
@@ -134,18 +148,16 @@ export async function deriveSessionContext(input: {
     oldPath,
   });
 
-  if (mutations.length === 0) {
-    // Read-or-compose with no mutation: preserve the existing idempotency contract. The fast-path
-    // read returns without rewriting; the old-format and fresh-compose paths write.
-    if (base.needsWrite) {
-      await writeManifest(newPath, base.manifest);
-    }
-    return base.manifest;
-  }
+  const mutated = mutations.length === 0 ? base.manifest : applyMutations(base.manifest, mutations);
+  const final = enforceDefaultBranchInvariant(mutated, mutations);
 
-  const mutated = applyMutations(base.manifest, mutations);
-  await writeManifest(newPath, mutated);
-  return mutated;
+  // Write when the read-or-compose path owes one, or when this run changed a stored URL. Comparing
+  // the two fields rather than object identity is what keeps a refused mutation from rewriting a
+  // clean cache hit: it produces a new object holding the values it started with.
+  if (base.needsWrite || !hasSameStoredUrls(base.manifest, final)) {
+    await writeManifest(newPath, final);
+  }
+  return final;
 }
 
 /**
@@ -186,6 +198,59 @@ function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMu
     result = { ...result, [mutation.field]: mutation.value };
   }
   return result;
+}
+
+/**
+ * Enforces the default-branch invariant: on the default branch, `ticket_url` and `pr_url` are null.
+ * That branch is derived from no ticket and belongs to no pull request, so a value there is not the
+ * branch's association but whichever one the last session happened to resolve, and a later session
+ * auto-resolving from it would proceed against an arbitrary ticket or PR.
+ *
+ * A field holding no value is left exactly as found, absent or null alike, so a manifest already
+ * satisfying the invariant is returned unchanged and needs no write. `mutations` distinguishes a
+ * refused `--set-*` from the repair of a value that was already stored; both are reported, since a
+ * silently vanishing URL is the harder of the two to explain.
+ */
+function enforceDefaultBranchInvariant(
+  manifest: BranchManifest,
+  mutations: readonly ManifestMutation[],
+): BranchManifest {
+  if (!isOnDefaultBranch(manifest)) {
+    return manifest;
+  }
+  let result = manifest;
+  for (const field of STORED_URL_FIELDS) {
+    const stored = result[field];
+    if (stored === undefined || stored === null) {
+      continue;
+    }
+    const refused = mutations.some((mutation) => mutation.field === field && mutation.value !== null);
+    process.stderr.write(
+      refused
+        ? `derive-session-context: refusing to store ${field} on default branch ${manifest.branch_name}\n`
+        : `derive-session-context: cleared ${field} stored on default branch ${manifest.branch_name}\n`,
+    );
+    result = { ...result, [field]: null };
+  }
+  return result;
+}
+
+/**
+ * True when the manifest's branch is the repository's default branch. `default_branch` is
+ * remote-qualified (`origin/main`) where `branch_name` is bare, so the remote is stripped before the
+ * comparison. Only the first segment goes: a remote name carries no slash, and a branch name may
+ * (`origin/release/2.x` yields `release/2.x`).
+ */
+function isOnDefaultBranch(manifest: BranchManifest): boolean {
+  const { default_branch: defaultBranch, branch_name: branchName } = manifest;
+  const separatorIndex = defaultBranch.indexOf('/');
+  const defaultBranchName = separatorIndex === -1 ? defaultBranch : defaultBranch.slice(separatorIndex + 1);
+  return defaultBranchName === branchName;
+}
+
+/** True when both manifests hold the same value in every stored-URL field. */
+function hasSameStoredUrls(a: BranchManifest, b: BranchManifest): boolean {
+  return STORED_URL_FIELDS.every((field) => a[field] === b[field]);
 }
 
 /**
