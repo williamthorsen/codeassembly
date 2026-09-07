@@ -138,9 +138,11 @@ Use `ticket_title` directly as the GitHub issue title or the Jira summary; it al
 
 #### GitHub path
 
-Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
+Write the body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-issue-{timestamp}.md`, since the issue has no number until this step returns one; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
 
 ```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 url=$(gh issue create --title "${ticket_title}" --body-file "$body_path"${label_flags})
 ```
 
@@ -323,15 +325,21 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 
 Then attach it as a comment on the remote ticket, through the platform step 3 resolved.
 
-**GitHub.** Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
+**GitHub.** Write the comment body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-issue{number}-{timestamp}.md`; do not inline the comment into the shell command:
 
 ```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 gh issue comment {number} --body-file "$body_path"
 ```
 
 **Jira.** Comment through the client that created the work item, in the format {skill:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
 
+The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path carried between Bash invocations resolves to nothing either way.
+
 ```bash
+adf_path="{absolute path from the write step}"
+[ -s "$adf_path" ] || { echo "Comment file missing or empty: $adf_path" >&2; exit 1; }
 acli jira workitem comment create --key "{ticket_id}" --body-file "$adf_path"
 ```
 
@@ -369,3 +377,5 @@ Branch association skipped: {reason}       <- only when the step-6 guard skipped
 ```
 
 Nothing else.
+
+<!-- include: ../_partials/gh-body-file.md / -->

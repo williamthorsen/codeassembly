@@ -108,9 +108,11 @@ Write a revision back to the ticket of record, which the caller names; where a c
 
 ### GitHub
 
-Write the body to a scratch file using the [gh body file](gh-body-file.md) pattern, then:
+Write the body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-issue{number}-{timestamp}.md`, then:
 
-```
+```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 gh issue edit {number} --body-file "$body_path"
 ```
 
@@ -145,3 +147,5 @@ After resolution, store the following metadata for use by the calling skill:
 - **Last-updated date**: The ticket's last-modified timestamp, if available from the platform
 - **Ticket content**: The title, body, labels, and any other retrieved fields
 - **Ticket URL**: Persisted across sessions in the branch manifest's `ticket_url` field, written through the deriver's mutation flags; see [Stored ticket URL](#stored-ticket-url)
+
+<!-- include: ../_partials/gh-body-file.md / -->

@@ -111,15 +111,16 @@ Report the written `path` on success.
 Such a pull request wrote no merge artifact, so the caller supplies the merged lede. The helper reads a lede file whole and records it as the lede, applying none of the heading extraction it uses on the artifact path: Where the file contains the entire pull-request body, the helper records the entire body as the lede. Extract the `## What` section as the file is written:
 
 ```bash
+lede_path="{absolute path in the session scratchpad, or under $TMPDIR as this call resolves it}"
 gh pr view <number> --json body --jq '.body' \
   | awk '{ sub(/\r$/, "") }
          tolower($0) ~ /^## what[[:space:]]*$/ { capturing = 1; next }
          /^## / { capturing = 0 }
          capturing' \
-  > "$TMPDIR/merged-lede.md"
+  > "$lede_path"
 ```
 
-Pass that file to `--merged-lede-file` and continue from step 2. Everything else resolves from the ticket's artifacts as usual.
+Pass that absolute path to `--merged-lede-file`, not a `$TMPDIR`-relative one: the variable resolves differently from one Bash invocation to the next, so a later call would look for the file somewhere else. Continue from step 2; everything else resolves from the ticket's artifacts as usual.
 
 ## The record
 
