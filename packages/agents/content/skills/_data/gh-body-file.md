@@ -1,6 +1,6 @@
 # gh body file
 
-Pattern for passing Markdown bodies to `gh` commands without routing content through bash.
+Pattern for passing Markdown bodies to `gh` and `acli` without routing content through bash.
 
 The contract comes first; the reasoning behind it follows. Skills that compose a body inline the contract rather than linking to it, so what they consult here is the reasoning.
 
