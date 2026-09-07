@@ -11,4 +11,4 @@ packages:
 rulebooks:
   use:
     - codeassembly-content-specification
-    - live-worktree-conventions
+    - live-worktree-policy

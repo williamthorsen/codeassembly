@@ -39,8 +39,8 @@ const PINS = new Map<string, RulebookPin>([
     { bodyHash: '2448d32434c2545e9dd8433bb153eb72ca6f35fca0db4702ed5a0198cebac942', version: '1' },
   ],
   [
-    'live-worktree-conventions',
-    { bodyHash: '0b9f8190358a3303d96dbb290428b9d125fb8472eea0410b62b56c8a203eae26', version: '1' },
+    'live-worktree-policy',
+    { bodyHash: 'bd46288d3fedfc65a9f7beada2b07a203aa2bb7c897378e34264e28d1e2b517c', version: '1' },
   ],
   ['shell-conventions', { bodyHash: 'db4b63b590313eb149f1f1e0c65fe626b9d8db073461a96d21f4a0c22d52ecf2', version: '2' }],
   [

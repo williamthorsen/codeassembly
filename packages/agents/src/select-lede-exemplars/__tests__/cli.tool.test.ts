@@ -181,6 +181,16 @@ describe(runSelect, () => {
     expect(expectSuccess(result).warnings).toHaveLength(1);
   });
 
+  it('resolves a work type carrying the breaking-change marker', async () => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await run({ argv: ['--type', 'feat!'], fixture });
+
+    const success = expectSuccess(result);
+    expect(success.type).toBe('feat');
+    expect(success.tier).toBe('public');
+  });
+
   it('reports a work type the taxonomy does not declare', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
