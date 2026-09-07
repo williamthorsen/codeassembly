@@ -182,7 +182,7 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
 - **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
 - **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
-- **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file.
+- **`acli`**: convert the body to ADF, write the ADF to a scratch file per [gh body file](#gh-body-file), and pass the file. An unset path costs the work item's description on a work item that then exists without one.
 
   Where step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` carries no `--parent` flag, so this is the only call that can set one, and a reference Jira rejects costs the work item rather than the relationship unless it is checked first:
 
@@ -193,6 +193,8 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
   A zero exit adds `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: create the work item without the flag, and report the parent as skipped per step 7.
 
   ```bash
+  adf_path="{absolute path from the write step}"
+  [ -s "$adf_path" ] || { echo "Description file missing or empty: $adf_path" >&2; exit 1; }
   output=$(acli jira workitem create \
     --project "{project_key}" \
     --type "{issue_type}" \

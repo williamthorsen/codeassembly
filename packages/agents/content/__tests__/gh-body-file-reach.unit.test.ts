@@ -24,8 +24,11 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
   CONTRACT_HEADLINE,
   'Name the file for its consumer.',
   'Assign the path and guard it inside the call that consumes it.',
-  'The `Write` tool performs no shell expansion',
+  'tool performs no shell expansion',
 ];
+
+/** The body-file flags the guarded CLIs take; `acli` names the description one on its create call. */
+const BODY_FILE_FLAGS: ReadonlyArray<string> = ['--body-file', '--description-file'];
 
 /** The guard itself, which is what turns a missing or empty body file into a refusal. */
 const GUARD = '[ -s "$body_path" ]';
@@ -70,8 +73,8 @@ describe('gh-body-file reach', () => {
     for (const relativePath of CARRIERS) {
       const content = await readFile(path.join(CONTENT_ROOT, relativePath), 'utf8');
       for (const block of listShellBlocks(content)) {
-        if (!block.includes('--body-file')) continue;
-        if (block.includes('-s "$body_path"') || block.includes('-s "$adf_path"')) continue;
+        if (BODY_FILE_FLAGS.every((flag) => !block.includes(flag))) continue;
+        if (/\[ -s "\$\w+" \]/.test(block)) continue;
         violations.push(relativePath);
       }
     }
@@ -105,10 +108,10 @@ async function expandCarrier(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
 }
 
-/** Returns the bodies of a Markdown file's fenced `bash` blocks. */
+/** Returns the bodies of a Markdown file's fenced `bash` blocks, indented ones inside list items included. */
 function listShellBlocks(content: string): Array<string> {
   const blocks: Array<string> = [];
-  const pattern = /^```bash\n([\s\S]*?)^```$/gm;
+  const pattern = /^[ \t]*```bash\n([\s\S]*?)^[ \t]*```$/gm;
   let match = pattern.exec(content);
   while (match !== null) {
     const body = match[1];
