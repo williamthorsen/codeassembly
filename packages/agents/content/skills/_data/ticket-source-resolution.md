@@ -13,7 +13,7 @@ Resolve a ticket source argument into ticket content and metadata. Skills that a
 | Plain text                                                  | Use as-is                                                                                        |
 | _(no source provided)_                                      | Auto-resolve from environment (see [auto-resolve](#auto-resolve))                                |
 
-**Persist the resolved URL.** After resolving by any form above (an explicitly supplied URL included, not only the auto-resolve path), store the resolved `ticket_url` in the branch manifest so later sessions reuse it without re-resolving or re-pasting. See [Stored ticket URL](#stored-ticket-url).
+**Persist the resolved URL.** After resolving by any form above (an explicitly supplied URL included, not only the auto-resolve path), store the resolved `ticket_url` in the branch manifest so later sessions reuse it without re-resolving or re-pasting. On the default branch nothing is stored, and the deriver enforces that. See [Stored ticket URL](#stored-ticket-url).
 
 ## Auto-resolve
 
@@ -132,6 +132,7 @@ The manifest also surfaces `ticket_base_url`, mirroring the `ticket.base_url` pr
 
 - **Prefer**: Auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
 - **Persist**: After a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it by running `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
+- **Never on the default branch**: That branch is derived from no ticket, so a URL stored against it is not its association but whichever ticket the last session happened to resolve, and a later session auto-resolving from it proceeds against an arbitrary one. The deriver enforces this: it refuses the write, reports on stderr, exits 0, and emits a manifest whose `ticket_url` is null. It clears a value already stored there for the same reason. A skill that decides the skip itself can report it in its own completion output instead of leaving it to a stderr line; `create-ticket` does. `pr_url` carries the same rule; see [PR source resolution](pr-source-resolution.md#stored-pr-url).
 - **Invalidate**: When the stored URL does not yield the expected ticket (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-fetches through `acli` or a connected read tool, and re-prompts the user only where neither is available.
 
 ## Resolved metadata

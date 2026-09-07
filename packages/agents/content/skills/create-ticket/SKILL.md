@@ -30,7 +30,7 @@ Each takes ticket references in the project's own form (`#123`, `ABC-123`), comm
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `artifact_base_dir`, and `ticket_base_url` from the manifest JSON emitted on stdout
-- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6.
+- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6. Read `branch_name` and `default_branch` too, which the step-6 guard compares.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 - From the same file, read `integrations.jira.project_key` and `integrations.jira.issue_types`. Both are optional, and both are consumed only by step 6's Jira path, which states what each falls back to.
 
@@ -210,15 +210,19 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
 #### Persist the branch association
 
-Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced:
+Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced, and `branch_name` against `default_branch` (both step 1, the second remote-qualified as `origin/main` where the first is bare):
 
-- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `ticket_id` (the branch is already linked to this ticket), persist:
+- When the branch is not the default branch, and `branch_ticket_id` is either empty (the branch encodes no ticket) or equal to `ticket_id` (the branch is already linked to this ticket), persist:
 
   ```bash
   node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
   ```
 
+- When the branch is the default branch, the new ticket is a backlog ticket by construction: that branch is derived from no ticket, so it has no association to record. Skip the persist and report it, e.g. `Ticket {ticket_id} created on default branch {branch_name}; skipped branch-manifest association.`
+
 - Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket {ticket_id} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
+
+The deriver refuses the write on the default branch regardless, per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url). Deciding it here is what produces the reported skip rather than a stderr diagnostic the completion output never sees.
 
 Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare where `ticket_ref_prefix` is `#` or absent, prefixed where it is a project key. Comparing a bare number holds only in the first case and silently skips every persist in the second.
 
