@@ -210,7 +210,7 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
 #### Persist the branch association
 
-Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced, and `branch_name` against `default_branch` (both step 1, the second remote-qualified as `origin/main` where the first is bare):
+Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced, and `branch_name` against `default_branch` (both step 1). The second comparison strips `default_branch`'s remote first, taking everything after its first `/`, since `default_branch` is remote-qualified (`origin/main`) where `branch_name` is bare (`main`). Comparing the two as written matches on no branch and silently disables the guard.
 
 - When the branch is not the default branch, and `branch_ticket_id` is either empty (the branch encodes no ticket) or equal to `ticket_id` (the branch is already linked to this ticket), persist:
 
@@ -218,7 +218,7 @@ Persist the new ticket's URL into the branch manifest so later sessions reuse it
   node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
   ```
 
-- When the branch is the default branch, the new ticket is a backlog ticket by construction: that branch is derived from no ticket, so it has no association to record. Skip the persist and report it, e.g. `Ticket {ticket_id} created on default branch {branch_name}; skipped branch-manifest association.`
+- When the branch is the default branch, the new ticket is a backlog ticket by construction: That branch is derived from no ticket, so it has no association to record. Skip the persist and report it, e.g. `Ticket {ticket_id} created on default branch {branch_name}; skipped branch-manifest association.`
 
 - Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket {ticket_id} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
 

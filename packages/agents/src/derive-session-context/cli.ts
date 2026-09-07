@@ -9,12 +9,13 @@
  *   it. Otherwise composes a fresh manifest, writes it, and returns it. Stale-schema or corrupt
  *   manifests are overwritten in place.
  * - Single mutation point: the `--set-*` / `--clear-*` flags read-or-compose a manifest, apply the
- *   mutation, write the file atomically, and emit the updated JSON. With no mutation flag the
+ *   mutation, and emit the updated JSON, writing the file atomically when a stored URL changed. A
+ *   mutation that resolves to the value already held writes nothing. With no mutation flag the
  *   read-or-compose behavior is unchanged.
  * - Default-branch invariant: a manifest whose branch is the default branch carries no `ticket_url`
  *   and no `pr_url`. The default branch is derived from no ticket and belongs to no pull request, so
  *   a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. It is the one
- *   thing that makes a cache hit write: an already-stored value is cleared from the file, once.
+ *   thing that makes a no-mutation cache hit write: an already-stored value is cleared, once.
  * - Writes JSON to stdout, diagnostics to stderr. Exit 0 on success; exit 1 on hard failures
  *   (detached HEAD, no git, schema-validation error).
  *
@@ -365,8 +366,9 @@ async function writeManifest(targetPath: string, manifest: BranchManifest): Prom
 /**
  * True when `value` is an object containing every required manifest field with the right type.
  * Hand-rolled type narrowing rather than Zod because the schema is small, stable, and Zod is not
- * in use elsewhere in this module. Fields not checked here (e.g., `project_slug`, `branch_name`)
- * are present-but-unchecked; the downstream consumers tolerate `unknown` for those.
+ * in use elsewhere in this module. Fields not checked here (e.g., `project_slug`, `created_at`) are
+ * present-but-unchecked; the downstream consumers tolerate `unknown` for those. A field a consumer
+ * dereferences belongs in the checks below, so a corrupt value recomposes rather than throwing.
  */
 function isCurrentSchema(value: unknown): value is BranchManifest {
   if (!isRecord(value)) {
@@ -387,6 +389,9 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
     return false;
   }
   if (value.scm !== 'github' && value.scm !== 'bitbucket') {
+    return false;
+  }
+  if (typeof value.default_branch !== 'string' || typeof value.branch_name !== 'string') {
     return false;
   }
   // The stored-URL fields are optional and not part of REQUIRED_MANIFEST_FIELDS, so a manifest

@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { deriveSessionContext, parseArgs } from '../cli.ts';
+import type { BranchManifest } from '../types.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -362,10 +363,9 @@ describe(deriveSessionContext, () => {
       expect(recomposed.ticket_url).toBeNull();
       expect(recomposed.pr_url).toBeNull();
 
-      const warningLine = stderrSpy.mock.calls
-        .map((call) => call[0])
-        .find((arg): arg is string => typeof arg === 'string' && arg.includes('stored URLs not carried forward'));
-      expect(warningLine).toMatch(/prior manifest at .* is corrupt; stored URLs not carried forward/);
+      expect(findStderrLine(stderrSpy, 'stored URLs not carried forward')).toMatch(
+        /prior manifest at .* is corrupt; stored URLs not carried forward/,
+      );
     } finally {
       stderrSpy.mockRestore();
     }
@@ -598,13 +598,50 @@ describe('default-branch invariant', () => {
     };
     await writeFile(manifestPath, JSON.stringify(polluted), 'utf8');
 
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    let result: BranchManifest;
+    try {
+      result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+      expect(findStderrLine(stderrSpy, 'cleared ticket_url')).toMatch(
+        /cleared ticket_url stored on default branch main/,
+      );
+      expect(findStderrLine(stderrSpy, 'cleared pr_url')).toMatch(/cleared pr_url stored on default branch main/);
+    } finally {
+      stderrSpy.mockRestore();
+    }
     expect(result.ticket_url).toBeNull();
     expect(result.pr_url).toBeNull();
 
     // The repair is durable, not a mask over the emitted JSON: the file no longer holds the values.
     const onDisk: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
     expect(onDisk).toMatchObject({ ticket_url: null, pr_url: null });
+  });
+
+  it.each([
+    { field: 'default_branch', malformed: { default_branch: null } },
+    { field: 'branch_name', malformed: { branch_name: 42 } },
+  ] as const)('recomposes rather than throwing when $field is wrong-typed', async ({ malformed }) => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    const seeded = {
+      ticket_id: null,
+      ticket_ref: null,
+      project_slug: 'seeded',
+      scm: 'github',
+      default_branch: 'origin/main',
+      branch_name: 'main',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      ...malformed,
+    };
+    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
+
+    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(result.default_branch).toBe('origin/main');
+    expect(result.branch_name).toBe('main');
+    expect(result.project_slug).toBe('my-project');
   });
 
   it('drops stored URLs on the default branch rather than carrying them forward', async () => {
