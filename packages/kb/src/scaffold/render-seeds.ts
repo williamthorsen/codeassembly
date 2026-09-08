@@ -16,9 +16,11 @@ const ALIASES_HEADER = `# Tag aliases for this knowledge store.
 
 const CONFIG_HEADER = `# Check configuration for this knowledge store.
 #
-# Both keys are optional and fall back to the defaults shown below; an absent file uses these defaults too. Uncomment
+# Every key is optional and falls back to the default shown below; an absent file uses these defaults too. Uncomment
 # and edit to override. \`targets\` selects which notes \`kb check\` enumerates and \`exclude\` removes matches;
-# patterns are slash-separated and relative to the store root.
+# patterns are slash-separated and relative to the store root. \`visibility\` declares how widely the store is
+# published, which decides what may link into it: a \`[[store:Note title]]\` link resolves only into a store as
+# shareable as its own or more so.
 #
 `;
 
