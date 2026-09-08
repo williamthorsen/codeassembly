@@ -25,8 +25,14 @@ describe(parseRecord, () => {
     ).toThrow(/ISO calendar date/);
   });
 
-  it('refuses a rejection naming a rule the helper does not detect', () => {
-    expect(() => parseRecord(rejectionYaml({ rule: 'sentence-case' }))).toThrow(/Invalid sweep record/);
+  it('reads a rejection under a rule the helper holds no detector for', () => {
+    const record = parseRecord(rejectionYaml({ rule: 'plain-speech', unit: 'plain-speech' }));
+
+    expect(record.rejections[0]?.rule).toBe('plain-speech');
+  });
+
+  it('refuses a rejection whose rule is not a kebab-case name', () => {
+    expect(() => parseRecord(rejectionYaml({ rule: 'Plain Speech' }))).toThrow(/kebab-case/);
   });
 
   it('refuses a hash that is not sixteen hex characters', () => {
@@ -224,6 +230,19 @@ describe(stringifyRecord, () => {
       }),
     );
 
+    expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
+  });
+
+  it('round-trips a rejection under a rule with no detector', () => {
+    const record = composeRecord(
+      EMPTY,
+      fold({
+        units: { 'plain-speech': { version: '3', roots: ['.'] } },
+        rejections: [foldRejection({ rule: 'plain-speech', unit: 'plain-speech' })],
+      }),
+    );
+
+    expect(record.rejections[0]).toMatchObject({ rule: 'plain-speech', 'unit-version': '3' });
     expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
   });
 

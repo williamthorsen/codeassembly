@@ -85,7 +85,11 @@ export interface UnitCoverage {
 
 /** One adjudicated rejection, keyed on its rule, its file, and the hash of its phrase. */
 export interface RecordedRejection {
-  rule: RuleId;
+  /**
+   * The rule the site was adjudicated under. Any rule a bound rulebook declares, whether or not the helper holds a
+   * detector for it, so a unit records what a sweeper judged without owning a detector.
+   */
+  rule: string;
   /** The unit owning the rule, which is what a version bump marks stale. */
   unit: string;
   /** The unit's version when the rejection was recorded. */
@@ -111,7 +115,8 @@ export interface ProseRecord {
  * the key a function of the phrase as it reads after the run's edits rather than of whatever a caller supplies.
  */
 export interface FoldRejection {
-  rule: RuleId;
+  /** The rule the site was adjudicated under, detected or not. */
+  rule: string;
   /** The unit owning the rule, which must be one the fold names. */
   unit: string;
   file: string;

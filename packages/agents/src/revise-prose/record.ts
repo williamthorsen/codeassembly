@@ -14,11 +14,16 @@ import { createHash } from 'node:crypto';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { z } from 'zod';
 
-import { RULE_IDS } from './rules.ts';
 import type { Candidate, ProseRecord, RecordedRejection, RunFold } from './types.ts';
 
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
+
+/**
+ * A rule name. Any rule a bound rulebook declares is recordable, detected or not, so the shape is all that is held
+ * here: pinning the detector registry's names would make a unit's coverage of the record depend on holding a detector.
+ */
+const RuleNameSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'rule must be a lowercase kebab-case name');
 
 /** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
@@ -32,7 +37,7 @@ const UnitCoverageSchema = z.object({
 
 /** One rejection, keyed on its rule, its file, and the hash of its phrase. */
 const RejectionSchema = z.object({
-  rule: z.enum(RULE_IDS),
+  rule: RuleNameSchema,
   unit: z.string().min(1),
   'unit-version': z.string().min(1),
   file: z.string().min(1),
@@ -49,7 +54,7 @@ export const ProseRecordSchema = z.object({
 
 /** One rejection as a run reports it: no hash and no version, both of which the helper derives. */
 const FoldRejectionSchema = z.object({
-  rule: z.enum(RULE_IDS),
+  rule: RuleNameSchema,
   unit: z.string().min(1),
   file: z.string().min(1),
   phrase: z.string().min(1),
