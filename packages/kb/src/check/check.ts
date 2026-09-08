@@ -111,12 +111,16 @@ async function resolveQualifiedStores(input: {
     projectDir: input.projectDir,
     ...(input.home !== undefined && { home: input.home }),
   });
+  // A registry that did not load leaves every store unconsulted, which is what the empty map reports. Resolving
+  // against its empty entry list instead would claim each store is unregistered, which the run cannot know.
+  if (registry.error !== undefined) return { foreignStores: new Map(), registryError: registry.error };
+
   const foreignStores = await resolveForeignStores({
     prefixes,
     registry: registry.config,
     sourceVisibility: input.sourceVisibility,
   });
-  return { foreignStores, ...(registry.error !== undefined && { registryError: registry.error }) };
+  return { foreignStores };
 }
 
 /** Names the registry in a finding's `path`, which no single file on disk stands for once the two tiers are merged. */

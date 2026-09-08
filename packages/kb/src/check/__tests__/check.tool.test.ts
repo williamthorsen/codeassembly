@@ -157,9 +157,10 @@ describe(`${check.name} resolving store-qualified links`, () => {
 
     const result = await check({ kbRoot: source, home });
 
-    const registryFindings = result.findings.filter((finding) => finding.rule === 'wikilinks.registry-unloadable');
-    expect(registryFindings).toHaveLength(1);
-    expect(registryFindings[0]?.scope).toBe('vault');
+    // The whole list, not a filtered one: a per-link finding here would claim the store is unregistered, which a
+    // run that read no registry cannot know.
+    expect(result.findings.map((finding) => finding.rule)).toEqual(['wikilinks.registry-unloadable']);
+    expect(result.findings[0]?.scope).toBe('vault');
   });
 
   it('reads no registry, and reports none, for a store whose links qualify no store', async () => {

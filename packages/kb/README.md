@@ -188,6 +188,8 @@ Only the stores a run's own links name are consulted, and each is enumerated und
 
 `wikilinks.store-unavailable` is a warning rather than an error because a store absent from this machine leaves its links unverifiable rather than broken: a correct link should not fail a check run on a machine that has not cloned the target.
 
+A run that reports `wikilinks.registry-unloadable` reports nothing per link. No store was looked up, so whether one is registered is undetermined, and naming each link would send the reader to fix a registration that may already be correct.
+
 ### The declared structure: `.kb/taxonomy.yaml`
 
 `.kb/taxonomy.yaml` states where a store's assertions are meant to live. It is the source of truth for intended structure: folders on disk are derived from it, not the reverse. It governs `content/assertions/` only, since `content/events/` is flat and ULID-keyed.
