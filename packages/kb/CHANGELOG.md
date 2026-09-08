@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 — 2026-09-08
+
+### 🎉 Features
+
+- 🚨 **Breaking:** Add kb scaffold to back-fill canonical files into an existing store (#1584)
+
+  - Adds the `kb scaffold` command, which writes the canonical files (`.kb/config.yaml` and `.kb/tag-aliases.yaml`) into a knowledge base. Files are created if missing, or replaced if `--force` is used.
+  - Narrows what `kb create` reports to the paths that it actually created.
+
+  Migration: import `renderAliasesSeed` and `renderConfigSeed` from `@williamthorsen/kb/scaffold` instead of `@williamthorsen/kb/create`.
+
+- Add canonical formatting configs so a store formats without a toolchain (#1586)
+
+  - Adds `.editorconfig` and `.prettierrc.yaml` to the canonical file set, so that `kb create` writes them into a new store and `kb scaffold` back-fills them into an existing one.
+  - Puts width, indentation, and line endings in `.editorconfig`, which editors read as well as Prettier.
+  - Sets `embeddedLanguageFormatting: off` in `.prettierrc.yaml`, which keeps Prettier from reflowing note frontmatter that the kb's note writer would flatten again.
+
+### 🐛 Bug fixes
+
+- Stop checking gitignored notes (#1587)
+
+  - Stops `kb check` from checking notes matching patterns in `.gitignore`. It now checks only those files that are tracked by git or new and not gitignored.
+  - Makes a link pointing at a gitignored note report `wikilinks.unresolved`, since such a link is broken for every clone but the author's.
+  - Fixes `kb check <path>` and `kb check --vs <ref>` for a note with an accented name, which on macOS matched nothing and could select unrelated files in its place.
+
+  Migration: Track a gitignored note that other notes link to, or remove the wikilinks pointing at it.
+
 ## 0.6.2 — 2026-09-01
 
 ### 🧪 Tests

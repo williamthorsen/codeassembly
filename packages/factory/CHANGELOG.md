@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.10 — 2026-09-08
+
+### ⚙️ Tooling
+
+- Bind the import-x resolver and drop factory's .js import specifiers (#1568)
+
+  - Wires the TypeScript import resolver to `settings['import-x/resolver-next']` in the root `eslint.config.ts`, the key that `eslint-plugin-import-x` reads, so `import-x/extensions` reports a `.js` specifier naming a `.ts` file instead of accepting it.
+  - Rewrites the 382 relative `.js` import specifiers under `packages/factory/src/` to name the `.ts` or `.tsx` file on disk, as every other package already does.
+  - Removes two leftovers of the move to `import-x`: the `import/extensions` override in `packages/factory/eslint.config.ts` and `eslint-plugin-import` in the root manifest, neither of which is registered by any config.
+
 ## 0.2.8 — 2026-09-01
 
 ### ♻️ Refactoring

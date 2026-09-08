@@ -1,5 +1,39 @@
 [
   {
+    "version": "0.7.0",
+    "date": "2026-09-08",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Add kb scaffold to back-fill canonical files into an existing store (#1584)",
+            "body": "- Adds the `kb scaffold` command, which writes the canonical files (`.kb/config.yaml` and `.kb/tag-aliases.yaml`) into a knowledge base. Files are created if missing, or replaced if `--force` is used.\n- Narrows what `kb create` reports to the paths that it actually created.\n\nMigration: import `renderAliasesSeed` and `renderConfigSeed` from `@williamthorsen/kb/scaffold` instead of `@williamthorsen/kb/create`.",
+            "breaking": true,
+            "hash": "38d2dfe0fe275a5d3b13981e2e540000c906ce36"
+          },
+          {
+            "description": "Add canonical formatting configs so a store formats without a toolchain (#1586)",
+            "body": "- Adds `.editorconfig` and `.prettierrc.yaml` to the canonical file set, so that `kb create` writes them into a new store and `kb scaffold` back-fills them into an existing one.\n- Puts width, indentation, and line endings in `.editorconfig`, which editors read as well as Prettier.\n- Sets `embeddedLanguageFormatting: off` in `.prettierrc.yaml`, which keeps Prettier from reflowing note frontmatter that the kb's note writer would flatten again.",
+            "hash": "9961b64d7f8fc09ee86620b2671c87c71b9b8f8d"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Stop checking gitignored notes (#1587)",
+            "body": "- Stops `kb check` from checking notes matching patterns in `.gitignore`. It now checks only those files that are tracked by git or new and not gitignored.\n- Makes a link pointing at a gitignored note report `wikilinks.unresolved`, since such a link is broken for every clone but the author's.\n- Fixes `kb check <path>` and `kb check --vs <ref>` for a note with an accented name, which on macOS matched nothing and could select unrelated files in its place.\n\nMigration: Track a gitignored note that other notes link to, or remove the wikilinks pointing at it.",
+            "hash": "1bd88cd98367d260bf3b2b7187f08848935b9e5f"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.6.2",
     "date": "2026-09-01",
     "sections": [

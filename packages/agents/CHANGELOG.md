@@ -2,6 +2,109 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.14.0 — 2026-09-08
+
+### 🎉 Features
+
+- Sweep YAML and Markdown frontmatter, and count every held-out file (#1555)
+
+  - Adds YAML to the file types that `revise-prose` sweeps.
+  - Adds a Markdown file's YAML frontmatter to what `revise-prose` reads, so a shipped skill or subagent `description:` is no longer skipped.
+  - Fixes `revise-prose` reporting a clean sweep over files that no extractor reads, which now count as `ineligible`.
+
+- Require the lede drafter to write bullets from rated exemplars (#1563)
+
+  - Changes the lede drafter's form to a list of bullets, each required to state the benefit of an operation unless the benefit is self-evident.
+  - Instructs the drafter to use only "strong"-rated ledes as exemplars.
+  - Replaces the shared concision rule in `lede-drafter.md` with a "What to leave out" section stating the rule that a lede drops true facts.
+
+- Add a deletion-only lede-cutter to summarize-change (#1567)
+
+  Adds a `lede-cutter` subagent, which receives a drafted lede's bullets and returns the ones its reader would act on. Deleting whole bullets is the whole of its authority.
+
+  Adds a cut step to `summarize-change`, which dispatches the cutter over the verified lede and rejects a return that reworded a bullet or kept none.
+
+  Adds `--with-pair` to `select-lede-exemplars`, which reports each record's agent lede, merged lede, and author comment, so the cutter calibrates against the author's own edits. Without the flag the payload is unchanged, so the lede drafter still receives merged ledes alone.
+
+  Tells the lede writer that every surface renders the change's title above the lede, and makes a bullet restating that title the first one the cutter drops.
+
+- Lead testing-conventions with what a test is for (#1570)
+
+  - Rules out three kinds of test in `testing-conventions`: one guarding a change made on purpose, one guarding code that the repository did not author, and one guarding a difference that costs nothing until noticed.
+  - Requires an agent that proposes a ruled-out test to stop, state the case, and wait for approval rather than write the test.
+
+- Add a fact-routing rule to implement-plan's closing report (#1579)
+
+  - Adds a "Fact routing" section to the `implement-plan` skill, directing how to route a fact by its audience: A fact for the user goes into the closing response, and a fact for a reviewer goes into the commit body, the pull-request description, or a comment in the source.
+
+- Add canonical formatting configs so a store formats without a toolchain (#1586)
+
+  - Adds `.editorconfig` and `.prettierrc.yaml` to the canonical file set, so that `kb create` writes them into a new store and `kb scaffold` back-fills them into an existing one.
+  - Puts width, indentation, and line endings in `.editorconfig`, which editors read as well as Prettier.
+  - Sets `embeddedLanguageFormatting: off` in `.prettierrc.yaml`, which keeps Prettier from reflowing note frontmatter that the kb's note writer would flatten again.
+
+- 🚨 **Breaking:** State the rulebook slug naming convention and rename its one exception (#1596)
+
+  - Renames the `understanding-codeassembly` rulebook to `generated-content-policy` to align with the rulebook naming convention.
+
+  Migration: In a `codeassembly.yaml` that declares `understanding-codeassembly`, change the slug to `generated-content-policy`. The old slug resolves to no rulebook, and the run fails naming the directories searched.
+
+- 🚨 **Breaking:** Rename live-worktree-conventions to live-worktree-policy (#1600)
+
+  - Stops `select-lede-exemplars` from rejecting a `--type` that carries the breaking-change marker, such as `feat!`, which was causing the exemplars for a breaking change to be drawn from the whole public tier instead of the specific work type.
+
+  Migration: In a `.agents/codeassembly.yaml` that declares `live-worktree-conventions` under `rulebooks.use`, change the slug to `live-worktree-policy`. The old slug resolves to no rulebook, and the run fails with a not-found error.
+
+### 🐛 Bug fixes
+
+- Fix the lede audit so it catches and repairs a wrong-subject bullet (#1585)
+
+  - Adds prose-style checks to `summarize-change`'s lede audit.
+  - Limits a redispatch to the passages that failed.
+  - Directs `summarize-change` to ask the developer for a replacement or an explicit acceptance where two redispatches do not converge.
+
+- Stop checking gitignored notes (#1587)
+
+  - Stops `kb check` from checking notes matching patterns in `.gitignore`. It now checks only those files that are tracked by git or new and not gitignored.
+  - Makes a link pointing at a gitignored note report `wikilinks.unresolved`, since such a link is broken for every clone but the author's.
+  - Fixes `kb check <path>` and `kb check --vs <ref>` for a note with an accented name, which on macOS matched nothing and could select unrelated files in its place.
+
+  Migration: Track a gitignored note that other notes link to, or remove the wikilinks pointing at it.
+
+- Stop the deriver storing a ticket or PR URL on the default branch (#1594)
+
+  - Stops the session-context deriver from storing a ticket or pull-request URL against the repository's default branch, and clears one already stored there, so that a skill run from that branch no longer resolves an unrelated session's ticket and `merge-pr` with no `--pr` no longer targets an unrelated pull request.
+  - Adds the skipped branch association to `create-ticket`'s completion output when a ticket is created on the default branch, where the deriver's refusal reaches only stderr.
+
+- Fix the body-file path handoff that published a default body (#1602)
+
+  - Fixes the issue that a composed pull-request, issue, or comment body could be silently replaced by the platform's default. Every body-file call now assigns an absolute scratch path and refuses a missing or empty file.
+  - Adds a check to `merge-gh-pr` that reads the body file back immediately before `gh pr merge` and refuses a merge whose content is not the approved body, since a squash commit on a protected default branch cannot be amended.
+  - Fixes `create-ticket`'s Jira work-item creation, which passed `acli --description-file` an unset path, so the composed description never reached the command.
+
+### 🏗️ Internal features
+
+- State and enforce when a rulebook's version must be bumped (#1572)
+
+  - Updates `codeassembly-content-specification` to state that a rulebook's `version` tracks its deployed body after includes expand, so an edit to an included partial is a content change for every rulebook that includes it; an edit to a linked `_data/` file is not.
+  - Changes the `agents` build, bundle-check, smoke, and install scripts and the CLI tool test to run under `node` rather than `tsx`, whose unix-domain-socket IPC fails with `EPERM` in an environment permitting no unix sockets.
+
+### ♻️ Refactoring
+
+- Decompose sync.ts into topic modules that declare their own types (#1554)
+
+  Splits `commands/sync/sync.ts` into one module per concern, each declaring its own types, so `report.ts` reads each type from the module that owns it. `sync.ts` keeps the two command entry points and `reconcileDomain`.
+
+  Separately, each ambient host is now read once per run rather than twice.
+
+### 🧪 Tests
+
+- Guard every shellspec hook against a failed mktemp (#1577)
+
+  - Adds the `make_tmpdir`, `remove_tmpdir`, `enter_tmpdir`, and `leave_tmpdir` helper functions and converts every hook in the five shellspec suites under `content/scripts/__tests__/` to call them, so that a failed `mktemp -d` stops the hook before it writes fixtures into the invoking directory.
+  - Rewrites the nested hooks in `resolve_frontmatter_test.sh` to build their repositories in the directory that the enclosing `Describe` supplies, so the suite no longer leaves one temporary directory behind per context.
+  - Adds a "Shellspec hooks" section to the `shell-conventions` rulebook, stating that `set -e` is shell-global and unusable inside a hook, and that the step creating the workspace takes an explicit guard.
+
 ## 0.13.0 — 2026-09-04
 
 ### 🎉 Features
