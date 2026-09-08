@@ -61,13 +61,13 @@ If `gh pr view` exits non-zero, surface its stderr and stop.
 Compare the local HEAD against the PR's head commit:
 
 ```bash
-local_head=$(git rev-parse HEAD)
+git rev-parse HEAD
 ```
 
-If `local_head` does not equal `headRefOid`, exit non-zero with:
+If the printed HEAD does not equal `headRefOid`, exit non-zero with:
 
 ```
-PR #{number}'s head commit is {short(headRefOid)} but HEAD is at {short(local_head)}. Run "gh pr checkout {number}" first.
+PR #{number}'s head commit is {short(headRefOid)} but HEAD is at {short(HEAD)}. Run "gh pr checkout {number}" first.
 ```
 
 Use the first 7 characters of each SHA for the short form. **Fail closed**: Never proceed with mismatched state. Compilation, dependency installation, and test execution all require the working tree to match the commit being reviewed.
@@ -82,7 +82,7 @@ Apply this cascade:
 Compute the merge-base once:
 
 ```bash
-merge_base_sha=$(git merge-base HEAD {diff_base})
+git merge-base HEAD {diff_base}
 ```
 
 ### 5. Resolve the ticket

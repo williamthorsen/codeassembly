@@ -47,6 +47,8 @@ const GUARD = '[ -s "$body_path" ]';
 const CARRIERS: ReadonlyArray<string> = [
   'skills/_data/gh-body-file.md',
   'skills/_data/ticket-source-resolution.md',
+  'skills/condense-branch/SKILL.md',
+  'skills/create-commit/SKILL.md',
   'skills/create-gh-pr/SKILL.md',
   'skills/create-ticket/SKILL.md',
   'skills/merge-gh-pr/SKILL.md',

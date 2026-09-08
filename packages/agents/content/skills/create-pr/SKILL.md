@@ -50,22 +50,19 @@ If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type
 Call `describe-change.sh` to render the PR title from the configured `pr.title_format` template. Pass every input that is available; the template controls which tokens are required:
 
 ```bash
-json=$({harness_home_dir}/scripts/describe-change.sh \
+{harness_home_dir}/scripts/describe-change.sh \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \
-  --ticket-ref "{ticket_ref}")
+  --ticket-ref "{ticket_ref}" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))"
 ```
 
-Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved.
-
-```bash
-pr_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))")
-```
+Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: no shell variable survives to a second call, and an assignment prints nothing for the next step to read.
 
 Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Use `pr_title` directly as the final PR title. Do not concatenate with `title` separately; the rendered output already includes it.
+Read the rendered title from the command's output and use it directly as the final PR title. Do not concatenate with `title` separately; the rendered output already includes it.
 
 If the script is not found, fall back to the bare `title` from the change summary.
 

@@ -56,13 +56,13 @@ The branch-sync check only makes sense when the **local current branch is the PR
 Detect the case before running the check:
 
 ```bash
-local_branch=$(git rev-parse --abbrev-ref HEAD)
+git rev-parse --abbrev-ref HEAD
 ```
 
 Skip the sync check entirely when **either** of these is true:
 
 - `isCrossRepository` is `true` (PR is from a fork: `gh pr view --json isCrossRepository` returns `true` when the head repo differs from the base repo).
-- `local_branch` does not equal `headRefName`.
+- The printed branch does not equal `headRefName`.
 
 When neither skip condition applies, run the sync check:
 

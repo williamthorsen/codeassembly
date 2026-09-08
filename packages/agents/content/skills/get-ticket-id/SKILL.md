@@ -46,7 +46,7 @@ When the bare-numeric fallback applies, the script reads `project.ticket_ref_pre
 
 ```bash
 branch_name="${1:-$(git branch --show-current)}"
-ticket_id=$({harness_home_dir}/scripts/get-ticket-id.sh "$branch_name")
+{harness_home_dir}/scripts/get-ticket-id.sh "$branch_name"
 ```
 
 ### From commit message

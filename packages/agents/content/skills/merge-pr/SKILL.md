@@ -55,19 +55,19 @@ Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`
 Invoke `resolve-merge-options.sh` to resolve both dimensions in one call. The script combines the CLI override, reverse-lookup against `.meta/label-map.json`, and commit-majority over `git log {default_branch}..HEAD --format=%s` per the rules documented in the script header.
 
 ```bash
-json=$({harness_home_dir}/scripts/resolve-merge-options.sh \
+{harness_home_dir}/scripts/resolve-merge-options.sh \
   [--cli-scope "{cli_scope}"] \
   [--cli-type "{cli_type}"] \
   [--pr-label "{label_1}" --pr-label "{label_2}" ...] \
   --base-ref "{default_branch}" \
-  [--ticket-ref "{ticket_ref}"])
+  [--ticket-ref "{ticket_ref}"]
 ```
 
 Omit `--cli-scope`/`--cli-type` when no override was provided. Pass each PR label from step 2 as a separate `--pr-label` flag (the repeated form is robust against label names that contain commas). Include `--ticket-ref` when `ticket_ref` is non-null in session context.
 
 A Bitbucket PR contributes no labels, since `create-bitbucket-pr` applies none. The script already treats zero labels as no signal and falls through to commit-majority, so this is a missing signal rather than a failure and needs no special handling here.
 
-The output is a JSON object with one entry per dimension:
+The command prints a JSON object with one entry per dimension:
 
 ```json
 {
@@ -76,7 +76,7 @@ The output is a JSON object with one entry per dimension:
 }
 ```
 
-Read `.scope.status` and `.type.status` with python3 (or jq). When `status` is `"resolved"`, use `.value` as the concrete value. When `status` is `"ambiguous"`, carry the `candidates` array forward to the approval gate.
+Read `.scope.status` and `.type.status` from that printed JSON, with python3 (or jq) where a parser helps. When `status` is `"resolved"`, use `.value` as the concrete value. When `status` is `"ambiguous"`, carry the `candidates` array forward to the approval gate.
 
 ### 4. Resolve strategy and deletion strategy
 
@@ -103,20 +103,20 @@ Compute the bare title from the PR title with the `ticket_ref` prefix stripped:
 Render the merge-commit title via `describe-change.sh`:
 
 ```bash
-json=$({harness_home_dir}/scripts/describe-change.sh \
+{harness_home_dir}/scripts/describe-change.sh \
   --title "{bare_title}" \
   --scope "{scope}" \
   --type "{type}" \
   --ticket-ref "{ticket_ref}" \
-  --pr-number "{pr_number}")
-merge_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('merge_title',''))")
+  --pr-number "{pr_number}" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin).get('merge_title',''))"
 ```
 
 Omit any flag whose value is empty or null. For dimensions whose `status` from step 3 is `ambiguous`, omit the flag too: Those are resolved at the gate, and this initial render is provisional.
 
 Use a JSON parser (python3 above; `jq -r '.merge_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes.
 
-If the script is not found, fall back to the bare title.
+The pipeline prints the rendered title; read it from the command's output and carry it forward as literal text. Assigning the parse instead prints nothing, and no shell variable survives to a later call. If the script is not found, fall back to the bare title.
 
 ### 6. Compose merge-commit body
 

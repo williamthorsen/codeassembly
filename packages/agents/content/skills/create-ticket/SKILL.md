@@ -111,13 +111,7 @@ If the file exists, resolve labels from the scope and type established in the co
 
 Missing entries are silently skipped: If a type or scope is not in the map, no label is added for that dimension.
 
-Construct `--label` flags for each resolved label:
-
-```bash
-label_flags=""
-# For each resolved label:
-label_flags+=" --label \"{label_name}\""
-```
+Render one `--label "{label_name}"` flag per resolved label, and write them into the create call in step 6 as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call applies no labels at all.
 
 ### 6. Create remote ticket
 
@@ -128,13 +122,13 @@ Both platforms render the same title and persist the same branch association; on
 Render with `describe-change.sh`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
-json=$({harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
-ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))")
+{harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))"
 ```
 
 Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Use `ticket_title` directly as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+The pipeline prints the rendered title. Read it from the command's output and write it into the create call below as literal text, as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. Assigning the parse instead prints nothing, and no shell variable survives to the create call, so a call that reads `$ticket_title` submits an empty title. If the script is not found, fall back to the bare `{title}`.
 
 #### GitHub path
 
@@ -143,14 +137,10 @@ Write the body to a scratch file per [gh body file](#gh-body-file), naming it `g
 ```bash
 body_path="{absolute path from the write step}"
 [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
-url=$(gh issue create --title "${ticket_title}" --body-file "$body_path"${label_flags})
+gh issue create --title "{ticket_title}" --body-file "$body_path" {label_flags}
 ```
 
-Extract the issue number from the returned URL:
-
-```bash
-number=$(echo "$url" | grep -oE '[0-9]+$')
-```
+`gh issue create` prints the issue URL. Read it from the command's output; the issue number is its final path segment. Never capture either into a shell variable.
 
 Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
@@ -198,13 +188,14 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
   output=$(acli jira workitem create \
     --project "{project_key}" \
     --type "{issue_type}" \
-    --summary "${ticket_title}" \
+    --summary "{ticket_title}" \
     --description-file "$adf_path" \
     --json)
-  key=$(printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null)
+  printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null
+  printf '%s\n' "$output"
   ```
 
-  Capture the output before parsing it, as the snippet does. Where the parse yields no key, read the key out of `$output`, which still holds everything the one invocation returned. Never run the create command a second time to obtain the key: that creates a second work item.
+  Capture the create call's output before parsing it, as the snippet does, and print both the parsed key and the raw response. The parse prints the key on the first line; where it yields none, read the key out of the response printed after it, which holds everything the one invocation returned. Assigning the parse instead prints nothing, leaving neither to read. Never run the create command a second time to obtain the key: that creates a second work item.
 
 ##### Record the identifiers
 
@@ -219,7 +210,7 @@ Persist the new ticket's URL into the branch manifest so later sessions reuse it
 - When the branch is not the default branch, and `branch_ticket_id` is either empty (the branch encodes no ticket) or equal to `ticket_id` (the branch is already linked to this ticket), persist:
 
   ```bash
-  node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
+  node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"
   ```
 
 - When the branch is the default branch, the new ticket is a backlog ticket by construction: That branch is derived from no ticket, so it has no association to record. Skip the persist and report it, e.g. `Ticket {ticket_id} created on default branch {branch_name}; skipped branch-manifest association.`
@@ -245,7 +236,7 @@ Otherwise apply relationships after the ticket exists rather than as part of cre
 One call applies every relationship decided:
 
 ```bash
-gh issue edit "${number}" --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
+gh issue edit {number} --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
 ```
 
 Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.

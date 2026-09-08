@@ -59,13 +59,13 @@ If the call fails, surface the tool's error and stop.
 Compare the local HEAD against the PR's head commit:
 
 ```bash
-local_head=$(git rev-parse HEAD)
+git rev-parse HEAD
 ```
 
-The comparison is a prefix test, not an equality test, because `source.commit.hash` may arrive abbreviated; see [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request) for the rule. If `source.commit.hash` is not a prefix of `local_head` of at least 7 characters, exit non-zero with:
+The comparison is a prefix test, not an equality test, because `source.commit.hash` may arrive abbreviated; see [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request) for the rule. If `source.commit.hash` is not a prefix of the printed HEAD of at least 7 characters, exit non-zero with:
 
 ```
-PR #{number}'s head commit is {short(source_commit_hash)} but HEAD is at {short(local_head)}. Check out the PR branch first (e.g., "git fetch origin pull-requests/{number}/from:pr-{number} && git checkout pr-{number}") or pull the latest commits on {source_branch_name}.
+PR #{number}'s head commit is {short(source_commit_hash)} but HEAD is at {short(HEAD)}. Check out the PR branch first (e.g., "git fetch origin pull-requests/{number}/from:pr-{number} && git checkout pr-{number}") or pull the latest commits on {source_branch_name}.
 ```
 
 Use the first 7 characters for short SHAs. **Fail closed**: Never proceed with mismatched state.
@@ -80,7 +80,7 @@ Apply this cascade:
 Compute the merge-base once:
 
 ```bash
-merge_base_sha=$(git merge-base HEAD {diff_base})
+git merge-base HEAD {diff_base}
 ```
 
 ### 5. Resolve the ticket
@@ -141,7 +141,7 @@ The list order is `[ticket?, pr_description]`, same as `review-gh-pr`.
   pr_metadata: {
     number: <id>,
     url: <links.html.href>,
-    head_oid: <local_head from step 3>,
+    head_oid: <the HEAD printed in step 3>,
     base_ref: <destination.branch.name>,
     title: <title>
   }

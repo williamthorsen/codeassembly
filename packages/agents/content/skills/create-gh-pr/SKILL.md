@@ -28,13 +28,7 @@ This skill receives the following inputs from the orchestrator:
 
 If `labels` is empty, skip this step; no `--label` flags are needed.
 
-For each label in the `labels` list, construct a `--label` flag:
-
-```bash
-label_flags=""
-# For each resolved label:
-label_flags+=" --label \"{label_name}\""
-```
+Otherwise render one `--label "{label_name}"` flag per label in the `labels` list, and write them into the create call below as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call applies no labels at all.
 
 ### 2. Create the pull request
 
@@ -43,13 +37,15 @@ Write the body to a scratch file per [gh body file](#gh-body-file); do not inlin
 ```bash
 body_path="{absolute path from the write step}"
 [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
-url=$(gh pr create \
+gh pr create \
   --title "{title}" \
   --body-file "$body_path" \
   --base "{base_branch}" \
   --draft \
-  ${label_flags})
+  {label_flags}
 ```
+
+`gh pr create` prints the pull-request URL. Read it from the command's output and carry it into step 4's artifact and the completion line; never capture it into a shell variable.
 
 ### 3. Handle label failures
 
