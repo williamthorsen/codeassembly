@@ -33,7 +33,7 @@ Four edits fall under cases 1 and 2, and one under case 3: "must be fetched" dro
 
 ### Shapes to look for
 
-Eight shapes recur in this corpus. Each is a search pattern rather than a rule: A sentence matching one is a candidate for the reader test, and a sentence matching none can still fail that test.
+Eight shapes recur in this corpus. Each is a search pattern rather than a rule: A sentence matching one is a candidate for the rule's tests, and a sentence matching none can still fail them.
 
 1. **The cleft construction.** "Segment anchoring is what admits the branch form" becomes "Segment anchoring admits the branch form".
 2. **Appositives stacked on the subject.** "The record, a file that one run writes and the next reads, is keyed on the phrase" becomes "The record is keyed on the phrase. One run writes it and the next reads it."
