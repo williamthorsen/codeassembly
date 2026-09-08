@@ -26,10 +26,14 @@ If branch exists, increment version number.
 
    Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout.
 
+   Write the title, a blank line, and the body to a scratch file per [gh body file](#gh-body-file), naming it `commit-message-{timestamp}.md`; do not inline the message into the shell command.
+
    ```bash
+   body_path="{absolute path from the write step}"
+   [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
    git reset --soft $(git merge-base {default_branch} HEAD)
    git add --all
-   git commit --message "{title}" --message "{body}" --no-gpg-sign --no-verify
+   git commit --file "$body_path" --no-gpg-sign --no-verify
    ```
 
 ## Commit message creation
@@ -53,3 +57,5 @@ Compose the message per `{rulebook:commit-conventions}`. Use `describe-change.sh
 - Always create a backup branch before condensing
 - Increment version numbers if backup already exists
 - Use `--no-gpg-sign --no-verify` to avoid hook issues
+
+<!-- include: ../_partials/gh-body-file.md / -->

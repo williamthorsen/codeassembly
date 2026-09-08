@@ -28,10 +28,12 @@ Record each unit as it is finished. Several single-concern commits read better t
 
 5. **Compose the body.** The conventions state its voice and its mechanics; [Line breaks](#line-breaks) below states the one mechanic that binds only while the body is being written.
 
-6. **Commit**, passing the title and body as separate `--message` values so the blank line between them is git's rather than the shell's:
+6. **Commit** from a message file, never through `--message`. Write the title, a blank line, and the body to a scratch file per [gh body file](#gh-body-file), naming it `commit-message-{timestamp}.md`; do not inline the message into the shell command.
 
    ```bash
-   git commit --message "{commit_title}" --message "{body}"
+   body_path="{absolute path from the write step}"
+   [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
+   git commit --file "$body_path"
    ```
 
 ## Rendering the title
@@ -43,3 +45,5 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 ## Line breaks
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
+
+<!-- include: ../_partials/gh-body-file.md / -->

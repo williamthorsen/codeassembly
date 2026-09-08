@@ -1,6 +1,6 @@
 ## gh body file
 
-Pass a Markdown body to a CLI through a file, never through the shell. This governs every invocation taking a body file: `gh issue create`, `gh issue edit`, `gh issue comment`, `gh pr create`, `gh pr edit`, `gh pr comment`, `gh pr merge`, `acli jira workitem create`, and `acli jira workitem comment create`.
+Pass a Markdown body to a CLI through a file, never through the shell. This governs every invocation taking a body file: `git commit`, `gh issue create`, `gh issue edit`, `gh issue comment`, `gh pr create`, `gh pr edit`, `gh pr comment`, `gh pr merge`, `acli jira workitem create`, and `acli jira workitem comment create`. A body passed as a double-quoted argument instead has its backticks and `$(…)` expanded, so the shell runs what the message only meant to quote.
 
 **Resolve the scratch directory; never reference it.** Use the harness's session scratchpad where it supplies an absolute path; otherwise resolve `$TMPDIR` in a Bash call and use the value that call prints. The {tool:Write} tool performs no shell expansion, so a path containing `$TMPDIR` handed to it creates a directory named `$TMPDIR`.
 
