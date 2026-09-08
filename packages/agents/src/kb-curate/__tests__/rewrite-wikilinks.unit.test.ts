@@ -80,4 +80,14 @@ describe(rewriteWikilinks, () => {
     expect(result.changed).toBe(false);
     expect(result.body).toBe(body);
   });
+
+  it('leaves a store-qualified link alone even when its basename resolves locally', () => {
+    const result = rewriteWikilinks({
+      body: 'See [[fde:notes/Title]].',
+      vaultIndex: indexOf([['Title', ['content/tools/Title.md']]]),
+    });
+
+    expect(result.changed).toBe(false);
+    expect(result.body).toBe('See [[fde:notes/Title]].');
+  });
 });
