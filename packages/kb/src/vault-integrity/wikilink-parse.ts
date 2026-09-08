@@ -131,7 +131,9 @@ export interface ScannedWikilink {
  * them cannot drift apart on either question.
  *
  * `offset` indexes the body as passed in. Masking substitutes same-length whitespace, which this function asserts, so
- * a consumer may slice the unmasked body at the offsets yielded here.
+ * a consumer may slice the unmasked body at the offsets yielded here. It also leaves every newline where it was, so a
+ * consumer may count lines in the unmasked body at those offsets; nothing asserts that at runtime, so a masker that
+ * moved a newline while keeping the length would shift reported line numbers rather than fail.
  */
 export function* scanWikilinks(body: string): Generator<ScannedWikilink> {
   const masked = maskInlineCode(maskFencedCode(body));

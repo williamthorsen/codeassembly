@@ -33,6 +33,16 @@ describe(checkVaultIntegrity, () => {
     expect(findings[0]?.line).toBe(6);
   });
 
+  it('reports the line of a link that follows a fenced code block', () => {
+    const body = ['Prose.', '```bash', 'if [[ -n "$x" ]]; then :; fi', '```', 'See [[Missing]].'].join('\n');
+
+    const findings = checkVaultIntegrity([note('a/Guide.md', body, 5)]);
+
+    // bodyStartLine 5 + four preceding newlines = file line 9. Masking blanks the fenced line in place and leaves
+    // every newline where it was, which is what lets the line count read the unmasked body at a scanned offset.
+    expect(findings[0]?.line).toBe(9);
+  });
+
   it('warns once, vault-wide, for a basename shared by two notes even with no referencing link', () => {
     const findings = checkVaultIntegrity([note('engineering/Foo.md'), note('tools/Foo.md')]);
     expect(findings).toHaveLength(1);
