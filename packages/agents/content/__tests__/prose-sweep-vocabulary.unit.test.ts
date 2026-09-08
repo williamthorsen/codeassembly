@@ -7,26 +7,31 @@ import { RULE_IDS } from '../../src/revise-prose/rules.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Three hand-written surfaces must agree on which rule names exist: the helper's detector registry, the vocabulary
-// `prose-reviser` reports, and the fold `revise-prose` composes from that report. The helper validates a fold against
-// its registry and refuses a name outside it, so a report vocabulary forwarded unfiltered by the skill ends the run with
-// no record written. Nothing else holds the three together.
+// `prose-reviser` reports, and the fold `revise-prose` composes from that report. A name the subagent reports that
+// step 1 of the skill maps to no unit reaches the helper naming a unit the fold does not cover, and the `record`
+// command refuses the whole fold. Nothing else holds the three together.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const SKILL = 'skills/revise-prose/SKILL.md';
 const SUBAGENT = 'subagents/prose-reviser.md';
 
 /**
- * Rule names the subagent may report that the helper holds no detector for. The fold refuses them, so the skill has to
- * drop them; a name added here without that filter is the divergence that this suite exists to catch.
+ * Rule names the subagent may report that the helper holds no detector for. Each is recordable, so the skill has to map
+ * it to a unit; a name added here without that mapping is the divergence that this suite exists to catch.
  */
-const NON_RECORDABLE: ReadonlyArray<string> = ['plain-speech'];
+const UNDETECTED_RULES: ReadonlyArray<string> = ['plain-speech'];
 
-/** The sentence in the skill that performs the drop. Pinned so a rewrite that loses it fails here. */
-const FOLD_FILTER = '**Fold only a rejection whose `rule` is one of the detector rules from step 1.**';
+/** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
+const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
 
-/** The sentence stating what becomes of a dropped rejection. Pinned so a rewrite that loses it fails here. */
-const PLAIN_SPEECH_CONSEQUENCE =
-  'A `plain-speech` rejection is therefore reported to the user and re-adjudicated the next time its batch is swept.';
+/** The sentence mapping the undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
+const UNIT_MAPPING = '**A `plain-speech` rejection takes the `plain-speech` unit**';
+
+/** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
+const REJECTIONS_KEY = 'rejections:';
+
+/** The same scalar as the subagent names it, so the two surfaces cannot drift onto different key names. */
+const REJECTIONS_SCALAR = '**`rejections`**';
 
 /** Matches every `"rule": "<name>"` field in a JSON example, whose captured group is the name. */
 const REPORTED_RULE_REGEX = /"rule":\s*"([^"]+)"/g;
@@ -41,20 +46,20 @@ const RULE_DOCUMENT_DIRS: ReadonlyArray<string> = ['_partials', 'guidance/rulebo
 const RULE_MARKER_REGEX = /<!--\s*rule:\s*(\S+)\s*-->/g;
 
 describe('prose-sweep rule vocabulary', () => {
-  it('keeps the recordable and non-recordable names disjoint', () => {
-    const overlap = NON_RECORDABLE.filter((name) => DETECTOR_RULES.has(name));
+  it('keeps the undetected names free of a detector, so the constant stays true to its name', () => {
+    const detected = UNDETECTED_RULES.filter((name) => DETECTOR_RULES.has(name));
 
-    const message = `${overlap.join(', ')} is both a detector rule and one that the skill drops from the fold; a detector rule is recordable, so drop it from NON_RECORDABLE and from the skill's filter`;
-    expect(overlap, message).toEqual([]);
+    const message = `${detected.join(', ')} now has a detector, so it needs no entry in UNDETECTED_RULES`;
+    expect(detected, message).toEqual([]);
   });
 
-  it('reports only names the fold accepts or the skill drops', async () => {
+  it('reports only names the skill can map to a unit', async () => {
     const body = await readContentFile(SUBAGENT);
     const reported = body
       .matchAll(REPORTED_RULE_REGEX)
       .map(([, name]) => name)
       .toArray();
-    const known = new Set<string>([...DETECTOR_RULES, ...NON_RECORDABLE]);
+    const known = new Set<string>([...DETECTOR_RULES, ...UNDETECTED_RULES]);
     const unknown = reported.filter((name) => name !== undefined && !known.has(name));
 
     const message = `${SUBAGENT} reports rule names the fold has never heard of: ${unknown.join(', ')}`;
@@ -70,14 +75,25 @@ describe('prose-sweep rule vocabulary', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('drops every non-recordable name from the fold', async () => {
+  it('folds a rejection under every name the subagent reports', async () => {
     const body = await readContentFile(SKILL);
 
+    expect(body, `${SKILL} no longer folds every rejection, so a judgment is discarded again`).toContain(FOLD_EVERY);
     expect(
       body,
-      `${SKILL} no longer filters the fold; the helper refuses a non-detector rule and the run ends with no record`,
-    ).toContain(FOLD_FILTER);
-    expect(body, `${SKILL} does not say what becomes of a dropped rejection`).toContain(PLAIN_SPEECH_CONSEQUENCE);
+      `${SKILL} maps no unit onto an undetected rule, so the fold names a unit it does not cover and the record command refuses it`,
+    ).toContain(UNIT_MAPPING);
+  });
+
+  it('hands the recorded sites to the subagent that would otherwise re-adjudicate them', async () => {
+    const skill = await readContentFile(SKILL);
+    const subagent = await readContentFile(SUBAGENT);
+
+    expect(skill, `${SKILL} names no \`${REJECTIONS_KEY}\` in its dispatch block`).toContain(REJECTIONS_KEY);
+    expect(
+      subagent,
+      `${SUBAGENT} describes no \`${REJECTIONS_KEY}\` scalar, so the skill writes a file that nothing opens`,
+    ).toContain(REJECTIONS_SCALAR);
   });
 
   it('carries a marker for every detector rule', async () => {

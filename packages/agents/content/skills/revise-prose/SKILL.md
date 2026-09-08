@@ -108,9 +108,9 @@ rules: {rule-id}, {rule-id}
 
    `sweptAt` is today's ISO calendar date. `units` names every unit from step 1 with the version it is at and its `roots`: the invocation's narrowing paths, or `["."]` for a whole-repository sweep.
 
-   `rejections` holds every subagent rejection plus every questionable that the user rejected, each carrying `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which names no unit.
+   `rejections` holds every subagent rejection plus every questionable that the user rejected, each carrying `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which names no unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not reach: step 1 names the unit directly rather than through a `<!-- rule: <id> -->` marker.
 
-   **Fold only a rejection whose `rule` is one of the detector rules from step 1.** The helper records a rejection so a later run's detector can match it, so a rejection under a rule with no detector would key nothing and the `record` command refuses it. A `plain-speech` rejection is therefore reported to the user and re-adjudicated the next time its batch is swept. Give the count in the summary.
+   **Fold every rejection, whatever rule it names.** A rejection is keyed on its rule, its file, and the hash of its phrase, so a rule the helper holds no detector for records and re-suppresses its sites like any other. Step 4 hands the recorded sites to the next sweep of that batch.
 
 4. **Commit the closing repairs and the record together**, per `{skill:create-commit}`.
 5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A repaired string that a test asserts on fails there; repair the test expectation and commit that separately.
@@ -135,11 +135,10 @@ revise-prose summary
 | 1     | 9     | 18      | 1        | 0            |
 
 Recorded in `.agents/revise-prose.yaml`: plain-speech 1, williamthorsen-writing-preferences 2.
-3 plain-speech rejections were not recorded; the next sweep of their batches re-adjudicates them.
 5 files held out: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
-Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, every image, lockfile, and data file in the repository being one; a narrowed sweep reports the files that it was given and could not read. Give the unrecorded-rejection line only where the fold dropped one.
+Give the held-out clause only where `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, every image, lockfile, and data file in the repository being one; a narrowed sweep reports the files that it was given and could not read.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 
