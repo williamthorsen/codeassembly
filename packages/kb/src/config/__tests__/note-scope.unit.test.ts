@@ -19,7 +19,7 @@ describe(createNoteScopeMatcher, () => {
   });
 
   it('lets an exclude override a matching target', () => {
-    const config: KbConfig = { targets: ['content/**/*.md'], exclude: ['content/drafts/**'] };
+    const config: KbConfig = { ...defaultKbConfig, targets: ['content/**/*.md'], exclude: ['content/drafts/**'] };
     const matcher = createNoteScopeMatcher(config);
 
     expect(matcher.isTarget('content/drafts/wip.md')).toBe(true);
@@ -29,7 +29,7 @@ describe(createNoteScopeMatcher, () => {
   });
 
   it('honors a custom whole-tree target', () => {
-    const config: KbConfig = { targets: ['**/*.md'], exclude: ['**/node_modules/**'] };
+    const config: KbConfig = { ...defaultKbConfig, targets: ['**/*.md'], exclude: ['**/node_modules/**'] };
     const matcher = createNoteScopeMatcher(config);
 
     expect(matcher.isNote('notes/2024-archive/runbook.md')).toBe(true);

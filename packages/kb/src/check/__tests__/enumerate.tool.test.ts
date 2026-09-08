@@ -53,7 +53,7 @@ describe(enumerateNotePaths, () => {
       'content/drafts/skip.md': VALID,
       'outside.md': VALID,
     });
-    const config = { targets: ['content/**/*.md'], exclude: ['**/drafts/**'] };
+    const config: KbConfig = { ...defaultKbConfig, targets: ['content/**/*.md'], exclude: ['**/drafts/**'] };
 
     const paths = await enumerateNotePaths({ kbRoot: root, config });
 
@@ -229,12 +229,9 @@ describe(`${enumerateNotePaths.name} under git`, () => {
 
 // region | Helpers
 
-/** Enumerates `root` under a config, defaulting `exclude` to the bundled default. */
+/** Enumerates `root` under a config, inheriting the bundled defaults for every field the caller omits. */
 async function enumerateIn(root: string, config: Partial<KbConfig> & Pick<KbConfig, 'targets'>): Promise<string[]> {
-  const notes = await enumerateNotes({
-    kbRoot: root,
-    config: { targets: config.targets, exclude: config.exclude ?? defaultKbConfig.exclude },
-  });
+  const notes = await enumerateNotes({ kbRoot: root, config: { ...defaultKbConfig, ...config } });
   return notes.map((entry) => entry.relativePath).toSorted();
 }
 
