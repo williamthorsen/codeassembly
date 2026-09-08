@@ -11,7 +11,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { loadWorkTypes, type WorkType } from '../lib/work-types.ts';
+import { loadWorkTypes, resolveWorkType, type WorkType } from '../lib/work-types.ts';
 import { selectExemplars } from './select-exemplars.ts';
 import type { ExemplarRequest, SelectErrorCode, SelectResult } from './types.ts';
 
@@ -289,16 +289,15 @@ function resolveRequest(
   workTypes: ReadonlyMap<string, WorkType>,
 ): { ok: true; request: ExemplarRequest } | { ok: false; error: SelectErrorCode; message: string } {
   if (args.kind === 'type') {
-    const key = stripBreakingMarker(args.type);
-    const workType = workTypes.get(key);
-    if (workType === undefined) {
+    const resolved = resolveWorkType(args.type, workTypes);
+    if (resolved === null) {
       return {
         ok: false,
         error: 'unknown-type',
-        message: `work type "${key}" is not declared in work-types.json, so its tier cannot be resolved`,
+        message: `work type "${args.type}" is not declared in work-types.json, so its tier cannot be resolved`,
       };
     }
-    return { ok: true, request: { kind: 'type', workType } };
+    return { ok: true, request: { kind: 'type', workType: resolved.workType } };
   }
 
   const tiers = new Set(workTypes.values().map((workType) => workType.tier));
@@ -311,14 +310,6 @@ function resolveRequest(
     };
   }
   return { ok: true, request: { kind: 'tier', tier: args.tier } };
-}
-
-/**
- * Removes the breaking-change marker that a work type carries in a commit or pull-request title, so `feat!` resolves
- * against the `feat` the taxonomy declares. The taxonomy holds bare keys; the marker is title rendering.
- */
-function stripBreakingMarker(type: string): string {
-  return type.endsWith('!') ? type.slice(0, -1) : type;
 }
 
 // endregion | Helpers

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { loadWorkTypes, type WorkType } from '../work-types.ts';
+import { loadWorkTypes, resolveWorkType, type WorkType } from '../work-types.ts';
 
 const TAXONOMY = {
   types: [
@@ -74,6 +74,47 @@ describe(loadWorkTypes, () => {
     const index = await loadWorkTypes(await writeTaxonomy({ tiers: ['public'] }));
 
     expect(index).toBeNull();
+  });
+});
+
+describe(resolveWorkType, () => {
+  it('resolves a canonical key, reporting no marker', async () => {
+    const index = await loadTaxonomy(TAXONOMY);
+
+    expect(resolveWorkType('feat', index)).toStrictEqual({
+      workType: { key: 'feat', tier: 'public' },
+      breaking: false,
+    });
+  });
+
+  it('resolves a key carrying the breaking marker, so feat! names the declared feat', async () => {
+    const index = await loadTaxonomy(TAXONOMY);
+
+    expect(resolveWorkType('feat!', index)).toStrictEqual({
+      workType: { key: 'feat', tier: 'public' },
+      breaking: true,
+    });
+  });
+
+  it('resolves an alias carrying the marker through the same index', async () => {
+    const index = await loadTaxonomy(TAXONOMY);
+
+    expect(resolveWorkType('feature!', index)).toStrictEqual({
+      workType: { key: 'feat', tier: 'public' },
+      breaking: true,
+    });
+  });
+
+  it('yields null for a type the taxonomy does not declare', async () => {
+    const index = await loadTaxonomy(TAXONOMY);
+
+    expect(resolveWorkType('invented', index)).toBeNull();
+  });
+
+  it('yields null for an undeclared type carrying the marker, so the marker declares nothing', async () => {
+    const index = await loadTaxonomy(TAXONOMY);
+
+    expect(resolveWorkType('invented!', index)).toBeNull();
   });
 });
 
