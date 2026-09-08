@@ -90,6 +90,14 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
   { heading: '## Commits', phrase: 'Invoke the `create-commit` skill to make a commit' },
 ];
 
+/**
+ * Skills that inline a shared section directly. The carrier populations above read `subagents/` alone, so a skill's
+ * include is asserted here or nowhere, and a dropped one would strip the doctrine from that skill in silence.
+ */
+const SKILL_CARRIERS: ReadonlyArray<{ readonly relativePath: string; readonly section: string }> = [
+  { relativePath: 'skills/revise-prose/SKILL.md', section: 'plain-speech' },
+];
+
 /** The guidance files that inline the shared file, one per harness. */
 const HARNESS_GUIDANCE: ReadonlyArray<string> = [
   'guidance/_harnesses/claude/CLAUDE.md',
@@ -128,6 +136,19 @@ describe('shared-doctrine reach', () => {
 
       const message = `The rule is stated once and inlined from there; these files restate it instead of including it:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
+    });
+  });
+
+  describe.each(SKILL_CARRIERS)('$relativePath', ({ relativePath, section }) => {
+    it('renders $section', async () => {
+      const expected = SECTIONS[section];
+      if (expected === undefined) throw new Error(`No shared section is named ${section}`);
+      const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+
+      for (const phrase of expected.phrases) {
+        expect(expanded).toContain(phrase);
+      }
+      expect(countOccurrences(expanded, expected.headline)).toBe(1);
     });
   });
 
