@@ -189,5 +189,3 @@ The expander reports structured errors for the following conditions. Each error 
 ## Borrowed content
 
 `plain-speech.md` takes the term "mannered prose" and its two example pairs ("a dial worth turning" for "a parameter worth varying", "this point earns its keep" for "this point still matters") from Anthropic's Fable 5.1 prompting documentation, under "Writing density": https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1
-
-The surrounding sentences are this repository's own. The source carries no reuse licence, so the definition is reworded rather than reproduced; that page is documentation on Anthropic's own site, and the phrase appears in no Anthropic repository under an open licence.
