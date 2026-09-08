@@ -15,7 +15,11 @@ describe(loadKbConfig, () => {
   it('loads targets and exclude from a valid config.yaml', async () => {
     const kbRoot = await makeKbRoot({ config: 'targets:\n  - "**/*.md"\nexclude:\n  - "drafts/**"\n' });
 
-    expect(await loadKbConfig({ kbRoot })).toEqual({ targets: ['**/*.md'], exclude: ['drafts/**'] });
+    expect(await loadKbConfig({ kbRoot })).toEqual({
+      targets: ['**/*.md'],
+      exclude: ['drafts/**'],
+      visibility: defaultKbConfig.visibility,
+    });
   });
 
   it('inherits the default for an omitted field', async () => {
@@ -24,7 +28,26 @@ describe(loadKbConfig, () => {
     expect(await loadKbConfig({ kbRoot })).toEqual({
       targets: ['notes/**/*.md'],
       exclude: defaultKbConfig.exclude,
+      visibility: defaultKbConfig.visibility,
     });
+  });
+
+  it('loads a declared visibility', async () => {
+    const kbRoot = await makeKbRoot({ config: 'visibility: shared\n' });
+
+    expect(await loadKbConfig({ kbRoot })).toMatchObject({ visibility: 'shared' });
+  });
+
+  it('defaults visibility to private when the field is absent', async () => {
+    const kbRoot = await makeKbRoot({ config: 'targets:\n  - "notes/**/*.md"\n' });
+
+    expect(await loadKbConfig({ kbRoot })).toMatchObject({ visibility: 'private' });
+  });
+
+  it('throws a KbLoaderError naming the file when visibility is not one of the two values', async () => {
+    const kbRoot = await makeKbRoot({ config: 'visibility: public\n' });
+
+    await expect(loadKbConfig({ kbRoot })).rejects.toBeInstanceOf(KbLoaderError);
   });
 
   it('throws a KbLoaderError naming the file when the YAML is malformed', async () => {

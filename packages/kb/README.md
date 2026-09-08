@@ -70,6 +70,8 @@ Configuration keys, per KB entry under `kbs.<name>`:
 | `description` | no       | Human-readable description                                                                              |
 | `readonly`    | no       | Marks the KB as read-only                                                                               |
 
+An entry's name is also what a [store-qualified wikilink](#linking-into-another-store) names: `[[coding:Note title]]` resolves against the KB registered as `coding`.
+
 ### Merge semantics
 
 `loadKbRegistry` merges the two registries by KB name:
@@ -113,6 +115,8 @@ missing files (when a path is given) throw.
 
 `checkVaultIntegrity(notes)` runs whole-vault, type-blind checks over a `{ path, body, bodyStartLine }[]` note set: an unresolved `[[link]]` is an error (`wikilinks.unresolved`), and a basename shared by two or more notes is one vault-wide warning (`wikilinks.basename`). `buildVaultIndex(notes)` builds the basename → paths index the layer and curate's wikilink rewriter share.
 
+A second argument, `{ foreignStores, sourceVisibility }`, resolves [store-qualified links](#linking-into-another-store) against the stores they name; supplied none, the layer treats every target as store-local, which is what `buildVaultIndex`'s other consumers get.
+
 The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
 
 `taxonomyFindings({ notes, taxonomy, config, taxonomyPath })` reports where a store's assertion folders and its declared taxonomy disagree (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Its findings carry `scope: 'vault'`: they describe the store rather than any one note, so a consumer that narrows a report to selected notes must keep them rather than filter them out by path.
@@ -139,7 +143,7 @@ A structural defect in any loaded file throws a `KbLoaderError` (see below). Any
 
 ### Which notes are checked: `.kb/config.yaml`
 
-`.kb/config.yaml` configures which notes a check enumerates. Both keys are optional; an absent file or an omitted key falls back to the default.
+`.kb/config.yaml` configures which notes a check enumerates and how widely the store is published. Every key is optional; an absent file or an omitted key falls back to the default.
 
 ```yaml
 # .kb/config.yaml
@@ -147,12 +151,16 @@ targets:
   - 'content/**/*.md'
 exclude:
   - '**/node_modules/**'
+visibility: private
 ```
 
-| Key       | Default                  | Meaning                                                                      |
-| --------- | ------------------------ | ---------------------------------------------------------------------------- |
-| `targets` | `['content/**/*.md']`    | Glob patterns (store-root-relative) selecting which notes a check enumerates |
-| `exclude` | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches           |
+| Key          | Default                  | Meaning                                                                      |
+| ------------ | ------------------------ | ---------------------------------------------------------------------------- |
+| `targets`    | `['content/**/*.md']`    | Glob patterns (store-root-relative) selecting which notes a check enumerates |
+| `exclude`    | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches           |
+| `visibility` | `private`                | `shared` or `private`; decides which stores may link into this one           |
+
+`visibility` belongs here rather than in the registry entry because it is intrinsic to the store: one store cloned on two machines has one visibility, where a per-machine declaration could let the two disagree silently. It governs [linking into another store](#linking-into-another-store).
 
 Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@williamthorsen/kb/config`.
 
@@ -161,6 +169,26 @@ Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `
 Where the store sits in a git working tree, `targets`/`exclude` is not the whole of note scope: what git accounts for narrows it further. A note is enumerated when git tracks it, or when git would track it, meaning no ignore rule covers it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: such a link is broken for every clone but the author's. This is what lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
 
 A store outside a git working tree, or a machine carrying no git, keeps the filesystem walk alone. Where git accounts for none of the notes that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting a clean bill over an empty note set.
+
+### Linking into another store
+
+A wikilink names a store by qualifying its target: `[[fde:Note title]]` resolves `Note title` in the store registered as `fde`, where a bare `[[Note title]]` stays inside the store being checked. A qualifier is recognized only when the text before the first colon is non-empty and carries no whitespace and no `/`, so a title that happens to contain a colon resolves whole.
+
+Direction is decided by `visibility`: a link may point at a store as shareable as its own or more so, never at a less shareable one. A private note may therefore link to the share-safe assertion its detail was stripped from, while the reverse is refused, because a note's title tends to be its claim and a link into a private store discloses that claim through the link itself.
+
+Only the stores a run's own links name are consulted, and each is enumerated under its own `targets`/`exclude` and git scope, reading note paths alone. A run whose links qualify no store reads no registry.
+
+| Rule                            | Severity | Reported when                                                                       |
+| ------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| `wikilinks.disallowed-store`    | error    | The named store is less shareable than the one being checked                        |
+| `wikilinks.registry-unloadable` | error    | A run with qualified links could not load `kb.yaml`; vault-scoped, reported once    |
+| `wikilinks.store-unavailable`   | warning  | The named store is registered but could not be read here, so the link is unverified |
+| `wikilinks.unknown-store`       | error    | No `kb.yaml` entry declares the named store                                         |
+| `wikilinks.unresolved`          | error    | The named store carries no note of that basename                                    |
+
+`wikilinks.store-unavailable` is a warning rather than an error because a store absent from this machine leaves its links unverifiable rather than broken: a correct link should not fail a check run on a machine that has not cloned the target.
+
+A run that reports `wikilinks.registry-unloadable` reports nothing per link. No store was looked up, so whether one is registered is undetermined, and naming each link would send the reader to fix a registration that may already be correct.
 
 ### The declared structure: `.kb/taxonomy.yaml`
 
@@ -266,7 +294,7 @@ kb check --vs=main             # check only the notes changed since a ref
 
 `kb check` resolves the store from the nearest ancestor `.kb/` directory, or from a `--kb <name>` entry in the merged `kb.yaml` registry (project-local entries join the user-global registry). The default output groups findings by file; `--json` emits `{ store, summary, findings }`. The command is read-only and never writes to the store.
 
-**Targeting.** Path arguments and `--vs` each scope the run to a subset of notes; they are mutually exclusive, and both compose with `--kb` and `--json`. Cross-note rules always resolve against the whole vault, so a targeted run never false-flags a link to an unselected note; only the report and the exit code narrow to the selection.
+**Targeting.** Path arguments and `--vs` each scope the run to a subset of notes; they are mutually exclusive, and both compose with `--kb` and `--json`. Cross-note rules always resolve against the whole store, and a store-qualified link against the whole store it names, so a targeted run never false-flags a link to an unselected note; only the report and the exit code narrow to the selection.
 
 - **`[paths...]`**: one or more glob patterns, files, or directories (store-root-relative). The command expands globs itself, so a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that matches no note is a usage error, unless it names a real non-note (a README, a triage note, or a file that `exclude` or git rules out), which is skipped silently.
 - **`--vs <ref>`**: the notes changed between the working tree and the merge-base of `<ref>` and HEAD. The diff follows renames (checking the destination), includes uncommitted edits to tracked notes, and excludes deletions, so a `git mv`-heavy migration batch reports the notes it actually touched.

@@ -23,7 +23,8 @@ export const CHECK_HELP = `Usage: kb check [paths...] [options]
 
 Validate notes in a knowledge base against its tag aliases and cross-note
 link and path rules. With no path arguments, every note is checked.
-Cross-note rules always resolve against the whole vault.
+Cross-note rules always resolve against the whole store; a [[store:Target]]
+link resolves against the store its prefix names in the kb.yaml registry.
 
 Targeting (mutually exclusive):
   [paths...]    Check only the notes matching the given glob patterns, files,
@@ -79,7 +80,11 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
 
   let result;
   try {
-    result = await check({ kbRoot: store.path });
+    result = await check({
+      kbRoot: store.path,
+      cwd: input.cwd,
+      ...(input.home !== undefined && { home: input.home }),
+    });
   } catch (error) {
     if (isKbLoaderError(error)) {
       return { exitCode: 2, stdout: '', stderr: `kb check: ${error.message}\n` };
