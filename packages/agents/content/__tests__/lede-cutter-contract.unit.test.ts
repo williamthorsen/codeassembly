@@ -6,7 +6,7 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
 // The cutter deletes candidates and returns the survivors unchanged. Three edits would defeat that quietly: granting
 // it a diff, which restores the attachment the fresh context removes; softening the deletion-only authority into a
-// licence to reword, which the caller's byte-identity check then rejects on every run; and dropping the exemplar
+// license to reword, which the caller's byte-identity check then rejects on every run; and dropping the exemplar
 // floor, which calibrates the cut against ledes the author never approved. None of the three fails at runtime -- each
 // yields a plausible shorter lede -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
