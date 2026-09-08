@@ -55,19 +55,19 @@ Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`
 Invoke `resolve-merge-options.sh` to resolve both dimensions in one call. The script combines the CLI override, reverse-lookup against `.meta/label-map.json`, and commit-majority over `git log {default_branch}..HEAD --format=%s` per the rules documented in the script header.
 
 ```bash
-json=$({harness_home_dir}/scripts/resolve-merge-options.sh \
+{harness_home_dir}/scripts/resolve-merge-options.sh \
   [--cli-scope "{cli_scope}"] \
   [--cli-type "{cli_type}"] \
   [--pr-label "{label_1}" --pr-label "{label_2}" ...] \
   --base-ref "{default_branch}" \
-  [--ticket-ref "{ticket_ref}"])
+  [--ticket-ref "{ticket_ref}"]
 ```
 
 Omit `--cli-scope`/`--cli-type` when no override was provided. Pass each PR label from step 2 as a separate `--pr-label` flag (the repeated form is robust against label names that contain commas). Include `--ticket-ref` when `ticket_ref` is non-null in session context.
 
 A Bitbucket PR contributes no labels, since `create-bitbucket-pr` applies none. The script already treats zero labels as no signal and falls through to commit-majority, so this is a missing signal rather than a failure and needs no special handling here.
 
-The output is a JSON object with one entry per dimension:
+The command prints a JSON object with one entry per dimension:
 
 ```json
 {
@@ -76,7 +76,7 @@ The output is a JSON object with one entry per dimension:
 }
 ```
 
-Read `.scope.status` and `.type.status` with python3 (or jq). When `status` is `"resolved"`, use `.value` as the concrete value. When `status` is `"ambiguous"`, carry the `candidates` array forward to the approval gate.
+Read `.scope.status` and `.type.status` from that printed JSON, with python3 (or jq) where a parser helps. When `status` is `"resolved"`, use `.value` as the concrete value. When `status` is `"ambiguous"`, carry the `candidates` array forward to the approval gate.
 
 ### 4. Resolve strategy and deletion strategy
 

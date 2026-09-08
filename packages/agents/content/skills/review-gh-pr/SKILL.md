@@ -61,7 +61,7 @@ If `gh pr view` exits non-zero, surface its stderr and stop.
 Compare the local HEAD against the PR's head commit:
 
 ```bash
-local_head=$(git rev-parse HEAD)
+git rev-parse HEAD
 ```
 
 If `local_head` does not equal `headRefOid`, exit non-zero with:
@@ -82,7 +82,7 @@ Apply this cascade:
 Compute the merge-base once:
 
 ```bash
-merge_base_sha=$(git merge-base HEAD {diff_base})
+git merge-base HEAD {diff_base}
 ```
 
 ### 5. Resolve the ticket

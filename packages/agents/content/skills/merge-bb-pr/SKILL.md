@@ -48,7 +48,7 @@ Bitbucket exposes no counterpart to GitHub's `mergeable` or `mergeStateStatus`, 
 The check only makes sense when the local working copy holds the branch being merged. Otherwise it is unrelated to what is being merged, and the comparison would produce a spurious refusal.
 
 ```bash
-local_branch=$(git rev-parse --abbrev-ref HEAD)
+git rev-parse --abbrev-ref HEAD
 ```
 
 Skip the check when **either** holds:

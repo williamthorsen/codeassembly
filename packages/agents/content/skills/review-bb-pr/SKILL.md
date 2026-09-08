@@ -59,7 +59,7 @@ If the call fails, surface the tool's error and stop.
 Compare the local HEAD against the PR's head commit:
 
 ```bash
-local_head=$(git rev-parse HEAD)
+git rev-parse HEAD
 ```
 
 The comparison is a prefix test, not an equality test, because `source.commit.hash` may arrive abbreviated; see [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request) for the rule. If `source.commit.hash` is not a prefix of `local_head` of at least 7 characters, exit non-zero with:
@@ -80,7 +80,7 @@ Apply this cascade:
 Compute the merge-base once:
 
 ```bash
-merge_base_sha=$(git merge-base HEAD {diff_base})
+git merge-base HEAD {diff_base}
 ```
 
 ### 5. Resolve the ticket

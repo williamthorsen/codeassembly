@@ -56,7 +56,7 @@ The branch-sync check only makes sense when the **local current branch is the PR
 Detect the case before running the check:
 
 ```bash
-local_branch=$(git rev-parse --abbrev-ref HEAD)
+git rev-parse --abbrev-ref HEAD
 ```
 
 Skip the sync check entirely when **either** of these is true:
