@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { composeRecord, hashPhrase, isStaleRejection, parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
+import {
+  composeRecord,
+  hashPhrase,
+  isStaleRejection,
+  parseRecord,
+  RECORD_PATH,
+  selectPriorRejections,
+  stringifyRecord,
+} from '../record.ts';
 import type { FoldRejection, ProseRecord, RecordedRejection, RunFold } from '../types.ts';
 
 const EMPTY: ProseRecord = { units: {}, rejections: [] };
@@ -25,8 +33,14 @@ describe(parseRecord, () => {
     ).toThrow(/ISO calendar date/);
   });
 
-  it('refuses a rejection naming a rule the helper does not detect', () => {
-    expect(() => parseRecord(rejectionYaml({ rule: 'sentence-case' }))).toThrow(/Invalid sweep record/);
+  it('reads a rejection under a rule the helper holds no detector for', () => {
+    const record = parseRecord(rejectionYaml({ rule: 'plain-speech', unit: 'plain-speech' }));
+
+    expect(record.rejections[0]?.rule).toBe('plain-speech');
+  });
+
+  it('refuses a rejection whose rule is not a kebab-case name', () => {
+    expect(() => parseRecord(rejectionYaml({ rule: 'Plain Speech' }))).toThrow(/kebab-case/);
   });
 
   it('refuses a hash that is not sixteen hex characters', () => {
@@ -214,6 +228,52 @@ describe(isStaleRejection, () => {
   });
 });
 
+describe(selectPriorRejections, () => {
+  const versions = new Map([['writing', '2']]);
+
+  it('selects a live rejection over a file the sweep read', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+
+    expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([
+      { rule: 'reduced-object-relative', file: 'docs/guide.md', phrase: 'the source that it names' },
+    ]);
+  });
+
+  it('selects a rejection under a rule the helper holds no detector for', () => {
+    const record: ProseRecord = {
+      units: {},
+      rejections: [rejection({ rule: 'plain-speech', unit: 'plain-speech', 'unit-version': '3' })],
+    };
+
+    expect(selectPriorRejections(record, new Map([['plain-speech', '3']]), ['docs/guide.md'])).toHaveLength(1);
+  });
+
+  it('withholds a rejection recorded at an older unit version, so its site is judged afresh', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection({ 'unit-version': '1' })] };
+
+    expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
+  });
+
+  it('withholds a rejection whose unit the run does not name, no version standing to re-open it', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection({ unit: 'unbound' })] };
+
+    expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
+  });
+
+  it('withholds a rejection over a file the sweep did not read', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+
+    expect(selectPriorRejections(record, versions, ['docs/other.md'])).toStrictEqual([]);
+  });
+
+  it("carries the site alone, the unit, version, hash, and ground being the record's own bookkeeping", () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+    const [selected] = selectPriorRejections(record, versions, ['docs/guide.md']);
+
+    expect(Object.keys(selected ?? {}).toSorted()).toStrictEqual(['file', 'phrase', 'rule']);
+  });
+});
+
 describe(stringifyRecord, () => {
   it('round-trips without drift', () => {
     const record = composeRecord(
@@ -224,6 +284,19 @@ describe(stringifyRecord, () => {
       }),
     );
 
+    expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
+  });
+
+  it('round-trips a rejection under a rule with no detector', () => {
+    const record = composeRecord(
+      EMPTY,
+      fold({
+        units: { 'plain-speech': { version: '3', roots: ['.'] } },
+        rejections: [foldRejection({ rule: 'plain-speech', unit: 'plain-speech' })],
+      }),
+    );
+
+    expect(record.rejections[0]).toMatchObject({ rule: 'plain-speech', 'unit-version': '3' });
     expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
   });
 

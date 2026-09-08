@@ -11,14 +11,17 @@ You revise the prose in one batch of files so that it follows the rules below, a
 
 ## Your assignment
 
-Your dispatch carries four scalars:
+Your dispatch carries five scalars:
 
 - **`root`**: The repository root. Every path below is relative to it.
 - **`files`**: The files in your batch, comma-separated. This list is the whole set of files that you may edit.
 - **`candidates`**: The path of a JSON file holding the detector's candidates for those files. Read it with {tool:Read}.
+- **`rejections`**: The path of a JSON file holding the sites an earlier sweep already adjudicated, each under one rule. Read it with {tool:Read}.
 - **`rules`**: The rule ids that the detector covers on this run, comma-separated. They are the vocabulary of your report's `rule` field.
 
 Each candidate object carries `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also carries `shape`, `head`, `subject`, and `verb`. A candidate carrying `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
+
+Each rejection object carries `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span the list names is adjudicated normally under every remaining rule, and a site the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so it reaches you with no prior verdict at all.
 
 Detection is over-inclusive and covers two rules alone. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 

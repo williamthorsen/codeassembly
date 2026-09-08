@@ -852,11 +852,14 @@ rejections:
 
 A unit's `roots` are the path roots that sweeps at this version have covered, `.` meaning the repository; `swept-at` dates the most recent of them. A rejection is keyed on its rule, its file, and `hash`: sha256 over the NFC-normalized, whitespace-collapsed phrase, truncated to sixteen hex characters. The helper derives the hash from the phrase that the fold reports, so the key is a function of the phrase as it reads _after_ the run's edits; a repair under another rule in the same run therefore does not invalidate it.
 
+A `rule` is any lowercase kebab-case name a bound rulebook declares, detected or not. `plain-speech` carries no detector and is recorded like any other, which is what lets a unit hold judgments without owning a detector.
+
 On read, with units named:
 
 - A batch every file of which the record covers, for every named unit at that unit's current version, is skipped.
 - A candidate matching a rejection at its unit's current version is dropped.
 - A candidate matching a rejection recorded at an _older_ version is kept and marked `stale: true`, so a rule's revision re-opens the judgment for review rather than discarding it.
+- Every rejection the record holds over a file the sweep read, under a named unit at that unit's current version, is reported under `rejections` as `rule`, `file`, and `phrase`. A caller hands these to the sweeper, which leaves each site under the rule its entry names rather than reaching the same verdict again; this is the one path by which a rule with no detector saves a later run any work. A rejection recorded at an older version, or under a unit the run does not name, is withheld, so its site reaches the sweeper with no prior verdict attached.
 
 ### The fold
 

@@ -85,7 +85,11 @@ export interface UnitCoverage {
 
 /** One adjudicated rejection, keyed on its rule, its file, and the hash of its phrase. */
 export interface RecordedRejection {
-  rule: RuleId;
+  /**
+   * The rule the site was adjudicated under. Any rule a bound rulebook declares, whether or not the helper holds a
+   * detector for it, so a unit records what a sweeper judged without owning a detector.
+   */
+  rule: string;
   /** The unit owning the rule, which is what a version bump marks stale. */
   unit: string;
   /** The unit's version when the rejection was recorded. */
@@ -97,6 +101,17 @@ export interface RecordedRejection {
   hash: string;
   /** Why the site was left as it stands. */
   ground: string;
+}
+
+/**
+ * One rejection a later run inherits: a site an earlier sweep adjudicated and left, at a version of its unit that
+ * still stands. The sweeper needs no argument for a settled site, so the record's own bookkeeping is left behind.
+ */
+export interface PriorRejection {
+  rule: string;
+  file: string;
+  /** The phrase as the earlier sweep left it. */
+  phrase: string;
 }
 
 /** The per-repository sweep record. */
@@ -111,7 +126,8 @@ export interface ProseRecord {
  * the key a function of the phrase as it reads after the run's edits rather than of whatever a caller supplies.
  */
 export interface FoldRejection {
-  rule: RuleId;
+  /** The rule the site was adjudicated under, detected or not. */
+  rule: string;
   /** The unit owning the rule, which must be one the fold names. */
   unit: string;
   file: string;
@@ -201,6 +217,12 @@ export interface DetectSuccess {
   /** Repository root the sweep ran against. */
   root: string;
   candidates: readonly Candidate[];
+  /**
+   * Sites the record already holds a live rejection for, over the files the sweep read. A sweeper given these leaves
+   * each under the rule its entry names and judges it under every other; one recorded at an older unit version, or
+   * under a unit the run does not name, is absent, so its site is judged afresh.
+   */
+  rejections: readonly PriorRejection[];
   /** The batches left to adjudicate, those the record already covers having been dropped. */
   batches: readonly Batch[];
   summary: CandidateSummary;
