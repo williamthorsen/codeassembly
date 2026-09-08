@@ -138,6 +138,7 @@ Route by the `error` code:
 
 - `no-artifact-dir`, `no-agent-lede`, `no-merged-lede`: The ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
 - `no-doctrine`: The installed doctrine file is unreadable. Report it as an install problem.
+- `no-taxonomy`: The installed `work-types.json` is unreadable. Report it as an install problem; no `--type` value resolves against a taxonomy that did not load.
 - `unresolved-identity`: The work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
 - `invalid-args`: Report the message and propose a corrected invocation.
 - `store-not-registered`: The corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.

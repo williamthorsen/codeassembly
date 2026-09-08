@@ -197,6 +197,14 @@ describe(resolveEpisode, () => {
 
     expect(expectFailure(outcome)).toBe('unresolved-identity');
   });
+
+  it('reports an unreadable taxonomy apart from an undeclared type, which passing a flag would not repair', async () => {
+    const fixture = await createLedeFixture({ omit: 'work-types' });
+
+    const outcome = await resolveEpisode(inputFor(fixture));
+
+    expect(expectFailure(outcome)).toBe('no-taxonomy');
+  });
 });
 
 // region | Helpers

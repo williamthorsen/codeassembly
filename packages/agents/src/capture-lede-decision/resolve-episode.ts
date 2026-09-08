@@ -250,6 +250,10 @@ async function readLede(input: {
  * artifact's frontmatter, which is the only artifact in the chain that carries typed fields. The work type is resolved
  * through the installed taxonomy rather than taken as spelled, so the identity carries the canonical key and the tier
  * that the taxonomy in force declares for it, and reports the breaking marker separately.
+ *
+ * A taxonomy that does not load is reported apart from a type it does not declare. The two conditions look alike at the
+ * failed lookup and differ in the caller's recourse: one is repaired by passing a flag, the other only by repairing the
+ * install.
  */
 async function resolveIdentity(input: {
   artifactDir: string;
@@ -259,7 +263,9 @@ async function resolveIdentity(input: {
   type?: string;
   scope?: string;
   ticket?: string;
-}): Promise<{ ok: true; identity: EpisodeIdentity } | { ok: false; error: 'unresolved-identity'; message: string }> {
+}): Promise<
+  { ok: true; identity: EpisodeIdentity } | { ok: false; error: 'no-taxonomy' | 'unresolved-identity'; message: string }
+> {
   const fallback = await readChangeSummaryFields(input.artifactDir);
 
   const type = input.type ?? fallback.type;
@@ -273,7 +279,15 @@ async function resolveIdentity(input: {
   }
 
   const workTypes = await loadWorkTypes(input.dataDir);
-  const resolved = workTypes === null ? null : resolveWorkType(type, workTypes);
+  if (workTypes === null) {
+    return {
+      ok: false,
+      error: 'no-taxonomy',
+      message: `no readable work-types.json under ${input.dataDir}`,
+    };
+  }
+
+  const resolved = resolveWorkType(type, workTypes);
   if (resolved === null) {
     return {
       ok: false,
