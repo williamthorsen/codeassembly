@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractTarget, splitStoreQualifier } from '../wikilink-parse.ts';
+import { extractTarget, scanWikilinks, splitStoreQualifier } from '../wikilink-parse.ts';
 
 describe(splitStoreQualifier, () => {
   it('separates a store qualifier from the target', () => {
@@ -33,5 +33,37 @@ describe(splitStoreQualifier, () => {
 
     expect(fromAlias).toEqual({ store: 'fde', target: 'Note title' });
     expect(fromAnchor).toEqual({ store: 'fde', target: 'Note title' });
+  });
+});
+
+describe(scanWikilinks, () => {
+  it('yields a store-local link with its offset into the body as passed in', () => {
+    expect(scanWikilinks('See [[Setting up nvm]] now.').toArray()).toEqual([
+      { match: '[[Setting up nvm]]', inner: 'Setting up nvm', offset: 4, target: 'Setting up nvm' },
+    ]);
+  });
+
+  it('yields a qualified link split into its store and target', () => {
+    const [link] = scanWikilinks('See [[fde:Shared assertion|the one]].').toArray();
+
+    expect(link).toMatchObject({ store: 'fde', target: 'Shared assertion', inner: 'fde:Shared assertion|the one' });
+  });
+
+  it('skips links inside fenced and inline code, intra-doc anchors, and non-Markdown embeds', () => {
+    const body = [
+      '```bash',
+      'if [[ -n "$x" ]]; then :; fi',
+      '```',
+      'A `[[inline:One]]` span,',
+      '![[a.png]], [[#top]].',
+    ].join('\n');
+
+    expect(scanWikilinks(body).toArray()).toEqual([]);
+  });
+
+  it('keeps the embed prefix on the match while the target drops it', () => {
+    const [link] = scanWikilinks('![[Diagram]]').toArray();
+
+    expect(link).toMatchObject({ match: '![[Diagram]]', target: 'Diagram', offset: 0 });
   });
 });

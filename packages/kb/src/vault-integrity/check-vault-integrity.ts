@@ -1,16 +1,7 @@
 import type { StoreVisibility } from '../config/config-schema.ts';
 import type { Finding } from '../types.ts';
 import { buildVaultIndex, type VaultIndex } from './build-vault-index.ts';
-import {
-  countNewlines,
-  extractTarget,
-  hasNonMarkdownExtension,
-  lookupKey,
-  maskFencedCode,
-  maskInlineCode,
-  splitStoreQualifier,
-  WIKILINK,
-} from './wikilink-parse.ts';
+import { countNewlines, lookupKey, type ScannedWikilink, scanWikilinks } from './wikilink-parse.ts';
 
 /**
  * Checks whole-vault integrity over a type-blind note set: unresolved `[[link]]` targets and basename collisions.
@@ -78,44 +69,6 @@ function basenameFindings(vaultIndex: VaultIndex): Finding[] {
   return findings;
 }
 
-/**
- * Flags every `[[Target]]` that resolves to no note, reported at its file-absolute line. The body is masked for fenced
- * and inline code before scanning so wikilink-shaped text inside code is not flagged; backslash-escaped links,
- * intra-doc anchors, and non-Markdown embeds are skipped.
- */
-function linkFindings(
-  notes: readonly VaultIntegrityNote[],
-  vaultIndex: VaultIndex,
-  options: VaultIntegrityOptions | undefined,
-): Finding[] {
-  const findings: Finding[] = [];
-  for (const note of notes) {
-    const body = maskInlineCode(maskFencedCode(note.body));
-    for (const match of body.matchAll(WIKILINK)) {
-      const inner = match[1];
-      if (inner === undefined) continue;
-      const target = extractTarget(inner);
-      if (target === null) continue;
-      if (hasNonMarkdownExtension(target)) continue;
-
-      const { store, target: bare } =
-        options === undefined ? { store: undefined, target } : splitStoreQualifier(target);
-      const defect =
-        store === undefined || options === undefined
-          ? describeLocalDefect(bare, vaultIndex)
-          : describeForeignDefect(store, bare, options);
-      if (defect === undefined) continue;
-
-      findings.push({
-        path: note.path,
-        line: note.bodyStartLine + countNewlines(body, match.index),
-        ...defect,
-      });
-    }
-  }
-  return findings;
-}
-
 /** Describes why a store-qualified link failed to resolve, or `undefined` when it resolved. */
 function describeForeignDefect(
   store: string,
@@ -124,7 +77,10 @@ function describeForeignDefect(
 ): Pick<Finding, 'rule' | 'severity' | 'message'> | undefined {
   const link = `[[${store}:${target}]]`;
   const foreignStore = options.foreignStores.get(store);
-  if (foreignStore === undefined || foreignStore.status === 'unknown') {
+  // A store absent from the map was never looked up, so nothing is known about it and nothing is reported. The
+  // caller that skipped the lookup reports why.
+  if (foreignStore === undefined) return undefined;
+  if (foreignStore.status === 'unknown') {
     return {
       rule: 'wikilinks.unknown-store',
       severity: 'error',
@@ -167,6 +123,40 @@ function describeLocalDefect(
     severity: 'error',
     message: `[[${target}]] does not resolve to any vault note`,
   };
+}
+
+/** Rejoins a scanned link's store qualifier to its target, for a caller resolving the whole string store-locally. */
+function joinTarget(link: ScannedWikilink): string {
+  return link.store === undefined ? link.target : `${link.store}:${link.target}`;
+}
+
+/**
+ * Flags every `[[Target]]` that resolves to no note, reported at its file-absolute line. The body is masked for fenced
+ * and inline code before scanning so wikilink-shaped text inside code is not flagged; backslash-escaped links,
+ * intra-doc anchors, and non-Markdown embeds are skipped.
+ */
+function linkFindings(
+  notes: readonly VaultIntegrityNote[],
+  vaultIndex: VaultIndex,
+  options: VaultIntegrityOptions | undefined,
+): Finding[] {
+  const findings: Finding[] = [];
+  for (const note of notes) {
+    for (const link of scanWikilinks(note.body)) {
+      const defect =
+        link.store === undefined || options === undefined
+          ? describeLocalDefect(joinTarget(link), vaultIndex)
+          : describeForeignDefect(link.store, link.target, options);
+      if (defect === undefined) continue;
+
+      findings.push({
+        path: note.path,
+        line: note.bodyStartLine + countNewlines(note.body, link.offset),
+        ...defect,
+      });
+    }
+  }
+  return findings;
 }
 
 // endregion | Helpers

@@ -67,12 +67,18 @@ describe(checkVaultIntegrity, () => {
   it('flags a qualified link whose store no registry entry declares', () => {
     const notes = [note('a/Journal.md', 'See [[fed:Shared assertion]].')];
 
-    const findings = checkVaultIntegrity(notes, options({}));
+    const findings = checkVaultIntegrity(notes, options({ fed: { status: 'unknown' } }));
 
     expect(findings).toHaveLength(1);
     expect(findings[0]?.rule).toBe('wikilinks.unknown-store');
     expect(findings[0]?.severity).toBe('error');
     expect(findings[0]?.message).toContain('"fed"');
+  });
+
+  it('reports nothing for a store that was never looked up, so a skipped lookup claims nothing about it', () => {
+    const notes = [note('a/Journal.md', 'See [[fde:Shared assertion]].')];
+
+    expect(checkVaultIntegrity(notes, options({}))).toEqual([]);
   });
 
   it('warns rather than errors when the named store could not be read here', () => {

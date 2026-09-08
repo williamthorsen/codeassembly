@@ -8,32 +8,18 @@ import { resolveKbDir } from '../layout/index.ts';
 import type { KbRegistry } from '../types.ts';
 import { buildVaultIndex } from '../vault-integrity/build-vault-index.ts';
 import type { ForeignStore } from '../vault-integrity/check-vault-integrity.ts';
-import {
-  extractTarget,
-  hasNonMarkdownExtension,
-  maskFencedCode,
-  maskInlineCode,
-  splitStoreQualifier,
-  WIKILINK,
-} from '../vault-integrity/wikilink-parse.ts';
+import { scanWikilinks } from '../vault-integrity/wikilink-parse.ts';
 import { enumerateNotePaths } from './enumerate.ts';
 
 /**
  * Collects the distinct store names that a note set's wikilinks qualify, so a check run consults only the stores its
- * own links reach. Bodies are masked for fenced and inline code first, matching how the links are later evaluated, so
- * a store-shaped prefix inside a code sample pulls in no store.
+ * own links reach. It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a store-shaped
+ * prefix inside a code sample pulls in no store and the two cannot disagree on what counts as a qualified link.
  */
 export function collectStorePrefixes(notes: readonly { body: string }[]): Set<string> {
   const prefixes = new Set<string>();
   for (const note of notes) {
-    const body = maskInlineCode(maskFencedCode(note.body));
-    for (const match of body.matchAll(WIKILINK)) {
-      const inner = match[1];
-      if (inner === undefined) continue;
-      const target = extractTarget(inner);
-      if (target === null) continue;
-      if (hasNonMarkdownExtension(target)) continue;
-      const { store } = splitStoreQualifier(target);
+    for (const { store } of scanWikilinks(note.body)) {
       if (store !== undefined) prefixes.add(store);
     }
   }

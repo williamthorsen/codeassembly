@@ -13,6 +13,8 @@ export {
   maskFencedCode,
   maskInlineCode,
   type QualifiedTarget,
+  type ScannedWikilink,
+  scanWikilinks,
   splitStoreQualifier,
   WIKILINK,
 } from './wikilink-parse.ts';
