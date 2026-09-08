@@ -8,12 +8,15 @@ import { describe, expect, it } from 'vitest';
 // the version that it declares. Nothing else ties that version to the calibrated rule, so a rule edit would otherwise
 // leave every repository recorded as swept against a rule that has since changed.
 //
-// The pin below is what forces the look. A rule edit fails this suite until the author decides which of the two
-// remedies applies, and the failure message states both.
+// The pins below are what force the look. An edit to either file fails this suite until the author decides which of
+// the two remedies applies, and the failure message states both.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
 const RULE = '_partials/plain-speech.md';
+
+/** The calibration text that this suite pins. */
+const PINNED_CALIBRATION_HASH = '93ae8affb5e6113b93999d115fde9689e6101ed845173bcbbc6689e7c11c3770';
 
 /** The version declared by the calibration, and the rule text that version was calibrated against. */
 const PINNED_RULE_HASH = '086f58f3ef758794946beffa83fe1917a41bb492dcd4f72eb621d8704e7a5eeb';
@@ -22,7 +25,13 @@ const PINNED_VERSION = '2';
 /** Matches the calibration's opening version marker, whose captured group is the version. */
 const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*plain-speech\s+(\S+)\s*-->$/m;
 
-const DRIFT_MESSAGE =
+const CALIBRATION_DRIFT_MESSAGE =
+  `${CALIBRATION} no longer matches the text pinned here. Choose one remedy: ` +
+  `bump the calibration's \`unit-version\` marker (and \`PINNED_VERSION\` here) where the checking standard moved, ` +
+  `so every repository's record re-opens its plain-speech coverage for review; or re-pin ` +
+  `\`PINNED_CALIBRATION_HASH\` alone where the edit left the checking standard as it was.`;
+
+const RULE_DRIFT_MESSAGE =
   `${RULE} no longer matches the text that ${CALIBRATION} was calibrated against. Choose one remedy: ` +
   `bump the calibration's \`unit-version\` marker (and \`PINNED_VERSION\` here) where the rule's operative content ` +
   `moved, so every repository's record re-opens its plain-speech coverage for review; or re-pin ` +
@@ -37,15 +46,27 @@ describe('plain-speech calibration', () => {
   });
 
   it('is calibrated against the rule as it stands', async () => {
-    expect(hashText(await readContentFile(RULE)), DRIFT_MESSAGE).toBe(PINNED_RULE_HASH);
+    expect(hashText(await readContentFile(RULE)), RULE_DRIFT_MESSAGE).toBe(PINNED_RULE_HASH);
   });
 
   it('reports drift from a one-character change to the rule', async () => {
     const mutated = `${await readContentFile(RULE)} `;
 
     expect(hashText(mutated)).not.toBe(PINNED_RULE_HASH);
-    expect(DRIFT_MESSAGE).toContain('bump');
-    expect(DRIFT_MESSAGE).toContain('re-pin');
+    expect(RULE_DRIFT_MESSAGE).toContain('bump');
+    expect(RULE_DRIFT_MESSAGE).toContain('re-pin');
+  });
+
+  it('is pinned to the calibration as it stands', async () => {
+    expect(hashText(await readContentFile(CALIBRATION)), CALIBRATION_DRIFT_MESSAGE).toBe(PINNED_CALIBRATION_HASH);
+  });
+
+  it('reports drift from a one-character change to the calibration', async () => {
+    const mutated = `${await readContentFile(CALIBRATION)} `;
+
+    expect(hashText(mutated)).not.toBe(PINNED_CALIBRATION_HASH);
+    expect(CALIBRATION_DRIFT_MESSAGE).toContain('bump');
+    expect(CALIBRATION_DRIFT_MESSAGE).toContain('re-pin');
   });
 });
 

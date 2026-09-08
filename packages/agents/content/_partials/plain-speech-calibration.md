@@ -9,12 +9,14 @@ How one sweep applies the rule above, so that two sweepers reach the same verdic
 1. **A figurative verb where a plain one exists.** "detail taxes the reader" becomes "detail costs the reader attention". "the lede writes itself" becomes "the lede follows".
 2. **A subject that cannot perform the verb.** "the file carries a section" becomes "the file contains a section". "the block governs" becomes "the block takes precedence". "Findings arrive as warnings" becomes "The function reports warnings": Findings arrive nowhere, and the original drops the function that produced them.
 3. **A missing actor that the reader needs.** Rewrite where the sentence omits an actor that the reader must know and cannot recover from context. "Refinement happens later, in bulk" becomes "A later pass refines them in bulk", because which pass does it is the point.
+4. **A constructed figure where a literal phrase exists.** The rule's mannered-prose test, applied to a site. The case reaches a figure built for one sentence, never a word on which this corpus has settled: `gate`, `sweep`, `tier`, and `lede` are its vocabulary and stay, whatever their figurative origin.
 
 Passive voice is not a defect on its own, and case 3 is no licence to convert it. Keep the passive where the actor is obvious or beside the point, where the patient is the paragraph's topic, or where it holds a heavy phrase at the end of the sentence.
 
 ### Leave these
 
-- Domain verbs with no plain equivalent: "renders as a subsection", "inlines the partial", "the test fails".
+- Domain terms on which this corpus has settled: "renders as a subsection", "inlines the partial", "the test fails". A settled term is vocabulary, however a sweeper might paraphrase it. Entrenchment alone does not settle a term: a figure merely repeated by the corpus is still a figure.
+- A figure carrying meaning that the literal phrase drops. The rule's own "a figure drags in connotations" is one: "drags in" says the connotations arrive attached and resist removal, where "has" reports only that they exist. Leave any figure doing comparable work.
 - Any rewrite that would change what the text directs. Where the plain wording would resolve an ambiguity that the original left open, leave the text and report the site as questionable.
 
 ### Worked example
@@ -31,7 +33,7 @@ Four edits fall under cases 1 and 2, and one under case 3: "must be fetched" dro
 
 ### Shapes to look for
 
-Seven shapes recur in this corpus. Each is a search pattern rather than a rule: A sentence matching one is a candidate for the reader test, and a sentence matching none can still fail that test.
+Eight shapes recur in this corpus. Each is a search pattern rather than a rule: A sentence matching one is a candidate for the reader test, and a sentence matching none can still fail that test.
 
 1. **The cleft construction.** "Segment anchoring is what admits the branch form" becomes "Segment anchoring admits the branch form".
 2. **Appositives stacked on the subject.** "The record, a file that one run writes and the next reads, is keyed on the phrase" becomes "The record is keyed on the phrase. One run writes it and the next reads it."
@@ -40,3 +42,4 @@ Seven shapes recur in this corpus. Each is a search pattern rather than a rule: 
 5. **A long subject carrying an embedded clause before its main verb.** "A change that needs coverage but finds no candidate clearing the bar ships without a test" becomes "A change ships without a test when it needs coverage and no candidate clears the bar".
 6. **Personification of an inanimate subject.** "The queue now reads as one set behind the blocking ticket" becomes "All four tickets are now marked as blocked by that ticket".
 7. **An abstract noun standing in for a small concrete set.** "The suite covers the boundary cases" becomes "The suite covers an empty list, one entry, and a list past the budget".
+8. **A concrete metaphor standing in for the literal abstraction.** The mirror of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "a cost to you".
