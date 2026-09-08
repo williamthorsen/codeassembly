@@ -1,5 +1,10 @@
 export { buildVaultIndex, type VaultIndex } from './build-vault-index.ts';
-export { checkVaultIntegrity, type VaultIntegrityNote } from './check-vault-integrity.ts';
+export {
+  checkVaultIntegrity,
+  type ForeignStore,
+  type VaultIntegrityNote,
+  type VaultIntegrityOptions,
+} from './check-vault-integrity.ts';
 export {
   countNewlines,
   extractTarget,

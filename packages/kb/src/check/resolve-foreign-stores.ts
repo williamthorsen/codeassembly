@@ -6,7 +6,8 @@ import { isAtLeastAsShareable, type StoreVisibility } from '../config/config-sch
 import { loadKbConfig } from '../config/load-config.ts';
 import { resolveKbDir } from '../layout/index.ts';
 import type { KbRegistry } from '../types.ts';
-import { buildVaultIndex, type VaultIndex } from '../vault-integrity/build-vault-index.ts';
+import { buildVaultIndex } from '../vault-integrity/build-vault-index.ts';
+import type { ForeignStore } from '../vault-integrity/check-vault-integrity.ts';
 import {
   extractTarget,
   hasNonMarkdownExtension,
@@ -38,17 +39,6 @@ export function collectStorePrefixes(notes: readonly { body: string }[]): Set<st
   }
   return prefixes;
 }
-
-/** What a check run found when it looked up a store one of its links names. */
-export type ForeignStore =
-  /** The name matches no entry in the merged registry. */
-  | { status: 'unknown' }
-  /** The store is registered but cannot be read on this machine, so its links are unverifiable rather than broken. */
-  | { status: 'unavailable'; reason: string }
-  /** The store is less shareable than the source, so a link into it would widen disclosure. */
-  | { status: 'disallowed'; visibility: StoreVisibility }
-  /** The store was read; `index` holds its basenames. */
-  | { status: 'resolved'; index: VaultIndex };
 
 /**
  * Resolves each store name a run's links qualify against the merged registry, reading only note paths and each store's

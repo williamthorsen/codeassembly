@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import type { StoreVisibility } from '../../config/config-schema.ts';
 import { makeStore } from '../../test-utils/make-store.ts';
 import type { KbRegistry } from '../../types.ts';
-import { collectStorePrefixes, type ForeignStore, resolveForeignStores } from '../resolve-foreign-stores.ts';
+import type { ForeignStore } from '../../vault-integrity/check-vault-integrity.ts';
+import { collectStorePrefixes, resolveForeignStores } from '../resolve-foreign-stores.ts';
 
 describe(collectStorePrefixes, () => {
   it('collects each qualified store once and ignores bare links', () => {
