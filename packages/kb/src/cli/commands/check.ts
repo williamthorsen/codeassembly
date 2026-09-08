@@ -79,7 +79,11 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
 
   let result;
   try {
-    result = await check({ kbRoot: store.path });
+    result = await check({
+      kbRoot: store.path,
+      cwd: input.cwd,
+      ...(input.home !== undefined && { home: input.home }),
+    });
   } catch (error) {
     if (isKbLoaderError(error)) {
       return { exitCode: 2, stdout: '', stderr: `kb check: ${error.message}\n` };

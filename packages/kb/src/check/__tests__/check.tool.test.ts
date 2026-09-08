@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { KbLoaderError } from '../../config/kb-loader-error.ts';
 import { commitAll, initGitRepo } from '../../test-utils/git-repo.ts';
 import { makeStore } from '../../test-utils/make-store.ts';
+import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
+import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
 import { check } from '../check.ts';
 
 const LINKS_TO_SCRATCH =
@@ -123,3 +125,69 @@ describe(`${check.name} under git`, () => {
     expect(result.findings.map((finding) => finding.rule)).toContain('wikilinks.unresolved');
   });
 });
+
+describe(`${check.name} resolving store-qualified links`, () => {
+  it('resolves a link from a private store into a shared one', async () => {
+    const target = await makeStore({ 'content/Shared assertion.md': VALID, '.kb/config.yaml': 'visibility: shared\n' });
+    const source = await makeStore({ 'content/Journal.md': linksTo('fde:Shared assertion') });
+    const home = await seedHome({ fde: target });
+
+    const result = await check({ kbRoot: source, home });
+
+    expect(result.findings).toEqual([]);
+  });
+
+  it('reports a link from a shared store into a private one', async () => {
+    const target = await makeStore({ 'content/Secret.md': VALID, '.kb/config.yaml': 'visibility: private\n' });
+    const source = await makeStore({
+      'content/Assertion.md': linksTo('journal:Secret'),
+      '.kb/config.yaml': 'visibility: shared\n',
+    });
+    const home = await seedHome({ journal: target });
+
+    const result = await check({ kbRoot: source, home });
+
+    expect(result.findings.map((finding) => finding.rule)).toEqual(['wikilinks.disallowed-store']);
+  });
+
+  it('reports a registry that will not load as one vault-scoped finding', async () => {
+    const source = await makeStore({ 'content/Journal.md': linksTo('fde:Shared assertion') });
+    const home = await makeTempDir('kb-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs: [not-a-map\n');
+
+    const result = await check({ kbRoot: source, home });
+
+    const registryFindings = result.findings.filter((finding) => finding.rule === 'wikilinks.registry-unloadable');
+    expect(registryFindings).toHaveLength(1);
+    expect(registryFindings[0]?.scope).toBe('vault');
+  });
+
+  it('reads no registry, and reports none, for a store whose links qualify no store', async () => {
+    const source = await makeStore({ 'content/Journal.md': VALID });
+    const home = await makeTempDir('kb-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs: [not-a-map\n');
+
+    const result = await check({ kbRoot: source, home });
+
+    expect(result.findings).toEqual([]);
+  });
+});
+
+// region | Helpers
+
+/** Builds a note body whose sole wikilink names `target`. */
+function linksTo(target: string): string {
+  return `---\ntitle: Kept\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nSee [[${target}]].\n`;
+}
+
+/** Stands up a home directory whose user-global registry declares the given `name → store path` entries. */
+async function seedHome(stores: Record<string, string>): Promise<string> {
+  const home = await makeTempDir('kb-home-');
+  const entries = Object.entries(stores)
+    .map(([name, path]) => `  ${name}:\n    path: ${path}\n`)
+    .join('');
+  await seedRegistry(getRegistryPathFor(home), `kbs:\n${entries}`);
+  return home;
+}
+
+// endregion | Helpers
