@@ -23,7 +23,8 @@ export const CHECK_HELP = `Usage: kb check [paths...] [options]
 
 Validate notes in a knowledge base against its tag aliases and cross-note
 link and path rules. With no path arguments, every note is checked.
-Cross-note rules always resolve against the whole vault.
+Cross-note rules always resolve against the whole store; a [[store:Target]]
+link resolves against the store its prefix names in the kb.yaml registry.
 
 Targeting (mutually exclusive):
   [paths...]    Check only the notes matching the given glob patterns, files,
