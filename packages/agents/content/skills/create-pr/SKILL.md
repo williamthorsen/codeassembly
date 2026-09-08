@@ -55,13 +55,10 @@ json=$({harness_home_dir}/scripts/describe-change.sh \
   --scope "{scope}" \
   --type "{type}" \
   --ticket-ref "{ticket_ref}")
-```
-
-Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved.
-
-```bash
 pr_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))")
 ```
+
+Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved. Parse in the same Bash invocation that renders, as above; `$json` does not survive to a second call, and parsing an empty string yields an empty title.
 
 Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
