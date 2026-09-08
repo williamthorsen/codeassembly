@@ -53,7 +53,7 @@ git rev-parse --abbrev-ref HEAD
 
 Skip the check when **either** holds:
 
-- `local_branch` does not equal `source.branch.name`.
+- The printed branch does not equal `source.branch.name`.
 - `source.repository.full_name` does not equal the resolved `{workspace}/{repo}` pair, which makes this a fork PR. `origin/{source.branch.name}` then names a branch in the base repository, and a fork PR whose source branch happens to share that name would be compared against an unrelated ref.
 
 Both conditions mirror `merge-gh-pr`'s, whose second keys on `isCrossRepository`. Otherwise:
