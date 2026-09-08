@@ -254,6 +254,12 @@ describe(selectPriorRejections, () => {
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
   });
 
+  it('withholds a rejection whose unit the run does not name, no version standing to re-open it', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection({ unit: 'unbound' })] };
+
+    expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
+  });
+
   it('withholds a rejection over a file the sweep did not read', () => {
     const record: ProseRecord = { units: {}, rejections: [rejection()] };
 

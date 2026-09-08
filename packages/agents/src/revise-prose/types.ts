@@ -219,7 +219,8 @@ export interface DetectSuccess {
   candidates: readonly Candidate[];
   /**
    * Sites the record already holds a live rejection for, over the files the sweep read. A sweeper given these leaves
-   * them without re-adjudicating them; one recorded at an older unit version is absent, so its site is judged afresh.
+   * each under the rule its entry names and judges it under every other; one recorded at an older unit version, or
+   * under a unit the run does not name, is absent, so its site is judged afresh.
    */
   rejections: readonly PriorRejection[];
   /** The batches left to adjudicate, those the record already covers having been dropped. */
