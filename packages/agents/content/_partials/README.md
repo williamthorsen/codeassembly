@@ -185,3 +185,7 @@ The expander reports structured errors for the following conditions. Each error 
 | `slot-without-children`  | The caller provided slot content but the partial has no `<!-- children -->` placeholder. |
 | `unclosed-open`          | An open directive was never followed by a matching close.                                |
 | `unrecognized-parameter` | A directive uses `include:` syntax but does not match any recognized shape.              |
+
+## Borrowed content
+
+`plain-speech.md` takes the term "mannered prose" and its two example pairs ("a dial worth turning" for "a parameter worth varying", "this point earns its keep" for "this point still matters") from Anthropic's Fable 5.1 prompting documentation, under "Writing density": https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1
