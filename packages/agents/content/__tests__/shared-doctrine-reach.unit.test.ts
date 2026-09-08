@@ -36,7 +36,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
     // `skills/_data/concision.md` states the full principle this section summarizes, and the two share sentences.
     // These are the summary's own, so the single-statement check below reads as a duplicate rather than the pairing.
     phrases: [
-      'then costs the reader attention and hides the signal',
+      "then wastes the reader's attention and hides the signal",
       'Lead with the minimal skeleton and add a sentence only when it changes what the reader does',
     ],
   },
@@ -76,7 +76,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
 const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string }> = [
   { heading: '## Interactive work', phrase: 'Invoke the `collaborate` skill when working interactively' },
   { heading: '## Style', phrase: 'Code style should adhere to' },
-  { heading: '## Concision', phrase: 'then costs the reader attention and hides the signal' },
+  { heading: '## Concision', phrase: "then wastes the reader's attention and hides the signal" },
   { heading: '## Plain speech', phrase: 'Speak plainly in practical documentation' },
   { heading: '## Code descriptions', phrase: 'gets a brief description' },
   { heading: '## File access', phrase: 'When given an exact file path' },

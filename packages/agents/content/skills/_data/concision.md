@@ -1,6 +1,6 @@
 # Concision
 
-Detail adds value up to a peak, then costs the reader attention: Past the peak, added detail hides the signal it was meant to convey. Add detail only while it adds signal. Weigh each sentence by the signal it adds, not its length.
+Detail adds value up to a peak, then wastes the reader's attention: Past the peak, added detail hides the signal it was meant to convey. Add detail only while it adds signal. Weigh each sentence by the signal it adds, not its length.
 
 ## Compose tight the first time
 
