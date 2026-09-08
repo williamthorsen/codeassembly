@@ -2,7 +2,8 @@
  * The per-repository sweep record, `.agents/revise-prose.yaml`.
  *
  * The record answers two questions on a later run: which paths a unit has already been swept over at its current
- * version, and which candidates an adjudicator has already rejected. A version bump marks a unit's rejections stale
+ * version, and which sites an adjudicator has already rejected. A rejected site need not be one a detector reports,
+ * so the second answer reaches a rule whose sites no candidate nominates. A version bump marks a unit's rejections stale
  * rather than deleting them, so a rule's revision re-opens its rejections for review instead of discarding the
  * judgment behind them.
  *
