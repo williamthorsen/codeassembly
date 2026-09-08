@@ -103,20 +103,20 @@ Compute the bare title from the PR title with the `ticket_ref` prefix stripped:
 Render the merge-commit title via `describe-change.sh`:
 
 ```bash
-json=$({harness_home_dir}/scripts/describe-change.sh \
+{harness_home_dir}/scripts/describe-change.sh \
   --title "{bare_title}" \
   --scope "{scope}" \
   --type "{type}" \
   --ticket-ref "{ticket_ref}" \
-  --pr-number "{pr_number}")
-merge_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('merge_title',''))")
+  --pr-number "{pr_number}" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin).get('merge_title',''))"
 ```
 
 Omit any flag whose value is empty or null. For dimensions whose `status` from step 3 is `ambiguous`, omit the flag too: Those are resolved at the gate, and this initial render is provisional.
 
 Use a JSON parser (python3 above; `jq -r '.merge_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes.
 
-If the script is not found, fall back to the bare title.
+The pipeline prints the rendered title; read it from the command's output and carry it forward as literal text. Assigning the parse instead prints nothing, and no shell variable survives to a later call. If the script is not found, fall back to the bare title.
 
 ### 6. Compose merge-commit body
 

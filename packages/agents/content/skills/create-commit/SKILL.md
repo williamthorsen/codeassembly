@@ -31,7 +31,7 @@ Record each unit as it is finished. Several single-concern commits read better t
 6. **Commit**, passing the title and body as separate `--message` values so the blank line between them is git's rather than the shell's:
 
    ```bash
-   git commit --message "$commit_title" --message "$body"
+   git commit --message "{commit_title}" --message "{body}"
    ```
 
 ## Rendering the title

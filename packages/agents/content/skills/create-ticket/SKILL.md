@@ -122,13 +122,13 @@ Both platforms render the same title and persist the same branch association; on
 Render with `describe-change.sh`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
-json=$({harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
-ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))")
+{harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))"
 ```
 
 Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
-Read the rendered title from the command's output and write it into the create call below as literal text, as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. The variable does not survive this Bash invocation, so a create call that reads `$ticket_title` submits an empty title. If the script is not found, fall back to the bare `{title}`.
+The pipeline prints the rendered title. Read it from the command's output and write it into the create call below as literal text, as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. Assigning the parse instead prints nothing, and no shell variable survives to the create call, so a call that reads `$ticket_title` submits an empty title. If the script is not found, fall back to the bare `{title}`.
 
 #### GitHub path
 
@@ -191,10 +191,11 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
     --summary "{ticket_title}" \
     --description-file "$adf_path" \
     --json)
-  key=$(printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null)
+  printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null
+  printf '%s\n' "$output"
   ```
 
-  Capture the output before parsing it, as the snippet does. Where the parse yields no key, read the key out of `$output`, which still holds everything the one invocation returned. Never run the create command a second time to obtain the key: that creates a second work item.
+  Capture the create call's output before parsing it, as the snippet does, and print both the parsed key and the raw response. The parse prints the key on the first line; where it yields none, read the key out of the response printed after it, which holds everything the one invocation returned. Assigning the parse instead prints nothing, leaving neither to read. Never run the create command a second time to obtain the key: that creates a second work item.
 
 ##### Record the identifiers
 
