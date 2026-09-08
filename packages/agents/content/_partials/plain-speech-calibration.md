@@ -9,7 +9,7 @@ How one sweep applies the rule above, so that two sweepers reach the same verdic
 1. **A figurative verb where a plain one exists.** "detail taxes the reader" becomes "detail costs the reader attention". "the lede writes itself" becomes "the lede follows".
 2. **A subject that cannot perform the verb.** "the file carries a section" becomes "the file contains a section". "the block governs" becomes "the block takes precedence". "Findings arrive as warnings" becomes "The function reports warnings": Findings arrive nowhere, and the original drops the function that produced them.
 3. **A missing actor that the reader needs.** Rewrite where the sentence omits an actor that the reader must know and cannot recover from context. "Refinement happens later, in bulk" becomes "A later pass refines them in bulk", because which pass does it is the point.
-4. **A constructed figure where a literal phrase exists.** The rule's mannered-prose test, applied to a site. The case reaches a figure built for one sentence, never a word on which this corpus has settled: `gate`, `sweep`, `tier`, and `lede` are its vocabulary and stay, whatever their figurative origin.
+4. **A constructed figure where a literal phrase exists.** The rule's mannered-prose test, applied to a site. `gate`, `sweep`, `tier`, and `lede` are settled vocabulary and stay, whatever their figurative origin.
 
 Passive voice is not a defect on its own, and case 3 is no licence to convert it. Keep the passive where the actor is obvious or beside the point, where the patient is the paragraph's topic, or where it holds a heavy phrase at the end of the sentence.
 
