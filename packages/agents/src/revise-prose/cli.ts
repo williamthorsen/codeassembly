@@ -32,6 +32,7 @@ import {
   parseRecord,
   parseRunFold,
   RECORD_PATH,
+  selectPriorRejections,
   stringifyRecord,
 } from './record.ts';
 import { detectRules, isRuleId, RULE_IDS } from './rules.ts';
@@ -175,11 +176,17 @@ export async function runDetect(input: {
 
     const planned = planBatches({ files: scannedFiles, candidates, budget: args.budget });
     const batches = planned.filter((batch) => batch.files.some((file) => !isCoveredAt(record, args.units, file)));
+    const rejections = selectPriorRejections(
+      record,
+      args.units,
+      scannedFiles.map((scanned) => scanned.file),
+    );
 
     return {
       ok: true,
       root: input.root,
       candidates,
+      rejections,
       batches,
       summary: summarize({ candidates, scanned: scannedFiles.length, skipped, batches, planned }),
     };

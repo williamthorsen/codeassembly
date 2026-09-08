@@ -154,6 +154,43 @@ describe(runDetect, () => {
       expect(batches.flatMap((batch) => batch.files)).toContain('src/notes.md');
     });
 
+    it('reports a live rejection to the run, so the sweeper leaves the site alone', async () => {
+      const phrase = await rejectedPhrase();
+      await writeRecord(recordFor(phrase));
+
+      expect(expectSuccess(await sweep(bothRules())).rejections).toStrictEqual([
+        { rule: 'reduced-object-relative', file: 'docs/guide.md', phrase },
+      ]);
+    });
+
+    it('withholds a rejection recorded at an older unit version, which re-opens its site', async () => {
+      await writeRecord(recordFor(await rejectedPhrase(), '1'));
+
+      expect(expectSuccess(await sweep(bothRules())).rejections).toStrictEqual([]);
+    });
+
+    it('reports a rejection under a rule no detector covers', async () => {
+      const phrase = 'a figure the document displays on purpose';
+      await writeRecord({
+        units: { writing: { version: '2', 'swept-at': '2026-09-02', roots: ['.'] } },
+        rejections: [
+          {
+            rule: 'plain-speech',
+            unit: 'writing',
+            'unit-version': '2',
+            file: 'docs/guide.md',
+            phrase,
+            hash: hashPhrase(phrase),
+            ground: 'a marked exhibit of the construction',
+          },
+        ],
+      });
+
+      expect(expectSuccess(await sweep(bothRules())).rejections).toStrictEqual([
+        { rule: 'plain-speech', file: 'docs/guide.md', phrase },
+      ]);
+    });
+
     it('reports a malformed record as a structured failure rather than sweeping past it', async () => {
       await mkdir(path.join(scratch, '.agents'), { recursive: true });
       await writeFile(path.join(scratch, RECORD_PATH), 'units: [not, a, map]\n', 'utf8');

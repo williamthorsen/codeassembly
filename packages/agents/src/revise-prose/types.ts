@@ -103,6 +103,17 @@ export interface RecordedRejection {
   ground: string;
 }
 
+/**
+ * One rejection a later run inherits: a site an earlier sweep adjudicated and left, at a version of its unit that
+ * still stands. The sweeper needs no argument for a settled site, so the record's own bookkeeping is left behind.
+ */
+export interface PriorRejection {
+  rule: string;
+  file: string;
+  /** The phrase as the earlier sweep left it. */
+  phrase: string;
+}
+
 /** The per-repository sweep record. */
 export interface ProseRecord {
   /** Coverage by unit name. */
@@ -206,6 +217,11 @@ export interface DetectSuccess {
   /** Repository root the sweep ran against. */
   root: string;
   candidates: readonly Candidate[];
+  /**
+   * Sites the record already holds a live rejection for, over the files the sweep read. A sweeper given these leaves
+   * them without re-adjudicating them; one recorded at an older unit version is absent, so its site is judged afresh.
+   */
+  rejections: readonly PriorRejection[];
   /** The batches left to adjudicate, those the record already covers having been dropped. */
   batches: readonly Batch[];
   summary: CandidateSummary;

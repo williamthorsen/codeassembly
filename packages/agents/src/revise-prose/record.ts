@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { z } from 'zod';
 
-import type { Candidate, ProseRecord, RecordedRejection, RunFold } from './types.ts';
+import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold } from './types.ts';
 
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
@@ -212,6 +212,26 @@ export function parseRunFold(json: string): RunFold {
   }
 
   return result.data;
+}
+
+/**
+ * Selects the rejections a run inherits: those recorded against a file it read, at a version of their unit that still
+ * stands. A stale one is withheld, so its site reaches the sweeper with no prior verdict attached and is adjudicated
+ * afresh, which is what makes a version bump a review rather than a deletion.
+ *
+ * The projection drops the record's own bookkeeping. A settled site needs no argument, and the ground behind it would
+ * seed the judgment of a sweeper who meets the site again once the rejection goes stale.
+ */
+export function selectPriorRejections(
+  record: ProseRecord,
+  unitVersions: ReadonlyMap<string, string>,
+  files: readonly string[],
+): PriorRejection[] {
+  const read = new Set(files);
+
+  return record.rejections
+    .filter((rejection) => read.has(rejection.file) && !isStaleRejection(rejection, unitVersions))
+    .map(({ rule, file, phrase }) => ({ rule, file, phrase }));
 }
 
 /**

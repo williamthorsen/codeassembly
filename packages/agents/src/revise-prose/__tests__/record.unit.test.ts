@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { composeRecord, hashPhrase, isStaleRejection, parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
+import {
+  composeRecord,
+  hashPhrase,
+  isStaleRejection,
+  parseRecord,
+  RECORD_PATH,
+  selectPriorRejections,
+  stringifyRecord,
+} from '../record.ts';
 import type { FoldRejection, ProseRecord, RecordedRejection, RunFold } from '../types.ts';
 
 const EMPTY: ProseRecord = { units: {}, rejections: [] };
@@ -217,6 +225,46 @@ describe(isStaleRejection, () => {
 
   it('reports a rejection whose unit the run does not name as current, the run holding no version to compare', () => {
     expect(isStaleRejection(rejection({ 'unit-version': '1' }), new Map())).toBe(false);
+  });
+});
+
+describe(selectPriorRejections, () => {
+  const versions = new Map([['writing', '2']]);
+
+  it('selects a live rejection over a file the sweep read', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+
+    expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([
+      { rule: 'reduced-object-relative', file: 'docs/guide.md', phrase: 'the source that it names' },
+    ]);
+  });
+
+  it('selects a rejection under a rule the helper holds no detector for', () => {
+    const record: ProseRecord = {
+      units: {},
+      rejections: [rejection({ rule: 'plain-speech', unit: 'plain-speech', 'unit-version': '3' })],
+    };
+
+    expect(selectPriorRejections(record, new Map([['plain-speech', '3']]), ['docs/guide.md'])).toHaveLength(1);
+  });
+
+  it('withholds a rejection recorded at an older unit version, so its site is judged afresh', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection({ 'unit-version': '1' })] };
+
+    expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
+  });
+
+  it('withholds a rejection over a file the sweep did not read', () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+
+    expect(selectPriorRejections(record, versions, ['docs/other.md'])).toStrictEqual([]);
+  });
+
+  it("carries the site alone, the unit, version, hash, and ground being the record's own bookkeeping", () => {
+    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+    const [selected] = selectPriorRejections(record, versions, ['docs/guide.md']);
+
+    expect(Object.keys(selected ?? {}).toSorted()).toStrictEqual(['file', 'phrase', 'rule']);
   });
 });
 
