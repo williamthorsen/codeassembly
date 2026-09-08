@@ -23,6 +23,25 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
   });
 
+  it('marks a breaking change with the field and the tag, which the doctrine holds to a longer contract', () => {
+    const content = expectContent(
+      prepareDecision({
+        ...decisionFor({}),
+        episode: { ...episodeFor({}), identity: { ...IDENTITY, breaking: true } },
+      }),
+    );
+
+    expect(content).toMatch(/^breaking: true$/m);
+    expect(content).toMatch(/^tags: \[lede-decision, type:feat, breaking, revised, quality:strong]$/m);
+  });
+
+  it('leaves a non-breaking change unmarked rather than writing the negative on every record', () => {
+    const content = expectContent(prepareDecision(decisionFor({})));
+
+    expect(content).not.toMatch(/^breaking:/m);
+    expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
+  });
+
   it('carries the rating in frontmatter, where the exemplar selector reads a record', () => {
     const content = expectContent(prepareDecision(decisionFor({ quality: 'exemplary' })));
 
@@ -118,6 +137,7 @@ describe(prepareDecision, () => {
 const IDENTITY = {
   type: 'feat',
   tier: 'public',
+  breaking: false,
   scope: 'agents',
   pr: '1124',
   mergeCommit: '35aa58d7',

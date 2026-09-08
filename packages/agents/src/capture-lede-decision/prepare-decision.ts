@@ -31,9 +31,11 @@ export type PrepareDecisionOutcome = { ok: true; prepared: PreparedDecision } | 
  * record type of its own, so it carries the same typed spine every captured event does and rides its change identity,
  * doctrine fingerprint, and provenance in `extra`.
  *
- * Tags carry the group (`lede-decision`), the work type under a `type:` namespace, the verdict, and the rating under a
- * `quality:` namespace. The namespaces are what keep a work type or a rating from colliding with the topical tags an
- * event already uses — a bare `fix` already means a solved-problem episode.
+ * Tags carry the group (`lede-decision`), the work type under a `type:` namespace, `breaking` for a change whose type
+ * carried the marker, the verdict, and the rating under a `quality:` namespace. The namespaces are what keep a work
+ * type or a rating from colliding with the topical tags an event already uses — a bare `fix` already means a
+ * solved-problem episode. `breaking` needs none: no event uses it topically, and it matches the label that `create-pr`
+ * and `create-ticket` derive from the same marker.
  *
  * The verdict is derived from whether the two ledes differ, which is also what decides whether the body carries a
  * merged section. One derivation drives both, so the verdict and the sections can never describe different episodes.
@@ -55,6 +57,7 @@ export function prepareDecision(input: {
     quality,
     type: identity.type,
     tier: identity.tier,
+    ...(identity.breaking && { breaking: true }),
     scope: identity.scope,
     pr: identity.pr,
     'merge-commit': identity.mergeCommit,
@@ -72,7 +75,13 @@ export function prepareDecision(input: {
     ...(context.session !== undefined && { session: context.session }),
     cwd: context.cwd,
     summary: `Lede ${verdict} for ${identity.scope} #${identity.pr}, rated ${quality}`,
-    tags: [LEDE_DECISION_TAG, `type:${identity.type}`, verdict, `quality:${quality}`],
+    tags: [
+      LEDE_DECISION_TAG,
+      `type:${identity.type}`,
+      ...(identity.breaking ? ['breaking'] : []),
+      verdict,
+      `quality:${quality}`,
+    ],
     addressedBy: [],
     extra,
     body: composeBody({ episode, comment: input.comment }),
