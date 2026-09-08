@@ -9,6 +9,12 @@ export interface WorkType {
   tier: string;
 }
 
+/** A spelled work type resolved against the taxonomy: the entry it names, and whether it carried the breaking marker. */
+export interface ResolvedWorkType {
+  workType: WorkType;
+  breaking: boolean;
+}
+
 /**
  * Loads the work-type taxonomy from `work-types.json` under `dataDir`, indexed by canonical key and by every declared
  * alias, so `feature` and `feat` reach one entry. Yields `null` when the file is absent, unparseable, or declares no
@@ -58,4 +64,18 @@ export async function loadWorkTypes(dataDir: string): Promise<ReadonlyMap<string
     index.set(workType.key, workType);
   }
   return index;
+}
+
+/**
+ * Resolves a work type as spelled in a commit or pull-request title, reporting both the entry it names and whether it
+ * carried the breaking marker. The taxonomy declares bare keys and models the marker separately under `markers`, so
+ * `feat!` names the `feat` entry. Yields `null` for a type no entry declares, marker or not.
+ *
+ * The marker is reported rather than discarded because a caller recording the change needs both halves of the parse,
+ * and re-deriving one from a stripped string would put the same rule in two places.
+ */
+export function resolveWorkType(type: string, workTypes: ReadonlyMap<string, WorkType>): ResolvedWorkType | null {
+  const breaking = type.endsWith('!');
+  const workType = workTypes.get(breaking ? type.slice(0, -1) : type);
+  return workType === undefined ? null : { workType, breaking };
 }

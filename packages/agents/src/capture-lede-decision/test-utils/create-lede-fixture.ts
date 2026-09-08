@@ -29,7 +29,7 @@ export interface LedeFixture {
 export async function createLedeFixture(
   overrides: {
     mergedLede?: string;
-    omit?: 'pull-request' | 'merge';
+    omit?: 'pull-request' | 'merge' | 'work-types';
     /** Ticket id as the change summary spells it; a wholly numeric id is written unquoted, as the real artifact does. */
     ticketId?: string;
   } = {},
@@ -58,16 +58,18 @@ export async function createLedeFixture(
   );
 
   await writeFile(join(dataDir, 'lede-voice.md'), '# Lede voice\n\nDoctrine text.\n', 'utf8');
-  await writeFile(
-    join(dataDir, 'work-types.json'),
-    JSON.stringify({
-      types: [
-        { key: 'feat', tier: 'public', aliases: ['feature'] },
-        { key: 'fix', tier: 'public', aliases: [] },
-      ],
-    }),
-    'utf8',
-  );
+  if (overrides.omit !== 'work-types') {
+    await writeFile(
+      join(dataDir, 'work-types.json'),
+      JSON.stringify({
+        types: [
+          { key: 'feat', tier: 'public', aliases: ['feature'] },
+          { key: 'fix', tier: 'public', aliases: [] },
+        ],
+      }),
+      'utf8',
+    );
+  }
 
   return { root, artifactDir, dataDir, provenancePath: join(root, 'home-provenance.json') };
 }

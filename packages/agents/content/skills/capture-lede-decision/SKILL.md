@@ -30,20 +30,20 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 
 ## Arguments
 
-| Argument             | Description                                                                               | Required |
-| -------------------- | ----------------------------------------------------------------------------------------- | -------- |
-| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.         | Yes      |
-| `--pr`               | The pull-request number.                                                                  | Yes      |
-| `--merge-commit`     | The merge commit's SHA.                                                                   | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.      | Mode     |
-| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.        | Mode     |
-| `--store`            | Names a corpus registered under some other name; `@default` is refused.                   | No       |
-| `--type`             | Work type. Falls back to the change summary's frontmatter.                                | No       |
-| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.                 | No       |
-| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                | No       |
-| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.         | No       |
-| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                      | Injected |
+| Argument             | Description                                                                                    | Required |
+| -------------------- | ---------------------------------------------------------------------------------------------- | -------- |
+| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.              | Yes      |
+| `--pr`               | The pull-request number.                                                                       | Yes      |
+| `--merge-commit`     | The merge commit's SHA.                                                                        | Yes      |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.           | Mode     |
+| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.             | Mode     |
+| `--store`            | Names a corpus registered under some other name; `@default` is refused.                        | No       |
+| `--type`             | Work type, breaking marker included (`feat!`). Falls back to the change summary's frontmatter. | No       |
+| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.                      | No       |
+| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                     | No       |
+| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.              | No       |
+| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact.      | No       |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                           | Injected |
 
 Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
@@ -126,8 +126,8 @@ Pass that absolute path to `--merged-lede-file`, not a `$TMPDIR`-relative one: t
 
 One event per decision, in the corpus:
 
-- **Tags**: `lede-decision`, `type:{work type}`, the derived verdict, and `quality:{level}`. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, by work type with `--tag type:feat`, and by rating with `--tag quality:exemplary`.
-- **Frontmatter**: the rating; the work type, tier, and scope; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
+- **Tags**: `lede-decision`, `type:{work type}`, `breaking` for a change whose work type carried the marker, the derived verdict, and `quality:{level}`. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, by work type with `--tag type:feat`, by rating with `--tag quality:exemplary`, and the breaking changes alone with `--tag breaking`.
+- **Frontmatter**: the rating; the work type, tier, and scope; `breaking: true` for a breaking change, and nothing for any other; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the lede doctrine in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
 - **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
 `doctrine-hash` is what groups records by doctrine generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the doctrine file's own history.
@@ -138,6 +138,7 @@ Route by the `error` code:
 
 - `no-artifact-dir`, `no-agent-lede`, `no-merged-lede`: The ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
 - `no-doctrine`: The installed doctrine file is unreadable. Report it as an install problem.
+- `no-taxonomy`: The installed `work-types.json` is unreadable. Report it as an install problem; no `--type` value resolves against a taxonomy that did not load.
 - `unresolved-identity`: The work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
 - `invalid-args`: Report the message and propose a corrected invocation.
 - `store-not-registered`: The corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.

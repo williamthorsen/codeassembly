@@ -8,7 +8,7 @@ import { extractString } from '../kb-shared/note-helpers.ts';
 import { readHomeProvenance, readHomeProvenanceAt } from '../lib/home-provenance.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
 import { isEnoent } from '../lib/type-guards.ts';
-import { loadWorkTypes } from '../lib/work-types.ts';
+import { loadWorkTypes, resolveWorkType } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
 /** Artifact filename suffix holding the lede the agent published, and the heading that lede sits under. */
@@ -247,8 +247,13 @@ async function readLede(input: {
 
 /**
  * Resolves the change's identity, preferring the caller's flags and falling back to the newest change-summary
- * artifact's frontmatter, which is the only artifact in the chain that carries typed fields. The tier derives from the
- * work type through the installed taxonomy rather than being passed in, so it always reflects the taxonomy in force.
+ * artifact's frontmatter, which is the only artifact in the chain that carries typed fields. The work type is resolved
+ * through the installed taxonomy rather than taken as spelled, so the identity carries the canonical key and the tier
+ * that the taxonomy in force declares for it, and reports the breaking marker separately.
+ *
+ * A taxonomy that does not load is reported apart from a type it does not declare. The two conditions look alike at the
+ * failed lookup and differ in the caller's recourse: one is repaired by passing a flag, the other only by repairing the
+ * install.
  */
 async function resolveIdentity(input: {
   artifactDir: string;
@@ -258,7 +263,9 @@ async function resolveIdentity(input: {
   type?: string;
   scope?: string;
   ticket?: string;
-}): Promise<{ ok: true; identity: EpisodeIdentity } | { ok: false; error: 'unresolved-identity'; message: string }> {
+}): Promise<
+  { ok: true; identity: EpisodeIdentity } | { ok: false; error: 'no-taxonomy' | 'unresolved-identity'; message: string }
+> {
   const fallback = await readChangeSummaryFields(input.artifactDir);
 
   const type = input.type ?? fallback.type;
@@ -272,8 +279,16 @@ async function resolveIdentity(input: {
   }
 
   const workTypes = await loadWorkTypes(input.dataDir);
-  const tier = workTypes?.get(type)?.tier;
-  if (tier === undefined) {
+  if (workTypes === null) {
+    return {
+      ok: false,
+      error: 'no-taxonomy',
+      message: `no readable work-types.json under ${input.dataDir}`,
+    };
+  }
+
+  const resolved = resolveWorkType(type, workTypes);
+  if (resolved === null) {
     return {
       ok: false,
       error: 'unresolved-identity',
@@ -286,8 +301,9 @@ async function resolveIdentity(input: {
   return {
     ok: true,
     identity: {
-      type,
-      tier,
+      type: resolved.workType.key,
+      tier: resolved.workType.tier,
+      breaking: resolved.breaking,
       scope,
       pr: input.pr,
       mergeCommit: input.mergeCommit,

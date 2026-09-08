@@ -62,6 +62,28 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { type: 'feature' })).identity.tier).toBe('public');
   });
 
+  it('records the canonical key for a type spelled as an alias', async () => {
+    const fixture = await createLedeFixture();
+
+    expect((await resolveFor(fixture, { type: 'feature' })).identity.type).toBe('feat');
+  });
+
+  it('resolves a work type carrying the breaking marker and reports the marker', async () => {
+    const fixture = await createLedeFixture();
+
+    expect((await resolveFor(fixture, { type: 'feat!' })).identity).toMatchObject({
+      type: 'feat',
+      tier: 'public',
+      breaking: true,
+    });
+  });
+
+  it('reports no marker for a work type spelled without one', async () => {
+    const fixture = await createLedeFixture();
+
+    expect((await resolveFor(fixture, { type: 'feat' })).identity.breaking).toBe(false);
+  });
+
   it('falls back to the change summary for a type and scope the caller did not pass', async () => {
     const fixture = await createLedeFixture();
     const { type: _type, scope: _scope, ...withoutIdentity } = inputFor(fixture);
@@ -166,6 +188,22 @@ describe(resolveEpisode, () => {
     const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented' }));
 
     expect(expectFailure(outcome)).toBe('unresolved-identity');
+  });
+
+  it('reports an undeclared work type carrying the marker, which declares nothing on its own', async () => {
+    const fixture = await createLedeFixture();
+
+    const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented!' }));
+
+    expect(expectFailure(outcome)).toBe('unresolved-identity');
+  });
+
+  it('reports an unreadable taxonomy apart from an undeclared type, which passing a flag would not repair', async () => {
+    const fixture = await createLedeFixture({ omit: 'work-types' });
+
+    const outcome = await resolveEpisode(inputFor(fixture));
+
+    expect(expectFailure(outcome)).toBe('no-taxonomy');
   });
 });
 

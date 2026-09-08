@@ -17,6 +17,8 @@ export type LedeVerdict = (typeof LEDE_VERDICTS)[number];
 export interface EpisodeIdentity {
   type: string;
   tier: string;
+  /** Whether the work type carried the breaking marker; the doctrine requires a `Migration:` paragraph of these alone. */
+  breaking: boolean;
   scope: string;
   pr: string;
   mergeCommit: string;
@@ -47,9 +49,12 @@ export type ResolveEpisodeOutcome =
  * Categorical reasons an episode cannot be resolved, each naming a distinct missing input. `unresolved-identity` covers
  * every field of {@link EpisodeIdentity} under one code, with the message naming the field that failed: the caller's
  * recourse is the same in each case — supply the flag — so splitting it per field would buy the caller nothing.
+ *
+ * An unreadable taxonomy is `no-taxonomy` rather than `unresolved-identity`, because no `--type` value resolves against
+ * a taxonomy that did not load: the caller's recourse is to repair the install, as it is for `no-doctrine`.
  */
 export type EpisodeErrorCode =
-  'no-artifact-dir' | 'no-agent-lede' | 'no-merged-lede' | 'no-doctrine' | 'unresolved-identity';
+  'no-artifact-dir' | 'no-agent-lede' | 'no-merged-lede' | 'no-doctrine' | 'no-taxonomy' | 'unresolved-identity';
 
 /**
  * The store a decision would record into, as seen from inspect mode: reachable, or the categorical reason a record
