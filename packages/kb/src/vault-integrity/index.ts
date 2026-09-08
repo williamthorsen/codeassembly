@@ -7,5 +7,7 @@ export {
   lookupKey,
   maskFencedCode,
   maskInlineCode,
+  type QualifiedTarget,
+  splitStoreQualifier,
   WIKILINK,
 } from './wikilink-parse.ts';

@@ -102,4 +102,31 @@ export function maskInlineCode(body: string): string {
   return body.replace(/`+[^`\n]+?`+/g, (match) => ' '.repeat(match.length));
 }
 
+/** A wikilink target separated into the store it names, where it names one, and the target within that store. */
+export interface QualifiedTarget {
+  /** The store the link names, or `undefined` when the target is store-local. */
+  store?: string;
+  /** The target with any store qualifier removed. */
+  target: string;
+}
+
+/**
+ * Separates a leading `store:` qualifier from a wikilink target, so `fde:Note title` names the note `Note title` in
+ * the store `fde`. A qualifier is recognized only when the text before the first colon is non-empty and carries no
+ * whitespace and no `/`, and something follows the colon; every other target passes through store-local, which leaves
+ * a title that happens to contain a colon resolving as it always has.
+ *
+ * Call it on the output of {@link extractTarget}, which has already stripped any alias and anchor.
+ */
+export function splitStoreQualifier(target: string): QualifiedTarget {
+  const colonIndex = target.indexOf(':');
+  if (colonIndex <= 0) return { target };
+
+  const store = target.slice(0, colonIndex);
+  const remainder = target.slice(colonIndex + 1);
+  if (remainder === '' || /[\s/]/.test(store)) return { target };
+
+  return { store, target: remainder };
+}
+
 const FENCE_LINE = /^\s{0,3}(`{3,}|~{3,})/;
