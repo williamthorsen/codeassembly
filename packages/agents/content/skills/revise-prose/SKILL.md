@@ -49,7 +49,7 @@ node {harness_home_dir}/skills/revise-prose/revise-prose.mjs detect {paths} \
 
 Pass one `--unit` per unit from step 1 and one `--rule` per marker. Add `--batch-budget {bytes}` where the invocation carried one. Omit the paths for a whole-repository sweep.
 
-The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` that it swept, a `candidates` array, a `batches` array, and a `summary`. On failure it carries `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
+The helper prints one JSON object to stdout. On success it carries `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array holding the sites an earlier sweep already adjudicated, a `batches` array, and a `summary`. On failure it carries `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
 Read `summary` before anything else. `filesSkipped` counts the files that the sweep held out, keyed by the reason for each: `generated` and `machine-generated` for output whose edit belongs to its source, `unreadable` for a file whose prose cannot be read, and `ineligible` for one that no extractor reads at all. `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its unit.
 
@@ -71,7 +71,7 @@ On a no-go, ask the user before reverting, then revert that batch's files and st
 
 Send up to four `{tool:Task}` calls with `subagent_type: prose-reviser` in one message. A harness that returns each before the next is the series case; attempt no detection of which one you are on.
 
-Before each dispatch, write that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `{scratch}/revise-prose/batch-{index}.json`. `{scratch}` is `$TMPDIR`, or `/tmp` where the environment does not set it: Resolve it and write the absolute path in both places, since this write and the subagent's read both go through a file tool that expands no shell syntax.
+Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even where the batch inherits none, so every dispatch names the same keys. `{scratch}` is `$TMPDIR`, or `/tmp` where the environment does not set it: Resolve it and write the absolute path in each place, since these writes and the subagent's reads all go through a file tool that expands no shell syntax.
 
 Dispatch each batch with this block:
 
@@ -79,6 +79,7 @@ Dispatch each batch with this block:
 root: {root}
 files: {the batch's files, comma-separated}
 candidates: {scratch}/revise-prose/batch-{index}.json
+rejections: {scratch}/revise-prose/rejections-{index}.json
 rules: {rule-id}, {rule-id}
 ```
 
