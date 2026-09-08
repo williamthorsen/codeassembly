@@ -138,9 +138,11 @@ Use `ticket_title` directly as the GitHub issue title or the Jira summary; it al
 
 #### GitHub path
 
-Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
+Write the body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-issue-{timestamp}.md`, since the issue has no number until this step returns one; do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 5:
 
 ```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 url=$(gh issue create --title "${ticket_title}" --body-file "$body_path"${label_flags})
 ```
 
@@ -180,7 +182,7 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
 
 - **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
 - **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
-- **`acli`**: convert the body to ADF, write the ADF to a scratch file, and pass the file.
+- **`acli`**: convert the body to ADF, write the ADF to a scratch file per [gh body file](#gh-body-file), and pass the file. An unset path costs the work item's description on a work item that then exists without one.
 
   Where step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` carries no `--parent` flag, so this is the only call that can set one, and a reference Jira rejects costs the work item rather than the relationship unless it is checked first:
 
@@ -191,6 +193,8 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
   A zero exit adds `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: create the work item without the flag, and report the parent as skipped per step 7.
 
   ```bash
+  adf_path="{absolute path from the write step}"
+  [ -s "$adf_path" ] || { echo "Description file missing or empty: $adf_path" >&2; exit 1; }
   output=$(acli jira workitem create \
     --project "{project_key}" \
     --type "{issue_type}" \
@@ -323,15 +327,21 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 
 Then attach it as a comment on the remote ticket, through the platform step 3 resolved.
 
-**GitHub.** Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the comment into the shell command:
+**GitHub.** Write the comment body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-issue{number}-{timestamp}.md`; do not inline the comment into the shell command:
 
 ```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 gh issue comment {number} --body-file "$body_path"
 ```
 
 **Jira.** Comment through the client that created the work item, in the format {skill:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
 
+The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path carried between Bash invocations resolves to nothing either way.
+
 ```bash
+adf_path="{absolute path from the write step}"
+[ -s "$adf_path" ] || { echo "Comment file missing or empty: $adf_path" >&2; exit 1; }
 acli jira workitem comment create --key "{ticket_id}" --body-file "$adf_path"
 ```
 
@@ -369,3 +379,5 @@ Branch association skipped: {reason}       <- only when the step-6 guard skipped
 ```
 
 Nothing else.
+
+<!-- include: ../_partials/gh-body-file.md / -->

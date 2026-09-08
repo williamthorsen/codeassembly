@@ -292,7 +292,14 @@ Process confirmed actions in this order:
 1. **Batch tickets for findings**: Invoke `{skill:create-ticket}` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives: Execute whichever the user selected, not both.
 2. **Tickets for findings**: Invoke `{skill:create-ticket}` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
 3. **Tickets for legacy items**: Invoke `{skill:create-ticket}` once per item. Label as technical debt or the appropriate category.
-4. **Post insights to ticket**: For each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from the session-context manifest). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
+4. **Post insights to ticket**: For each `ticket comment` insight, write the insight body to a scratch file per [gh body file](#gh-body-file), naming it for the insight it carries (`gh-body-insight{index}-{timestamp}.md`), then post it with the call below (ticket number from the session-context manifest). Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
+
+   ```bash
+   body_path="{absolute path from the write step}"
+   [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
+   gh issue comment {number} --body-file "$body_path"
+   ```
+
 5. **Save session devlog**: Invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 After all actions complete, identify which findings were _not_ selected by any action (implicitly dropped) and pass that set forward to Phase 4 for inclusion in the report's `### Dropped` section and the artifact's `## Dropped` section.
@@ -426,6 +433,8 @@ The prompt closes the turn that presents the results report, so it goes in an ac
 ## Ticket title conventions
 
 Compose the title of a deferred-item ticket per [`title-voice.md`](../_data/title-voice.md), which governs voice, length, content discipline, and the framing that gives a bug ticket the problem rather than the fix.
+
+<!-- include: ../_partials/gh-body-file.md / -->
 
 ## Constraints
 

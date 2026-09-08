@@ -75,11 +75,7 @@ If the counts differ from `0\t0`, refuse: "Local branch is out of sync with `ori
 
 ### 4. Write merge-commit body to scratch file
 
-Write `body` to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command.
-
-```
-path: $TMPDIR/gh-body-{timestamp}.md
-```
+Write `body` to a scratch file per [gh body file](#gh-body-file), naming it for the PR (`gh-body-pr{pr_number}-{timestamp}.md`); do not inline the body into the shell command.
 
 ### 5. Build and execute the merge command
 
@@ -97,9 +93,13 @@ For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or 
 
 For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none`: `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
 
+**Read the scratch file back before running the command.** Read the path this step is about to pass to `gh` and compare its content against the `body` this delegate received. Refuse where the two differ, naming the PR and the path: "Body file for PR #{n} at {path} is not the approved merge body." A squash merge onto a protected default branch publishes a commit message that cannot be amended, so this is the last point at which a wrong body can be caught. Read the path being passed rather than the one step 4 wrote, so a path left over from another PR is caught rather than confirmed.
+
 Example invocation (shown for `strategy=squash`, `deletion_strategy=both`; `--delete-branch` is included **only** when `deletion_strategy == 'both'`):
 
 ```bash
+body_path="{absolute path from step 4}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 gh pr merge {pr_number} \
   --squash \
   --subject "{title}" \
@@ -180,3 +180,5 @@ Artifact saved: {artifact path}
 ```
 
 Local state is intentionally left untouched; removing the merged branch is left to the user. Do not append local-branch cleanup steps or advice. Do not report this state to the user.
+
+<!-- include: ../_partials/gh-body-file.md / -->

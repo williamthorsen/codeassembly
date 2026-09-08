@@ -38,9 +38,11 @@ label_flags+=" --label \"{label_name}\""
 
 ### 2. Create the pull request
 
-Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern; do not inline the body into the shell command. Store the path so the retry step in step 3 can reuse it.
+Write the body to a scratch file per [gh body file](#gh-body-file); do not inline the body into the shell command. Name it `gh-body-pr-{timestamp}.md`, since the PR has no number until this step returns one.
 
 ```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 url=$(gh pr create \
   --title "{title}" \
   --body-file "$body_path" \
@@ -55,7 +57,7 @@ If `gh pr create` fails and the error indicates one or more labels are invalid:
 
 1. Identify the failing label(s) from the error message.
 2. Remove the failing labels from the `--label` flags.
-3. Retry `gh pr create` without the failing labels, reusing the same `$body_path`; do not rewrite the body or inline it.
+3. Retry `gh pr create` without the failing labels, re-stating the assignment and the guard for the same scratch file; do not rewrite the body or inline it.
 4. Record which labels were skipped.
 
 If the failure is unrelated to labels, report the error and stop.
@@ -104,3 +106,5 @@ Artifact saved: {artifact path}
 ```
 
 Nothing else.
+
+<!-- include: ../_partials/gh-body-file.md / -->
