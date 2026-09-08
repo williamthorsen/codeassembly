@@ -37,22 +37,26 @@ The store's `.kb/config.yaml` decides which notes are curated: By default, only 
 
 ## Detection categories
 
-The helper reports findings across six categories. Each finding has a rule code and a severity.
+The helper reports findings across six categories. Each finding has a rule code and a severity. A `[[store:Target]]` link resolves against the store its prefix names in the `kb.yaml` registry, and only into a store as shareable as this one; see the kb package's README for the rule.
 
-| Rule code               | Severity | Meaning                                                                                |
-| ----------------------- | -------- | -------------------------------------------------------------------------------------- |
-| `wikilinks.unresolved`  | error    | A `[[Target]]` does not resolve to any vault note.                                     |
-| `wikilinks.basename`    | warning  | Two or more notes share a basename (reported once for the vault).                      |
-| `paths.user-home`       | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                   |
-| `tag-alias`             | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
-| `taxonomy.undeclared`   | warning  | A folder contains notes but `.kb/taxonomy.yaml` declares no domain for it.             |
-| `taxonomy.unused`       | warning  | A declared domain has no note at or beneath it.                                        |
-| `taxonomy.orphan`       | warning  | A declared domain's parent is undeclared.                                              |
-| `verification.unmarked` | warning  | The note has no `last-verified` field; reported only when the vault uses verification. |
-| `verification.stale`    | warning  | `last-verified` is older than `--stale-after` days.                                    |
-| `supersede.dangling`    | error    | A `superseded-by`/`supersedes` target is not a vault note.                             |
-| `supersede.cycle`       | error    | The note is in a `superseded-by` loop.                                                 |
-| `supersede.asymmetric`  | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.                         |
+| Rule code                       | Severity | Meaning                                                                                |
+| ------------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| `wikilinks.unresolved`          | error    | A `[[Target]]` does not resolve to any vault note.                                     |
+| `wikilinks.basename`            | warning  | Two or more notes share a basename (reported once for the vault).                      |
+| `wikilinks.unknown-store`       | error    | A `[[store:Target]]` names a store no `kb.yaml` entry declares.                        |
+| `wikilinks.disallowed-store`    | error    | A `[[store:Target]]` names a store less shareable than this one.                       |
+| `wikilinks.store-unavailable`   | warning  | A `[[store:Target]]` names a store that could not be read on this machine.             |
+| `wikilinks.registry-unloadable` | error    | `kb.yaml` would not load, so no `[[store:Target]]` can resolve (once per run).         |
+| `paths.user-home`               | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                   |
+| `tag-alias`                     | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
+| `taxonomy.undeclared`           | warning  | A folder contains notes but `.kb/taxonomy.yaml` declares no domain for it.             |
+| `taxonomy.unused`               | warning  | A declared domain has no note at or beneath it.                                        |
+| `taxonomy.orphan`               | warning  | A declared domain's parent is undeclared.                                              |
+| `verification.unmarked`         | warning  | The note has no `last-verified` field; reported only when the vault uses verification. |
+| `verification.stale`            | warning  | `last-verified` is older than `--stale-after` days.                                    |
+| `supersede.dangling`            | error    | A `superseded-by`/`supersedes` target is not a vault note.                             |
+| `supersede.cycle`               | error    | The note is in a `superseded-by` loop.                                                 |
+| `supersede.asymmetric`          | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.                         |
 
 The three `taxonomy.*` rules describe the vault rather than a note, so each is reported once against `.kb/taxonomy.yaml` with the domain named in the message. They are self-configuring in the same way `verification.unmarked` is: The helper reports none of them for a vault whose `.kb/taxonomy.yaml` is absent, or present but declaring nothing.
 
