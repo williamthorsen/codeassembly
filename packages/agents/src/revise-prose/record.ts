@@ -9,7 +9,8 @@
  *
  * A rejection resolves to a site by containment rather than by an exact string: see {@link applyRejections}. The record
  * and the detector describe one site in spans of different lengths, so a phrase is what a reader locates the site by
- * and never a key that either side must reproduce character for character.
+ * rather than a string the detector must reproduce. Retiring one entry for another is the stricter test, since two
+ * spans that merely overlap are not the same judgment: {@link rejectionKey} compares the whole phrase, normalized.
  *
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record. The helper's `record` command is the one
  * write path, which is what keeps the YAML deterministic rather than hand-edited into drift.
@@ -310,9 +311,13 @@ function normalizeForMatch(phrase: string): string {
   return flattenWhitespace(maskCodeSpans(phrase.normalize('NFC')));
 }
 
-/** One rejection's identity within the record: its rule, its file, and its phrase. */
+/**
+ * One rejection's identity within the record: its rule, its file, and its normalized phrase. Normalizing here is what
+ * lets a re-record retire the entry it supersedes across a repair that only reflowed the line, the sole path on which
+ * a rejection recorded at an older version is retired at all.
+ */
 function rejectionKey(rejection: RecordedRejection): string {
-  return composeKey(rejection.rule, rejection.file, rejection.phrase);
+  return composeKey(rejection.rule, rejection.file, normalizeForMatch(rejection.phrase));
 }
 
 /** Orders rejections by rule, file, and phrase, which is what makes a rewrite of unchanged content byte-identical. */

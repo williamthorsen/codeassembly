@@ -273,6 +273,19 @@ describe(composeRecord, () => {
     ).toThrow(/which the fold does not cover/);
   });
 
+  it('retires the entry it supersedes across a reflow, a rewrapped line naming the same site', () => {
+    const older = rejection({ 'unit-version': '1', phrase: 'the source\n  that it names' });
+    const prior: ProseRecord = { units: {}, rejections: [older] };
+
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', roots: ['.'] } }, rejections: [foldRejection()] }),
+    );
+
+    expect(record.rejections).toHaveLength(1);
+    expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
+  });
+
   it('holds one entry per site when a bump is followed by a re-rejection of the same site', () => {
     const older = rejection({ 'unit-version': '1' });
     const prior: ProseRecord = { units: {}, rejections: [older] };
