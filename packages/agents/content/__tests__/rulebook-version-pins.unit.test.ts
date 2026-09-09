@@ -28,7 +28,7 @@ interface RulebookPin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: 'fa432bf0409173c15b63890d5fb83ee6b9c3e72c0115fda8655618ae7f5b20fb', version: '15' },
+    { bodyHash: 'a19fdaddf752c413158fbbae7687c58783148d7e246cb95856b91c7353ff51f6', version: '16' },
   ],
   [
     'commit-conventions',
