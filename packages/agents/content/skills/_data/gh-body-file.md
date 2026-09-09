@@ -27,4 +27,4 @@ The pattern once prescribed a `$TMPDIR`-relative path and told the caller to kee
 
 ## Cleanup
 
-None is required. A session scratchpad is scoped to the session, and `$TMPDIR` is OS-managed.
+None is required. A `mktemp` directory under `/tmp` does not survive a reboot.
