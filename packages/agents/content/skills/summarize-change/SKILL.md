@@ -16,7 +16,7 @@ Analyze the current branch's changes since diverging from the default branch.
 2. **Analyze changes**:
 
 ```bash
-git diff $DEFAULT_BRANCH...HEAD
+git diff {default_branch}...HEAD
 ```
 
 Check commit messages for additional context.
@@ -77,10 +77,10 @@ Check commit messages for additional context.
 
    **A single-bullet lede skips the dispatch.** The cut leaves at least one bullet, so a lede that already has one has nothing to give up.
 
-   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them:
+   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path it was written to:
 
    ```bash
-   grep -Fxv -f "$candidates_file" "$returned_file"
+   grep -Fxv -f "{candidates_file}" "{returned_file}"
    ```
 
    Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status.
@@ -166,21 +166,21 @@ The block is structured as:
 
 ### Canonical-field resolution
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$title`, `$scope`, and `$type` from the consumer-field inference below (omit a flag if the corresponding value cannot be inferred unambiguously).
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `{title}`, `{scope}`, and `{type}` from the consumer-field inference below.
 
-Run via Bash:
+Run via Bash, writing each resolved value into the call as literal text and dropping the whole flag for a value that cannot be inferred unambiguously:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill summarize-change \
   --interactive true \
-  --model "$MODEL_ID" \
-  --extra "title=$title" \
-  ${scope:+--extra "scope=$scope"} \
-  ${type:+--extra "type=$type"}
+  --model "{model_id}" \
+  --extra "title={title}" \
+  --extra "scope={scope}" \
+  --extra "type={type}"
 ```
 
-The `${var:+--extra "key=$var"}` form expands to the flag only when `$var` is non-empty, so an unresolved `scope` or `type` is naturally omitted from the emitted frontmatter.
+Dropping the flag is what keeps an unresolved `scope` or `type` out of the emitted frontmatter.
 
 Prepend the script's output verbatim to the artifact body.
 

@@ -25,7 +25,7 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 2. **Analyze branch changes**:
 
 ```bash
-git diff $DEFAULT_BRANCH...HEAD
+git diff {default_branch}...HEAD
 ```
 
 3. **Write the ticket** on the branch step 1 selected, describing issues that were addressed, then write it to the targets [Saving](#saving) names
@@ -77,9 +77,9 @@ Invoked with no delta, alignment revises whichever criteria the implementation f
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with-implementation --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with-implementation --interactive true --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
 Append `--extra copies_remote=true` where the remote write in [Write targets](#write-targets) succeeded, which records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the generation branch, where no ticket of record exists to copy; under `--write-target=local`, whose snapshot is the newer contract by design; and where the remote write failed, leaving the remote without the body that the artifact holds. Writing the remote before saving the local artifact is what makes the outcome known in time to record it.
 

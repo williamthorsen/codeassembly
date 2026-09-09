@@ -37,22 +37,22 @@ This skill runs between receiving a code review and implementing fixes. The agen
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `{review_filename}` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
 
-Resolve `$pr_url` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
+Resolve `{pr_url}` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
 
-- If the review's frontmatter has a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
-- Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, leave `$pr_url` empty.
+- If the review's frontmatter has a `pr:` field, take `{pr_url}` from it so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{pr_url}"`.
+- Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, `{pr_url}` has no value.
 
-Run via Bash:
+Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag where `{pr_url}` has no value:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill respond-to-review \
   --interactive true \
-  --model "$MODEL_ID" \
-  --extra "responding_to=$review_filename" \
-  ${pr_url:+--override "pr=$pr_url"}
+  --model "{model_id}" \
+  --extra "responding_to={review_filename}" \
+  --override "pr={pr_url}"
 ```
 
 Prepend the script's output verbatim to the artifact body.

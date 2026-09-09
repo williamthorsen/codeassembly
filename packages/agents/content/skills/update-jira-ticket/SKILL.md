@@ -69,14 +69,6 @@ A bundled helper at `{harness_home_dir}/skills/update-jira-ticket/update-jira-ti
 Pipe the HTML on stdin; the helper writes a JSON result to stdout and exits 0 in both the pass and fail cases (only invocation errors exit non-zero).
 
 ```bash
-cat <<'EOF' | node "$(dirname "$SKILL_PATH")/update-jira-ticket.mjs"
-<p>Your rendered HTML payload here.</p>
-EOF
-```
-
-Or, when the skill directory is known:
-
-```bash
 cat <<'EOF' | node {harness_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs
 <p>Your rendered HTML payload here.</p>
 EOF

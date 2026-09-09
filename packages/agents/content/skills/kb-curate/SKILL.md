@@ -87,14 +87,14 @@ The remaining findings name the operator's next step:
 Always start without `--apply`. Read the findings and decide which report-only items warrant action.
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-curate.mjs" --kb coding
-node "$(dirname "$SKILL_PATH")/kb-curate.mjs" --kb coding --stale-after 30
+node {harness_home_dir}/skills/kb-curate/kb-curate.mjs --kb coding
+node {harness_home_dir}/skills/kb-curate/kb-curate.mjs --kb coding --stale-after 30
 ```
 
 ### 2. Apply the safe fixes when warranted
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-curate.mjs" --kb coding --apply
+node {harness_home_dir}/skills/kb-curate/kb-curate.mjs --kb coding --apply
 ```
 
 ### 3. Handle the result

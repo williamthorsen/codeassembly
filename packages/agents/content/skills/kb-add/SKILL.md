@@ -105,7 +105,7 @@ In default mode, present the proposed KB, folder, Diátaxis label, title, tags, 
 Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies legible without the quoting and escaping that `echo "$BODY"` requires once the note contains backticks, blank lines, or shell metacharacters:
 
 ```bash
-cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
+cat <<'EOF' | node {harness_home_dir}/skills/kb-add/kb-add.mjs \
   --diataxis <label> --title "<title>" \
   [--kb <name>] [--folder <topic-subpath>] \
   [--tags <comma,separated>] [--domain-description "<description>"] [--auto]
@@ -113,7 +113,7 @@ cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
 EOF
 ```
 
-Or, when the skill directory is known:
+A worked example:
 
 ```bash
 cat <<'EOF' | node {harness_home_dir}/skills/kb-add/kb-add.mjs \

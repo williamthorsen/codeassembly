@@ -20,10 +20,10 @@ Where the `revise-prose` sweep is wanted on the same files, run this skill first
 
 1. **Resolve the target file set** per [Target file set](#target-file-set), keeping the comment-supporting files from what it yields.
 
-   With no argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `$default_branch` via `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
+   With no argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `{default_branch}` via `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
 
    ```bash
-   git diff --name-only "$default_branch...HEAD"
+   git diff --name-only "{default_branch}...HEAD"
    ```
 
 2. **Apply the audit per file.** Read each target file. Put every comment through the three tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.

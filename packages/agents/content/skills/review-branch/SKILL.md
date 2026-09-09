@@ -56,17 +56,17 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$author` from `git log --format='%an' "$default_branch..HEAD" | sort -u | paste -sd, -` (unique authors of the commits under review). When invoked via `review-pr`, set `$pr_url` to `pr_metadata.url` (the PR under review); otherwise leave it empty.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `{author}` from `git log --format='%an' "{default_branch}..HEAD" | sort -u | paste -sd, -` (unique authors of the commits under review). When invoked via `review-pr`, take `{pr_url}` from `pr_metadata.url` (the PR under review); otherwise it has no value.
 
-Run via Bash:
+Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag where `{pr_url}` has no value:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill review-branch \
   --interactive true \
-  --model "$MODEL_ID" \
-  --extra "author=$author" \
-  ${pr_url:+--override "pr=$pr_url"}
+  --model "{model_id}" \
+  --extra "author={author}" \
+  --override "pr={pr_url}"
 ```
 
 Prepend the script's output verbatim to the artifact body. The `pr:` field is populated only when reviewing a PR (via `review-pr`); a direct ticket-only review omits it.
@@ -105,7 +105,7 @@ Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the cano
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it, e.g., `# Code review: {description}`.
 
-The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author=$author"` to the script to populate the review-artifact `author` field.
+The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author={author}"` to the script to populate the review-artifact `author` field.
 
 The body following the frontmatter has this structure:
 

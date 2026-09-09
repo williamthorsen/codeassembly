@@ -71,9 +71,9 @@ Use these to mark significant sections:
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill summarize-chat --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill summarize-chat --interactive true --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Saving
 

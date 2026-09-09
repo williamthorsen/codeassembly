@@ -32,5 +32,5 @@ After resolving the URL by any of the three paths above, **persist** it per [Sto
 
 `respond-to-review` does not discover a PR from the platform at runtime. Its PR URL comes from the sibling review artifact's `pr:` frontmatter.
 
-- **When the review artifact has a `pr:` value:** Forward it to `resolve-frontmatter.sh` via the existing `${pr_url:+--override "pr=$pr_url"}` pattern (the frontmatter-field contract; see [`pr-resolution.md`](pr-resolution.md)), and additionally **persist** it via `--set-pr-url` so future sessions inherit it.
+- **When the review artifact has a `pr:` value:** Forward it to `resolve-frontmatter.sh` as `--override "pr={pr_url}"` (the frontmatter-field contract; see [`pr-resolution.md`](pr-resolution.md)), and additionally **persist** it via `--set-pr-url` so future sessions inherit it.
 - **When the review artifact has no `pr:` field:** Fall back to the stored manifest `pr_url`, read from the manifest JSON the deriver already emitted during session-context setup.
