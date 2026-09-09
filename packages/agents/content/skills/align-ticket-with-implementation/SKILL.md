@@ -25,7 +25,7 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 2. **Analyze branch changes**:
 
 ```bash
-git diff $DEFAULT_BRANCH...HEAD
+git diff {default_branch}...HEAD
 ```
 
 3. **Write the ticket** on the branch step 1 selected, describing issues that were addressed, then write it to the targets [Saving](#saving) names

@@ -16,7 +16,7 @@ Analyze the current branch's changes since diverging from the default branch.
 2. **Analyze changes**:
 
 ```bash
-git diff $DEFAULT_BRANCH...HEAD
+git diff {default_branch}...HEAD
 ```
 
 Check commit messages for additional context.
@@ -77,10 +77,10 @@ Check commit messages for additional context.
 
    **A single-bullet lede skips the dispatch.** The cut leaves at least one bullet, so a lede that already has one has nothing to give up.
 
-   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them:
+   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path it was written to:
 
    ```bash
-   grep -Fxv -f "$candidates_file" "$returned_file"
+   grep -Fxv -f "{candidates_file}" "{returned_file}"
    ```
 
    Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status.
