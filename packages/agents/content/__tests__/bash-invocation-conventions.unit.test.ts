@@ -82,10 +82,20 @@ interface TerminalStatement {
   readonly start: FenceLine;
 }
 
+interface UnassignedRead extends FenceLine {
+  readonly variables: ReadonlyArray<string>;
+}
+
 interface Violation {
   readonly file: string;
   readonly line: number;
   readonly text: string;
+  readonly variables?: ReadonlyArray<string>;
+}
+
+interface Partition {
+  readonly fences: ReadonlyArray<ReadonlyArray<FenceLine>>;
+  readonly unfenced: ReadonlyArray<FenceLine>;
 }
 
 describe('bash-invocation conventions', () => {
@@ -113,9 +123,7 @@ describe('bash-invocation conventions', () => {
   });
 
   it('no bash invocation reads a variable it does not assign', async () => {
-    const violations = [...(await findViolations(findUnassignedReads)), ...(await findInlineViolations())].toSorted(
-      (left, right) => left.file.localeCompare(right.file) || left.line - right.line,
-    );
+    const violations = await findUnassignedReads();
     const message =
       `Found ${violations.length} Bash invocation(s) reading a variable that the same invocation does not assign. ` +
       `No shell state survives an invocation, so the read expands to nothing however carefully the prose above ` +
@@ -154,42 +162,67 @@ describe('bash-invocation conventions', () => {
     });
   });
 
-  describe('fence tracker', () => {
+  describe('fence partitioner', () => {
     it('collects a bash fence body and nothing around it', () => {
       const content = ['prose', '```bash', 'gh pr view', '```', 'more prose'].join('\n');
-      expect(listBashFences(content).flat()).toEqual([{ line: 3, text: 'gh pr view' }]);
+      expect(partitionFences(content).fences.flat()).toEqual([{ line: 3, text: 'gh pr view' }]);
     });
 
     it('collects a bash fence indented inside a list item', () => {
       const content = ['- item', '', '  ```bash', '  gh pr view', '  ```'].join('\n');
-      expect(listBashFences(content).flat()).toEqual([{ line: 4, text: '  gh pr view' }]);
+      expect(partitionFences(content).fences.flat()).toEqual([{ line: 4, text: '  gh pr view' }]);
     });
 
     it('ignores a shorter fence run nested inside a longer one', () => {
       const content = ['````markdown', '```', 'inner', '```', '````'].join('\n');
-      expect(listBashFences(content).flat()).toEqual([]);
+      expect(partitionFences(content).fences.flat()).toEqual([]);
     });
 
     it('still scans a bash fence following an unbalanced nested run', () => {
       const content = ['````markdown', '```bash', '````', '```bash', 'url=$(gh pr create)', '```'].join('\n');
-      expect(listBashFences(content).flat()).toEqual([{ line: 5, text: 'url=$(gh pr create)' }]);
+      expect(partitionFences(content).fences.flat()).toEqual([{ line: 5, text: 'url=$(gh pr create)' }]);
     });
 
     it('does not treat a fence with an info string as a close', () => {
       const content = ['```bash', 'gh pr view', '```', '```markdown', 'prose', '```'].join('\n');
-      expect(listBashFences(content).flat()).toEqual([{ line: 2, text: 'gh pr view' }]);
+      expect(partitionFences(content).fences.flat()).toEqual([{ line: 2, text: 'gh pr view' }]);
     });
 
     it('keeps each fence separate', () => {
       const content = ['```bash', 'one', '```', 'prose', '```bash', 'two', '```'].join('\n');
-      expect(listBashFences(content)).toHaveLength(2);
+      expect(partitionFences(content).fences).toHaveLength(2);
+    });
+
+    it('collects the lines outside every fence', () => {
+      const content = ['before', '```bash', 'inside', '```', 'after'].join('\n');
+      expect(partitionFences(content).unfenced).toEqual([
+        { line: 1, text: 'before' },
+        { line: 5, text: 'after' },
+      ]);
+    });
+
+    it('treats a shorter fence run inside a longer one as fenced content', () => {
+      const content = ['````markdown', '```bash', 'inner', '```', '````', 'after'].join('\n');
+      expect(partitionFences(content).unfenced).toEqual([{ line: 6, text: 'after' }]);
+    });
+
+    it('resumes collecting unfenced lines after an unbalanced nested run', () => {
+      const content = ['````markdown', '```bash', '````', 'after'].join('\n');
+      expect(partitionFences(content).unfenced).toEqual([{ line: 4, text: 'after' }]);
+    });
+
+    it('treats a fence with an info string as content rather than a close', () => {
+      const content = ['```bash', 'inside', '```markdown', 'still inside', '```', 'after'].join('\n');
+      expect(partitionFences(content).unfenced).toEqual([{ line: 6, text: 'after' }]);
     });
   });
 
-  describe('unassigned-read finder', () => {
+  describe('fence read finder', () => {
     it('flags a read no line assigns', () => {
       const fence = [{ line: 1, text: '--model "$MODEL_ID"' }];
-      expect(findUnassignedReads(fence)).toEqual([{ line: 1, text: '--model "$MODEL_ID"' }]);
+      expect(listFenceUnassignedReads(fence)).toEqual([
+        { line: 1, text: '--model "$MODEL_ID"', variables: ['MODEL_ID'] },
+      ]);
     });
 
     it('does not flag a read the fence assigns', () => {
@@ -197,7 +230,7 @@ describe('bash-invocation conventions', () => {
         { line: 1, text: 'body_path="/tmp/x.md"' },
         { line: 2, text: 'gh issue edit 1 --body-file "$body_path"' },
       ];
-      expect(findUnassignedReads(fence)).toEqual([]);
+      expect(listFenceUnassignedReads(fence)).toEqual([]);
     });
 
     it('does not flag a read assigned on an indented line', () => {
@@ -205,7 +238,7 @@ describe('bash-invocation conventions', () => {
         { line: 1, text: '  output=$(acli jira workitem create --json)' },
         { line: 2, text: '  printf \'%s\' "$output"' },
       ];
-      expect(findUnassignedReads(fence)).toEqual([]);
+      expect(listFenceUnassignedReads(fence)).toEqual([]);
     });
 
     it('does not flag a loop or read target', () => {
@@ -215,53 +248,57 @@ describe('bash-invocation conventions', () => {
         { line: 3, text: '  echo "$first"' },
         { line: 4, text: 'done' },
       ];
-      expect(findUnassignedReads(fence)).toEqual([]);
+      expect(listFenceUnassignedReads(fence)).toEqual([]);
     });
 
     it('does not flag an allowed environment variable', () => {
-      expect(findUnassignedReads([{ line: 1, text: 'cd "$TMPDIR"' }])).toEqual([]);
+      expect(listFenceUnassignedReads([{ line: 1, text: 'cd "$TMPDIR"' }])).toEqual([]);
     });
 
     it('does not flag a command substitution', () => {
-      expect(findUnassignedReads([{ line: 1, text: 'echo "$(git branch --show-current)"' }])).toEqual([]);
+      expect(listFenceUnassignedReads([{ line: 1, text: 'echo "$(git branch --show-current)"' }])).toEqual([]);
     });
 
     it('does not flag a positional parameter', () => {
-      expect(findUnassignedReads([{ line: 1, text: 'echo "$1"' }])).toEqual([]);
+      expect(listFenceUnassignedReads([{ line: 1, text: 'echo "$1"' }])).toEqual([]);
     });
 
     it('does not flag a comment', () => {
-      expect(findUnassignedReads([{ line: 1, text: '# reads $MODEL_ID from the environment block' }])).toEqual([]);
+      expect(listFenceUnassignedReads([{ line: 1, text: '# reads $MODEL_ID from the environment block' }])).toEqual([]);
     });
   });
 
-  describe('inline-invocation classifier', () => {
+  describe('inline read finder', () => {
     it('flags a span opening with a command', () => {
-      const content = 'Run `{harness_home_dir}/scripts/resolve.sh --model "$MODEL_ID"` via Bash.';
-      expect(listInlineViolations(content)).toEqual([
-        { line: 1, text: '{harness_home_dir}/scripts/resolve.sh --model "$MODEL_ID"' },
+      const text = 'Run `{harness_home_dir}/scripts/resolve.sh --model "$MODEL_ID"` via Bash.';
+      expect(listInlineUnassignedReads([{ line: 1, text }])).toEqual([
+        {
+          line: 1,
+          text: '{harness_home_dir}/scripts/resolve.sh --model "$MODEL_ID"',
+          variables: ['MODEL_ID'],
+        },
       ]);
     });
 
     it('does not flag a span that merely names the variable', () => {
-      expect(listInlineViolations('Source `$MODEL_ID` from the environment block.')).toEqual([]);
+      expect(listInlineUnassignedReads([{ line: 1, text: 'Source `$MODEL_ID` from the block.' }])).toEqual([]);
     });
 
     it('does not flag a flag fragment quoting a fence variable', () => {
-      expect(listInlineViolations('Pass `--body-file "$body_path"` to the call.')).toEqual([]);
+      expect(listInlineUnassignedReads([{ line: 1, text: 'Pass `--body-file "$body_path"` on.' }])).toEqual([]);
     });
 
     it('does not flag a span opening with an unlisted command', () => {
-      expect(listInlineViolations('Avoid `echo "$BODY"`, which needs escaping.')).toEqual([]);
+      expect(listInlineUnassignedReads([{ line: 1, text: 'Avoid `echo "$BODY"`, which escapes.' }])).toEqual([]);
     });
 
     it('does not flag a span whose own assignment binds the read', () => {
-      expect(listInlineViolations('Run `node x.mjs --set-url "{url}"` first.')).toEqual([]);
+      expect(listInlineUnassignedReads([{ line: 1, text: 'Run `node x.mjs --set-url "{url}"`.' }])).toEqual([]);
     });
 
-    it('does not read inside a fenced block', () => {
-      const content = ['```bash', 'git diff "$default_branch"', '```'].join('\n');
-      expect(listInlineViolations(content)).toEqual([]);
+    it('reads no span from a line the partitioner reports as fenced', () => {
+      const content = ['```bash', 'Run `git diff "$default_branch"` first.', '```'].join('\n');
+      expect(listInlineUnassignedReads(partitionFences(content).unfenced)).toEqual([]);
     });
   });
 
@@ -322,20 +359,6 @@ function containsExcludedSubstitution(line: string): boolean {
   return false;
 }
 
-/** Collects every inline invocation span reading a variable it does not assign, across the scanned trees. */
-async function findInlineViolations(): Promise<ReadonlyArray<Violation>> {
-  const violations: Array<Violation> = [];
-  const files = await listScannedFiles();
-  for (const file of files) {
-    const content = await readFile(file, 'utf8');
-    if (isExtractedContent(content)) continue;
-    for (const span of listInlineViolations(content)) {
-      violations.push({ file: path.relative(CONTENT_ROOT, file), line: span.line, text: span.text });
-    }
-  }
-  return violations;
-}
-
 /**
  * Finds a fence's last statement: the line that starts it, and the last `;`-separated command within it. Blank lines
  * and comments are skipped, and backslash continuations are joined, so a chain written as one invocation reports the
@@ -360,12 +383,27 @@ function findTerminalStatement(fence: ReadonlyArray<FenceLine>): TerminalStateme
   return { command, start };
 }
 
-/** Collects every line of a fence that reads a variable the fence does not assign. */
-function findUnassignedReads(fence: ReadonlyArray<FenceLine>): ReadonlyArray<FenceLine> {
-  const assigned = listAssignedVariables(fence.map((fenceLine) => fenceLine.text).join('\n'));
-  return fence.filter(
-    (fenceLine) => !isComment(fenceLine.text) && listUnassignedReads(fenceLine.text, assigned).length > 0,
-  );
+/** Collects every Bash invocation in the scanned trees that reads a variable it does not assign, in file order. */
+async function findUnassignedReads(): Promise<ReadonlyArray<Violation>> {
+  const violations: Array<Violation> = [];
+  const files = await listScannedFiles();
+  for (const file of files) {
+    const content = await readFile(file, 'utf8');
+    if (isExtractedContent(content)) continue;
+    const { fences, unfenced } = partitionFences(content);
+    const reads = [...fences.flatMap(listFenceUnassignedReads), ...listInlineUnassignedReads(unfenced)].toSorted(
+      (left, right) => left.line - right.line,
+    );
+    for (const read of reads) {
+      violations.push({
+        file: path.relative(CONTENT_ROOT, file),
+        line: read.line,
+        text: read.text.trim(),
+        variables: read.variables,
+      });
+    }
+  }
+  return violations;
 }
 
 /** Collects every line the selector reports as offending, across the scanned content trees, in file order. */
@@ -377,7 +415,7 @@ async function findViolations(
   for (const file of files) {
     const content = await readFile(file, 'utf8');
     if (isExtractedContent(content)) continue;
-    for (const fence of listBashFences(content)) {
+    for (const fence of partitionFences(content).fences) {
       for (const fenceLine of select(fence)) {
         violations.push({
           file: path.relative(CONTENT_ROOT, file),
@@ -393,7 +431,10 @@ async function findViolations(
 /** Renders the assertion message: the stated reason, then each offending site. */
 function formatViolations(violations: ReadonlyArray<Violation>, header: string): string {
   if (violations.length === 0) return '';
-  const lines = violations.map((violation) => `  ${violation.file}:${violation.line}: ${violation.text}`);
+  const lines = violations.map((violation) => {
+    const named = violation.variables?.map((variable) => `$${variable}`).join(', ');
+    return `  ${violation.file}:${violation.line}: ${violation.text}${named ? ` -- ${named}` : ''}`;
+  });
   return [header, ...lines].join('\n');
 }
 
@@ -418,67 +459,33 @@ function listAssignedVariables(body: string): ReadonlySet<string> {
   return assigned;
 }
 
-/** Groups the body lines of each bash fence in a Markdown document, paired with their 1-based line numbers. */
-function listBashFences(content: string): ReadonlyArray<ReadonlyArray<FenceLine>> {
-  const fences: Array<Array<FenceLine>> = [];
-  let openDelimiter: string | undefined;
-  let current: Array<FenceLine> | undefined;
-
-  for (const [index, text] of content.split('\n').entries()) {
-    const fence = text.match(FENCE);
-    if (fence) {
-      const delimiter = fence[1] ?? '';
-      const info = (fence[2] ?? '').trim();
-      if (openDelimiter === undefined) {
-        openDelimiter = delimiter;
-        if (info === 'bash') {
-          current = [];
-          fences.push(current);
-        }
-        continue;
-      }
-      if (delimiter.length >= openDelimiter.length && info === '') {
-        openDelimiter = undefined;
-        current = undefined;
-        continue;
-      }
-    }
-    current?.push({ line: index + 1, text });
+/** Collects a fence's lines that read a variable the fence does not assign, each with the names it reads. */
+function listFenceUnassignedReads(fence: ReadonlyArray<FenceLine>): ReadonlyArray<UnassignedRead> {
+  const assigned = listAssignedVariables(fence.map((fenceLine) => fenceLine.text).join('\n'));
+  const reads: Array<UnassignedRead> = [];
+  for (const fenceLine of fence) {
+    if (isComment(fenceLine.text)) continue;
+    const variables = listUnassignedReads(fenceLine.text, assigned);
+    if (variables.length > 0) reads.push({ ...fenceLine, variables });
   }
-  return fences;
+  return reads;
 }
 
 /**
- * Collects the inline code spans of a document that open with a command and read a variable they do not assign.
- * Fenced regions are skipped, so a fence's own lines reach only the fence checks.
+ * Collects the inline code spans among unfenced lines that open with a command and read a variable they do not
+ * assign, each with the names it reads.
  */
-function listInlineViolations(content: string): ReadonlyArray<FenceLine> {
-  const violations: Array<FenceLine> = [];
-  let openDelimiter: string | undefined;
-
-  for (const [index, text] of content.split('\n').entries()) {
-    const fence = text.match(FENCE);
-    if (fence) {
-      const delimiter = fence[1] ?? '';
-      if (openDelimiter === undefined) {
-        openDelimiter = delimiter;
-        continue;
-      }
-      const info = (fence[2] ?? '').trim();
-      if (delimiter.length >= openDelimiter.length && info === '') openDelimiter = undefined;
-      continue;
-    }
-    if (openDelimiter !== undefined) continue;
-
+function listInlineUnassignedReads(lines: ReadonlyArray<FenceLine>): ReadonlyArray<UnassignedRead> {
+  const reads: Array<UnassignedRead> = [];
+  for (const { line, text } of lines) {
     for (const match of text.matchAll(INLINE_SPAN)) {
       const span = match[1];
       if (span === undefined || !opensWithInvocation(span)) continue;
-      if (listUnassignedReads(span, listAssignedVariables(span)).length > 0) {
-        violations.push({ line: index + 1, text: span });
-      }
+      const variables = listUnassignedReads(span, listAssignedVariables(span));
+      if (variables.length > 0) reads.push({ line, text: span, variables });
     }
   }
-  return violations;
+  return reads;
 }
 
 /** Lists every Markdown file under the scanned content trees, in path order. */
@@ -504,6 +511,42 @@ function listUnassignedReads(text: string, assigned: ReadonlySet<string>): Reado
 /** Reports whether an inline span opens with one of the commands that make it an invocation rather than prose. */
 function opensWithInvocation(span: string): boolean {
   return INVOCATION_OPENINGS.some((opening) => span.startsWith(opening));
+}
+
+/**
+ * Splits a Markdown document into the body lines of each bash fence and the lines outside every fence, so both site
+ * kinds read one tracker. A fence run that neither opens nor closes the current fence is content, not a delimiter.
+ */
+function partitionFences(content: string): Partition {
+  const fences: Array<Array<FenceLine>> = [];
+  const unfenced: Array<FenceLine> = [];
+  let openDelimiter: string | undefined;
+  let current: Array<FenceLine> | undefined;
+
+  for (const [index, text] of content.split('\n').entries()) {
+    const fence = text.match(FENCE);
+    if (fence) {
+      const delimiter = fence[1] ?? '';
+      const info = (fence[2] ?? '').trim();
+      if (openDelimiter === undefined) {
+        openDelimiter = delimiter;
+        if (info === 'bash') {
+          current = [];
+          fences.push(current);
+        }
+        continue;
+      }
+      if (delimiter.length >= openDelimiter.length && info === '') {
+        openDelimiter = undefined;
+        current = undefined;
+        continue;
+      }
+    }
+    const fenceLine = { line: index + 1, text };
+    if (openDelimiter === undefined) unfenced.push(fenceLine);
+    else current?.push(fenceLine);
+  }
+  return { fences, unfenced };
 }
 
 /** Reports whether the text opens with the command name followed by a word boundary. */
