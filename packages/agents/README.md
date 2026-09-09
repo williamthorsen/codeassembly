@@ -19,7 +19,7 @@ Add it to a project when the repo ships guidance of its own, or wants `sync` to 
 pnpm add --save-dev codeassembly
 ```
 
-`install` deploys the built-in library into your harness directories. `sync` resolves `.agents/codeassembly.yaml` and materializes exactly what the project declares, including guidance shipped by its dependencies (see [Packages](#packages)).
+`install` deploys the built-in library into the harness directories. `sync` resolves `.agents/codeassembly.yaml` and materializes exactly what the project declares, including guidance shipped by its dependencies (see [Packages](#packages)).
 
 Supported harnesses are Claude Code and Rovo Dev; `--harness` narrows a run to one.
 
@@ -44,7 +44,7 @@ Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--fo
 
 ## Session-lifecycle hooks
 
-Skills report the work they do, but they cannot report a session opening, exiting, or handing a turn back to you — at those moments no skill is running. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
+Skills report the work they do, but they cannot report a session opening, exiting, or handing a turn back to the developer: At those moments no skill is running. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
 
 | Event             | Claude Code        | Rovo Dev           |
 | ----------------- | ------------------ | ------------------ |
@@ -57,12 +57,12 @@ Skills report the work they do, but they cannot report a session opening, exitin
 
 - `install --skip-hooks` installs everything else and leaves the configs untouched.
 - `codeassembly configure-hooks` runs just the wiring, for re-applying it later.
-- `configure-hooks --print` prints the entries without writing anything — the manual-adoption path for a config you manage elsewhere. The snippets below are exactly what it emits.
+- `configure-hooks --print` prints the entries without writing anything: the manual-adoption path for a config managed elsewhere. The snippets below are exactly what it emits.
 - `uninstall` removes the entries; `status` reports each one as present, drifted, or absent.
 
-Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: The CLI creates, replaces, and removes only entries whose command carries it, so your own hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
+Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: The CLI creates, replaces, and removes only entries whose command carries it, so hand-written hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
 
-The relay reports a boundary and nothing more. It never carries your prompt text, and it always exits 0 — a relay that failed loudly would be worse than the missing event, since both harnesses read some non-zero hook exits as a signal to block the agent.
+The relay reports a boundary and nothing more. It never sends the prompt text, and it always exits 0: A relay that failed loudly would be worse than the missing event, since both harnesses read some non-zero hook exits as a signal to block the agent.
 
 ### Claude Code
 
@@ -140,7 +140,7 @@ eventHooks:
         - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_complete --sentinel codeassembly-agents
 ```
 
-Write your home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes your machine's absolute path here, matching the entries Rovo's own tooling generates.
+Write the home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes the machine's absolute path here, matching the entries that Rovo's own tooling generates.
 
 Two things to know about Rovo:
 
@@ -149,9 +149,9 @@ Two things to know about Rovo:
 
 ## Project declaration
 
-A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts you want, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).
+A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).
 
-Authoring conventions for the artifacts you declare — frontmatter fields, the `dependencies:` and `members:` blocks, and naming — live in the `codeassembly-content-specification` rulebook (`content/guidance/rulebooks/codeassembly-content-specification.md`). This section documents the declaration mechanism itself.
+Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) live in the `codeassembly-content-specification` rulebook (`content/guidance/rulebooks/codeassembly-content-specification.md`). This section documents the declaration mechanism itself.
 
 ### Format
 
@@ -303,7 +303,7 @@ Four collections ship, each carrying a claim a reader can act on:
 
 An artifact in none of them is standalone: deliberate, declared directly where wanted, and either too rarely invoked to justify a standing line in the skill index or wanted only in specific projects. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
 
-`codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`; add any other collection to that file yourself. A project adds a collection for repo deployment by declaring it explicitly.
+`codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`; add any other collection to that file by hand. A project adds a collection for repo deployment by declaring it explicitly.
 
 #### The `@library` token
 
@@ -329,7 +329,7 @@ The resolver follows `members:` and `dependencies:` identically; the split is se
 
 ### Sources
 
-By default, a declared artifact resolves from CodeAssembly's built-in content library. A top-level `sources:` list adds your own content directories — machine-local, project-local, or a third-party guidance repo — each structured like the library's `content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`). Resolution searches the declared sources first, then the library:
+By default, a declared artifact resolves from CodeAssembly's built-in content library. A top-level `sources:` list adds further content directories (machine-local, project-local, or a third-party guidance repo), each structured like the library's `content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`). Resolution searches the declared sources first, then the library:
 
 ```yaml
 sources:
@@ -371,9 +371,9 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-**Precedence.** Every `sources` entry, from any tier, outranks every package, and every package outranks the built-in library — a directory you pointed at by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. A package that masks a library slug is reported by the same shadow warning a declared source triggers; two packages that ship the same slug resolve by precedence with no warning, and `sync --dry-run` names the source each artifact resolved from.
+**Precedence.** Every `sources` entry, from any tier, outranks every package, and every package outranks the built-in library: A directory named by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. A package that masks a library slug is reported by the same shadow warning a declared source triggers; two packages that ship the same slug resolve by precedence with no warning, and `sync --dry-run` names the source each artifact resolved from.
 
-**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain Node itself searches, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or declares no content directory, fails the run — dry-run included — before any file is written, naming what was searched. One that declares a content directory it does not ship warns rather than failing, like any other missing source. The consumer's declaration holds no path to correct, so the remedy is to create the directory in a package you maintain, or report the omission upstream in one you do not.
+**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain Node itself searches, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or declares no content directory, fails the run — dry-run included — before any file is written, naming what was searched. One that declares a content directory it does not ship warns rather than failing, like any other missing source. The consumer's declaration holds no path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one they do not.
 
 **Discovery.** `sync` reports any direct dependency that ships content the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: an undeclared dependency contributes nothing, so installing one changes nothing about what an agent reads, and `drop` silences the advice for a package the project has turned down.
 
@@ -469,7 +469,7 @@ The declaration resolves in two independent **domains**, each with its own base 
 1. **User-global** — `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
 2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
 
-A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain, so guidance the developer bound globally goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovo/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content; `install` and `uninstall` retire a legacy `~/.agents/AGENTS.md` the same way, removing a copy the CLI deployed and keeping one that holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovo/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
+A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing the caller to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain, so guidance the developer bound globally goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovo/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content; `install` and `uninstall` retire a legacy `~/.agents/AGENTS.md` the same way, removing a copy the CLI deployed and keeping one that holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovo/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
 
 When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: The new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
 
