@@ -47,10 +47,10 @@ Within each knowledge base, recall is limited to the notes the store declares, t
 Invoke the co-located bundled helper with `node`, passing the query and any flags through verbatim:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-retrieve.mjs" <query> [--all-kbs] [--store <name>] [--diataxis <label>] [--tag <tag>] [--folder <folder>]
+node {harness_home_dir}/skills/kb-retrieve/kb-retrieve.mjs <query> [--all-kbs] [--store <name>] [--diataxis <label>] [--tag <tag>] [--folder <folder>]
 ```
 
-Or, when the skill directory is known:
+A worked example:
 
 ```bash
 node {harness_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup" --diataxis howto

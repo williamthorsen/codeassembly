@@ -80,32 +80,26 @@ In default mode, present the note path, the operation, and the operation-specifi
 `--bump-updated`, `--verify`, `--retag`, and `--supersede-with` take no stdin:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --bump-updated
-node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --verify
-node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --retag "tag1,tag2"
-node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <old-path> --supersede-with <new-path>
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <path> --bump-updated
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <path> --verify
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <path> --retag "tag1,tag2"
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <old-path> --supersede-with <new-path>
 ```
 
 `--add-addressed-by` appends to one or more notes; comma-separate multiple references, space-separate multiple target notes:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --add-addressed-by "[[how-to-avoid-x]]"
-node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <event-1> <event-2> --add-addressed-by "[[how-to-avoid-x]],#789"
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <path> --add-addressed-by "[[how-to-avoid-x]]"
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <event-1> <event-2> --add-addressed-by "[[how-to-avoid-x]],#789"
 ```
 
 `--append` reads the new body from stdin. A heredoc keeps the addition legible without shell quoting and escaping:
 
 ```bash
-cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-edit.mjs" <path> --append
+cat <<'EOF' | node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <path> --append
 A new section appended to the existing body. The helper adds a separating
 blank line and bumps `updated:` to today (UTC).
 EOF
-```
-
-Or, when the skill directory is known:
-
-```bash
-node {harness_home_dir}/skills/kb-edit/kb-edit.mjs Tools/tmux/tmux-insights.md --verify
 ```
 
 ### 5. Handle the result

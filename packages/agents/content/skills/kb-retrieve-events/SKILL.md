@@ -44,13 +44,7 @@ Within each knowledge base, recall is limited to the notes the store declares, t
 Invoke the co-located bundled helper with `node`, passing the query and any flags through verbatim:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-retrieve-events.mjs" <query> [--all-kbs] [--store <name>] [--tag <tag>] [--min-impact <level>]
-```
-
-Or, when the skill directory is known:
-
-```bash
-node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store <name>
+node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs <query> [--all-kbs] [--store <name>] [--tag <tag>] [--min-impact <level>]
 ```
 
 Triage the most consequential events with an impact floor:
