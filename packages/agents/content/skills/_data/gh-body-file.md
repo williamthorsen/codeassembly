@@ -27,4 +27,4 @@ The pattern once prescribed a `$TMPDIR`-relative path and told the caller to kee
 
 ## Cleanup
 
-None is required. A session scratchpad is scoped to the session, and `$TMPDIR` is OS-managed.
+None is required. Each call creates its own directory, so a file left in one collides with nothing and is readable only by the user who wrote it.

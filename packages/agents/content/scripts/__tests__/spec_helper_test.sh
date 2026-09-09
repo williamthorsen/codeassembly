@@ -10,7 +10,8 @@ setup_failing_mktemp() {
   stub_dir="$tmpdir"
   saved_pwd="$original_pwd"
   mkdir -p bin
-  # Shadow `mktemp` rather than pointing TMPDIR at an unwritable path: BSD mktemp ignores TMPDIR.
+  # Shadow `mktemp` rather than pointing TMPDIR at an unwritable path: a stub fails on every platform and under any
+  # sandbox, where an unwritable path depends on what this machine lets the suite create.
   cat >bin/mktemp <<'STUB'
 #!/usr/bin/env bash
 echo "mktemp: stubbed failure" >&2

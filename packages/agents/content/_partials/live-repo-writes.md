@@ -1,6 +1,8 @@
 ## Don't test write operations against a live repo
 
-Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment: a temp directory (`mktemp -d`), a fresh `git init` with minimal fixtures, or a container.
+Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment: a scratch directory (`mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX"`, since bare `mktemp -d` picks a path the agent sandbox denies and then leaves the variable empty), a fresh `git init` with minimal fixtures, or a container.
+
+Write absolute paths beneath that directory rather than changing into it and writing relative ones, unless the change of directory is chained to the creation succeeding, as `enter_tmpdir` is. `cd ""` returns 0, so a failed `mktemp` otherwise routes every later write into the working repo, which is the outcome this rule exists to prevent.
 
 Why it matters:
 

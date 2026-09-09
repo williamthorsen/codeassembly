@@ -2,7 +2,7 @@
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
 delivery: skill
-version: '2'
+version: '3'
 ---
 
 # Shell script conventions
@@ -97,6 +97,12 @@ main "$@"
 - **`main()` wrapper**: Wrap the main flow in a `main()` function. Call `main "$@"` at the bottom of the file, after all function definitions.
 - **Main flow first**: Option parsing, validation, dependencies, and core logic go inside `main()`.
 - **Helpers at end**: Place helper functions after `main()`, before the `main "$@"` call.
+
+### Strict mode does not catch an empty path
+
+`set -e` stops a script at a command that fails, and a command handed an empty path mostly succeeds. `cd ""` returns 0 and leaves the working directory where it was, so a script whose directory variable came out empty runs on, and every later relative write lands in the invoking directory instead of the one it meant. `rm -rf "$dir/"*` and `mkdir -p "$dir/sub"` read an empty value the same way.
+
+Read a path that must be non-empty as `${dir:?message}`, which aborts where the bare expansion continues. This holds wherever the value comes from, and it matters most for a directory a command produced, since that is where the empty value comes from a failure the script did not see.
 
 ## Help and exit codes
 
@@ -240,7 +246,7 @@ Guard the step whose failure would let a later one act on bad state. A hook with
 That step is usually the one establishing the workspace. Once it succeeds, a later failure is contained inside the temporary directory, so the example below guards the first step and no other.
 
 ```bash
-# Bad: a failed mktemp leaves `tmpdir` empty, and the writes land in the invoking directory
+# Bad: the bare call fails under an agent sandbox, leaving `tmpdir` empty, and the writes land in the invoking directory
 setup_workspace() {
   tmpdir=$(mktemp -d)
   cd "$tmpdir"

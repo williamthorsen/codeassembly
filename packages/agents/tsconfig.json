@@ -4,6 +4,8 @@
   // prettier-ignore
   "include": [
     ".readyup/**/*.ts",
+    // A suite covering the whole package sits at its root, since no one directory contains what it reads.
+    "__tests__/**/*.ts",
     // Content-convention suites sit beside the content tree they cover. `nmr compile` builds from `src/` alone, so
     // this reaches typechecking and linting without adding anything to the emitted package.
     "content/__tests__/**/*.ts",
