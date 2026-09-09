@@ -292,7 +292,7 @@ Every rule tests the open findings as a collection, which is what lets one recom
 
 Whether a change is discretionary and which shape it has are independent axes. Whether a change is optional is a different question from who decides it: An `S` reading "rename `x` to `descriptiveName`" is discretionary and still a single named change, since the only decision left is yes or no and the person reading the menu is the one making it. Routing that to the author round-trips a settled edit through a second session.
 
-Do not attempt to detect whether the author is the person reading the review. Agents commit under the user's git identity, so the review's resolved `$author` cannot distinguish them. Rule 2 turns on the review's own content, which is decidable.
+Do not attempt to detect whether the author is the person reading the review. Agents commit under the user's git identity, so the review's resolved `{author}` cannot distinguish them. Rule 2 turns on the review's own content, which is decidable.
 
 #### Marker strengths
 

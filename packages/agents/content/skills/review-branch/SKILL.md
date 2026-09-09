@@ -105,7 +105,7 @@ Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the cano
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it, e.g., `# Code review: {description}`.
 
-The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author=$author"` to the script to populate the review-artifact `author` field.
+The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author={author}"` to the script to populate the review-artifact `author` field.
 
 The body following the frontmatter has this structure:
 
