@@ -63,9 +63,9 @@ If the review concluded with no findings (or no error-handling code was present)
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill aspect-silent-failure-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill aspect-silent-failure-reviewer --interactive false --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Scope
 

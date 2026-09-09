@@ -83,26 +83,26 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 The devlog frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the devlog-specific extensions listed in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter).
 
-Resolve `$run_id_arg` from the `--run-id={id}` argument (empty when not supplied). Resolve the `commits` extension according to the mode:
+Resolve `{run_id}` from the `--run-id={id}` argument (empty when not supplied). Resolve `{commits}` according to the mode:
 
-- No argument (last commit): `commits_arg=$(git log -n 1 --format=%h)`.
-- `<n>` (last N commits): `commits_arg=$(git log -n N --format=%h | paste -sd, -)`.
-- `working-tree`: Do not pass `--extra-list commits=...`.
+- No argument (last commit): the output of `git log -n 1 --format=%h`.
+- `<n>` (last N commits): the output of `git log -n N --format=%h | paste -sd, -`.
+- `working-tree`: no value.
 
-Run via Bash, substituting the resolved arguments:
+Run via Bash, writing each resolved value into the call as literal text:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill create-devlog \
   --interactive true \
-  --model "$MODEL_ID" \
-  ${commits_arg:+--extra-list "commits=$commits_arg"} \
-  --override "run_id=$run_id_arg"
+  --model "{model_id}" \
+  --extra-list "commits={commits}" \
+  --override "run_id={run_id}"
 ```
 
-The `${commits_arg:+--extra-list "commits=$commits_arg"}` form expands to the flag only when `$commits_arg` is non-empty, so the `working-tree` mode (where `$commits_arg` is unset) naturally omits the `commits` field rather than emitting `commits: []`. Quoting `run_id=$run_id_arg` ensures the empty-value force-omit case works when no `--run-id` was supplied.
+Drop the `--extra-list` flag entirely in `working-tree` mode, where `{commits}` has no value; passing it empty emits `commits: []`. Keep `--override "run_id="` with its empty value where no `--run-id` was supplied, because an empty override force-omits the field, which dropping the flag would not.
 
-Prepend the script's output verbatim to the artifact body. Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
+Prepend the script's output verbatim to the artifact body. Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 ### Filename examples
 

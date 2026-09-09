@@ -166,21 +166,21 @@ The block is structured as:
 
 ### Canonical-field resolution
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$title`, `$scope`, and `$type` from the consumer-field inference below (omit a flag if the corresponding value cannot be inferred unambiguously).
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `{title}`, `{scope}`, and `{type}` from the consumer-field inference below.
 
-Run via Bash:
+Run via Bash, writing each resolved value into the call as literal text and dropping the whole flag for a value that cannot be inferred unambiguously:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill summarize-change \
   --interactive true \
-  --model "$MODEL_ID" \
-  --extra "title=$title" \
-  ${scope:+--extra "scope=$scope"} \
-  ${type:+--extra "type=$type"}
+  --model "{model_id}" \
+  --extra "title={title}" \
+  --extra "scope={scope}" \
+  --extra "type={type}"
 ```
 
-The `${var:+--extra "key=$var"}` form expands to the flag only when `$var` is non-empty, so an unresolved `scope` or `type` is naturally omitted from the emitted frontmatter.
+Dropping the flag is what keeps an unresolved `scope` or `type` out of the emitted frontmatter.
 
 Prepend the script's output verbatim to the artifact body.
 
