@@ -18,8 +18,6 @@
 
 <!-- include: ../../_partials/shell-commands.md / -->
 
-<!-- include: ../../_partials/scratch-directory.md / -->
-
 <!-- include: ../../_partials/live-repo-writes.md / -->
 
 <!-- include: ../../_partials/technical-recommendations.md / -->

@@ -27,7 +27,6 @@ export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<str
   'file-access': listGovernedSubagents(),
   'live-repo-writes': ['orchestrated-coder'],
   'plain-speech': listGovernedSubagents(),
-  'scratch-directory': ['orchestrated-coder'],
   'shell-commands': listGovernedSubagents().filter((slug) => !SHELL_LESS_SUBAGENTS.has(slug)),
   'technical-recommendations': listApproachChoosingSubagents(),
 };

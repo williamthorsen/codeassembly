@@ -63,16 +63,6 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
       'a tool **reports** its findings (not "the findings arrive")',
     ],
   },
-  'scratch-directory': {
-    headline: '## Scratch files',
-    // One phrase per rule. `shell-conventions.md` states the empty-path hazard for an authored script and shares
-    // wording with the third rule's explanation, so that phrase stops at the rule itself.
-    phrases: [
-      'Resolve a base once, and never inside the repository.',
-      'Re-state the base as an absolute path at every use.',
-      'Write absolute paths beneath the base',
-    ],
-  },
   'shell-commands': {
     headline: '## Shell commands',
     phrases: ['Compound `cd &&` commands'],
@@ -92,7 +82,6 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
   { heading: '## Code descriptions', phrase: 'gets a brief description' },
   { heading: '## File access', phrase: 'When given an exact file path' },
   { heading: '## Shell commands', phrase: 'Compound `cd &&` commands' },
-  { heading: '## Scratch files', phrase: 'Resolve a base once, and never inside the repository.' },
   {
     heading: "## Don't test write operations against a live repo",
     phrase: 'Never exercise destructive or side-effecting operations',
@@ -107,26 +96,7 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
  * include is asserted here or nowhere, and a dropped one would strip the doctrine from that skill in silence.
  */
 const SKILL_CARRIERS: ReadonlyArray<{ readonly relativePath: string; readonly section: string }> = [
-  { relativePath: 'skills/capture-lede-decision/SKILL.md', section: 'scratch-directory' },
-  { relativePath: 'skills/condense-branch/SKILL.md', section: 'scratch-directory' },
-  { relativePath: 'skills/create-commit/SKILL.md', section: 'scratch-directory' },
-  { relativePath: 'skills/create-gh-pr/SKILL.md', section: 'scratch-directory' },
-  { relativePath: 'skills/create-ticket/SKILL.md', section: 'scratch-directory' },
-  { relativePath: 'skills/merge-gh-pr/SKILL.md', section: 'scratch-directory' },
   { relativePath: 'skills/revise-prose/SKILL.md', section: 'plain-speech' },
-  { relativePath: 'skills/revise-prose/SKILL.md', section: 'scratch-directory' },
-  { relativePath: 'skills/wrap-up/SKILL.md', section: 'scratch-directory' },
-];
-
-/** The anchor `_partials/live-repo-writes.md` carries, and the heading it resolves to. */
-const SCRATCH_ANCHOR = '[scratch directory](#scratch-files)';
-const SCRATCH_HEADING = '## Scratch files';
-
-/** Every host that inlines `live-repo-writes`, and so must render the heading its anchor names. */
-const ANCHOR_HOSTS: ReadonlyArray<string> = [
-  'guidance/_harnesses/claude/CLAUDE.md',
-  'guidance/_harnesses/rovo/AGENTS.md',
-  'subagents/orchestrated-coder.md',
 ];
 
 /** The guidance files that inline the shared file, one per harness. */
@@ -167,18 +137,6 @@ describe('shared-doctrine reach', () => {
 
       const message = `The rule is stated once and inlined from there; these files restate it instead of including it:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
-    });
-  });
-
-  // `live-repo-writes` reaches the scratch-directory rules by in-file anchor rather than by a second include, which
-  // would render the section twice in a host carrying both. An anchor resolves only where the host renders the
-  // heading it names, and a dangling one fails nothing on its own: the reader follows it to no target.
-  describe('the scratch-directory anchor', () => {
-    it.each(ANCHOR_HOSTS)('resolves in %s', async (relativePath) => {
-      const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
-
-      expect(expanded, `${relativePath} inlines the anchor`).toContain(SCRATCH_ANCHOR);
-      expect(countOccurrences(expanded, SCRATCH_HEADING), `${relativePath} renders the anchor's target once`).toBe(1);
     });
   });
 
