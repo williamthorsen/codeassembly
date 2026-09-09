@@ -2,7 +2,7 @@
 slug: williamthorsen-writing-preferences
 description: William Thorsen's personal writing preferences for agent-authored prose.
 delivery: [ambient, hook]
-version: '2'
+version: '3'
 ---
 
 # William Thorsen's writing preferences
@@ -24,10 +24,25 @@ Don't use em-dashes; use appropriate punctuation instead. A dash separating an i
 
 <!-- include: ../../_partials/reduced-object-relative.md / -->
 
+## Second person
+
+Documentation describes; it does not address. Never write `you`, `your`, `yours`, or `yourself`, and never the contractions `you're`, `you've`, `you'll`, or `you'd`.
+
+Imperative mood is untouched, because it carries no pronoun: "Run the formatter" directs the reader without naming one.
+
+**The addressee decides.** Ask who the pronoun names. Where it names the agent that the document instructs, a skill body or a subagent body directing its own executor, the pronoun is that document's address and stays. Where it names a reader of documentation, someone using the package or working on it, the pronoun goes.
+
+**The replacement names an actor.** Say who or what acts: "the config caps the rule" rather than "you cap the rule". Where no actor belongs in the sentence, recast so the artifact is the subject: "the flag takes a path" rather than "you pass it a path".
+
+Two traps take a naive substitution:
+
+- **The agentless passive.** Dropping the pronoun by hiding who acted trades one defect for another: "your rules are capped" becomes "the rules are capped", which names nobody. Plain speech rejects that passive; name the actor instead.
+- **The surviving object gap.** "the rules you cap" and "the rules the config caps" are the same reduced object relative, so the substitution leaves the second defect in place. Restore the relativizer, or apply the repairs in "Reduced object relatives" above.
+
 ## Sentence case
 
 Use sentence case for titles, headings, section headers, steps, labels, and interface elements. Never use title case. Preserve the case of proper nouns, named entities, and the actual titles of books and movies.
 
 - "Backend: Express API routes and server" not "Backend: Express API Routes And Server"
 - "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
-- "Customizing the Status Adapter for your backend", not "Customizing the Status Adapter for Your Backend"
+- "Customizing the Status Adapter for a new backend", not "Customizing the Status Adapter for a New Backend"

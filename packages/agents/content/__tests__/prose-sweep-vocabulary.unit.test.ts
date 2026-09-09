@@ -19,13 +19,16 @@ const SUBAGENT = 'subagents/prose-reviser.md';
  * Rule names the subagent may report that the helper holds no detector for. Each is recordable, so the skill has to map
  * it to a unit; a name added here without that mapping is the divergence that this suite exists to catch.
  */
-const UNDETECTED_RULES: ReadonlyArray<string> = ['plain-speech'];
+const UNDETECTED_RULES: ReadonlyArray<string> = ['plain-speech', 'second-person'];
 
 /** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
 const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
 
-/** The sentence mapping the undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
-const UNIT_MAPPING = '**A `plain-speech` rejection takes the `plain-speech` unit**';
+/** The sentences mapping each undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
+const UNIT_MAPPINGS: ReadonlyArray<string> = [
+  '**A `plain-speech` rejection takes the `plain-speech` unit**',
+  '**A `second-person` rejection takes the unit of the fill block that states the rule**',
+];
 
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
 const REJECTIONS_KEY = 'rejections:';
@@ -79,10 +82,12 @@ describe('prose-sweep rule vocabulary', () => {
     const body = await readContentFile(SKILL);
 
     expect(body, `${SKILL} no longer folds every rejection, so a judgment is discarded again`).toContain(FOLD_EVERY);
-    expect(
-      body,
-      `${SKILL} maps no unit onto an undetected rule, so the fold names a unit it does not cover and the record command refuses it`,
-    ).toContain(UNIT_MAPPING);
+    for (const mapping of UNIT_MAPPINGS) {
+      expect(
+        body,
+        `${SKILL} maps no unit onto an undetected rule, so the fold names a unit it does not cover and the record command refuses it`,
+      ).toContain(mapping);
+    }
   });
 
   it('hands the recorded sites to the subagent that would otherwise re-adjudicate them', async () => {

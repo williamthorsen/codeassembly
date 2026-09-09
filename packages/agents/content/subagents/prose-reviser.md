@@ -108,7 +108,7 @@ Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questio
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Use `plain-speech` where the site breaks the plain-speech rule, which no detector covers. Report no unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Two rules are covered by no detector, so neither appears in that scalar: Use `plain-speech` where the site breaks the plain-speech rule, and `second-person` where it breaks the second-person rule stated in the writing preferences below. Report no unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 

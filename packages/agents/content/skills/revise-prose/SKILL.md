@@ -108,7 +108,7 @@ rules: {rule-id}, {rule-id}
 
    `sweptAt` is today's ISO calendar date. `units` names every unit from step 1 with its current version and its `roots`: the invocation's narrowing paths, or `["."]` for a whole-repository sweep.
 
-   `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which names no unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not cover: step 1 names the unit directly rather than through a `<!-- rule: <id> -->` marker.
+   `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which names no unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not cover: step 1 names the unit directly rather than through a `<!-- rule: <id> -->` marker. **A `second-person` rejection takes the unit of the fill block that states the rule**, which that mapping does not cover either: the rule carries no marker, because no detector covers it and the helper rejects an argument naming one.
 
    **Fold every rejection, whatever rule it names.** A rejection is keyed on its rule, its file, and the hash of its phrase, so a rejection under a rule for which the helper has no detector is recorded and re-suppressed like any other. Step 4 hands the recorded sites to the next sweep of that batch.
 

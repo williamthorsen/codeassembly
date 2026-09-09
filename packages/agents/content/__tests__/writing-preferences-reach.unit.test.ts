@@ -40,8 +40,11 @@ const RULES: ReadonlyArray<Rule> = [
     phrases: [
       'Capitalize a complete sentence, keep a fragment or list lowercase',
       'Capitalize what follows as though the label were absent',
+      'Documentation describes; it does not address',
+      'Dropping the pronoun by hiding who acted',
       'Never use title case',
       'Use sentence case',
+      'Where it names the agent that the document instructs',
     ],
   },
 ];
