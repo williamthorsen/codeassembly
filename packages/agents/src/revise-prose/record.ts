@@ -77,9 +77,9 @@ export const RunFoldSchema = z.object({
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
  *
- * A candidate can match both, a version bump carrying the earlier rejection forward beside the one that the run re-recorded
- * under a phrase of its own. The live rejection decides, so whether the site is suppressed follows from the
- * record's content rather than from its order.
+ * A candidate can match both, a version bump carrying the earlier rejection forward beside the one that the run
+ * re-recorded under a phrase of its own. The live rejection decides, so whether the site is suppressed follows from
+ * the record's content rather than from its order.
  */
 export function applyRejections(
   candidates: readonly Candidate[],
@@ -89,7 +89,9 @@ export function applyRejections(
   const bySite = new Map<string, RecordedRejection[]>();
   for (const rejection of record.rejections) {
     const site = composeKey(rejection.rule, rejection.file);
-    bySite.set(site, [...(bySite.get(site) ?? []), rejection]);
+    const held = bySite.get(site);
+    if (held === undefined) bySite.set(site, [rejection]);
+    else held.push(rejection);
   }
 
   const applied: Candidate[] = [];
@@ -246,8 +248,8 @@ export function selectPriorRejections(
 }
 
 /**
- * Renders a record as YAML, with units keyed in sorted order and rejections sorted by rule, file, and phrase. Re-writing
- * an unchanged record is byte-identical, which is what keeps the file out of a diff it did not earn.
+ * Renders a record as YAML, with units keyed in sorted order and rejections sorted by rule, file, and phrase.
+ * Re-writing an unchanged record is byte-identical, which is what keeps the file out of a diff it did not earn.
  */
 export function stringifyRecord(record: ProseRecord): string {
   const units = Object.fromEntries(
@@ -264,7 +266,7 @@ export function stringifyRecord(record: ProseRecord): string {
 
 // region | Helpers
 
-/** Joins the parts of a key on a delimiter no rule, path, or phrase can contain. */
+/** Joins the parts of a key on a delimiter that no rule, path, or phrase can contain. */
 function composeKey(...parts: readonly string[]): string {
   return parts.join('\u{0}');
 }
@@ -273,11 +275,11 @@ function composeKey(...parts: readonly string[]): string {
  * Reports whether a recorded phrase and a candidate's phrase name one site: either normalized form containing the
  * other.
  *
- * The two come from different producers. The record holds the span reported by an adjudicator, readable enough to locate
- * the site by eye; the candidate holds the span emitted by its detector, which is shorter and carries a placeholder
- * where an inline code span stood. Normalizing both through the detector's own pipeline puts them in one form, and
- * containment then resolves the length difference that remains. It runs both ways because an em-dash candidate's
- * phrase is its whole sentence, which a recorded phrase sits inside rather than around.
+ * The two come from different producers. The record holds the span reported by an adjudicator, readable enough to
+ * locate the site by eye; the candidate holds the span emitted by its detector, which is shorter and carries a
+ * placeholder where an inline code span stood. Normalizing both through the detector's own pipeline puts them in one
+ * form, and containment then resolves the length difference that remains. It runs both ways because an em-dash
+ * candidate's phrase is its whole sentence, which a recorded phrase sits inside rather than around.
  */
 function coversPhrase(recorded: string, detected: string): boolean {
   const left = normalizeForMatch(recorded);
@@ -301,9 +303,8 @@ function mergeRoots(recorded: readonly string[], swept: readonly string[]): stri
 
 /**
  * Renders a phrase in the form in which the two sides are compared: inline code spans masked, NFC, and whitespace
- * collapsed.
- * This is the pipeline through which a detector's phrase already passed, applied to a recorded phrase too, so a reflow
- * or a backticked token cannot separate one from the other.
+ * collapsed. This is the pipeline through which a detector's phrase already passed, applied to a recorded phrase too,
+ * so a reflow or a backticked token cannot separate one from the other.
  */
 function normalizeForMatch(phrase: string): string {
   return flattenWhitespace(maskCodeSpans(phrase.normalize('NFC')));
