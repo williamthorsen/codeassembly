@@ -21,119 +21,102 @@ rejections:
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: '**carry**'
-    ground: 'not prose: the watchlist headword naming the word to search for, not a use of it'
+    phrase: '"the change carries a flag"'
+    ground: "a marked exhibit: the watchlist's own example of the use it forbids"
     unit-version: '4'
-    hash: 112e537163e1dbc4
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: what the text directs
-    ground: '"direct" is used in its literal sense of giving authoritative instruction, which is what a guidance text does; the subject performs the verb and no plainer term names the relation'
-    unit-version: '4'
-    hash: 72a98179d576acbe
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '"the file carries a section"'
     ground: "a marked exhibit: the before half of case 2's own before/after pair"
     unit-version: '4'
-    hash: 98cb2ed9c29ddb1a
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: '"the change carries a flag"'
-    ground: "a marked exhibit: the watchlist's own example of the use it forbids"
+    phrase: '**carry**'
+    ground: 'not prose: the watchlist headword naming the word to search for, not a use of it'
     unit-version: '4'
-    hash: a2d4246b3818eae5
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: what the text directs
+    ground: '"direct" is used in its literal sense of giving authoritative instruction, which is what a guidance text does; the subject performs the verb and no plainer term names the relation'
+    unit-version: '4'
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/_partials/plain-speech.md
+    phrase: '"the change carries a flag"'
+    ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
+    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech.md
     phrase: '"The file carries a section"'
     ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
     unit-version: '4'
-    hash: 08688ea2985f7abe
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech.md
     phrase: '"the record carries a version"'
     ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
     unit-version: '4'
-    hash: 32b73628955b2c8c
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech.md
     phrase: not "bears" or "carries"
     ground: "a marked exhibit: the rule's own example of the verbs it forbids"
     unit-version: '4'
-    hash: 43505b7ccb446bee
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech.md
-    phrase: '"the change carries a flag"'
-    ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
-    hash: a2d4246b3818eae5
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/subagents/prose-reviser.md
-    phrase: never what it directs
-    ground: same idiom as the calibration partial; "direct" is literal for an instruction text, and the contrast with "how the text reads" is what the hard gate turns on
-    unit-version: '4'
-    hash: 98c18181c4928505
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/subagents/prose-reviser.md
     phrase: carrying the old verdict over
     ground: '"carry over" is an ordinary phrasal verb whose subject is the sweeper, and it names one relation: reusing a prior verdict. It is not the possessive "carry" that the watchlist names.'
     unit-version: '4'
-    hash: f8a90a225913a896
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: plain one exists
-    ground: 'not the construction: "a plain one" is the subject of "exists" in an adjunct clause, and there is no object gap'
-    unit-version: '2'
-    hash: 13437f2488fa9325
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/subagents/prose-reviser.md
+    phrase: never what it directs
+    ground: same idiom as the calibration partial; "direct" is literal for an instruction text, and the contrast with "how the text reads" is what the hard gate turns on
+    unit-version: '4'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: action it governs
     ground: 'a marked exhibit: it is the "Before:" block of the worked example, and the paragraph after the "After:" block names "the action that it governs" as the restored form'
     unit-version: '2'
-    hash: f4cd4776373943bd
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: plain one exists
+    ground: 'not the construction: "a plain one" is the subject of "exists" in an adjunct clause, and there is no object gap'
+    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/target-file-set-resolution.md
     phrase: widen it afterwards
     ground: 'not the construction: "widen" is the sentence''s own imperative verb and "it" its object'
     unit-version: '2'
-    hash: 0bf7182025571b04
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/skills/revise-prose/SKILL.md
-    phrase: whatever rule it names
-    ground: 'outside the rule: "whatever rule" is a fused head, which admits no relativizer'
-    unit-version: '2'
-    hash: 000c634ab673e23d
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/skills/revise-prose/SKILL.md
-    phrase: hands the recorded sites
-    ground: 'not the construction: "hands" is the sentence''s own verb and "the recorded sites" its object'
-    unit-version: '2'
-    hash: 097ccc783bc27756
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/skills/revise-prose/SKILL.md
-    phrase: success it contains
-    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
-    unit-version: '2'
-    hash: 47beafc79ee15d84
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/skills/revise-prose/SKILL.md
     phrase: failure it contains
     ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
     unit-version: '2'
-    hash: c8a8ac6394519345
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-prose/SKILL.md
+    phrase: hands the recorded sites
+    ground: 'not the construction: "hands" is the sentence''s own verb and "the recorded sites" its object'
+    unit-version: '2'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-prose/SKILL.md
+    phrase: success it contains
+    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
+    unit-version: '2'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-prose/SKILL.md
+    phrase: whatever rule it names
+    ground: 'outside the rule: "whatever rule" is a fused head, which admits no relativizer'
+    unit-version: '2'

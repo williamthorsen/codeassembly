@@ -7,14 +7,19 @@
  * rather than deleting them, so a rule's revision re-opens its rejections for review instead of discarding the
  * judgment behind them.
  *
+ * A rejection resolves to a site by containment rather than by an exact string: see {@link applyRejections}. The record
+ * and the detector describe one site in spans of different lengths, so a phrase is what a reader locates the site by
+ * rather than a string the detector must reproduce. Retiring one entry for another is the stricter test, since two
+ * spans that merely overlap are not the same judgment: {@link rejectionKey} compares the whole phrase, normalized.
+ *
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record. The helper's `record` command is the one
  * write path, which is what keeps the YAML deterministic rather than hand-edited into drift.
  */
-import { createHash } from 'node:crypto';
-
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { z } from 'zod';
 
+import { maskCodeSpans } from './mask-code-spans.ts';
+import { flattenWhitespace } from './span-text.ts';
 import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold } from './types.ts';
 
 /** Path of the record within a repository. */
@@ -36,14 +41,13 @@ const UnitCoverageSchema = z.object({
   roots: z.array(z.string().min(1)).min(1),
 });
 
-/** One rejection, keyed on its rule, its file, and the hash of its phrase. */
+/** One rejection, resolved to a site by its rule, its file, and its phrase. */
 const RejectionSchema = z.object({
   rule: RuleNameSchema,
   unit: z.string().min(1),
   'unit-version': z.string().min(1),
   file: z.string().min(1),
   phrase: z.string().min(1),
-  hash: z.string().regex(/^[0-9a-f]{16}$/, 'hash must be 16 lowercase hex characters'),
   ground: z.string().min(1),
 });
 
@@ -53,7 +57,7 @@ export const ProseRecordSchema = z.object({
   rejections: z.array(RejectionSchema).default([]),
 });
 
-/** One rejection as a run reports it: no hash and no version, both of which the helper derives. */
+/** One rejection as a run reports it: no version, which the helper derives from the unit covered by the fold. */
 const FoldRejectionSchema = z.object({
   rule: RuleNameSchema,
   unit: z.string().min(1),
@@ -73,22 +77,37 @@ export const RunFoldSchema = z.object({
  * Applies the record's rejections to a candidate set: a candidate matching a rejection at its unit's current version
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
+ *
+ * A candidate can match both, a version bump carrying the earlier rejection forward beside the one that the run
+ * re-recorded under a phrase of its own. The live rejection decides, so whether the site is suppressed follows from
+ * the record's content rather than from its order.
  */
 export function applyRejections(
   candidates: readonly Candidate[],
   record: ProseRecord,
   unitVersions: ReadonlyMap<string, string>,
 ): Candidate[] {
-  const byKey = new Map(record.rejections.map((rejection) => [rejectionKey(rejection), rejection]));
+  const bySite = new Map<string, RecordedRejection[]>();
+  for (const rejection of record.rejections) {
+    const site = composeKey(rejection.rule, rejection.file);
+    const held = bySite.get(site);
+    if (held === undefined) bySite.set(site, [rejection]);
+    else held.push(rejection);
+  }
+
   const applied: Candidate[] = [];
 
   for (const candidate of candidates) {
-    const rejection = byKey.get(composeKey(candidate.rule, candidate.file, hashPhrase(candidate.phrase)));
-    if (rejection === undefined) {
+    const matched = (bySite.get(composeKey(candidate.rule, candidate.file)) ?? []).filter((rejection) =>
+      coversPhrase(rejection.phrase, candidate.phrase),
+    );
+    if (matched.length === 0) {
       applied.push(candidate);
       continue;
     }
-    if (isStaleRejection(rejection, unitVersions)) applied.push({ ...candidate, stale: true });
+    if (matched.every((rejection) => isStaleRejection(rejection, unitVersions))) {
+      applied.push({ ...candidate, stale: true });
+    }
   }
 
   return applied;
@@ -122,11 +141,11 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
     if (version === undefined) {
       throw new Error(`rejection names unit "${rejection.unit}", which the fold does not cover`);
     }
-    return { ...rejection, 'unit-version': version, hash: hashPhrase(rejection.phrase) };
+    return { ...rejection, 'unit-version': version };
   });
 
   // A key the run re-recorded supersedes whatever the record held for it. Without this, a version bump followed by a
-  // re-rejection leaves both entries, and which one suppresses a candidate would rest on the sort being stable.
+  // re-rejection leaves the record holding two entries for one site, the withdrawn version alongside the standing one.
   const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
   const carried = prior.rejections.filter((rejection) => {
     if (rerecorded.has(rejectionKey(rejection))) return false;
@@ -138,18 +157,6 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
   });
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };
-}
-
-/**
- * Hashes a phrase into a rejection's key. The phrase is normalized to NFC and its whitespace collapsed first, so a
- * repair that only reflows the line does not invalidate the rejection recorded against it.
- *
- * The hash is taken after the run's edits, not before: a phrase repaired under another rule in the same run is
- * recorded as it now reads, which is what a later run will find there.
- */
-export function hashPhrase(phrase: string): string {
-  const normalized = phrase.normalize('NFC').replaceAll(/\s+/g, ' ').trim();
-  return createHash('sha256').update(normalized, 'utf8').digest('hex').slice(0, 16);
 }
 
 /**
@@ -242,8 +249,8 @@ export function selectPriorRejections(
 }
 
 /**
- * Renders a record as YAML, with units keyed in sorted order and rejections sorted by rule, file, and hash. Re-writing
- * an unchanged record is byte-identical, which is what keeps the file out of a diff it did not earn.
+ * Renders a record as YAML, with units keyed in sorted order and rejections sorted by rule, file, and phrase.
+ * Re-writing an unchanged record is byte-identical, which is what keeps the file out of a diff it did not earn.
  */
 export function stringifyRecord(record: ProseRecord): string {
   const units = Object.fromEntries(
@@ -260,9 +267,25 @@ export function stringifyRecord(record: ProseRecord): string {
 
 // region | Helpers
 
-/** Joins the three parts of a rejection key on a delimiter no rule, path, or hash can contain. */
-function composeKey(rule: string, file: string, hash: string): string {
-  return `${rule}\u{0}${file}\u{0}${hash}`;
+/** Joins the parts of a key on a delimiter that no rule, path, or phrase can contain. */
+function composeKey(...parts: readonly string[]): string {
+  return parts.join('\u{0}');
+}
+
+/**
+ * Reports whether a recorded phrase and a candidate's phrase name one site: either normalized form containing the
+ * other.
+ *
+ * The two come from different producers. The record holds the span reported by an adjudicator, readable enough to
+ * locate the site by eye; the candidate holds the span emitted by its detector, which is shorter and carries a
+ * placeholder where an inline code span stood. Normalizing both through the detector's own pipeline puts them in one
+ * form, and containment then resolves the length difference that remains. It runs both ways because an em-dash
+ * candidate's phrase is its whole sentence, which a recorded phrase sits inside rather than around.
+ */
+function coversPhrase(recorded: string, detected: string): boolean {
+  const left = normalizeForMatch(recorded);
+  const right = normalizeForMatch(detected);
+  return left.includes(right) || right.includes(left);
 }
 
 /** Reports whether a repository-relative path lies under a recorded root, `.` covering the whole repository. */
@@ -279,15 +302,28 @@ function mergeRoots(recorded: readonly string[], swept: readonly string[]): stri
   return roots.filter((root) => roots.every((other) => other === root || !isUnderRoot(root, other))).toSorted();
 }
 
-/** The key a candidate is matched against: its rule, its file, and the hash of its phrase. */
-function rejectionKey(rejection: RecordedRejection): string {
-  return composeKey(rejection.rule, rejection.file, rejection.hash);
+/**
+ * Renders a phrase in the form in which the two sides are compared: inline code spans masked, NFC, and whitespace
+ * collapsed. This is the pipeline through which a detector's phrase already passed, applied to a recorded phrase too,
+ * so a reflow or a backticked token cannot separate one from the other.
+ */
+function normalizeForMatch(phrase: string): string {
+  return flattenWhitespace(maskCodeSpans(phrase.normalize('NFC')));
 }
 
-/** Orders rejections by rule, file, and hash, which is what makes a rewrite of unchanged content byte-identical. */
+/**
+ * One rejection's identity within the record: its rule, its file, and its normalized phrase. Normalizing here is what
+ * lets a re-record retire the entry it supersedes across a repair that only reflowed the line, the sole path on which
+ * a rejection recorded at an older version is retired at all.
+ */
+function rejectionKey(rejection: RecordedRejection): string {
+  return composeKey(rejection.rule, rejection.file, normalizeForMatch(rejection.phrase));
+}
+
+/** Orders rejections by rule, file, and phrase, which is what makes a rewrite of unchanged content byte-identical. */
 function sortRejections(rejections: readonly RecordedRejection[]): RecordedRejection[] {
   return [...rejections].toSorted(
-    (a, b) => a.rule.localeCompare(b.rule) || a.file.localeCompare(b.file) || a.hash.localeCompare(b.hash),
+    (a, b) => a.rule.localeCompare(b.rule) || a.file.localeCompare(b.file) || a.phrase.localeCompare(b.phrase),
   );
 }
 

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runDetect, runRecord } from '../cli.ts';
-import { hashPhrase, parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
+import { parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
 import type { DetectResult, DetectSuccess, ProseRecord, RunFold } from '../types.ts';
 
 const OBJECT_RELATIVE = 'The helper reports the source it names.';
@@ -122,6 +122,16 @@ describe(runDetect, () => {
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
     });
 
+    it('suppresses a rejection whose recorded phrase runs wider than the span reported by the detector', async () => {
+      const wider = OBJECT_RELATIVE.replace(/^The helper reports /, '').replace(/\.$/, '');
+      expect(wider).toContain(await rejectedPhrase());
+      await writeRecord(recordFor(wider));
+
+      const { candidates } = expectSuccess(await sweep(bothRules()));
+
+      expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
+    });
+
     it('emits a rejection recorded at an older unit version, marked stale', async () => {
       await writeRecord(recordFor(await rejectedPhrase(), '1'));
       const { candidates, summary } = expectSuccess(await sweep(bothRules()));
@@ -180,7 +190,6 @@ describe(runDetect, () => {
             'unit-version': '2',
             file: 'docs/guide.md',
             phrase,
-            hash: hashPhrase(phrase),
             ground: 'a marked exhibit of the construction',
           },
         ],
@@ -207,7 +216,7 @@ describe(runDetect, () => {
       const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'));
       expect(written.rejections[0]).toMatchObject({
         rule: 'reduced-object-relative',
-        hash: hashPhrase(await rejectedPhrase()),
+        phrase: await rejectedPhrase(),
         'unit-version': '2',
       });
     });
@@ -317,7 +326,6 @@ function recordFor(phrase: string, version = '2'): ProseRecord {
         'unit-version': version,
         file: 'docs/guide.md',
         phrase,
-        hash: hashPhrase(phrase),
         ground: 'a quoted exhibit of the construction',
       },
     ],
