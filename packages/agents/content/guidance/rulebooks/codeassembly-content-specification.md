@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '15'
+version: '16'
 ---
 
 # CodeAssembly content specification
@@ -158,6 +158,12 @@ A `codeassembly-` prefix marks guidance for working in the CodeAssembly reposito
 Correct a behavior at the fewest surfaces that plausibly account for it, ship that change, and observe. Extend to further surfaces only after the minimal change has been seen to fail. Changing every contributing surface at once means no single edit can be credited with the improvement, so the cheapest sufficient fix is never learned, and each surface touched is permanent token weight on every later invocation.
 
 Breadth is what a proposal justifies, not what it assumes. A contributing surface left unaddressed is recorded as an observation for a later pass rather than offered as an option to adopt now. Before adding exposition to a rulebook, check whether its existing examples already teach the point. _(Convention; not enforced.)_
+
+## Changing the sweep's own doctrine
+
+`revise-prose` delivers `_partials/plain-speech.md` and `_partials/plain-speech-calibration.md` inside the prompts of `skills/revise-prose/SKILL.md` and `subagents/prose-reviser.md`, so those files state a rule and exhibit it at once. Check an edit to any of them by running the sweep over that set on the branch, rather than by reading the diff for violations: A hand check reads what the author was already looking at, where the sweep reads each file whole against every rule.
+
+A sweeper applies the doctrine deployed to its harness, so a branch that edits the doctrine deploys its own content before sweeping. Where the deployed copy is behind the branch, sync the branch's content to the project tier first; where `live` already matches the branch, the deployed copy is the branch's and the sweep runs as it stands. _(Convention; not enforced.)_
 
 ## Skill-local reinforcement
 

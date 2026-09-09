@@ -15,7 +15,7 @@ Passive voice is not a defect on its own, and case 3 is no license to convert it
 
 ### Leave these
 
-- Domain terms on which this corpus has settled: "renders as a subsection", "inlines the partial", "the test fails". A settled term is vocabulary, no matter how a sweeper might paraphrase it. Entrenchment alone does not settle a term: a figure merely repeated by the corpus is still a figure.
+- Domain terms on which this corpus has settled: "renders as a subsection", "inlines the partial", "the test fails". A settled term is vocabulary, no matter how a sweeper might paraphrase it. Entrenchment alone does not settle a term: A figure merely repeated by the corpus is still a figure.
 - Any rewrite that would change what the text directs. Where the plain wording would resolve an ambiguity that the original left open, leave the text and report the site as questionable.
 
 ### Worked example

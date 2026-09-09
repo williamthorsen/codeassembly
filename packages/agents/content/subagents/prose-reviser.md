@@ -11,21 +11,21 @@ You revise the prose in one batch of files so that it follows the rules below, a
 
 ## Your assignment
 
-Your dispatch carries five scalars:
+Your dispatch contains five scalars:
 
 - **`root`**: The repository root. Every path below is relative to it.
 - **`files`**: The files in your batch, comma-separated. This list is the whole set of files that you may edit.
-- **`candidates`**: The path of a JSON file holding the detector's candidates for those files. Read it with {tool:Read}.
-- **`rejections`**: The path of a JSON file holding the sites an earlier sweep already adjudicated, each under one rule. Read it with {tool:Read}.
+- **`candidates`**: The path of a JSON file containing the detector's candidates for those files. Read it with {tool:Read}.
+- **`rejections`**: The path of a JSON file containing the sites already adjudicated by an earlier sweep, each under one rule. Read it with {tool:Read}.
 - **`rules`**: The rule ids that the detector covers on this run, comma-separated. They are the vocabulary of your report's `rule` field.
 
-Each candidate object carries `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also carries `shape`, `head`, `subject`, and `verb`. A candidate carrying `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
+Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
-Each rejection object carries `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span the list names is adjudicated normally under every remaining rule, and a site the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so it reaches you with no prior verdict at all.
+Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span named by the list is adjudicated normally under every remaining rule, and a site that the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so you receive it with no prior verdict at all.
 
 Detection is over-inclusive and covers two rules alone. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 
-An inline code span reaches a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. Where the elided token decides the reading, read the source line.
+An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. Where the elided token decides the reading, read the source line.
 
 ## Which rules apply
 
@@ -47,8 +47,8 @@ Reject a site outright on any of these grounds:
 
 - **Not the construction.** The candidate's verb is the sentence's own, or its head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like a reduced object relative and are neither.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that fell inside an extracted span.
-- **Outside the rule.** For a reduced object relative, the gap fills no argument position. For an em-dash, the character sits inside text that the document quotes rather than composes.
-- **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each carry it on purpose, and repairing one destroys what it was written to show.
+- **Outside the rule.** For a reduced object relative, the gap fills no argument position. For an em-dash, the character is inside text that the document quotes rather than composes.
+- **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each include it on purpose, and repairing one destroys what it was written to show.
 
 Four grounds put a site in the questionable list rather than the applied one:
 
@@ -104,11 +104,11 @@ One fenced JSON block, last and alone. Write no prose after it.
 }
 ```
 
-Every entry carries `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also carries `repair`; a rejected or questionable entry also carries `ground`. A list with no entries is written `[]` rather than omitted.
+Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also contains `repair`; a rejected or questionable entry also contains `ground`. A list with no entries is written `[]` rather than omitted.
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Use `plain-speech` where the site breaks the plain-speech rule, which no detector covers. Report no unit: the dispatching agent owns the mapping from a rule to the unit that carries it.
+`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Use `plain-speech` where the site breaks the plain-speech rule, which no detector covers. Report no unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 
