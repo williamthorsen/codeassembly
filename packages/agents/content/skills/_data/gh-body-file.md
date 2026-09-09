@@ -27,4 +27,4 @@ The pattern once prescribed a `$TMPDIR`-relative path and told the caller to kee
 
 ## Cleanup
 
-None is required. A `mktemp` directory under `/tmp` does not survive a reboot.
+None is required. Each call creates its own directory, so a file left in one collides with nothing and is readable only by the user who wrote it.

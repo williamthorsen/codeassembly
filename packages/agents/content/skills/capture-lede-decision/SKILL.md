@@ -112,7 +112,7 @@ Such a pull request wrote no merge artifact, so the caller supplies the merged l
 
 ```bash
 scratch_dir=$(mktemp -d "${TMPDIR:-/tmp}/lede.XXXXXX")
-lede_path="$scratch_dir/lede-pr<number>.md"
+lede_path="${scratch_dir:?scratch directory not created}/lede-pr<number>.md"
 gh pr view <number> --json body --jq '.body' \
   | awk '{ sub(/\r$/, "") }
          tolower($0) ~ /^## what[[:space:]]*$/ { capturing = 1; next }
