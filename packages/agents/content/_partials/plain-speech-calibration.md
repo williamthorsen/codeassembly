@@ -38,14 +38,14 @@ Eight shapes recur in this corpus. Each is a search pattern rather than a rule: 
 2. **Appositives stacked on the subject.** "The record, a file that one run writes and the next reads, is keyed on the phrase" becomes "The record is keyed on the phrase. One run writes it and the next reads it."
 3. **"Not X, but Y" where Y alone says it.** "The default is not a report, but an applied repair" becomes "The default applies the repair".
 4. **A nominalized gerund standing in for the actor.** "Five filters separate needing coverage from a particular test being worth writing" becomes "A change can need coverage even when no particular test is worth writing".
-5. **A long subject with an embedded clause before its main verb.** "A change that needs coverage but finds no candidate clearing the bar ships without a test" becomes "A change ships without a test when it needs coverage and no candidate clears the bar".
+5. **A long subject with an embedded clause before its main verb.** "A change that needs coverage but finds no candidate clearing the bar ships without a test" becomes "A change is merged without a test when it needs coverage and no candidate clears the bar".
 6. **Personification of an inanimate subject.** "The queue now reads as one set behind the blocking ticket" becomes "All four tickets are now marked as blocked by that ticket".
 7. **An abstract noun standing in for a small concrete set.** "The suite covers the boundary cases" becomes "The suite covers an empty list, one entry, and a list past the budget".
-8. **A concrete metaphor standing in for the literal abstraction.** The inverse of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "spent by you".
+8. **A concrete metaphor standing in for the literal abstraction.** The inverse of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "measured by you".
 
 ### Words to look for
 
-Nine words recur in this corpus where a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests, and a use in the sense that an entry says stays is no candidate.
+Nine words recur in this corpus where a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. Where an entry names a sense that stays, a use in that sense is no candidate.
 
 - **carry**: "the change carries a flag". Instead: has, includes, declares, sets, states.
 - **cost**: "a cost to you", "the token cost". Instead: the unit itself, so "takes 12 ms", "one round trip", "spends the reader's attention".
