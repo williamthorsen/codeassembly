@@ -83,7 +83,7 @@ export interface UnitCoverage {
   roots: readonly string[];
 }
 
-/** One adjudicated rejection, keyed on its rule, its file, and the hash of its phrase. */
+/** One adjudicated rejection, resolved to a site by its rule, its file, and its phrase. */
 export interface RecordedRejection {
   /**
    * The rule the site was adjudicated under. Any rule a bound rulebook declares, whether or not the helper holds a
@@ -95,10 +95,8 @@ export interface RecordedRejection {
   /** The unit's version when the rejection was recorded. */
   'unit-version': string;
   file: string;
-  /** The phrase as it reads after the run's edits. */
+  /** The phrase as it reads after the run's edits, which a later run matches a candidate against by containment. */
   phrase: string;
-  /** Hash of the phrase, which is the key a later run matches a candidate against. */
-  hash: string;
   /** Why the site was left as it stands. */
   ground: string;
 }
@@ -122,8 +120,7 @@ export interface ProseRecord {
 }
 
 /**
- * One rejection as a run reports it. It carries no hash and no version: the helper derives both, which is what keeps
- * the key a function of the phrase as it reads after the run's edits rather than of whatever a caller supplies.
+ * One rejection as a run reports it. It carries no version, which the helper derives from the unit the fold covers.
  */
 export interface FoldRejection {
   /** The rule the site was adjudicated under, detected or not. */

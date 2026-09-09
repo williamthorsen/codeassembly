@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyRejections,
   composeRecord,
-  hashPhrase,
   isStaleRejection,
   parseRecord,
   RECORD_PATH,
   selectPriorRejections,
   stringifyRecord,
 } from '../record.ts';
-import type { FoldRejection, ProseRecord, RecordedRejection, RunFold } from '../types.ts';
+import type {
+  Candidate,
+  FoldRejection,
+  ObjectRelativeCandidate,
+  ProseRecord,
+  RecordedRejection,
+  RunFold,
+} from '../types.ts';
 
 const EMPTY: ProseRecord = { units: {}, rejections: [] };
 
@@ -43,8 +50,10 @@ describe(parseRecord, () => {
     expect(() => parseRecord(rejectionYaml({ rule: 'Plain Speech' }))).toThrow(/kebab-case/);
   });
 
-  it('refuses a hash that is not sixteen hex characters', () => {
-    expect(() => parseRecord(rejectionYaml({ hash: 'nope' }))).toThrow(/16 lowercase hex/);
+  it('reads a record still holding a hash, which the schema no longer defines', () => {
+    const record = parseRecord(rejectionYaml({ hash: '0123456789abcdef' }));
+
+    expect(record.rejections[0]).not.toHaveProperty('hash');
   });
 
   it('names the record in its failure, so a malformed file is findable', () => {
@@ -52,21 +61,114 @@ describe(parseRecord, () => {
   });
 });
 
-describe(hashPhrase, () => {
-  it('returns sixteen lowercase hex characters', () => {
-    expect(hashPhrase('the source that it names')).toMatch(/^[0-9a-f]{16}$/);
+describe(applyRejections, () => {
+  const versions = new Map([['writing', '2']]);
+
+  it('suppresses a site whose recorded phrase runs wider than the span the detector reports', () => {
+    const applied = applyRejections(
+      [candidate({ phrase: 'rule it names' })],
+      { units: {}, rejections: [rejection({ phrase: 'whatever rule it names' })] },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([]);
   });
 
-  it('ignores a reflow, so a repair that only rewraps a line keeps the rejection', () => {
-    expect(hashPhrase('the source\n  that it names')).toBe(hashPhrase('the source that it names'));
+  it('suppresses a site whose recorded phrase sits inside the span the detector reports', () => {
+    const sentence = 'The cache is cold, so the transport reconnects.';
+    const applied = applyRejections(
+      [{ rule: 'em-dash', file: 'docs/guide.md', line: 3, phrase: sentence, sentence }],
+      { units: {}, rejections: [rejection({ rule: 'em-dash', phrase: 'so the transport reconnects' })] },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([]);
   });
 
-  it('ignores a Unicode normalization difference', () => {
-    expect(hashPhrase('café menu')).toBe(hashPhrase('café menu'));
+  it('suppresses a site across an inline code span, which the detector elides and the record holds whole', () => {
+    const applied = applyRejections(
+      [candidate({ phrase: 'enumerate their «codespan» reasons' })],
+      { units: {}, rejections: [rejection({ phrase: 'enumerate their `unavailable` reasons' })] },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([]);
   });
 
-  it('distinguishes phrases that differ in a word', () => {
-    expect(hashPhrase('the source that it names')).not.toBe(hashPhrase('the source that it holds'));
+  it('suppresses a site across a reflow, so a repair that only rewraps a line keeps the rejection', () => {
+    const applied = applyRejections(
+      [candidate()],
+      { units: {}, rejections: [rejection({ phrase: 'the source\n  that it names' })] },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([]);
+  });
+
+  it('suppresses a site across a Unicode normalization difference', () => {
+    const applied = applyRejections(
+      [candidate({ phrase: 'the caf\u{E9} that it names' })],
+      { units: {}, rejections: [rejection({ phrase: 'the cafe\u{301} that it names' })] },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([]);
+  });
+
+  it('leaves a site under a rule the rejection does not name, one verdict settling one rule', () => {
+    const applied = applyRejections(
+      [candidate()],
+      { units: {}, rejections: [rejection({ rule: 'em-dash' })] },
+      versions,
+    );
+
+    expect(applied).toHaveLength(1);
+  });
+
+  it('leaves a site in a file the rejection does not name', () => {
+    const applied = applyRejections(
+      [candidate()],
+      { units: {}, rejections: [rejection({ file: 'docs/other.md' })] },
+      versions,
+    );
+
+    expect(applied).toHaveLength(1);
+  });
+
+  it('leaves a site whose span the recorded phrase does not reach', () => {
+    const applied = applyRejections(
+      [candidate({ phrase: 'the level against which it is probed' })],
+      { units: {}, rejections: [rejection()] },
+      versions,
+    );
+
+    expect(applied).toHaveLength(1);
+  });
+
+  it('marks a site recorded at an older unit version stale, which re-opens it for review', () => {
+    const applied = applyRejections(
+      [candidate()],
+      { units: {}, rejections: [rejection({ 'unit-version': '1' })] },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([{ ...candidate(), stale: true }]);
+  });
+
+  it('suppresses a site a live rejection covers, whatever a stale one recorded beside it holds', () => {
+    const applied = applyRejections(
+      [candidate()],
+      {
+        units: {},
+        rejections: [
+          rejection({ 'unit-version': '1', phrase: 'the source that it names, as an earlier sweep left it' }),
+          rejection(),
+        ],
+      },
+      versions,
+    );
+
+    expect(applied).toStrictEqual([]);
   });
 });
 
@@ -129,8 +231,8 @@ describe(composeRecord, () => {
   });
 
   it("replaces a swept unit's rejections at the same version, a site not re-rejected being withdrawn", () => {
-    const kept = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
-    const withdrawn = rejection({ file: 'docs/b.md', hash: hashPhrase('the level it is probed against') });
+    const kept = rejection({ file: 'docs/a.md' });
+    const withdrawn = rejection({ file: 'docs/b.md', phrase: 'the level against which it is probed' });
     const prior: ProseRecord = { units: {}, rejections: [kept, withdrawn] };
 
     const record = composeRecord(
@@ -144,7 +246,7 @@ describe(composeRecord, () => {
     expect(record.rejections).toStrictEqual([kept]);
   });
 
-  it('keys a recorded rejection by hashing the phrase the fold reports', () => {
+  it('records the phrase the fold reports, at the version of the unit it names', () => {
     const record = composeRecord(
       { units: {}, rejections: [] },
       fold({
@@ -154,7 +256,7 @@ describe(composeRecord, () => {
     );
 
     expect(record.rejections[0]).toMatchObject({
-      hash: hashPhrase('the ticket that the branch name encodes'),
+      phrase: 'the ticket that the branch name encodes',
       'unit-version': '2',
     });
   });
@@ -171,8 +273,8 @@ describe(composeRecord, () => {
     ).toThrow(/which the fold does not cover/);
   });
 
-  it('holds one entry per key when a bump is followed by a re-rejection of the same site', () => {
-    const older = rejection({ 'unit-version': '1', hash: hashPhrase('the source that it names') });
+  it('holds one entry per site when a bump is followed by a re-rejection of the same site', () => {
+    const older = rejection({ 'unit-version': '1' });
     const prior: ProseRecord = { units: {}, rejections: [older] };
 
     const record = composeRecord(
@@ -185,8 +287,8 @@ describe(composeRecord, () => {
   });
 
   it('carries forward a rejection outside the roots swept by the run, which the run never revisited', () => {
-    const inside = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
-    const outside = rejection({ file: 'src/b.ts', hash: hashPhrase('the level it is probed against') });
+    const inside = rejection({ file: 'docs/a.md' });
+    const outside = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
     const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
 
     const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['docs'] } } }));
@@ -195,8 +297,8 @@ describe(composeRecord, () => {
   });
 
   it('withdraws a rejection anywhere in the repository when the run swept the whole of it', () => {
-    const inside = rejection({ file: 'docs/a.md', hash: hashPhrase('the source that it names') });
-    const outside = rejection({ file: 'src/b.ts', hash: hashPhrase('the level it is probed against') });
+    const inside = rejection({ file: 'docs/a.md' });
+    const outside = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
     const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
 
     const record = composeRecord(prior, fold({ units: { writing: { version: '2', roots: ['.'] } } }));
@@ -266,7 +368,7 @@ describe(selectPriorRejections, () => {
     expect(selectPriorRejections(record, versions, ['docs/other.md'])).toStrictEqual([]);
   });
 
-  it("carries the site alone, the unit, version, hash, and ground being the record's own bookkeeping", () => {
+  it("carries the site alone, the unit, version, and ground being the record's own bookkeeping", () => {
     const record: ProseRecord = { units: {}, rejections: [rejection()] };
     const [selected] = selectPriorRejections(record, versions, ['docs/guide.md']);
 
@@ -301,8 +403,8 @@ describe(stringifyRecord, () => {
   });
 
   it('renders the same bytes whatever order the units and rejections arrive in', () => {
-    const first = rejection({ file: 'docs/a.md', hash: 'aaaaaaaaaaaaaaaa' });
-    const second = rejection({ file: 'docs/b.md', hash: 'bbbbbbbbbbbbbbbb' });
+    const first = rejection({ file: 'docs/a.md' });
+    const second = rejection({ file: 'docs/b.md' });
     const coverage = { version: '2', 'swept-at': '2026-09-02', roots: ['.'] };
 
     const forward = stringifyRecord({ units: { a: coverage, b: coverage }, rejections: [first, second] });
@@ -321,12 +423,28 @@ describe(stringifyRecord, () => {
 
 // region | Helpers
 
+/** Builds an object-relative candidate, overriding whichever fields an assertion turns on. */
+function candidate(overrides: Partial<ObjectRelativeCandidate> = {}): Candidate {
+  return {
+    rule: 'reduced-object-relative',
+    file: 'docs/guide.md',
+    line: 3,
+    phrase: 'the source that it names',
+    sentence: 'The helper reports the source that it names.',
+    shape: 'pronoun',
+    head: 'source',
+    subject: 'it',
+    verb: 'names',
+    ...overrides,
+  };
+}
+
 /** Builds a run fold, defaulting the date every assertion above reads. */
 function fold(overrides: Partial<RunFold>): RunFold {
   return { sweptAt: '2026-09-02', units: {}, rejections: [], ...overrides };
 }
 
-/** Builds a fold rejection, which carries neither a hash nor a version; the helper derives both. */
+/** Builds a fold rejection, which carries no version; the helper derives it from the unit the fold covers. */
 function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
   return {
     rule: 'reduced-object-relative',
@@ -346,7 +464,6 @@ function rejection(overrides: Partial<RecordedRejection> = {}): RecordedRejectio
     'unit-version': '2',
     file: 'docs/guide.md',
     phrase: 'the source that it names',
-    hash: hashPhrase('the source that it names'),
     ground: 'a quoted exhibit of the construction',
     ...overrides,
   };
@@ -360,7 +477,6 @@ function rejectionYaml(overrides: Record<string, string>): string {
     'unit-version': '2',
     file: 'docs/guide.md',
     phrase: 'the source that it names',
-    hash: '0123456789abcdef',
     ground: 'a quoted exhibit',
     ...overrides,
   };
