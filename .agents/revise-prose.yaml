@@ -28,6 +28,13 @@ rejections:
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: what the text directs
+    ground: '"direct" is used in its literal sense of giving authoritative instruction, which is what a guidance text does; the subject performs the verb and no plainer term names the relation'
+    unit-version: '4'
+    hash: 72a98179d576acbe
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '"the file carries a section"'
     ground: 'a marked exhibit: the before half of case 2 own before/after pair'
     unit-version: '4'
@@ -67,6 +74,13 @@ rejections:
     ground: 'a marked exhibit: the rule own example of the all-purpose verb it forbids'
     unit-version: '4'
     hash: a2d4246b3818eae5
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/subagents/prose-reviser.md
+    phrase: never what it directs
+    ground: same idiom as the calibration partial; "direct" is literal for an instruction text, and the contrast with "how the text reads" is what the hard gate turns on
+    unit-version: '4'
+    hash: 98c18181c4928505
   - rule: plain-speech
     unit: plain-speech
     file: packages/agents/content/subagents/prose-reviser.md
