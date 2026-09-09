@@ -118,6 +118,17 @@ const SKILL_CARRIERS: ReadonlyArray<{ readonly relativePath: string; readonly se
   { relativePath: 'skills/wrap-up/SKILL.md', section: 'scratch-directory' },
 ];
 
+/** The anchor `_partials/live-repo-writes.md` carries, and the heading it resolves to. */
+const SCRATCH_ANCHOR = '[scratch directory](#scratch-files)';
+const SCRATCH_HEADING = '## Scratch files';
+
+/** Every host that inlines `live-repo-writes`, and so must render the heading its anchor names. */
+const ANCHOR_HOSTS: ReadonlyArray<string> = [
+  'guidance/_harnesses/claude/CLAUDE.md',
+  'guidance/_harnesses/rovo/AGENTS.md',
+  'subagents/orchestrated-coder.md',
+];
+
 /** The guidance files that inline the shared file, one per harness. */
 const HARNESS_GUIDANCE: ReadonlyArray<string> = [
   'guidance/_harnesses/claude/CLAUDE.md',
@@ -156,6 +167,18 @@ describe('shared-doctrine reach', () => {
 
       const message = `The rule is stated once and inlined from there; these files restate it instead of including it:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
+    });
+  });
+
+  // `live-repo-writes` reaches the scratch-directory rules by in-file anchor rather than by a second include, which
+  // would render the section twice in a host carrying both. An anchor resolves only where the host renders the
+  // heading it names, and a dangling one fails nothing on its own: the reader follows it to no target.
+  describe('the scratch-directory anchor', () => {
+    it.each(ANCHOR_HOSTS)('resolves in %s', async (relativePath) => {
+      const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+
+      expect(expanded, `${relativePath} inlines the anchor`).toContain(SCRATCH_ANCHOR);
+      expect(countOccurrences(expanded, SCRATCH_HEADING), `${relativePath} renders the anchor's target once`).toBe(1);
     });
   });
 
