@@ -129,7 +129,7 @@ const findings = checkVaultIntegrity(notes);
 
 ## Checking a store
 
-`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes that the config selects (narrowed by [the git dimension](#the-git-dimension) inside a working tree), and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
+`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes that the config selects (inside a git working tree, the enumeration drops [ignored notes](#ignored-notes)), and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
 
 ```ts
 import { check } from '@williamthorsen/kb/check';
@@ -164,11 +164,11 @@ visibility: private
 
 Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@williamthorsen/kb/config`.
 
-#### The git dimension
+#### Ignored notes
 
-Where the store sits in a git working tree, `targets`/`exclude` is not the whole of note scope: what git accounts for narrows it further. A note is enumerated when git tracks it, or when git would track it, meaning no ignore rule covers it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: such a link is broken for every clone but the author's. This is what lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
+Where the store sits in a git working tree, the repository's ignore rules narrow the selection further. A note is enumerated when git tracks it, or when no ignore rule covers it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: such a link is broken for every clone but the author's. This is what lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
 
-A store outside a git working tree, or a machine carrying no git, keeps the filesystem walk alone. Where git accounts for none of the notes that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting a clean bill over an empty note set.
+A store outside a git working tree, or a machine carrying no git, keeps the filesystem walk alone. Where the repository ignores every note that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting a clean bill over an empty note set.
 
 ### Linking into another store
 
@@ -176,7 +176,7 @@ A wikilink names a store by qualifying its target: `[[fde:Note title]]` resolves
 
 Direction is decided by `visibility`: a link may point at a store as shareable as its own or more so, never at a less shareable one. A private note may therefore link to the share-safe assertion its detail was stripped from, while the reverse is refused, because a note's title tends to be its claim and a link into a private store discloses that claim through the link itself.
 
-Only the stores a run's own links name are consulted, and each is enumerated under its own `targets`/`exclude` and git scope, reading note paths alone. A run whose links qualify no store reads no registry.
+Only the stores that a run's own links name are consulted, and each is enumerated under its own `targets`/`exclude` and its own repository's ignore rules, reading note paths alone. A run whose links qualify no store reads no registry.
 
 | Rule                            | Severity | Reported when                                                                       |
 | ------------------------------- | -------- | ----------------------------------------------------------------------------------- |
