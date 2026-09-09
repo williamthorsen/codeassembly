@@ -120,7 +120,7 @@ export interface ProseRecord {
 }
 
 /**
- * One rejection as a run reports it. It carries no version, which the helper derives from the unit the fold covers.
+ * One rejection as a run reports it. It carries no version, which the helper derives from the unit covered by the fold.
  */
 export interface FoldRejection {
   /** The rule the site was adjudicated under, detected or not. */

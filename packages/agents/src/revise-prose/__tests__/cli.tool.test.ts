@@ -122,7 +122,7 @@ describe(runDetect, () => {
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
     });
 
-    it('suppresses a rejection whose recorded phrase runs wider than the span the detector reports', async () => {
+    it('suppresses a rejection whose recorded phrase runs wider than the span reported by the detector', async () => {
       const wider = OBJECT_RELATIVE.replace(/^The helper reports /, '').replace(/\.$/, '');
       expect(wider).toContain(await rejectedPhrase());
       await writeRecord(recordFor(wider));

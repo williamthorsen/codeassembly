@@ -64,7 +64,7 @@ describe(parseRecord, () => {
 describe(applyRejections, () => {
   const versions = new Map([['writing', '2']]);
 
-  it('suppresses a site whose recorded phrase runs wider than the span the detector reports', () => {
+  it('suppresses a site whose recorded phrase runs wider than the span reported by the detector', () => {
     const applied = applyRejections(
       [candidate({ phrase: 'rule it names' })],
       { units: {}, rejections: [rejection({ phrase: 'whatever rule it names' })] },
@@ -74,7 +74,7 @@ describe(applyRejections, () => {
     expect(applied).toStrictEqual([]);
   });
 
-  it('suppresses a site whose recorded phrase sits inside the span the detector reports', () => {
+  it('suppresses a site whose recorded phrase sits inside the span reported by the detector', () => {
     const sentence = 'The cache is cold, so the transport reconnects.';
     const applied = applyRejections(
       [{ rule: 'em-dash', file: 'docs/guide.md', line: 3, phrase: sentence, sentence }],
@@ -115,7 +115,7 @@ describe(applyRejections, () => {
     expect(applied).toStrictEqual([]);
   });
 
-  it('leaves a site under a rule the rejection does not name, one verdict settling one rule', () => {
+  it('leaves a site under a rule that the rejection does not name, one verdict settling one rule', () => {
     const applied = applyRejections(
       [candidate()],
       { units: {}, rejections: [rejection({ rule: 'em-dash' })] },
@@ -125,7 +125,7 @@ describe(applyRejections, () => {
     expect(applied).toHaveLength(1);
   });
 
-  it('leaves a site in a file the rejection does not name', () => {
+  it('leaves a site in a file that the rejection does not name', () => {
     const applied = applyRejections(
       [candidate()],
       { units: {}, rejections: [rejection({ file: 'docs/other.md' })] },
@@ -155,7 +155,7 @@ describe(applyRejections, () => {
     expect(applied).toStrictEqual([{ ...candidate(), stale: true }]);
   });
 
-  it('suppresses a site a live rejection covers, whatever a stale one recorded beside it holds', () => {
+  it('suppresses a site that a live rejection covers, whatever a stale one recorded beside it holds', () => {
     const applied = applyRejections(
       [candidate()],
       {
@@ -246,7 +246,7 @@ describe(composeRecord, () => {
     expect(record.rejections).toStrictEqual([kept]);
   });
 
-  it('records the phrase the fold reports, at the version of the unit it names', () => {
+  it('records the phrase reported by the fold, at the version of the unit that it names', () => {
     const record = composeRecord(
       { units: {}, rejections: [] },
       fold({
@@ -444,7 +444,7 @@ function fold(overrides: Partial<RunFold>): RunFold {
   return { sweptAt: '2026-09-02', units: {}, rejections: [], ...overrides };
 }
 
-/** Builds a fold rejection, which carries no version; the helper derives it from the unit the fold covers. */
+/** Builds a fold rejection, which carries no version; the helper derives it from the unit covered by the fold. */
 function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
   return {
     rule: 'reduced-object-relative',

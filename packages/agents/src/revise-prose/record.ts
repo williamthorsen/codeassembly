@@ -56,7 +56,7 @@ export const ProseRecordSchema = z.object({
   rejections: z.array(RejectionSchema).default([]),
 });
 
-/** One rejection as a run reports it: no version, which the helper derives from the unit the fold covers. */
+/** One rejection as a run reports it: no version, which the helper derives from the unit covered by the fold. */
 const FoldRejectionSchema = z.object({
   rule: RuleNameSchema,
   unit: z.string().min(1),
@@ -77,9 +77,9 @@ export const RunFoldSchema = z.object({
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
  *
- * A candidate can match both, a version bump carrying the earlier rejection forward beside the one the run re-recorded
- * under a phrase of its own. The live rejection decides, so whether the site is suppressed rests on the record's
- * content rather than on the order it happens to hold.
+ * A candidate can match both, a version bump carrying the earlier rejection forward beside the one that the run re-recorded
+ * under a phrase of its own. The live rejection decides, so whether the site is suppressed follows from the
+ * record's content rather than from its order.
  */
 export function applyRejections(
   candidates: readonly Candidate[],
@@ -273,9 +273,9 @@ function composeKey(...parts: readonly string[]): string {
  * Reports whether a recorded phrase and a candidate's phrase name one site: either normalized form containing the
  * other.
  *
- * The two come from different producers. The record holds the span an adjudicator reported, readable enough to locate
- * the site by eye; the candidate holds the span its detector emitted, which is shorter and carries a placeholder where
- * an inline code span stood. Normalizing both through the detector's own pipeline puts them in one form, and
+ * The two come from different producers. The record holds the span reported by an adjudicator, readable enough to locate
+ * the site by eye; the candidate holds the span emitted by its detector, which is shorter and carries a placeholder
+ * where an inline code span stood. Normalizing both through the detector's own pipeline puts them in one form, and
  * containment then resolves the length difference that remains. It runs both ways because an em-dash candidate's
  * phrase is its whole sentence, which a recorded phrase sits inside rather than around.
  */
@@ -300,9 +300,10 @@ function mergeRoots(recorded: readonly string[], swept: readonly string[]): stri
 }
 
 /**
- * Renders a phrase in the form the two sides are compared in: inline code spans masked, NFC, and whitespace collapsed.
- * This is the pipeline a detector's phrase already went through, applied to a recorded phrase too, so a reflow or a
- * backticked token cannot separate one from the other.
+ * Renders a phrase in the form in which the two sides are compared: inline code spans masked, NFC, and whitespace
+ * collapsed.
+ * This is the pipeline through which a detector's phrase already passed, applied to a recorded phrase too, so a reflow
+ * or a backticked token cannot separate one from the other.
  */
 function normalizeForMatch(phrase: string): string {
   return flattenWhitespace(maskCodeSpans(phrase.normalize('NFC')));
