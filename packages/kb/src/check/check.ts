@@ -18,7 +18,10 @@ import { collectStorePrefixes, resolveForeignStores } from './resolve-foreign-st
 export interface CheckResult {
   /** The effective `KbConfig` the run used — loaded from `.kb/config.yaml`, or `defaultKbConfig` when absent. */
   config: KbConfig;
-  /** Every note that the store's `config.targets` and, inside a git working tree, its git scope admit, in walk order. */
+  /**
+   * Every note selected by the store's `config.targets` and, inside a git working tree, not ignored by the repository,
+   * in walk order.
+   */
   notes: readonly EnumeratedNote[];
   /**
    * Findings from whole-vault integrity (unresolved links, basename collisions), taxonomy drift, and the tag-alias and
@@ -33,7 +36,7 @@ export interface CheckResult {
  * the type-blind per-note lints across them. Frontmatter validity is owned by the record types at write time, so no
  * frontmatter re-validation runs here.
  *
- * Inside a git working tree the enumeration narrows to what git accounts for, so a note the repository ignores is
+ * Inside a git working tree the enumeration also drops the notes that the repository ignores, so such a note is
  * neither checked nor available as a wikilink target; see {@link enumerateNotes} for the rule.
  *
  * A `[[store:Target]]` link resolves against the store its prefix names rather than this one. Those stores are looked
