@@ -21,7 +21,7 @@ Your dispatch contains five scalars:
 
 Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
-Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span named by the list is adjudicated normally under every remaining rule, and a site that the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so you receive it with no prior verdict at all.
+Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span named by the list is adjudicated normally under every remaining rule, and a site that the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so you receive it with no prior verdict at all.
 
 Detection is over-inclusive and covers two rules alone. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 
@@ -108,7 +108,7 @@ Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questio
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Use `plain-speech` where the site breaks the plain-speech rule, which no detector covers. Report no unit: the dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Use `plain-speech` where the site breaks the plain-speech rule, which no detector covers. Report no unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 

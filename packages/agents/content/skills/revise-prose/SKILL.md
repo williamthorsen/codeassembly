@@ -85,7 +85,7 @@ rules: {rule-id}, {rule-id}
 
 **The block contains scalars only, and only these keys.** Compose no prose into it: The subagent has the rule set and reads the files itself, and a sentence written here would bias its judgment toward yours. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set.
 
-**On each return, parse the report.** It is one fenced JSON block containing `applied`, `rejected`, and `questionable`. A return that contains no such block, or one that is truncated, is a redispatch of that batch rather than an edit.
+**On each return, parse the report.** It is one fenced JSON block containing `applied`, `rejected`, and `questionable`. If the returned value contains no such block, or the block is truncated, redispatch the batch rather than editing from it.
 
 **Once the whole wave has returned:**
 
