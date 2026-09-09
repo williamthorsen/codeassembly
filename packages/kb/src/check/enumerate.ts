@@ -52,10 +52,10 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  * (`content/**` descends only into `content/`); a target with no leading literal (e.g. `**\/*.md`) falls back to a
  * full walk. Excludes are honored during descent so an excluded subtree is never entered.
  *
- * Where the store sits in a git working tree, scope narrows further to what git accounts for: tracked notes plus
- * untracked ones that no ignore rule covers. A note that the repository ignores is therefore neither enumerated nor available
+ * If the store sits in a git working tree, the enumeration keeps only the notes that git tracks and the untracked
+ * notes that no ignore rule covers. A note that the repository ignores is therefore neither enumerated nor available
  * as a wikilink target, so a link pointing at one resolves to nothing. A store outside a working tree, or a machine
- * carrying no git, keeps the walk's own scope.
+ * carrying no git, keeps what the walk alone found.
  *
  * Notes with malformed or absent frontmatter are kept — `readNoteContent` records the parse error in `error` and
  * returns an empty field map rather than throwing, so they remain valid wikilink targets. A note that cannot be read,
@@ -88,7 +88,7 @@ export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }
 
 // region | Helpers
 
-/** Walks a KB root and collects every note that the config's `targets`/`exclude` and the store's git scope admit, in walk order. */
+/** Walks a KB root and collects every note admitted by the config's `targets`/`exclude` and the repository's ignore rules, in walk order. */
 async function collectNoteLocations(input: { kbRoot: string; config: KbConfig }): Promise<NoteLocation[]> {
   const { kbRoot, config } = input;
   const matcher = createNoteScopeMatcher(config);

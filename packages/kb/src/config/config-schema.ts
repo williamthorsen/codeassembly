@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { CONTENT_DIR } from '../layout/index.ts';
 
 /**
- * The on-disk `.kb/config.yaml` shape. Every field is optional so a file may override only the dimension it cares
- * about; an absent field falls back to {@link defaultKbConfig}.
+ * The on-disk `.kb/config.yaml` shape. Every field is optional so a file may override only the key it cares about; an
+ * absent field falls back to {@link defaultKbConfig}.
  */
 export const configFileShape = z.object({
   targets: z.array(z.string()).optional(),

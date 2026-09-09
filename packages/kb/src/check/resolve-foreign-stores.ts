@@ -28,8 +28,8 @@ export function collectStorePrefixes(notes: readonly { body: string }[]): Set<st
 
 /**
  * Resolves each store name a run's links qualify against the merged registry, reading only note paths and each store's
- * own `.kb/config.yaml`: a foreign store is enumerated under its own `targets`/`exclude` and git scope, as it would be
- * under its own check run, and no foreign note is opened.
+ * own `.kb/config.yaml`: a foreign store is enumerated under its own `targets`/`exclude` and its own repository's
+ * ignore rules, as it would be under its own check run, and no foreign note is opened.
  *
  * A store that cannot be read — absent from this machine, or carrying a config file that will not load — resolves
  * `unavailable` rather than throwing, so one unrelated store cannot fail the run.

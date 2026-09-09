@@ -19,7 +19,7 @@ export interface NoteScopeMatcher {
  *
  * The `.md` extension gate is deliberately left to the caller: `enumerateNotes` applies its own `.endsWith('.md')`
  * during the walk, and `kb-retrieve` constrains ripgrep with `--glob '*.md'`. Keeping it out of `isNote` lets this
- * matcher govern only the `targets`/`exclude` dimension, the one place the two tools previously disagreed.
+ * matcher govern `targets`/`exclude` alone, the one place the two tools previously disagreed.
  */
 export function createNoteScopeMatcher(config: KbConfig): NoteScopeMatcher {
   const isTarget = picomatch([...config.targets], { dot: false });
