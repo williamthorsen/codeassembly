@@ -203,6 +203,8 @@ Every commit message MUST satisfy every rule below. Violations are treated as qu
 
 <!-- include: ../_partials/live-repo-writes.md / -->
 
+<!-- include: ../_partials/scratch-directory.md / -->
+
 <!-- include: ../_partials/shell-commands.md / -->
 
 <!-- include: ../_partials/technical-recommendations.md / -->

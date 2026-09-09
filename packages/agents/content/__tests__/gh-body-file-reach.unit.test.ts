@@ -16,15 +16,18 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 /** The one file permitted to state the contract; every carrier reaches it through an include. */
 const PARTIAL = 'skills/_partials/gh-body-file.md';
 
-/** The contract's opening, which the single-statement counts key on. */
-const CONTRACT_HEADLINE = 'Resolve the scratch directory; never reference it.';
+/**
+ * The contract's opening, which the single-statement counts key on. Where the file goes is the scratch-directory
+ * contract's rule rather than this one's, so it is asserted in `shared-doctrine-reach.unit.test.ts` instead; this
+ * contract picks up at naming the file.
+ */
+const CONTRACT_HEADLINE = 'Name the file for its consumer.';
 
 /** Phrases that must survive an edit to the partial, so a gutted contract cannot still pass on its opening alone. */
 const CONTRACT_PHRASES: ReadonlyArray<string> = [
   CONTRACT_HEADLINE,
-  'Name the file for its consumer.',
   'Assign the path and guard it inside the call that consumes it.',
-  'tool performs no shell expansion',
+  'publishes its own default body in place of the composed one',
 ];
 
 /**

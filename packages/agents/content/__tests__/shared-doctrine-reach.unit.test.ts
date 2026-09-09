@@ -63,6 +63,16 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
       'a tool **reports** its findings (not "the findings arrive")',
     ],
   },
+  'scratch-directory': {
+    headline: '## Scratch files',
+    // One phrase per rule. `shell-conventions.md` states the empty-path hazard for an authored script and shares
+    // wording with the third rule's explanation, so that phrase stops at the rule itself.
+    phrases: [
+      'Resolve a base once, and never inside the repository.',
+      'Re-state the base as an absolute path at every use.',
+      'Write absolute paths beneath the base',
+    ],
+  },
   'shell-commands': {
     headline: '## Shell commands',
     phrases: ['Compound `cd &&` commands'],
@@ -82,6 +92,7 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
   { heading: '## Code descriptions', phrase: 'gets a brief description' },
   { heading: '## File access', phrase: 'When given an exact file path' },
   { heading: '## Shell commands', phrase: 'Compound `cd &&` commands' },
+  { heading: '## Scratch files', phrase: 'Resolve a base once, and never inside the repository.' },
   {
     heading: "## Don't test write operations against a live repo",
     phrase: 'Never exercise destructive or side-effecting operations',
@@ -96,7 +107,15 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
  * include is asserted here or nowhere, and a dropped one would strip the doctrine from that skill in silence.
  */
 const SKILL_CARRIERS: ReadonlyArray<{ readonly relativePath: string; readonly section: string }> = [
+  { relativePath: 'skills/capture-lede-decision/SKILL.md', section: 'scratch-directory' },
+  { relativePath: 'skills/condense-branch/SKILL.md', section: 'scratch-directory' },
+  { relativePath: 'skills/create-commit/SKILL.md', section: 'scratch-directory' },
+  { relativePath: 'skills/create-gh-pr/SKILL.md', section: 'scratch-directory' },
+  { relativePath: 'skills/create-ticket/SKILL.md', section: 'scratch-directory' },
+  { relativePath: 'skills/merge-gh-pr/SKILL.md', section: 'scratch-directory' },
   { relativePath: 'skills/revise-prose/SKILL.md', section: 'plain-speech' },
+  { relativePath: 'skills/revise-prose/SKILL.md', section: 'scratch-directory' },
+  { relativePath: 'skills/wrap-up/SKILL.md', section: 'scratch-directory' },
 ];
 
 /** The guidance files that inline the shared file, one per harness. */

@@ -1,6 +1,6 @@
 ## Don't test write operations against a live repo
 
-Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment: a temp directory (`mktemp -d`), a fresh `git init` with minimal fixtures, or a container.
+Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment: a [scratch directory](#scratch-files), a fresh `git init` with minimal fixtures, or a container.
 
 Why it matters:
 

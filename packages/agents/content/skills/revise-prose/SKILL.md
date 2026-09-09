@@ -71,7 +71,7 @@ On a no-go, ask the user before reverting, then revert that batch's files and st
 
 Send up to four `{tool:Task}` calls with `subagent_type: prose-reviser` in one message. A harness that returns each before the next is the series case; attempt no detection of which one you are on.
 
-Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even where the batch inherits none, so every dispatch names the same keys. `{scratch}` is `$TMPDIR`, or `/tmp` where the environment does not set it: Resolve it and write the absolute path in each place, since these writes and the subagent's reads all go through a file tool that expands no shell syntax.
+Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even where the batch inherits none, so every dispatch names the same keys. `{scratch}` is the base resolved per [Scratch files](#scratch-files), written out as an absolute path in each place below and in each dispatch block.
 
 Dispatch each batch with this block:
 
@@ -115,6 +115,8 @@ rules: {rule-id}, {rule-id}
 4. **Commit the closing repairs and the record together**, per `{skill:create-commit}`.
 5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A repaired string that a test asserts on fails there; repair the test expectation and commit that separately.
 6. **Emit the summary** per [Summary format](#summary-format).
+
+<!-- include: ../../_partials/scratch-directory.md / -->
 
 <!-- include: ../../_partials/plain-speech.md / -->
 

@@ -21,10 +21,8 @@ Although a `<<'EOF'` heredoc performs no expansion and backticks need no escapin
 
 Writing the body through the {tool:Write} tool removes bash from the path entirely. There is no shell context in which escaping could feel necessary, so the class of bug cannot arise. See codeassembly#442 for the originating incident.
 
-## Why the path is re-stated at every call
+## What an unset path costs here
 
-The pattern once prescribed a `$TMPDIR`-relative path and told the caller to keep it in a `body_path` variable that later calls would reuse. Neither survives an agent harness. `$TMPDIR` alternates between the sandbox value and the launchd per-user value between Bash invocations, and a shell variable does not outlive one at all. A `gh` call reached with the variable unset published GitHub's default body onto a squash commit that could not be amended on a protected default branch. See codeassembly#1599.
+The pattern once told the caller to keep the path in a `body_path` variable that later calls would reuse. A `gh` call reached with the variable unset published GitHub's default body onto a squash commit that could not be amended on a protected default branch. See codeassembly#1599. The guard on the assignment is what turns that into a refusal.
 
-## Cleanup
-
-None is required. A session scratchpad is scoped to the session, and `$TMPDIR` is OS-managed.
+Why a path is re-stated rather than carried, and where a scratch file belongs: [scratch directory](scratch-directory.md).
