@@ -1,18 +1,23 @@
 # codeassembly-run-core
 
-Core runtime library for orchestrated development runs. Provides the canonical domain model, Zod schemas, event folding, and data parsing consumed by the MCP server and Factory visualization.
+The domain model and parsers for CodeAssembly's orchestrated development runs. Given a run directory in any of the three formats that runs have written, it returns one `CanonicalRunStatus`.
 
-## Exports
+```ts
+import { parseRunData } from 'codeassembly-run-core/parsers';
 
-The package exposes four subpath entries:
+const run = await parseRunData('path/to/run');
+run.status; // 'in_progress' | 'completed' | 'failed' | 'needs_manual_review'
+```
 
-| Entry        | Description                                                         | Environment |
-| ------------ | ------------------------------------------------------------------- | ----------- |
-| `.`          | Types, constants, schemas, `foldEvents()`, type guards, error class | Any         |
-| `./config`   | Path resolution (`resolveBaseDir()`, `resolveProjectsDir()`)        | Node.js     |
-| `./parsers`  | File parsers for run data (`run-index.json`, `run-log.jsonl`)       | Node.js     |
-| `./scanners` | Directory scanning and validation for run directories               | Node.js     |
+## Entry points
 
-The root entry (`.`) avoids Node.js APIs so it can be used in browser builds. Node.js-specific functionality is isolated in `./config`, `./parsers`, and `./scanners`.
+The root entry imports no Node.js API, so a browser build can use its types, schemas, and `foldEvents()`. Everything that reads the filesystem or the environment sits behind a subpath.
 
-The package ships no binary; it is consumed as a library.
+| Entry        | Contents                                                                                  | Environment |
+| ------------ | ----------------------------------------------------------------------------------------- | ----------- |
+| `.`          | Types, constants, Zod schemas, `foldEvents()`, `RunDataParseError`, `isEnoent()`          | Any         |
+| `./config`   | `resolveBaseDir()` and `resolveProjectsDir()`, which resolve the artifact directories     | Node.js     |
+| `./parsers`  | `parseRunData()`, and `parseRunRawData()` for a v3 run's header and events before folding | Node.js     |
+| `./scanners` | `discoverRunDirectories()` and `validateRunDirectory()`                                   | Node.js     |
+
+The `run-index.json` format is specified in [artifact conventions](https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/_data/artifact-conventions.md#run-indexjson).
