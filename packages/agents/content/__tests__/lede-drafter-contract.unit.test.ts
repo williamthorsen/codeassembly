@@ -25,7 +25,7 @@ const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'bullet list',
   'one bullet per change',
   'one sentence',
-  'the artifact the reader consumes',
+  'the artifact consumed by the reader',
   'third-person indicative present',
 ];
 
@@ -40,8 +40,8 @@ const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
  * review cannot recover it, and without the bound a migration grows a worked example per call shape.
  */
 const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
-  'any trap the replacement carries',
-  'holds the edit and the trap and stops there',
+  'any trap present in the replacement',
+  'states the edit and the trap and stops there',
 ];
 
 /** A connective the drafter prescribes nowhere, pinned as a literal because a rewording is how it returns. */
