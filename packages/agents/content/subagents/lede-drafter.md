@@ -56,7 +56,22 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
 A lede drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
 
+Some facts report how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often carries them, and no bullet you write takes them.
+
 The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: the facts you leave out are actionable ones, and the reader has `## Details` and the diff one click away.
+
+## What your type owes the reader
+
+Most types owe nothing here: the question and the reader already decide the bullet, and a type absent below is one this section has nothing to add to. Where your dispatch's `type` appears, its bullet carries the fact named.
+
+- **`perf`** -- the effect and its size where it was measured. "Improves performance" names nothing.
+- **`sec`** -- enough that a reader can tell whether they were exposed, and no more. A lede is not a reproduction.
+- **`refactor`** -- one bullet. External behavior goes unmentioned unless it changed.
+- **`ai`** -- the artifact named, and the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it: guidance instructs, and agents are instructed.
+- **`deps`** -- the version delta and the consequence that matters. A routine bump carrying no consequence is one bullet.
+- **`drop`, `deprecate`** -- published surface is presumed used and owes a migration paragraph; unpublished or never-released surface owes none, and takes no breaking-change framing. Include it where you are unsure. A removal whose surface only moved is reported as the move, and one with no drop-in replacement still owes the reader the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon where it is known.
+
+A revert carries the work type of the change it undoes, so your dispatch names that type rather than `revert`. Its bullet names the change undone and what is restored; a pull-request number may accompany that name and never stands in for it.
 
 ## The form your answer takes
 
@@ -72,6 +87,8 @@ Mechanical, and none of it decides what goes in.
 - Where a bullet names an operation whose benefit the operation does not make evident, it states the benefit.
 - Never address the reader as "you".
 - Where the change breaks a consumer, a paragraph below the bullets opens with the literal label `Migration:` and names, in the imperative, the edit that the consumer makes. A sentence describing the resulting state is not an edit.
+- A migration paragraph also names any trap the replacement carries and the old path did not, such as a filter the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else surfaces it.
+- A migration paragraph holds the edit and the trap and stops there, rather than working an example per call shape. One that overruns that bound links the package's versioned upgrade guide where the package has one.
 
 Do not go looking for the lede doctrine, and do not work from a remembered rule list. The doctrine is written for the author and the auditor who read your draft. Reading rules before you write turns the question into a checklist, and a checklist is answered by including everything it does not forbid.
 
