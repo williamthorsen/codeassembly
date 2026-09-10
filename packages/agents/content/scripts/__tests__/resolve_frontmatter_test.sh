@@ -849,6 +849,37 @@ The output should include "tags: [a, b]"
 The output should not include "run_id"
 End
 
+It "accumulates repeated --extra-list-item flags into one flow list, in the order given"
+When run main \
+  --skill foo \
+  --interactive true \
+  --extra-list-item "changes=first" \
+  --extra-list-item "changes=second" \
+  --override "run_id="
+The status should be success
+The output should include "changes: [first, second]"
+End
+
+It "keeps an --extra-list-item value carrying a comma whole"
+When run main \
+  --skill foo \
+  --interactive true \
+  --extra-list-item "changes=agents|feat: Add a parser, a renderer, and a verifier" \
+  --override "run_id="
+The status should be success
+The output should include "changes: ['agents|feat: Add a parser, a renderer, and a verifier']"
+End
+
+It "emits a single --extra-list-item as a one-item list"
+When run main \
+  --skill foo \
+  --interactive true \
+  --extra-list-item "changes=only" \
+  --override "run_id="
+The status should be success
+The output should include "changes: [only]"
+End
+
 It "emits pr only when supplied via --override pr="
 When run main \
   --skill foo \

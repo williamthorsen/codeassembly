@@ -19,7 +19,11 @@
 #   --extra KEY=VALUE         Append a scalar extension key (repeatable).
 #                             Values may contain `=`; split on the first `=`.
 #   --extra-list KEY=v1,v2,…  Append a flow-list extension key (repeatable).
-#                             Values are split on `,`.
+#                             Values are split on `,`, so an item containing a
+#                             comma splits; use --extra-list-item for those.
+#   --extra-list-item KEY=V   Append one item to a flow-list extension key
+#                             (repeatable). Items accumulate in the order given
+#                             and are never split, so an item may contain `,`.
 #   --override KEY=VALUE      Force a canonical/provenance field to VALUE.
 #                             Empty VALUE force-omits the key.
 #   --format yaml|json        Output format (default `yaml`).
@@ -32,7 +36,7 @@
 #   provenance:
 #     skill, timestamp, baseSha, isInteractive, model     (camelCase)
 #   ticket_id, ticket_ref, branch, commit, pr, run_id     (snake_case)
-#   {--extra / --extra-list extensions in insertion order}
+#   {--extra / --extra-list / --extra-list-item extensions in insertion order}
 #
 # Output (json mode, stdout): a single JSON object, backward-compatible
 # with prior `--format json` (default) callers. Keys: branch, commit,
@@ -64,6 +68,7 @@ show_usage() {
 Usage:
   $PROG --skill NAME --interactive true|false [--model ID]
        [--extra KEY=VALUE ...] [--extra-list KEY=v1,v2,... ...]
+       [--extra-list-item KEY=VALUE ...]
        [--override KEY=VALUE ...] [--format yaml|json]
   $PROG --format json
   $PROG --help
@@ -120,6 +125,11 @@ main() {
     --extra-list)
       [[ "$#" -ge 2 ]] || fail "missing value for --extra-list"
       add_extra "list" "$2" extra_keys extra_values extra_kinds
+      shift 2
+      ;;
+    --extra-list-item)
+      [[ "$#" -ge 2 ]] || fail "missing value for --extra-list-item"
+      add_extra_item "$2" extra_keys extra_values extra_kinds
       shift 2
       ;;
     --override)
@@ -242,6 +252,29 @@ add_extra() {
   fi
   values_ref["$key"]="$value"
   kinds_ref["$key"]="$kind"
+}
+
+# Appends one item to a flow-list extension key, registering the key on its
+# first item. Items accumulate joined by ASCII US, the one character an item may
+# not contain; `--extra-list` splits on `,` instead, which a title carrying one
+# would break apart.
+add_extra_item() {
+  local arg="$1"
+  local -n keys_ref="$2"
+  local -n values_ref="$3"
+  local -n kinds_ref="$4"
+  local key value
+  parse_key_value "$arg" "--extra-list-item" key value
+  if [[ -z "${kinds_ref[$key]:-}" ]]; then
+    keys_ref+=("$key")
+    values_ref["$key"]="$value"
+  elif [[ "${kinds_ref[$key]}" != "items" ]]; then
+    warn "--extra-list-item key '$key' was already set by --extra/--extra-list: replacing previous value"
+    values_ref["$key"]="$value"
+  else
+    values_ref["$key"]+=$'\x1f'"$value"
+  fi
+  kinds_ref["$key"]="items"
 }
 
 # Records an override key=value. Empty value force-omits the key on emit.
@@ -447,7 +480,9 @@ emit_yaml() {
   for key in "${yaml_extra_keys[@]+"${yaml_extra_keys[@]}"}"; do
     value="${yaml_extra_values[$key]}"
     kind="${yaml_extra_kinds[$key]}"
-    if [[ "$kind" == "list" ]]; then
+    if [[ "$kind" == "items" ]]; then
+      emit_yaml_flow_list_items "$key" "$value"
+    elif [[ "$kind" == "list" ]]; then
       # Flow-list extensions intentionally emit `key: []` for empty values
       # (see `emit_yaml_flow_list`); only scalar extensions are subject to the canonical-field omission rule.
       emit_yaml_flow_list "$key" "$value"
@@ -475,6 +510,20 @@ emit_yaml_indented_scalar() {
 
 # Emits a top-level YAML flow list: `key: [v1, v2, v3]`.
 # Empty value emits an empty flow list `key: []`. Elements are split on `,` and each is passed through `yaml_quote`.
+# Emit a top-level YAML flow list from items accumulated by `--extra-list-item`,
+# splitting on ASCII US rather than on `,` so an item carrying a comma survives
+# whole. Each item is quoted as `emit_yaml_flow_list` quotes its own.
+emit_yaml_flow_list_items() {
+  local key="$1" raw="$2"
+  local out="" first=1 item
+  while IFS= read -r -d $'\x1f' item || [[ -n "$item" ]]; do
+    [[ "$first" == 1 ]] || out+=", "
+    first=0
+    out+="$(yaml_quote "$item")"
+  done < <(printf '%s' "$raw")
+  printf '%s: [%s]\n' "$key" "$out"
+}
+
 emit_yaml_flow_list() {
   local key="$1" raw="$2"
   if [[ -z "$raw" ]]; then
