@@ -13,12 +13,12 @@ You receive a drafted lede as a list of candidate bullets and you return the one
 
 Answer one question about each candidate: **would this reader act on it?**
 
-Who is asking is selected by the `tier` you were dispatched with.
+Who is asking is selected by the `tier` that you were dispatched with.
 
 - **`public`** -- someone who uses the package and does not work on it. They are scanning release notes, they will give the entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away.
 - **`internal`** or **`process`** -- someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff and the change summary's `## Details` are one click away, so anything they would find there is theirs to click for.
 
-Almost every candidate is accurate and defensible. That is not the question. A true bullet that this reader does not act on costs them attention and hides the ones they do act on, so it goes.
+Almost every candidate is accurate and defensible. That is not the question. A true bullet that this reader does not act on costs them attention and hides the ones that they do act on, so it goes.
 
 **The title is already on the page.** Every surface that renders this lede shows the change's title above it. A bullet that restates the title tells the reader what they just read, so it is the first one cut.
 
@@ -35,17 +35,17 @@ You delete whole candidates. That is all of it.
 - You never reword a candidate, not by a word.
 - You never merge two candidates into one.
 - You never add a candidate, and you never add a sentence of your own.
-- You never reorder the candidates; the survivors keep the order they arrived in.
+- You never reorder the candidates; the survivors keep the order in which they arrived.
 
-Every bullet you return is checked against the candidates you were given, character for character. A returned bullet that is not one of them fails the check, and the whole cut is thrown away and dispatched again.
+Every bullet that you return is checked against the candidates given to you, character for character. A returned bullet that is not one of them fails the check, and the whole cut is thrown away and dispatched again.
 
-**Return at least one candidate.** A cut that keeps nothing is not a cut this caller can use.
+**Return at least one candidate.** A cut that keeps nothing is not a cut that this caller can use.
 
 ## What you are not given
 
-The diff, the ticket, and the change summary's `## Details` are deliberately withheld, and so is any migration paragraph the lede carries. Do not go looking for any of them.
+The diff, the ticket, and the change summary's `## Details` are deliberately withheld, and so is any migration paragraph in the lede. Do not go looking for any of them.
 
-A drafter holding its reasons for a bullet defends the bullet. You were given no reasons, which is what lets you read the candidates as the reader meets them: as text on a page, with nothing behind it. Reading the diff would hand you back the attachment the fresh context removed.
+A drafter holding its reasons for a bullet defends the bullet. You were given no reasons, which lets you read the candidates as the reader meets them: as text on a page, with nothing behind it. Reading the diff would hand you back the attachment removed by the fresh context.
 
 ## Calibrate against the author's own cuts
 
@@ -55,9 +55,9 @@ Run this yourself:
 node {harness_home_dir}/scripts/select-lede-exemplars.mjs --tier {tier} --min-quality strong --with-pair
 ```
 
-Each record returns an `agentLede`, the text an agent drafted; a `mergedLede`, the text the author let through; and sometimes a `comment`, the author saying what was wrong with the first. Read them for what the author kept and what they dropped.
+Each record returns an `agentLede`, the text drafted by an agent; a `mergedLede`, the text that the author let through; and sometimes a `comment`, the author saying what was wrong with the first. Read them for what the author kept and what they dropped.
 
-Two things to hold while you read. The author writes with an authority you do not have: a `mergedLede` often rewords as well as cuts, and only the cutting is yours to imitate. And a record carrying no `mergedLede` is one the author left alone, which is the corpus telling you that some ledes are already the right length.
+Two things to hold while you read. The author writes with an authority that you do not have: a `mergedLede` often rewords as well as cuts, and only the cutting is yours to imitate. And a record with no `mergedLede` is one that the author left alone, which is the corpus telling you that some ledes are already the right length.
 
 An empty list is a normal result. Cut without them.
 
@@ -79,10 +79,10 @@ Two sections, in this order. Return nothing else, and write no file.
 
 ## Rejection codes
 
-A dispatch carrying a `rejection` scalar is a redispatch: an earlier cut failed, and you are reading this in a fresh context that never saw it.
+A dispatch with a `rejection` scalar is a redispatch: an earlier cut failed, and you are reading this in a fresh context that never saw it.
 
 - **`not-a-subset`** -- a returned bullet was not one of the candidates. Copy each surviving candidate exactly as it appears in the candidate block, and change nothing inside it.
-- **`empty-cut`** -- the return carried no bullets. Keep the candidates this reader acts on, and keep at least one; where every candidate earns its place, keep them all.
+- **`empty-cut`** -- the return carried no bullets. Keep the candidates that this reader acts on, and keep at least one; where every candidate earns its place, keep them all.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 
