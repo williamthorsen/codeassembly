@@ -21,8 +21,10 @@ describe(verify, () => {
 
     it.each([
       '{title}',
+      '[[{scope}|]{type}: ]{title}',
       '[{scope}|{type}: ]{title}',
       '[{ticket_ref} ]{title}',
+      '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]',
       '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]',
       '[{ticket_ref} ][{scope}|][{type}: ]{title}[ (#{pr_number})]',
     ])('accepts the configured template %s', (template) => {
