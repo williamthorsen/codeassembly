@@ -14,8 +14,18 @@ import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 /** Artifact filename suffix holding the lede the agent published, and the heading that lede sits under. */
 const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 
+/**
+ * Subagent bodies that govern a draft, in the fixed order the combined digest depends on. The drafter writes the lede
+ * and the cutter decides which of its bullets survive, so a change to either changes the doctrine a lede was written
+ * under.
+ */
+const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
+
 /** Artifact filename suffix holding the lede that merged, and the heading it sits under. */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
+
+/** Result of digesting the doctrine: the combined fingerprint, or the first body that could not be read. */
+type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadablePath: string };
 
 /**
  * Assembles a lede decision episode from a ticket's artifact directory: the lede the agent published, the lede that
@@ -32,8 +42,10 @@ const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
  */
 export async function resolveEpisode(input: {
   artifactDir: string;
-  /** Directory holding `lede-voice.md` and `work-types.json`; the `_data` sibling of the installed helper. */
+  /** Directory holding `work-types.json`; the `_data` sibling of the installed helper. */
   dataDir: string;
+  /** Directory holding the deployed subagent bodies that govern a draft; the harness's `agents` or `subagents` dir. */
+  subagentsDir: string;
   pr: string;
   mergeCommit: string;
   type?: string;
@@ -76,10 +88,9 @@ export async function resolveEpisode(input: {
     };
   }
 
-  const doctrinePath = path.join(input.dataDir, 'lede-voice.md');
-  const doctrineHash = await hashFile(doctrinePath);
-  if (doctrineHash === null) {
-    return { ok: false, error: 'no-doctrine', message: `doctrine file not readable: ${doctrinePath}` };
+  const doctrine = await hashDoctrine(input.subagentsDir);
+  if (!doctrine.ok) {
+    return { ok: false, error: 'no-doctrine', message: `doctrine file not readable: ${doctrine.unreadablePath}` };
   }
 
   const identity = await resolveIdentity(input);
@@ -96,7 +107,7 @@ export async function resolveEpisode(input: {
       mergedLede,
       differ: normalizeLede(agentLede) !== normalizeLede(mergedLede),
       identity: identity.identity,
-      doctrineHash,
+      doctrineHash: doctrine.hash,
       ...(agentsVersion !== null && { agentsVersion }),
     },
   };
@@ -133,10 +144,21 @@ async function findNewestArtifact(input: { artifactDir: string; suffix: string }
   return newest === null ? null : path.join(input.artifactDir, newest.relativePath);
 }
 
-/** Computes a `sha256:`-prefixed digest of a file's bytes; `null` when the file cannot be read. */
-async function hashFile(filePath: string): Promise<string | null> {
-  const content = await readFileSafely(filePath);
-  return content === null ? null : `sha256:${createHash('sha256').update(content).digest('hex')}`;
+/**
+ * Digests the subagent bodies that govern a draft. Each body is hashed on its own and the digests are hashed
+ * together, so a change to either moves the result and no content can straddle the boundary between them.
+ */
+async function hashDoctrine(subagentsDir: string): Promise<DoctrineHashOutcome> {
+  const digests: string[] = [];
+  for (const filename of DOCTRINE_FILENAMES) {
+    const filePath = path.join(subagentsDir, filename);
+    const content = await readFileSafely(filePath);
+    if (content === null) {
+      return { ok: false, unreadablePath: filePath };
+    }
+    digests.push(createHash('sha256').update(content).digest('hex'));
+  }
+  return { ok: true, hash: `sha256:${createHash('sha256').update(digests.join('\n')).digest('hex')}` };
 }
 
 /** Reports whether a path exists and is a directory. */

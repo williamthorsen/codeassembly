@@ -43,6 +43,8 @@ describe(parseArgs, () => {
       '/tmp/home-provenance.json',
       '--harness',
       'claude',
+      '--subagents-dir',
+      '/agents',
     ]);
 
     expect(parsed).toStrictEqual({
@@ -52,6 +54,7 @@ describe(parseArgs, () => {
       pr: '1124',
       mergeCommit: '35aa58d7',
       dataDir: '/skills/_data',
+      subagentsDir: '/agents',
       store: OTHER_STORE_NAME,
       type: 'feat',
       scope: 'agents',
@@ -263,12 +266,14 @@ function expectInspect(result: DecisionResult): Extract<DecisionResult, { mode: 
 }
 
 /** The flags a merge caller supplies, pointing at a fixture tree. */
-function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'provenancePath'>): string[] {
+function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'provenancePath' | 'subagentsDir'>): string[] {
   return [
     '--artifact-dir',
     fixture.artifactDir,
     '--data-dir',
     fixture.dataDir,
+    '--subagents-dir',
+    fixture.subagentsDir,
     '--provenance',
     fixture.provenancePath,
     '--pr',
@@ -324,6 +329,7 @@ function runInput(input: {
     env: {},
     now: NOW,
     defaultDataDir: input.fixture.dataDir,
+    defaultSubagentsDir: input.fixture.subagentsDir,
     home: input.home ?? input.fixture.root,
   };
 }

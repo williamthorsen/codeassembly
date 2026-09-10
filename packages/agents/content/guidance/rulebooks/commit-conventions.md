@@ -2,12 +2,12 @@
 slug: commit-conventions
 description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
 delivery: skill
-version: '2'
+version: '3'
 ---
 
 # Git commit conventions
 
-Commit titles and bodies are extracted into the changelog and, for release-notes-contributing work types, into release notes. The `summarize-change` skill also uses commit bodies for the PR's `## What` section. Write with those downstream surfaces in mind.
+A commit that lands on the default branch is extracted into the changelog and, for release-notes-contributing work types, into release notes. Under a squash merge that is the merge commit alone, whose body `merge-pr` composes from the pull request's `## What`; the branch commits a squash collapses reach no changelog and no release notes. A branch commit reaches `summarize-change`'s lede drafter instead, which reads the branch's commit log to answer what the pull request is about. Write with that reader in mind.
 
 ## Commit metadata
 
@@ -26,9 +26,7 @@ The branch name records the ticket. Include the ID at the end of the commit body
 
 ## Commit body
 
-**Body voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. The first paragraph of the body is the lede and must stand alone as the entry, so the doctrine below applies to it; subsequent paragraphs are elaboration for the engaged reader who has clicked through.
-
-<!-- include: ../../_partials/voice-checklist.md / -->
+**Body voice.** The body is a source the lede drafter reads, not an entry a reader meets. Report what the commit did, completely and factually, and leave the selecting to the drafter: it drops what the change's reader would not act on, and a fact the body omits is one no lede recovers.
 
 ### Body mechanics
 

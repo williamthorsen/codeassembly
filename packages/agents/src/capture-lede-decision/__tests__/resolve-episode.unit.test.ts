@@ -9,6 +9,7 @@ import { resolveEpisode } from '../resolve-episode.ts';
 import {
   createLedeFixture,
   FIXTURE_AGENT_LEDE,
+  FIXTURE_DOCTRINE_FILENAMES,
   FIXTURE_MERGED_LEDE,
   type LedeFixture,
   renderSection,
@@ -154,7 +155,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode({ ...inputFor(fixture), artifactDir: join(fixture.root, 'absent') });
 
-    expect(expectFailure(outcome)).toBe('no-artifact-dir');
+    expect(expectFailure(outcome).error).toBe('no-artifact-dir');
   });
 
   it('reports an absent pull-request artifact separately from an absent merge artifact', async () => {
@@ -162,7 +163,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    expect(expectFailure(outcome)).toBe('no-agent-lede');
+    expect(expectFailure(outcome).error).toBe('no-agent-lede');
   });
 
   it('reports a merge artifact carrying no body section', async () => {
@@ -170,16 +171,29 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    expect(expectFailure(outcome)).toBe('no-merged-lede');
+    expect(expectFailure(outcome).error).toBe('no-merged-lede');
   });
 
-  it('reports an unreadable doctrine file', async () => {
+  it.each(FIXTURE_DOCTRINE_FILENAMES)('reports %s as an unreadable doctrine file', async (filename) => {
     const fixture = await createLedeFixture();
-    await rm(join(fixture.dataDir, 'lede-voice.md'));
+    const doctrinePath = join(fixture.subagentsDir, filename);
+    await rm(doctrinePath);
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    expect(expectFailure(outcome)).toBe('no-doctrine');
+    // The digest covers several bodies, so a caller told only the code cannot tell which one to reinstall.
+    expect(expectFailure(outcome)).toStrictEqual({
+      error: 'no-doctrine',
+      message: expect.stringContaining(doctrinePath),
+    });
+  });
+
+  it.each(FIXTURE_DOCTRINE_FILENAMES)('moves the fingerprint when %s changes', async (filename) => {
+    const fixture = await createLedeFixture();
+    const before = (await resolveFor(fixture)).doctrineHash;
+    await writeFile(join(fixture.subagentsDir, filename), 'Revised doctrine text.\n', 'utf8');
+
+    expect((await resolveFor(fixture)).doctrineHash).not.toBe(before);
   });
 
   it('reports a work type the taxonomy does not declare', async () => {
@@ -187,7 +201,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented' }));
 
-    expect(expectFailure(outcome)).toBe('unresolved-identity');
+    expect(expectFailure(outcome).error).toBe('unresolved-identity');
   });
 
   it('reports an undeclared work type carrying the marker, which declares nothing on its own', async () => {
@@ -195,7 +209,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented!' }));
 
-    expect(expectFailure(outcome)).toBe('unresolved-identity');
+    expect(expectFailure(outcome).error).toBe('unresolved-identity');
   });
 
   it('reports an unreadable taxonomy apart from an undeclared type, which passing a flag would not repair', async () => {
@@ -203,7 +217,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    expect(expectFailure(outcome)).toBe('no-taxonomy');
+    expect(expectFailure(outcome).error).toBe('no-taxonomy');
   });
 });
 
@@ -217,12 +231,12 @@ function expectEpisode(outcome: ResolveEpisodeOutcome): LedeEpisode {
   throw new Error(`expected a resolved episode, got ${outcome.error}: ${outcome.message}`);
 }
 
-/** Narrows a resolver outcome to its failure arm and yields the error code, failing the test when it succeeded. */
-function expectFailure(outcome: ResolveEpisodeOutcome): string {
+/** Narrows a resolver outcome to its failure arm and yields its code and message, failing the test when it succeeded. */
+function expectFailure(outcome: ResolveEpisodeOutcome): { error: string; message: string } {
   if (outcome.ok) {
     throw new Error('expected the resolver to fail, but it resolved an episode');
   }
-  return outcome.error;
+  return { error: outcome.error, message: outcome.message };
 }
 
 /** Builds resolver input over a fixture, supplying the flags a merge caller would pass. */
@@ -230,6 +244,7 @@ function inputFor(fixture: LedeFixture, overrides: { type?: string } = {}): Para
   return {
     artifactDir: fixture.artifactDir,
     dataDir: fixture.dataDir,
+    subagentsDir: fixture.subagentsDir,
     pr: '1124',
     mergeCommit: '35aa58d7',
     type: overrides.type ?? 'feat',

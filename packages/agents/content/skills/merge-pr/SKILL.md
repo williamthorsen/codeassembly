@@ -128,26 +128,58 @@ Extract from the PR body (already in scope from step 2):
 
 A captured body is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter `## What` if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
 
-If the `## What` heading is missing or the captured body is thin, compose fresh content from commit messages and the diff:
+If the `## What` heading is missing or the captured body is thin, compose fresh content through the drafter and cutter that `summarize-change` dispatches, rather than writing it here. The whole body is the lede, and those two are where the lede doctrine lives.
 
-```bash
-git log {default_branch}..HEAD --format=%B
-git diff {default_branch}...HEAD --stat
+Resolve the tier by looking up the `type` from step 3 in [work-types.json](../_data/work-types.json).
+
+Where step 3 reported `type` as `ambiguous`, ask step 7's type question here rather than composing against a guess. Present the dimension's `candidates` plus an "other (specify)" option, following [option format](#option-format), and take the answer as the concrete type; step 7 then has one fewer dimension to ask about. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change owes a public-tier reader, in a body that reaches the merge commit, the changelog, and release notes.
+
+Dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
+
+```dispatch
+type: {resolved type}
+tier: {resolved tier}
+ticket-source: {ticket URL or reference}
 ```
 
-Report what the change did. The whole body is the lede, so the doctrine below applies to it end to end.
+The block carries scalars only, and only these keys. Compose no prose into it: the drafter gathers every fact itself, and a sentence written here seeds the draft with this session's weighting. Take its `## Lede` section as the body candidate, and read its `## Report` for any source it could not reach.
 
-<!-- include: ../../_partials/voice-checklist.md / -->
+Then cut that draft. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
+
+```dispatch
+title: {the bare title from step 5}
+tier: {the tier resolved above}
+```
+
+```candidates
+- {the first bullet of the draft}
+- {the second bullet}
+```
+
+Copy each candidate character for character, one per line, and number none of them: the cutter returns the survivors verbatim, and anything added here has to be stripped back out. Hold any `Migration:` paragraph aside and re-attach it below the surviving bullets, since it is the whole channel to a consumer whose build just broke. A single-bullet draft skips this dispatch, because the cut leaves at least one bullet.
+
+**Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path it was written to:
+
+```bash
+grep -Fxv -f "{candidates_file}" "{returned_file}"
+```
+
+Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status. Count the returned bullets too: the empty set is a subset, so the comparison above passes a return carrying none.
+
+Redispatch on either failure -- `rejection: not-a-subset` for a bullet the cutter wrote, `rejection: empty-cut` for a return carrying none -- at most twice across the two. After a second failure, take the draft uncut and report the failure to the user.
+
+The composed body reaches the approval gate in step 7, where the user reads it before anything is published, so no audit of the draft runs here.
 
 <!-- include: ../_partials/nested-list-indent.md / -->
 
 ### 7. Approval gate
 
-If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:
+For each dimension still unresolved after step 6, ask one question at a time before showing the final commit:
 
-- For each ambiguous dimension, present a numbered list of the dimension's `candidates` array, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
+- Present a numbered list of the dimension's `candidates` array from step 3, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
-- After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
+
+Re-render the title (step 5) with the now-concrete values wherever a dimension was resolved after step 5, whether here or at step 6's thin-body fallback. Step 5 omitted the flag for each ambiguous dimension, so its render is provisional whichever step settles the value.
 
 Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
 

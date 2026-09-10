@@ -1,6 +1,6 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
-import { realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
@@ -37,6 +37,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'quality', takesValue: true },
   { name: 'scope', takesValue: true },
   { name: 'store', takesValue: true },
+  { name: 'subagents-dir', takesValue: true },
   { name: 'ticket', takesValue: true },
   { name: 'type', takesValue: true },
 ];
@@ -57,8 +58,10 @@ export interface ParsedArgs {
   artifactDir: string;
   pr: string;
   mergeCommit: string;
-  /** Directory holding `lede-voice.md` and `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
+  /** Directory holding `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
   dataDir: string | null;
+  /** Directory holding the deployed subagent bodies; `null` falls back to the one beside the installed helper. */
+  subagentsDir: string | null;
   /** The store to record into; falls back to the one this helper serves when `--store` names none. */
   store: string;
   type: string | null;
@@ -80,6 +83,7 @@ async function main(): Promise<void> {
       env: process.env,
       now: new Date(),
       defaultDataDir: resolveDefaultDataDir(),
+      defaultSubagentsDir: resolveDefaultSubagentsDir(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
@@ -113,6 +117,7 @@ export async function runDecision(input: {
   env: NodeJS.ProcessEnv;
   now: Date;
   defaultDataDir: string;
+  defaultSubagentsDir: string;
   home?: string;
 }): Promise<DecisionResult> {
   let args: ParsedArgs;
@@ -125,6 +130,7 @@ export async function runDecision(input: {
   const resolved = await resolveEpisode({
     artifactDir: args.artifactDir,
     dataDir: args.dataDir ?? input.defaultDataDir,
+    subagentsDir: args.subagentsDir ?? input.defaultSubagentsDir,
     pr: args.pr,
     mergeCommit: args.mergeCommit,
     ...(args.type !== null && { type: args.type }),
@@ -245,6 +251,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     pr: requireFlag(raw, 'pr'),
     mergeCommit: requireFlag(raw, 'merge-commit'),
     dataDir: raw['data-dir'] ?? null,
+    subagentsDir: raw['subagents-dir'] ?? null,
     store: raw.store ?? LEDE_DECISION_STORE,
     type: raw.type ?? null,
     scope: raw.scope ?? null,
@@ -320,6 +327,17 @@ function isEntryPoint(): boolean {
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', '_data');
+}
+
+/**
+ * Locates the deployed subagents directory beside the installed helper. The harness names it, `agents` on Claude and
+ * `subagents` on Rovo, so the name is probed rather than derived from the skills dir. Where neither exists the Claude
+ * name stands in, so the resolver's failure names a path rather than an empty string.
+ */
+function resolveDefaultSubagentsDir(): string {
+  const harnessHome = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const rovoDir = path.join(harnessHome, 'subagents');
+  return existsSync(rovoDir) ? rovoDir : path.join(harnessHome, 'agents');
 }
 
 /**

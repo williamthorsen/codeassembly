@@ -4,20 +4,15 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// The drafter answers "What is this PR about?" from summary-shaped sources, in a form the author rates. Two inputs
-// defeat that question, and both look like diligence when a later edit restores them: the diff, which makes every
-// fact it holds feel load-bearing, and the doctrine, which turns the question into a rule list answered by
-// including whatever it does not forbid. The form is defeated by a prescribed phrase, which the model emits
-// wherever guidance names one, and by an exemplar below the floor, every one of which is paragraph-form. None of
-// these failures shows up at runtime -- each yields a plausible lede that catalogs the change -- so the guard has
-// to be here.
+// The drafter answers "What is this PR about?" from summary-shaped sources, in a form the author rates. The diff
+// defeats that question and looks like diligence when a later edit restores it, because every fact it holds feels
+// load-bearing. The form is defeated by a prescribed phrase, which the model emits wherever guidance names one, and
+// by an exemplar below the floor, every one of which is paragraph-form. None of these failures shows up at runtime
+// -- each yields a plausible lede that catalogs the change -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
 const ASSIGNMENT_QUESTION = 'What is this PR about?';
-
-/** The doctrine, written for the author and the auditor who read the draft rather than for the drafter. */
-const DOCTRINE_FILENAME = 'lede-voice.md';
 
 /** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
@@ -30,7 +25,7 @@ const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'bullet list',
   'one bullet per change',
   'one sentence',
-  'the artifact the reader consumes',
+  'the artifact consumed by the reader',
   'third-person indicative present',
 ];
 
@@ -40,8 +35,20 @@ const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 /** The rule stating what a lede leaves out, which the drafter carries in place of the shared concision rule. */
 const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
 
+/**
+ * Phrases binding a migration paragraph to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
+ * review cannot recover it, and without the bound a migration grows a worked example per call shape.
+ */
+const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
+  'any trap present in the replacement',
+  'states the edit and the trap and stops there',
+];
+
 /** A connective the drafter prescribes nowhere, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
+
+/** The phrase excluding how a change was produced, which a commit body carries and a bullet does not. */
+const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
 /** The statement that the writer composes against a title the reader has already read. */
 const TITLE_PHRASE = 'The title is already on the page';
@@ -54,12 +61,6 @@ const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', '
  * opening capital still matches.
  */
 const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not work on it', 'works in this codebase'];
-
-/** Each file stating the reader specification. The drafter never reads the doctrine, so each carries its own copy. */
-const READER_SOURCES: ReadonlyArray<string> = [
-  path.join('skills', '_data', DOCTRINE_FILENAME),
-  path.join('subagents', 'lede-drafter.md'),
-];
 
 /**
  * Phrases binding a redispatch to the passages it was handed. Lowercased, so a sentence's opening capital still
@@ -89,6 +90,12 @@ const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
 /** The flag the exemplar call falls back to where the dispatch carries no type. */
 const TIER_FALLBACK_FLAG = '--tier {tier}';
 
+/**
+ * Work types whose bullet owes a fact the assignment does not supply. Each is stated nowhere else, so a rewrite that
+ * drops one leaves the drafter with no guidance at all on that type and every suite green.
+ */
+const TYPE_RULE_KEYS: ReadonlyArray<string> = ['ai', 'deps', 'deprecate', 'drop', 'fix', 'perf', 'refactor', 'sec'];
+
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'lede-drafter.md'), CONTENT_ROOT);
 
 describe('lede-drafter contract', () => {
@@ -99,14 +106,13 @@ describe('lede-drafter contract', () => {
     expect(await EXPANDED, message).toContain(ASSIGNMENT_QUESTION);
   });
 
-  it.each(READER_SOURCES)('names both readers in %s', async (relativePath) => {
-    const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
+  it('names both readers', async () => {
+    const text = (await EXPANDED).toLowerCase();
     const missing = READER_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The reader decides what the entry reports, and the doctrine and the drafter each state the readers, since ' +
-      'the drafter never reads the doctrine. Revising one leaves the other naming a superseded reader. These ' +
-      `phrases are gone:\n  ${missing.join('\n  ')}`;
+      'The reader decides what the entry reports, and this file is the only one that states the readers to the ' +
+      `writer. Where one is gone, the drafter writes for an audience nothing named. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -121,14 +127,6 @@ describe('lede-drafter contract', () => {
       "rather than what it is about, and the caller already checks the draft's claims against the diff. These " +
       `invocations return hunks:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
-  });
-
-  it('points the drafter at no doctrine to read before drafting', async () => {
-    const message =
-      `\`${DOCTRINE_FILENAME}\` is written for the author and the auditor who read the draft. Reading a rule list ` +
-      'before writing turns the assignment into a checklist, which is answered by including everything it does ' +
-      'not forbid.';
-    expect(await EXPANDED, message).not.toContain(DOCTRINE_FILENAME);
   });
 
   it('draws exemplars from ledes at the floor alone', async () => {
@@ -200,14 +198,41 @@ describe('lede-drafter contract', () => {
     expect(await EXPANDED, message).toContain(LEAVE_OUT_RULE_PHRASE);
   });
 
-  it.each(READER_SOURCES)('states that the title is already on the page in %s', async (relativePath) => {
-    const text = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+  it('states what each type owes the reader', async () => {
+    const text = await EXPANDED;
+    const missing = TYPE_RULE_KEYS.filter((key) => !text.includes(`\`${key}\``));
 
     const message =
+      'A type owing a fact beyond the assignment owes it here, and nothing else states these. Where one is gone, ' +
+      'the drafter writes a bullet that reads as correct and withholds what that type is read for: a measured size, ' +
+      `an exposure bound, a migration. These types are unstated:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('binds a migration paragraph to the edit, the trap, and the bound', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = MIGRATION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'A migration paragraph is the whole channel to a consumer whose build broke, and the cutter never sees it. ' +
+      'The trap the replacement carries appears in no hunk, so a caller auditing against the diff cannot supply it. ' +
+      `These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('leaves out how the change was produced', async () => {
+    const message =
+      'A commit body carries review mechanics, ticket and finding numbers, and CI runs, and the drafter reads the ' +
+      'commit log. Without this the drafter reads them as facts of the change and writes them into a bullet.';
+    expect(await EXPANDED, message).toContain(PROCESS_NARRATION_PHRASE);
+  });
+
+  it('states that the title is already on the page', async () => {
+    const message =
       "Every surface renders the change title above the lede, so a sentence restating it spends the reader's " +
-      'opening seconds on what they already know. The doctrine and the drafter each state this, since the drafter ' +
-      'never reads the doctrine, and a deletion-only cut cannot repair a bullet that opens by restating the title.';
-    expect(text, message).toContain(TITLE_PHRASE);
+      'opening seconds on what they already know, and a deletion-only cut cannot repair a bullet that opens by ' +
+      'restating the title.';
+    expect(await EXPANDED, message).toContain(TITLE_PHRASE);
   });
 
   it('prescribes no connective phrase', async () => {

@@ -16,8 +16,8 @@ import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '..
 
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
-/** A phrase of `_partials/voice-checklist.md` that `commit-conventions` reaches only by including the partial. */
-const INCLUDED_PARTIAL_MARKER = '**Matter of course.**';
+/** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` reaches only by including the partial. */
+const INCLUDED_PARTIAL_MARKER = '**No hard line breaks.**';
 
 interface RulebookPin {
   readonly bodyHash: string;
@@ -32,7 +32,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'commit-conventions',
-    { bodyHash: 'dcc72e017ea6692f3b0f408ff81ad5f5bdd7c962f377db11e754227e19f927d1', version: '2' },
+    { bodyHash: 'aee3edef3f4d4f1b673c97a96e3e9af32361d5ca0d10e77de61fa9d2b07f677f', version: '3' },
   ],
   [
     'generated-content-policy',
