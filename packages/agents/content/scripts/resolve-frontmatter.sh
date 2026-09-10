@@ -510,20 +510,6 @@ emit_yaml_indented_scalar() {
 
 # Emits a top-level YAML flow list: `key: [v1, v2, v3]`.
 # Empty value emits an empty flow list `key: []`. Elements are split on `,` and each is passed through `yaml_quote`.
-# Emit a top-level YAML flow list from items accumulated by `--extra-list-item`,
-# splitting on ASCII US rather than on `,` so an item carrying a comma survives
-# whole. Each item is quoted as `emit_yaml_flow_list` quotes its own.
-emit_yaml_flow_list_items() {
-  local key="$1" raw="$2"
-  local out="" first=1 item
-  while IFS= read -r -d $'\x1f' item || [[ -n "$item" ]]; do
-    [[ "$first" == 1 ]] || out+=", "
-    first=0
-    out+="$(yaml_quote "$item")"
-  done < <(printf '%s' "$raw")
-  printf '%s: [%s]\n' "$key" "$out"
-}
-
 emit_yaml_flow_list() {
   local key="$1" raw="$2"
   if [[ -z "$raw" ]]; then
@@ -544,6 +530,20 @@ emit_yaml_flow_list() {
     fi
     out+="$(yaml_quote "${parts[$i]}")"
   done
+  printf '%s: [%s]\n' "$key" "$out"
+}
+
+# Emits a top-level YAML flow list from items accumulated by `--extra-list-item`,
+# splitting on ASCII US rather than on `,` so an item carrying a comma survives
+# whole. Each item is quoted as `emit_yaml_flow_list` quotes its own.
+emit_yaml_flow_list_items() {
+  local key="$1" raw="$2"
+  local out="" first=1 item
+  while IFS= read -r -d $'\x1f' item || [[ -n "$item" ]]; do
+    [[ "$first" == 1 ]] || out+=", "
+    first=0
+    out+="$(yaml_quote "$item")"
+  done < <(printf '%s' "$raw")
   printf '%s: [%s]\n' "$key" "$out"
 }
 
