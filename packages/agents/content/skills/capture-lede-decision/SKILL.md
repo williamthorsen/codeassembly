@@ -132,7 +132,7 @@ One event per decision, in the corpus:
 - **Frontmatter**: the rating; the work type, tier, and scope; `breaking: true` for a breaking change, and nothing for any other; the pull-request number, merge commit, and ticket; `doctrine-hash`, a combined digest of the `lede-drafter` and `lede-cutter` bodies in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
 - **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
-`doctrine-hash` is what groups records by doctrine generation. The drafter writes the lede and the cutter decides which of its bullets survive, so those two bodies are what a draft was written under and a change to either opens a generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing each body's own history.
+`doctrine-hash` is what groups records by doctrine generation. The drafter writes the lede and the cutter decides which of its bullets survive, so those two bodies are what a draft was written under and a change to either opens a generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing each body's own history. A digest recorded before the bodies became the doctrine fingerprints the retired `skills/_data/lede-voice.md`, and resolves against that file's history instead.
 
 ## Handling failures
 
