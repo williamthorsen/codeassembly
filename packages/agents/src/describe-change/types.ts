@@ -5,9 +5,39 @@ export function isSurface(value: string): value is Surface {
   return SURFACE_NAMES.includes(value);
 }
 
-/** What the invocation asks for: titles rendered from a record, or one surface's subject read back into a record. */
+/** One entry the classification found, flattened onto the commit that declared it. */
+export interface ClassifiedEntryOutcome {
+  breaking: boolean;
+  commit: string;
+  scope: string | null;
+  title: string | null;
+  type: string | null;
+}
+
+/** What a branch of commits classified to, in the shape the JSON output names. */
+export interface ClassifyOutcome {
+  entries: ClassifiedEntryOutcome[];
+  head: HeadOutcome | null;
+  ticket_type: string | null;
+  unclassified: Array<{ commit: string; subject: string }>;
+  violations: Array<{ commit: string; policy: string; type: string }>;
+}
+
+/** The head a branch's entries consolidated to. It names no title; a caller supplies that from the change summary. */
+export interface HeadOutcome {
+  breaking: boolean;
+  scope: string | null;
+  type: string | null;
+}
+
+/**
+ * What the invocation asks for: titles rendered from a record, one surface's subject read back into a record, or a
+ * commit range classified.
+ */
 export type ParsedArgs =
-  { mode: 'parse'; subject: string; surface: Surface } | { mode: 'render'; record: ChangeRecord };
+  | { baseRef: string; mode: 'classify'; ticketLabels: string[] }
+  | { mode: 'parse'; subject: string; surface: Surface }
+  | { mode: 'render'; record: ChangeRecord };
 
 /** A subject read back through a surface's template, or the report that the template did not match it. */
 export type ParseOutcome =
