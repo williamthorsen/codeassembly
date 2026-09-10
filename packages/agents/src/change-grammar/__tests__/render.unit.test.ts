@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compileTemplate } from '../compile-template.ts';
 import { render } from '../render.ts';
-import { TEMPLATE_CATALOGUE } from '../templates.ts';
+import { type ConventionName, TEMPLATE_CATALOGUE } from '../templates.ts';
 import type { ChangeRecord } from '../types.ts';
 
 const TITLE = 'Add foo';
@@ -14,7 +14,7 @@ const GLOBAL_MERGE = '[{ticket_ref} ][{scope}|][{type}: ]{title}[ (#{pr_number})
 
 describe(render, () => {
   describe('the catalogue templates', () => {
-    const cases: Array<{ convention: keyof typeof TEMPLATE_CATALOGUE; expected: string; record: ChangeRecord }> = [
+    const cases: Array<{ convention: ConventionName; expected: string; record: ChangeRecord }> = [
       { convention: 'house', record: { scope: 'agents', type: 'feat' }, expected: 'agents|feat: Add foo' },
       {
         convention: 'house',
