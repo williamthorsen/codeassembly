@@ -2,7 +2,7 @@
 slug: commit-conventions
 description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
 delivery: skill
-version: '3'
+version: '4'
 ---
 
 # Git commit conventions
@@ -17,7 +17,7 @@ A commit that lands on the default branch is extracted into the changelog and, f
 
 Voice, length, content discipline, and the ticket-reference rule are stated in [`title-voice.md`](../../skills/_data/title-voice.md), which governs the authored string across every surface it is rendered into. Two rules are commit-specific:
 
-- Render via `describe-change.sh`; see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
+- Render via `describe-change.mjs`; see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
 - Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
 
 ## Ticket ID

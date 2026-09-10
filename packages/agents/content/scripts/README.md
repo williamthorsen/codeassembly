@@ -7,7 +7,7 @@ This directory holds two kinds of helper, distinguished by who invokes them:
 - **Agent-invoked.** Helpers a skill or subagent runs, via the `{harness_home_dir}/scripts/` prefix documented below.
 - **Harness-invoked.** Helpers wired into a harness's own configuration, with no agent in the loop.
 
-The extension says how a helper is written, not who runs it: a `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are build output, generated here by `scripts/bundle-skill-helpers.ts` and git-ignored. Either kind serves either invoker.
+The extension says how a helper is written, not who runs it: a `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are tracked build output, generated here by `scripts/bundle-skill-helpers.ts`, so a source edit lands with its rebuilt bundle in the same commit. Either kind serves either invoker.
 
 Files of any other extension (such as this README) are not installed.
 
@@ -23,13 +23,13 @@ At install time, `{harness_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.op
 
 Bare invocations (e.g., `` Run `resolve-frontmatter.sh ...` ``) do not resolve at runtime: The install directory is not on `$PATH`, and only `feedback-memories.sh` is symlinked into `/usr/local/bin`. An agent that encounters a bare invocation typically guesses a path and fails before succeeding, wasting tool calls.
 
-Prose mentions of script names that are not invocations (e.g., ``"the `describe-change.sh` script renders titles"``) do not need the prefix.
+Prose mentions of script names that are not invocations (e.g., ``"the `describe-change.mjs` script renders titles"``) do not need the prefix.
 
 ## Scripts
 
 Agent-invoked:
 
-- `describe-change.sh`: Renders titles for commits, tickets, PRs, and merges from declarative templates.
+- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, and reads a rendered title back into its parts. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs`; the bundle carries no shebang.
 - `get-ticket-id.sh`: Extracts a ticket ID from a branch name.
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields.
 - `resolve-merge-options.sh`: Resolves merge-method and squash-title inputs from CLI overrides, label maps, and commit majority.

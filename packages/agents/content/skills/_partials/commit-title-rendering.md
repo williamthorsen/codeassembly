@@ -1,5 +1,5 @@
 ```bash
-{harness_home_dir}/scripts/describe-change.sh \
+node {harness_home_dir}/scripts/describe-change.mjs \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \

@@ -92,7 +92,7 @@ describe(createSkillLinkAnchor, () => {
 describe(createContentRootLinkAnchor, () => {
   it('anchors a scripts target at the harness home, the only tree that deploys it', () => {
     const anchor = createContentRootLinkAnchor(buildContext({ domainBase: PROJECT_BASE }));
-    expect(anchor('scripts/describe-change.sh')).toBe('~/.claude/scripts/describe-change.sh');
+    expect(anchor('scripts/describe-change.mjs')).toBe('~/.claude/scripts/describe-change.mjs');
   });
 
   it('hands a deployed skill target to the skills anchor', () => {
@@ -116,6 +116,6 @@ describe(createContentRootLinkAnchor, () => {
   // body carrying the link belongs to a source.
   it('keeps a scripts target at the harness home for a source-owned body', () => {
     const anchor = createContentRootLinkAnchor(buildContext({ domainBase: PROJECT_BASE, supportNamespace: 'org' }));
-    expect(anchor('scripts/describe-change.sh')).toBe('~/.claude/scripts/describe-change.sh');
+    expect(anchor('scripts/describe-change.mjs')).toBe('~/.claude/scripts/describe-change.mjs');
   });
 });

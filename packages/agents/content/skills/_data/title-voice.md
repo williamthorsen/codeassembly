@@ -44,7 +44,7 @@ Naming the identifier is still the point, and it is often the most informative w
 
 ## The ticket reference
 
-The authored string carries no ticket reference. Each surface's template adds one back or does not, per the repository's own `title_format` values, and `describe-change.sh` renders it; the branch name records the ticket besides. Writing the reference into the string doubles it wherever a template supplies one.
+The authored string carries no ticket reference. Each surface's template adds one back or does not, per the repository's own `title_format` values, and `describe-change.mjs` renders it; the branch name records the ticket besides. Writing the reference into the string doubles it wherever a template supplies one.
 
 ## Per-surface framing
 

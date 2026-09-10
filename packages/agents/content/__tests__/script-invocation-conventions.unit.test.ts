@@ -9,7 +9,7 @@ import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
 // on `$PATH`. Agent-facing content must invoke them via the `{harness_home_dir}/scripts/` template,
 // which the install pipeline expands per harness. Bare invocations leave the agent guessing a path at runtime.
 const KNOWN_SCRIPTS: ReadonlyArray<string> = [
-  'describe-change.sh',
+  'describe-change.mjs',
   'get-ticket-id.sh',
   'resolve-frontmatter.sh',
   'resolve-merge-options.sh',
@@ -29,7 +29,7 @@ interface Violation {
   readonly text: string;
 }
 
-// Recognize executable context after `.sh`: a CLI flag, line continuation, quoted arg, shell variable, or shell
+// Recognize executable context after the script name: a CLI flag, line continuation, quoted arg, shell variable, or shell
 // operator. Anything else (a closing backtick, prose word, punctuation) is treated as a non-invocation mention.
 const INVOCATION_SUFFIX = /^(?:--|-[A-Za-z]|\\\s*$|"|'|\$[A-Za-z_(@{*]|\||>|<|;|&)/;
 

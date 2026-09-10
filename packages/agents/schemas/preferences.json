@@ -28,11 +28,11 @@
     },
     "commit": {
       "type": "object",
-      "description": "Commit-title rendering configuration consumed by the `describe-change.sh` script.",
+      "description": "Commit-title rendering configuration consumed by the `describe-change.mjs` script.",
       "properties": {
         "title_format": {
           "type": "string",
-          "description": "Template string used to render commit titles. Supports tokens such as `{scope}`, `{type}`, `{title}`, `{ticket_ref}` and optional `[...]` groups that drop when their tokens are empty."
+          "description": "Template string used to render commit titles. Supports the tokens `{scope}`, `{type}`, `{breaking}`, `{title}`, and `{ticket_ref}`, and nesting `[...]` groups that drop when a token directly inside them resolves empty."
         }
       },
       "required": ["title_format"]

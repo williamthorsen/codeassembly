@@ -579,7 +579,7 @@ Project-level values take precedence over global. An explicitly empty value at t
 
 #### `commit`, `ticket`, `pr`, `merge` — title format conventions
 
-These four sections share the same structure. Each holds a declarative template that `describe-change.sh` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
+These four sections share the same structure. Each holds a declarative template that `describe-change.mjs` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
 
 | Key                   | Type   | Default | Description                                 |
 | --------------------- | ------ | ------- | ------------------------------------------- |
@@ -588,25 +588,30 @@ These four sections share the same structure. Each holds a declarative template 
 | `pr.title_format`     | string | `''`    | Template for pull-request titles.           |
 | `merge.title_format`  | string | `''`    | Template for the squash-merge commit title. |
 
-A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out — the corresponding rendered title will be the empty string. The `describe-change.sh` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_title`.
+A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out — the corresponding rendered title will be the empty string. The `describe-change.mjs` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_title`.
 
 ##### Supported tokens
 
-| Token          | Resolves to                                                                           |
-| -------------- | ------------------------------------------------------------------------------------- |
-| `{scope}`      | Change scope (workspace, package, module).                                            |
-| `{type}`       | Work type (`feat`, `fix`, `docs`, …).                                                 |
-| `{title}`      | Bare title text. Required in every template that should produce a non-empty title.    |
-| `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated. |
-| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.         |
+| Token          | Resolves to                                                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `{scope}`      | Change scope (workspace, package, module). `*` normalizes to empty.                                                          |
+| `{type}`       | Work type (`feat`, `fix`, `docs`, …). Carries the breaking marker itself (`feat!`) where the template names no `{breaking}`. |
+| `{breaking}`   | The breaking marker `!`, empty for a change that is not breaking.                                                            |
+| `{title}`      | Bare title text. Required in every template that should produce a non-empty title.                                           |
+| `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated.                                        |
+| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.                                                |
 
 A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so typos surface in the output.
 
-Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules. In an unquoted value a bare `#` (e.g., `#{pr_number}`) is preserved, but YAML's inline-comment convention — a space immediately followed by `#` — silently truncates the rest of the template. `title_format: {title} # legacy` becomes `{title}` with no warning. When in doubt, quote.
+Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `{`, `#`, `:`, and `|` from YAML's own parsing rules: unquoted, `{title}` opens a flow mapping rather than naming a token, and a space followed by `#` opens a comment. A value that resolves to anything but a string is reported and skipped, so a misquoted template falls through to the next source rather than rendering as written.
 
 ##### Optional groups
 
-A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the entire group — literals included — drops. After substitution, runs of multiple spaces are collapsed and leading/trailing whitespace is trimmed. Groups are processed left-to-right; nesting is not supported.
+A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group — literals included — drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would carry the marker. Groups nest, and a nested group decides its own fate: under `[[{scope}|]{type}: ]{title}`, a change naming no scope still renders `feat: Add foo`. Write `\[` and `\]` for a literal bracket.
+
+No whitespace pass runs after substitution, so each group carries its own separators — `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That is what lets `describe-change.mjs --parse` read a rendered title back into the record that produced it.
+
+A template that cannot round-trip is refused when preferences load, naming the surface, the template, and the defect: two adjacent tokens with no literal between them, a token named twice, an optional group whose opening literal repeats the text before it, or a `{breaking}` placed where the `!` cannot be told from its neighbour.
 
 Example template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
 

@@ -100,10 +100,10 @@ Compute the bare title from the PR title with the `ticket_ref` prefix stripped:
 - If PR title starts with `{ticket_ref} `, the bare title is everything after it.
 - Otherwise, the bare title is the full PR title.
 
-Render the merge-commit title via `describe-change.sh`:
+Render the merge-commit title via `describe-change.mjs`:
 
 ```bash
-{harness_home_dir}/scripts/describe-change.sh \
+node {harness_home_dir}/scripts/describe-change.mjs \
   --title "{bare_title}" \
   --scope "{scope}" \
   --type "{type}" \
