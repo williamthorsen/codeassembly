@@ -50,6 +50,15 @@ const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'states the edit and the trap and stops there',
 ];
 
+/**
+ * Phrases deciding what a bullet names and how it marks it. Where they are gone, the kinds list reads as the whole
+ * rule, so a token the reader never meets is backticked, and the internal call stands in for what the artifact does.
+ */
+const NAMING_RULE_PHRASES: ReadonlyArray<string> = [
+  'never the internal call that the change edited',
+  'what the reader consumes decides the marking',
+];
+
 /** A connective the drafter prescribes nowhere, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
 
@@ -172,6 +181,17 @@ describe('lede-drafter contract', () => {
       'A drafter reading "one bullet" as one edit splits a single outcome across bullets, and the split survives the ' +
       'whole pipeline: the audit may strike and correct but never merge, and the cutter may only delete. These ' +
       `phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('decides what a bullet names and how it marks it', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = NAMING_RULE_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The kinds list mis-predicts on its own: a flag is on it, and a flag this pipeline passes internally is one the ' +
+      "reader never meets. Where these are gone, a bullet marks by kind and reports the change's own call rather " +
+      `than what the reader gets. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
