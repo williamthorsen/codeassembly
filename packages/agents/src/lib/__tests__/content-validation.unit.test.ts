@@ -283,7 +283,7 @@ describe(validateContentRoot, () => {
 
   // The root also carries a defect the later stages would report, so a second entry would mean they ran anyway.
   it('reports an unsupported content format on its own, naming the declared and supported formats', async () => {
-    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 2\n');
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 3\n');
     await writeCollection(root, 'starter', { skills: ['no-such-skill'] });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
@@ -292,7 +292,7 @@ describe(validateContentRoot, () => {
       {
         file: '.',
         kind: 'root',
-        detail: 'Content root declares content format 2; this codeassembly supports content format 1.',
+        detail: 'Content root declares content format 3; this codeassembly supports content formats 1 and 2.',
       },
     ]);
   });
@@ -310,6 +310,42 @@ describe(validateContentRoot, () => {
   it('validates a root declaring a supported content format', async () => {
     await writeFileAt(root, 'codeassembly-content.yaml', 'format: 1\n');
     await writeSkill(root, 'alpha');
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+  });
+
+  it('reports an optional token under a format that predates the form, naming the token and the remedy', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 1\n');
+    await writeSkill(root, 'alpha');
+    await writeSkill(root, 'create-pr', { body: 'Delegate to {skill?:alpha}.' });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: 'skills/create-pr/SKILL.md', kind: 'root' });
+    expect(defects[0]?.detail).toContain('{skill?:alpha}');
+    expect(defects[0]?.detail).toContain('Declare format 2');
+  });
+
+  it('reports an optional token a root carries only through an unreferenced partial', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 1\n');
+    await writeFileAt(root, 'skills/_partials/delegate.md', 'Delegate to {subagent?:planner}.\n');
+
+    expect(filesOf(await validateContentRoot(root, ALL_HARNESS_IDS))).toEqual(['skills/_partials/delegate.md']);
+  });
+
+  it('accepts an optional token once the root declares the format that honors it', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 2\n');
+    await writeSkill(root, 'alpha');
+    await writeSkill(root, 'create-pr', { body: 'Delegate to {skill?:alpha}.' });
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+  });
+
+  it('accepts a required token under format 1, which the form predates', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 1\n');
+    await writeSkill(root, 'alpha');
+    await writeSkill(root, 'create-pr', { body: 'Delegate to {skill:alpha}.' });
 
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });

@@ -384,6 +384,64 @@ describe(resolveClosure, () => {
     });
   });
 
+  describe('optional body tokens', () => {
+    it('keeps an optional skill token out of the closure', async () => {
+      await writeArtifact(contentDir, 'skill', 'create-bitbucket-pr');
+      await writeArtifactWithBody(contentDir, 'skill', 'create-pr', 'Delegate to {skill?:create-bitbucket-pr}.');
+
+      const closure = await resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: [], skills: ['create-pr'], subagents: [] });
+    });
+
+    it('keeps an optional subagent token out of the closure', async () => {
+      await writeArtifact(contentDir, 'subagent', 'planner');
+      await writeArtifactWithBody(contentDir, 'skill', 'plan', 'Dispatch {subagent?:planner}.');
+
+      const closure = await resolveClosure({ skill: ['plan'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: [], skills: ['plan'], subagents: [] });
+    });
+
+    it('keeps the optional target’s own dependencies out of the closure', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'jira-conventions');
+      await writeArtifact(contentDir, 'skill', 'update-jira-ticket', { rulebook: ['jira-conventions'] });
+      await writeArtifactWithBody(contentDir, 'skill', 'create-ticket', 'Write per {skill?:update-jira-ticket}.');
+
+      const closure = await resolveClosure({ skill: ['create-ticket'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: [], skills: ['create-ticket'], subagents: [] });
+    });
+
+    it('keeps an optional token from closing a cycle its required form would close', async () => {
+      await writeArtifactWithBody(contentDir, 'skill', 'alpha', 'See {skill?:beta}.');
+      await writeArtifactWithBody(contentDir, 'skill', 'beta', 'See {skill:alpha}.');
+
+      const closure = await resolveClosure({ skill: ['alpha'] }, libraryResolver(contentDir));
+
+      expect(closure.skills).toEqual(['alpha']);
+    });
+
+    it.each([
+      { kind: 'skill' as const, body: 'Delegate to {skill?:ghost}.' },
+      { kind: 'subagent' as const, body: 'Dispatch {subagent?:ghost}.' },
+    ])('fails the run when an optional $kind token names a non-existent artifact', async ({ kind, body }) => {
+      await writeArtifactWithBody(contentDir, 'skill', 'create-pr', body);
+
+      await expect(resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir))).rejects.toThrow(
+        new RegExp(`Optional ${kind} "ghost", named by skill:create-pr, was not found`),
+      );
+    });
+
+    it('resolves an optional token carried by a rulebook body', async () => {
+      await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Invoke {skill?:ghost}.');
+
+      await expect(resolveClosure({ rulebook: ['some-rulebook'] }, libraryResolver(contentDir))).rejects.toThrow(
+        /Optional skill "ghost", named by rulebook:some-rulebook, was not found/,
+      );
+    });
+  });
+
   describe('resolving through declared sources', () => {
     let sourceDir: string;
 

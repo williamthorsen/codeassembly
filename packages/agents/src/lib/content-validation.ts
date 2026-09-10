@@ -8,18 +8,21 @@ import { ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './ar
 import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from './content-defects.ts';
 import { resolveContentDir } from './content-resolver.ts';
 import {
+  CONTENT_MANIFEST_FILENAME,
   type ContentFormatProblem,
   describeSupportedFormats,
   findContentFormatProblem,
+  OPTIONAL_TOKEN_CONTENT_FORMAT,
+  readContentRootManifest,
 } from './content-root-manifest.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
-import { listVisibleMarkdownFiles } from './fs-helpers.ts';
+import { listMarkdownFilesRecursively, listVisibleMarkdownFiles } from './fs-helpers.ts';
 import { HARNESSES, resolveSkillsPathPrefix } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
-import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
+import { locateInvocationTokens, type RulebookInvocationCatalog } from './invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
 import { homeAnchor } from './path-rewriter.ts';
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
@@ -55,6 +58,38 @@ const RETIRED_HARNESSES_KEY = 'harnesses';
  * frontmatter merge looks up by agent name and never reads it, so this pass is what tells a producer it is dead.
  */
 const RETIRED_TOOLS_KEY = '_tools';
+
+/**
+ * Reports every body that uses a form the root's declared content format predates. The optional invocation-token form
+ * needs format 2, so a root carrying one under a lower format ships its literal text on a tool implementing only that
+ * contract, which is the outcome the format field exists to prevent. The walk reads files rather than resolved bodies:
+ * a partial carries a token into every body that inlines it, and a partial resolves only within its own root.
+ */
+export async function findUnderdeclaredFormatDefects(root: string): Promise<ReadonlyArray<ContentDefect>> {
+  const { format } = await readContentRootManifest(root);
+  if (format >= OPTIONAL_TOKEN_CONTENT_FORMAT) {
+    return [];
+  }
+
+  const defects: Array<ContentDefect> = [];
+  const files = await listMarkdownFilesRecursively(root);
+  for (const file of files) {
+    const carried = locateInvocationTokens(await readFile(file, 'utf8')).filter((token) => token.optional);
+    if (carried.length === 0) {
+      continue;
+    }
+    const named = carried.map((token) => `{${token.kind}?:${token.slug}}`).join(', ');
+    defects.push({
+      file: path.relative(root, file),
+      kind: 'root',
+      detail:
+        `Carries an optional invocation token (${named}) under declared content format ${format}. ` +
+        `Declare format ${OPTIONAL_TOKEN_CONTENT_FORMAT} in ${CONTENT_MANIFEST_FILENAME}, or write the token in its ` +
+        'required form.',
+    });
+  }
+  return defects;
+}
 
 /**
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
@@ -104,6 +139,7 @@ export async function validateContentRoot(
   return [
     ...seeded.defects,
     ...artifacts.defects,
+    ...(await findUnderdeclaredFormatDefects(root)),
     ...findCollisionDefects(artifacts),
     ...(await findRetiredKeyDefects(artifacts)),
     ...(await findRetiredOverlayKeyDefects(root, harnessIds)),

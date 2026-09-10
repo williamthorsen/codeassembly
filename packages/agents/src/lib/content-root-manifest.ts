@@ -12,10 +12,17 @@ import { isMissingFile } from './type-guards.ts';
 export const CONTENT_MANIFEST_FILENAME = 'codeassembly-content.yaml';
 
 /**
+ * The format that first honors the optional invocation-token form. A root carrying one under a lower format deploys
+ * wrongly on a tool that implements only that lower contract: the token matches nothing, so its literal text ships
+ * into the body.
+ */
+export const OPTIONAL_TOKEN_CONTENT_FORMAT = 2;
+
+/**
  * The content formats this tool can deploy. A root declaring anything else is refused, because the contract it was
  * authored against is one this tool does not implement.
  */
-export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1];
+export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1, 2];
 
 /** The format a root with no manifest is treated as declaring: the contract that predates the manifest itself. */
 const DEFAULT_CONTENT_FORMAT = 1;
@@ -82,9 +89,14 @@ export async function assertSupportedContentFormats(roots: ReadonlyArray<Content
   }
 }
 
-/** Renders the supported formats for a message, so every caller names them the same way. */
+/**
+ * Renders the supported formats for a message, so every caller names them the same way. The noun agrees with the count
+ * and the last element joins with "and", because this sentence is the whole remedy a producer gets when a root is
+ * refused.
+ */
 export function describeSupportedFormats(): string {
-  return `content format ${SUPPORTED_CONTENT_FORMATS.join(', ')}`;
+  const formats = SUPPORTED_CONTENT_FORMATS.map(String);
+  return `content format${formats.length === 1 ? '' : 's'} ${joinAsProse(formats)}`;
 }
 
 /**
@@ -146,6 +158,14 @@ function describeProblem(root: ContentRootRef, problem: ContentFormatProblem): s
 /** Joins one kind's problems into the clause its error message reports them in. */
 function describeProblems(entries: ReadonlyArray<{ root: ContentRootRef; problem: ContentFormatProblem }>): string {
   return entries.map((entry) => describeProblem(entry.root, entry.problem)).join('; ');
+}
+
+/** Joins items as a reader says them: `a`, `a and b`, or `a, b, and c`. */
+function joinAsProse(items: ReadonlyArray<string>): string {
+  if (items.length < 3) {
+    return items.join(' and ');
+  }
+  return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
 }
 
 /**

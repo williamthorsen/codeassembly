@@ -1203,16 +1203,16 @@ describe(syncCommand, () => {
     );
 
     it('fails the run when a declared source declares an unsupported content format', async () => {
-      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /Unsupported content format.*"org".*2.*supports content format 1/s,
+        /Unsupported content format.*"org".*3.*supports content formats 1 and 2/s,
       );
     });
 
     it('fails a dry run, writing nothing, when a declared source declares an unsupported content format', async () => {
-      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
@@ -1222,7 +1222,7 @@ describe(syncCommand, () => {
     });
 
     it('fails the run when the content library declares an unsupported content format', async () => {
-      await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+      await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
@@ -2556,7 +2556,7 @@ describe(syncGlobalCommand, () => {
   it('fails the run when a declared source declares an unsupported content format', async () => {
     const sourceDir = path.join(contentDir, '..', `${path.basename(contentDir)}-source`);
     await mkdir(sourceDir, { recursive: true });
-    await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 2\n', 'utf8');
+    await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
     await declareRaw(`sources:\n  - name: org\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`);
 
     try {

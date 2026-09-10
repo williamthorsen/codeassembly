@@ -14,7 +14,7 @@ import {
   readMembers,
 } from './dependency-frontmatter.ts';
 import { expandIncludes } from './directive-expander.ts';
-import { extractInvocationEdges } from './invocation-tokens.ts';
+import { extractInvocationEdges, extractOptionalInvocationTargets } from './invocation-tokens.ts';
 import { enumerateCatalogSlugs } from './library-catalog.ts';
 
 /** The directly-declared slugs per type that seed closure resolution; an absent type seeds nothing. */
@@ -131,6 +131,28 @@ export async function resolveSeedClosures(
 // region | Helpers
 
 /**
+ * Throws when an optional invocation token in `body` names an artifact that resolves from no source or the library.
+ * An optional target never becomes an edge, so the closure walk never visits it and nothing else would catch a slug
+ * that a rename or a deletion left behind. The error names the artifact carrying the token and every location searched,
+ * matching what a required edge raises.
+ */
+async function assertOptionalTargetsResolve(body: string, referrer: string, resolver: SourceResolver): Promise<void> {
+  const targets = extractOptionalInvocationTargets(body);
+  const named: ReadonlyArray<{ type: ArtifactType; slug: string }> = [
+    ...targets.skills.map((slug) => ({ type: 'skill' as const, slug })),
+    ...targets.subagents.map((slug) => ({ type: 'subagent' as const, slug })),
+  ];
+  for (const { type, slug } of named) {
+    if ((await resolver.resolve(type, slug)) === undefined) {
+      throw new Error(
+        `Optional ${type} "${slug}", named by ${referrer}, was not found in any of: ` +
+          describeSearchedLocations(resolver, type, slug),
+      );
+    }
+  }
+}
+
+/**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
  * every location searched when the artifact resolves from no source or the library, plus the artifact that named it
  * where `trail` carries one. A seed's trail is empty, and naming where a seed came from is its caller's job. Every type
@@ -147,7 +169,8 @@ export async function resolveSeedClosures(
  * still errors. A rulebook unions its own body tokens the same way, off its include-expanded body, since its
  * frontmatter file is also its body file. A `{rulebook:<slug>}` token is unioned from every body that renders one --
  * rulebook, skill, and subagent alike -- so a rulebook named only inline deploys. Every unioned edge enters the closure
- * without a duplicate `dependencies:` declaration.
+ * without a duplicate `dependencies:` declaration. An optional token contributes no edge: Its target is resolved for
+ * existence and then dropped, so neither the target nor its own dependencies enter the closure.
  */
 async function readArtifactEdges(
   type: ArtifactType,
@@ -179,7 +202,9 @@ async function readArtifactEdges(
   if (type === 'rulebook') {
     // Expanded to match the render surface, so a token inside an inlined partial becomes an edge for the rulebook that
     // inlines it.
-    const tokens = extractInvocationEdges(await expandIncludes(filePath, resolved.dir));
+    const expandedRulebook = await expandIncludes(filePath, resolved.dir);
+    await assertOptionalTargetsResolve(expandedRulebook, `${type}:${slug}`, resolver);
+    const tokens = extractInvocationEdges(expandedRulebook);
     return {
       ...dependencies,
       rulebook: [...(dependencies.rulebook ?? []), ...tokens.rulebooks.filter((edge) => edge !== slug)],
@@ -193,6 +218,7 @@ async function readArtifactEdges(
   // declared dependencies. `visit` carries dedup and cycle-safety, so the unions are emitted unfiltered; a slug named
   // by both a token and `dependencies:` collapses to one visit.
   const expanded = await expandIncludes(filePath, resolved.dir);
+  await assertOptionalTargetsResolve(expanded, `${type}:${slug}`, resolver);
   const tokens = extractInvocationEdges(expanded);
   // A body token that names its own artifact is a render-only self-reference, not a dependency: Drop it before it
   // becomes an edge and reaches the cycle check. Only a same-kind, same-slug token self-collides, so filter per kind.
