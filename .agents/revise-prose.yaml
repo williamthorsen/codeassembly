@@ -1,122 +1,149 @@
 units:
   plain-speech:
     version: '4'
-    swept-at: 2026-09-09
+    swept-at: 2026-09-10
     roots:
       - packages/agents/content/_partials/plain-speech-calibration.md
       - packages/agents/content/_partials/plain-speech.md
       - packages/agents/content/_partials/target-file-set-resolution.md
       - packages/agents/content/skills/revise-prose/SKILL.md
+      - packages/agents/content/subagents/lede-drafter.md
       - packages/agents/content/subagents/prose-reviser.md
   williamthorsen-writing-preferences:
-    version: '2'
-    swept-at: 2026-09-09
+    version: '3'
+    swept-at: 2026-09-10
     roots:
-      - packages/agents/content/_partials/plain-speech-calibration.md
-      - packages/agents/content/_partials/plain-speech.md
-      - packages/agents/content/_partials/target-file-set-resolution.md
-      - packages/agents/content/skills/revise-prose/SKILL.md
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents/lede-drafter.md
 rejections:
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '"the change carries a flag"'
     ground: "a marked exhibit: the watchlist's own example of the use it forbids"
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '"the file carries a section"'
     ground: "a marked exhibit: the before half of case 2's own before/after pair"
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '**carry**'
     ground: 'not prose: the watchlist headword naming the word to search for, not a use of it'
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: what the text directs
     ground: '"direct" is used in its literal sense of giving authoritative instruction, which is what a guidance text does; the subject performs the verb and no plainer term names the relation'
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech.md
     phrase: '"the change carries a flag"'
     ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech.md
     phrase: '"The file carries a section"'
     ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech.md
     phrase: '"the record carries a version"'
     ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/_partials/plain-speech.md
     phrase: not "bears" or "carries"
     ground: "a marked exhibit: the rule's own example of the verbs it forbids"
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/subagents/prose-reviser.md
     phrase: carrying the old verdict over
     ground: '"carry over" is an ordinary phrasal verb whose subject is the sweeper, and it names one relation: reusing a prior verdict. It is not the possessive "carry" that the watchlist names.'
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/subagents/prose-reviser.md
     phrase: never what it directs
     ground: same idiom as the calibration partial; "direct" is literal for an instruction text, and the contrast with "how the text reads" is what the hard gate turns on
-    unit-version: '4'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: action it governs
     ground: 'a marked exhibit: it is the "Before:" block of the worked example, and the paragraph after the "After:" block names "the action that it governs" as the restored form'
-    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: plain one exists
     ground: 'not the construction: "a plain one" is the subject of "exists" in an adjunct clause, and there is no object gap'
-    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/_partials/target-file-set-resolution.md
     phrase: widen it afterwards
     ground: 'not the construction: "widen" is the sentence''s own imperative verb and "it" its object'
-    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/skills/revise-prose/SKILL.md
     phrase: failure it contains
     ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
-    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/skills/revise-prose/SKILL.md
     phrase: hands the recorded sites
     ground: 'not the construction: "hands" is the sentence''s own verb and "the recorded sites" its object'
-    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/skills/revise-prose/SKILL.md
     phrase: success it contains
     ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
-    unit-version: '2'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '2'
     file: packages/agents/content/skills/revise-prose/SKILL.md
     phrase: whatever rule it names
     ground: 'outside the rule: "whatever rule" is a fused head, which admits no relativizer'
-    unit-version: '2'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: in the order the fence listed them
+    ground: 'outside the rule: an adjunct relative whose gap fills no argument position, like "the way it works"'
+    unit-version: '3'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: not worth the reader's seconds
+    ground: 'not the construction: the noun phrase is the complement of the adjective `worth`, and `worth` heads no relative clause'
+    unit-version: '3'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: The form your answer takes
+    ground: 'not the construction: an embedded interrogative used as a section heading'
+    unit-version: '3'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: they will give your entry a few seconds
+    ground: 'not the construction: a double-object clause, not a relative clause with an object gap'
+    unit-version: '3'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: what form your answer takes
+    ground: 'not the construction: an embedded interrogative with a fronted wh-determiner, which admits no relativizer'
+    unit-version: '3'
