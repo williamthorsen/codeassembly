@@ -149,7 +149,7 @@ Two things to know about Rovo:
 
 ## Project declaration
 
-A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).
+A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `recommended` and `triage` collections. See [Scopes](#scopes).
 
 Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) live in the `codeassembly-content-specification` rulebook (`content/guidance/rulebooks/codeassembly-content-specification.md`). This section documents the declaration mechanism itself.
 

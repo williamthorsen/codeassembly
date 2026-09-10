@@ -79,8 +79,8 @@ export async function initCommand(options: InstallOptions, projectRoot: string =
 }
 
 /**
- * Scaffolds the user-global `~/.agents/codeassembly.yaml` seeded with the `all` collection, so `sync --global`
- * deploys the whole catalog into the home harness dirs.
+ * Scaffolds the user-global `~/.agents/codeassembly.yaml` seeded with the `recommended` and `triage` collections, so
+ * `sync --global` deploys them into the home harness dirs.
  *
  * @param homeDir The home directory to scaffold under (defaults to the OS home dir; injected in tests).
  */
