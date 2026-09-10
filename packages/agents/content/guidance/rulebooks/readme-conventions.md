@@ -1,6 +1,6 @@
 ---
 slug: readme-conventions
-description: What belongs in a README, how its shape follows from what it describes, and when detail moves to a docs directory.
+description: What belongs in a README, how its shape follows from what it describes, and where detail goes when it leaves. Consult before writing, restructuring, or adding a section to a README.
 delivery: skill
 version: '1'
 ---
@@ -35,19 +35,21 @@ Screenshots earn their place in the application row and almost nowhere else. A l
 
 ## The first screen
 
-Whatever the type, the opening makes the same three moves, in order:
+The opening makes up to three moves, in order. The first applies to every type; the second and third apply wherever a reader installs, imports, or runs the thing.
 
 1. **One sentence of identity.** What this is and who it serves. "A lightweight CLI that converts Markdown to PDF" tells a reader more than a paragraph of welcome.
 2. **How to get it running.** The install command, the import line, or the bootstrap command, whichever the type calls for.
 3. **The smallest thing that works.** One example, short enough to read without scrolling, that a reader can run unchanged.
 
-A README that reaches its second heading before making all three moves has buried its answer.
+A README that reaches its second heading before making the moves that apply to it has buried its answer.
 
-## Moving detail to a docs directory
+## Moving detail out of the README
 
 The test is who a section is written for, not how long the README has grown. A section addressed to a reader who has already decided to use the thing, and who has come back with a specific question, belongs in the `docs/` directory of the tier that owns it: the repository's for a root README, the package's own for a package README.
 
-Length is a symptom worth reading rather than the rule itself. A configuration package whose README runs long because per-option detail is its subject is correct as it stands; an application README of the same length usually has a reference manual hiding inside it.
+Detail about one symbol's behavior, such as its edge cases, its failure modes, and the reason for a rule that it enforces, belongs in that symbol's doc comment, where a caller reads it while holding the symbol. A README paragraph that would make a good doc comment is a doc comment in the wrong file.
+
+Length is a symptom worth reading, with one hard limit: The npm registry truncates a published package's README at 65,536 characters, silently and mid-sentence, and `wc -m README.md` measures it. Within that limit, a configuration package whose README runs long because per-option detail is its subject is correct as it stands; an application README of the same length usually has a reference manual hiding inside it.
 
 Move the section, and leave a link where a reader looking for it would have found it. A pointer costs one line, and a reader who concludes the answer does not exist costs more.
 
