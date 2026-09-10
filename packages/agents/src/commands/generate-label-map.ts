@@ -6,13 +6,14 @@ import { pathExists } from '@williamthorsen/kb/filesystem';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 
-/** Canonical mapping from commit type keys to human-readable label values. */
+/** Canonical mapping from commit type keys to the label names a tracker carries. */
 const TYPE_MAP: Readonly<Record<string, string>> = {
   ai: 'ai',
   ci: 'ci',
-  deprecate: 'deprecate',
+  deprecate: 'deprecation',
   deps: 'dependencies',
   docs: 'documentation',
+  drop: 'removal',
   feat: 'feature',
   fix: 'fix',
   fmt: 'formatting',

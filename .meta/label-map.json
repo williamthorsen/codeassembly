@@ -1,11 +1,12 @@
 {
-  "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v10.4.4/packages/release-kit/schemas/label-map.json",
+  "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v10.5.0/packages/release-kit/schemas/label-map.json",
   "types": {
     "ai": "ai",
     "ci": "ci",
-    "deprecate": "deprecate",
+    "deprecate": "deprecation",
     "deps": "dependencies",
     "docs": "documentation",
+    "drop": "removal",
     "feat": "feature",
     "fix": "fix",
     "fmt": "formatting",
