@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   assertSupportedContentFormats,
+  describeSupportedFormats,
   findContentFormatProblem,
   readContentRootManifest,
 } from '../content-root-manifest.ts';
@@ -62,6 +63,14 @@ describe(readContentRootManifest, () => {
     const root = await makeRoot(baseDir, `invalid-${label.replaceAll(' ', '-')}`, body);
 
     await expect(readContentRootManifest(root)).rejects.toThrow(/format/);
+  });
+});
+
+describe(describeSupportedFormats, () => {
+  // The sentence this renders is the whole remedy a refused producer gets, so the noun agrees with the count and the
+  // last element joins with "and" rather than a comma.
+  it('names the supported formats as a reader says them', () => {
+    expect(describeSupportedFormats()).toBe('content formats 1 and 2');
   });
 });
 
@@ -139,7 +148,7 @@ describe(assertSupportedContentFormats, () => {
     ]);
 
     await expect(failure).rejects.toThrow(/org-guidance.*3.*personal.*4/s);
-    await expect(failure).rejects.toThrow(/supports content format 1, 2/);
+    await expect(failure).rejects.toThrow(/supports content formats 1 and 2/);
   });
 
   it('attributes an unnamed root by its directory', async () => {

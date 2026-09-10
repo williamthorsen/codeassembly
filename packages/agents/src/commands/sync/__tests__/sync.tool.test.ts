@@ -1207,7 +1207,7 @@ describe(syncCommand, () => {
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /Unsupported content format.*"org".*3.*supports content format 1, 2/s,
+        /Unsupported content format.*"org".*3.*supports content formats 1 and 2/s,
       );
     });
 

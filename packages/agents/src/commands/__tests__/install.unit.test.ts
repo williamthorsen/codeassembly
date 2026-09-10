@@ -52,7 +52,7 @@ describe(installCommand, () => {
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
 
     await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir)).rejects.toThrow(
-      /Unsupported content format.*3.*supports content format 1, 2/s,
+      /Unsupported content format.*3.*supports content formats 1 and 2/s,
     );
     expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(false);
   });

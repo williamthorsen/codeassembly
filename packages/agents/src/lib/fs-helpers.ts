@@ -1,5 +1,6 @@
 import type { Dirent } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import { isEnoent } from './type-guards.ts';
 
@@ -26,6 +27,19 @@ export function isUnderTestDirectory(relativePath: string): boolean {
   return relativePath.split(/[/\\]/).some((segment) => isTestDirectory(segment));
 }
 
+/**
+ * Lists every authored Markdown file under `root` at any depth, as absolute paths, skipping the test tree. Partials
+ * and dotfiles are included: a check that reads a body as the pipeline expands it sees a partial's content too, so a
+ * walk that dropped them would miss what an inlining body ships. Empty when `root` is absent.
+ */
+export async function listMarkdownFilesRecursively(root: string): Promise<ReadonlyArray<string>> {
+  const entries = await readDirEntriesRecursively(root);
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
+}
+
 /** Lists visible (`.md`, non-`_`, non-dotfile) regular-file names directly in `dir`; empty when `dir` is absent. */
 export async function listVisibleMarkdownFiles(dir: string): Promise<Array<string>> {
   return (await readDirEntries(dir))
@@ -44,6 +58,18 @@ export async function listVisibleSubdirectories(dir: string): Promise<Array<stri
 export async function readDirEntries(dir: string): Promise<Array<Dirent>> {
   try {
     return await readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    if (isEnoent(error)) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+/** Reads `dir` with file types at every depth, returning `[]` when the directory does not exist. */
+export async function readDirEntriesRecursively(dir: string): Promise<Array<Dirent>> {
+  try {
+    return await readdir(dir, { recursive: true, withFileTypes: true });
   } catch (error) {
     if (isEnoent(error)) {
       return [];
