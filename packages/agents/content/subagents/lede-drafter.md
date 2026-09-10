@@ -80,7 +80,7 @@ A revert has the work type of the change that it undoes, so your dispatch names 
 
 ## The form your answer takes
 
-Mechanical, and none of it decides what goes in.
+These fix how a bullet is written. None of them ranks the facts; the question and the reader above do that.
 
 - The lede is a bullet list, one bullet per change. A second concern is a second bullet.
 - A bullet is one sentence. A change that needs two is either two changes or one that you have not finished reducing.
