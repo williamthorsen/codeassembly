@@ -6,6 +6,7 @@ units:
       - packages/agents/content/_partials/plain-speech-calibration.md
       - packages/agents/content/_partials/plain-speech.md
       - packages/agents/content/_partials/target-file-set-resolution.md
+      - packages/agents/content/collections/atlassian.md
       - packages/agents/content/skills/revise-prose/SKILL.md
       - packages/agents/content/subagents/lede-cutter.md
       - packages/agents/content/subagents/lede-drafter.md
@@ -14,6 +15,7 @@ units:
     version: '3'
     swept-at: 2026-09-10
     roots:
+      - packages/agents/content/collections/atlassian.md
       - packages/agents/content/subagents/lede-cutter.md
       - packages/agents/content/subagents/lede-drafter.md
 rejections:
@@ -67,28 +69,40 @@ rejections:
     ground: "a marked exhibit: the rule's own example of the verbs it forbids"
   - rule: plain-speech
     unit: plain-speech
+    file: packages/agents/content/collections/atlassian.md
+    phrase: Each member costs a line in the skill index of every session
+    ground: the sentence already names the unit spent, a line in the skill index, which is what the watchlist entry for "cost" asks for; the content specification uses the same wording
+    unit-version: '4'
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/collections/atlassian.md
+    phrase: Nothing outside this collection reaches a member.
+    ground: 'graph-reachability sense settled in this corpus: the content specification states the same criterion as "Nothing outside it reaches its members", and collection-dispositions.unit.test.ts reports "triage''s closure reaches skill:vendor"'
+    unit-version: '4'
+  - rule: plain-speech
+    unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: Two things to hold while you read.
     ground: '`hold in mind` is ordinary idiom here, not the flagged storage sense of `hold`'
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: where every candidate earns its place
     ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: earns its place after a compiler-target bump
     ground: settled corpus vocabulary, as with the coverage bar the same phrase names elsewhere
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
+    unit-version: '4'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: plants the doubt that it means to remove
     ground: a conventional collocation rather than a figure built for the sentence; it parses on one pass
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
     unit-version: '4'
@@ -145,55 +159,55 @@ rejections:
     ground: 'outside the rule: "whatever rule" is a fused head, which admits no relativizer'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: they will give the entry a few seconds
     ground: 'not the construction: a ditransitive clause, with `the entry` and `a few seconds` both objects of `give`'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: which part of the codebase it changed
     ground: 'not the construction: an embedded interrogative whose fronted wh-phrase admits no relativizer'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: worth the reader's seconds
     ground: "not the construction: `worth` is an adjective and `the reader's seconds` is its complement, not a relative clause"
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: in the order the fence listed them
     ground: 'outside the rule: an adjunct relative whose gap fills no argument position, like "the way it works"'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: not worth the reader's seconds
     ground: 'not the construction: the noun phrase is the complement of the adjective `worth`, and `worth` heads no relative clause'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: The form your answer takes
     ground: 'not the construction: an embedded interrogative used as a section heading'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: they will give your entry a few seconds
     ground: 'not the construction: a double-object clause, not a relative clause with an object gap'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: what form your answer takes
     ground: 'not the construction: an embedded interrogative with a fronted wh-determiner, which admits no relativizer'
-    unit-version: '3'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
+    unit-version: '3'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: which part of the codebase it changed
     ground: 'not the construction: an embedded interrogative whose fronted wh-phrase admits no relativizer'
-    unit-version: '3'
