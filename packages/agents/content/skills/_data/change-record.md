@@ -26,13 +26,13 @@ Change: agents|feat: Add the parser
 Change: agents|fix: Correct the guard
 ```
 
-`condense-branch` writes these when it squashes a branch, so a condensed branch stays readable. Git parses them as trailers, so the block may sit below any number of body paragraphs.
+`condense-branch` will write these when it squashes a branch, so a condensed branch stays readable; it does not write them yet. Git parses them as trailers, so the block may sit below any number of body paragraphs.
 
 **A commit carrying trailers contributes them in place of its subject.** Its subject is the head those trailers already consolidate to, so reading both would count the branch against itself.
 
 ## The `change-record` block
 
-A pull-request body ends with a fenced block naming `change-record` as its info string. The payload is YAML.
+A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML. The renderer ships; the skill that writes the block into a body does not yet.
 
 ````markdown
 ```change-record
@@ -60,11 +60,13 @@ The payload is YAML rather than a surface template because `head` and `overrides
 
 ## Where the record is written
 
-| Surface                    | What it carries                                                                   |
-| -------------------------- | --------------------------------------------------------------------------------- |
-| Change-summary frontmatter | `title`, `scope`, `type`, `breaking`, `changes`, `ticket_type`                    |
-| Condensed commit message   | One `Change:` trailer per entry                                                   |
-| Pull-request body          | The `change-record` block, as the final block, alongside `Closes`                 |
-| Pull-request labels        | The head's type and scope, mapped through `.meta/label-map.json`, plus `breaking` |
+This table states the target contract. Only the classification itself is built; every row below is pending, and no skill writes any of it yet.
 
-The change-summary fields are specified in [artifact conventions](./artifact-conventions.md#change-summary-frontmatter).
+| Surface                    | What it will carry                                                                | Status  |
+| -------------------------- | --------------------------------------------------------------------------------- | ------- |
+| Change-summary frontmatter | `title`, `scope`, `type`, `breaking`, `changes`, `ticket_type`                    | Pending |
+| Condensed commit message   | One `Change:` trailer per entry                                                   | Pending |
+| Pull-request body          | The `change-record` block, as the final block, alongside `Closes`                 | Pending |
+| Pull-request labels        | The head's type and scope, mapped through `.meta/label-map.json`, plus `breaking` | Pending |
+
+Read this section as the contract the consuming work is written against, never as a description of what the pipeline does today. [Artifact conventions](./artifact-conventions.md#change-summary-frontmatter) specifies `title`, `scope`, and `type`; the other three change-summary fields are specified there when the surface that writes them lands.
