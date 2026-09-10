@@ -607,7 +607,7 @@ Quote `title_format` values in YAML (single or double quotes are both fine). Quo
 
 ##### Optional groups
 
-A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group — literals included — drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would carry the marker. Groups nest, and a nested group decides its own fate: under `[[{scope}|]{type}: ]{title}`, a change naming no scope still renders `feat: Add foo`. Write `\[` and `\]` for a literal bracket.
+A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group — literals included — drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would carry the marker. Groups nest, and a nested group decides its own fate: under `[[{scope}|]{type}: ]{title}`, a change naming no scope still renders `feat: Add foo`. A flat group holding both tokens takes the type down with an absent scope instead, and a `*` scope is absent by the time the group decides, so a template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
 
 No whitespace pass runs after substitution, so each group carries its own separators — `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That is what lets `describe-change.mjs --parse` read a rendered title back into the record that produced it.
 
@@ -615,13 +615,13 @@ A template that cannot round-trip is refused when preferences load, naming the s
 
 Example template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
 
-| Inputs                       | Output                              |
-| ---------------------------- | ----------------------------------- |
-| All five tokens populated    | `#466 agents\|feat: Add foo (#470)` |
-| No `{ticket_ref}`            | `agents\|feat: Add foo (#470)`      |
-| No `{scope}` and no `{type}` | `#466 Add foo (#470)`               |
-| No `{pr_number}`             | `#466 agents\|feat: Add foo`        |
-| Only `{title}`               | `Add foo`                           |
+| Inputs                    | Output                              |
+| ------------------------- | ----------------------------------- |
+| All five tokens populated | `#466 agents\|feat: Add foo (#470)` |
+| No `{ticket_ref}`         | `agents\|feat: Add foo (#470)`      |
+| No `{scope}`              | `#466 Add foo (#470)`               |
+| No `{pr_number}`          | `#466 agents\|feat: Add foo`        |
+| Only `{title}`            | `Add foo`                           |
 
 ##### Examples
 
@@ -655,31 +655,31 @@ Scope-pipe-type prefix with optional drop (monorepo convention):
 
 ```yaml
 commit:
-  title_format: '[{scope}|{type}: ]{title}'
+  title_format: '[[{scope}|]{type}: ]{title}'
 ```
 
-Produces: `agents|feat: Add script installer` when scope and type are present, `Add script installer` when either is missing.
+Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` with no scope, and `Add script installer` with no type. Nesting the scope in a group of its own is what keeps the type when the scope drops; a flat `[{scope}|{type}: ]` takes the type down with it.
 
 Conventional commits with scope in parentheses:
 
 ```yaml
 commit:
-  title_format: '[{type}({scope}): ]{title}'
+  title_format: '{type}[({scope})]{breaking}: {title}'
 ```
 
-Produces: `feat(agents): Add script installer`
+Produces: `feat(agents): Add script installer`, and `feat: Add script installer` with no scope.
 
 Squash-merge convention (the typical shape this repo uses):
 
 ```yaml
 commit:
-  title_format: '[{scope}|{type}: ]{title}'
+  title_format: '[[{scope}|]{type}: ]{title}'
 ticket:
   title_format: '{title}'
 pr:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
+  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}'
 merge:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
+  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'
 ```
 
 Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' --pr-number 470`):
@@ -774,13 +774,13 @@ repository:
     default_branch: main
 
 commit:
-  title_format: '[{scope}|{type}: ]{title}'
+  title_format: '[[{scope}|]{type}: ]{title}'
 ticket:
   title_format: '{title}'
 pr:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
+  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}'
 merge:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
+  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'
 
 integrations:
   jira:

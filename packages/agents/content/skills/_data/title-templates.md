@@ -25,13 +25,13 @@ The bundle reads `commit.title_format`, `ticket.title_format`, `pr.title_format`
 
 ```yaml
 commit:
-  title_format: '[{scope}|{type}: ]{title}'
+  title_format: '[[{scope}|]{type}: ]{title}'
 ticket:
   title_format: '{title}'
 pr:
   title_format: '[{ticket_ref} ]{title}'
 merge:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
+  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'
 ```
 
 Quote every `title_format` value, single or double quotes alike. Unquoted, YAML reads `{title}` as a flow mapping rather than a token, and a space followed by `#` opens a comment.
@@ -104,6 +104,8 @@ A template that omits `{title}` produces a title without the bare title text: th
 ## Optional groups
 
 A `[...]` group renders verbatim when every token directly inside it resolves non-empty. When one is empty, the whole group drops, literals included.
+
+A group holding both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the group decides. Where the type should survive a scope-less change, nest the scope in a group of its own, as the piped-scope convention does.
 
 `{breaking}` never decides a group. A non-breaking change would otherwise drop the very prefix that carries the marker.
 
