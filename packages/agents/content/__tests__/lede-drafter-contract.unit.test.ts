@@ -19,7 +19,11 @@ const ASSIGNMENT_QUESTION = 'What is this PR about?';
  * Phrases fixing a bullet's scope to the outcome rather than to the edit. Where they are gone, "one bullet" reads as
  * one edit, and neither the caller's audit nor the deletion-only cutter may merge the bullets that reading splits.
  */
-const BULLET_SCOPE_PHRASES: ReadonlyArray<string> = ['one bullet per outcome', 'not the edit that produced it'];
+const BULLET_SCOPE_PHRASES: ReadonlyArray<string> = [
+  'either two outcomes',
+  'not the edit that produced it',
+  'one bullet per outcome',
+];
 
 /** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
