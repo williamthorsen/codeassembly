@@ -15,7 +15,7 @@ export const CONTENT_MANIFEST_FILENAME = 'codeassembly-content.yaml';
  * The content formats this tool can deploy. A root declaring anything else is refused, because the contract it was
  * authored against is one this tool does not implement.
  */
-export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1];
+export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1, 2];
 
 /** The format a root with no manifest is treated as declaring: the contract that predates the manifest itself. */
 const DEFAULT_CONTENT_FORMAT = 1;

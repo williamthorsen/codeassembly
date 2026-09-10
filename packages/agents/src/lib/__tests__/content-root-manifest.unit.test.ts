@@ -82,16 +82,16 @@ describe(findContentFormatProblem, () => {
     expect(await findContentFormatProblem(root)).toBeUndefined();
   });
 
-  it('reports no problem for a supported format', async () => {
-    const root = await makeRoot(baseDir, 'supported', 'format: 1\n');
+  it.each([1, 2])('reports no problem for supported format %i', async (format) => {
+    const root = await makeRoot(baseDir, `supported-${format}`, `format: ${format}\n`);
 
     expect(await findContentFormatProblem(root)).toBeUndefined();
   });
 
   it('classifies a format outside the supported set as unsupported', async () => {
-    const root = await makeRoot(baseDir, 'ahead', 'format: 2\n');
+    const root = await makeRoot(baseDir, 'ahead', 'format: 3\n');
 
-    expect(await findContentFormatProblem(root)).toEqual({ kind: 'unsupported', detail: expect.stringContaining('2') });
+    expect(await findContentFormatProblem(root)).toEqual({ kind: 'unsupported', detail: expect.stringContaining('3') });
   });
 
   it('classifies an unreadable manifest as malformed, naming the file', async () => {
@@ -117,28 +117,33 @@ describe(assertSupportedContentFormats, () => {
 
   it('passes roots that declare a supported format or none at all', async () => {
     const declared = await makeRoot(baseDir, 'declared', 'format: 1\n');
+    const optionalTokens = await makeRoot(baseDir, 'optional-tokens', 'format: 2\n');
     const bare = await makeRoot(baseDir, 'bare');
 
     await expect(
-      assertSupportedContentFormats([{ name: 'declared', dir: declared }, { dir: bare }]),
+      assertSupportedContentFormats([
+        { name: 'declared', dir: declared },
+        { name: 'optional-tokens', dir: optionalTokens },
+        { dir: bare },
+      ]),
     ).resolves.toBeUndefined();
   });
 
   it('names every unsupported root, its declared format, and the supported formats', async () => {
-    const first = await makeRoot(baseDir, 'first', 'format: 2\n');
-    const second = await makeRoot(baseDir, 'second', 'format: 3\n');
+    const first = await makeRoot(baseDir, 'first', 'format: 3\n');
+    const second = await makeRoot(baseDir, 'second', 'format: 4\n');
 
     const failure = assertSupportedContentFormats([
       { name: 'org-guidance', dir: first },
       { name: 'personal', dir: second },
     ]);
 
-    await expect(failure).rejects.toThrow(/org-guidance.*2.*personal.*3/s);
-    await expect(failure).rejects.toThrow(/supports content format 1/);
+    await expect(failure).rejects.toThrow(/org-guidance.*3.*personal.*4/s);
+    await expect(failure).rejects.toThrow(/supports content format 1, 2/);
   });
 
   it('attributes an unnamed root by its directory', async () => {
-    const root = await makeRoot(baseDir, 'library', 'format: 2\n');
+    const root = await makeRoot(baseDir, 'library', 'format: 3\n');
 
     await expect(assertSupportedContentFormats([{ dir: root }])).rejects.toThrow(root);
   });
@@ -147,7 +152,7 @@ describe(assertSupportedContentFormats, () => {
   // folded into the version mismatch a reader would then be told to fix by upgrading.
   it('raises a malformed manifest separately from an unsupported format', async () => {
     const malformed = await makeRoot(baseDir, 'malformed', 'format: [1\n');
-    const unsupported = await makeRoot(baseDir, 'unsupported', 'format: 2\n');
+    const unsupported = await makeRoot(baseDir, 'unsupported', 'format: 3\n');
 
     await expect(
       assertSupportedContentFormats([

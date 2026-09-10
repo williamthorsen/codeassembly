@@ -283,7 +283,7 @@ describe(validateContentRoot, () => {
 
   // The root also carries a defect the later stages would report, so a second entry would mean they ran anyway.
   it('reports an unsupported content format on its own, naming the declared and supported formats', async () => {
-    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 2\n');
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 3\n');
     await writeCollection(root, 'starter', { skills: ['no-such-skill'] });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
@@ -292,7 +292,7 @@ describe(validateContentRoot, () => {
       {
         file: '.',
         kind: 'root',
-        detail: 'Content root declares content format 2; this codeassembly supports content format 1.',
+        detail: 'Content root declares content format 3; this codeassembly supports content format 1, 2.',
       },
     ]);
   });
