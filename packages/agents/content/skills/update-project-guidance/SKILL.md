@@ -87,6 +87,7 @@ For each finding, assign one of these classes:
 **Rules:**
 
 - Two axes decide the destination. **Scope** (general vs project-specific) separates `{harness_home_dir}/{harness_guidance_file}` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` states from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
+- What belongs in a README, and when a section moves to a `docs/` directory instead, is stated by {rulebook:readme-conventions}. Consult it before routing a finding to the reference tier: A README's shape follows from what it describes, so the same finding lands differently in a library's README and a monorepo root's.
 - A finding belongs in the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch goes stale silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, ask the user: one question at a time, prefer multiple choice.
