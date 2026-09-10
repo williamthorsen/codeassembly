@@ -103,7 +103,7 @@ A collection enumerates every member, not just its dependency roots. Roots-only 
 
 ### Dispositions
 
-Declaring a collection is a claim about its members, so every artifact has at least one disposition recording the claims it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- i.e., the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: It neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence tolerate no conflicting claim: Standalone means membership in no collection, and triage excludes vetted membership. An opt-in collection asserts an absence of a third kind, about what reaches its members rather than about what they belong to. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+Declaring a collection is a claim about its members, so every artifact has at least one disposition recording the claims it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- i.e., the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: It neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence tolerate no conflicting claim: Standalone means membership in no collection, and triage excludes vetted membership. An opt-in collection asserts an absence of its own: Nothing outside it reaches its members. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 
 Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
 
@@ -126,9 +126,9 @@ Deciding a disposition takes two reading passes, and the second is the one that 
 
 **An opt-in collection** (`atlassian` here) claims fit to one vendor ecosystem rather than to one author or to everyone:
 
-- Nothing outside it reaches its members: No other collection enumerating its own members resolves a closure containing one, so a consumer that does not declare it never deploys one. That is what standalone gets from membership in no collection, extended to a bundle whose members are wanted together.
+- Nothing outside it reaches its members: No other collection enumerating its own members resolves a closure containing one, so a consumer that does not declare it never deploys one.
 - Its closure contains only opt-in and public members.
-- Its members earn their skill-index lines only where the ecosystem is in use, which is what makes the collection worth having rather than recording each member standalone.
+- A consumer declares it only where that vendor's products are in use, since each member costs a line in the skill index of every session.
 
 The first criterion is enforced rather than observed, because a single invocation token restored to its required form would undo it silently. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 

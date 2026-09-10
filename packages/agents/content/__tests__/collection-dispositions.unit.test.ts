@@ -106,9 +106,9 @@ describe('collection dispositions', () => {
   });
 
   // An opt-in member costs a skill-index line on every machine that deploys it, and the collection's whole claim is
-  // that only a machine declaring it pays. One restored invocation token undoes that silently: the general PR, merge,
-  // review, and ticket skills each address a member through an optional token, and writing one in its required form
-  // hands the members back to every consumer of those skills.
+  // that only a machine declaring it deploys one. One restored invocation token undoes that silently: the general PR,
+  // merge, review, and ticket skills each address a member through an optional token, and writing one in its required
+  // form hands the members back to every consumer of those skills.
   it.each(OPT_IN_COLLECTIONS)('keeps %s out of every other collection’s closure', async (optIn) => {
     const collections = await readExplicitCollections(contentDir);
     const members = listArtifactIds(collections.get(optIn) ?? {});
