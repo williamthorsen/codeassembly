@@ -1,15 +1,15 @@
 # Title templates
 
-Commit titles, ticket titles, PR titles, and squash-merge titles are produced from declarative templates. Each surface has its own template, configured per repository and per user, and rendered by `describe-change.sh` from a small set of named tokens.
+Commit titles, ticket titles, PR titles, and squash-merge titles are produced from declarative templates. Each surface has its own template, configured per repository and per user, and rendered by `describe-change.mjs` from a small set of named tokens. One compiled template serves both directions: the same template that renders a title reads a rendered title back into its parts.
 
-This file states how a title is rendered; [`title-voice.md`](./title-voice.md) states how the `{title}` text fed to these templates is composed.
+This file states how a title is rendered and read; [`title-voice.md`](./title-voice.md) states how the `{title}` text fed to these templates is composed.
 
-## Rendering the title
+## Rendering a title
 
-Run the `describe-change.sh` script with every input that is available; templates control which tokens are required:
+Run the bundle with every input that is available; templates control which tokens are required:
 
 ```bash
-{harness_home_dir}/scripts/describe-change.sh \
+node {harness_home_dir}/scripts/describe-change.mjs \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \
@@ -17,56 +17,11 @@ Run the `describe-change.sh` script with every input that is available; template
   --pr-number "{pr_number}"
 ```
 
-All flags are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so titles with spaces or shell-special characters survive.
+The bundle carries no shebang, so the `node` prefix is required.
 
-The script reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and `merge.title_format` from `.agents/preferences.yaml` (project) then `~/.agents/preferences.yaml` (global), falling back to empty string. It outputs JSON:
+All flags are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so titles with spaces or shell-special characters survive. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to no scope, so the sentinel never reaches a rendered title.
 
-```json
-{
-  "commit_title": "agents|feat: Add script installer",
-  "ticket_title": "Add script installer",
-  "pr_title": "#466 agents|feat: Add script installer",
-  "merge_title": "#466 agents|feat: Add script installer (#470)"
-}
-```
-
-Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title` for pull-request titles, and `merge_title` for the squash-merge title shown in the merge UI. Each value is the fully rendered title; do not concatenate it with the bare `title`.
-
-If the script is not found, fall back to the bare `--title` value.
-
-## Supported tokens
-
-| Token          | Resolves to                                                                           |
-| -------------- | ------------------------------------------------------------------------------------- |
-| `{scope}`      | Change scope (workspace, package, module).                                            |
-| `{type}`       | Work type (`feat`, `fix`, `docs`, …).                                                 |
-| `{title}`      | Bare title text. Required in every template that should produce a non-empty title.    |
-| `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated. |
-| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.         |
-
-A template that omits `{title}` produces a title without the bare title text: `describe-change.sh` does not insert it implicitly. Unknown tokens (e.g., a typo like `{titel}`) are left as-is so the mistake is visible in the rendered output.
-
-## Optional groups via `[...]`
-
-A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the renderer drops the entire group, literals included. Groups are processed left-to-right and may not be nested.
-
-After substitution, a final whitespace pass collapses runs of multiple spaces into a single space and trims leading and trailing whitespace.
-
-### Worked example
-
-Template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
-
-| Inputs                       | Output                              |
-| ---------------------------- | ----------------------------------- |
-| All five tokens populated    | `#466 agents\|feat: Add foo (#470)` |
-| No `{ticket_ref}`            | `agents\|feat: Add foo (#470)`      |
-| No `{scope}` and no `{type}` | `#466 Add foo (#470)`               |
-| No `{pr_number}`             | `#466 agents\|feat: Add foo`        |
-| Only `{title}`               | `Add foo`                           |
-
-The whitespace-collapse pass turns `  Add foo  ` into `Add foo` and prevents extra spaces from showing up next to dropped groups (e.g., `[{ticket_ref}] {title} [{pr_number}]` with only `{title}` populated renders as `Add foo`, not `  Add foo  `).
-
-## Common templates
+The bundle reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and `merge.title_format` from `.agents/preferences.yaml` at the repository root, then from `~/.agents/preferences.yaml`, falling back to the empty string. Resolution is per key, so a project file naming `commit.title_format` alone still inherits the other three from the global file, and a key present with an empty value opts that surface out.
 
 ```yaml
 commit:
@@ -74,21 +29,139 @@ commit:
 ticket:
   title_format: '{title}'
 pr:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
+  title_format: '[{ticket_ref} ]{title}'
 merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
 
-Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules. In an unquoted value a bare `#` (e.g., `#{pr_number}`) is preserved, but YAML's inline-comment convention (a space immediately followed by `#`) silently truncates the rest of the template. `title_format: {title} # legacy` becomes `{title}` with no warning. When in doubt, quote. The parser does not understand YAML's escape forms for embedded quote characters (`''` inside a single-quoted string, `""` inside a double-quoted string); if a template needs a literal apostrophe, wrap it in double quotes (or vice versa).
+Quote every `title_format` value, single or double quotes alike. Unquoted, YAML reads `{title}` as a flow mapping rather than a token, and a space followed by `#` opens a comment.
 
-| Template                       | Sample output                        |
-| ------------------------------ | ------------------------------------ |
-| `'{title}'`                    | `Add script installer`               |
-| `'{type}: {title}'`            | `feat: Add script installer`         |
-| `'{type}({scope}): {title}'`   | `feat(agents): Add script installer` |
-| `'[{scope}\|{type}: ]{title}'` | `agents\|feat: Add script installer` |
-| `'[{ticket_ref} ]{title}'`     | `#466 Add script installer`          |
-| `'{title} ({ticket_ref})'`     | `Add script installer (#466)`        |
+Output is JSON:
+
+```json
+{
+  "commit_title": "agents|feat: Add script installer",
+  "ticket_title": "Add script installer",
+  "pr_title": "#466 Add script installer",
+  "merge_title": "#466 agents|feat: Add script installer (#470)"
+}
+```
+
+Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title` for pull-request titles, and `merge_title` for the squash-merge title shown in the merge UI. Each value is the fully rendered title; do not concatenate it with the bare `title`.
+
+If the bundle is not found, fall back to the bare `--title` value.
+
+### What stops a run and what only warns
+
+- A configured template that the engine cannot invert stops the run, naming the surface, the template, and the defect. See [What the grammar refuses](#what-the-grammar-refuses).
+- Malformed YAML in a preferences file stops the run, naming the file.
+- A run outside a repository warns on stderr and anchors the `.agents/` lookup at the working directory, so the global templates still render.
+- A `title_format` resolving to anything but a string draws a warning on stderr, and the next source supplies the template.
+
+## Reading a title back
+
+`--parse` inverts one surface's template, so a rendered subject reads back into the record that produced it:
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs --parse commit "agents|feat: Add foo"
+```
+
+The output names every field, with `null` where the record carries none:
+
+```json
+{
+  "breaking": false,
+  "matched": true,
+  "pr_number": null,
+  "scope": "agents",
+  "ticket_ref": null,
+  "title": "Add foo",
+  "type": "feat"
+}
+```
+
+A subject not matched by the template reports `{"matched":false}` and exits 0. A hand-written subject is an ordinary result rather than an error, so a caller reads `matched` rather than the exit status.
+
+**A type is required.** A template naming `{type}` reads a subject carrying no declared type as unmatched, whatever else the subject carries. Under `[[{scope}|]{type}: ]{title}`, both `agents|Add foo` and `Support a|b: syntax` are unmatched, the second because `b` is no declared type.
+
+**A template naming no `{ticket_ref}` strips one first.** The bundle removes three leading forms before the match: `## `, `#123 ` (with an optional `.1` or `-1` suffix), and `ABC-123 `. These are the forms that release-kit strips, which is what lets a commit template naming no `{ticket_ref}` read a subject that carries one.
+
+**Where a parse could read a group as present or absent, present wins.** This is release-kit's reading, and it is what makes `agents|feat: Add foo` parse as scoped and typed rather than as a bare title. See [What the grammar does not support](#what-the-grammar-does-not-support) for the cost.
+
+## Supported tokens
+
+| Token          | Resolves to                                                                                                            |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `{scope}`      | Change scope (workspace, package, module). `*` normalizes to empty.                                                    |
+| `{type}`       | Work type (`feat`, `fix`, `docs`, …). Renders as `feat!` where the template names no `{breaking}` to carry the marker. |
+| `{breaking}`   | The breaking marker `!`; empty for a change that is not breaking.                                                      |
+| `{title}`      | Bare title text. Required in every template that should produce a non-empty title.                                     |
+| `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated.                                  |
+| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.                                          |
+
+A template that omits `{title}` produces a title without the bare title text: the renderer does not insert it implicitly. Any other `{...}` run is literal text, so a typo such as `{titel}` shows up in the rendered output rather than vanishing.
+
+## Optional groups
+
+A `[...]` group renders verbatim when every token directly inside it resolves non-empty. When one is empty, the whole group drops, literals included.
+
+`{breaking}` never decides a group. A non-breaking change would otherwise drop the very prefix that carries the marker.
+
+Groups nest, and a nested group decides its own fate. Under `[[{scope}|]{type}: ]{title}`, a change naming no scope keeps its type prefix and renders `feat: Add foo`, while a change naming neither scope nor type renders the bare title.
+
+Write `\[` and `\]` for a literal bracket, and `\\` for a literal backslash.
+
+**No whitespace pass runs.** Output is exactly what the template describes, so each group carries its own separators: write `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That exactness is what lets `--parse` invert what the renderer produced.
+
+## The catalogue
+
+Four conventions, each of which round-trips.
+
+| Convention           | Template                                  |
+| -------------------- | ----------------------------------------- |
+| Bracketed scope      | `[\[{scope}\] ]{type}{breaking}: {title}` |
+| Conventional commits | `{type}[({scope})]{breaking}: {title}`    |
+| Piped scope          | `[[{scope}\|]{type}: ]{title}`            |
+| Type only            | `{type}{breaking}: {title}`               |
+
+Piped scope carries the marker on the type, since it names no `{breaking}`; the other three place the marker immediately before the colon. Piped scope also nests its scope group inside its type group, so a change naming no scope keeps its type prefix.
+
+How they render across the cases that separate them:
+
+| Record                                | Bracketed scope                         | Conventional commits                   | Piped scope                            | Type only                      |
+| ------------------------------------- | --------------------------------------- | -------------------------------------- | -------------------------------------- | ------------------------------ |
+| scope `agents`, type `feat`           | `[agents] feat: Add foo`                | `feat(agents): Add foo`                | `agents\|feat: Add foo`                | `feat: Add foo`                |
+| type `feat`, no scope                 | `feat: Add foo`                         | `feat: Add foo`                        | `feat: Add foo`                        | `feat: Add foo`                |
+| scope `agents`, type `drop`, breaking | `[agents] drop!: Remove the legacy API` | `drop(agents)!: Remove the legacy API` | `agents\|drop!: Remove the legacy API` | `drop!: Remove the legacy API` |
+| title only                            | `: Add foo`                             | `: Add foo`                            | `Add foo`                              | `: Add foo`                    |
+
+Three of the four name `{type}` outside any group, so a record carrying no type renders a subject opening with a bare colon. Supply a type, or choose piped scope, whose type sits inside a group and drops with it.
+
+## Constraints from release-kit
+
+Because release-kit reads merge subjects to build the changelog, a template whose subjects it must read is bound by what its parser accepts:
+
+- Any ticket reference comes first, in one of the three stripped forms above.
+- A pipe separates the scope from the type (`agents|feat:`), or parentheses follow it (`feat(agents):`). The parser reads no bracketed scope, so `[agents] feat: Add foo` is unmatched.
+- The breaking marker sits immediately before the colon: `feat!:`, `feat(agents)!:`.
+- The type is a run of word characters, so a type carrying a hyphen or a dot goes unread. The parser lowercases the type before matching the taxonomy, so case does not decide the match, and the canonical spelling stays lowercase.
+
+## What the grammar refuses
+
+The bundle checks each configured template when preferences load, and a template that cannot round-trip stops the run, naming the surface, the template, and the defect. It refuses four structural defects:
+
+- **Adjacent tokens.** Two tokens with no literal between them, such as `{scope}{type}`, leave a parse no boundary to split on. `{breaking}` beside another token is exempt, since the marker is a single known character.
+- **A repeated token.** A token named twice leaves a parse no way to decide which occurrence a value belongs to.
+- **A group boundary that repeats.** An optional group whose opening literal repeats the text before it hides where the group begins.
+- **An indistinguishable marker.** `{breaking}` placed beside free text, or beside a literal that spells `!`, leaves the marker unrecognizable.
+
+A render-and-parse pass over well-formed values then backstops the four, so a later extension to the grammar cannot outrun the checker in silence.
+
+## What the grammar does not support
+
+**Value-dependent ambiguity passes the check.** The check runs over well-formed values, so it accepts a template whose ambiguity depends on what a value happens to contain. Under `[{ticket_ref} ]{title}`, the title `#466 Add foo` reads back as ticket reference `#466` and title `Add foo`. That matches how release-kit reads it, so the behavior is compatibility rather than a defect, but a caller holding both halves separately should not rely on a round trip to recover them.
+
+The same cost falls on the piped-scope convention, where a present group wins. `Rename kb|docs: the shared layer` reads back as scope `Rename kb`, type `docs`, title `the shared layer`. The type check rescues a nonsense type, so `Support a|b: syntax` is unmatched, but it cannot rescue a real one.
 
 ## Scope values
 
@@ -96,6 +169,6 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 
 - In a monorepo, the scope is typically the workspace name or abbreviation.
 - Use `root` when the change touches only files at the monorepo root.
-- Use `*` when the change spans multiple workspaces, or root and one or more workspaces.
+- Use `*` when the change spans multiple workspaces, or root and one or more workspaces. It normalizes to no scope, so the rendered title carries no scope prefix.
 
 Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill; see the `consult-commit-conventions` skill for the commit-side rules.
