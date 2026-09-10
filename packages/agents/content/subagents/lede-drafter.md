@@ -46,7 +46,7 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
    Read the diffstat, and do not read the diff. Your question is what the change is about; someone reading hunks answers what it contains instead, and every fact found there seems load-bearing because it cost something to find. The caller has the diff and checks your claims against it, so accuracy is covered without your reading it.
 
-4. **Exemplars.** `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` returns ledes rated `strong` or `exemplary` by the author, newest first. Read them for the level of detail and the register that they hold, not for phrases to reuse. An empty list is a normal result; draft without them.
+4. **Exemplars.** `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` returns ledes rated `strong` or `exemplary` by the author, newest first. Read them for the level of detail and the register that they use, not for phrases to reuse. An empty list is a normal result; draft without them.
 
    Where your dispatch names no `type`, put `--tier {tier}` in place of `--type {type}`, keep `--min-quality strong`, and name the omission in your report. Never supply a `type` that you were not given: A guessed type selects exemplars written for the wrong reader.
 
@@ -60,7 +60,7 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
 A lede drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
 
-Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and no bullet that you write takes them.
+Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and no bullet that you write includes them.
 
 The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: the facts that you leave out are actionable ones, and the reader has `## Details` and the diff one click away.
 
