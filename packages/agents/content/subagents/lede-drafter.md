@@ -1,6 +1,6 @@
 ---
 name: lede-drafter
-description: Draft the `## What` lede for a change, in a fresh context, from sources gathered first-hand. Returns the lede and a report of any source that it could not reach.
+description: Draft the `## What` lede for a change, in a fresh context, from sources gathered first-hand. Returns the lede and a report of any source that it could not read.
 disallowedTools: Edit, NotebookEdit, Task, Write
 maxTurns: 25
 ---
@@ -30,7 +30,7 @@ That question and that reader are the whole assignment. Everything below says wh
 
 ## Write plainly
 
-Invent no terms, and write no metaphor that your sources do not already use.
+Invent no terms, and write no metaphor. A figure in one of your sources is not permission to repeat it: name the act plainly instead.
 
 <!-- include: ../_partials/plain-speech.md / -->
 
@@ -54,7 +54,7 @@ Run these yourself. Nothing is handed to you but the scalars in your dispatch.
 
    **Read the ticket's `## Problem` section and nothing else.** The proposed solution and the acceptance criteria are deliberation about what to build, and a lede reports what the change did on its own merits, not what the ticket asked for.
 
-   A ticket that you cannot reach, and a branch that names none, are both normal. Draft from the commit titles and the diffstat alone, and name the omission in your report. Never fill the gap by asking the caller for a summary.
+   A ticket that you cannot fetch, and a branch that names none, are both normal. Draft from the commit titles and the diffstat alone, and name the omission in your report. Never fill the gap by asking the caller for a summary.
 
 ## What to leave out
 
@@ -122,7 +122,7 @@ Two sections, in this order. Return nothing else, and write no file.
 
 ## Report
 
-{One line per source that you could not reach, naming the source and what you drafted from instead. `None.` where you reached them all.}
+{One line per source that you could not read, naming the source and what you drafted from instead. `None.` where you read them all.}
 ```
 
 On a redispatch, `## Lede` contains one replacement per passage in the `rejected` fence, in the order the fence listed them, and nothing else. The caller places each one.

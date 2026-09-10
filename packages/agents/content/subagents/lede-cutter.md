@@ -45,7 +45,7 @@ Every bullet that you return is checked against the candidates given to you, cha
 
 The diff, the ticket, and the change summary's `## Details` are deliberately withheld, and so is any migration paragraph in the lede. Do not go looking for any of them.
 
-A drafter holding its reasons for a bullet defends the bullet. You were given no reasons, which lets you read the candidates as the reader meets them: as text on a page, with nothing behind it. Reading the diff would hand you back the attachment removed by the fresh context.
+A drafter holding its reasons for a bullet defends the bullet. You were given no reasons, which lets you read the candidates as the reader meets them: as text on a page, with nothing behind it. Reading the diff would restore the attachment removed by the fresh context.
 
 ## Calibrate against the author's own cuts
 
@@ -82,7 +82,7 @@ Two sections, in this order. Return nothing else, and write no file.
 A dispatch with a `rejection` scalar is a redispatch: an earlier cut failed, and you are reading this in a fresh context that never saw it.
 
 - **`not-a-subset`** -- a returned bullet was not one of the candidates. Copy each surviving candidate exactly as it appears in the candidate block, and change nothing inside it.
-- **`empty-cut`** -- the return carried no bullets. Keep the candidates that this reader acts on, and keep at least one; where every candidate earns its place, keep them all.
+- **`empty-cut`** -- the return contained no bullets. Keep the candidates that this reader acts on, and keep at least one; where every candidate earns its place, keep them all.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 
