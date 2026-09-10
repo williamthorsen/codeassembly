@@ -20,6 +20,6 @@ The skills belong here on different grounds. A rulebook of the personal collecti
 
 `generated-content-policy` qualifies on its own terms too: What it states is a mechanism every consumer meets, not a preference, and the guidance a reader needs beyond the trigger is in the reference it links rather than in the ambient body every session loads.
 
-`readme-conventions` qualifies on its own terms as well. It names no repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how one should read. Its body carries no invocation token, so its closure is empty and admitting it extends this collection's reach by nothing.
+`readme-conventions` qualifies on its own terms as well. It names no repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how a README should read. Its body carries no invocation token, so its closure is empty and admitting it extends this collection's reach by nothing.
 
 Adding a skill that declares a guidance hook has a cost no current member does. Guidance-hook bindings do not cross the boundary between the user-global and project domains, so a project declaring this collection deploys its own copy of that skill and shadows the user's home-bound one: Guidance the developer bound globally goes missing in that repository until the project binds it too. Weigh that against the general applicability membership claims before admitting such a skill.
