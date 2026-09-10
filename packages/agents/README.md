@@ -451,9 +451,10 @@ Unknown keys pass through, so a later tool can read a key an older one ignores w
 
 **What a bump obliges.** The format version names the contract the tool implements — frontmatter keys, invocation tokens, directives, and content-root layout — so it rises when content authored against the new contract would deploy wrongly under the old one rather than failing outright. Adding a key nothing older depends on does not need one; changing what an existing key means does.
 
-| Format | Contract                      |
-| ------ | ----------------------------- |
-| 1      | The contract documented here. |
+| Format | Contract                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1      | The contract documented here.                                                                                                   |
+| 2      | Adds the optional invocation-token form, `{skill?:<slug>}` and `{subagent?:<slug>}`, which names a target without deploying it. |
 
 ### Scopes
 

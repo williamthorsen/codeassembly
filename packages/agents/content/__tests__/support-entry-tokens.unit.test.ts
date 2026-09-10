@@ -12,7 +12,11 @@ import { libraryResolver } from '../../src/lib/content-sources.ts';
 import { resolveClosure } from '../../src/lib/dependency-resolver.ts';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { listVisibleMarkdownFiles } from '../../src/lib/fs-helpers.ts';
-import { extractInvocationEdges, locateInvocationTokens } from '../../src/lib/invocation-tokens.ts';
+import {
+  extractInvocationEdges,
+  extractOptionalInvocationTargets,
+  locateInvocationTokens,
+} from '../../src/lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSkillDirectories, listSupportEntries } from '../../src/lib/library-catalog.ts';
 import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../../src/lib/path-rewriter.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
@@ -26,7 +30,8 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // reaches the install: a support entry ships unconditionally, so a token whose target no declaration pulls in renders
 // a pointer to a skill the consumer does not have. Nothing supplies that edge automatically, which leaves the
 // `dependencies:` declaration on each linking skill as the whole mitigation, and the second suite below is what holds
-// those declarations in place.
+// those declarations in place. An optional token is exempt from that second property by construction: it names a
+// target that need not deploy, so the pointer it renders is one the author accepted.
 //
 // `{rulebook:<slug>}` is out of scope. The render pass rejects one in a support entry outright, since `install` ships
 // such an entry having resolved no declaration to render it against.
@@ -59,14 +64,18 @@ describe('support entry invocation tokens', () => {
 
     const files = await listSupportEntryFiles();
     for (const file of files) {
-      const edges = extractInvocationEdges(await readFile(file, 'utf8'));
+      const body = await readFile(file, 'utf8');
+      // Optional targets join the required ones here: the closure walk never reads a support entry, so nothing else
+      // catches a slug that no longer names an artifact, whichever form the token takes.
+      const edges = extractInvocationEdges(body);
+      const optional = extractOptionalInvocationTargets(body);
       const relative = path.relative(CONTENT_ROOT, file);
-      for (const slug of edges.skills) {
+      for (const slug of [...edges.skills, ...optional.skills]) {
         if (!skills.has(slug)) {
           violations.push(`${relative} -> {skill:${slug}}`);
         }
       }
-      for (const slug of edges.subagents) {
+      for (const slug of [...edges.subagents, ...optional.subagents]) {
         if (!subagents.has(slug)) {
           violations.push(`${relative} -> {subagent:${slug}}`);
         }
@@ -98,6 +107,9 @@ describe('support entry invocation tokens', () => {
 //
 // One reach is not attributed: a token a host arrives at through a second support entry, since a support entry
 // declares no dependencies of its own and the walk stops at the first hop.
+//
+// An optional token carries no requirement at all. Compelling a declaration for one would deploy the target the marker
+// exists to leave out.
 describe('support entry token declarations', () => {
   it('are declared by every host that links into the section carrying them', async () => {
     const carriers = await mapTokenCarriers();
@@ -229,9 +241,10 @@ async function listSupportEntryFiles(): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Maps each support entry to the artifacts its invocation tokens name, keyed by every heading slug whose section
- * encloses the token. A token under `### Jira` inside `## Platform-specific write` is listed under both, so a host
- * linking either heading carries the same requirement.
+ * Maps each support entry to the artifacts its required invocation tokens name, keyed by every heading slug whose
+ * section encloses the token. A token under `### Jira` inside `## Platform-specific write` is listed under both, so a
+ * host linking either heading carries the same requirement. An optional token is left out: It asserts the target may
+ * be absent, which is the opposite of what the host declaration it would compel guarantees.
  */
 async function mapTokenCarriers(): Promise<ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<ArtifactId>>>> {
   const carriers = new Map<string, Map<string, Set<ArtifactId>>>();
@@ -242,7 +255,7 @@ async function mapTokenCarriers(): Promise<ReadonlyMap<string, ReadonlyMap<strin
     const headings = collectHeadingPositions(body);
     const sections = new Map<string, Set<ArtifactId>>();
 
-    const tokens = locateInvocationTokens(body).filter((token) => token.kind !== 'rulebook');
+    const tokens = locateInvocationTokens(body).filter((token) => token.kind !== 'rulebook' && !token.optional);
     for (const token of tokens) {
       for (const heading of listEnclosingSlugs(headings, token.index)) {
         const ids = sections.get(heading) ?? new Set<ArtifactId>();
