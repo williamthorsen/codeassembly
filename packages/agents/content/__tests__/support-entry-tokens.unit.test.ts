@@ -66,18 +66,21 @@ describe('support entry invocation tokens', () => {
     for (const file of files) {
       const body = await readFile(file, 'utf8');
       // Optional targets join the required ones here: the closure walk never reads a support entry, so nothing else
-      // catches a slug that no longer names an artifact, whichever form the token takes.
+      // catches a slug that no longer names an artifact, whichever form the token takes. Each slug carries its form, so
+      // the reported token is the string the author finds in the file.
       const edges = extractInvocationEdges(body);
       const optional = extractOptionalInvocationTargets(body);
       const relative = path.relative(CONTENT_ROOT, file);
-      for (const slug of [...edges.skills, ...optional.skills]) {
-        if (!skills.has(slug)) {
-          violations.push(`${relative} -> {skill:${slug}}`);
-        }
-      }
-      for (const slug of [...edges.subagents, ...optional.subagents]) {
-        if (!subagents.has(slug)) {
-          violations.push(`${relative} -> {subagent:${slug}}`);
+      const named = [
+        ...edges.skills.map((slug) => ({ kind: 'skill' as const, slug, marker: '' })),
+        ...optional.skills.map((slug) => ({ kind: 'skill' as const, slug, marker: '?' })),
+        ...edges.subagents.map((slug) => ({ kind: 'subagent' as const, slug, marker: '' })),
+        ...optional.subagents.map((slug) => ({ kind: 'subagent' as const, slug, marker: '?' })),
+      ];
+      for (const { kind, slug, marker } of named) {
+        const known = kind === 'skill' ? skills : subagents;
+        if (!known.has(slug)) {
+          violations.push(`${relative} -> {${kind}${marker}:${slug}}`);
         }
       }
     }
