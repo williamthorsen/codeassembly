@@ -21,7 +21,7 @@ const TAXONOMY: Taxonomy = {
   ],
 };
 
-/** House-convention subjects both readers are expected to agree on. */
+/** Piped-scope subjects both readers are expected to agree on. */
 const SUBJECTS = [
   'agents|feat: Add foo',
   'feat: Add foo',
@@ -44,7 +44,7 @@ const RELEASE_KIT_WORK_TYPES = Object.fromEntries(
 
 describe('release-kit parity', () => {
   it.each(SUBJECTS)('reads "%s" as release-kit does', (subject) => {
-    const nodes = compileTemplate(TEMPLATE_CATALOGUE.house);
+    const nodes = compileTemplate(TEMPLATE_CATALOGUE.pipedScope);
     const ours = parse(nodes, subject, TAXONOMY);
     const theirs = parseCommitMessage(subject, '0000000', RELEASE_KIT_WORK_TYPES);
 

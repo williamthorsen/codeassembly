@@ -15,16 +15,16 @@ const GLOBAL_MERGE = '[{ticket_ref} ][{scope}|][{type}: ]{title}[ (#{pr_number})
 describe(render, () => {
   describe('the catalogue templates', () => {
     const cases: Array<{ convention: ConventionName; expected: string; record: ChangeRecord }> = [
-      { convention: 'house', record: { scope: 'agents', type: 'feat' }, expected: 'agents|feat: Add foo' },
+      { convention: 'pipedScope', record: { scope: 'agents', type: 'feat' }, expected: 'agents|feat: Add foo' },
       {
-        convention: 'house',
+        convention: 'pipedScope',
         record: { breaking: true, scope: 'agents', type: 'feat' },
         expected: 'agents|feat!: Add foo',
       },
-      { convention: 'house', record: { type: 'feat' }, expected: 'feat: Add foo' },
-      { convention: 'house', record: { breaking: true, type: 'feat' }, expected: 'feat!: Add foo' },
-      { convention: 'house', record: { scope: 'agents' }, expected: 'Add foo' },
-      { convention: 'house', record: {}, expected: 'Add foo' },
+      { convention: 'pipedScope', record: { type: 'feat' }, expected: 'feat: Add foo' },
+      { convention: 'pipedScope', record: { breaking: true, type: 'feat' }, expected: 'feat!: Add foo' },
+      { convention: 'pipedScope', record: { scope: 'agents' }, expected: 'Add foo' },
+      { convention: 'pipedScope', record: {}, expected: 'Add foo' },
 
       {
         convention: 'conventionalCommits',
