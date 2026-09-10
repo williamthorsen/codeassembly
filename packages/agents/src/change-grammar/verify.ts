@@ -8,8 +8,9 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * Reports every reason a template cannot round-trip, empty where it can. A caller refuses the template on a non-empty
  * result; each message names the template and the defect, so the refusal says what to change.
  *
- * The structural rules run first and hold whatever the values are. A render-and-parse pass over well-formed values then
- * backstops them, so a later grammar extension cannot outrun the checker silently.
+ * The structural rules run first and hold whatever the values are. Render-and-parse passes over well-formed values then
+ * backstop them, so a later grammar extension cannot outrun the checker silently: one pass carries every token the
+ * template names, and one more drops each optional group in turn.
  *
  * Value-dependent ambiguity is not a defect. Under `[{ticket_ref} ]{title}` a title opening with `#466 ` is
  * indistinguishable from a ticket reference, as it is for release-kit, and the template is accepted.
@@ -43,6 +44,31 @@ function admitsMarker(node: FlatNode | undefined, edge: 'end' | 'start'): boolea
     return (edge === 'end' ? node.text.at(-1) : node.text.at(0)) === '!';
   }
   return FREE_TEXT_TOKENS.has(node.name);
+}
+
+/** Builds a well-formed record carrying exactly the tokens `present` names. */
+function buildSample(present: ReadonlySet<TokenName>, breaking: boolean, taxonomy: Taxonomy): ChangeRecord {
+  const sample: ChangeRecord = {};
+  if (breaking) {
+    sample.breaking = true;
+  }
+  if (present.has('pr_number')) {
+    sample.prNumber = SAMPLE_PR_NUMBER;
+  }
+  if (present.has('scope')) {
+    sample.scope = SAMPLE_SCOPE;
+  }
+  if (present.has('ticket_ref')) {
+    sample.ticketRef = SAMPLE_TICKET_REF;
+  }
+  if (present.has('title')) {
+    sample.title = SAMPLE_TITLE;
+  }
+  const type = taxonomy.types.at(0)?.key;
+  if (present.has('type') && type !== undefined) {
+    sample.type = type;
+  }
+  return sample;
 }
 
 /** Serializes a record with its keys ordered, so two equal records compare equal as text. */
@@ -129,7 +155,14 @@ function findRepeatedTokenDefects(template: string, flattened: readonly FlatNode
     .map(([name]) => `Template ${JSON.stringify(template)} names {${name}} more than once.`);
 }
 
-/** Renders well-formed values and reads them back, so a defect no structural rule names still surfaces. */
+/**
+ * Renders well-formed values and reads them back, so a defect no structural rule names still surfaces. One pass carries
+ * every token the template names; one further pass per optional group drops that group, since a group a parse cannot
+ * tell from an absent one is the ordinary case a group exists for.
+ *
+ * A group carrying `{type}` is left populated. Dropping it takes the type out of the rendered string, which the
+ * type-required rule then reads as unmatched however well-formed the template is.
+ */
 function findRoundTripDefects(
   template: string,
   nodes: readonly TemplateNode[],
@@ -138,37 +171,26 @@ function findRoundTripDefects(
 ): string[] {
   const named = new Set(flattened.filter((node) => node.kind === 'token').map((node) => node.name));
   const carriesMarker = named.has('breaking') || named.has('type');
-  const defects: string[] = [];
-
   const markerStates = carriesMarker ? [false, true] : [false];
-  for (const breaking of markerStates) {
-    const sample: ChangeRecord = {};
-    if (breaking) {
-      sample.breaking = true;
-    }
-    if (named.has('pr_number')) {
-      sample.prNumber = SAMPLE_PR_NUMBER;
-    }
-    if (named.has('scope')) {
-      sample.scope = SAMPLE_SCOPE;
-    }
-    if (named.has('ticket_ref')) {
-      sample.ticketRef = SAMPLE_TICKET_REF;
-    }
-    if (named.has('title')) {
-      sample.title = SAMPLE_TITLE;
-    }
-    const type = taxonomy.types[0]?.key;
-    if (named.has('type') && type !== undefined) {
-      sample.type = type;
-    }
 
-    const rendered = render(nodes, sample);
-    const parsed = parse(nodes, rendered, taxonomy);
-    if (describeRecord(parsed) !== describeRecord(sample)) {
-      defects.push(
-        `Template ${JSON.stringify(template)} does not round-trip: it renders ${describeRecord(sample)} as ${JSON.stringify(rendered)}, which reads back as ${describeRecord(parsed)}.`,
-      );
+  const passes: Array<ReadonlySet<TokenName>> = [named];
+  for (const vanishing of mapDroppableTokens(nodes).values()) {
+    if (!vanishing.has('breaking') && !vanishing.has('type')) {
+      passes.push(named.difference(vanishing));
+    }
+  }
+
+  const defects: string[] = [];
+  for (const breaking of markerStates) {
+    for (const present of passes) {
+      const sample = buildSample(present, breaking, taxonomy);
+      const rendered = render(nodes, sample);
+      const parsed = parse(nodes, rendered, taxonomy);
+      if (describeRecord(parsed) !== describeRecord(sample)) {
+        defects.push(
+          `Template ${JSON.stringify(template)} does not round-trip: it renders ${describeRecord(sample)} as ${JSON.stringify(rendered)}, which reads back as ${describeRecord(parsed)}.`,
+        );
+      }
     }
   }
   return defects;
@@ -192,6 +214,33 @@ function flattenTemplate(nodes: readonly TemplateNode[]): FlatNode[] {
 
 /** The tokens whose values are free text, so either edge of one may spell the breaking marker. */
 const FREE_TEXT_TOKENS: ReadonlySet<TokenName> = new Set<TokenName>(['scope', 'title']);
+
+/** Maps each token an optional group can drop to every token that vanishes when that group drops. */
+function mapDroppableTokens(nodes: readonly TemplateNode[]): Map<TokenName, ReadonlySet<TokenName>> {
+  const droppable = new Map<TokenName, ReadonlySet<TokenName>>();
+
+  function walk(list: readonly TemplateNode[]): void {
+    for (const node of list) {
+      if (node.kind !== 'group') {
+        continue;
+      }
+      const vanishing = new Set(
+        flattenTemplate(node.children)
+          .filter((child) => child.kind === 'token')
+          .map((child) => child.name),
+      );
+      for (const child of node.children) {
+        if (child.kind === 'token' && child.name !== 'breaking') {
+          droppable.set(child.name, vanishing);
+        }
+      }
+      walk(node.children);
+    }
+  }
+
+  walk(nodes);
+  return droppable;
+}
 
 /** The group's own opening literal, where it opens with one. */
 function readLeadingLiteral(group: GroupNode): string | undefined {

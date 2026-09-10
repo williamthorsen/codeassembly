@@ -32,6 +32,10 @@ describe(verify, () => {
     it('accepts a template whose ambiguity depends on the values, since #1638 inverts it', () => {
       expect(verify('[{ticket_ref} ]{title}', TAXONOMY)).toStrictEqual([]);
     });
+
+    it('accepts a template whose scope group carries the type, whose drop leaves nothing to read back', () => {
+      expect(verify('[{scope}|{type}: ]{title}', TAXONOMY)).toStrictEqual([]);
+    });
   });
 
   describe('structural defects', () => {
@@ -83,6 +87,12 @@ describe(verify, () => {
   describe('the round-trip backstop', () => {
     it('refuses a template that renders a value it cannot read back', () => {
       const defects = verify('{title} {scope}', TAXONOMY);
+
+      expect(defects.some((defect) => defect.includes('does not round-trip'))).toBe(true);
+    });
+
+    it('refuses a template whose optional group cannot be told from an absent one', () => {
+      const defects = verify('[{scope} ]{title}', TAXONOMY);
 
       expect(defects.some((defect) => defect.includes('does not round-trip'))).toBe(true);
     });
