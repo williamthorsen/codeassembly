@@ -21,6 +21,8 @@ const TAXONOMY: Taxonomy = {
 
 const FLAT_SCOPE_COMMIT = '[{scope}|{type}: ]{title}';
 const FLAT_SCOPE_MERGE = '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]';
+const NESTED_SCOPE_COMMIT = TEMPLATE_CATALOGUE.pipedScope;
+const NESTED_SCOPE_MERGE = '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]';
 const PROJECT_PR = '[{ticket_ref} ]{title}';
 const GLOBAL_MERGE = '[{ticket_ref} ][{scope}|][{type}: ]{title}[ (#{pr_number})]';
 
@@ -44,12 +46,15 @@ describe(parse, () => {
       expect(parse(nodes, render(nodes, record), TAXONOMY)).toStrictEqual(dropScopelessFields(template, record));
     });
 
-    it.each([FLAT_SCOPE_COMMIT, FLAT_SCOPE_MERGE, GLOBAL_MERGE])('inverts the configured template %s', (template) => {
-      const nodes = compileTemplate(template);
-      const record = { prNumber: '470', scope: 'agents', ticketRef: '#466', title: 'Add foo', type: 'feat' };
+    it.each([NESTED_SCOPE_COMMIT, NESTED_SCOPE_MERGE, FLAT_SCOPE_COMMIT, FLAT_SCOPE_MERGE, GLOBAL_MERGE])(
+      'inverts the configured template %s',
+      (template) => {
+        const nodes = compileTemplate(template);
+        const record = { prNumber: '470', scope: 'agents', ticketRef: '#466', title: 'Add foo', type: 'feat' };
 
-      expect(parse(nodes, render(nodes, record), TAXONOMY)).toStrictEqual(dropScopelessFields(template, record));
-    });
+        expect(parse(nodes, render(nodes, record), TAXONOMY)).toStrictEqual(dropScopelessFields(template, record));
+      },
+    );
 
     it('reads a ticket reference and a trailing pull-request number out of a merge subject', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_MERGE), '#466 agents|feat: Add foo (#470)', TAXONOMY);
