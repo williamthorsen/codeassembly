@@ -114,6 +114,12 @@ describe('collection dispositions', () => {
     const members = listArtifactIds(collections.get(optIn) ?? {});
     const defects: Array<string> = [];
 
+    // A slug naming no collection leaves no members to claim, which the loop below reads as no leak. Failing here is
+    // what keeps a renamed or mistyped entry from retiring the check in silence.
+    expect(members, `${optIn} names no collection with members, so the check below would pass vacuously.`).not.toEqual(
+      [],
+    );
+
     for (const collection of collections.keys()) {
       if (collection === optIn) {
         continue;
