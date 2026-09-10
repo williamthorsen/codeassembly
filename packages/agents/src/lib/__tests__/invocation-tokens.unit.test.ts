@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   extractInvocationEdges,
+  extractOptionalInvocationTargets,
   type InvocationSigils,
   locateInvocationTokens,
   resolveRulebookToken,
@@ -48,6 +49,35 @@ describe(extractInvocationEdges, () => {
     const content = '{skill:commit} then {skill:commit} again.';
     expect(extractInvocationEdges(content)).toEqual({ rulebooks: [], skills: ['commit', 'commit'], subagents: [] });
   });
+
+  it('omits an optional token, which names a target that need not deploy', () => {
+    const content = 'Delegate to {skill?:create-bitbucket-pr} or {skill:create-gh-pr}, then {subagent?:canary}.';
+    expect(extractInvocationEdges(content)).toEqual({ rulebooks: [], skills: ['create-gh-pr'], subagents: [] });
+  });
+});
+
+describe(extractOptionalInvocationTargets, () => {
+  it('returns empty groups when every token is required', () => {
+    expect(extractOptionalInvocationTargets('{skill:plan} and {subagent:planner}')).toEqual({
+      skills: [],
+      subagents: [],
+    });
+  });
+
+  it('groups optional slugs by kind, in source order', () => {
+    const content = '{skill?:update-jira-ticket}, {subagent?:canary}, then {skill?:create-bitbucket-pr}.';
+    expect(extractOptionalInvocationTargets(content)).toEqual({
+      skills: ['update-jira-ticket', 'create-bitbucket-pr'],
+      subagents: ['canary'],
+    });
+  });
+
+  it('drops an optional rulebook token, which the render pass rejects rather than resolves', () => {
+    expect(extractOptionalInvocationTargets('{rulebook?:shell-conventions} and {skill?:plan}')).toEqual({
+      skills: ['plan'],
+      subagents: [],
+    });
+  });
 });
 
 describe(locateInvocationTokens, () => {
@@ -55,19 +85,25 @@ describe(locateInvocationTokens, () => {
     const content = 'Run {skill:create-commit}, then {subagent:canary}.';
 
     expect(locateInvocationTokens(content)).toEqual([
-      { kind: 'skill', slug: 'create-commit', index: content.indexOf('{skill:') },
-      { kind: 'subagent', slug: 'canary', index: content.indexOf('{subagent:') },
+      { kind: 'skill', slug: 'create-commit', optional: false, index: content.indexOf('{skill:') },
+      { kind: 'subagent', slug: 'canary', optional: false, index: content.indexOf('{subagent:') },
     ]);
   });
 
   it('reports a rulebook token, which the edge surface groups separately', () => {
     expect(locateInvocationTokens('{rulebook:shell-conventions}')).toEqual([
-      { kind: 'rulebook', slug: 'shell-conventions', index: 0 },
+      { kind: 'rulebook', slug: 'shell-conventions', optional: false, index: 0 },
+    ]);
+  });
+
+  it('marks an optional token, whose kind and slug read as the required form does', () => {
+    expect(locateInvocationTokens('{skill?:update-jira-ticket}')).toEqual([
+      { kind: 'skill', slug: 'update-jira-ticket', optional: true, index: 0 },
     ]);
   });
 
   it('ignores a malformed token, so the locator and the edge surface read the same grammar', () => {
-    expect(locateInvocationTokens('{skill:Not-Kebab} {tool:Read} {skill:}')).toEqual([]);
+    expect(locateInvocationTokens('{skill:Not-Kebab} {tool:Read} {skill:} {skill?:}')).toEqual([]);
   });
 });
 
@@ -173,6 +209,32 @@ describe(rewriteInvocationTokens, () => {
     expect(() => rewriteInvocationTokens('See {rulebook:nmr-scripts}.', CLAUDE_SIGILS, SUPPORT_HOST)).toThrow(
       'Unusable invocation token {rulebook:nmr-scripts} in skills/_data/artifact-conventions.md: it is honored only ' +
         'where a declaration supplies the deployed rulebook set; a support entry under skills/ renders without one.',
+    );
+  });
+
+  it('renders an optional skill or subagent token exactly as its required form renders', () => {
+    const optional = 'Delegate to {skill?:create-bitbucket-pr}, then {subagent?:canary}.';
+    const required = 'Delegate to {skill:create-bitbucket-pr}, then {subagent:canary}.';
+
+    expect(rewriteInvocationTokens(optional, CLAUDE_SIGILS, HOST)).toBe(
+      rewriteInvocationTokens(required, CLAUDE_SIGILS, HOST),
+    );
+    expect(rewriteInvocationTokens(optional, ROVO_SIGILS, HOST)).toBe(
+      rewriteInvocationTokens(required, ROVO_SIGILS, HOST),
+    );
+  });
+
+  it('rejects an optional rulebook token, naming the forms that have one', () => {
+    expect(() => rewriteInvocationTokens('See {rulebook?:nmr-scripts}.', CLAUDE_SIGILS, HOST, RULEBOOKS)).toThrow(
+      'Unusable invocation token {rulebook?:nmr-scripts} in skills/wrap-up/SKILL.md: a rulebook token renders the ' +
+        'skill name its target deploys under, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+        '{subagent?:<slug>} have an optional form.',
+    );
+  });
+
+  it('rejects an optional rulebook token before the catalog is consulted', () => {
+    expect(() => rewriteInvocationTokens('See {rulebook?:nmr-scripts}.', CLAUDE_SIGILS, HOST)).toThrow(
+      /only \{skill\?:<slug>\} and \{subagent\?:<slug>\} have an optional form/,
     );
   });
 
