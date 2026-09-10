@@ -64,6 +64,46 @@ describe(readCommits, () => {
 
     expect(await readCommits({ baseRef: 'base', cwd })).toStrictEqual([]);
   });
+
+  it('reports commits oldest first, matching the order trailers are read in', async () => {
+    const cwd = await buildRepo([
+      'agents|feat: Add the parser',
+      [
+        'agents|fix: Squash the branch',
+        '',
+        'Change: agents|refactor: Extract the reader',
+        'Change: agents|docs: Note it',
+      ].join('\n'),
+      'agents|fix: Correct the guard',
+    ]);
+
+    const commits = await readCommits({ baseRef: 'base', cwd });
+
+    expect(commits.map((commit) => commit.subject)).toStrictEqual([
+      'agents|feat: Add the parser',
+      'agents|fix: Squash the branch',
+      'agents|fix: Correct the guard',
+    ]);
+    expect(commits[1]?.trailers).toStrictEqual(['agents|refactor: Extract the reader', 'agents|docs: Note it']);
+  });
+
+  it('contributes nothing for a merge commit', async () => {
+    const cwd = await buildRepo(['agents|feat: Add the parser']);
+    await execFileAsync('git', ['-C', cwd, 'checkout', '--quiet', '-b', 'side', 'base']);
+    await writeFile(join(cwd, 'side.txt'), 'side\n', 'utf8');
+    await commitAll(cwd, 'agents|fix: Correct the guard');
+    await execFileAsync('git', ['-C', cwd, 'checkout', '--quiet', '-']);
+    await execFileAsync('git', ['-C', cwd, 'merge', '--no-ff', '--no-gpg-sign', '--quiet', '-m', 'Merge side', 'side']);
+
+    const commits = await readCommits({ baseRef: 'base', cwd });
+
+    // Two branches committed in the same second have no stable order between them, so this fixes membership alone;
+    // the linear-history case above fixes the order.
+    expect(commits.map((commit) => commit.subject).toSorted()).toStrictEqual([
+      'agents|feat: Add the parser',
+      'agents|fix: Correct the guard',
+    ]);
+  });
 });
 
 // region | Helpers

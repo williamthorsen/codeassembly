@@ -109,6 +109,10 @@ node {harness_home_dir}/scripts/describe-change.mjs --classify origin/main \
 }
 ```
 
+**`entries` runs oldest first**, in the order the branch was built, and a commit's own trailers keep the order they were written in. One order therefore holds across the whole list, whether an entry came from a subject or from a trailer.
+
+**A merge commit contributes no entry.** Its subject matches no template and its author cannot rewrite it, so reporting it as unclassifiable would train a reader to skim a list that exists to be read. The commits a merge brought in stay in the range on their own.
+
 **A commit carrying `Change:` trailers contributes those entries and not its subject.** A condensed commit's subject is the head its trailers already consolidate to, so reading both would count the branch against itself. See [The `Change:` trailer](./change-record.md#the-change-trailer).
 
 **The head ranks; it does not count.** One `feat` speaks for a branch carrying three `fix` commits, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. `head` is `null` where no entry was found, which is how a branch with no classified commits is told from one whose head names no scope. The head names no title: a caller takes that from the change summary.

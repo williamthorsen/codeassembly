@@ -2,7 +2,14 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 /**
- * Reads every commit in `base..HEAD`, newest first, reporting each one's subject and its `Change:` trailers.
+ * Reads every commit in `base..HEAD`, oldest first, reporting each one's subject and its `Change:` trailers.
+ *
+ * Oldest first is what makes one order hold across the whole result: a commit's trailers are read in the order they
+ * were written, so a reverse-chronological walk would run backwards across commits and forwards inside one.
+ *
+ * A merge commit contributes nothing. Its subject matches no template and its author cannot rewrite it, so reporting
+ * it as unclassifiable would train a reader to skim the list that exists to be read. The commits a merge brought in
+ * stay in the range on their own.
  *
  * Git parses the trailers itself through `%(trailers:key=Change,valueonly)`, so a folded trailer and a trailer block
  * separated from the body by a blank line both read correctly without a scanner of this module's own.
@@ -12,7 +19,7 @@ import { promisify } from 'node:util';
  */
 export async function readCommits(input: { baseRef: string; cwd: string }): Promise<RawCommit[]> {
   const format = `%H${FIELD}%s${FIELD}%(trailers:key=Change,valueonly,separator=${TRAILER})${RECORD}`;
-  const args = ['-C', input.cwd, 'log', `${input.baseRef}..HEAD`, `--format=${format}`];
+  const args = ['-C', input.cwd, 'log', `${input.baseRef}..HEAD`, '--reverse', '--no-merges', `--format=${format}`];
   const { stdout } = await execFileAsync('git', args, { maxBuffer: GIT_MAX_BUFFER });
 
   const commits: RawCommit[] = [];
