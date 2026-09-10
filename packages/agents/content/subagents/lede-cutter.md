@@ -16,7 +16,7 @@ Answer one question about each candidate: **would this reader act on it?**
 Who is asking is selected by the `tier` you were dispatched with.
 
 - **`public`** -- someone who uses the package and does not work on it. They are scanning release notes, they will give the entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away.
-- **`internal`** or **`process`** -- someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding where it landed and whether it touches the code in front of them. The diff and the change summary's `## Details` are one click away, so anything they would find there is theirs to click for.
+- **`internal`** or **`process`** -- someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff and the change summary's `## Details` are one click away, so anything they would find there is theirs to click for.
 
 Almost every candidate is accurate and defensible. That is not the question. A true bullet that this reader does not act on costs them attention and hides the ones they do act on, so it goes.
 
