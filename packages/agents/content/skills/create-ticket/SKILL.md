@@ -119,10 +119,10 @@ Both platforms render the same title and persist the same branch association; on
 
 #### Render the ticket title
 
-Render with `describe-change.sh`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
+Render with `describe-change.mjs`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
-{harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}" \
+node {harness_home_dir}/scripts/describe-change.mjs --title "{title}" --scope "{scope}" --type "{type}" \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))"
 ```
 

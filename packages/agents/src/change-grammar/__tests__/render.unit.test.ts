@@ -7,8 +7,8 @@ import type { ChangeRecord } from '../types.ts';
 
 const TITLE = 'Add foo';
 
-const PROJECT_COMMIT = '[{scope}|{type}: ]{title}';
-const PROJECT_MERGE = '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]';
+const FLAT_SCOPE_COMMIT = '[{scope}|{type}: ]{title}';
+const FLAT_SCOPE_MERGE = '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]';
 const PROJECT_PR = '[{ticket_ref} ]{title}';
 const GLOBAL_MERGE = '[{ticket_ref} ][{scope}|][{type}: ]{title}[ (#{pr_number})]';
 
@@ -69,7 +69,7 @@ describe(render, () => {
 
   describe('the configured preference templates', () => {
     it('renders the project commit template as it does today', () => {
-      expect(render(compileTemplate(PROJECT_COMMIT), { scope: 'agents', title: TITLE, type: 'feat' })).toBe(
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: 'agents', title: TITLE, type: 'feat' })).toBe(
         'agents|feat: Add foo',
       );
     });
@@ -77,7 +77,7 @@ describe(render, () => {
     it('renders the project merge template as it does today', () => {
       const record = { prNumber: '470', scope: 'agents', ticketRef: '#466', title: TITLE, type: 'feat' };
 
-      expect(render(compileTemplate(PROJECT_MERGE), record)).toBe('#466 agents|feat: Add foo (#470)');
+      expect(render(compileTemplate(FLAT_SCOPE_MERGE), record)).toBe('#466 agents|feat: Add foo (#470)');
     });
 
     it('renders the project PR template as it does today', () => {
@@ -93,11 +93,11 @@ describe(render, () => {
     it('carries the marker on the type, since no configured template names {breaking}', () => {
       const record = { breaking: true, scope: 'agents', title: TITLE, type: 'feat' };
 
-      expect(render(compileTemplate(PROJECT_COMMIT), record)).toBe('agents|feat!: Add foo');
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), record)).toBe('agents|feat!: Add foo');
     });
 
     it('drops the whole prefix under the project commit template when the scope is absent', () => {
-      expect(render(compileTemplate(PROJECT_COMMIT), { title: TITLE, type: 'feat' })).toBe('Add foo');
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { title: TITLE, type: 'feat' })).toBe('Add foo');
     });
 
     it('keeps the type prefix under the global merge template when the scope is absent', () => {
@@ -139,7 +139,7 @@ describe(render, () => {
     });
 
     it('drops the wildcard scope, so its group drops with it', () => {
-      expect(render(compileTemplate(PROJECT_COMMIT), { scope: '*', title: TITLE, type: 'feat' })).toBe('Add foo');
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: '*', title: TITLE, type: 'feat' })).toBe('Add foo');
     });
 
     it('trims a padded value rather than emitting the padding', () => {

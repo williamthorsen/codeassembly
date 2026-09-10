@@ -38,7 +38,7 @@ describe(isRewritableLinkTarget, () => {
     '/absolute/path.md',
     '~/.claude/skills/_data/concision.md',
     '#anchor-only',
-    '{harness_home_dir}/scripts/describe-change.sh',
+    '{harness_home_dir}/scripts/describe-change.mjs',
   ])('treats %s as passthrough', (target) => {
     expect(isRewritableLinkTarget(target)).toBe(false);
   });
@@ -101,8 +101,8 @@ describe(rewriteMarkdownPaths, () => {
     {
       name: 'leaves template-variable-prefixed targets untouched',
       fileRelPath: 'commit/SKILL.md',
-      content: 'Run [describe-change]({harness_home_dir}/scripts/describe-change.sh) first.',
-      expected: 'Run [describe-change]({harness_home_dir}/scripts/describe-change.sh) first.',
+      content: 'Run [describe-change]({harness_home_dir}/scripts/describe-change.mjs) first.',
+      expected: 'Run [describe-change]({harness_home_dir}/scripts/describe-change.mjs) first.',
     },
     {
       name: 'leaves anchor-only links untouched',
@@ -140,9 +140,9 @@ describe(rewriteMarkdownPaths, () => {
 
 describe(rewriteTemplateVariables, () => {
   it('replaces {harness_home_dir} with tilde-prefixed homeDir', () => {
-    const content = '{harness_home_dir}/scripts/describe-change.sh --scope agents --type feat';
+    const content = '{harness_home_dir}/scripts/describe-change.mjs --scope agents --type feat';
     expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(
-      '~/.claude/scripts/describe-change.sh --scope agents --type feat',
+      '~/.claude/scripts/describe-change.mjs --scope agents --type feat',
     );
   });
 
@@ -159,8 +159,8 @@ describe(rewriteTemplateVariables, () => {
   });
 
   it('resolves to the correct path for different harnesses', () => {
-    const content = '{harness_home_dir}/scripts/describe-change.sh';
-    expect(rewriteTemplateVariables(content, ROVO_VARIABLES)).toBe(`~/${ROVO_HOME}/scripts/describe-change.sh`);
+    const content = '{harness_home_dir}/scripts/describe-change.mjs';
+    expect(rewriteTemplateVariables(content, ROVO_VARIABLES)).toBe(`~/${ROVO_HOME}/scripts/describe-change.mjs`);
   });
 
   it('inserts a substitution value carrying a replacement pattern verbatim', () => {
@@ -276,14 +276,14 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      '{harness_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}',
+      '{harness_home_dir}/scripts/describe-change.mjs --scope {scope} --type {type}',
       'utf8',
     );
 
     await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
-    expect(result).toBe('~/.claude/scripts/describe-change.sh --scope {scope} --type {type}');
+    expect(result).toBe('~/.claude/scripts/describe-change.mjs --scope {scope} --type {type}');
   });
 
   it('applies both Markdown link and template variable rewrites', async () => {
@@ -291,7 +291,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      'See [format](../_data/title-templates.md). Run {harness_home_dir}/scripts/describe-change.sh.',
+      'See [format](../_data/title-templates.md). Run {harness_home_dir}/scripts/describe-change.mjs.',
       'utf8',
     );
 
@@ -299,7 +299,7 @@ describe(rewritePathsInDirectory, () => {
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe(
-      'See [format](~/.claude/skills/_data/title-templates.md). Run ~/.claude/scripts/describe-change.sh.',
+      'See [format](~/.claude/skills/_data/title-templates.md). Run ~/.claude/scripts/describe-change.mjs.',
     );
   });
 
@@ -308,14 +308,14 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      'Run [describe-change]({harness_home_dir}/scripts/describe-change.sh) first.',
+      'Run [describe-change]({harness_home_dir}/scripts/describe-change.mjs) first.',
       'utf8',
     );
 
     await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
-    expect(result).toBe('Run [describe-change](~/.claude/scripts/describe-change.sh) first.');
+    expect(result).toBe('Run [describe-change](~/.claude/scripts/describe-change.mjs) first.');
   });
 
   it('does not write files when no changes are needed', async () => {

@@ -2,7 +2,7 @@
 artifacts:
   base_dir: ~/ai-artifacts
 commit:
-  title_format: '[{scope}|{type}: ]{title}'
+  title_format: '[[{scope}|]{type}: ]{title}'
 editors:
   - extensions: '*.md'
     name: Webstorm
@@ -11,7 +11,7 @@ integrations:
   jira:
     enabled: false
 merge:
-  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
+  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'
 pr:
   title_format: '[{ticket_ref} ]{title}'
 project:

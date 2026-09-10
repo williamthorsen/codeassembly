@@ -47,10 +47,10 @@ If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type
 
 ### 6. Render PR title
 
-Call `describe-change.sh` to render the PR title from the configured `pr.title_format` template. Pass every input that is available; the template controls which tokens are required:
+Call `describe-change.mjs` to render the PR title from the configured `pr.title_format` template. Pass every input that is available; the template controls which tokens are required:
 
 ```bash
-{harness_home_dir}/scripts/describe-change.sh \
+node {harness_home_dir}/scripts/describe-change.mjs \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \

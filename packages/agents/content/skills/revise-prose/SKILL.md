@@ -91,7 +91,7 @@ rules: {rule-id}, {rule-id}
 
 1. **Check the diff against the wave.** Run `git diff --name-only`. Every batch in the wave has already edited by now, so the gate is the union of their file lists rather than any one batch's. Where the diff names a file outside that union, stop the run and report which file changed; commit nothing.
 2. **Check each report against its own batch.** Where a batch's `applied` entries name a file outside that batch's `files` list, stop the run and report which batch strayed; commit nothing. The union check above cannot see this, because the stray file is inside the wave.
-3. **Commit each batch in index order.** Stage that batch's files alone and commit them per `{skill:create-commit}`, with type `docs` and the scope that `create-commit` derives from those files. Where the files span workspaces, `describe-change.sh` renders the prefix as `*|docs:`; correct it to a bare `docs:`.
+3. **Commit each batch in index order.** Stage that batch's files alone and commit them per `{skill:create-commit}`, with type `docs` and the scope that `create-commit` derives from those files.
 4. **Accumulate** the wave's `rejected` and `questionable` entries for step 5.
 
 ### 5. Close the run

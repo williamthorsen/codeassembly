@@ -44,8 +44,8 @@ describe(renderRulebookBody, () => {
       },
       {
         name: 'emits an absolute path for a target under scripts/',
-        body: 'Run [describe-change](../../scripts/describe-change.sh).',
-        expected: 'Run [describe-change](~/.claude/scripts/describe-change.sh).',
+        body: 'Run [describe-change](../../scripts/describe-change.mjs).',
+        expected: 'Run [describe-change](~/.claude/scripts/describe-change.mjs).',
       },
       {
         name: 'preserves an anchor fragment',

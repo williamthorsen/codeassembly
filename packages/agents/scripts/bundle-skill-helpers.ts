@@ -111,6 +111,10 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/revise-prose/revise-prose.mjs',
   },
   {
+    entry: 'src/describe-change/cli.ts',
+    outFile: 'content/scripts/describe-change.mjs',
+  },
+  {
     entry: 'src/relay-hook-event/cli.ts',
     outFile: 'content/scripts/relay-hook-event.mjs',
   },

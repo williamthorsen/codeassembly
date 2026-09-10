@@ -19,8 +19,10 @@ const TAXONOMY: Taxonomy = {
   ],
 };
 
-const PROJECT_COMMIT = '[{scope}|{type}: ]{title}';
-const PROJECT_MERGE = '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]';
+const FLAT_SCOPE_COMMIT = '[{scope}|{type}: ]{title}';
+const FLAT_SCOPE_MERGE = '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]';
+const NESTED_SCOPE_COMMIT = TEMPLATE_CATALOGUE.pipedScope;
+const NESTED_SCOPE_MERGE = '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]';
 const PROJECT_PR = '[{ticket_ref} ]{title}';
 const GLOBAL_MERGE = '[{ticket_ref} ][{scope}|][{type}: ]{title}[ (#{pr_number})]';
 
@@ -44,15 +46,18 @@ describe(parse, () => {
       expect(parse(nodes, render(nodes, record), TAXONOMY)).toStrictEqual(dropScopelessFields(template, record));
     });
 
-    it.each([PROJECT_COMMIT, PROJECT_MERGE, GLOBAL_MERGE])('inverts the configured template %s', (template) => {
-      const nodes = compileTemplate(template);
-      const record = { prNumber: '470', scope: 'agents', ticketRef: '#466', title: 'Add foo', type: 'feat' };
+    it.each([NESTED_SCOPE_COMMIT, NESTED_SCOPE_MERGE, FLAT_SCOPE_COMMIT, FLAT_SCOPE_MERGE, GLOBAL_MERGE])(
+      'inverts the configured template %s',
+      (template) => {
+        const nodes = compileTemplate(template);
+        const record = { prNumber: '470', scope: 'agents', ticketRef: '#466', title: 'Add foo', type: 'feat' };
 
-      expect(parse(nodes, render(nodes, record), TAXONOMY)).toStrictEqual(dropScopelessFields(template, record));
-    });
+        expect(parse(nodes, render(nodes, record), TAXONOMY)).toStrictEqual(dropScopelessFields(template, record));
+      },
+    );
 
     it('reads a ticket reference and a trailing pull-request number out of a merge subject', () => {
-      const record = parse(compileTemplate(PROJECT_MERGE), '#466 agents|feat: Add foo (#470)', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_MERGE), '#466 agents|feat: Add foo (#470)', TAXONOMY);
 
       expect(record).toStrictEqual({
         prNumber: '470',
@@ -76,7 +81,7 @@ describe(parse, () => {
     });
 
     it('reads the marker off the type where the template names no {breaking}', () => {
-      const record = parse(compileTemplate(PROJECT_COMMIT), 'agents|feat!: Add foo', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'agents|feat!: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ breaking: true, scope: 'agents', title: 'Add foo', type: 'feat' });
     });
@@ -105,7 +110,7 @@ describe(parse, () => {
     });
 
     it('drops the wildcard scope that release-kit keeps, since the engine reads it as no scope', () => {
-      const record = parse(compileTemplate(PROJECT_COMMIT), '*|feat: Add foo', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), '*|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ title: 'Add foo', type: 'feat' });
     });
@@ -113,15 +118,15 @@ describe(parse, () => {
 
   describe('unmatched subjects', () => {
     it('refuses a hand-written subject under a template naming {type}', () => {
-      expect(parse(compileTemplate(PROJECT_COMMIT), 'Add foo', TAXONOMY)).toBeUndefined();
+      expect(parse(compileTemplate(FLAT_SCOPE_COMMIT), 'Add foo', TAXONOMY)).toBeUndefined();
     });
 
     it('refuses a subject naming a scope but no type', () => {
-      expect(parse(compileTemplate(PROJECT_COMMIT), 'agents|: Add foo', TAXONOMY)).toBeUndefined();
+      expect(parse(compileTemplate(FLAT_SCOPE_COMMIT), 'agents|: Add foo', TAXONOMY)).toBeUndefined();
     });
 
     it('refuses a subject whose type the taxonomy does not declare', () => {
-      expect(parse(compileTemplate(PROJECT_COMMIT), 'Support a|b: syntax', TAXONOMY)).toBeUndefined();
+      expect(parse(compileTemplate(FLAT_SCOPE_COMMIT), 'Support a|b: syntax', TAXONOMY)).toBeUndefined();
     });
 
     it('refuses a scoped subject under a template that names no scope', () => {
@@ -135,19 +140,19 @@ describe(parse, () => {
 
   describe('the ticket-reference preprocessor', () => {
     it('strips a ticket prefix the template does not name', () => {
-      const record = parse(compileTemplate(PROJECT_COMMIT), '#466 agents|feat: Add foo', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), '#466 agents|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
     it('strips a sub-ticket prefix the template does not name', () => {
-      const record = parse(compileTemplate(PROJECT_COMMIT), '#466.1 agents|feat: Add foo', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), '#466.1 agents|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
     it('strips a Jira prefix the template does not name', () => {
-      const record = parse(compileTemplate(PROJECT_COMMIT), 'MAC-147 agents|feat: Add foo', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'MAC-147 agents|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
@@ -161,7 +166,7 @@ describe(parse, () => {
 
   describe('the ambiguity the grammar accepts', () => {
     it('reads a pipe-carrying title as a scope and a type, since a present group wins', () => {
-      const record = parse(compileTemplate(PROJECT_COMMIT), 'Rename kb|docs: the shared layer', TAXONOMY);
+      const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'Rename kb|docs: the shared layer', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'Rename kb', title: 'the shared layer', type: 'docs' });
     });
