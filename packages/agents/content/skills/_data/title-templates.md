@@ -88,6 +88,39 @@ A subject not matched by the template reports `{"matched":false}` and exits 0. A
 
 **Where a parse could read a group as present or absent, present wins.** This is release-kit's reading, and it is what makes `agents|feat: Add foo` parse as scoped and typed rather than as a bare title. See [What the grammar does not support](#what-the-grammar-does-not-support) for the cost.
 
+## Classifying a commit range
+
+`--classify` reads a range of commits through `commit.title_format` and reports what the branch adds up to. The base ref is the flag's value; the range is `{base-ref}..HEAD`.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs --classify origin/main \
+  --ticket-label feature --ticket-label scope:agents
+```
+
+`--ticket-label` is repeatable and carries the linked ticket's labels. The bundle reverse-looks-up the repository's `.meta/label-map.json` to report which work type they name, so it fetches nothing itself.
+
+```json
+{
+  "entries": [{ "breaking": false, "commit": "63d2173", "scope": "agents", "title": "Add the parser", "type": "feat" }],
+  "head": { "breaking": false, "scope": "agents", "type": "feat" },
+  "ticket_type": "feat",
+  "unclassified": [{ "commit": "b5ce73f", "subject": "wip" }],
+  "violations": [{ "commit": "8d2227d", "policy": "forbidden", "type": "fix" }]
+}
+```
+
+**A commit carrying `Change:` trailers contributes those entries and not its subject.** A condensed commit's subject is the head its trailers already consolidate to, so reading both would count the branch against itself. See [The `Change:` trailer](./change-record.md#the-change-trailer).
+
+**The head ranks; it does not count.** One `feat` speaks for a branch carrying three `fix` commits, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. `head` is `null` where no entry was found, which is how a branch with no classified commits is told from one whose head names no scope. The head names no title: a caller takes that from the change summary.
+
+**A subject no template matched is listed rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set the head is derived from.
+
+**A violation is reported and the run continues.** A `fix!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. The commit is already written, so refusing here would block the work behind a rebase; the entry is reported as written and never normalized.
+
+**`ticket_type` is `null` where the labels name no type and where they name more than one.** Two type labels on one ticket say that nobody has decided which it is.
+
+The run refuses outright where no taxonomy is readable, since the head has nothing to rank against, and where `commit.title_format` is empty, since no template would match any subject. `--classify` takes no record flags and refuses `--parse`; `--ticket-label` refuses to stand on its own.
+
 ## Supported tokens
 
 | Token          | Resolves to                                                                                                            |
