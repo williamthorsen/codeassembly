@@ -29,9 +29,9 @@ Prose mentions of script names that are not invocations (e.g., ``"the `describe-
 
 Agent-invoked:
 
-- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, and reads a rendered title back into its parts. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs`; the bundle carries no shebang.
+- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, reads a rendered title back into its parts, and classifies a commit range into the head its entries consolidate to. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs`; the bundle carries no shebang.
 - `get-ticket-id.sh`: Extracts a ticket ID from a branch name.
-- `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields.
+- `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields, plus scalar and list extension keys.
 - `resolve-merge-options.sh`: Resolves merge-method and squash-title inputs from CLI overrides, label maps, and commit majority.
 - `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.
 - `select-lede-exemplars.mjs`: Selects author-approved ledes of a given work type from the lede-decision corpus, optionally floored at a quality rating. `--with-pair` reports each record's agent lede, merged lede, and author comment alongside the approved text.
