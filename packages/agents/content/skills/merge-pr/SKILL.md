@@ -174,11 +174,12 @@ The composed body reaches the approval gate in step 7, where the user reads it b
 
 ### 7. Approval gate
 
-If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:
+For each dimension still unresolved after step 6, ask one question at a time before showing the final commit:
 
-- For each ambiguous dimension, present a numbered list of the dimension's `candidates` array, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
+- Present a numbered list of the dimension's `candidates` array from step 3, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
-- After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
+
+Re-render the title (step 5) with the now-concrete values wherever a dimension was resolved after step 5, whether here or at step 6's thin-body fallback. Step 5 omitted the flag for each ambiguous dimension, so its render is provisional whichever step settles the value.
 
 Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
 
