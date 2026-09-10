@@ -84,7 +84,7 @@ Missing entries are silently skipped. If neither scope nor type is present, labe
 Read `scm` from the session context manifest:
 
 - `"github"` -> delegate to `{skill:create-gh-pr}`
-- `"bitbucket"` -> delegate to `{skill:create-bitbucket-pr}`
+- `"bitbucket"` -> delegate to `{skill?:create-bitbucket-pr}`
 - Unknown or missing -> ask the user which platform to use. On this branch only, emit `input.requested` (payload `{"prompt":"platform"}`) per [Lifecycle events](#lifecycle-events) before asking.
 
 ### 9. Append auto-close keyword (if applicable)

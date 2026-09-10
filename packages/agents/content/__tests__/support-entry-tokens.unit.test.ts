@@ -36,8 +36,7 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // `{rulebook:<slug>}` is out of scope. The render pass rejects one in a support entry outright, since `install` ships
 // such an entry having resolved no declaration to render it against.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
-const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
-const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
+const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures', 'support-entry-tokens');
 
 /** An artifact addressed as `<type>:<slug>`, the form the resolver's own errors use. */
 type ArtifactId = string;
@@ -62,7 +61,7 @@ describe('support entry invocation tokens', () => {
     const subagents = new Set(catalog.subagent);
     const violations: Array<string> = [];
 
-    const files = await listSupportEntryFiles();
+    const files = await listSupportEntryFiles(CONTENT_ROOT);
     for (const file of files) {
       const body = await readFile(file, 'utf8');
       // Optional targets join the required ones here: the closure walk never reads a support entry, so nothing else
@@ -94,7 +93,7 @@ describe('support entry invocation tokens', () => {
   // The assertion above only ever reports what it fails to find, so a walk that silently returned nothing would leave
   // the suite green and the guard gone. This pins the walk against an entry reached only by link.
   it('reaches a support entry reached only by link', async () => {
-    const files = (await listSupportEntryFiles()).map((file) => path.relative(CONTENT_ROOT, file));
+    const files = (await listSupportEntryFiles(CONTENT_ROOT)).map((file) => path.relative(CONTENT_ROOT, file));
 
     expect(files).toContain('skills/_data/ticket-source-resolution.md');
   });
@@ -115,30 +114,7 @@ describe('support entry invocation tokens', () => {
 // exists to leave out.
 describe('support entry token declarations', () => {
   it('are declared by every host that links into the section carrying them', async () => {
-    const carriers = await mapTokenCarriers();
-    const hosts = await listLinkingHosts();
-    const violations: Array<string> = [];
-
-    for (const host of hosts) {
-      const required = new Set<ArtifactId>();
-      for (const link of host.links) {
-        const carried = carriers.get(link.file)?.get(link.section) ?? [];
-        for (const id of carried) {
-          required.add(id);
-        }
-      }
-      if (required.size === 0) {
-        continue;
-      }
-
-      const closure = await resolveClosure({ [host.type]: [host.slug] }, libraryResolver(CONTENT_ROOT));
-      const reached = new Set<ArtifactId>([
-        ...closure.skills.map((slug) => `skill:${slug}`),
-        ...closure.subagents.map((slug) => `subagent:${slug}`),
-      ]);
-      const missing = [...required].toSorted().filter((id) => !reached.has(id));
-      violations.push(...missing.map((id) => `${host.type}:${host.slug} -> ${id}`));
-    }
+    const violations = await findUndeclaredTokens(CONTENT_ROOT);
 
     const message =
       'A host links into a support-entry section carrying an invocation token whose target its closure never ' +
@@ -147,20 +123,59 @@ describe('support entry token declarations', () => {
     expect(violations, message).toEqual([]);
   });
 
-  // The assertion above reports only what it fails to reach, so a walk finding no linking host at all would pass. This
-  // pins the one pairing the suite exists for.
-  it('holds the declaration that carries the Jira write into ticket alignment', async () => {
-    const hosts = await listLinkingHosts();
-    const align = hosts.find((host) => host.slug === 'align-ticket-with-implementation');
+  // The assertion above reports only what it fails to reach, and no support entry in the library carries a required
+  // token today: every one naming an Atlassian skill is written in the optional form, which carries no requirement. So
+  // the live walk has nothing to judge, and these two fixtures are what prove the walk still judges correctly when a
+  // support entry next carries one.
+  describe('detection', () => {
+    it('reports a host that declares none of what the section it links names', async () => {
+      const violations = await findUndeclaredTokens(path.join(FIXTURES_DIR, 'undeclared'));
 
-    expect(align?.links).toContainEqual({
-      file: path.join(SKILLS_ROOT, '_data', 'ticket-source-resolution.md'),
-      section: 'platform-specific-write',
+      expect(violations).toEqual(['skill:host -> skill:target']);
+    });
+
+    it('accepts a host that declares it', async () => {
+      const violations = await findUndeclaredTokens(path.join(FIXTURES_DIR, 'declared'));
+
+      expect(violations).toEqual([]);
     });
   });
 });
 
 // region | Helpers
+
+/**
+ * Reports each host whose closure fails to reach an artifact named by a required invocation token in a support-entry
+ * section the host links. One walk serves the library and the fixtures alike, so what the fixtures prove about the
+ * detection is what the library is held to.
+ */
+async function findUndeclaredTokens(root: string): Promise<Array<string>> {
+  const carriers = await mapTokenCarriers(root);
+  const hosts = await listLinkingHosts(root);
+  const violations: Array<string> = [];
+
+  for (const host of hosts) {
+    const required = new Set<ArtifactId>();
+    for (const link of host.links) {
+      const carried = carriers.get(link.file)?.get(link.section) ?? [];
+      for (const id of carried) {
+        required.add(id);
+      }
+    }
+    if (required.size === 0) {
+      continue;
+    }
+
+    const closure = await resolveClosure({ [host.type]: [host.slug] }, libraryResolver(root));
+    const reached = new Set<ArtifactId>([
+      ...closure.skills.map((slug) => `skill:${slug}`),
+      ...closure.subagents.map((slug) => `subagent:${slug}`),
+    ]);
+    const missing = [...required].toSorted().filter((id) => !reached.has(id));
+    violations.push(...missing.map((id) => `${host.type}:${host.slug} -> ${id}`));
+  }
+  return violations.toSorted();
+}
 
 /**
  * Lists the anchor slugs of every heading whose section encloses `index`, outermost first. A heading opens a section
@@ -182,25 +197,27 @@ function listEnclosingSlugs(headings: ReadonlyArray<HeadingPosition>, index: num
 }
 
 /** Lists every skill and subagent whose include-expanded body links into a support entry, with the sections it names. */
-async function listLinkingHosts(): Promise<ReadonlyArray<LinkingHost>> {
-  const supportFiles = new Set(await listSupportEntryFiles());
+async function listLinkingHosts(root: string): Promise<ReadonlyArray<LinkingHost>> {
+  const skillsRoot = path.join(root, 'skills');
+  const subagentsRoot = path.join(root, 'subagents');
+  const supportFiles = new Set(await listSupportEntryFiles(root));
   const hosts: Array<LinkingHost> = [];
 
   const candidates: Array<{ type: 'skill' | 'subagent'; slug: string; file: string }> = [
-    ...(await listSkillDirectories(SKILLS_ROOT)).map((slug) => ({
+    ...(await listSkillDirectories(skillsRoot)).map((slug) => ({
       type: 'skill' as const,
       slug,
-      file: path.join(SKILLS_ROOT, slug, 'SKILL.md'),
+      file: path.join(skillsRoot, slug, 'SKILL.md'),
     })),
-    ...(await listVisibleMarkdownFiles(SUBAGENTS_ROOT)).map((file) => ({
+    ...(await listVisibleMarkdownFiles(subagentsRoot)).map((file) => ({
       type: 'subagent' as const,
       slug: path.basename(file, '.md'),
-      file: path.join(SUBAGENTS_ROOT, file),
+      file: path.join(subagentsRoot, file),
     })),
   ];
 
   for (const candidate of candidates) {
-    const body = normalizeForAnchorScan(await expandIncludes(candidate.file, CONTENT_ROOT));
+    const body = normalizeForAnchorScan(await expandIncludes(candidate.file, root));
     const links: Array<SupportLink> = [];
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
       const target = match[2];
@@ -229,11 +246,12 @@ async function listLinkingHosts(): Promise<ReadonlyArray<LinkingHost>> {
  * A support entry is a directory or a plain file, so the walk decides on what the entry is rather than on its name: a
  * `notes.json` beside `_data/` contributes no Markdown, where reading its suffix would send `readdir` at a file.
  */
-async function listSupportEntryFiles(): Promise<ReadonlyArray<string>> {
+async function listSupportEntryFiles(root: string): Promise<ReadonlyArray<string>> {
+  const skillsRoot = path.join(root, 'skills');
   const files: Array<string> = [];
-  const entries = await listSupportEntries(SKILLS_ROOT);
+  const entries = await listSupportEntries(skillsRoot);
   for (const entry of entries) {
-    const target = path.join(SKILLS_ROOT, entry);
+    const target = path.join(skillsRoot, entry);
     if ((await stat(target)).isDirectory()) {
       files.push(...(await listMarkdownFiles(target)));
     } else if (target.endsWith('.md')) {
@@ -249,9 +267,11 @@ async function listSupportEntryFiles(): Promise<ReadonlyArray<string>> {
  * host linking either heading carries the same requirement. An optional token is left out: It asserts the target may
  * be absent, which is the opposite of what the host declaration it would compel guarantees.
  */
-async function mapTokenCarriers(): Promise<ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<ArtifactId>>>> {
+async function mapTokenCarriers(
+  root: string,
+): Promise<ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<ArtifactId>>>> {
   const carriers = new Map<string, Map<string, Set<ArtifactId>>>();
-  const files = await listSupportEntryFiles();
+  const files = await listSupportEntryFiles(root);
 
   for (const file of files) {
     const body = normalizeForAnchorScan(await readFile(file, 'utf8'));

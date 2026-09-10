@@ -41,9 +41,17 @@ const STANDALONE: Readonly<Record<ArtifactId, string>> = {
 
 /** Each vetted collection and the dispositions its closure may reach. A collection absent here is not vetted. */
 const VETTED_CLOSURES: ReadonlyArray<{ collection: string; reaches: ReadonlyArray<string> }> = [
+  { collection: 'atlassian', reaches: ['atlassian', 'recommended'] },
   { collection: 'recommended', reaches: ['recommended'] },
   { collection: 'williamthorsen', reaches: ['recommended', 'williamthorsen'] },
 ];
+
+/**
+ * The opt-in collections: vetted, and additionally reached by no collection outside themselves. A member is deployed
+ * only where its own collection is declared, which is what an opt-in claim promises and what the check below holds it
+ * to. The outbound half of that claim is `VETTED_CLOSURES` above, which every opt-in collection also appears in.
+ */
+const OPT_IN_COLLECTIONS: ReadonlyArray<string> = ['atlassian'];
 
 /** The vetted collections' slugs, derived from the reach table. */
 const VETTED_COLLECTIONS: ReadonlyArray<string> = VETTED_CLOSURES.map(({ collection }) => collection);
@@ -81,8 +89,8 @@ describe('collection dispositions', () => {
   });
 
   // Standalone spares an artifact the skill-index line every collection member gets, and that is true only while
-  // no collection's closure reaches it. `triage` is the 71-member surface where a new edge is likeliest, and no
-  // vetted-closure rule constrains it.
+  // no collection's closure reaches it. `triage` is the largest surface by far, so a new edge is likeliest there, and
+  // no vetted-closure rule constrains it.
   it('keeps every standalone artifact out of the collections’ combined closure', async () => {
     const collections = await readExplicitCollections(contentDir);
     const closure = await resolveClosure({ collection: collections.keys().toArray() }, libraryResolver(contentDir));
@@ -95,6 +103,35 @@ describe('collection dispositions', () => {
     );
 
     expect(defects).toEqual([]);
+  });
+
+  // An opt-in member costs a skill-index line on every machine that deploys it, and the collection's whole claim is
+  // that only a machine declaring it deploys one. One restored invocation token undoes that silently: the general PR,
+  // merge, review, and ticket skills each address a member through an optional token, and writing one in its required
+  // form hands the members back to every consumer of those skills.
+  it.each(OPT_IN_COLLECTIONS)('keeps %s out of every other collection’s closure', async (optIn) => {
+    const collections = await readExplicitCollections(contentDir);
+    const members = listArtifactIds(collections.get(optIn) ?? {});
+    const defects: Array<string> = [];
+
+    // A slug naming no collection leaves no members to claim, which the loop below reads as no leak. Failing here is
+    // what keeps a renamed or mistyped entry from retiring the check in silence.
+    expect(members, `${optIn} names no collection with members, so the check below would pass vacuously.`).not.toEqual(
+      [],
+    );
+
+    for (const collection of collections.keys()) {
+      if (collection === optIn) {
+        continue;
+      }
+      const closure = await resolveClosure({ collection: [collection] }, libraryResolver(contentDir));
+      defects.push(...findOptInLeaks(optIn, members, collection, listClosureIds(closure)));
+    }
+
+    const message =
+      `A collection outside ${optIn} reaches one of its members, so declaring that collection deploys an artifact ` +
+      `only a machine opting into ${optIn} should have:\n  ${defects.join('\n  ')}`;
+    expect(defects, message).toEqual([]);
   });
 
   it('records a standalone reason for every artifact it exempts', () => {
@@ -219,6 +256,27 @@ describe('collection dispositions', () => {
       ]);
     });
   });
+
+  describe('opt-in reach', () => {
+    it('reports a collection reaching an opt-in member', () => {
+      expect(findOptInLeaks('atlassian', ['skill:vendor'], 'triage', ['skill:host', 'skill:vendor'])).toEqual([
+        "triage's closure reaches skill:vendor, a member of the opt-in collection atlassian.",
+      ]);
+    });
+
+    it('accepts a collection reaching none of them', () => {
+      expect(findOptInLeaks('atlassian', ['skill:vendor'], 'triage', ['skill:host'])).toEqual([]);
+    });
+
+    it('reports every member a collection reaches', () => {
+      const reached = ['skill:second', 'skill:first'];
+
+      expect(findOptInLeaks('atlassian', ['skill:first', 'skill:second'], 'triage', reached)).toEqual([
+        "triage's closure reaches skill:first, a member of the opt-in collection atlassian.",
+        "triage's closure reaches skill:second, a member of the opt-in collection atlassian.",
+      ]);
+    });
+  });
 });
 
 // region | Helpers
@@ -317,6 +375,23 @@ function findCoverageDefects(
     }
   }
   return defects.toSorted();
+}
+
+/**
+ * Reports each member of `optIn` that `collection`'s closure reaches. `collection` is any collection but the opt-in
+ * one itself, whose own closure reaching its members is what it is for.
+ */
+function findOptInLeaks(
+  optIn: string,
+  members: ReadonlyArray<ArtifactId>,
+  collection: string,
+  reached: ReadonlyArray<ArtifactId>,
+): Array<string> {
+  const claimed = new Set(members);
+  return reached
+    .filter((id) => claimed.has(id))
+    .toSorted()
+    .map((id) => `${collection}'s closure reaches ${id}, a member of the opt-in collection ${optIn}.`);
 }
 
 /** Flattens a per-type slug map into artifact ids. */

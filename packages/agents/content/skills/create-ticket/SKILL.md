@@ -166,7 +166,7 @@ Do not choose a type from the ticket's content. A team-managed project need not 
 
 ##### Create the work item
 
-Identify the client per {skill:update-jira-ticket}, which ranks the three client shapes and states the description format each one takes. Where it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
+Identify the client per {skill?:update-jira-ticket}, which ranks the three client shapes and states the description format each one takes. Where it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
 
 Every client takes `ticket_title` as the summary, the resolved project key, the resolved issue type, and the step-2 body as the description in that skill's assigned format:
 
@@ -326,7 +326,7 @@ body_path="{absolute path from the write step}"
 gh issue comment {number} --body-file "$body_path"
 ```
 
-**Jira.** Comment through the client that created the work item, in the format {skill:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
+**Jira.** Comment through the client that created the work item, in the format {skill?:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
 
 The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path carried between Bash invocations resolves to nothing either way.
 

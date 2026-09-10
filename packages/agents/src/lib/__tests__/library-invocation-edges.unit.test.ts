@@ -10,7 +10,8 @@ import { enumerateCatalogSlugs } from '../library-catalog.ts';
 
 // Asserts that the content library's invocation edges resolve: declaring a skill pulls the skills and subagents it
 // invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
-// frontmatter.
+// frontmatter. An optional body token is the one invocation that contributes no edge, so the closure it stays out of
+// is asserted here alongside the closures the others enter.
 describe('library invocation edges', () => {
   const contentDir = resolveContentDir();
 
@@ -27,10 +28,11 @@ describe('library invocation edges', () => {
     expect(closure.skills).toContain('capture-event');
   });
 
-  it('pulls create-pr delegates', async () => {
+  it('pulls create-pr’s required delegates and leaves its optional one out', async () => {
     const closure = await resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir));
 
-    expect(closure.skills).toEqual(expect.arrayContaining(['create-gh-pr', 'create-bitbucket-pr', 'summarize-change']));
+    expect(closure.skills).toEqual(expect.arrayContaining(['create-gh-pr', 'summarize-change']));
+    expect(closure.skills).not.toContain('create-bitbucket-pr');
   });
 
   it('pulls orchestrate dispatched subagents declared in frontmatter', async () => {
@@ -74,7 +76,7 @@ describe('library invocation edges', () => {
     // excludes script paths (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
     const catalog = await enumerateCatalogSlugs(contentDir);
     const known = new Set([...(catalog.skill ?? []), ...(catalog.subagent ?? [])]);
-    const tokenRe = /\{(?:skill|subagent):[a-z][a-z0-9-]*\}/g;
+    const tokenRe = /\{(?:skill|subagent)\??:[a-z][a-z0-9-]*\}/g;
     const literalRefRe = /(?<![\w./])\/([a-z][a-z0-9-]*)(?![\w/.-])/g;
     const offenders: Array<string> = [];
 

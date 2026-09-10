@@ -5,7 +5,6 @@ user-invocable: true
 dependencies:
   skills:
     - emit-event
-    - update-jira-ticket
   subagents:
     - plan-reviewer
     - plan-reviser

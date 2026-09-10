@@ -7,7 +7,6 @@ dependencies:
     - emit-event
     - save-artifact
     - testing-conventions
-    - update-jira-ticket
 ---
 
 # Design and plan
