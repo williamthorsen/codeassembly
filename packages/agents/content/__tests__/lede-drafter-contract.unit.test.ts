@@ -4,20 +4,15 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// The drafter answers "What is this PR about?" from summary-shaped sources, in a form the author rates. Two inputs
-// defeat that question, and both look like diligence when a later edit restores them: the diff, which makes every
-// fact it holds feel load-bearing, and the doctrine, which turns the question into a rule list answered by
-// including whatever it does not forbid. The form is defeated by a prescribed phrase, which the model emits
-// wherever guidance names one, and by an exemplar below the floor, every one of which is paragraph-form. None of
-// these failures shows up at runtime -- each yields a plausible lede that catalogs the change -- so the guard has
-// to be here.
+// The drafter answers "What is this PR about?" from summary-shaped sources, in a form the author rates. The diff
+// defeats that question and looks like diligence when a later edit restores it, because every fact it holds feels
+// load-bearing. The form is defeated by a prescribed phrase, which the model emits wherever guidance names one, and
+// by an exemplar below the floor, every one of which is paragraph-form. None of these failures shows up at runtime
+// -- each yields a plausible lede that catalogs the change -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
 const ASSIGNMENT_QUESTION = 'What is this PR about?';
-
-/** The doctrine, written for the author and the auditor who read the draft rather than for the drafter. */
-const DOCTRINE_FILENAME = 'lede-voice.md';
 
 /** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
@@ -67,12 +62,6 @@ const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', '
  */
 const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not work on it', 'works in this codebase'];
 
-/** Each file stating the reader specification. The drafter never reads the doctrine, so each carries its own copy. */
-const READER_SOURCES: ReadonlyArray<string> = [
-  path.join('skills', '_data', DOCTRINE_FILENAME),
-  path.join('subagents', 'lede-drafter.md'),
-];
-
 /**
  * Phrases binding a redispatch to the passages it was handed. Lowercased, so a sentence's opening capital still
  * matches.
@@ -117,14 +106,13 @@ describe('lede-drafter contract', () => {
     expect(await EXPANDED, message).toContain(ASSIGNMENT_QUESTION);
   });
 
-  it.each(READER_SOURCES)('names both readers in %s', async (relativePath) => {
-    const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
+  it('names both readers', async () => {
+    const text = (await EXPANDED).toLowerCase();
     const missing = READER_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The reader decides what the entry reports, and the doctrine and the drafter each state the readers, since ' +
-      'the drafter never reads the doctrine. Revising one leaves the other naming a superseded reader. These ' +
-      `phrases are gone:\n  ${missing.join('\n  ')}`;
+      'The reader decides what the entry reports, and this file is the only one that states the readers to the ' +
+      `writer. Where one is gone, the drafter writes for an audience nothing named. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -139,14 +127,6 @@ describe('lede-drafter contract', () => {
       "rather than what it is about, and the caller already checks the draft's claims against the diff. These " +
       `invocations return hunks:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
-  });
-
-  it('points the drafter at no doctrine to read before drafting', async () => {
-    const message =
-      `\`${DOCTRINE_FILENAME}\` is written for the author and the auditor who read the draft. Reading a rule list ` +
-      'before writing turns the assignment into a checklist, which is answered by including everything it does ' +
-      'not forbid.';
-    expect(await EXPANDED, message).not.toContain(DOCTRINE_FILENAME);
   });
 
   it('draws exemplars from ledes at the floor alone', async () => {
@@ -247,14 +227,12 @@ describe('lede-drafter contract', () => {
     expect(await EXPANDED, message).toContain(PROCESS_NARRATION_PHRASE);
   });
 
-  it.each(READER_SOURCES)('states that the title is already on the page in %s', async (relativePath) => {
-    const text = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
-
+  it('states that the title is already on the page', async () => {
     const message =
       "Every surface renders the change title above the lede, so a sentence restating it spends the reader's " +
-      'opening seconds on what they already know. The doctrine and the drafter each state this, since the drafter ' +
-      'never reads the doctrine, and a deletion-only cut cannot repair a bullet that opens by restating the title.';
-    expect(text, message).toContain(TITLE_PHRASE);
+      'opening seconds on what they already know, and a deletion-only cut cannot repair a bullet that opens by ' +
+      'restating the title.';
+    expect(await EXPANDED, message).toContain(TITLE_PHRASE);
   });
 
   it('prescribes no connective phrase', async () => {

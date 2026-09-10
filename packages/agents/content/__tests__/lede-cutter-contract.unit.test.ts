@@ -22,9 +22,6 @@ const AUTHORITY_PHRASES: ReadonlyArray<string> = [
   'character for character',
 ];
 
-/** The doctrine, written for the author and the auditor rather than for the cutter. */
-const DOCTRINE_FILENAME = 'lede-voice.md';
-
 /** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
 
@@ -46,7 +43,7 @@ const REJECTION_CODES: ReadonlyArray<string> = ['not-a-subset', 'empty-cut'];
  */
 const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not work on it', 'works in this codebase'];
 
-/** The instruction that closes the title-restating bullet, which is what #1559 reports. */
+/** The instruction that closes the bullet restating the title the reader has already met. */
 const TITLE_PHRASE = 'The title is already on the page';
 
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'lede-cutter.md'), CONTENT_ROOT);
@@ -64,8 +61,8 @@ describe('lede-cutter contract', () => {
     const missing = READER_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The reader decides which candidates survive, and the cutter never reads the doctrine that states them, so ' +
-      `this file carries its own copy. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'The reader decides which candidates survive, and this file is the only one that states them to the cutter. ' +
+      `Where one is gone, the cut is made for an audience nothing named. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -89,7 +86,7 @@ describe('lede-cutter contract', () => {
   it('requires the cut to keep a candidate', async () => {
     const message =
       `\`${NONEMPTY_RULE_PHRASE}\` is what keeps the cut usable. \`merge-pr\` reads a \`## What\` under 30 ` +
-      'characters as thin and composes a fresh body from the diff, so an emptied lede is rewritten by the auditor.';
+      'characters as thin and composes a replacement, so an emptied lede is silently discarded and redrafted.';
     expect(await EXPANDED, message).toContain(NONEMPTY_RULE_PHRASE);
   });
 
@@ -113,13 +110,6 @@ describe('lede-cutter contract', () => {
       'The cutter reads the candidates as the reader meets them, with nothing behind them. A cutter holding the ' +
       `hunks recovers the reasons the fresh context removed. These invocations return hunks:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
-  });
-
-  it('points the cutter at no doctrine to read before cutting', async () => {
-    const message =
-      `\`${DOCTRINE_FILENAME}\` is written for the author and the auditor who read the draft. A rule list turns the ` +
-      'cut into a checklist, which is answered by keeping everything the list does not forbid.';
-    expect(await EXPANDED, message).not.toContain(DOCTRINE_FILENAME);
   });
 
   it('draws exemplars from the author edits at the floor alone', async () => {
