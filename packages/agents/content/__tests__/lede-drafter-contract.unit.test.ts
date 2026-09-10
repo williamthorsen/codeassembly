@@ -6,13 +6,20 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
 // The drafter answers "What is this PR about?" from summary-shaped sources, in a form the author rates. The diff
 // defeats that question and looks like diligence when a later edit restores it, because every fact it holds feels
-// load-bearing. The form is defeated by a prescribed phrase, which the model emits wherever guidance names one, and
-// by an exemplar below the floor, every one of which is paragraph-form. None of these failures shows up at runtime
-// -- each yields a plausible lede that catalogs the change -- so the guard has to be here.
+// load-bearing. The form is defeated by a prescribed phrase, which the model emits wherever guidance names one, by an
+// exemplar below the floor, every one of which is paragraph-form, and by a bullet unit that reads as one edit, whose
+// split bullets no later actor may merge. None of these failures shows up at runtime -- each yields a plausible lede
+// that catalogs the change -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
 const ASSIGNMENT_QUESTION = 'What is this PR about?';
+
+/**
+ * Phrases fixing a bullet's scope to the outcome rather than to the edit. Where they are gone, "one bullet" reads as
+ * one edit, and neither the caller's audit nor the deletion-only cutter may merge the bullets that reading splits.
+ */
+const BULLET_SCOPE_PHRASES: ReadonlyArray<string> = ['one bullet per outcome', 'not the edit that produced it'];
 
 /** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
@@ -23,7 +30,6 @@ const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
  */
 const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'bullet list',
-  'one bullet per change',
   'one sentence',
   'the artifact consumed by the reader',
   'third-person indicative present',
@@ -158,6 +164,17 @@ describe('lede-drafter contract', () => {
     expect(missing, message).toEqual([]);
   });
 
+  it('fixes a bullet to one outcome', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = BULLET_SCOPE_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'A drafter reading "one bullet" as one edit splits a single outcome across bullets, and the split survives the ' +
+      'whole pipeline: the audit may strike and correct but never merge, and the cutter may only delete. These ' +
+      `phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
   it.each(SUBJECT_TEST_SOURCES)('states the subject test in %s', async (relativePath) => {
     const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
     const missing = SUBJECT_TEST_PHRASES.filter((phrase) => !text.includes(phrase));
@@ -238,7 +255,7 @@ describe('lede-drafter contract', () => {
   it('prescribes no connective phrase', async () => {
     const message =
       `A form named in guidance is a form the model emits, so "${PRESCRIBED_CONNECTIVE}" reaches the draft wherever ` +
-      'the drafter names it. A second concern is a second bullet.';
+      'the drafter names it. A second outcome is a second bullet.';
     expect(await EXPANDED, message).not.toContain(PRESCRIBED_CONNECTIVE);
   });
 });

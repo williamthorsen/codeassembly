@@ -82,8 +82,8 @@ A revert has the work type of the change that it undoes, so your dispatch names 
 
 These fix how a bullet is written. None of them ranks the facts; the question and the reader above do that.
 
-- The lede is a bullet list, one bullet per change. A second concern is a second bullet.
-- A bullet is one sentence. A change that needs two is either two changes or one that you have not finished reducing.
+- The lede is a bullet list, one bullet per outcome: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one bullet, and a second outcome is a second bullet.
+- A bullet is one sentence. An outcome that needs two is either two outcomes or one that you have not finished reducing.
 - A bullet opens with its verb, third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine where natural.
 - The subject is the pull request, and it stays unwritten. Read a bullet with "This pull request" in front of it: Where that sentence is false, the verb names what the system does rather than what the change did, and the bullet fails. "This pull request ends quietly when the reader closes the pipe" is false; "This pull request stops `foo` from crashing with an unhandled `EPIPE`" is true.
 - Where the change adds something that itself acts, a command, a check, a rule, a hook, that thing's behavior is the interesting content, so a drafter is tempted to give it the main verb. The change keeps the main verb, and the artifact's behavior goes in a subordinate clause.
