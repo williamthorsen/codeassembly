@@ -6,19 +6,26 @@ import { describe, expect, it } from 'vitest';
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, '..', '..', '..');
 
 /** The rules the boundary block declares, each keyed to the reach it forecloses. */
-const BOUNDARY_RULES = ['import-x/no-nodejs-modules', 'import-x/no-restricted-paths', 'no-restricted-globals'];
+const BOUNDARY_RULES = [
+  'import-x/no-nodejs-modules',
+  'import-x/no-restricted-paths',
+  'no-restricted-globals',
+  'no-restricted-imports',
+];
 
 /**
- * A source breaking all three at once. It is linted under a path already on disk because the TypeScript project
+ * A source breaking all four at once. It is linted under a path already on disk because the TypeScript project
  * service resolves the file before ESLint reaches it, and refuses a path it cannot find.
  */
 const VIOLATING_SOURCE = [
   "import { readFile } from 'node:fs/promises';",
   '',
+  "import { parse } from 'yaml';",
+  '',
   "import { isRecord } from '../lib/type-guards.ts';",
   '',
   'export function probe(): unknown[] {',
-  '  return [readFile, isRecord, process.env.HOME];',
+  '  return [readFile, parse, isRecord, process.env.HOME];',
   '}',
   '',
 ].join('\n');
