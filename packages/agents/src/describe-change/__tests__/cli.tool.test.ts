@@ -252,6 +252,125 @@ describe(runDescribe, () => {
   });
 });
 
+describe('--classify', () => {
+  it('reads the base ref and every ticket label', () => {
+    const parsed = parseArgs(['--classify', 'main', '--ticket-label', 'feature', '--ticket-label', 'scope:agents']);
+
+    expect(parsed).toEqual({ baseRef: 'main', mode: 'classify', ticketLabels: ['feature', 'scope:agents'] });
+  });
+
+  it('reads an invocation carrying no ticket label', () => {
+    expect(parseArgs(['--classify', 'main'])).toEqual({ baseRef: 'main', mode: 'classify', ticketLabels: [] });
+  });
+
+  it('refuses a record flag alongside it', () => {
+    expect(() => parseArgs(['--classify', 'main', '--title', 'Add foo'])).toThrow(/takes no record flags; got --title/);
+  });
+
+  it('refuses --parse alongside it', () => {
+    expect(() => parseArgs(['--classify', 'main', '--parse', 'commit'])).toThrow(/pass one or the other/);
+  });
+
+  it('refuses --ticket-label on its own', () => {
+    expect(() => parseArgs(['--ticket-label', 'feature'])).toThrow(/takes no meaning on its own/);
+  });
+
+  it('lets one feat speak for a branch carrying three fixes', async () => {
+    const { cwd, home } = await makeCommittedRepo([
+      'agents|fix: Correct the guard',
+      'agents|feat: Add the parser',
+      'agents|fix: Correct the other guard',
+      'agents|fix: Correct the third guard',
+    ]);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ head: { breaking: false, scope: 'agents', type: 'feat' } });
+  });
+
+  it('carries the breaking marker onto the head', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ head: { breaking: true, scope: 'agents', type: 'sec' } });
+  });
+
+  it('lists an unmatched subject and keeps it out of the entries', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser', 'wip']);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({
+      entries: [{ scope: 'agents', type: 'feat' }],
+      unclassified: [{ subject: 'wip' }],
+    });
+  });
+
+  it('reports a fix carrying the marker its policy forbids', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|fix!: Correct the guard']);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'fix' }] });
+  });
+
+  it('yields a null head for a range holding no commits', async () => {
+    const { cwd, home } = await makeCommittedRepo([]);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ entries: [], head: null, ticket_type: null, unclassified: [], violations: [] });
+  });
+
+  it('resolves the ticket type from the labels and the repository’s label map', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
+    await mkdir(join(cwd, '.meta'), { recursive: true });
+    await writeFile(join(cwd, '.meta', 'label-map.json'), JSON.stringify({ types: { feat: 'feature', fix: 'fix' } }));
+
+    const argv = ['--classify', 'base', '--ticket-label', 'fix', '--ticket-label', 'scope:agents'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ head: { type: 'feat' }, ticket_type: 'fix' });
+  });
+
+  it('yields a null ticket type where the repository configures no label map', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
+
+    const argv = ['--classify', 'base', '--ticket-label', 'feature'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ ticket_type: null });
+  });
+
+  it('takes a commit’s Change trailers in place of its subject', async () => {
+    const { cwd, home } = await makeCommittedRepo([
+      [
+        'agents|fix: Squash the branch',
+        '',
+        'Change: agents|feat: Add the parser',
+        'Change: agents|fix: Correct the guard',
+      ].join('\n'),
+    ]);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({
+      entries: [{ type: 'feat' }, { type: 'fix' }],
+      head: { scope: 'agents', type: 'feat' },
+    });
+  });
+
+  it('refuses --classify when no taxonomy is readable', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
+    const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
+
+    await expect(runDescribe({ argv: ['--classify', 'base'], cwd, dataDir, home })).rejects.toThrow(
+      /--classify ranks types against the taxonomy/,
+    );
+  });
+});
+
 // region | Helpers
 
 /** Creates a temp home directory holding `.agents/preferences.yaml` with `content`. */
@@ -259,6 +378,32 @@ async function makeHome(content: string): Promise<string> {
   const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
   await writeAgentsPreferences(home, content);
   return home;
+}
+
+/**
+ * Creates a throwaway repository carrying the house templates, one commit per message, and a `base` tag before the
+ * first of them, so `--classify base` reads exactly the messages given.
+ */
+async function makeCommittedRepo(messages: readonly string[]): Promise<{ cwd: string; home: string }> {
+  const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+  await execFileAsync('git', ['-C', cwd, 'config', 'user.email', 'test@example.com']);
+  await execFileAsync('git', ['-C', cwd, 'config', 'user.name', 'Test']);
+
+  await writeFile(join(cwd, 'seed.txt'), 'seed\n', 'utf8');
+  await commitAll(cwd, 'seed');
+  await execFileAsync('git', ['-C', cwd, 'tag', 'base']);
+
+  for (const [index, message] of messages.entries()) {
+    await writeFile(join(cwd, `file${index}.txt`), `${index}\n`, 'utf8');
+    await commitAll(cwd, message);
+  }
+  return { cwd, home };
+}
+
+/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing a fixture cannot supply. */
+async function commitAll(cwd: string, message: string): Promise<void> {
+  await execFileAsync('git', ['-C', cwd, 'add', '--all']);
+  await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);
 }
 
 /** Creates a throwaway repository carrying `content` as its project preferences, plus an empty global home. */

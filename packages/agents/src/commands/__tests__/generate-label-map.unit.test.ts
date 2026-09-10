@@ -59,9 +59,10 @@ describe(generateLabelMap, () => {
     expect(parsed.types).toEqual({
       ai: 'ai',
       ci: 'ci',
-      deprecate: 'deprecate',
+      deprecate: 'deprecation',
       deps: 'dependencies',
       docs: 'documentation',
+      drop: 'removal',
       feat: 'feature',
       fix: 'fix',
       fmt: 'formatting',

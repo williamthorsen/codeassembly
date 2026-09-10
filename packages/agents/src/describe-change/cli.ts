@@ -15,15 +15,28 @@ import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
+import { classifyCommits } from './classify.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
-import { isSurface, type ParsedArgs, type ParseOutcome, type RenderedTitles, type Surface, SURFACES } from './types.ts';
+import { readCommits } from './read-commits.ts';
+import { resolveTicketType } from './resolve-ticket-type.ts';
+import {
+  type ClassifyOutcome,
+  isSurface,
+  type ParsedArgs,
+  type ParseOutcome,
+  type RenderedTitles,
+  type Surface,
+  SURFACES,
+} from './types.ts';
 
 /** The flags this helper accepts; it reads nothing from stdin. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'breaking', takesValue: false },
+  { name: 'classify', takesValue: true },
   { name: 'parse', takesValue: true },
   { name: 'pr-number', takesValue: true },
   { name: 'scope', takesValue: true },
+  { name: 'ticket-label', takesValue: true },
   { name: 'ticket-ref', takesValue: true },
   { name: 'title', takesValue: true },
   { name: 'type', takesValue: true },
@@ -65,18 +78,31 @@ if (isEntryPoint()) {
  * `--parse` names the surface whose template reads the subject, and the subject itself follows as the one positional.
  * It takes no record flags: a record flag alongside it would be silently unused.
  *
+ * `--classify` names the base ref of the range to read, and takes `--ticket-label` as often as the ticket carries one.
+ * It takes no record flags either, and the two modes are mutually exclusive.
+ *
  * @internal - Exported to allow testing.
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
   const { positionals, flags } = scanFlags(argv, FLAGS);
   const values = valueFlagMap(flags);
 
+  const baseRef = values.classify;
   const surface = values.parse;
+  if (baseRef !== undefined && surface !== undefined) {
+    throw new Error('--classify reads a commit range and --parse reads one subject; pass one or the other');
+  }
+  if (baseRef !== undefined) {
+    return parseClassifyArgs(baseRef, positionals, flags);
+  }
   if (surface !== undefined) {
     return parseReadArgs(surface, positionals, flags);
   }
   if (positionals[0] !== undefined) {
     throw new Error(`unexpected argument: ${positionals[0]}`);
+  }
+  if (values['ticket-label'] !== undefined) {
+    throw new Error('--ticket-label resolves a ticket type for --classify, so it takes no meaning on its own');
   }
 
   const record: ChangeRecord = {
@@ -128,6 +154,23 @@ export async function runDescribe(input: {
     return { output: readSubject(args.surface, templates[args.surface], args.subject, taxonomy), warnings };
   }
 
+  if (args.mode === 'classify') {
+    if (taxonomy === null) {
+      throw new Error(`--classify ranks types against the taxonomy; none is readable under ${input.dataDir}`);
+    }
+    if (templates.commit === '') {
+      throw new Error('commit.title_format is empty, so a branch’s commits cannot be read back');
+    }
+    const output = await classifyRange({
+      baseRef: args.baseRef,
+      cwd: projectRoot,
+      taxonomy,
+      template: templates.commit,
+      ticketLabels: args.ticketLabels,
+    });
+    return { output, warnings };
+  }
+
   return {
     output: {
       commit_title: renderTemplate(templates.commit, args.record),
@@ -141,11 +184,48 @@ export async function runDescribe(input: {
 
 /** What a completed run writes: the JSON payload for stdout, and the diagnostics for stderr. */
 export interface DescribeResult {
-  output: ParseOutcome | RenderedTitles;
+  output: ClassifyOutcome | ParseOutcome | RenderedTitles;
   warnings: string[];
 }
 
 // region | Helpers
+
+/** Reads a range's commits, classifies them, and resolves the ticket type, in the shape the JSON output names. */
+async function classifyRange(input: {
+  baseRef: string;
+  cwd: string;
+  taxonomy: Taxonomy;
+  template: string;
+  ticketLabels: readonly string[];
+}): Promise<ClassifyOutcome> {
+  const commits = await readCommits({ baseRef: input.baseRef, cwd: input.cwd });
+  const classification = classifyCommits(commits, compileTemplate(input.template), input.taxonomy);
+  const ticketType = await resolveTicketType({
+    labelMapPath: path.join(input.cwd, '.meta', 'label-map.json'),
+    labels: input.ticketLabels,
+  });
+
+  return {
+    entries: classification.entries.map((entry) => ({
+      breaking: entry.record.breaking === true,
+      commit: entry.commit,
+      scope: entry.record.scope ?? null,
+      title: entry.record.title ?? null,
+      type: entry.record.type ?? null,
+    })),
+    head:
+      classification.head === undefined
+        ? null
+        : {
+            breaking: classification.head.breaking === true,
+            scope: classification.head.scope ?? null,
+            type: classification.head.type ?? null,
+          },
+    ticket_type: ticketType ?? null,
+    unclassified: classification.unclassified,
+    violations: classification.violations,
+  };
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
@@ -163,6 +243,25 @@ function isEntryPoint(): boolean {
     process.stderr.write(`${PROGRAM}: warning: could not determine entry point: ${describeError(error)}\n`);
     return false;
   }
+}
+
+/** Reads the `--classify` invocation: the base ref it names, and every `--ticket-label` the ticket carries. */
+function parseClassifyArgs(baseRef: string, positionals: readonly string[], flags: readonly MatchedFlag[]): ParsedArgs {
+  const other = flags.find((flag) => flag.name !== 'classify' && flag.name !== 'ticket-label');
+  if (other !== undefined) {
+    throw new Error(`--classify reads a commit range, so it takes no record flags; got --${other.name}`);
+  }
+  if (positionals[0] !== undefined) {
+    throw new Error(`unexpected argument: ${positionals[0]}`);
+  }
+
+  const ticketLabels: string[] = [];
+  for (const flag of flags) {
+    if (flag.name === 'ticket-label' && flag.value !== null) {
+      ticketLabels.push(flag.value);
+    }
+  }
+  return { baseRef, mode: 'classify', ticketLabels };
 }
 
 /** Reads the `--parse` invocation: the surface it names, and the single positional carrying the subject. */
