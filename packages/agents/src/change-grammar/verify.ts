@@ -162,6 +162,10 @@ function findRepeatedTokenDefects(template: string, flattened: readonly FlatNode
  *
  * A group carrying `{type}` is left populated. Dropping it takes the type out of the rendered string, which the
  * type-required rule then reads as unmatched however well-formed the template is.
+ *
+ * A group carrying `{breaking}` is left populated too, for a reason of its own: the sample takes the marker from the
+ * pass rather than from the tokens it names, so a pass that dropped such a group would still expect a marker back from
+ * a string that no longer carries one.
  */
 function findRoundTripDefects(
   template: string,
