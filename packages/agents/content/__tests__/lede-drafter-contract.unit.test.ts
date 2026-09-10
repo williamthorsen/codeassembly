@@ -55,8 +55,9 @@ const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases deciding what a bullet names and how it marks it. Where they are gone, the kinds list reads as the whole
- * rule, so a token the reader never meets is backticked, and the internal call stands in for what the artifact does.
+ * Phrases deciding what a bullet names and how it marks it. Where they are gone, the kinds list reads as the
+ * whole rule, so a token that the reader never sees is backticked, and the internal call stands in for what the
+ * artifact does.
  */
 const NAMING_RULE_PHRASES: ReadonlyArray<string> = [
   'never the internal call that the change edited',
@@ -193,9 +194,9 @@ describe('lede-drafter contract', () => {
     const missing = NAMING_RULE_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The kinds list mis-predicts on its own: a flag is on it, and a flag this pipeline passes internally is one the ' +
-      "reader never meets. Where these are gone, a bullet marks by kind and reports the change's own call rather " +
-      `than what the reader gets. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'The kinds list mis-predicts on its own: a flag is on it, and a flag that this pipeline passes internally is ' +
+      "one that the reader never sees. Where these are gone, a bullet marks by kind and reports the change's own " +
+      `call rather than what the reader gets. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
