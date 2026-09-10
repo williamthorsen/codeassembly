@@ -292,14 +292,15 @@ members:
 
 Dropping or omitting a collection, or setting `root: true`, excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead.
 
-Four collections ship, each carrying a claim a reader can act on:
+Five collections ship, each carrying a claim a reader can act on:
 
-| Collection       | Claim                                                                                                                      |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.                    |
-| `williamthorsen` | Examined and found deliberately personal — one author's preferences, environment, and domain.                              |
-| `triage`         | Not yet examined, and where new content starts. It shrinks by promotion.                                                   |
-| `all`            | The whole catalog, computed. It makes no claim about its members, and is the escape hatch rather than the expected choice. |
+| Collection       | Claim                                                                                                                       |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `atlassian`      | Examined and found fitted to Bitbucket and Jira. Nothing outside it reaches its members, so only declaring it deploys them. |
+| `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.                     |
+| `williamthorsen` | Examined and found deliberately personal — one author's preferences, environment, and domain.                               |
+| `triage`         | Not yet examined, and where new content starts. It shrinks by promotion.                                                    |
+| `all`            | The whole catalog, computed. It makes no claim about its members, and is the escape hatch rather than the expected choice.  |
 
 An artifact in none of them is standalone: deliberate, declared directly where wanted, and either too rarely invoked to justify a standing line in the skill index or wanted only in specific projects. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
 
