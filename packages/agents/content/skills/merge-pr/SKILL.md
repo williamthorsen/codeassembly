@@ -130,7 +130,9 @@ A captured body is **thin** if it is empty or contains fewer than 30 characters 
 
 If the `## What` heading is missing or the captured body is thin, compose fresh content through the drafter and cutter that `summarize-change` dispatches, rather than writing it here. The whole body is the lede, and those two are where the lede doctrine lives.
 
-Resolve the tier by looking up the `type` from step 3 in [work-types.json](../_data/work-types.json). Where step 3 reported `type` as `ambiguous`, use tier `internal` and omit `type` from the block below: the drafter refuses a type it was not given, because a guessed one draws exemplars written for the wrong reader.
+Resolve the tier by looking up the `type` from step 3 in [work-types.json](../_data/work-types.json).
+
+Where step 3 reported `type` as `ambiguous`, ask step 7's type question here rather than composing against a guess. Present the dimension's `candidates` plus an "other (specify)" option, following [option format](#option-format), and take the answer as the concrete type; step 7 then has one fewer dimension to ask about. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change owes a public-tier reader, in a body that reaches the merge commit, the changelog, and release notes.
 
 Dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
