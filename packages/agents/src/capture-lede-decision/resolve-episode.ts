@@ -152,7 +152,6 @@ async function hashDoctrine(subagentsDir: string): Promise<DoctrineHashOutcome> 
   const digests: string[] = [];
   for (const filename of DOCTRINE_FILENAMES) {
     const filePath = path.join(subagentsDir, filename);
-    // eslint-disable-next-line no-await-in-loop -- two files, read in the fixed order the digest depends on.
     const content = await readFileSafely(filePath);
     if (content === null) {
       return { ok: false, unreadablePath: filePath };
