@@ -9,19 +9,27 @@ export const FIXTURE_AGENT_LEDE = 'Rulebooks can now address a file by linking t
 export const FIXTURE_MERGED_LEDE =
   'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
-/** A temporary fixture tree: the ticket's artifact directory, the `_data` directory, and a provenance-stamp path. */
+/** Filenames of the subagent bodies the fixture's doctrine directory carries. */
+export const FIXTURE_DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
+
+/**
+ * A temporary fixture tree: the ticket's artifact directory, the `_data` directory, the deployed subagents directory,
+ * and a provenance-stamp path.
+ */
 export interface LedeFixture {
   /** Temporary root holding everything the fixture created. */
   root: string;
   artifactDir: string;
   dataDir: string;
+  subagentsDir: string;
   /** Path the fixture would write a provenance stamp to; absent unless a test writes one. */
   provenancePath: string;
 }
 
 /**
  * Builds a temporary ticket directory carrying a pull-request, merge, and change-summary artifact, plus a `_data`
- * directory holding a doctrine file and a minimal work-type taxonomy.
+ * directory holding a minimal work-type taxonomy and a subagents directory holding the bodies the doctrine digest
+ * covers.
  *
  * The change summary declares a work type and scope that differ from what a caller would normally pass as flags, so a
  * test can tell a supplied flag from its artifact fallback.
@@ -37,8 +45,10 @@ export async function createLedeFixture(
   const root = await mkdtemp(join(tmpdir(), 'lede-decision-'));
   const artifactDir = join(root, 'tickets', '1107');
   const dataDir = join(root, '_data');
+  const subagentsDir = join(root, 'agents');
   await mkdir(artifactDir, { recursive: true });
   await mkdir(dataDir, { recursive: true });
+  await mkdir(subagentsDir, { recursive: true });
 
   if (overrides.omit !== 'pull-request') {
     const body = `## Body\n\n${renderSection('What', FIXTURE_AGENT_LEDE)}\n## Why\n\nThe motivation.\n`;
@@ -57,7 +67,9 @@ export async function createLedeFixture(
     `---\ntype: fix\nscope: kb\nticket_id: ${overrides.ticketId ?? '1107'}\n---\n\n# Title\n`,
   );
 
-  await writeFile(join(dataDir, 'lede-voice.md'), '# Lede voice\n\nDoctrine text.\n', 'utf8');
+  for (const filename of FIXTURE_DOCTRINE_FILENAMES) {
+    await writeFile(join(subagentsDir, filename), `# ${filename}\n\nDoctrine text.\n`, 'utf8');
+  }
   if (overrides.omit !== 'work-types') {
     await writeFile(
       join(dataDir, 'work-types.json'),
@@ -71,7 +83,7 @@ export async function createLedeFixture(
     );
   }
 
-  return { root, artifactDir, dataDir, provenancePath: join(root, 'home-provenance.json') };
+  return { root, artifactDir, dataDir, subagentsDir, provenancePath: join(root, 'home-provenance.json') };
 }
 
 /** Renders a second-level Markdown section with its heading. */

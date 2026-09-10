@@ -9,6 +9,7 @@ import { resolveEpisode } from '../resolve-episode.ts';
 import {
   createLedeFixture,
   FIXTURE_AGENT_LEDE,
+  FIXTURE_DOCTRINE_FILENAMES,
   FIXTURE_MERGED_LEDE,
   type LedeFixture,
   renderSection,
@@ -173,13 +174,21 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome)).toBe('no-merged-lede');
   });
 
-  it('reports an unreadable doctrine file', async () => {
+  it.each(FIXTURE_DOCTRINE_FILENAMES)('reports %s as an unreadable doctrine file', async (filename) => {
     const fixture = await createLedeFixture();
-    await rm(join(fixture.dataDir, 'lede-voice.md'));
+    await rm(join(fixture.subagentsDir, filename));
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
     expect(expectFailure(outcome)).toBe('no-doctrine');
+  });
+
+  it.each(FIXTURE_DOCTRINE_FILENAMES)('moves the fingerprint when %s changes', async (filename) => {
+    const fixture = await createLedeFixture();
+    const before = (await resolveFor(fixture)).doctrineHash;
+    await writeFile(join(fixture.subagentsDir, filename), 'Revised doctrine text.\n', 'utf8');
+
+    expect((await resolveFor(fixture)).doctrineHash).not.toBe(before);
   });
 
   it('reports a work type the taxonomy does not declare', async () => {
@@ -230,6 +239,7 @@ function inputFor(fixture: LedeFixture, overrides: { type?: string } = {}): Para
   return {
     artifactDir: fixture.artifactDir,
     dataDir: fixture.dataDir,
+    subagentsDir: fixture.subagentsDir,
     pr: '1124',
     mergeCommit: '35aa58d7',
     type: overrides.type ?? 'feat',
