@@ -5,7 +5,6 @@ user-invocable: true
 dependencies:
   skills:
     - testing-conventions
-    - update-jira-ticket
 ---
 
 # Align ticket with implementation

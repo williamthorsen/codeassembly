@@ -214,7 +214,7 @@ If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: decl
 Read `scm` from session context:
 
 - `"github"` → delegate to `{skill:merge-gh-pr}`
-- `"bitbucket"` → delegate to `{skill:merge-bb-pr}`
+- `"bitbucket"` → delegate to `{skill?:merge-bb-pr}`
 - Unknown or missing → ask the user which platform to use
 
 ### 9. Re-read the PR and re-confirm a changed title or body

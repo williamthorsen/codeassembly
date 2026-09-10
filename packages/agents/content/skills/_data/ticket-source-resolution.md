@@ -118,7 +118,7 @@ gh issue edit {number} --body-file "$body_path"
 
 ### Jira
 
-Update through {skill:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
+Update through {skill?:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
 
 `acli`'s default view is text rather than Markdown and the write converts the whole description, so a partial revision re-renders the sections it leaves alone; report it as a re-rendering of the whole description rather than an edit confined to the revised section.
 
