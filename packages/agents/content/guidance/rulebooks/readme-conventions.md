@@ -11,7 +11,7 @@ A README answers two questions for a reader who arrived a moment ago: whether th
 
 ## Audience
 
-A README is written for people. `AGENTS.md` is the agent-facing companion, and it takes the context that an agent needs and a human reader does not: exact test invocations, constraints on what to modify, conventions a contributor absorbs from the code but an agent must be told.
+A README is written for people. `AGENTS.md` is the agent-facing companion, and it takes the context that an agent needs and a human reader does not: exact test invocations, constraints on what to modify, conventions that a contributor absorbs from the code but that an agent must be told.
 
 The split is not a matter of taste. An agent loads `AGENTS.md` in full at every session, so a line there costs something every time, where a human reads a README once and skims it later. Routing content by who reads it keeps both files short.
 
@@ -26,9 +26,9 @@ What the README describes decides its shape. Find the row; the rest of this rule
 | Application or service           | What it does for the person running it                      | Screenshots, how to run it, how to configure a first run           | Internal architecture, exhaustive configuration       |
 | CLI tool                         | The install command, then the single most common invocation | Copy-pasteable examples of the two or three real tasks             | A command inventory, which `--help` already prints    |
 | Library or package               | The import line and a minimal use in about three lines      | The problem it solves, and how it compares to known alternatives   | A full API listing, once it outgrows the first screen |
-| Configuration or preset package  | How to consume, extend, override, and compose it            | Per-option detail, which is the subject here rather than an excess | Narrative about the tools being configured            |
+| Configuration or preset package  | How to consume, extend, override, and compose it            | Per-option detail, which is the subject here rather than an excess | Narrative about the tools that it configures          |
 | Monorepo root                    | What the repository is, and a map of its packages           | One bootstrap command, and where each package's README sits        | Anything a package's own README states                |
-| Content or data repository       | What the content is, and the shape it takes                 | The authoring contract: how to add an entry, how it is validated   | Detail belonging to whatever consumes the content     |
+| Content or data repository       | What the content is, and the shape it takes                 | The authoring contract: how to add an entry, and what checks it    | Detail belonging to whatever consumes the content     |
 | Internal or agent-facing package | What the thing is, and its entry points                     | A pointer to the guidance that governs work on it                  | Everything else                                       |
 
 Screenshots earn their place in the application row and almost nowhere else. A library has no interface to show, and a terminal recording of a CLI demonstrates one path where the text already shows three.
