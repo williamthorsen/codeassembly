@@ -94,7 +94,7 @@ const TIER_FALLBACK_FLAG = '--tier {tier}';
  * Work types whose bullet owes a fact the assignment does not supply. Each is stated nowhere else, so a rewrite that
  * drops one leaves the drafter with no guidance at all on that type and every suite green.
  */
-const TYPE_RULE_KEYS: ReadonlyArray<string> = ['ai', 'deps', 'deprecate', 'drop', 'perf', 'refactor', 'sec'];
+const TYPE_RULE_KEYS: ReadonlyArray<string> = ['ai', 'deps', 'deprecate', 'drop', 'fix', 'perf', 'refactor', 'sec'];
 
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'lede-drafter.md'), CONTENT_ROOT);
 

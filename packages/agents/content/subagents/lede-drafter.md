@@ -22,6 +22,8 @@ For the `internal` and `process` reader, the operation performed -- a rename, an
 
 Both readers already assume that inputs are validated, that the code is tested, and that the documentation matches. Reporting one of those tells them that you found it remarkable, and their answer is "of course": It belongs in your answer only where it is what the pull request is about.
 
+An assurance behaves the same way. An invariant asserted against a harm that the reader had not suspected plants the doubt that it means to remove, so a bullet states one only where the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump and nowhere else.
+
 **The title is already on the page.** Every surface that renders your lede shows the change's title above it, so the reader meets that title before your first bullet. Write bullets reporting what the title does not.
 
 That question and that reader are the whole assignment. Everything below says where the facts come from, what to leave out, and what form your answer takes. None of it replaces the question.
@@ -66,12 +68,13 @@ The general concision rule does not govern here. It tells a writer to keep every
 
 Most types owe nothing here: the question and the reader already decide the bullet, and a type absent below is one to which this section has nothing to add. Where your dispatch's `type` appears, its bullet states the fact named.
 
-- **`perf`** -- the effect and its size where it was measured. "Improves performance" names nothing.
-- **`sec`** -- enough that a reader can tell whether they were exposed, and no more. A lede is not a reproduction.
-- **`refactor`** -- one bullet. External behavior goes unmentioned unless it changed.
 - **`ai`** -- the artifact named, and the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it: guidance instructs, and agents are instructed.
 - **`deps`** -- the version delta and the consequence that matters. A routine bump with no consequence is one bullet.
 - **`drop`, `deprecate`** -- published surface is presumed used and owes a migration paragraph; unpublished or never-released surface owes none, and takes no breaking-change framing. Include it where you are unsure. A removal whose surface only moved is reported as the move, and one with no drop-in replacement still owes the reader the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon where it is known.
+- **`fix`** -- what was wrong. A bullet reporting the repaired state leaves the reader unable to tell what the defect was.
+- **`perf`** -- the effect and its size where it was measured. "Improves performance" names nothing.
+- **`refactor`** -- one bullet. External behavior goes unmentioned unless it changed.
+- **`sec`** -- enough that a reader can tell whether they were exposed, and no more. A lede is not a reproduction.
 
 A revert has the work type of the change that it undoes, so your dispatch names that type rather than `revert`. Its bullet names the change undone and what is restored; a pull-request number may accompany that name and never stands in for it.
 
@@ -85,8 +88,11 @@ Mechanical, and none of it decides what goes in.
 - The subject is the pull request, and it stays unwritten. Read a bullet with "This pull request" in front of it: where that sentence is false, the verb names what the system does rather than what the change did, and the bullet fails. "This pull request ends quietly when the reader closes the pipe" is false; "This pull request stops `foo` from crashing with an unhandled `EPIPE`" is true.
 - Where the change adds something that itself acts, a command, a check, a rule, a hook, that thing's behavior is the interesting content, so a drafter is tempted to give it the main verb. The change keeps the main verb, and the artifact's behavior goes in a subordinate clause.
 - The verb is whichever one names the act plainly. No opener and no connective phrase is prescribed, and there is no menu of verbs to choose from.
-- A bullet names the artifact consumed by the reader, backticked: the package, command, flag, file, or rule. An enumeration of the instances touched is not that artifact.
+- A bullet names the artifact consumed by the reader, backticked: the package, command, flag, file, or rule. An enumeration of the instances touched is not that artifact. Never talk around a name that the reader is owed: "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. At `public` tier, define any term that the audience may not share.
 - Where a bullet names an operation whose benefit the operation does not make evident, it states the benefit.
+- A claim is no stronger than what the change delivers. A mitigation is not a fix, and the true actor keeps the agency: violations fail the build, and rules only classify. A promise that holds on one version or configuration alone names that condition, and a first increment is framed as initial, since unframed placeholder behavior reads as a bug.
+- A pull request that repeats a recognized routine operation, a deferred-lint cleanup or a fleet-wide upgrade, reuses the series' established lede rather than fresh prose; the change summary or the repository's changelog supplies it.
+- A repo-wide change reports the repo-level operation, and names individual packages only where they are few and load-bearing.
 - Never address the reader as "you".
 - Where the change breaks a consumer, a paragraph below the bullets opens with the literal label `Migration:` and names, in the imperative, the edit that the consumer makes. A sentence describing the resulting state is not an edit.
 - A migration paragraph also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
