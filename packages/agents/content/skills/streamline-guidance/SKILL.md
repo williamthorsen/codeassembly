@@ -46,7 +46,7 @@ At any level, in any file:
 - The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since every description loads into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
-Edit no file outside the targets and their transitive files, except a version pin or content hash that step 7 updates.
+Edit no file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 7 updates.
 
 ## Process
 
@@ -122,12 +122,14 @@ Present one numbered table per [Cut table](#cut-table), then ask which rows to a
 
 Where no row was applied or declined, skip to the summary.
 
-### 7. Run the quality gate
+### 7. Bump versions and run the quality gate
 
-Where any row was applied, run the project's quality gate as {skill:development-workflows} resolves it.
+Skip this step where no row was applied.
 
-- Where it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Bump the rulebook's `version` where a cut changed what the rulebook asks, and update the pin alone where the cut did not. A `conservative` cut directs nothing, so it changes nothing that a rulebook asks.
-- Where it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again.
+1. Bump the `version` of each rulebook where a cut changed what the rulebook asks: a rulebook that a cut edited, and a rulebook that includes an edited file. Find the second kind by searching the rulebooks for an include directive that names the edited file. A `conservative` cut directs nothing, so it changes nothing that a rulebook asks.
+2. Run the project's quality gate as {skill:development-workflows} resolves it.
+   - Where it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone where no cut changed what the rulebook asks.
+   - Where it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again.
 
 ### 8. Commit
 
