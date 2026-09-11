@@ -29,7 +29,7 @@ export interface ClassifyOutcome {
   violations: Array<{ commit: string; policy: string; type: string }>;
 }
 
-/** The head a branch's entries consolidated to. It names no title; a caller supplies that from the change summary. */
+/** A head, in the shape the JSON output names: the scope, type, and breaking marker of a change, and no title. */
 export interface HeadOutcome {
   breaking: boolean;
   scope: string | null;
