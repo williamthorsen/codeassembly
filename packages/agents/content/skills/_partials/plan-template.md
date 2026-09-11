@@ -50,7 +50,7 @@
 
 **Per-task documentation criterion:** When a task adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include updating documentation, help text, and usage examples, including removal of references to anything that no longer exists.
 
-**Per-task README guidance:** When a task writes or revises a README, its key decisions name {rulebook:readme-conventions}, so whoever implements the task consults it before editing.
+**Per-task README guidance:** When a task writes or revises a README, consult {rulebook:readme-conventions} while planning the task. Its key decisions name the rulebook, the table row that fits the README, and what that row says the README leads with, keeps, and omits, so the constraints reach an implementer that cannot load the rulebook.
 
 #### What belongs in the plan
 
