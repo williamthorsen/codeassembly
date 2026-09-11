@@ -134,11 +134,11 @@ node {harness_home_dir}/scripts/describe-change.mjs --classify origin/main \
 
 **`ticket_type` is `null` where the labels name no type and where they name more than one.** Two type labels on one ticket say that nobody has decided which it is.
 
-The run refuses outright where no taxonomy is readable, since the head has nothing to rank against, and where `commit.title_format` is empty, since no template would match any subject. `--classify` takes no record flags and refuses `--parse`; `--ticket-label` refuses to stand on its own.
+The run refuses outright where no taxonomy is readable, since the head has nothing to rank against, and where `commit.title_format` is empty, since no template would match any subject. `--classify` takes no record flags and refuses the other modes; `--ticket-label` refuses to stand on its own.
 
 ## Rendering the record block
 
-`--record-block` renders the fenced `change-record` block that a pull-request body ends with. The flag's value is the commit from which the head was derived; the head comes from the record flags, and the author's overrides from the `--override-*` flags.
+`--record-block` renders the fenced `change-record` block that ends a pull-request body. The flag's value is the commit from which the head was derived; the head comes from the record flags, and the author's overrides from the `--override-*` flags.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs --record-block e5029924 \
@@ -154,7 +154,7 @@ The output is JSON whose `block` holds the fenced block, fences included:
 }
 ````
 
-`--override-type sec!` is accepted and splits into the override type and `--override-breaking`, as `--type` does. An override flag outside this mode is refused, and so are `--ticket-ref`, `--pr-number`, `--ticket-label`, and the other modes within it. [`change-record.md`](./change-record.md#the-change-record-block) states the block's grammar and how a reader applies the overrides.
+`--override-type sec!` is accepted and splits into the override type and `--override-breaking`, as `--type` does. An override flag outside this mode is refused, and so are `--ticket-ref`, `--pr-number`, `--ticket-label`, and the other modes within it. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
 
 ## Supported tokens
 
