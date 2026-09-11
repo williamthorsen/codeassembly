@@ -33,8 +33,8 @@ export interface ChangeRecordBlock {
 }
 
 /**
- * The dimensions an author may override, named as the flags that set them are. `breaking` is only ever `true`: an
- * override can add the marker to a head but not remove it.
+ * The dimensions an author may override, named as the flags that set them are. A `scope` of `*` sets no scope.
+ * `breaking` is only ever `true`: an override can add the marker to a head but not remove it.
  */
 export interface RecordOverrides {
   breaking?: true;
@@ -50,11 +50,15 @@ const FENCE = '```';
 /** Names the block's kind on the opening fence, distinguishing it from any other fence in the body. */
 const INFO_STRING = 'change-record';
 
-/** Keeps only the overridable dimensions of a normalized record, so a marker spelled on the type becomes `breaking`. */
+/**
+ * Keeps only the overridable dimensions of a normalized record, so a marker spelled on the type becomes `breaking`. The
+ * scope is kept as given, `*` included, since an override of `*` is the author's choice of no scope.
+ */
 function normalizeOverrides(overrides: RecordOverrides): RecordOverrides {
-  const { breaking, scope, type } = normalizeChangeRecord(overrides);
+  const { breaking, type } = normalizeChangeRecord(overrides);
+  const scope = overrides.scope?.trim();
   return {
-    ...(scope !== undefined && { scope }),
+    ...(scope !== undefined && scope !== '' && { scope }),
     ...(type !== undefined && { type }),
     ...(breaking === true && { breaking }),
   };

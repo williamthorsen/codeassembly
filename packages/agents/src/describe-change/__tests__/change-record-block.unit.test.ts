@@ -43,6 +43,16 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered).overrides).toStrictEqual({ breaking: true, type: 'sec' });
   });
 
+  it('when the author overrides the scope to the wildcard, records the wildcard override', () => {
+    const rendered = renderChangeRecordBlock({
+      commit: 'e5029924',
+      head: { scope: 'agents', type: 'feat' },
+      overrides: { scope: '*' },
+    });
+
+    expect(readBlock(rendered).overrides).toStrictEqual({ scope: '*' });
+  });
+
   it('omits overrides where the author applied none', () => {
     const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { type: 'feat' }, overrides: {} });
 

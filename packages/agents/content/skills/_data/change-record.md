@@ -13,7 +13,7 @@ A change's classification is derived once, from the branch's commits, and then c
 | `title`    | The change's title, without any rendered prefix.                                           |
 | `type`     | A work type declared in [`work-types.json`](./work-types.json).                            |
 
-A field the branch did not determine is absent rather than empty. The `*` scope normalizes to no scope and never reaches a written record.
+A field the branch did not determine is absent rather than empty. The `*` scope normalizes to no scope and never reaches a head.
 
 ## The `Change:` trailer
 
@@ -61,7 +61,7 @@ The payload is YAML rather than a surface template because `head` and `overrides
 
 ## The effective record
 
-A surface that renders a title or applies labels reads the head with the overrides applied: `scope` and `type` from the override where one is set, otherwise from the head, and `breaking` where either the head or the override sets it. An override can therefore add the breaking marker but never remove it.
+A surface that renders a title or applies labels reads the head with the overrides applied: `scope` and `type` from the override where one is set, otherwise from the head, and `breaking` where either the head or the override sets it. An override can therefore add the breaking marker but never remove it. A scope override of `*` is recorded as given, and it leaves the effective record with no scope.
 
 An override is kept as the author set it, even where it equals the head. The head is re-derived whenever the branch moves, and the override has to outlast that.
 

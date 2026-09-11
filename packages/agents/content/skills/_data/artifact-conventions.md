@@ -298,7 +298,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | `breaking`          | no       | `true` where the derived head is breaking. Omitted otherwise; there is no `false`.                                                  |
 | `changes`           | no       | Each classified entry rendered through `commit.title_format`, oldest first. Omitted where no commit was classified.                 |
 | `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted where they name none or more than one, or where no labels were read.    |
-| `scope_override`    | no       | The scope that the author set by hand.                                                                                              |
+| `scope_override`    | no       | The scope that the author set by hand, or `*` where the author set no scope.                                                        |
 | `type_override`     | no       | The work type that the author set by hand, without a marker.                                                                        |
 | `breaking_override` | no       | `true` where the author added the breaking marker by hand. Omitted otherwise.                                                       |
 
