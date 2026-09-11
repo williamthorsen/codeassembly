@@ -20,8 +20,8 @@ export function findDeployedSource(
 ): SourceLookup {
   const sourceUrl = SOURCE_LINE_REGEX.exec(content)?.[1];
   if (sourceUrl !== undefined) {
-    const relative = BLOB_PATH_REGEX.exec(sourceUrl)?.[1];
-    const candidate = relative === undefined ? undefined : path.join(input.root, decodeURIComponent(relative));
+    const relative = decodeUrlPath(BLOB_PATH_REGEX.exec(sourceUrl)?.[1]);
+    const candidate = relative === undefined ? undefined : path.join(input.root, relative);
     return candidate !== undefined && existsSync(candidate)
       ? { found: candidate }
       : { reason: 'source-not-in-repository' };
@@ -77,6 +77,18 @@ function composeSourcePath(kind: string, slug: string): string {
       return path.join('skills', slug, 'SKILL.md');
     default:
       return path.join('subagents', `${slug}.md`);
+  }
+}
+
+/** Decodes a URL path's percent-escapes, returning undefined for an absent path or a malformed escape. */
+function decodeUrlPath(encoded: string | undefined): string | undefined {
+  if (encoded === undefined) {
+    return undefined;
+  }
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return undefined;
   }
 }
 

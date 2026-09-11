@@ -59,7 +59,7 @@ export interface GuidanceFile {
   redirectedFrom?: string;
 }
 
-export type HelperError = 'invalid-args' | 'invalid-include' | 'invalid-input' | 'invalid-record' | 'not-a-repository';
+export type HelperError = 'invalid-args' | 'invalid-input' | 'invalid-record' | 'not-a-repository';
 
 /** A structured failure. The helper exits 0 with one of these, keeping a non-zero exit for an unexpected throw. */
 export interface HelperFailure {
@@ -101,7 +101,8 @@ export type RejectReason =
   | 'not-markdown'
   | 'outside-repository'
   | 'sealed-artifact'
-  | 'source-not-in-repository';
+  | 'source-not-in-repository'
+  | 'unresolved-include';
 
 export interface ResolveSuccess {
   ok: true;

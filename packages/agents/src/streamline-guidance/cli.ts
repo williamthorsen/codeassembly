@@ -18,7 +18,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { scanFlags } from '../lib/parse-flags.ts';
 import { checkCuts, parseCheckInput } from './check.ts';
 import { composeRecord, parseFold, parseRecord, RECORD_PATH, stringifyRecord } from './record.ts';
-import { findRepositoryRoot, InvalidIncludeError, NotARepositoryError, resolveGuidance } from './resolve.ts';
+import { findRepositoryRoot, NotARepositoryError, resolveGuidance } from './resolve.ts';
 import type {
   CheckInput,
   CheckSuccess,
@@ -140,8 +140,7 @@ export function runRecord(input: { cwd: string; foldJson: string }): HelperFailu
 
 /**
  * Resolves the named paths into targets and transitive files. A path that cannot be a target is reported in the
- * result; a missing path argument, a directory outside git, a malformed record, and an unresolvable include are
- * structured failures.
+ * result; a missing path argument, a working directory outside git, and a malformed record are structured failures.
  *
  * @internal - Exported to allow testing.
  */
@@ -175,12 +174,7 @@ export async function runResolve(input: {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
 
-  try {
-    return await resolveGuidance({ cwd: input.cwd, home: input.home, paths, record, root });
-  } catch (error) {
-    if (!(error instanceof InvalidIncludeError)) throw error;
-    return { ok: false, error: 'invalid-include', message: error.message };
-  }
+  return resolveGuidance({ cwd: input.cwd, home: input.home, paths, record, root });
 }
 
 // region | Helpers

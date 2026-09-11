@@ -27,9 +27,6 @@ import type {
   TransitiveFile,
 } from './types.ts';
 
-/** Raised when a target's include directives cannot be resolved. */
-export class InvalidIncludeError extends Error {}
-
 /** Raised when the helper runs somewhere git does not track. */
 export class NotARepositoryError extends Error {}
 
@@ -49,8 +46,8 @@ export function findRepositoryRoot(cwd: string): string {
 
 /**
  * Resolves the named paths into targets and transitive files, with their sizes, their state in git, their generated
- * regions, and the record's live declined cuts against them. A path that cannot be a target is reported rather than
- * failing the run. Throws {@link InvalidIncludeError} for a target whose includes do not resolve.
+ * regions, and the record's live declined cuts against them. A path that cannot be a target, including one whose
+ * includes do not resolve, is reported rather than failing the run.
  */
 export async function resolveGuidance(input: {
   cwd: string;
@@ -66,19 +63,23 @@ export async function resolveGuidance(input: {
     root: input.root,
   };
 
-  const named = new Map<string, string | undefined>();
+  const named = new Map<string, AcceptedFile>();
   const rejected: RejectedPath[] = [];
   for (const namedPath of input.paths) {
     for (const outcome of resolveNamedPath(namedPath, input.cwd, context)) {
       if ('reason' in outcome) {
         rejected.push(outcome);
       } else if (!named.has(outcome.file)) {
-        named.set(outcome.file, outcome.redirectedFrom);
+        named.set(outcome.file, outcome);
       }
     }
   }
 
-  const edges = await collectTransitiveEdges(named.keys().toArray(), context);
+  const { edges, unresolved } = await collectTransitiveEdges(named.keys().toArray(), context);
+  for (const file of unresolved) {
+    rejected.push({ path: named.get(file)?.namedPath ?? file, reason: 'unresolved-include' });
+    named.delete(file);
+  }
   for (const file of named.keys()) {
     edges.delete(file);
   }
@@ -86,10 +87,13 @@ export async function resolveGuidance(input: {
   const files = [...named.keys(), ...edges.keys()];
   const dirty = listDirtyFiles(input.root, files);
 
-  const targets = [...named].map(([file, redirectedFrom]) => ({
-    ...describeFile(file, context, dirty),
-    ...(redirectedFrom !== undefined && { redirectedFrom }),
-  }));
+  const targets = named
+    .values()
+    .map(({ file, redirectedFrom }) => ({
+      ...describeFile(file, context, dirty),
+      ...(redirectedFrom !== undefined && { redirectedFrom }),
+    }))
+    .toArray();
   const transitive: TransitiveFile[] = [...edges]
     .toSorted(([left], [right]) => left.localeCompare(right))
     .map(([file, via]) => ({ ...describeFile(file, context, dirty), via }));
@@ -127,9 +131,10 @@ interface ResolutionContext {
   root: string;
 }
 
-/** A path accepted as a target, relative to the repository root. */
+/** A file accepted as a target: its repository-relative path and the path by which it was named. */
 interface AcceptedFile {
   file: string;
+  namedPath: string;
   redirectedFrom?: string;
 }
 
@@ -152,7 +157,7 @@ function classifyFile(
   const content = readFileSync(absolutePath, 'utf8');
   if (!isDeployedCopy(absolutePath, content)) {
     return isInside(absolutePath, context.root)
-      ? { file: path.relative(context.root, absolutePath) }
+      ? { file: path.relative(context.root, absolutePath), namedPath }
       : { path: namedPath, reason: 'outside-repository' };
   }
 
@@ -168,19 +173,20 @@ function classifyFile(
   ) {
     return { path: namedPath, reason: 'source-not-in-repository' };
   }
-  return { file: path.relative(context.root, source), redirectedFrom: namedPath };
+  return { file: path.relative(context.root, source), namedPath, redirectedFrom: namedPath };
 }
 
 /**
- * Collects the transitive files reached from the targets, each with the edges that reach it. A link inside an included
- * file resolves against the target's directory, because an include is rendered into the target's body and its links
- * are rewritten there.
+ * Collects the transitive files reached from the targets, each with the edges that reach it, and lists the targets
+ * whose includes do not resolve, which contribute no edge. A link inside an included file resolves against the
+ * target's directory, because an include is rendered into the target's body and its links are rewritten there.
  */
 async function collectTransitiveEdges(
   targets: readonly string[],
   context: ResolutionContext,
-): Promise<Map<string, TransitiveEdge[]>> {
+): Promise<{ edges: Map<string, TransitiveEdge[]>; unresolved: string[] }> {
   const edges = new Map<string, TransitiveEdge[]>();
+  const unresolved: string[] = [];
   function addEdge(file: string, edge: TransitiveEdge): void {
     const list = edges.get(file) ?? [];
     if (list.every((existing) => existing.from !== edge.from || existing.kind !== edge.kind)) {
@@ -192,17 +198,17 @@ async function collectTransitiveEdges(
   for (const target of targets) {
     const targetPath = path.join(context.root, target);
     const contentRoot = findContentRoot(targetPath, context.contentRoots);
-    const expanded =
-      contentRoot === undefined
-        ? [targetPath]
-        : await listExpandedFiles(targetPath, contentRoot, (file, includer) => {
-            addEdge(path.relative(context.root, file), {
-              from: path.relative(context.root, includer),
-              kind: 'include',
-            });
-          });
+    const expansion =
+      contentRoot === undefined ? { files: [targetPath], includes: [] } : await expandTarget(targetPath, contentRoot);
+    if (expansion === undefined) {
+      unresolved.push(target);
+      continue;
+    }
 
-    for (const file of expanded) {
+    for (const { file, includer } of expansion.includes) {
+      addEdge(path.relative(context.root, file), { from: path.relative(context.root, includer), kind: 'include' });
+    }
+    for (const file of expansion.files) {
       const linked = listLinkedPaths(readFileSync(file, 'utf8'), {
         contentRoot,
         home: context.home,
@@ -217,7 +223,7 @@ async function collectTransitiveEdges(
     }
   }
 
-  return edges;
+  return { edges, unresolved };
 }
 
 /** Describes one repository-relative file: its size, its state in git, and its generated regions. */
@@ -229,6 +235,37 @@ function describeFile(file: string, context: ResolutionContext, dirty: ReadonlyS
     dirty: dirty.has(file),
     generatedRegions: findGeneratedRegions(readFileSync(absolutePath, 'utf8')),
   };
+}
+
+/**
+ * Lists a target and every file that its includes reach, in discovery order, with each include edge found on the way.
+ * Returns undefined where a directive in any of those files does not resolve, such as an example directive in
+ * documentation that deployment never expands.
+ */
+async function expandTarget(
+  target: string,
+  contentRoot: string,
+): Promise<{ files: string[]; includes: Array<{ file: string; includer: string }> } | undefined> {
+  const visited = new Set<string>([target]);
+  const includes: Array<{ file: string; includer: string }> = [];
+  const pending = [target];
+  for (let file = pending.shift(); file !== undefined; file = pending.shift()) {
+    let targets: string[];
+    try {
+      targets = await listIncludeTargets(file, contentRoot);
+    } catch (error) {
+      if (!(error instanceof DirectiveExpansionError)) throw error;
+      return undefined;
+    }
+    for (const include of targets) {
+      includes.push({ file: include, includer: file });
+      if (!visited.has(include)) {
+        visited.add(include);
+        pending.push(include);
+      }
+    }
+  }
+  return { files: [...visited], includes };
 }
 
 /** Returns the innermost content root containing a file, or undefined where none does. */
@@ -293,36 +330,6 @@ function listDirtyFiles(root: string, files: readonly string[]): Set<string> {
     if (/[CR]/.test(entry.slice(0, 2))) index += 1;
   }
   return dirty;
-}
-
-/**
- * Lists a target and every file that its includes reach, in discovery order, calling `onInclude` once per edge. Throws
- * {@link InvalidIncludeError} where a directive does not resolve.
- */
-async function listExpandedFiles(
-  target: string,
-  contentRoot: string,
-  onInclude: (file: string, includer: string) => void,
-): Promise<string[]> {
-  const visited = new Set<string>([target]);
-  const pending = [target];
-  for (let file = pending.shift(); file !== undefined; file = pending.shift()) {
-    let includes: string[];
-    try {
-      includes = await listIncludeTargets(file, contentRoot);
-    } catch (error) {
-      if (!(error instanceof DirectiveExpansionError)) throw error;
-      throw new InvalidIncludeError(error.message, { cause: error });
-    }
-    for (const include of includes) {
-      onInclude(include, file);
-      if (!visited.has(include)) {
-        visited.add(include);
-        pending.push(include);
-      }
-    }
-  }
-  return [...visited];
 }
 
 /**

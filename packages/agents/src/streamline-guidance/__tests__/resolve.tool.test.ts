@@ -127,6 +127,28 @@ describe(runResolve, () => {
     ]);
   });
 
+  it('rejects a file beneath a named directory whose include does not resolve, and resolves the others', async () => {
+    await writeFiles(repository, {
+      'lib/notes/README.md': [
+        '<!-- include: ../_partials/inner.md / -->',
+        '',
+        'An example directive:',
+        '',
+        '```',
+        '<!-- include: _partials/example.md / -->',
+        '```',
+        '',
+      ].join('\n'),
+      'lib/notes/guide.md': 'A guide.\n',
+    });
+
+    const result = expectSuccess(await resolve('lib/notes'));
+
+    expect(result.targets.map((target) => target.file)).toStrictEqual(['lib/notes/guide.md']);
+    expect(result.transitive).toStrictEqual([]);
+    expect(result.rejected).toStrictEqual([{ path: 'lib/notes/README.md', reason: 'unresolved-include' }]);
+  });
+
   it("reports the line range of a target's generated region", async () => {
     const result = expectSuccess(await resolve('AGENTS.md'));
 
@@ -182,12 +204,6 @@ describe(runResolve, () => {
       await writeFile(path.join(repository, RECORD_PATH), 'declined:\n  - file: x.md\n', 'utf8');
 
       expect(await resolve(TARGET)).toMatchObject({ ok: false, error: 'invalid-record' });
-    });
-
-    it("if a target's include does not resolve, fails as invalid-include", async () => {
-      await writeFile(path.join(repository, TARGET), '<!-- include: ./missing.md / -->\n', 'utf8');
-
-      expect(await resolve(TARGET)).toMatchObject({ ok: false, error: 'invalid-include' });
     });
   });
 

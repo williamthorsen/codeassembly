@@ -13,7 +13,6 @@ streamline-guidance.mjs record < fold.json
 | Error              | Cause                                                                                                     |
 | ------------------ | --------------------------------------------------------------------------------------------------------- |
 | `invalid-args`     | No command or an unknown one, `resolve` given no path or a flag, or `check` or `record` given an argument |
-| `invalid-include`  | An include directive in a target, or in a file that it includes, does not resolve                         |
 | `invalid-input`    | The JSON on standard input does not parse or does not match the command's input shape                     |
 | `invalid-record`   | `.agents/streamline-guidance.yaml` does not parse or does not match the record's shape                    |
 | `not-a-repository` | The working directory is outside a git working tree                                                       |
@@ -24,7 +23,7 @@ Each path names a Markdown file or a directory, and a leading `~/` names the hom
 
 A deployed copy resolves to its source. A file is a deployed copy when it contains a `GENERATED FILE` headline or a `<!-- codeassembly-skill|subagent|rulebook:<slug> -->` ownership marker, or when it lies in a harness's `skills/` or `scripts/` tree. Where it has a `Source:` URL, its source is the path after `/blob/<ref>/`; otherwise its source is the slug's source file under a content root, which is a directory containing `codeassembly-content.yaml`. An ambient or guidance-hook region does not make a file a copy.
 
-A path that cannot be a target is reported under `rejected` with one of these reasons: `not-found`, `not-markdown`, `sealed-artifact` (inside the artifact base directory set in preferences), `outside-repository`, `source-not-in-repository`, or `ambiguous-source` (a slug with a source under more than one content root).
+A path that cannot be a target is reported under `rejected` with one of these reasons: `not-found`, `not-markdown`, `sealed-artifact` (inside the artifact base directory set in preferences), `outside-repository`, `source-not-in-repository`, `ambiguous-source` (a slug with a source under more than one content root), or `unresolved-include` (an include directive in the file, or in a file that it includes, names no file, as an example directive in documentation does). The path is the one named, or the repository-relative path of a file found beneath a named directory.
 
 A target's transitive files are its includes, recursively, and the Markdown files to which the target or one of its includes links. Links count in two forms: Markdown links, and `{harness_home_dir}/skills/` or `{harness_home_dir}/scripts/` references, which map into the content root. A link inside an included file resolves against the target's directory, because the include is rendered into the target's body. Links inside a linked file are not followed. A file that is also a target is not listed as transitive.
 
