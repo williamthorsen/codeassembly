@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { readCommits } from '../read-commits.ts';
+import { MissingCommitError, readCommits } from '../read-commits.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -103,6 +103,37 @@ describe(readCommits, () => {
       'agents|feat: Add the parser',
       'agents|fix: Correct the guard',
     ]);
+  });
+
+  it('reads the range to an explicit head commit that the checkout is not on', async () => {
+    const cwd = await buildRepo(['agents|feat: Add the parser']);
+    await execFileAsync('git', ['-C', cwd, 'checkout', '--quiet', '-b', 'side', 'base']);
+    await writeFile(join(cwd, 'side.txt'), 'side\n', 'utf8');
+    await commitAll(cwd, 'kb|fix: Correct the store');
+    const { stdout } = await execFileAsync('git', ['-C', cwd, 'rev-parse', 'side']);
+    await execFileAsync('git', ['-C', cwd, 'checkout', '--quiet', '-']);
+
+    const commits = await readCommits({ baseRef: 'base', cwd, headRef: stdout.trim() });
+
+    expect(commits.map((commit) => commit.subject)).toStrictEqual(['kb|fix: Correct the store']);
+  });
+
+  it('if the head commit is absent from the repository, throws MissingCommitError naming it', async () => {
+    const cwd = await buildRepo(['agents|feat: Add the parser']);
+    const absent = '0123456789abcdef0123456789abcdef01234567';
+
+    await expect(readCommits({ baseRef: 'base', cwd, headRef: absent })).rejects.toThrow(
+      expect.objectContaining({ name: 'MissingCommitError', ref: absent }),
+    );
+  });
+
+  it('if the directory is not a repository, throws a git failure rather than MissingCommitError', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'read-commits-loose-'));
+
+    const reading = readCommits({ baseRef: 'base', cwd });
+
+    await expect(reading).rejects.toThrow(/not a git repository/);
+    await expect(reading).rejects.not.toBeInstanceOf(MissingCommitError);
   });
 });
 
