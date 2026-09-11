@@ -22,7 +22,8 @@ export interface DecisionSpec {
   mergedLede?: string;
   /** Author's critique, written to the section a commented decision carries; absent leaves the record without one. */
   comment?: string;
-  scope?: string;
+  /** Scope as the record's frontmatter spells it; `null` leaves the record naming none. */
+  scope?: string | null;
   pr?: string;
   /** Tier as the record recorded it; defaults to the tier the fixture taxonomy declares for `type`. */
   tier?: string;
@@ -113,7 +114,7 @@ export function renderDecision(spec: DecisionSpec): string {
     `tags: [${tags.join(', ')}]`,
     `type: ${spec.type}`,
     `tier: ${tier}`,
-    `scope: ${spec.scope ?? 'agents'}`,
+    ...(spec.scope === null ? [] : [`scope: ${spec.scope ?? 'agents'}`]),
     `pr: '${spec.pr ?? '1'}'`,
     ...(spec.quality === undefined ? [] : [`quality: ${spec.quality}`]),
     '---',

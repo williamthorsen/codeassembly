@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { readNoteContent } from '@williamthorsen/kb/note-io';
 
+import { SCOPE_WILDCARD } from '../change-grammar/tokens.ts';
 import { extractString } from '../kb-shared/note-helpers.ts';
 import { readHomeProvenance, readHomeProvenanceAt } from '../lib/home-provenance.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
@@ -50,6 +51,8 @@ export async function resolveEpisode(input: {
   mergeCommit: string;
   type?: string;
   scope?: string;
+  /** Whether `--breaking` was passed; `true` makes the flags the identity's source, as `--type` and `--scope` do. */
+  breaking?: boolean;
   ticket?: string;
   agentLedeFile?: string;
   mergedLedeFile?: string;
@@ -196,7 +199,8 @@ async function readAgentsVersion(input: {
 /**
  * Reads the effective type, scope, and breaking marker, and the `ticket_id`, from the newest change-summary artifact's
  * frontmatter. An override field outranks the derived head it overrides, and the marker is set where either `breaking`
- * or `breaking_override` sets it; a type spelled with `!` carries its own marker to the resolver.
+ * or `breaking_override` sets it; a type spelled with `!` carries its own marker to the resolver. A scope of `*` names
+ * no scope.
  *
  * The read is field-blind rather than routed through the knowledge base's record parser: a change summary is an
  * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields an
@@ -220,7 +224,7 @@ async function readChangeSummaryFields(
   return {
     breaking: fields.breaking === true || fields.breaking_override === true,
     type: extractString(fields, 'type_override') ?? extractString(fields, 'type'),
-    scope: extractString(fields, 'scope_override') ?? extractString(fields, 'scope'),
+    scope: readScope(extractString(fields, 'scope_override') ?? extractString(fields, 'scope')),
     ticket: readIdentifier(fields, 'ticket_id'),
   };
 }
@@ -235,6 +239,12 @@ function readIdentifier(fields: Record<string, unknown>, key: string): string | 
     return String(value);
   }
   return extractString(fields, key);
+}
+
+/** Reads a scope as the identity records it: the `*` scope and an empty one name no scope. */
+function readScope(scope: string | null): string | null {
+  const trimmed = scope?.trim();
+  return trimmed === undefined || ['', SCOPE_WILDCARD].includes(trimmed) ? null : trimmed;
 }
 
 /** Reads a file as UTF-8, yielding `null` when it does not exist. */
@@ -272,11 +282,15 @@ async function readLede(input: {
 }
 
 /**
- * Resolves the change's identity, preferring the caller's flags and falling back to the newest change-summary
- * artifact's frontmatter, which is the only artifact in the chain that carries typed fields. The work type is resolved
- * through the installed taxonomy rather than taken as spelled, so the identity carries the canonical key and the tier
- * that the taxonomy in force declares for it, and reports the breaking marker separately. A `--type` flag carries its
- * own marker, so the change summary's breaking fields count only where the type came from the change summary too.
+ * Resolves the change's identity from one source: the caller's `--type`, `--scope`, and `--breaking` where any of them
+ * is passed, and otherwise the newest change-summary artifact's frontmatter, which is the only artifact in the chain
+ * that carries typed fields. One identity never combines fields from both, so a caller passing a type for a change that
+ * names no scope records no scope. The ticket falls back to the change summary on its own, being no part of the
+ * classification.
+ *
+ * The work type is resolved through the installed taxonomy rather than taken as spelled, so the identity carries the
+ * canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
+ * breaking, as `--breaking` does.
  *
  * A taxonomy that does not load is reported apart from a type it does not declare. The two conditions look alike at the
  * failed lookup and differ in the caller's recourse: one is repaired by passing a flag, the other only by repairing the
@@ -289,20 +303,26 @@ async function resolveIdentity(input: {
   mergeCommit: string;
   type?: string;
   scope?: string;
+  breaking?: boolean;
   ticket?: string;
 }): Promise<
   { ok: true; identity: EpisodeIdentity } | { ok: false; error: 'no-taxonomy' | 'unresolved-identity'; message: string }
 > {
-  const fallback = await readChangeSummaryFields(input.artifactDir);
+  const summary = await readChangeSummaryFields(input.artifactDir);
+  const fromFlags = input.type !== undefined || input.scope !== undefined || input.breaking === true;
+  const source = fromFlags
+    ? { breaking: input.breaking === true, scope: readScope(input.scope ?? null), type: input.type ?? null }
+    : summary;
 
-  const type = input.type ?? fallback.type;
+  const type = source.type;
   if (type === null) {
-    return { ok: false, error: 'unresolved-identity', message: 'work type could not be resolved; pass --type' };
-  }
-
-  const scope = input.scope ?? fallback.scope;
-  if (scope === null) {
-    return { ok: false, error: 'unresolved-identity', message: 'scope could not be resolved; pass --scope' };
+    return {
+      ok: false,
+      error: 'unresolved-identity',
+      message: fromFlags
+        ? 'work type is missing; pass --type with --scope or --breaking, since the identity then comes from the flags alone'
+        : 'work type could not be resolved; pass --type',
+    };
   }
 
   const workTypes = await loadWorkTypes(input.dataDir);
@@ -323,15 +343,15 @@ async function resolveIdentity(input: {
     };
   }
 
-  const ticket = input.ticket ?? fallback.ticket;
+  const ticket = input.ticket ?? summary.ticket;
 
   return {
     ok: true,
     identity: {
       type: resolved.workType.key,
       tier: resolved.workType.tier,
-      breaking: resolved.breaking || (input.type === undefined && fallback.breaking),
-      scope,
+      breaking: resolved.breaking || source.breaking,
+      ...(source.scope !== null && { scope: source.scope }),
       pr: input.pr,
       mergeCommit: input.mergeCommit,
       ...(ticket !== null && { ticket }),

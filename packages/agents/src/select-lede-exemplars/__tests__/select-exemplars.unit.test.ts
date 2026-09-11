@@ -194,6 +194,33 @@ describe(selectExemplars, () => {
     });
   });
 
+  it('selects a record that names no scope, and reports no scope for it', async () => {
+    const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', scope: null, pr: '1124' }];
+
+    const selection = await select({ decisions, type: 'feat', count: 1 });
+
+    expect(selection.warnings).toStrictEqual([]);
+    expect(selection.exemplars[0]).toStrictEqual({
+      lede: agentLedeFor('A'),
+      type: 'feat',
+      tier: 'public',
+      pr: '1124',
+      capturedAt: '2026-01-01T00:00:00Z',
+    });
+  });
+
+  it('reports a record that does not name its pull request', async () => {
+    const files = {
+      'Z.md':
+        '---\nrecordType: event\nid: Z\ncaptured-at: 2026-09-01T00:00:00Z\ncwd: /repo\nsummary: Decision\n' +
+        'tags: [lede-decision]\ntype: feat\ntier: public\nscope: agents\n---\n\n## Agent lede\n\nText.\n',
+    };
+
+    const selection = await select({ decisions: [], files, type: 'feat', count: 1 });
+
+    expect(selection.warnings).toStrictEqual(['Z.md: does not name the change it describes (type, pr)']);
+  });
+
   it('reports the agent lede, the merged lede, and the comment when the request asks for the pair', async () => {
     const decisions = [
       {

@@ -58,6 +58,7 @@ describe(parseArgs, () => {
       store: OTHER_STORE_NAME,
       type: 'feat',
       scope: 'agents',
+      breaking: false,
       ticket: '1107',
       agentLedeFile: '/tmp/agent.md',
       mergedLedeFile: '/tmp/merged.md',
@@ -95,6 +96,10 @@ describe(parseArgs, () => {
 
   it('refuses a rating outside the declared scale', () => {
     expect(() => parseArgs(['--quality', 'excellent', ...requiredFlags()])).toThrow('--quality must be one of');
+  });
+
+  it('reads --breaking', () => {
+    expect(parseArgs(['--inspect', '--type', 'feat', '--breaking', ...requiredFlags()]).breaking).toBe(true);
   });
 
   it('refuses --verdict, which the record derives rather than accepts', () => {
@@ -180,6 +185,19 @@ describe(runDecision, () => {
     const content = await readFile(written.path, 'utf8');
     expect(content).toMatch(/^tags: \[lede-decision, type:feat, accepted, quality:exemplary]$/m);
     expect(content).not.toContain('## Merged lede');
+  });
+
+  it('records a flag-sourced identity with no scope where the change summary names one', async () => {
+    const fixture = await createLedeFixture();
+    const store = await makeStore();
+    const argv = ['--quality', 'good', ...withoutFlag(flagsFor(fixture), 'scope'), '--breaking'];
+
+    const result = await runDecision(runInput({ argv, fixture, home: store.home }));
+
+    const content = await readFile(expectCommit(result).path, 'utf8');
+    expect(content).not.toMatch(/^scope:/m);
+    expect(content).toMatch(/^breaking: true$/m);
+    expect(content).toMatch(/^tags: \[lede-decision, type:feat, breaking, revised, quality:good]$/m);
   });
 
   it('writes nothing in inspect mode', async () => {

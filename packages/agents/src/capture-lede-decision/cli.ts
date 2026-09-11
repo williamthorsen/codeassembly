@@ -27,6 +27,7 @@ import type { DecisionErrorCode, DecisionResult } from './types.ts';
 const FLAGS: readonly FlagSpec[] = [
   { name: 'agent-lede-file', takesValue: true },
   { name: 'artifact-dir', takesValue: true },
+  { name: 'breaking', takesValue: false },
   { name: 'data-dir', takesValue: true },
   { name: 'harness', takesValue: true },
   { name: 'inspect', takesValue: false },
@@ -66,6 +67,8 @@ export interface ParsedArgs {
   store: string;
   type: string | null;
   scope: string | null;
+  /** Whether `--breaking` was passed. */
+  breaking: boolean;
   ticket: string | null;
   agentLedeFile: string | null;
   mergedLedeFile: string | null;
@@ -135,6 +138,7 @@ export async function runDecision(input: {
     mergeCommit: args.mergeCommit,
     ...(args.type !== null && { type: args.type }),
     ...(args.scope !== null && { scope: args.scope }),
+    breaking: args.breaking,
     ...(args.ticket !== null && { ticket: args.ticket }),
     ...(args.agentLedeFile !== null && { agentLedeFile: args.agentLedeFile }),
     ...(args.mergedLedeFile !== null && { mergedLedeFile: args.mergedLedeFile }),
@@ -217,8 +221,9 @@ export async function runDecision(input: {
 /**
  * Parses the helper's argv. `--inspect` and `--quality` select the mode and are mutually exclusive; exactly one must
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
- * change it describes is not worth recording. Every other flag is optional: the work type, scope, and ticket fall back
- * to the change-summary artifact, the two lede overrides fall back to their artifacts, and `--store` names a corpus
+ * change it describes is not worth recording. Every other flag is optional: the change's identity (`--type`, `--scope`,
+ * and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall back to their
+ * artifacts, and `--store` names a corpus
  * registered under some other name. The `@default` sentinel is refused: it names a machine's default store rather than
  * a corpus, which is the route by which decisions have been filed outside the one that holds them.
  *
@@ -255,6 +260,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     store: raw.store ?? LEDE_DECISION_STORE,
     type: raw.type ?? null,
     scope: raw.scope ?? null,
+    breaking: flags.some((flag) => flag.name === 'breaking'),
     ticket: raw.ticket ?? null,
     agentLedeFile: raw['agent-lede-file'] ?? null,
     mergedLedeFile: raw['merged-lede-file'] ?? null,

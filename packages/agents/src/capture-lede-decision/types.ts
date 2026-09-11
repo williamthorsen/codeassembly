@@ -13,13 +13,14 @@ export const LEDE_VERDICTS = ['accepted', 'revised'] as const;
 /** What became of the agent's lede: it shipped as written, or it was rewritten before merge. */
 export type LedeVerdict = (typeof LEDE_VERDICTS)[number];
 
-/** The change a decision describes, resolved from caller flags with change-summary frontmatter as the fallback. */
+/** The change a decision describes, resolved wholly from caller flags or wholly from change-summary frontmatter. */
 export interface EpisodeIdentity {
   type: string;
   tier: string;
   /** Whether the work type carried the breaking marker; the doctrine requires a `Migration:` paragraph of these alone. */
   breaking: boolean;
-  scope: string;
+  /** Scope the change belongs to; absent for a change that names none. */
+  scope?: string;
   pr: string;
   mergeCommit: string;
   /** Ticket the change served; absent for a branch that carried none. */

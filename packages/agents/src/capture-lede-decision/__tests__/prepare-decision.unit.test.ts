@@ -65,6 +65,17 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^summary: 'Lede revised for agents #1124, rated good'$/m);
   });
 
+  it('omits the scope from frontmatter and from the summary for a change that names none', () => {
+    const { scope: _scope, ...identity } = IDENTITY;
+
+    const content = expectContent(
+      prepareDecision({ ...decisionFor({ differ: true, quality: 'good' }), episode: { ...episodeFor({}), identity } }),
+    );
+
+    expect(content).not.toMatch(/^scope:/m);
+    expect(content).toMatch(/^summary: 'Lede revised for #1124, rated good'$/m);
+  });
+
   it('derives a revised verdict when the two texts differ', () => {
     const outcome = prepareDecision(decisionFor({ differ: true }));
 

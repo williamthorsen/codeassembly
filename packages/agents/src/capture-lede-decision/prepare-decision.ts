@@ -58,7 +58,7 @@ export function prepareDecision(input: {
     type: identity.type,
     tier: identity.tier,
     ...(identity.breaking && { breaking: true }),
-    scope: identity.scope,
+    ...(identity.scope !== undefined && { scope: identity.scope }),
     pr: identity.pr,
     'merge-commit': identity.mergeCommit,
     ...(identity.ticket !== undefined && { ticket: identity.ticket }),
@@ -74,7 +74,7 @@ export function prepareDecision(input: {
     capturedAt,
     ...(context.session !== undefined && { session: context.session }),
     cwd: context.cwd,
-    summary: `Lede ${verdict} for ${identity.scope} #${identity.pr}, rated ${quality}`,
+    summary: `Lede ${verdict} for ${identity.scope === undefined ? '' : `${identity.scope} `}#${identity.pr}, rated ${quality}`,
     tags: [
       LEDE_DECISION_TAG,
       `type:${identity.type}`,

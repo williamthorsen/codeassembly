@@ -30,22 +30,25 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 
 ## Arguments
 
-| Argument             | Description                                                                                                                                                                          | Required |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.                                                                                                    | Yes      |
-| `--pr`               | The pull-request number.                                                                                                                                                             | Yes      |
-| `--merge-commit`     | The merge commit's SHA.                                                                                                                                                              | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.                                                                                                 | Mode     |
-| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.                                                                                                   | Mode     |
-| `--store`            | Names a corpus registered under some other name; `@default` is refused.                                                                                                              | No       |
-| `--type`             | Work type, breaking marker included (`feat!`). Falls back to the change summary's frontmatter: `type_override` over `type`, breaking where `breaking` or `breaking_override` is set. | No       |
-| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter: `scope_override` over `scope`.                                                                             | No       |
-| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                                                                                                           | No       |
-| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.                                                                                                    | No       |
-| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact.                                                                                            | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                                                                                                                 | Injected |
+| Argument             | Description                                                                               | Required |
+| -------------------- | ----------------------------------------------------------------------------------------- | -------- |
+| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.         | Yes      |
+| `--pr`               | The pull-request number.                                                                  | Yes      |
+| `--merge-commit`     | The merge commit's SHA.                                                                   | Yes      |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.      | Mode     |
+| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.        | Mode     |
+| `--store`            | Names a corpus registered under some other name; `@default` is refused.                   | No       |
+| `--type`             | Work type. `--type feat!` is accepted as `--type feat --breaking`.                        | Identity |
+| `--scope`            | Package or surface scope. Omit it for a change that names no scope; `*` names none.       | Identity |
+| `--breaking`         | Marks the change breaking.                                                                | Identity |
+| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                | No       |
+| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.         | No       |
+| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                      | Injected |
 
 Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
+
+The change's identity comes wholly from one source. Where any of `--type`, `--scope`, and `--breaking` is passed, it comes from those flags alone, and `--type` is required. Where none is, it comes from the change summary's frontmatter: `type_override` over `type`, `scope_override` over `scope`, and breaking where `breaking` or `breaking_override` is set. A scope of `*` from either source names no scope. `--ticket` falls back to the change summary on its own.
 
 ## Runtime dependencies
 
@@ -62,7 +65,7 @@ node {harness_home_dir}/skills/capture-lede-decision/capture-lede-decision.mjs \
   --artifact-dir <ticket artifact directory> \
   --pr <number> \
   --merge-commit <sha> \
-  [--type <key>] [--scope <name>] [--ticket <id>]
+  [--type <key> [--scope <name>] [--breaking]] [--ticket <id>]
 ```
 
 The helper prints a JSON object to stdout: `ok: true` with `episode` and `store` on success, or `ok: false` with `error` and `message`. Inspecting writes nothing, so it can never block or alter a merge that already happened.
@@ -97,7 +100,7 @@ cat <<'EOF' | node {harness_home_dir}/skills/capture-lede-decision/capture-lede-
   --artifact-dir <ticket artifact directory> \
   --pr <number> \
   --merge-commit <sha> \
-  [--type <key>] [--scope <name>] [--ticket <id>]
+  [--type <key> [--scope <name>] [--breaking]] [--ticket <id>]
 <the author's comment, verbatim; may be empty and may span multiple lines>
 EOF
 ```
@@ -129,7 +132,7 @@ Read the printed path and pass it to `--merged-lede-file` as literal text: no sh
 One event per decision, in the corpus:
 
 - **Tags**: `lede-decision`, `type:{work type}`, `breaking` for a change whose work type carried the marker, the derived verdict, and `quality:{level}`. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, by work type with `--tag type:feat`, by rating with `--tag quality:exemplary`, and the breaking changes alone with `--tag breaking`.
-- **Frontmatter**: the rating; the work type, tier, and scope; `breaking: true` for a breaking change, and nothing for any other; the pull-request number, merge commit, and ticket; `doctrine-hash`, a combined digest of the `lede-drafter` and `lede-cutter` bodies in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
+- **Frontmatter**: the rating; the work type and tier, and the scope where the change names one; `breaking: true` for a breaking change, and nothing for any other; the pull-request number, merge commit, and ticket; `doctrine-hash`, a combined digest of the `lede-drafter` and `lede-cutter` bodies in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
 - **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
 `doctrine-hash` is what groups records by doctrine generation. The drafter writes the lede and the cutter decides which of its bullets survive, so those two bodies are what a draft was written under and a change to either opens a generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing each body's own history. A digest recorded before the bodies became the doctrine fingerprints the retired `skills/_data/lede-voice.md`, and resolves against that file's history instead.
@@ -141,7 +144,7 @@ Route by the `error` code:
 - `no-artifact-dir`, `no-agent-lede`, `no-merged-lede`: The ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
 - `no-doctrine`: An installed subagent body the digest covers is unreadable; the message names it. Report it as an install problem.
 - `no-taxonomy`: The installed `work-types.json` is unreadable. Report it as an install problem; no `--type` value resolves against a taxonomy that did not load.
-- `unresolved-identity`: The work type, tier, or scope could not be resolved. The message names which; pass the corresponding flag.
+- `unresolved-identity`: The work type or its tier could not be resolved, or `--scope` or `--breaking` was passed without `--type`. The message names which; pass `--type`, with `--scope` and `--breaking` as the change carries them.
 - `invalid-args`: Report the message and propose a corrected invocation.
 - `store-not-registered`: The corpus is registered in no `kb.yaml`. Where it is registered under some other name, re-run with `--store <name>`.
 - `readonly-store`: The corpus is registered readonly. Report and stop; the skill substitutes no other destination for one the registry protects.
