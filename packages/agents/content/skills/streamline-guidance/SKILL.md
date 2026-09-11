@@ -46,6 +46,8 @@ At any level, in any file:
 - The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since every description loads into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
+Edit no file outside the targets and their transitive files, except a version pin or content hash that step 7 updates.
+
 ## Process
 
 ### 1. Resolve the files
