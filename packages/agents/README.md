@@ -1,3 +1,5 @@
+<!-- readme-type: cli -->
+
 # codeassembly
 
 A CLI that installs reusable AI agent guidance into coding-harness directories, and the library of rulebooks, skills, and subagents it deploys.
@@ -891,6 +893,10 @@ On read, with units named:
 A fold rejection carries neither a hash nor a version; the helper derives both. Merging is by unit: a unit that the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded.
 
 For a unit that the fold does name, its roots join the recorded ones where the version matches and replace them where it moved, and a root that another one already contains is dropped. So a full sweep followed by a narrowed one still records the repository as covered, and a version bump starts the coverage over. That unit's rejections at the current version are replaced by the fold's own within the roots named for it, a site not re-rejected having been withdrawn. A rejection outside those roots was never revisited, so it is carried forward, and so is one recorded at an older version.
+
+## Guidance streamlining helper
+
+`src/streamline-guidance/` contains the helper that the `streamline-guidance` skill runs. Its commands, their output, and the record of declined cuts are documented in [docs/streamline-guidance-helper.md](docs/streamline-guidance-helper.md).
 
 ## Development
 
