@@ -9,6 +9,7 @@ import path from 'node:path';
 
 import { z } from 'zod';
 
+import { listWorkingTreeFiles } from './list-working-tree-files.ts';
 import { normalizePhrase } from './normalize-phrase.ts';
 import type { CheckInput, CheckReport, PhraseCommit, TestAssertion } from './types.ts';
 
@@ -122,12 +123,7 @@ function isTestScript(file: string): boolean {
 
 /** Lists every string literal of at least the minimum length in the test scripts that git tracks or would track. */
 function listTestLiterals(root: string): TestAssertion[] {
-  const files = [
-    ...new Set([
-      ...listGitFiles(root, ['ls-files', '-z']),
-      ...listGitFiles(root, ['ls-files', '-z', '--others', '--exclude-standard']),
-    ]),
-  ].filter((file) => isTestScript(file));
+  const files = listWorkingTreeFiles(root).filter((file) => isTestScript(file));
 
   const literals: TestAssertion[] = [];
   for (const file of files) {
@@ -149,18 +145,6 @@ function listTestLiterals(root: string): TestAssertion[] {
     }
   }
   return literals;
-}
-
-/** Runs one `git ls-files` form in the repository, returning repository-relative paths. */
-function listGitFiles(root: string, args: readonly string[]): string[] {
-  return execFileSync('git', args, {
-    cwd: root,
-    encoding: 'utf8',
-    maxBuffer: GIT_MAX_BUFFER,
-    stdio: ['ignore', 'pipe', 'ignore'],
-  })
-    .split('\u{0}')
-    .filter((file) => file !== '');
 }
 
 /** Resolves the escape sequences in a literal's source text, so the literal compares as the string that it denotes. */

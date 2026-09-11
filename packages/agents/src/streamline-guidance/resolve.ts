@@ -14,6 +14,7 @@ import { DirectiveExpansionError, listIncludeTargets } from '../lib/directive-ex
 import { MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
 import { findDeployedSource, isDeployedCopy } from './deployed-source.ts';
+import { listWorkingTreeFiles } from './list-working-tree-files.ts';
 import { isLive } from './record.ts';
 import type {
   DeclinedPhrase,
@@ -265,7 +266,7 @@ function isInside(child: string, parent: string): boolean {
 
 /** Lists the absolute directories of every content root in the repository, tracked or not yet tracked. */
 function listContentRoots(root: string): string[] {
-  return listGitFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
+  return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
     .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
     .map((file) => path.join(root, path.dirname(file)));
 }
@@ -324,21 +325,6 @@ async function listExpandedFiles(
   return [...visited];
 }
 
-/** Lists repository-relative paths that git tracks or would track, matching the given pathspecs. */
-function listGitFiles(root: string, pathspecs: readonly string[]): string[] {
-  function run(args: readonly string[]): string[] {
-    return execFileSync('git', [...args, '--', ...pathspecs], {
-      cwd: root,
-      encoding: 'utf8',
-      maxBuffer: GIT_MAX_BUFFER,
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-      .split('\u{0}')
-      .filter((file) => file !== '');
-  }
-  return [...new Set([...run(['ls-files', '-z']), ...run(['ls-files', '-z', '--others', '--exclude-standard'])])];
-}
-
 /**
  * Lists the existing Markdown files to which content links: Markdown links resolved against the host's directory, and
  * `{harness_home_dir}` references mapped into the content root, whose tree is what deploys beneath the harness home.
@@ -365,9 +351,9 @@ function listLinkedPaths(
   );
 }
 
-/** Lists the Markdown files that git tracks or would track beneath a repository-relative directory. */
+/** Lists the Markdown files in the working tree that git tracks or would track beneath a repository-relative directory. */
 function listMarkdownFilesUnder(root: string, directory: string): string[] {
-  return listGitFiles(root, [directory === '' ? '.' : directory]).filter(
+  return listWorkingTreeFiles(root, [directory === '' ? '.' : directory]).filter(
     (file) => path.extname(file).toLowerCase() === '.md',
   );
 }
