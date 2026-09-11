@@ -1,6 +1,6 @@
 ---
 slug: readme-conventions
-description: What belongs in a README, how its shape follows from what it describes, and where detail goes when it leaves. Consult before writing, restructuring, or adding a section to a README.
+description: What belongs in a README, how its shape follows from what it describes, and where detail goes when it leaves. Consult before writing, revising, or tightening a README, or before adding a section to one.
 delivery: skill
 version: '1'
 ---
