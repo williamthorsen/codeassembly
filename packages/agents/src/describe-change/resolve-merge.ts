@@ -245,12 +245,19 @@ function isSameHead(left: ChangeRecord, right: ChangeRecord): boolean {
 }
 
 /**
- * Reports whether the pull request's head is still the commit from which the record was derived: the recorded commit
- * is a prefix, at least seven characters long, of the head commit.
+ * Reports whether the pull request's head is still the commit from which the record was derived: the shorter of the two
+ * hashes is at least seven characters long and a prefix of the longer. Either side may be abbreviated, since the record
+ * holds a short hash and a platform may report the head commit abbreviated too.
  */
 function isUnmoved(recordedCommit: string, headCommit: string): boolean {
+  const [shorter, longer] = [recordedCommit.toLowerCase(), headCommit.toLowerCase()].toSorted(
+    (left, right) => left.length - right.length,
+  );
   return (
-    recordedCommit.length >= MINIMUM_COMMIT_PREFIX && headCommit.toLowerCase().startsWith(recordedCommit.toLowerCase())
+    shorter !== undefined &&
+    longer !== undefined &&
+    shorter.length >= MINIMUM_COMMIT_PREFIX &&
+    longer.startsWith(shorter)
   );
 }
 

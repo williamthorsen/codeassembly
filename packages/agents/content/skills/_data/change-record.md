@@ -85,7 +85,7 @@ An override is kept as the author set it, even where it equals the head. The hea
 **With a readable block**, the recorded head and the derivation are compared on scope, type, and breaking, before any override:
 
 - Where they agree, or where the derivation is unavailable, the record stands.
-- Where they disagree and the branch is unmoved, the record wins and the derivation is shown. The branch is unmoved where `commit` is a prefix, at least seven characters long, of the pull request's head commit.
+- Where they disagree and the branch is unmoved, the record wins and the derivation is shown. The branch is unmoved where the shorter of `commit` and the pull request's head commit is at least seven characters long and a prefix of the longer, since either may be abbreviated.
 - Where they disagree and the branch has moved, the derivation wins and the record is shown.
 
 The block's overrides then apply to whichever head won, as [The effective record](#the-effective-record) states.

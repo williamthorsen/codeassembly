@@ -106,6 +106,18 @@ describe(resolveMerge, () => {
       expect(report.notices).toMatchObject([{ kind: 'divergence', used: 'derivation' }]);
     });
 
+    it('reads the branch as unmoved where the head commit is reported abbreviated', () => {
+      const report = resolveMerge(
+        buildInput({
+          block: readBlock({ scope: 'agents', type: 'feat' }, { commit: HEAD_COMMIT.slice(0, 14) }),
+          derived: { scope: 'kb', type: 'feat' },
+          headCommit: HEAD_COMMIT.slice(0, 12),
+        }),
+      );
+
+      expect(report.notices).toMatchObject([{ kind: 'divergence', used: 'record' }]);
+    });
+
     it('compares a derivation that found no entries like any other head', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), derived: {} }));
 
@@ -435,12 +447,13 @@ describe(resolveMerge, () => {
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {
     derived?: ChangeRecord;
+    headCommit?: string;
     prBody?: string;
     prTitle?: string;
     ticketRef?: string | null;
   } = {},
 ): MergeInput {
-  const { derived, prBody, prTitle, ticketRef, ...rest } = changes;
+  const { derived, headCommit, prBody, prTitle, ticketRef, ...rest } = changes;
   return {
     block: { kind: 'absent' },
     derivation: { head: derived ?? (rest.block?.kind === 'read' ? rest.block.block.head : {}), kind: 'derived' },
@@ -450,7 +463,12 @@ function buildInput(
     templates: TEMPLATES,
     ...(ticketRef !== null && { ticketRef: ticketRef ?? '#466' }),
     ...rest,
-    pr: { body: prBody ?? BODY, headCommit: HEAD_COMMIT, number: '470', title: prTitle ?? '#466 Add foo' },
+    pr: {
+      body: prBody ?? BODY,
+      headCommit: headCommit ?? HEAD_COMMIT,
+      number: '470',
+      title: prTitle ?? '#466 Add foo',
+    },
   };
 }
 
