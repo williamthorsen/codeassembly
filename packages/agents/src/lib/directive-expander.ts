@@ -68,6 +68,35 @@ export async function expandIncludes(filePath: string, contentDir: string): Prom
   return expandFile(path.resolve(filePath), path.resolve(contentDir), visited);
 }
 
+/**
+ * Lists the files named by a Markdown file's own include directives, resolved and in first-occurrence order, without
+ * expanding them or following their includes. Throws `DirectiveExpansionError` for a missing or out-of-tree target and
+ * for a malformed directive, as expansion does.
+ */
+export async function listIncludeTargets(filePath: string, contentDir: string): Promise<string[]> {
+  const resolvedFile = path.resolve(filePath);
+  const resolvedContentDir = path.resolve(contentDir);
+  const content = await readFile(resolvedFile, 'utf8');
+
+  const targets: string[] = [];
+  for (const [i, line] of content.split('\n').entries()) {
+    const lineNumber = i + 1;
+    // Self-close is matched first, as in expansion, so a target ending in a slash is not read as an open directive.
+    const target = SELF_CLOSE_REGEX.exec(line)?.[1] ?? OPEN_REGEX.exec(line)?.[1];
+    if (target === undefined) {
+      if (ANY_INCLUDE_LIKE_REGEX.test(line)) {
+        throw buildUnrecognizedParameterError(resolvedFile, lineNumber, line);
+      }
+      continue;
+    }
+    const resolved = resolveTarget(resolvedFile, resolvedContentDir, target, lineNumber);
+    if (!targets.includes(resolved)) {
+      targets.push(resolved);
+    }
+  }
+  return targets;
+}
+
 /** A frame on the open-directive stack tracking an unclosed open directive. */
 interface OpenFrame {
   readonly target: string;
@@ -137,10 +166,7 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
       // shapes, reject it as an unrecognized parameter. This catches typos like
       // `<!-- include: path foo -->` or `<!-- include: path /bar -->`.
       if (ANY_INCLUDE_LIKE_REGEX.test(line)) {
-        throw new DirectiveExpansionError(
-          `Include directive has unrecognized parameter: ${filePath}:${lineNumber} line="${line}" reason=unrecognized-parameter`,
-          'unrecognized-parameter',
-        );
+        throw buildUnrecognizedParameterError(filePath, lineNumber, line);
       }
 
       // Plain content line. If we're inside an open directive, accumulate it into the slot;
@@ -165,6 +191,14 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
   } finally {
     visited.delete(filePath);
   }
+}
+
+/** Builds the error reported for a line that uses `include:` syntax in no recognized shape. */
+function buildUnrecognizedParameterError(filePath: string, lineNumber: number, line: string): DirectiveExpansionError {
+  return new DirectiveExpansionError(
+    `Include directive has unrecognized parameter: ${filePath}:${lineNumber} line="${line}" reason=unrecognized-parameter`,
+    'unrecognized-parameter',
+  );
 }
 
 /**

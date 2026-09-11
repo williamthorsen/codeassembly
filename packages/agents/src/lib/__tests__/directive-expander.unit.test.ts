@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DirectiveExpansionError, expandIncludes } from '../directive-expander.ts';
+import { DirectiveExpansionError, expandIncludes, listIncludeTargets } from '../directive-expander.ts';
 
 describe(expandIncludes, () => {
   let contentDir: string;
@@ -403,5 +403,71 @@ describe(expandIncludes, () => {
         message: expect.stringContaining('host.md:1'),
       });
     });
+  });
+});
+
+describe(listIncludeTargets, () => {
+  let contentDir: string;
+
+  beforeEach(async () => {
+    contentDir = path.join(tmpdir(), `include-targets-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(contentDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  async function writeSource(relPath: string, content: string): Promise<string> {
+    const fullPath = path.join(contentDir, relPath);
+    await mkdir(path.dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, content, 'utf8');
+    return fullPath;
+  }
+
+  it('lists self-close and open targets once each, in first-occurrence order', async () => {
+    const host = await writeSource(
+      'skills/host/SKILL.md',
+      [
+        '<!-- include: ../_partials/b.md / -->',
+        '<!-- include: ../_partials/a.md -->',
+        'slot',
+        '<!-- /include -->',
+        '<!-- include: ../_partials/b.md / -->',
+        '',
+      ].join('\n'),
+    );
+    await writeSource('skills/_partials/a.md', '<!-- children -->\n');
+    await writeSource('skills/_partials/b.md', 'B\n');
+
+    const targets = await listIncludeTargets(host, contentDir);
+
+    expect(targets).toEqual([
+      path.join(contentDir, 'skills/_partials/b.md'),
+      path.join(contentDir, 'skills/_partials/a.md'),
+    ]);
+  });
+
+  it('does not list an include nested inside an included partial', async () => {
+    const host = await writeSource('host.md', '<!-- include: outer.md / -->\n');
+    await writeSource('outer.md', '<!-- include: inner.md / -->\n');
+    await writeSource('inner.md', 'Inner\n');
+
+    const targets = await listIncludeTargets(host, contentDir);
+
+    expect(targets).toEqual([path.join(contentDir, 'outer.md')]);
+  });
+
+  it('if a target does not exist, throws not-found', async () => {
+    const host = await writeSource('host.md', '<!-- include: missing.md / -->\n');
+
+    await expect(listIncludeTargets(host, contentDir)).rejects.toMatchObject({ reason: 'not-found' });
+  });
+
+  it('if a directive has an unrecognized parameter, throws unrecognized-parameter', async () => {
+    const host = await writeSource('host.md', '<!-- include: target.md unknown -->\n');
+    await writeSource('target.md', 'X\n');
+
+    await expect(listIncludeTargets(host, contentDir)).rejects.toMatchObject({ reason: 'unrecognized-parameter' });
   });
 });
