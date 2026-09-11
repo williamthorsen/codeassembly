@@ -11,14 +11,16 @@ import type { ChangeRecord } from '../change-grammar/types.ts';
  * flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip verification
  * of the kind the title grammar requires.
  *
- * `head` is normalized as the engine normalizes any record, so a field the branch did not determine is absent rather
- * than empty, and `breaking` appears only where it is true.
+ * `head` and `overrides` are normalized as the engine normalizes any record, so a field the branch did not determine is
+ * absent rather than empty, a marker spelled on a type splits into the type and `breaking`, and `breaking` appears only
+ * where it is true.
  */
 export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
+  const overrides = normalizeOverrides(block.overrides ?? {});
   const payload = {
     commit: block.commit,
     head: normalizeChangeRecord(block.head),
-    ...(block.overrides !== undefined && Object.keys(block.overrides).length > 0 && { overrides: block.overrides }),
+    ...(Object.keys(overrides).length > 0 && { overrides }),
   };
   return `${FENCE}${INFO_STRING}\n${stringifyYaml(payload)}${FENCE}`;
 }
@@ -30,8 +32,12 @@ export interface ChangeRecordBlock {
   overrides?: RecordOverrides;
 }
 
-/** The dimensions an author may override, named as the flags that set them are. */
+/**
+ * The dimensions an author may override, named as the flags that set them are. `breaking` is only ever `true`: an
+ * override can add the marker to a head but not remove it.
+ */
 export interface RecordOverrides {
+  breaking?: true;
   scope?: string;
   type?: string;
 }
@@ -43,5 +49,15 @@ const FENCE = '```';
 
 /** Names the block's kind on the opening fence, distinguishing it from any other fence in the body. */
 const INFO_STRING = 'change-record';
+
+/** Keeps only the overridable dimensions of a normalized record, so a marker spelled on the type becomes `breaking`. */
+function normalizeOverrides(overrides: RecordOverrides): RecordOverrides {
+  const { breaking, scope, type } = normalizeChangeRecord(overrides);
+  return {
+    ...(scope !== undefined && { scope }),
+    ...(type !== undefined && { type }),
+    ...(breaking === true && { breaking }),
+  };
+}
 
 // endregion | Helpers

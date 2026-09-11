@@ -33,6 +33,16 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered).head).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
+  it('when an override type spells the marker, records the type and a breaking override', () => {
+    const rendered = renderChangeRecordBlock({
+      commit: 'e5029924',
+      head: { type: 'feat' },
+      overrides: { type: 'sec!' },
+    });
+
+    expect(readBlock(rendered).overrides).toStrictEqual({ breaking: true, type: 'sec' });
+  });
+
   it('omits overrides where the author applied none', () => {
     const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { type: 'feat' }, overrides: {} });
 

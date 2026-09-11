@@ -32,7 +32,7 @@ Change: agents|fix: Correct the guard
 
 ## The `change-record` block
 
-A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML. The renderer is written and tested, and no entry point imports it, so no deployed bundle carries it and no skill writes the block into a body yet.
+A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML, and `describe-change.mjs --record-block` renders it; see [Rendering the record block](./title-templates.md#rendering-the-record-block).
 
 ````markdown
 ```change-record
@@ -42,21 +42,28 @@ head:
   type: feat
   title: Add the parser
 overrides:
-  type: feat
+  type: sec
+  breaking: true
 ```
 ````
 
-| Key         | Meaning                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| `commit`    | The commit the head was derived from. A reader compares it with the pull request's head to spot drift. |
-| `head`      | The record above, holding what the branch consolidated to plus the change summary's title.             |
-| `overrides` | The `scope` or `type` the author set by hand. Absent where the author set neither.                     |
+| Key         | Meaning                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `commit`    | The commit from which the head was derived. A reader compares it with the pull request's head to spot drift.                         |
+| `head`      | The record above, holding what the branch consolidated to plus the change summary's title.                                           |
+| `overrides` | The `scope`, `type`, or `breaking` that the author set by hand. Absent where the author set none. `breaking` appears only as `true`. |
 
 The payload is YAML rather than a surface template because `head` and `overrides` nest, and a template renders one flat line. Its inverse is a YAML parse rather than a compiled pattern, so this pair needs none of the round-trip verification the title grammar requires.
 
 **The block carries no entry list.** A reader at merge time needs the head; the per-entry list lives in the change summary's `changes` frontmatter field, where a reader who wants it has the whole summary to hand.
 
 **The block is the body's last element.** A reader takes the last `change-record` fence in the body, and a body composed from the change summary excludes the block itself.
+
+## The effective record
+
+A surface that renders a title or applies labels reads the head with the overrides applied: `scope` and `type` from the override where one is set, otherwise from the head, and `breaking` where either the head or the override sets it. An override can therefore add the breaking marker but never remove it.
+
+An override is kept as the author set it, even where it equals the head. The head is re-derived whenever the branch moves, and the override has to outlast that.
 
 ## Where the record is written
 

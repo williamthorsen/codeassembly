@@ -7,7 +7,9 @@ import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
+import { renderChangeRecordBlock } from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
+import type { ClassifiedEntryOutcome, ClassifyOutcome } from '../types.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -268,7 +270,7 @@ describe('--classify', () => {
   });
 
   it('refuses --parse alongside it', () => {
-    expect(() => parseArgs(['--classify', 'main', '--parse', 'commit'])).toThrow(/pass one or the other/);
+    expect(() => parseArgs(['--classify', 'main', '--parse', 'commit'])).toThrow(/each select a mode/);
   });
 
   it('refuses --ticket-label on its own', () => {
@@ -361,6 +363,29 @@ describe('--classify', () => {
     });
   });
 
+  it('when a subject carries a ticket reference, renders its change without it', async () => {
+    const { cwd, home } = await makeCommittedRepo(['#466 agents|feat!: Add the parser']);
+
+    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ entries: [{ change: 'agents|feat!: Add the parser' }] });
+  });
+
+  it('when each entry’s change is written as a Change trailer, classifies back to the same entries', async () => {
+    const original = await classifyMessages([
+      'agents|feat!: Add the parser, the renderer, and the verifier',
+      '#466 agents|fix: Correct the guard',
+      'kb|docs: Describe the store',
+    ]);
+    const trailers = original.entries.map((entry) => `Change: ${entry.change}`);
+
+    const condensed = await classifyMessages([
+      ['agents|feat!: Condense the branch', '', 'Adds the parser.', '', ...trailers].join('\n'),
+    ]);
+
+    expect(condensed.entries.map(omitCommit)).toStrictEqual(original.entries.map(omitCommit));
+  });
+
   it('refuses --classify when no taxonomy is readable', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
@@ -371,7 +396,92 @@ describe('--classify', () => {
   });
 });
 
+describe('--record-block', () => {
+  it('reads the commit, the head’s record flags, and every override flag', () => {
+    const parsed = parseArgs([
+      '--record-block',
+      'e5029924',
+      '--scope',
+      'agents',
+      '--type',
+      'feat',
+      '--breaking',
+      '--title',
+      'Add the parser',
+      '--override-scope',
+      'kb',
+      '--override-type',
+      'sec',
+      '--override-breaking',
+    ]);
+
+    expect(parsed).toEqual({
+      block: {
+        commit: 'e5029924',
+        head: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' },
+        overrides: { breaking: true, scope: 'kb', type: 'sec' },
+      },
+      mode: 'record-block',
+    });
+  });
+
+  it.each(['--ticket-ref', '--pr-number', '--ticket-label'])(
+    'if %s is passed alongside it, refuses the flag',
+    (flag) => {
+      expect(() => parseArgs(['--record-block', 'e5029924', flag, 'value'])).toThrow(/takes no --/);
+    },
+  );
+
+  it('if the commit is blank, refuses the invocation', () => {
+    expect(() => parseArgs(['--record-block', ' '])).toThrow(/takes the commit/);
+  });
+
+  it('if --classify is passed alongside it, refuses the invocation', () => {
+    expect(() => parseArgs(['--record-block', 'e5029924', '--classify', 'main'])).toThrow(/each select a mode/);
+  });
+
+  it('if an override flag is passed without it, refuses the flag', () => {
+    expect(() => parseArgs(['--title', 'Add foo', '--override-type', 'feat'])).toThrow(/takes no meaning on its own/);
+  });
+
+  it('renders the block from the head and the overrides as the JSON output’s block', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const argv = ['--record-block', 'e5029924', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
+
+    const { output } = await runDescribe({
+      argv: [...argv, '--override-type', 'sec', '--override-breaking'],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({
+      block: renderChangeRecordBlock({
+        commit: 'e5029924',
+        head: { scope: 'agents', title: 'Add the parser', type: 'feat' },
+        overrides: { breaking: true, type: 'sec' },
+      }),
+    });
+  });
+});
+
 // region | Helpers
+
+/** Classifies a throwaway repository holding one commit per message, returning the `--classify` output. */
+async function classifyMessages(messages: readonly string[]): Promise<ClassifyOutcome> {
+  const { cwd, home } = await makeCommittedRepo(messages);
+  const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+  if (!('entries' in output)) {
+    throw new Error(`--classify did not report entries: ${JSON.stringify(output)}`);
+  }
+  return output;
+}
+
+/** Drops the commit hash from an entry, which differs between two repositories holding the same entries. */
+function omitCommit(entry: ClassifiedEntryOutcome): Omit<ClassifiedEntryOutcome, 'commit'> {
+  const { commit: _commit, ...rest } = entry;
+  return rest;
+}
 
 /** Creates a temp home directory holding `.agents/preferences.yaml` with `content`. */
 async function makeHome(content: string): Promise<string> {
