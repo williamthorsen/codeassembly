@@ -74,6 +74,8 @@ Keep the `bytes` of each file for the summary.
 
 Read every target and transitive file whole. Compose candidates in the target files at the run's level, and in the transitive files from the `conservative` class. For each candidate, note its file, its line, its class, its `phrase` (the exact text that it removes or rewords, copied from the file), its replacement where it rewords or merges, and why it is safe at its class.
 
+Make each `phrase` long enough to occur only once in its file, and keep it from overlapping any other candidate's phrase. A cut is applied by replacing its phrase, so a repeated or overlapping phrase cannot be applied.
+
 Compose no candidate that removes or rewords a `declined` phrase in its file, and none inside a file's `generatedRegions`.
 
 A rewording follows the plain-speech rule and the writing preferences in your guidance. A shorter sentence that breaks either is lengthened again by the next prose sweep.
