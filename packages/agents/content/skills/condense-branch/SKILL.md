@@ -12,7 +12,18 @@ Condense the current branch into a single commit with a comprehensive message.
 
 1. **Stash changes** if working tree is dirty
 
-2. **Analyze branch** to create a good commit message
+2. **Analyze branch** to create a good commit message, and classify it while its commits still exist:
+   - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout.
+   - Classify the range into a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `classify-{timestamp}.json`:
+
+     ```bash
+     classify_path="{absolute path from the scratch-directory step}"
+     node {harness_home_dir}/scripts/describe-change.mjs --classify {default_branch} > "$classify_path" && cat "$classify_path"
+     ```
+
+   - Report each `unclassified` commit and each `violations` entry to the developer. An unclassified commit gets no trailer in step 4, so its subject leaves the branch's record.
+
+   [The change record](../_data/change-record.md) states the classification and the `Change:` trailer.
 
 3. **Create backup branch**:
 
@@ -24,16 +35,20 @@ If branch exists, increment version number.
 
 4. **Condense commits**:
 
-   Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout.
-
    Write the title, a blank line, and the body to a scratch file per [gh body file](#gh-body-file), naming it `commit-message-{timestamp}.md`; do not inline the message into the shell command.
+
+   The call below composes the final message from that file and the step-2 classification: the body, a blank line, and one `Change: {change}` trailer per entry, oldest first, as the last paragraph. The trailers are read from the classification file inside the call, so no entry is retyped into a command, and a retry rebuilds the message rather than appending to it. Where the classification found no entry, the message carries no trailer.
 
    ```bash
    body_path="{absolute path from the write step}"
+   classify_path="{absolute path of the step-2 classification file}"
    [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
+   [ -s "$classify_path" ] || { echo "Classification file missing or empty: $classify_path" >&2; exit 1; }
+   message_path="${body_path%.md}-with-trailers.md"
+   { cat "$body_path"; printf '\n\n'; jq -r '.entries[] | "Change: " + .change' "$classify_path"; } > "$message_path"
    git reset --soft $(git merge-base {default_branch} HEAD)
    git add --all
-   git commit --file "$body_path" --no-gpg-sign --no-verify
+   git commit --file "$message_path" --no-gpg-sign --no-verify
    ```
 
 ## Commit message creation
@@ -48,7 +63,7 @@ Use `{skill:summarize-change}` to compose a good commit message. Save the descri
 
 ## Commit format
 
-Compose the message per `{rulebook:commit-conventions}`. Use `describe-change.mjs` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax):
+Compose the message per `{rulebook:commit-conventions}`. Use `describe-change.mjs` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax), taking `{scope}` and `{type}` from the step-2 `head` and appending `!` to the type where the head is breaking. Where `head` is `null`, or names no scope, omit that flag:
 
 <!-- include: ../_partials/commit-title-rendering.md / -->
 
