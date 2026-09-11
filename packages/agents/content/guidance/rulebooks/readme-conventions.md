@@ -21,17 +21,23 @@ Where agents are the only likely readers, the README states what the thing is an
 
 What the README describes decides its shape. Find the row; the rest of this rulebook is the general case that each row narrows.
 
-| Type                             | Leads with                                                  | Keeps                                                              | Omits                                                 |
-| -------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
-| Application or service           | What it does for the person running it                      | Screenshots, how to run it, how to configure a first run           | Internal architecture, exhaustive configuration       |
-| CLI tool                         | The install command, then the single most common invocation | Copy-pasteable examples of the two or three real tasks             | A command inventory, which `--help` already prints    |
-| Library or package               | The import line and a minimal use in about three lines      | The problem it solves, and how it compares to known alternatives   | A full API listing, once it outgrows the first screen |
-| Configuration or preset package  | How to consume, extend, override, and compose it            | Per-option detail, which is the subject here rather than an excess | Narrative about the tools that it configures          |
-| Monorepo root                    | What the repository is, and a map of its packages           | One bootstrap command, and where each package's README sits        | Anything a package's own README states                |
-| Content or data repository       | What the content is, and the shape it takes                 | The authoring contract: how to add an entry, and what checks it    | Detail belonging to whatever consumes the content     |
-| Internal or agent-facing package | What the thing is, and its entry points                     | A pointer to the guidance that governs work on it                  | Everything else                                       |
+| Type                                          | Leads with                                                  | Keeps                                                              | Omits                                                 |
+| --------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| Application or service (`application`)        | What it does for the person running it                      | Screenshots, how to run it, how to configure a first run           | Internal architecture, exhaustive configuration       |
+| CLI tool (`cli`)                              | The install command, then the single most common invocation | Copy-pasteable examples of the two or three real tasks             | A command inventory, which `--help` already prints    |
+| Library or package (`library`)                | The import line and a minimal use in about three lines      | The problem it solves, and how it compares to known alternatives   | A full API listing, once it outgrows the first screen |
+| Configuration or preset package (`config`)    | How to consume, extend, override, and compose it            | Per-option detail, which is the subject here rather than an excess | Narrative about the tools that it configures          |
+| Monorepo root (`monorepo-root`)               | What the repository is, and a map of its packages           | One bootstrap command, and where each package's README sits        | Anything a package's own README states                |
+| Content or data repository (`content`)        | What the content is, and the shape it takes                 | The authoring contract: how to add an entry, and what checks it    | Detail belonging to whatever consumes the content     |
+| Internal or agent-facing package (`internal`) | What the thing is, and its entry points                     | A pointer to the guidance that governs work on it                  | Everything else                                       |
 
 Screenshots earn their place in the application row and almost nowhere else. A library has no interface to show, and a terminal recording of a CLI demonstrates one path where the text already shows three.
+
+## Recording the type
+
+A README records its row on its first line, as `<!-- readme-type: <slug> -->` with the slug from the Type column, so that the choice of row happens once rather than at every revision. Writing a README adds the marker. Revising one follows it; where the marker is missing or names no row, choose the row that fits and add the marker.
+
+The marker records a decision rather than a fact. Where it no longer fits what the README describes, such as an internal package that is now published, say so before editing rather than following it.
 
 ## The first screen
 
@@ -64,4 +70,4 @@ These share a failure mode: Each stays wrong with no test failing and no reader 
 
 ## Adding a type
 
-The table extends by rows. A new row earns its place when it produces a README that its neighbors would get wrong, and it states three things: what the README leads with, what it keeps that the others drop, and what it omits that the others keep. A row differing from its neighbor only in wording is evidence that the distinction is not real; merge the two.
+The table extends by rows. A new row earns its place when it produces a README that its neighbors would get wrong, and it states four things: the slug that its marker takes, what the README leads with, what it keeps that the others drop, and what it omits that the others keep. A row differing from its neighbor only in wording is evidence that the distinction is not real; merge the two.
