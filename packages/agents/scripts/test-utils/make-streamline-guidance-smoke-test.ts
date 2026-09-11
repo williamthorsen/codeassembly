@@ -13,8 +13,8 @@ const TARGET = 'skills/demo/SKILL.md';
 /**
  * Stands up a throwaway git repository holding one content root, whose skill includes one partial, and returns a
  * `SmokeTestInvocation` that resolves the skill. Exercises the git listing, the include listing, and the transitive-file
- * pipeline end to end. `HOME` is overridden to the fixture directory so the developer's own preferences do not reach the
- * run.
+ * pipeline end to end. `HOME` is overridden to the fixture directory so the run reads none of the developer's own
+ * preferences.
  */
 export function makeStreamlineGuidanceSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'streamline-guidance-smoke-'));

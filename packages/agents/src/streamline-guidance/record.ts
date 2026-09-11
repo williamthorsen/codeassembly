@@ -37,7 +37,7 @@ const DeclineRecordSchema = z.object({
 });
 
 /**
- * Merges one run's declined cuts into the record and drops every entry that is no longer live, so the record holds only
+ * Merges one run's declined cuts into the record and drops every entry that is no longer live, so the record contains only
  * cuts that a later run could still propose. A cut declined again replaces the entry that it repeats. `readFile`
  * returns a repository-relative file's content, or undefined where the file no longer exists.
  */

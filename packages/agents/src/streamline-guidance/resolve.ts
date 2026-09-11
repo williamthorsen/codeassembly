@@ -118,7 +118,7 @@ const HARNESS_HOME_REFERENCE_REGEX = /\{harness_home_dir\}\/((?:scripts|skills)\
 /** Output cap for one git listing, sized past what a large repository produces. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
-/** What resolution holds fixed for one run. */
+/** The values that resolution fixes for one run. */
 interface ResolutionContext {
   artifactBaseDir: string;
   contentRoots: readonly string[];

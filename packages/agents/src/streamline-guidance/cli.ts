@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's failure exit must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never when the module is imported. */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's failure exit code must be returned to the OS, and `main` runs only behind the `isEntryPoint()` guard, never when the module is imported. */
 /* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the termination mechanism at the process boundary. */
 /**
  * CLI entry for the streamline-guidance helper.
