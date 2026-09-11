@@ -131,7 +131,7 @@ Skip this step where no row was applied.
 1. Bump the `version` of each rulebook where a cut changed what the rulebook asks: a rulebook that a cut edited, and a rulebook that includes an edited file. Find the second kind by searching the rulebooks for an include directive that names the edited file. A `conservative` cut directs nothing, so it changes nothing that a rulebook asks.
 2. Run the project's quality gate as {skill:development-workflows} resolves it.
    - Where it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone where no cut changed what the rulebook asks.
-   - Where it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again.
+   - Where it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again. Where the restored cut was the only cut to change what its rulebook asks, also restore that rulebook's `version`, and its pin where this step updated it.
 
 ### 8. Commit
 
