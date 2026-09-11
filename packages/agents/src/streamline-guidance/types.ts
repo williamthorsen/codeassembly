@@ -1,4 +1,24 @@
-// Shapes for the streamline-guidance helper: the files that a run may cut and the record of cuts that the user declined.
+// Shapes for the streamline-guidance helper: the files that a run may cut, the evidence against a candidate cut, and the
+// record of cuts that the user declined.
+
+/** A candidate cut submitted to `check`: the file that it edits and the text that it removes or rewords. */
+export interface CheckInput {
+  file: string;
+  phrase: string;
+}
+
+/** The evidence that `check` gathered against one candidate cut. */
+export interface CheckReport extends CheckInput {
+  /** Commits that changed how often the phrase occurs in the file, newest first. */
+  history: PhraseCommit[];
+  /** Test string literals that the phrase contains. */
+  assertedBy: TestAssertion[];
+}
+
+export interface CheckSuccess {
+  ok: true;
+  reports: CheckReport[];
+}
 
 /** A cut's class, which the level of the run that proposed it allows. */
 export type CutClass = 'aggressive' | 'conservative' | 'moderate';
@@ -33,7 +53,7 @@ export interface GuidanceFile {
   redirectedFrom?: string;
 }
 
-export type HelperError = 'invalid-args' | 'invalid-include' | 'invalid-record' | 'not-a-repository';
+export type HelperError = 'invalid-args' | 'invalid-include' | 'invalid-input' | 'invalid-record' | 'not-a-repository';
 
 /** A structured failure. The helper exits 0 with one of these, keeping a non-zero exit for an unexpected throw. */
 export interface HelperFailure {
@@ -46,6 +66,15 @@ export interface HelperFailure {
 export interface LineRange {
   start: number;
   end: number;
+}
+
+/** A commit that changed how often a phrase occurs in its file. */
+export interface PhraseCommit {
+  sha: string;
+  /** Author date, as an ISO 8601 timestamp. */
+  date: string;
+  subject: string;
+  body: string;
 }
 
 /** A path that `resolve` could not accept as a target, with the reason. */
@@ -69,6 +98,13 @@ export interface ResolveSuccess {
   transitive: TransitiveFile[];
   declined: DeclinedPhrase[];
   rejected: RejectedPath[];
+}
+
+/** A test string literal that a candidate phrase contains. */
+export interface TestAssertion {
+  file: string;
+  line: number;
+  literal: string;
 }
 
 /** How a transitive file is reached: a file includes it or links to it. */

@@ -8,7 +8,7 @@
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
-import { flattenWhitespace } from '../revise-prose/span-text.ts';
+import { normalizePhrase } from './normalize-phrase.ts';
 import type { DeclinedPhrase, DeclineRecord } from './types.ts';
 
 /** Path of the record within a repository. */
@@ -30,7 +30,7 @@ const DeclineRecordSchema = z.object({
 
 /** Reports whether a declined cut still applies: its file exists and contains its phrase. */
 export function isLive(entry: DeclinedPhrase, content: string | undefined): boolean {
-  return content !== undefined && normalizeForMatch(content).includes(normalizeForMatch(entry.phrase));
+  return content !== undefined && normalizePhrase(content).includes(normalizePhrase(entry.phrase));
 }
 
 /**
@@ -51,11 +51,6 @@ export function parseRecord(content: string): DeclineRecord {
 /** Renders Zod issues as one line, each prefixed by the path to the offending value. */
 function describeIssues(issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>): string {
   return issues.map((issue) => `${issue.path.map(String).join('.') || '(root)'}: ${issue.message}`).join('; ');
-}
-
-/** Renders text in the form in which phrases are compared: NFC, with whitespace collapsed so a reflow cannot matter. */
-function normalizeForMatch(text: string): string {
-  return flattenWhitespace(text.normalize('NFC'));
 }
 
 // endregion | Helpers
