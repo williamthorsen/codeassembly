@@ -12,15 +12,15 @@ Internal delegate that creates a pull request on GitHub. Called by `create-pr` w
 
 This skill receives the following inputs from the orchestrator:
 
-| Input               | Type     | Description                                                   |
-| ------------------- | -------- | ------------------------------------------------------------- |
-| `title`             | string   | Final PR title, already prefixed if applicable                |
-| `body`              | string   | PR body extracted from `## What` onward in the change summary |
-| `labels`            | string[] | Resolved label names (may be empty)                           |
-| `base_branch`       | string   | Bare branch name (e.g., `main`, not `origin/main`)            |
-| `ticket_id`         | string   | Ticket ID for artifact path resolution                        |
-| `project_slug`      | string   | Project slug for artifact path resolution                     |
-| `artifact_base_dir` | string   | Base directory for artifact storage                           |
+| Input               | Type     | Description                                                                                            |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `title`             | string   | Final PR title, already prefixed if applicable                                                         |
+| `body`              | string   | PR body: `## What` onward from the change summary, then the closing line and the `change-record` block |
+| `labels`            | string[] | Resolved label names (may be empty)                                                                    |
+| `base_branch`       | string   | Bare branch name (e.g., `main`, not `origin/main`)                                                     |
+| `ticket_id`         | string   | Ticket ID for artifact path resolution                                                                 |
+| `project_slug`      | string   | Project slug for artifact path resolution                                                              |
+| `artifact_base_dir` | string   | Base directory for artifact storage                                                                    |
 
 ## Process
 

@@ -11,10 +11,14 @@ dependencies:
 
 Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
 
+The pull request carries the change's classification as [the change record](../_data/change-record.md) states it.
+
 ## Optional arguments
 
-- `--scope {scope}`: Override the scope inferred by `summarize-change`.
-- `--type {type}`: Override the work type inferred by `summarize-change`.
+- `--scope {scope}`: Override the scope that `summarize-change` derives.
+- `--type {type}`: Override the work type that `summarize-change` derives. A `!` on it (`feat!`) also adds the breaking marker.
+
+Both are passed to `summarize-change`, which records them as overrides beside the derived head.
 
 ## Process
 
@@ -35,30 +39,31 @@ If the branch is not up to date with remote, emit `skill.completed` (payload `{"
 
 ### 3. Call `summarize-change`
 
-Invoke the `{skill:summarize-change}` skill to produce a change summary. This generates a markdown file with YAML frontmatter containing `title`, `ticket_id`, `commit`, `scope`, and `type`.
+Invoke the `{skill:summarize-change}` skill to produce a change summary, passing `--scope` and `--type` where either was provided. The change summary's frontmatter carries the fields that [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter) lists.
 
 ### 4. Read frontmatter
 
-Read the YAML frontmatter from the change summary. Extract `title`, `scope`, and `type`.
+Read the YAML frontmatter from the change summary. Extract `title` and `commit`, the derived head's `scope`, `type`, and `breaking`, and the `scope_override`, `type_override`, and `breaking_override` fields. Any of the last six may be absent.
 
-### 5. Apply overrides
+### 5. Resolve the effective record
 
-If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type` was provided, use it instead of the frontmatter `type`.
+Apply the overrides to the head per [The effective record](../_data/change-record.md#the-effective-record): the effective scope is `scope_override` where present, otherwise `scope`; the effective type is `type_override` where present, otherwise `type`; and the change is breaking where `breaking` or `breaking_override` is `true`. Steps 6 and 7 use the effective record, and step 9 records the head and the overrides apart.
 
 ### 6. Render PR title
 
-Call `describe-change.mjs` to render the PR title from the configured `pr.title_format` template. Pass every input that is available; the template controls which tokens are required:
+Call `describe-change.mjs` to render the PR title from the configured `pr.title_format` template. Pass every input that is available, from the effective record; the template controls which tokens are required:
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \
+  --breaking \
   --ticket-ref "{ticket_ref}" \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))"
 ```
 
-Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: no shell variable survives to a second call, and an assignment prints nothing for the next step to read.
+Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`), and pass `--breaking` only where the effective record is breaking. Quote `--title` so titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: no shell variable survives to a second call, and an assignment prints nothing for the next step to read.
 
 Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
@@ -70,14 +75,14 @@ See [title-templates.md](../_data/title-templates.md) for the title-format model
 
 ### 7. Resolve labels
 
-Resolve labels following the same pattern as `create-ticket`:
+Resolve labels from the effective record in step 5:
 
 1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip: labels = [].
-2. **Type label** (if `type` is present): Strip any trailing `!` from the type. Look up the stripped type in `label_map.types`. If found, add the mapped label name.
-3. **Breaking label** (if `type` is present): If the original type had a `!` suffix, add `breaking` as an additional label.
-4. **Scope label** (if `scope` is present): Look up the scope in `label_map.scopes`. If found, add the mapped label name.
+2. **Type label** (if the effective type is present): Look up the type in `label_map.types`. If found, add the mapped label name.
+3. **Breaking label**: If the effective record is breaking, add `breaking` as an additional label.
+4. **Scope label** (if the effective scope is present): Look up the scope in `label_map.scopes`. If found, add the mapped label name.
 
-Missing entries are silently skipped. If neither scope nor type is present, labels = [].
+Missing entries are silently skipped. If neither scope nor type is present and the change is not breaking, labels = [].
 
 ### 8. Detect platform and select delegate
 
@@ -87,25 +92,41 @@ Read `scm` from the session context manifest:
 - `"bitbucket"` -> delegate to `{skill?:create-bitbucket-pr}`
 - Unknown or missing -> ask the user which platform to use. On this branch only, emit `input.requested` (payload `{"prompt":"platform"}`) per [Lifecycle events](#lifecycle-events) before asking.
 
-### 9. Append auto-close keyword (if applicable)
+### 9. Append the closing line and the record block
 
 If `ticket_ref` is non-null, append `\n\nCloses {ticket_ref}` to the body. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when no auto-close integration is wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
 
 If `ticket_ref` is null, skip: no closing line.
 
+Then render the `change-record` block from the change summary's `commit`, its head, and its overrides as recorded, never from the effective record:
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs --record-block "{commit}" \
+  --title "{title}" \
+  --scope "{scope}" \
+  --type "{type}" \
+  --breaking \
+  --override-scope "{scope_override}" \
+  --override-type "{type_override}" \
+  --override-breaking \
+  | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
+```
+
+Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only where that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even where the head carries only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found, leave the block out and say so.
+
 ### 10. Call delegate
 
 Pass the following inputs to the selected delegate per the delegate interface:
 
-| Input               | Value                                                                                               |
-| ------------------- | --------------------------------------------------------------------------------------------------- |
-| `title`             | Rendered `pr_title` from step 6 (or bare `title` if the script was unavailable)                     |
-| `body`              | Content from `## What` onward in the change summary                                                 |
-| `labels`            | Resolved label names (may be empty list)                                                            |
-| `base_branch`       | Bare branch name derived from `default_branch` (strip remote prefix, e.g., `origin/main` -> `main`) |
-| `ticket_id`         | From session context                                                                                |
-| `project_slug`      | From session context                                                                                |
-| `artifact_base_dir` | From session context                                                                                |
+| Input               | Value                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `title`             | Rendered `pr_title` from step 6 (or bare `title` if the script was unavailable)                      |
+| `body`              | Content from `## What` onward in the change summary, then the closing line and the block from step 9 |
+| `labels`            | Resolved label names (may be empty list)                                                             |
+| `base_branch`       | Bare branch name derived from `default_branch` (strip remote prefix, e.g., `origin/main` -> `main`)  |
+| `ticket_id`         | From session context                                                                                 |
+| `project_slug`      | From session context                                                                                 |
+| `artifact_base_dir` | From session context                                                                                 |
 
 ### 11. Persist the PR URL
 
