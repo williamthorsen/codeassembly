@@ -52,13 +52,20 @@ const FLAGS: readonly FlagSpec[] = [
 const MODE_FLAGS: readonly string[] = ['classify', 'parse', 'record-block'];
 
 /** The flags that set an override, which only a `change-record` block records. */
-const OVERRIDE_FLAGS: readonly string[] = ['override-breaking', 'override-scope', 'override-type'];
+const OVERRIDE_FLAGS: ReadonlySet<string> = new Set(['override-breaking', 'override-scope', 'override-type']);
 
 /** The name this helper reports itself under on stderr. */
 const PROGRAM = 'describe-change';
 
 /** The flags `--record-block` accepts: the mode itself, the head's record flags, and the overrides. */
-const RECORD_BLOCK_FLAGS: readonly string[] = ['breaking', 'record-block', 'scope', 'title', 'type', ...OVERRIDE_FLAGS];
+const RECORD_BLOCK_FLAGS: ReadonlySet<string> = new Set([
+  'breaking',
+  'record-block',
+  'scope',
+  'title',
+  'type',
+  ...OVERRIDE_FLAGS,
+]);
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -125,7 +132,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (values['ticket-label'] !== undefined) {
     throw new Error('--ticket-label resolves a ticket type for --classify, so it takes no meaning on its own');
   }
-  const override = flags.find((flag) => OVERRIDE_FLAGS.includes(flag.name));
+  const override = flags.find((flag) => OVERRIDE_FLAGS.has(flag.name));
   if (override !== undefined) {
     throw new Error(`--${override.name} sets an override for --record-block, so it takes no meaning on its own`);
   }
@@ -316,7 +323,7 @@ function parseRecordBlockArgs(
   positionals: readonly string[],
   flags: readonly MatchedFlag[],
 ): ParsedArgs {
-  const other = flags.find((flag) => !RECORD_BLOCK_FLAGS.includes(flag.name));
+  const other = flags.find((flag) => !RECORD_BLOCK_FLAGS.has(flag.name));
   if (other !== undefined) {
     throw new Error(`--record-block records a head and its overrides, so it takes no --${other.name}`);
   }
