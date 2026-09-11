@@ -32,7 +32,7 @@ Change: agents|fix: Correct the guard
 
 ## The `change-record` block
 
-A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML, and `describe-change.mjs --record-block` renders it; see [Rendering the record block](./title-templates.md#rendering-the-record-block).
+A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML, and the `--record-block` mode of `describe-change.mjs` renders it; see [Rendering the record block](./title-templates.md#rendering-the-record-block).
 
 ````markdown
 ```change-record
