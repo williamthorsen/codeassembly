@@ -8,25 +8,58 @@ user-invocable: true
 
 Analyze the current branch's changes since diverging from the default branch.
 
+The branch's classification is derived from its commits and recorded per [the change record](../_data/change-record.md).
+
+## Arguments
+
+| Flag              | Effect                                                                         |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `--scope {scope}` | Overrides the derived scope.                                                   |
+| `--type {type}`   | Overrides the derived work type. A `!` on it (`feat!`) adds the breaking mark. |
+
+Both are optional, and each is recorded as an override beside the derived head rather than in place of it.
+
 ## Process
 
 1. **Gather context**:
-   - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_id`, and `ticket_ref` from the manifest JSON emitted on stdout; consult [work-types.json](../_data/work-types.json).
+   - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_id`, `ticket_ref`, and `scm` from the manifest JSON emitted on stdout; consult [work-types.json](../_data/work-types.json).
 
 2. **Analyze changes**:
 
-```bash
-git diff {default_branch}...HEAD
-```
+   ```bash
+   git diff {default_branch}...HEAD
+   ```
 
-Check commit messages for additional context.
+   Check commit messages for additional context. Then classify the branch, in this order:
+   - **Fetch the ticket's labels** where `scm` is `github` and `ticket_id` is non-null:
+
+     ```bash
+     gh issue view {ticket_id} --json labels --jq '.labels[].name'
+     ```
+
+     Elsewhere, pass no labels. Where the fetch fails, continue without labels and say so; `ticket_type` is then absent.
+
+   - **Classify the range** into a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `classify-{timestamp}.json`. Pass one `--ticket-label` per label:
+
+     ```bash
+     classify_path="{absolute path from the scratch-directory step}"
+     node {harness_home_dir}/scripts/describe-change.mjs --classify {default_branch} \
+       --ticket-label "{label}" > "$classify_path" && cat "$classify_path"
+     ```
+
+     [Classifying a commit range](../_data/title-templates.md#classifying-a-commit-range) states the output. The frontmatter call reads `changes` back from this file, so keep its path.
+
+   - **Report** each `unclassified` commit and each `violations` entry to the developer, then continue. Where `head` is `null`, say that the branch yields no head, because no commit was classified; `scope`, `type`, and `breaking` are then left out of the frontmatter.
+   - **Resolve the overrides.** `--scope` sets `scope_override`. `--type` sets `type_override`, and a `!` on it sets `breaking_override` rather than staying on the type. Record an override as given, even where it equals the head. The effective type is `type_override` where set, otherwise the head's `type`.
+   - **Compare the ticket's type.** Where `ticket_type` is non-null and differs from the effective type, including where there is no effective type, ask the developer which to keep, following [option format](#option-format): the effective type, or the ticket's. Taking the ticket's sets `type_override` to `ticket_type`. Ask here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask records both and asks nothing.
+   - **Check the breaking policy.** The effective record is breaking where the head or `breaking_override` is. Where that disagrees with the effective type's `breakingPolicy` in [work-types.json](../_data/work-types.json), as a `fix` override on a breaking head does, report it and change nothing.
 
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
 4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before step 6 can run.
 
-5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the change's work type (inferred per [Consumer-field inference](#consumer-field-inference)) in [work-types.json](../_data/work-types.json); where the type could not be inferred, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
+5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); where there is none, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
    ```dispatch
    type: {resolved type}
@@ -146,7 +179,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - Omit inapplicable Details subsections
 - Subsection headings use `{emoji} {label}` from the matching [work-types.json](../_data/work-types.json) `types[]` entry. For any subsection not enumerated in the example template above, look up the entry by work-type key and use its `emoji` and `label`.
 - Order Details subsections per `work-types.json` tier order: public → internal → process.
-- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: A commit with the `!` breaking marker (e.g., `feat!`) or a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection: The prefix tags it inline rather than relocating it to a separate section. The prefix does not carry the migration: `## Details` reaches no consumer, so a breaking change states what the consumer does in a `Migration:` paragraph in `## What`.
+- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: An entry that the step-2 classification reports with `breaking: true`, or a commit with a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection: The prefix tags it inline rather than relocating it to a separate section. The prefix does not carry the migration: `## Details` reaches no consumer, so a breaking change states what the consumer does in a `Migration:` paragraph in `## What`.
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 
@@ -162,32 +195,47 @@ The block is structured as:
 
 1. `provenance:` block (canonical nested fields: `skill`, `timestamp`, `baseSha`, `isInteractive`, `model`).
 2. Top-level canonical fields: `branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`.
-3. Consumer extensions: `title`, `scope`, `type`.
+3. Consumer extensions: `title`, `scope`, `type`, `breaking`, `changes`, `ticket_type`, `scope_override`, `type_override`, `breaking_override`.
 
 ### Canonical-field resolution
 
-Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `{title}`, `{scope}`, and `{type}` from the consumer-field inference below.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below.
 
-Run via Bash, writing each resolved value into the call as literal text and dropping the whole flag for a value that cannot be inferred unambiguously:
+Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 classification file inside the same call, so no entry is retyped into a command, where a backtick, `$`, or `"` in it would be expanded or would end the argument:
 
 ```bash
+classify_path="{absolute path of the step-2 classification file}"
+[ -s "$classify_path" ] || { echo "Classification file missing or empty: $classify_path" >&2; exit 1; }
+changes=()
+while IFS= read -r change; do changes+=(--extra-list-item "changes=$change"); done < <(jq -r '.entries[].change' "$classify_path")
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill summarize-change \
   --interactive true \
   --model "{model_id}" \
   --extra "title={title}" \
   --extra "scope={scope}" \
-  --extra "type={type}"
+  --extra "type={type}" \
+  --extra "breaking=true" \
+  "${changes[@]}" \
+  --extra "ticket_type={ticket_type}" \
+  --extra "scope_override={scope_override}" \
+  --extra "type_override={type_override}" \
+  --extra "breaking_override=true"
 ```
 
-Dropping the flag is what keeps an unresolved `scope` or `type` out of the emitted frontmatter.
+Dropping a flag is what keeps an absent field out of the emitted frontmatter. `--extra "breaking=true"` and `--extra "breaking_override=true"` appear only where that field is `true`.
 
 Prepend the script's output verbatim to the artifact body.
 
-### Consumer-field inference
+### Consumer fields
 
 - **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.
-- **`scope`** and **`type`**: Infer from the commit message prefixes on the branch. Examine commits between the default branch and HEAD. If all (or the dominant majority of) commits share the same scope and type prefix (e.g., `agents|feat:`), use those values. If commits use mixed scopes or types with no clear dominant value, omit the ambiguous field entirely from the frontmatter. Omission is safe: Downstream consumers treat missing fields as absent and skip the corresponding resolution step.
+- **`scope`**, **`type`**, and **`breaking`**: The step-2 classification's `head`, each absent where the head does not determine it, and `breaking` only where it is `true`. They record what the branch derived and never an override.
+- **`changes`**: Each entry's `change`, oldest first, read from the classification file.
+- **`ticket_type`**: The classification's `ticket_type`, absent where it is `null`.
+- **`scope_override`**, **`type_override`**, and **`breaking_override`**: The overrides resolved in step 2, each absent where unset, and `breaking_override` only where it is `true`.
+
+A consumer reads the classification by applying the overrides to the head, per [The effective record](../_data/change-record.md#the-effective-record).
 
 ## As a PR description
 
@@ -210,3 +258,7 @@ Artifact type: `change-summary`. Filename format:
 ```
 
 Example: `20250121-1530Z_auto-share-exception_change-summary.md`
+
+<!-- include: ../_partials/option-format.md / -->
+
+<!-- include: ../_partials/gh-body-file.md / -->
