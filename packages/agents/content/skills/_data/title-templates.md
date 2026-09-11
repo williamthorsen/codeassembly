@@ -154,7 +154,68 @@ The output is JSON whose `block` holds the fenced block, fences included:
 }
 ````
 
-`--override-type sec!` is accepted and splits into the override type and `--override-breaking`, as `--type` does. An override flag outside this mode is refused, and so are `--ticket-ref`, `--pr-number`, `--ticket-label`, and the other modes within it. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
+`--override-type sec!` is accepted and splits into the override type and `--override-breaking`, as `--type` does. An override flag is refused outside this mode and `--resolve-merge`, and `--ticket-ref`, `--pr-number`, `--ticket-label`, `--override-title`, and the other modes are refused within it. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
+
+## Resolving a merge
+
+`--resolve-merge` reports what a pull request merges as. The flag's value is the base ref of the pull request's range, the pull request supplies the rest, and the author's choices at the approval gate arrive as overrides.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge origin/main \
+  --head 63d2173e5f0c9a7b1d4e8f2a6c0b3d5e7f9a1c2b \
+  --pr-number 470 \
+  --pr-title "#466 Add the parser" \
+  --pr-body-file {body_file} \
+  --pr-label feature --pr-label scope:agents \
+  --ticket-ref "#466"
+```
+
+`--head` is the pull request's head commit, which must be in the local repository but need not be checked out. `--pr-body-file` names a file holding the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies where the pull-request title carries none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
+
+```json
+{
+  "head": { "breaking": false, "scope": "agents", "type": "feat" },
+  "recorded": { "breaking": false, "scope": "agents", "type": "feat" },
+  "derived": { "breaking": false, "scope": "agents", "type": "fix" },
+  "labeled": null,
+  "title": "Add the parser",
+  "ticket_ref": "#466",
+  "merge_title": "#466 agents|feat: Add the parser (#470)",
+  "body": "- Adds the parser.",
+  "defects": [],
+  "notices": [{ "kind": "divergence", "used": "record", "shown": { "breaking": false, "scope": "agents", "type": "fix" } }]
+}
+```
+
+**`head` is the effective head**, resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states. `recorded` is the block's head, `derived` is the head to which the commits in `{base-ref}..{head}` consolidate, and `labeled` is the head that the labels name where no block is readable and the labels name a type or a scope. Each is `null` otherwise.
+
+**`title` is the bare title.** The pull-request title inverts through `pr.title_format`, which also yields `ticket_ref`. A scope and type read from the title, through `pr.title_format` where it names `{type}` and otherwise through `commit.title_format`, never stay in `title`. `merge_title` renders `title` through `merge.title_format` with the effective head, the marker included, and falls back to `title` where that template is empty.
+
+**`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that hold only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
+
+**`defects` block approval.** Each names a head that the author must override before the merge is offered:
+
+| Kind               | Meaning                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| `unclassified`     | The effective head names no type.                                                        |
+| `undeclared-type`  | `work-types.json` does not declare the effective type; `type` names it.                  |
+| `policy-violation` | The breaking marker disagrees with the type's `breakingPolicy`; `policy` names the rule. |
+
+**`notices` inform the gate** and block nothing:
+
+| Kind                     | Meaning                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `malformed-record`       | The body's last block cannot be read; `defect` names why, and the merge resolves as though no block were present.                                |
+| `derivation-unavailable` | The commits cannot be read; `reason` names why, and the record or the labels stand unchallenged.                                                 |
+| `divergence`             | The record or the labels disagree with the derivation; `used` names the source that won, and `shown` the head that lost.                         |
+| `candidate-head`         | The pull-request title carries a scope and type that differ from the effective head; `head` names them.                                          |
+| `title-fallback`         | The pull-request title does not invert through `pr.title_format`; `source` names whether the recorded title or the pull-request title stands in. |
+
+**Each override outranks every source on its own dimension.** `--override-scope *` clears the scope. `--override-type` takes a bare type and keeps the resolved marker, while `--override-breaking` and `--no-override-breaking` set the marker in either direction. `--override-title` replaces the bare title, and no candidate head is read from the pull-request title.
+
+**A head commit that the local repository lacks is not an error.** The run reports `derivation-unavailable` and resolves from the record or the labels, so fetch the head before resolving. Any other git failure stops the run.
+
+The run refuses where no taxonomy is readable and where the body file cannot be read. An empty `commit.title_format` reports `derivation-unavailable` rather than refusing. `--resolve-merge` refuses the other modes and the record flags `--scope`, `--type`, `--breaking`, and `--title`, since the head comes from the pull request, and `--override-type` refuses a type spelled with `!`. `--head`, `--pr-title`, `--pr-body-file`, `--pr-label`, `--override-title`, and `--no-override-breaking` refuse to stand outside it.
 
 ## Supported tokens
 
