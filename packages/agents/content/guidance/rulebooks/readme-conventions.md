@@ -65,6 +65,7 @@ Move the section, and leave a link where a reader looking for it would have foun
 - Release history, which is the changelog's subject.
 - Badge walls and marketing copy. A badge that a reader acts on earns its line; the rest is decoration.
 - Content copied from another file. Two copies of one fact drift apart, and the copy that nobody owns is the one that goes wrong.
+- A claim that has gone stale. A revision checks each claim that it keeps against what the README describes.
 
 These share a failure mode: Each stays wrong with no test failing and no reader complaining.
 
