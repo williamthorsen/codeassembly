@@ -35,6 +35,12 @@ export interface DeclinedPhrase {
   class: CutClass;
 }
 
+/** What one run reports back to `record`: the date of the run and the cuts that the user declined. */
+export interface DeclineFold {
+  declinedAt: string;
+  declined: DeclinedPhrase[];
+}
+
 /** The record of declined cuts. */
 export interface DeclineRecord {
   declined: DeclinedCut[];
@@ -75,6 +81,12 @@ export interface PhraseCommit {
   date: string;
   subject: string;
   body: string;
+}
+
+export interface RecordSuccess {
+  ok: true;
+  path: string;
+  declined: number;
 }
 
 /** A path that `resolve` could not accept as a target, with the reason. */
