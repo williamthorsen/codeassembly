@@ -87,11 +87,37 @@ describe(resolveEpisode, () => {
 
   it('falls back to the change summary for a type and scope the caller did not pass', async () => {
     const fixture = await createLedeFixture();
-    const { type: _type, scope: _scope, ...withoutIdentity } = inputFor(fixture);
 
-    const episode = expectEpisode(await resolveEpisode(withoutIdentity));
+    expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({
+      type: 'fix',
+      scope: 'kb',
+      ticket: '1107',
+    });
+  });
 
-    expect(episode.identity).toMatchObject({ type: 'fix', scope: 'kb', ticket: '1107' });
+  it.each([
+    ['as a field', 'type: feat\nbreaking: true'],
+    ['as an override', 'type: feat\nbreaking_override: true'],
+    ['as a marker spelled on the type', 'type: feat!'],
+  ])('when the change summary records breaking %s, resolves the fallback type as breaking', async (_label, fields) => {
+    const fixture = await createLedeFixture();
+    await writeChangeSummary(fixture, `${fields}\nscope: agents`);
+
+    expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({ type: 'feat', breaking: true });
+  });
+
+  it('when the change summary records overrides, takes them over the derived head', async () => {
+    const fixture = await createLedeFixture();
+    await writeChangeSummary(fixture, 'type: fix\nscope: kb\ntype_override: feat\nscope_override: agents');
+
+    expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({ type: 'feat', scope: 'agents' });
+  });
+
+  it('when the caller passes --type, ignores the change summary’s breaking fields', async () => {
+    const fixture = await createLedeFixture();
+    await writeChangeSummary(fixture, 'type: feat\nbreaking: true\nscope: agents');
+
+    expect((await resolveFor(fixture, { type: 'feat' })).identity.breaking).toBe(false);
   });
 
   it('reads a wholly numeric ticket id, which the change summary writes unquoted', async () => {
@@ -256,6 +282,21 @@ function inputFor(fixture: LedeFixture, overrides: { type?: string } = {}): Para
 /** Resolves an episode over a fixture and narrows it to the success arm, so an assertion reads as one call. */
 async function resolveFor(fixture: LedeFixture, overrides: { type?: string } = {}): Promise<LedeEpisode> {
   return expectEpisode(await resolveEpisode(inputFor(fixture, overrides)));
+}
+
+/** Resolves an episode passing neither `--type` nor `--scope`, so both come from the change summary. */
+async function resolveWithoutIdentity(fixture: LedeFixture): Promise<LedeEpisode> {
+  const { type: _type, scope: _scope, ...withoutIdentity } = inputFor(fixture);
+  return expectEpisode(await resolveEpisode(withoutIdentity));
+}
+
+/** Writes a change summary newer than the fixture's own, carrying `fields` as its frontmatter. */
+async function writeChangeSummary(fixture: LedeFixture, fields: string): Promise<void> {
+  await writeArtifact(
+    fixture.artifactDir,
+    '20260731-090000Z_later_change-summary.md',
+    `---\n${fields}\n---\n\n# Title\n`,
+  );
 }
 
 // endregion | Helpers

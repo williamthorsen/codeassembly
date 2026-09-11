@@ -194,15 +194,18 @@ async function readAgentsVersion(input: {
 }
 
 /**
- * Reads `type`, `scope`, and `ticket_id` from the newest change-summary artifact's frontmatter; each may be `null`.
+ * Reads the effective type, scope, and breaking marker, and the `ticket_id`, from the newest change-summary artifact's
+ * frontmatter. An override field outranks the derived head it overrides, and the marker is set where either `breaking`
+ * or `breaking_override` sets it; a type spelled with `!` carries its own marker to the resolver.
+ *
  * The read is field-blind rather than routed through the knowledge base's record parser: a change summary is an
  * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields an
  * artifact never carries.
  */
 async function readChangeSummaryFields(
   artifactDir: string,
-): Promise<{ type: string | null; scope: string | null; ticket: string | null }> {
-  const absent = { type: null, scope: null, ticket: null };
+): Promise<{ breaking: boolean; type: string | null; scope: string | null; ticket: string | null }> {
+  const absent = { breaking: false, type: null, scope: null, ticket: null };
 
   const artifactPath = await findNewestArtifact({ artifactDir, suffix: '_change-summary' });
   if (artifactPath === null) {
@@ -215,8 +218,9 @@ async function readChangeSummaryFields(
 
   const { fields } = readNoteContent(content);
   return {
-    type: extractString(fields, 'type'),
-    scope: extractString(fields, 'scope'),
+    breaking: fields.breaking === true || fields.breaking_override === true,
+    type: extractString(fields, 'type_override') ?? extractString(fields, 'type'),
+    scope: extractString(fields, 'scope_override') ?? extractString(fields, 'scope'),
     ticket: readIdentifier(fields, 'ticket_id'),
   };
 }
@@ -271,7 +275,8 @@ async function readLede(input: {
  * Resolves the change's identity, preferring the caller's flags and falling back to the newest change-summary
  * artifact's frontmatter, which is the only artifact in the chain that carries typed fields. The work type is resolved
  * through the installed taxonomy rather than taken as spelled, so the identity carries the canonical key and the tier
- * that the taxonomy in force declares for it, and reports the breaking marker separately.
+ * that the taxonomy in force declares for it, and reports the breaking marker separately. A `--type` flag carries its
+ * own marker, so the change summary's breaking fields count only where the type came from the change summary too.
  *
  * A taxonomy that does not load is reported apart from a type it does not declare. The two conditions look alike at the
  * failed lookup and differ in the caller's recourse: one is repaired by passing a flag, the other only by repairing the
@@ -325,7 +330,7 @@ async function resolveIdentity(input: {
     identity: {
       type: resolved.workType.key,
       tier: resolved.workType.tier,
-      breaking: resolved.breaking,
+      breaking: resolved.breaking || (input.type === undefined && fallback.breaking),
       scope,
       pr: input.pr,
       mergeCommit: input.mergeCommit,

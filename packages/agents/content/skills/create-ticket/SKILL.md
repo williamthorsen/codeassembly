@@ -58,6 +58,8 @@ Create the ticket body describing WHAT needs to be done: problem, context, and a
 
 Also draft the ticket string, per [`title-voice.md`](../_data/title-voice.md), for use in step 6.
 
+Then decide the ticket's scope and type, for use in steps 5 and 6. The type is the [work type](../_data/work-types.json) of the change that the ticket asks for: a ticket reporting a defect is `fix`, and one asking for a new capability is `feat`. Append `!` only where the proposed change breaks consumers and the type's `breakingPolicy` admits the marker. The scope is the workspace that the change belongs to, per [Scope values](../_data/title-templates.md#scope-values); a change spanning more than one takes `*`, which renders and labels no scope. The pull request that implements the ticket compares its derived type with the type label applied here.
+
 ### 3. Resolve platform
 
 Determine where to create the remote ticket:
@@ -103,7 +105,7 @@ The label map has this shape:
 }
 ```
 
-If the file exists, resolve labels from the scope and type established in the conversation context:
+If the file exists, resolve labels from the scope and type decided in step 2:
 
 1. **Type label:** Strip any trailing `!` from the type (e.g., `feat!` → `feat`). Look up the stripped type in `label_map.types`. If found, add the mapped label name.
 2. **Breaking label:** If the original type had a `!` suffix, add `breaking` as an additional label.
@@ -158,7 +160,7 @@ Take `integrations.jira.project_key` (step 1) where it is set. Otherwise derive 
 
 Read `integrations.jira.issue_types` (step 1) and stop at the first of these that yields a name:
 
-1. The entry keyed by the work type established in the conversation context, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` answers a `fix` work type, and one keyed `fix` answers a `bugfix` type.
+1. The entry keyed by the work type decided in step 2, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` answers a `fix` work type, and one keyed `fix` answers a `bugfix` type.
 2. The map's `default` entry.
 3. The literal `Task`.
 

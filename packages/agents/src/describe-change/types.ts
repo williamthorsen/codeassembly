@@ -1,13 +1,18 @@
 import type { ChangeRecord } from '../change-grammar/types.ts';
+import type { ChangeRecordBlock } from './change-record-block.ts';
 
 /** Reports whether `value` names one of the configured surfaces. */
 export function isSurface(value: string): value is Surface {
   return SURFACE_NAMES.includes(value);
 }
 
-/** One entry the classification found, flattened onto the commit that declared it. */
+/**
+ * One entry the classification found, flattened onto the commit that declared it. `change` is the entry rendered back
+ * through `commit.title_format`, the form a `Change:` trailer takes.
+ */
 export interface ClassifiedEntryOutcome {
   breaking: boolean;
+  change: string;
   commit: string;
   scope: string | null;
   title: string | null;
@@ -31,11 +36,12 @@ export interface HeadOutcome {
 }
 
 /**
- * What the invocation asks for: titles rendered from a record, one surface's subject read back into a record, or a
- * commit range classified.
+ * What the invocation asks for: titles rendered from a record, one surface's subject read back into a record, a commit
+ * range classified, or a `change-record` block rendered.
  */
 export type ParsedArgs =
   | { baseRef: string; mode: 'classify'; ticketLabels: string[] }
+  | { block: ChangeRecordBlock; mode: 'record-block' }
   | { mode: 'parse'; subject: string; surface: Surface }
   | { mode: 'render'; record: ChangeRecord };
 
@@ -51,6 +57,11 @@ export type ParseOutcome =
       title: string | null;
       type: string | null;
     };
+
+/** The fenced `change-record` block, under the key the JSON output names. */
+export interface RecordBlockOutcome {
+  block: string;
+}
 
 /** The rendered title for each surface, under the `<surface>_title` key the JSON output names. */
 export type RenderedTitles = Record<`${Surface}_title`, string>;
