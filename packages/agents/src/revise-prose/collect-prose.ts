@@ -12,9 +12,8 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { DEFAULT_ARTIFACT_BASE_DIR, resolveArtifactBaseDir } from '../derive-session-context/compose-manifest.ts';
-import { readPreferences } from '../derive-session-context/read-preferences.ts';
-import { HARNESSES } from '../lib/harness.ts';
+import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
+import { isHarnessDeployPath } from '../shared/is-harness-deploy-path.ts';
 import { extractYamlProse, UnparsableYamlError } from './extract-yaml.ts';
 import { findHashCommentStart } from './hash-comments.ts';
 import { maskCodeSpans } from './mask-code-spans.ts';
@@ -47,7 +46,7 @@ export async function collectProse(input: {
   home?: string;
 }): Promise<ProseCollection> {
   const home = input.home ?? homedir();
-  const artifactBaseDir = await resolveSweepArtifactBaseDir(input.root, home);
+  const artifactBaseDir = await resolveRootArtifactBaseDir(input.root, home);
   const files = resolveTargetFiles({ root: input.root, paths: input.paths ?? [], artifactBaseDir });
 
   const spans: ProseSpan[] = [];
@@ -487,18 +486,11 @@ function isBlockStart(line: string): boolean {
  * record, which the helper writes and whose grounds are no subagent's to rewrite.
  */
 function isExcludedPath(input: { file: string; root: string; artifactBaseDir: string }): boolean {
-  if (input.file === RECORD_PATH) return true;
-
-  const segments = input.file.split('/');
-  for (const config of Object.values(HARNESSES)) {
-    const homeIndex = segments.indexOf(config.homeDir);
-    if (homeIndex === -1) continue;
-    const next = segments[homeIndex + 1];
-    if (next === config.skillsDirName || next === config.scriptsDirName) return true;
-  }
-
-  const relativeToArtifacts = path.relative(input.artifactBaseDir, path.resolve(input.root, input.file));
-  return relativeToArtifacts !== '' && !relativeToArtifacts.startsWith('..') && !path.isAbsolute(relativeToArtifacts);
+  return (
+    input.file === RECORD_PATH ||
+    isHarnessDeployPath(input.file) ||
+    isInsideArtifactBaseDir(path.resolve(input.root, input.file), input.artifactBaseDir)
+  );
 }
 
 /**
@@ -564,20 +556,6 @@ function readFileSafely(absolutePath: string): string | undefined {
     return content.includes(NUL) ? undefined : content;
   } catch {
     return undefined;
-  }
-}
-
-/**
- * Resolves the artifact base directory that the sweep must stay out of, from the same preferences read by the
- * session-context deriver. A preferences file that cannot be read falls back to the documented default rather than
- * failing the sweep, since the exclusion binds only where a repository keeps its artifacts in tree.
- */
-async function resolveSweepArtifactBaseDir(root: string, home: string): Promise<string> {
-  try {
-    const { preferences } = await readPreferences({ cwd: root, home });
-    return resolveArtifactBaseDir(preferences.artifacts?.base_dir ?? DEFAULT_ARTIFACT_BASE_DIR, root, home);
-  } catch {
-    return resolveArtifactBaseDir(DEFAULT_ARTIFACT_BASE_DIR, root, home);
   }
 }
 

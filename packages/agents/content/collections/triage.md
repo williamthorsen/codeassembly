@@ -51,6 +51,7 @@ members:
     - save-artifact
     - save-plan
     - software-engineering
+    - streamline-guidance
     - summarize-change
     - summarize-chat
     - systematic-debugging

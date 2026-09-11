@@ -111,6 +111,10 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/revise-prose/revise-prose.mjs',
   },
   {
+    entry: 'src/streamline-guidance/cli.ts',
+    outFile: 'content/skills/streamline-guidance/streamline-guidance.mjs',
+  },
+  {
     entry: 'src/describe-change/cli.ts',
     outFile: 'content/scripts/describe-change.mjs',
   },
