@@ -112,7 +112,7 @@ node {harness_home_dir}/scripts/describe-change.mjs --record-block "{commit}" \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
 ```
 
-Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only where that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even where the head carries only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found, leave the block out and say so.
+Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only where that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even where the head carries only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found or the call fails, leave the block out and say so.
 
 ### 10. Call delegate
 

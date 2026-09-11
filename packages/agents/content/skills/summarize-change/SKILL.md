@@ -49,6 +49,8 @@ Both are optional, and each is recorded as an override beside the derived head r
 
      [Classifying a commit range](../_data/title-templates.md#classifying-a-commit-range) states the output. The frontmatter call reads `changes` back from this file, so keep its path.
 
+     Where the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a classification: `scope`, `type`, `breaking`, `changes`, and `ticket_type` are left out, and the ticket-type comparison below does not run.
+
    - **Report** each `unclassified` commit and each `violations` entry to the developer, then continue. Where `head` is `null`, say that the branch yields no head, because no commit was classified; `scope`, `type`, and `breaking` are then left out of the frontmatter.
    - **Resolve the overrides.** `--scope` sets `scope_override`. `--type` sets `type_override`, and a `!` on it sets `breaking_override` rather than staying on the type. Record an override as given, even where it equals the head. The effective type is `type_override` where set, otherwise the head's `type`.
    - **Compare the ticket's type.** Where `ticket_type` is non-null and differs from the effective type, including where there is no effective type, ask the developer which to keep, following [option format](#option-format): the effective type, or the ticket's. Taking the ticket's sets `type_override` to `ticket_type`. Ask here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask records both and asks nothing.
@@ -201,13 +203,14 @@ The block is structured as:
 
 Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below.
 
-Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 classification file inside the same call, so no entry is retyped into a command, where a backtick, `$`, or `"` in it would be expanded or would end the argument:
+Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 classification file inside the same call, so no entry is retyped into a command, where a backtick, `$`, or `"` in it would be expanded or would end the argument. A file that a failed classification left empty yields no `changes`:
 
 ```bash
 classify_path="{absolute path of the step-2 classification file}"
-[ -s "$classify_path" ] || { echo "Classification file missing or empty: $classify_path" >&2; exit 1; }
 changes=()
-while IFS= read -r change; do changes+=(--extra-list-item "changes=$change"); done < <(jq -r '.entries[].change' "$classify_path")
+if [ -s "$classify_path" ]; then
+  while IFS= read -r change; do changes+=(--extra-list-item "changes=$change"); done < <(jq -r '.entries[].change' "$classify_path")
+fi
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill summarize-change \
   --interactive true \
