@@ -30,20 +30,20 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 
 ## Arguments
 
-| Argument             | Description                                                                                    | Required |
-| -------------------- | ---------------------------------------------------------------------------------------------- | -------- |
-| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.              | Yes      |
-| `--pr`               | The pull-request number.                                                                       | Yes      |
-| `--merge-commit`     | The merge commit's SHA.                                                                        | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.           | Mode     |
-| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.             | Mode     |
-| `--store`            | Names a corpus registered under some other name; `@default` is refused.                        | No       |
-| `--type`             | Work type, breaking marker included (`feat!`). Falls back to the change summary's frontmatter. | No       |
-| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter.                      | No       |
-| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                     | No       |
-| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.              | No       |
-| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact.      | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                           | Injected |
+| Argument             | Description                                                                                                                                                                          | Required |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.                                                                                                    | Yes      |
+| `--pr`               | The pull-request number.                                                                                                                                                             | Yes      |
+| `--merge-commit`     | The merge commit's SHA.                                                                                                                                                              | Yes      |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.                                                                                                 | Mode     |
+| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.                                                                                                   | Mode     |
+| `--store`            | Names a corpus registered under some other name; `@default` is refused.                                                                                                              | No       |
+| `--type`             | Work type, breaking marker included (`feat!`). Falls back to the change summary's frontmatter: `type_override` over `type`, breaking where `breaking` or `breaking_override` is set. | No       |
+| `--scope`            | Package or surface scope. Falls back to the change summary's frontmatter: `scope_override` over `scope`.                                                                             | No       |
+| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                                                                                                           | No       |
+| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.                                                                                                    | No       |
+| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact.                                                                                            | No       |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                                                                                                                 | Injected |
 
 Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
