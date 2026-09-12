@@ -61,28 +61,10 @@ describe(readChangeRecordBlock, () => {
   });
 
   it('ignores a key the grammar does not declare, and reads a null field as absent', () => {
-    const body = ['```change-record', 'entries: []', 'head:', '  scope:', '  type: feat', '```'];
+    const body = ['```change-record', 'commit: e5029924', 'entries: []', 'head:', '  scope:', '  type: feat', '```'];
 
     expect(readChangeRecordBlock(body.join('\n'))).toStrictEqual({
       block: { head: { type: 'feat' } },
-      kind: 'read',
-    });
-  });
-
-  it('reads a block written before the grammar dropped the commit key', () => {
-    const body = [
-      '```change-record',
-      'commit: e5029924',
-      'head:',
-      '  scope: agents',
-      '  type: feat',
-      'overrides:',
-      '  type: sec',
-      '```',
-    ];
-
-    expect(readChangeRecordBlock(body.join('\n'))).toStrictEqual({
-      block: { head: { scope: 'agents', type: 'feat' }, overrides: { type: 'sec' } },
       kind: 'read',
     });
   });
