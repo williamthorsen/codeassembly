@@ -57,8 +57,12 @@ const RECORD_FLAGS: readonly FlagSpec[] = [
   { name: 'type', takesValue: true },
 ];
 
-/** Each subcommand's flags, and the reader of its scanned arguments, in the order the usage error lists them. */
-const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
+/**
+ * Each subcommand's flags, and the reader of its scanned arguments, in the order the usage error lists them.
+ *
+ * @internal - Exported to allow testing.
+ */
+export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
   'render-titles': {
     flags: [...RECORD_FLAGS, { name: 'pr-number', takesValue: true }, { name: 'ticket-ref', takesValue: true }],
     read: readRenderTitlesArgs,
