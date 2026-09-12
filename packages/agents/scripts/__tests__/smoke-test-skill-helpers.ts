@@ -24,6 +24,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { bundleSkillHelpers, type BundleTarget, packageRoot, targets } from '../bundle-skill-helpers.ts';
 import { makeCaptureEventSmokeTest } from '../test-utils/make-capture-event-smoke-test.ts';
 import { makeDeriveSessionContextSmokeTest } from '../test-utils/make-derive-session-context-smoke-test.ts';
+import { makeDescribeChangeSmokeTest } from '../test-utils/make-describe-change-smoke-test.ts';
 import { makeEmitEventSmokeTest } from '../test-utils/make-emit-event-smoke-test.ts';
 import { makeFeedbackMemoriesSmokeTest } from '../test-utils/make-feedback-memories-smoke-test.ts';
 import { makeKbCurateSmokeTest } from '../test-utils/make-kb-curate-smoke-test.ts';
@@ -43,6 +44,7 @@ import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts
 const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
   'src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
+  'src/describe-change/cli.ts': makeDescribeChangeSmokeTest(),
   'src/emit-event/cli.ts': makeEmitEventSmokeTest(),
   'src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
   'src/kb-curate/cli.ts': makeKbCurateSmokeTest(),
