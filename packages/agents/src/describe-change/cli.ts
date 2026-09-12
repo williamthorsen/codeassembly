@@ -131,12 +131,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 /**
  * Runs the helper end to end: parses args, then runs the subcommand they name, loading only what that subcommand reads.
- * A subcommand that loads the title templates refuses any template the engine cannot round-trip, so `render-block` and
- * `resolve-ticket-type`, which load none, run whatever the templates hold.
+ * A subcommand that loads the title templates refuses any template the engine cannot round-trip, so a defective template
+ * refuses neither `render-block` nor `resolve-ticket-type`, which load none.
  *
- * A run outside a repository warns and anchors the lookup at `cwd` rather than failing, since a title still renders from
- * the global templates. An unreadable taxonomy warns under `render-titles`, which renders without one, and refuses every
- * other subcommand that loads templates.
+ * A subcommand that reads the repository warns outside one and anchors its lookups at `cwd` rather than failing, since a
+ * title still renders from the global templates. An unreadable taxonomy warns under `render-titles`, which renders
+ * without one, and refuses every other subcommand that loads templates.
  *
  * @internal - Exported to allow testing.
  */
@@ -363,10 +363,7 @@ function readRequiredValue(subcommand: Subcommand, values: Record<string, string
   return value;
 }
 
-/**
- * Reads the `resolve-merge` invocation: the pull request's range and inputs, and the author's overrides. A type override
- * takes a bare type, since `--override-breaking` and `--no-override-breaking` set the marker.
- */
+/** Reads the `resolve-merge` invocation: the pull request's range and inputs, and the author's overrides. */
 function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   const values = valueFlagMap(flags);
