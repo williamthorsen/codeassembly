@@ -1,5 +1,6 @@
 import type { ChangeRecord } from '../change-grammar/types.ts';
 import type { ChangeRecordBlock } from './change-record-block.ts';
+import type { MergeOverrides } from './resolve-merge.ts';
 
 /** Reports whether `value` names one of the configured surfaces. */
 export function isSurface(value: string): value is Surface {
@@ -28,7 +29,7 @@ export interface ClassifyOutcome {
   violations: Array<{ commit: string; policy: string; type: string }>;
 }
 
-/** The head a branch's entries consolidated to. It names no title; a caller supplies that from the change summary. */
+/** A head, in the shape the JSON output names: the scope, type, and breaking marker of a change, and no title. */
 export interface HeadOutcome {
   breaking: boolean;
   scope: string | null;
@@ -37,11 +38,12 @@ export interface HeadOutcome {
 
 /**
  * What the invocation asks for: titles rendered from a record, one surface's subject read back into a record, a commit
- * range classified, or a `change-record` block rendered.
+ * range classified, a `change-record` block rendered, or a merge resolved.
  */
 export type ParsedArgs =
   | { baseRef: string; mode: 'classify'; ticketLabels: string[] }
   | { block: ChangeRecordBlock; mode: 'record-block' }
+  | { merge: ResolveMergeArgs; mode: 'resolve-merge' }
   | { mode: 'parse'; subject: string; surface: Surface }
   | { mode: 'render'; record: ChangeRecord };
 
@@ -61,6 +63,19 @@ export type ParseOutcome =
 /** The fenced `change-record` block, under the key the JSON output names. */
 export interface RecordBlockOutcome {
   block: string;
+}
+
+/** The pull request that `--resolve-merge` reads, and the overrides that the author applies to it. */
+export interface ResolveMergeArgs {
+  baseRef: string;
+  headCommit: string;
+  overrides: MergeOverrides;
+  prBodyFile: string;
+  prLabels: string[];
+  prNumber: string;
+  prTitle: string;
+  /** The ticket reference that applies where the pull-request title carries none. */
+  ticketRef?: string;
 }
 
 /** The rendered title for each surface, under the `<surface>_title` key the JSON output names. */

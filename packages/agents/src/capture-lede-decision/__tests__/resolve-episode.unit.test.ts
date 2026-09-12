@@ -120,6 +120,48 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { type: 'feat' })).identity.breaking).toBe(false);
   });
 
+  it('records breaking from --breaking', async () => {
+    const fixture = await createLedeFixture();
+
+    expect((await resolveFor(fixture, { breaking: true })).identity).toMatchObject({ type: 'feat', breaking: true });
+  });
+
+  it('where the flags name the identity, records no scope even though the change summary names one', async () => {
+    const fixture = await createLedeFixture();
+
+    const episode = await resolveFor(fixture, { scope: null });
+
+    expect(episode.identity).toMatchObject({ type: 'feat', ticket: '1107' });
+    expect(episode.identity).not.toHaveProperty('scope');
+  });
+
+  it.each([
+    ['--scope', { scope: 'agents', type: null }],
+    ['--breaking', { breaking: true, scope: null, type: null }],
+  ] as const)('where %s is passed without --type, reports that --type is required', async (_flag, overrides) => {
+    const fixture = await createLedeFixture();
+
+    const outcome = await resolveEpisode(inputFor(fixture, overrides));
+
+    expect(expectFailure(outcome)).toStrictEqual({
+      error: 'unresolved-identity',
+      message: expect.stringContaining('pass --type'),
+    });
+  });
+
+  it('reads a scope of * from the flags as no scope', async () => {
+    const fixture = await createLedeFixture();
+
+    expect((await resolveFor(fixture, { scope: '*' })).identity).not.toHaveProperty('scope');
+  });
+
+  it('reads a scope override of * from the change summary as no scope', async () => {
+    const fixture = await createLedeFixture();
+    await writeChangeSummary(fixture, "type: feat\nscope: agents\nscope_override: '*'");
+
+    expect((await resolveWithoutIdentity(fixture)).identity).not.toHaveProperty('scope');
+  });
+
   it('reads a wholly numeric ticket id, which the change summary writes unquoted', async () => {
     const fixture = await createLedeFixture({ ticketId: '1107' });
 
@@ -265,22 +307,35 @@ function expectFailure(outcome: ResolveEpisodeOutcome): { error: string; message
   return { error: outcome.error, message: outcome.message };
 }
 
-/** Builds resolver input over a fixture, supplying the flags a merge caller would pass. */
-function inputFor(fixture: LedeFixture, overrides: { type?: string } = {}): Parameters<typeof resolveEpisode>[0] {
+/**
+ * Builds resolver input over a fixture, supplying the flags a merge caller would pass. A `null` type or scope leaves
+ * that flag out.
+ */
+function inputFor(fixture: LedeFixture, overrides: IdentityFlags = {}): Parameters<typeof resolveEpisode>[0] {
+  const type = overrides.type === undefined ? 'feat' : overrides.type;
+  const scope = overrides.scope === undefined ? 'agents' : overrides.scope;
   return {
     artifactDir: fixture.artifactDir,
     dataDir: fixture.dataDir,
     subagentsDir: fixture.subagentsDir,
     pr: '1124',
     mergeCommit: '35aa58d7',
-    type: overrides.type ?? 'feat',
-    scope: 'agents',
+    ...(type !== null && { type }),
+    ...(scope !== null && { scope }),
+    ...(overrides.breaking !== undefined && { breaking: overrides.breaking }),
     provenancePath: fixture.provenancePath,
   };
 }
 
+/** The identity flags a test passes, where `null` leaves a flag out that `inputFor` would otherwise supply. */
+interface IdentityFlags {
+  breaking?: boolean;
+  scope?: string | null;
+  type?: string | null;
+}
+
 /** Resolves an episode over a fixture and narrows it to the success arm, so an assertion reads as one call. */
-async function resolveFor(fixture: LedeFixture, overrides: { type?: string } = {}): Promise<LedeEpisode> {
+async function resolveFor(fixture: LedeFixture, overrides: IdentityFlags = {}): Promise<LedeEpisode> {
   return expectEpisode(await resolveEpisode(inputFor(fixture, overrides)));
 }
 

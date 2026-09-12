@@ -38,7 +38,7 @@ Call `action: "create"` on the tool named in [Bitbucket pull-request access](../
 
 Bitbucket pull requests carry no labels, and the tool exposes no label parameter on any action. Attempt no call. Report every name in `labels` under `Labels skipped:` in the completion output, and leave `Labels applied:` as `none`.
 
-`merge-pr` resolves scope and type on the standing fact that a Bitbucket PR contributes no labels; this step is what makes that true.
+Labels matter to `merge-pr` only for a PR whose body carries no readable `change-record` block, and a Bitbucket PR contributes none there; this step is what makes that true.
 
 The artifact's label lines keep `create-gh-pr`'s three-field shape: `Labels attempted:` carries the requested set, `Labels applied:` is always `none`, and `Labels skipped:` repeats the requested set.
 

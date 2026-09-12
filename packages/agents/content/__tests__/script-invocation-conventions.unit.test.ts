@@ -12,7 +12,6 @@ const KNOWN_SCRIPTS: ReadonlyArray<string> = [
   'describe-change.mjs',
   'get-ticket-id.sh',
   'resolve-frontmatter.sh',
-  'resolve-merge-options.sh',
   'resolve-reviewer-context.sh',
   'select-lede-exemplars.mjs',
 ];

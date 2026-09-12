@@ -1,6 +1,6 @@
 # The change record
 
-A change's classification is derived once, from the branch's commits, and then carried to every surface that needs it. This file states what the record holds and the two grammars that carry it: the `Change:` commit trailer, and the fenced `change-record` block a pull-request body ends with.
+A change's classification is derived once, from the branch's commits, and then carried to every surface that needs it. This file states what the record holds, the two grammars that carry it (the `Change:` commit trailer, and the fenced `change-record` block a pull-request body ends with), and how a merge reads the block back.
 
 [`title-templates.md`](./title-templates.md) states how the classification is derived and what the deriving command reports. This file states how the result is written down.
 
@@ -75,3 +75,23 @@ An override is kept as the author set it, even where it equals the head. The hea
 | Pull-request labels        | The effective record's type and scope, mapped through `.meta/label-map.json`, plus `breaking` where it is breaking |
 
 [Artifact conventions](./artifact-conventions.md#change-summary-frontmatter) specifies the change-summary fields.
+
+## Where the record is read
+
+`merge-pr` reads the block when it merges, through the `--resolve-merge` mode of `describe-change.mjs` (see [Resolving a merge](./title-templates.md#resolving-a-merge)), and compares it with a head derived afresh from the commits up to the pull request's head commit.
+
+**The body's last `change-record` block is the one read.** It is malformed where it never closes, where its payload is not a YAML mapping, where `commit` is not a non-empty string, where `head` is not a mapping, and where a declared field has the wrong type. A malformed block is reported and resolved as though it were absent. A key that the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
+
+**With a readable block**, the recorded head and the derivation are compared on scope, type, and breaking, before any override:
+
+- Where they agree, or where the derivation is unavailable, the record stands.
+- Where they disagree and the branch is unmoved, the record wins and the derivation is shown. The branch is unmoved where the shorter of `commit` and the pull request's head commit is at least seven characters long and a prefix of the longer, since either may be abbreviated.
+- Where they disagree and the branch has moved, the derivation wins and the record is shown.
+
+The block's overrides then apply to whichever head won, as [The effective record](#the-effective-record) states.
+
+**Without a readable block**, the labels stand in for the record. The type and its breaking marker come together, from the labels where exactly one type label resolves and otherwise from the derivation, so a marker never pairs with a type from the other source. The scope comes from its label where exactly one resolves, and otherwise from the derivation. The breaking label is the literal `breaking`. A derivation that disagrees is shown.
+
+**The merge's own overrides apply last** and outrank the block's, each on its own dimension. A scope of `*` names no scope, a type replaces the type and keeps the marker, and the breaking override sets the marker in either direction.
+
+**The effective head must name a declared type and satisfy that type's breaking policy.** Otherwise the merge is not offered for approval until the author overrides the head; nothing is normalized.

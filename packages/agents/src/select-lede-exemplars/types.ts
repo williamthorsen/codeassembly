@@ -28,7 +28,8 @@ export interface LedeExemplar {
   /** Canonical work-type key, so a record filed under an alias and one filed under the key read alike. */
   type: string;
   tier: string;
-  scope: string;
+  /** Scope the change belongs to; absent for a change that names none. */
+  scope?: string;
   /** Number of the pull request the lede shipped with. */
   pr: string;
   capturedAt: string;

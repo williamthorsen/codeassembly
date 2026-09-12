@@ -182,8 +182,8 @@ async function readDecision(input: {
   const type = extractString(extra, 'type');
   const scope = extractString(extra, 'scope');
   const pr = extractString(extra, 'pr');
-  if (type === null || scope === null || pr === null) {
-    return { kind: 'warning', warning: `${basename}: does not name the change it describes (type, scope, pr)` };
+  if (type === null || pr === null) {
+    return { kind: 'warning', warning: `${basename}: does not name the change it describes (type, pr)` };
   }
 
   // The taxonomy decides a candidate's type and tier, so a request and a candidate are matched through one reading of
@@ -218,7 +218,7 @@ async function readDecision(input: {
         ...pair,
         type: resolved?.key ?? type,
         tier,
-        scope,
+        ...(scope !== null && { scope }),
         pr,
         capturedAt: parsed.record.capturedAt,
       },

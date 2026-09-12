@@ -465,6 +465,213 @@ describe('--record-block', () => {
   });
 });
 
+describe('--resolve-merge', () => {
+  const REQUIRED = [
+    '--head',
+    'abc1234',
+    '--pr-title',
+    '#466 Add foo',
+    '--pr-body-file',
+    'body.md',
+    '--pr-number',
+    '470',
+  ];
+
+  it('reads the pull request’s inputs and every override', () => {
+    const parsed = parseArgs([
+      '--resolve-merge',
+      'origin/main',
+      ...REQUIRED,
+      '--pr-label',
+      'feature',
+      '--pr-label',
+      'scope:agents',
+      '--ticket-ref',
+      '#466',
+      '--override-scope',
+      '*',
+      '--override-type',
+      'sec',
+      '--no-override-breaking',
+      '--override-title',
+      'Add the parser',
+    ]);
+
+    expect(parsed).toEqual({
+      merge: {
+        baseRef: 'origin/main',
+        headCommit: 'abc1234',
+        overrides: { breaking: false, scope: '*', title: 'Add the parser', type: 'sec' },
+        prBodyFile: 'body.md',
+        prLabels: ['feature', 'scope:agents'],
+        prNumber: '470',
+        prTitle: '#466 Add foo',
+        ticketRef: '#466',
+      },
+      mode: 'resolve-merge',
+    });
+  });
+
+  it.each(['--head', '--pr-title', '--pr-body-file', '--pr-number'])(
+    'if %s is missing, refuses the invocation',
+    (flag) => {
+      const index = REQUIRED.indexOf(flag);
+      const argv = ['--resolve-merge', 'origin/main', ...REQUIRED.toSpliced(index, 2)];
+
+      expect(() => parseArgs(argv)).toThrow(`--resolve-merge requires ${flag}`);
+    },
+  );
+
+  it.each(['--scope', '--type', '--title'])(
+    'if the record flag %s is passed alongside it, refuses the flag',
+    (flag) => {
+      expect(() => parseArgs(['--resolve-merge', 'origin/main', ...REQUIRED, flag, 'value'])).toThrow(
+        /reads the head from the pull request, so it takes no --/,
+      );
+    },
+  );
+
+  it('if both breaking overrides are passed, refuses the invocation', () => {
+    const argv = ['--resolve-merge', 'origin/main', ...REQUIRED, '--override-breaking', '--no-override-breaking'];
+
+    expect(() => parseArgs(argv)).toThrow(/opposite directions/);
+  });
+
+  it('if the type override spells the marker, refuses it', () => {
+    const argv = ['--resolve-merge', 'origin/main', ...REQUIRED, '--override-type', 'feat!'];
+
+    expect(() => parseArgs(argv)).toThrow(/takes a bare type; pass --override-breaking/);
+  });
+
+  it('if the pull-request number is not digits, refuses it', () => {
+    const argv = ['--resolve-merge', 'origin/main', ...REQUIRED.slice(0, -1), '#470'];
+
+    expect(() => parseArgs(argv)).toThrow(/--pr-number takes the pull request’s number/);
+  });
+
+  it.each(['--override-title', '--pr-label'])('if %s is passed without it, refuses the flag', (flag) => {
+    expect(() => parseArgs(['--title', 'Add foo', flag, 'value'])).toThrow(/is an input to --resolve-merge/);
+  });
+
+  it('if --override-title is passed alongside --record-block, refuses the flag', () => {
+    expect(() => parseArgs(['--record-block', 'e5029924', '--override-title', 'Add foo'])).toThrow(/takes no --/);
+  });
+
+  it('resolves a merge end to end from a body file, reading the commits to a head that the checkout is not on', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo([
+      'agents|feat: Add the parser',
+      'agents|fix: Correct the guard',
+    ]);
+    await mkdir(join(cwd, '.meta'), { recursive: true });
+    await writeFile(join(cwd, '.meta', 'label-map.json'), JSON.stringify({ types: { docs: 'documentation' } }));
+    const block = renderChangeRecordBlock({
+      commit: headCommit.slice(0, 8),
+      head: { scope: 'agents', title: 'Add the parser', type: 'feat' },
+    });
+    const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\nCloses #466\n\n${block}\n`);
+
+    const { output } = await runDescribe({
+      argv: [
+        '--resolve-merge',
+        'base',
+        '--head',
+        headCommit,
+        '--pr-title',
+        '#466 Add the parser',
+        '--pr-body-file',
+        bodyFile,
+        '--pr-number',
+        '470',
+        '--pr-label',
+        'documentation',
+      ],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({
+      head: { breaking: false, scope: 'agents', type: 'feat' },
+      recorded: { breaking: false, scope: 'agents', type: 'feat' },
+      derived: { breaking: false, scope: 'agents', type: 'feat' },
+      labeled: null,
+      title: 'Add the parser',
+      ticket_ref: '#466',
+      merge_title: '#466 agents|feat: Add the parser (#470)',
+      body: '- Adds the parser.',
+      defects: [],
+      notices: [],
+    });
+  });
+
+  it('where the head commit is absent from the repository, resolves without a derivation and says so', async () => {
+    const { cwd, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
+    const absent = '0123456789abcdef0123456789abcdef01234567';
+    const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
+
+    const { output } = await runDescribe({
+      argv: ['--resolve-merge', 'base', '--head', absent, ...pullRequestFlags(bodyFile)],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({ derived: null, notices: [{ kind: 'derivation-unavailable' }] });
+  });
+
+  it('where commit.title_format is empty, resolves without a derivation rather than refusing', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
+    await writeAgentsPreferences(
+      cwd,
+      [
+        "commit:\n  title_format: ''",
+        "pr:\n  title_format: '[{ticket_ref} ]{title}'",
+        "merge:\n  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'",
+      ].join('\n'),
+    );
+    const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
+
+    const { output } = await runDescribe({
+      argv: ['--resolve-merge', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({
+      notices: [{ kind: 'derivation-unavailable', reason: expect.stringContaining('commit.title_format is empty') }],
+    });
+  });
+
+  it('refuses a body file that cannot be read', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo([]);
+
+    await expect(
+      runDescribe({
+        argv: ['--resolve-merge', 'base', '--head', headCommit, ...pullRequestFlags(join(cwd, 'absent.md'))],
+        cwd,
+        dataDir: DATA_DIR,
+        home,
+      }),
+    ).rejects.toThrow(/--pr-body-file .*absent\.md cannot be read/);
+  });
+
+  it('refuses when no taxonomy is readable', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo([]);
+    const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
+    const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
+
+    await expect(
+      runDescribe({
+        argv: ['--resolve-merge', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
+        cwd,
+        dataDir,
+        home,
+      }),
+    ).rejects.toThrow(/--resolve-merge checks types against the taxonomy/);
+  });
+});
+
 // region | Helpers
 
 /** Classifies a throwaway repository holding one commit per message, returning the `--classify` output. */
@@ -516,6 +723,24 @@ async function commitAll(cwd: string, message: string): Promise<void> {
   await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);
 }
 
+/**
+ * Creates a throwaway repository whose pull-request branch holds one commit per message on top of `base`, and returns
+ * to the default branch, so the branch's head commit is not the checkout's `HEAD`.
+ */
+async function makePullRequestRepo(
+  messages: readonly string[],
+): Promise<{ cwd: string; headCommit: string; home: string }> {
+  const { cwd, home } = await makeCommittedRepo([]);
+  await execFileAsync('git', ['-C', cwd, 'checkout', '--quiet', '-b', 'pull-request']);
+  for (const [index, message] of messages.entries()) {
+    await writeFile(join(cwd, `branch${index}.txt`), `${index}\n`, 'utf8');
+    await commitAll(cwd, message);
+  }
+  const { stdout } = await execFileAsync('git', ['-C', cwd, 'rev-parse', 'pull-request']);
+  await execFileAsync('git', ['-C', cwd, 'checkout', '--quiet', '-']);
+  return { cwd, headCommit: stdout.trim(), home };
+}
+
 /** Creates a throwaway repository carrying `content` as its project preferences, plus an empty global home. */
 async function makeRepo(content: string): Promise<{ cwd: string; home: string }> {
   const cwd = await mkdtemp(join(tmpdir(), 'describe-change-repo-'));
@@ -523,6 +748,19 @@ async function makeRepo(content: string): Promise<{ cwd: string; home: string }>
   await writeAgentsPreferences(cwd, content);
   const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
   return { cwd, home };
+}
+
+/** Returns the pull-request flags that `--resolve-merge` requires beside `--head`, reading the body from `bodyFile`. */
+function pullRequestFlags(bodyFile: string): string[] {
+  return ['--pr-title', '#466 Add the parser', '--pr-body-file', bodyFile, '--pr-number', '470'];
+}
+
+/** Writes `content` to a pull-request body file under a scratch directory and returns its path. */
+async function writeBody(content: string): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'describe-change-body-'));
+  const bodyFile = join(dir, 'body.md');
+  await writeFile(bodyFile, content, 'utf8');
+  return bodyFile;
 }
 
 /** Writes `content` to `.agents/preferences.yaml` under `root`. */

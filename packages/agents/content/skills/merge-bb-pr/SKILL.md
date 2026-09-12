@@ -87,7 +87,7 @@ Step 4 returning success means the merge landed, so a `merge_commit.hash` absent
 
 ### 6. Save merge artifact
 
-Save a `merge` artifact in the ticket directory, in the same format `merge-gh-pr` writes, so `merge-pr` step 11 reads it on this platform as it does on GitHub.
+Save a `merge` artifact in the ticket directory, in the same format `merge-gh-pr` writes, so `merge-pr`'s lede-decision step reads it on this platform as it does on GitHub.
 
 Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
