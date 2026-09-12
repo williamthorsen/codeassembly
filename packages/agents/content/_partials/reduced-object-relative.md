@@ -6,15 +6,15 @@ A relative clause with an object gap takes an overt relativizer: "the source tha
 
 **Repairs, in preference order.** Choose per site; restored relativizers stacked across a passage read as a tic of their own.
 
-1. **Reduce to a passive participle** where the actor is worth naming: "a dependency imported by no exported tier module".
-2. **Restore the relativizer** where the passive reads worse: "the ticket that the branch name encodes".
-3. **Recast** where neither fits: Promote the embedded clause to a main clause, or replace the relative with a prepositional phrase.
+1. **Reduce to a passive participle** if the actor is worth naming: "a dependency imported by no exported tier module".
+2. **Restore the relativizer** if the passive reads worse: "the ticket that the branch name encodes".
+3. **Recast** if neither fits: Promote the embedded clause to a main clause, or replace the relative with a prepositional phrase.
 
-**A gap in a prepositional phrase takes its own order.** Pied-pipe the preposition first: "the level against which it is probed", preferred over the stranded "the level that it is probed against". Where pied-piping reads stiffly, the stranded relativizer is the second choice and a recast the third. The passive participle is last here rather than first, since the actor already sits inside the clause.
+**A gap in a prepositional phrase takes its own order.** Pied-pipe the preposition first: "the level against which it is probed", preferred over the stranded "the level that it is probed against". If pied-piping reads stiffly, the stranded relativizer is the second choice and a recast the third. The passive participle is last here rather than first, since the actor already sits inside the clause.
 
-**A predicate-nominal gap takes the restored relativizer.** "the throwing mock that it is", never "the throwing mock it is". Neither of the other repairs reaches it: a copula has no preposition to pied-pipe and no actor to promote into a participle. Where the restored relativizer reads stiffly, recast.
+**A predicate-nominal gap takes the restored relativizer.** "the throwing mock that it is", never "the throwing mock it is". Neither of the other repairs reaches it: a copula has no preposition to pied-pipe and no actor to promote into a participle. If the restored relativizer reads stiffly, recast.
 
-**A coordinated gap takes a doubled relative or one shared stranded relativizer.** Where a direct-object gap coordinates with an oblique one, pied-piping cannot reach the first, which carries no preposition to pipe. The parallel forms are "the error which it threw or with which it rejected" and "the error that it threw or rejected with".
+**A coordinated gap takes a doubled relative or one shared stranded relativizer.** When a direct-object gap coordinates with an oblique one, pied-piping cannot reach the first, which carries no preposition to pipe. The parallel forms are "the error which it threw or with which it rejected" and "the error that it threw or rejected with".
 
 **The shapes, ranked by cost.** The rank follows the embedded subject's form, since that is what the reader holds open before the verb arrives. Each is an exhibit of the construction, not a model to copy.
 
