@@ -138,10 +138,10 @@ The run refuses outright where no taxonomy is readable, since the head has nothi
 
 ## Rendering the record block
 
-`--record-block` renders the fenced `change-record` block that ends a pull-request body. The flag's value is the commit from which the head was derived; the head comes from the record flags, and the author's overrides from the `--override-*` flags.
+`--record-block` renders the fenced `change-record` block that ends a pull-request body. The flag takes no value: the head comes from the record flags, and the author's overrides from the `--override-*` flags.
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --record-block e5029924 \
+node {harness_home_dir}/scripts/describe-change.mjs --record-block \
   --scope agents --type feat --title "Add the parser" \
   --override-type sec --override-breaking
 ```
@@ -150,7 +150,7 @@ The output is JSON whose `block` holds the fenced block, fences included:
 
 ````json
 {
-  "block": "```change-record\ncommit: e5029924\nhead:\n  scope: agents\n  type: feat\n  title: Add the parser\noverrides:\n  type: sec\n  breaking: true\n```"
+  "block": "```change-record\nhead:\n  scope: agents\n  type: feat\n  title: Add the parser\noverrides:\n  type: sec\n  breaking: true\n```"
 }
 ````
 

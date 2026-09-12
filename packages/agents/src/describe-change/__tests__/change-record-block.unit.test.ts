@@ -13,28 +13,23 @@ describe(readChangeRecordBlock, () => {
   it.each<{ block: ChangeRecordBlock; expected: ChangeRecordBlock; name: string }>([
     {
       name: 'a head carrying every field',
-      block: { commit: 'e5029924', head: { scope: 'agents', title: 'Add the parser: the reader', type: 'feat' } },
-      expected: { commit: 'e5029924', head: { scope: 'agents', title: 'Add the parser: the reader', type: 'feat' } },
-    },
-    {
-      name: 'a digits-only commit',
-      block: { commit: '12345678', head: { type: 'feat' } },
-      expected: { commit: '12345678', head: { type: 'feat' } },
+      block: { head: { scope: 'agents', title: 'Add the parser: the reader', type: 'feat' } },
+      expected: { head: { scope: 'agents', title: 'Add the parser: the reader', type: 'feat' } },
     },
     {
       name: 'a wildcard scope override',
-      block: { commit: 'e5029924', head: { scope: 'agents', type: 'feat' }, overrides: { scope: '*' } },
-      expected: { commit: 'e5029924', head: { scope: 'agents', type: 'feat' }, overrides: { scope: '*' } },
+      block: { head: { scope: 'agents', type: 'feat' }, overrides: { scope: '*' } },
+      expected: { head: { scope: 'agents', type: 'feat' }, overrides: { scope: '*' } },
     },
     {
       name: 'a breaking head',
-      block: { commit: 'e5029924', head: { breaking: true, scope: 'agents', type: 'drop' } },
-      expected: { commit: 'e5029924', head: { breaking: true, scope: 'agents', type: 'drop' } },
+      block: { head: { breaking: true, scope: 'agents', type: 'drop' } },
+      expected: { head: { breaking: true, scope: 'agents', type: 'drop' } },
     },
     {
       name: 'a marker spelled on an override type',
-      block: { commit: 'e5029924', head: { type: 'feat' }, overrides: { type: 'sec!' } },
-      expected: { commit: 'e5029924', head: { type: 'feat' }, overrides: { breaking: true, type: 'sec' } },
+      block: { head: { type: 'feat' }, overrides: { type: 'sec!' } },
+      expected: { head: { type: 'feat' }, overrides: { breaking: true, type: 'sec' } },
     },
   ])('reads back the block rendered for $name', ({ block, expected }) => {
     const body = `## What\n\n- Adds the parser\n\nCloses #466\n\n${renderChangeRecordBlock(block)}\n`;
@@ -47,62 +42,75 @@ describe(readChangeRecordBlock, () => {
   });
 
   it('reads the last of several blocks', () => {
-    const first = renderChangeRecordBlock({ commit: 'aaaaaaaa', head: { type: 'fix' } });
-    const last = renderChangeRecordBlock({ commit: 'bbbbbbbb', head: { type: 'feat' } });
+    const first = renderChangeRecordBlock({ head: { type: 'fix' } });
+    const last = renderChangeRecordBlock({ head: { type: 'feat' } });
 
     expect(readChangeRecordBlock(`${first}\n\ntext\n\n${last}`)).toStrictEqual({
-      block: { commit: 'bbbbbbbb', head: { type: 'feat' } },
+      block: { head: { type: 'feat' } },
       kind: 'read',
     });
   });
 
   it('reads a block whose lines end in CRLF', () => {
-    const body = renderChangeRecordBlock({ commit: 'e5029924', head: { scope: 'kb', type: 'docs' } }).replaceAll(
-      '\n',
-      '\r\n',
-    );
+    const body = renderChangeRecordBlock({ head: { scope: 'kb', type: 'docs' } }).replaceAll('\n', '\r\n');
 
     expect(readChangeRecordBlock(body)).toStrictEqual({
-      block: { commit: 'e5029924', head: { scope: 'kb', type: 'docs' } },
+      block: { head: { scope: 'kb', type: 'docs' } },
       kind: 'read',
     });
   });
 
   it('ignores a key the grammar does not declare, and reads a null field as absent', () => {
-    const body = ['```change-record', 'commit: e5029924', 'entries: []', 'head:', '  scope:', '  type: feat', '```'];
+    const body = ['```change-record', 'entries: []', 'head:', '  scope:', '  type: feat', '```'];
 
     expect(readChangeRecordBlock(body.join('\n'))).toStrictEqual({
-      block: { commit: 'e5029924', head: { type: 'feat' } },
+      block: { head: { type: 'feat' } },
+      kind: 'read',
+    });
+  });
+
+  it('reads a block written before the grammar dropped the commit key', () => {
+    const body = [
+      '```change-record',
+      'commit: e5029924',
+      'head:',
+      '  scope: agents',
+      '  type: feat',
+      'overrides:',
+      '  type: sec',
+      '```',
+    ];
+
+    expect(readChangeRecordBlock(body.join('\n'))).toStrictEqual({
+      block: { head: { scope: 'agents', type: 'feat' }, overrides: { type: 'sec' } },
       kind: 'read',
     });
   });
 
   it.each([
     { name: 'a block that never closes', payload: null, defect: /never closes/ },
-    { name: 'a payload that is not YAML', payload: 'commit: e5029924\nhead: [unclosed', defect: /not valid YAML/ },
+    { name: 'a payload that is not YAML', payload: 'head: [unclosed', defect: /not valid YAML/ },
     { name: 'a payload that is not a mapping', payload: '- e5029924', defect: /payload is not a mapping/ },
-    { name: 'a digits-only commit edited by hand', payload: 'commit: 12345678\nhead: {}', defect: /`commit`/ },
-    { name: 'a blank commit', payload: "commit: ' '\nhead: {}", defect: /`commit`/ },
-    { name: 'a missing head', payload: 'commit: e5029924', defect: /`head` is not a mapping/ },
-    { name: 'a head that is a list', payload: 'commit: e5029924\nhead: [feat]', defect: /`head` is not a mapping/ },
+    { name: 'a missing head', payload: 'overrides: {}', defect: /`head` is not a mapping/ },
+    { name: 'a head that is a list', payload: 'head: [feat]', defect: /`head` is not a mapping/ },
     {
       name: 'overrides that are a string',
-      payload: 'commit: e5029924\nhead: {}\noverrides: sec',
+      payload: 'head: {}\noverrides: sec',
       defect: /`overrides` is not a mapping/,
     },
-    { name: 'a numeric head scope', payload: 'commit: e5029924\nhead:\n  scope: 42', defect: /`head.scope`/ },
+    { name: 'a numeric head scope', payload: 'head:\n  scope: 42', defect: /`head.scope`/ },
     {
       name: 'a head breaking spelled as a string',
-      payload: "commit: e5029924\nhead:\n  breaking: 'yes'",
+      payload: "head:\n  breaking: 'yes'",
       defect: /`head.breaking` is not a boolean/,
     },
     {
       name: 'a numeric override type',
-      payload: 'commit: e5029924\nhead: {}\noverrides:\n  type: 7',
+      payload: 'head: {}\noverrides:\n  type: 7',
       defect: /`overrides.type`/,
     },
   ])('reports $name as malformed, naming the defect', ({ payload, defect }) => {
-    const body = payload === null ? '```change-record\ncommit: e5029924\n' : `\`\`\`change-record\n${payload}\n\`\`\``;
+    const body = payload === null ? '```change-record\nhead: {}\n' : `\`\`\`change-record\n${payload}\n\`\`\``;
 
     const reading = readChangeRecordBlock(body);
 
@@ -113,7 +121,7 @@ describe(readChangeRecordBlock, () => {
 
 describe(renderChangeRecordBlock, () => {
   it('opens on the info string and closes on a bare fence', () => {
-    const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { scope: 'agents', type: 'feat' } });
+    const rendered = renderChangeRecordBlock({ head: { scope: 'agents', type: 'feat' } });
     const lines = rendered.split('\n');
 
     expect(lines.at(0)).toBe('```change-record');
@@ -122,27 +130,24 @@ describe(renderChangeRecordBlock, () => {
 
   it('parses back to the record it was given', () => {
     const block: ChangeRecordBlock = {
-      commit: 'e5029924',
       head: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'sec' },
       overrides: { type: 'sec' },
     };
 
     expect(readBlock(renderChangeRecordBlock(block))).toStrictEqual({
-      commit: 'e5029924',
       head: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'sec' },
       overrides: { type: 'sec' },
     });
   });
 
   it('omits breaking for a head that is not breaking', () => {
-    const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { scope: 'agents', type: 'feat' } });
+    const rendered = renderChangeRecordBlock({ head: { scope: 'agents', type: 'feat' } });
 
     expect(readBlock(rendered).head).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
   it('when an override type spells the marker, records the type and a breaking override', () => {
     const rendered = renderChangeRecordBlock({
-      commit: 'e5029924',
       head: { type: 'feat' },
       overrides: { type: 'sec!' },
     });
@@ -152,7 +157,6 @@ describe(renderChangeRecordBlock, () => {
 
   it('when the author overrides the scope to the wildcard, records the wildcard override', () => {
     const rendered = renderChangeRecordBlock({
-      commit: 'e5029924',
       head: { scope: 'agents', type: 'feat' },
       overrides: { scope: '*' },
     });
@@ -161,26 +165,26 @@ describe(renderChangeRecordBlock, () => {
   });
 
   it('omits overrides where the author applied none', () => {
-    const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { type: 'feat' }, overrides: {} });
+    const rendered = renderChangeRecordBlock({ head: { type: 'feat' }, overrides: {} });
 
-    expect(readBlock(rendered)).toStrictEqual({ commit: 'e5029924', head: { type: 'feat' } });
+    expect(readBlock(rendered)).toStrictEqual({ head: { type: 'feat' } });
   });
 
   it('splits a marker spelled on the type into the type and the flag', () => {
-    const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { type: 'drop!' } });
+    const rendered = renderChangeRecordBlock({ head: { type: 'drop!' } });
 
     expect(readBlock(rendered).head).toStrictEqual({ breaking: true, type: 'drop' });
   });
 
   it('drops the wildcard scope rather than recording it', () => {
-    const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { scope: '*', type: 'feat' } });
+    const rendered = renderChangeRecordBlock({ head: { scope: '*', type: 'feat' } });
 
     expect(readBlock(rendered).head).toStrictEqual({ type: 'feat' });
   });
 
   it('quotes a title carrying the colon that would otherwise open a mapping', () => {
     const title = 'Add a parser: the reader, the writer, and the verifier';
-    const rendered = renderChangeRecordBlock({ commit: 'e5029924', head: { title, type: 'feat' } });
+    const rendered = renderChangeRecordBlock({ head: { title, type: 'feat' } });
 
     expect(readBlock(rendered).head).toStrictEqual({ title, type: 'feat' });
   });
@@ -188,7 +192,7 @@ describe(renderChangeRecordBlock, () => {
 
 describe(stripChangeRecordBlocks, () => {
   it('removes every block, fences included, and keeps the text around them', () => {
-    const block = renderChangeRecordBlock({ commit: 'e5029924', head: { type: 'feat' } });
+    const block = renderChangeRecordBlock({ head: { type: 'feat' } });
 
     expect(stripChangeRecordBlocks(`- Adds the parser\n${block}\nbetween\n${block}\nafter`)).toBe(
       '- Adds the parser\nbetween\nafter',
@@ -196,9 +200,7 @@ describe(stripChangeRecordBlocks, () => {
   });
 
   it('removes a block that never closes through the end of the text', () => {
-    expect(stripChangeRecordBlocks('- Adds the parser\n```change-record\ncommit: e5029924\nhead: {}')).toBe(
-      '- Adds the parser',
-    );
+    expect(stripChangeRecordBlocks('- Adds the parser\n```change-record\nhead: {}')).toBe('- Adds the parser');
   });
 });
 

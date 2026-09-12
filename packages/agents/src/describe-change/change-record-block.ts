@@ -10,7 +10,7 @@ import { isRecord } from '../lib/type-guards.ts';
  *
  * `head` and `overrides` normalize as the renderer normalizes them, so a scope override of `*` is kept. A key the
  * grammar does not declare is ignored, so a later addition to the block does not break this reader, and a declared key
- * whose value is null reads as absent. A digits-only `commit` edited by hand reads as a YAML number and is malformed.
+ * whose value is null reads as absent.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const lines = splitLines(body);
@@ -34,7 +34,7 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
 
 /**
  * Renders the fenced `change-record` block a pull-request body carries as its final block: the head the branch
- * consolidated to, the commit that head was derived from, and any override the author applied.
+ * consolidated to, and any override the author applied.
  *
  * The payload is YAML rather than a surface template, because `head` and `overrides` nest and a template renders one
  * flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip verification
@@ -47,7 +47,6 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
 export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
   const overrides = normalizeOverrides(block.overrides ?? {});
   const payload = {
-    commit: block.commit,
     head: normalizeChangeRecord(block.head),
     ...(Object.keys(overrides).length > 0 && { overrides }),
   };
@@ -66,9 +65,8 @@ export function stripChangeRecordBlocks(text: string): string {
     .join('\n');
 }
 
-/** What the block records: the derived head, the commit it was derived from, and the overrides the author applied. */
+/** What the block records: the derived head and the overrides the author applied. */
 export interface ChangeRecordBlock {
-  commit: string;
   head: ChangeRecord;
   overrides?: RecordOverrides;
 }
@@ -140,10 +138,7 @@ function readPayload(payload: unknown): ChangeRecordBlockReading {
   if (!isRecord(payload)) {
     return { defect: 'the payload is not a mapping', kind: 'malformed' };
   }
-  const { commit, head, overrides } = payload;
-  if (typeof commit !== 'string' || commit.trim() === '') {
-    return { defect: '`commit` is not a non-empty string', kind: 'malformed' };
-  }
+  const { head, overrides } = payload;
   if (!isRecord(head)) {
     return { defect: '`head` is not a mapping', kind: 'malformed' };
   }
@@ -168,7 +163,6 @@ function readPayload(payload: unknown): ChangeRecordBlockReading {
   });
   return {
     block: {
-      commit: commit.trim(),
       head: normalizeChangeRecord(headFields.record),
       ...(Object.keys(normalizedOverrides).length > 0 && { overrides: normalizedOverrides }),
     },
