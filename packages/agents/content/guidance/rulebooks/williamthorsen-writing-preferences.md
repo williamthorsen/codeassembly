@@ -28,7 +28,7 @@ Don't use em-dashes; use appropriate punctuation instead. A dash separating an i
 
 Documentation describes; it does not address. Never write `you`, `your`, `yours`, or `yourself`, and never the contractions `you're`, `you've`, `you'll`, or `you'd`.
 
-Imperative mood is untouched, because it carries no pronoun: "Run the formatter" directs the reader without naming one.
+Imperative mood is untouched, because it does not carry a pronoun: "Run the formatter" directs the reader without naming one.
 
 **The addressee decides.** Ask who the pronoun names. If it names the agent that the document instructs, a skill body or a subagent body directing its own executor, the pronoun is that document's address and stays. If it names a reader of documentation, someone using the package or working on it, the pronoun goes.
 
