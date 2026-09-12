@@ -170,7 +170,7 @@ node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge origin/main 
   --ticket-ref "#466"
 ```
 
-`--head` is the pull request's head commit, which must be in the local repository but need not be checked out. `--pr-body-file` names a file holding the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies where the pull-request title carries none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
+`--head` is the pull request's head commit. The commits are read from the local repository, so the head must be there for the derivation to run, and it need not be checked out. `--pr-body-file` names a file holding the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies where the pull-request title carries none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
 
 ```json
 {

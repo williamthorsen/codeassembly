@@ -28,12 +28,12 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * A body-file argument and the variable it passes; `acli` names the description flag on its create call. Capturing the
- * variable is what ties the guard to the path the call actually passes, rather than to any guard the block happens to
- * carry: a carrier arrives by copying an existing block, and a renamed path with an un-renamed guard is the drift that
- * copying produces.
+ * A body-file argument and the variable it passes; `acli` names the description flag on its create call, and
+ * `describe-change.mjs` names the pull-request body `--pr-body-file`. Capturing the variable is what ties the guard to
+ * the path the call actually passes, rather than to any guard the block happens to carry: a carrier arrives by copying
+ * an existing block, and a renamed path with an un-renamed guard is the drift that copying produces.
  */
-const BODY_FILE_ARGUMENT = /--(?:body|description)-file "\$(\w+)"/g;
+const BODY_FILE_ARGUMENT = /--(?:body|description|pr-body)-file "\$(\w+)"/g;
 
 /** The guard itself, which is what turns a missing or empty body file into a refusal. */
 const GUARD = '[ -s "$body_path" ]';
@@ -41,9 +41,8 @@ const GUARD = '[ -s "$body_path" ]';
 // Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A place here goes to a file that composes a body and hands it to a CLI through a file. `merge-pr` is absent
-// because it composes the merge body and delegates the call, and the Bitbucket delegates are absent because they
-// submit a body inline through the API.
+// A place here goes to a file that composes a body and hands it to a CLI through a file. The Bitbucket delegates are
+// absent because they submit a body inline through the API.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/_data/gh-body-file.md',
   'skills/_data/ticket-source-resolution.md',
@@ -52,6 +51,7 @@ const CARRIERS: ReadonlyArray<string> = [
   'skills/create-gh-pr/SKILL.md',
   'skills/create-ticket/SKILL.md',
   'skills/merge-gh-pr/SKILL.md',
+  'skills/merge-pr/SKILL.md',
   'skills/wrap-up/SKILL.md',
 ];
 

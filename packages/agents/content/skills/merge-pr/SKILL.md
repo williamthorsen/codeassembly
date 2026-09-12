@@ -63,7 +63,7 @@ For a GitHub PR whose `isCrossRepository` is true, fetch `pull/{number}/head` in
 
 `describe-change.mjs` resolves the head, the bare title, the merge-commit title, and the body in one run, by the rules in [Where the record is read](../_data/change-record.md#where-the-record-is-read). This step runs it and resolves nothing by itself.
 
-Write the PR body to a scratch file per [gh body file](../_data/gh-body-file.md), naming it `gh-body-pr{number}-{timestamp}.md`. On GitHub, write it from the platform, so the body reaches the file byte for byte:
+Write the PR body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-pr{number}-{timestamp}.md`. On GitHub, write it from the platform, so the body reaches the file byte for byte:
 
 ```bash
 gh pr view {pr} --json body --jq '.body' > "{body_file}"
@@ -71,23 +71,29 @@ gh pr view {pr} --json body --jq '.body' > "{body_file}"
 
 On Bitbucket, write the `description` from step 2 to the file verbatim.
 
-Then run the helper, naming the file by the absolute path it was written to:
+Then run the helper, opening with the assignment and the guard:
 
 ```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge "{remote}/{baseRefName}" \
   --head "{headRefOid}" \
   --pr-number "{number}" \
   --pr-title "{title}" \
-  --pr-body-file "{body_file}" \
+  --pr-body-file "$body_path" \
   [--pr-label "{label_1}" --pr-label "{label_2}" ...] \
   [--ticket-ref "{ticket_ref}"] \
   [--override-scope "{scope}"] [--override-type "{type}"] [--override-breaking | --no-override-breaking] \
   [--override-title "{title}"]
 ```
 
+The guard is what keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body carries no `## What` and no `change-record` block: the helper would resolve the head from the labels alone, report no `malformed-record` notice, and send step 5 to the drafter. Where the guard refuses, emit `skill.completed` (payload `{"outcome":"stopped: PR body not read"}`) per [Lifecycle events](#lifecycle-events) and stop.
+
 Pass each PR label from step 2 as a separate `--pr-label` flag. Pass `--ticket-ref` only where `ticket_ref` from session context is non-null and `headRefName` is `branch_name`, since a PR merged from another branch's checkout belongs to another ticket; the helper uses that reference only where the PR title carries none. Pass this skill's `--scope`, `--type`, `--breaking`, and `--no-breaking` as `--override-scope`, `--override-type`, `--override-breaking`, and `--no-override-breaking`, omitting each one that was not given.
 
-Where the helper exits non-zero, which includes a `--type` spelled with `!`, or is not found, emit `skill.completed` (payload `{"outcome":"stopped: merge not resolved"}`) per [Lifecycle events](#lifecycle-events) and stop with its message. No title or body is composed without it.
+Where this step's first run exits non-zero, or the helper is not found, emit `skill.completed` (payload `{"outcome":"stopped: merge not resolved"}`) per [Lifecycle events](#lifecycle-events) and stop with its message. No title or body is composed without it. Step 8's re-read stops the same way, since no answer is at fault there.
+
+A re-run driven by an answer at step 6's gate does not stop the skill. Report the helper's message and return to the question that produced the answer: the refusal is in the answer, and the resolution already in hand is still good. A type spelled with `!` is that case, which step 6 maps rather than passes through.
 
 The helper prints one JSON object. Read it from the command's output, with python3 (or jq) where a parser helps:
 
@@ -173,6 +179,8 @@ Settle every entry in `defects` before showing the proposal, one question at a t
 
 - **`unclassified` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types among the report's `recorded`, `derived`, and `labeled` heads and any `candidate-head` notice, plus an "other (specify)" option.
 - **`policy-violation`**: Name the type and the policy that it breaks. Offer the marker that the policy asks for (`--no-override-breaking` where it forbids the marker, `--override-breaking` where it requires it), the types from the list above, and an "other (specify)" option.
+
+Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`. The helper refuses a type carrying `!`, so passing the answer through would refuse the run rather than settle the defect.
 
 When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
@@ -291,6 +299,8 @@ Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle even
 - Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is held by another worktree. On Bitbucket, `both` has no counterpart at all and `merge-bb-pr` refuses it, naming `--delete remote` as the alternative.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
+
+<!-- include: ../_partials/gh-body-file.md / -->
 
 <!-- include: ../_partials/option-format.md / -->
 
