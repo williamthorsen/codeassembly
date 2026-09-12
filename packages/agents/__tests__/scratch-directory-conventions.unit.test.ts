@@ -3,24 +3,34 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-// Bare `mktemp -d` reads the Darwin per-user temp directory rather than `$TMPDIR`, and the agent sandbox denies that
-// path. The command then exits non-zero with empty stdout, and `cd ""` returns 0, so a script carrying the empty value
-// writes into the invoking directory instead. That failure took out 139 shellspec examples and, in a consuming repo,
-// routed verification writes into a working tree. `-t` resolves the same directory, so it fails the same way.
+// A `mktemp` call that names neither a template nor a tmpdir option (`-p`, `--tmpdir`) reads the Darwin per-user temp
+// directory rather than `$TMPDIR`, and the agent sandbox denies that path. `-t` names a prefix, not a template, so it
+// counts as neither. The command then exits non-zero with empty stdout, and `cd ""` returns 0, so a script carrying the
+// empty value writes into the invoking directory instead.
 //
-// The scan covers the whole package because the defect appeared in both halves of it: in the guidance under `content/`
-// that recommends the command, and in the shellspec helper under `spec/` that runs it.
+// macOS substitutes only a trailing X run, so a template that continues past its run names one fixed path: The first
+// invocation leaves the file behind, and the second fails on it.
+//
+// The scan covers the whole package because both halves of it use the command: The guidance under `content/`
+// recommends it, and the shellspec helper under `spec/` runs it.
 const PACKAGE_ROOT = new URL('../', import.meta.url).pathname;
 
 /**
- * A `mktemp` directory call reaching the end of its statement with no template operand, `-t` included since it names a
- * prefix rather than a path. Held as a source string because a shared global regex carries `lastIndex` between uses,
- * which would let one assertion decide another.
+ * A `mktemp` call whose options reach the end of its statement without a template or a tmpdir option. The pattern
+ * accepts only the options that leave the location unchosen (`-d`, `-q`, `-u`, and `-t` with its prefix), so a `-p` or
+ * `--tmpdir` stops the match.
  *
- * The terminator set omits the backtick, which is what keeps prose out: a mention inside inline code is followed by
- * one, so `bare \`mktemp -d\` fails under the sandbox` reads as the warning it is rather than as a call.
+ * The terminator set omits the backtick, which is what keeps prose out: A mention inside inline code is followed by
+ * one, so `bare \`mktemp -d\` fails under the sandbox` reads as the warning it is rather than as a call. The lookbehind
+ * keeps paths out the same way, so `chmod +x bin/mktemp` names no call.
  */
-const BARE_MKTEMP_SOURCE = String.raw`mktemp\s+(?:-d|--directory)(?:\s+-t\s+\S+)?\s*(?:$|[|)>&;])`;
+const UNTEMPLATED_MKTEMP_SOURCE = String.raw`(?<![\w./-])mktemp(?:[ \t]+(?:-[dqu]+|--(?:directory|dry-run|quiet)|-[dqu]*t[ \t]*[^\s|)>&;\x60]+))*[ \t]*(?:$|[|)>&;])`;
+
+/**
+ * A `mktemp` template whose last X run is followed by more of the template, which ends at a quote, whitespace, a
+ * backtick, or a statement terminator. An unquoted template closing a substitution therefore ends at the `)`.
+ */
+const SUFFIXED_TEMPLATE_SOURCE = String.raw`(?<![\w./-])mktemp\b[^\n|)>&;\x60]*?X{3,}[^\sX"'\x60|)>&;]+(?=["'\s\x60|)>&;]|$)`;
 
 /** The comment that opens a negative example, exempting the lines under it up to the next blank one. */
 const BAD_EXAMPLE_LABEL = /^\s*#\s*Bad\b/;
@@ -31,25 +41,23 @@ const SCANNED_EXTENSIONS: ReadonlySet<string> = new Set(['.md', '.sh']);
 const SKIPPED_DIRECTORIES: ReadonlySet<string> = new Set(['dist', 'fixtures', 'node_modules']);
 
 describe('scratch-directory conventions', () => {
-  it('names a template on every mktemp call outside a labelled negative example', async () => {
-    const violations: Array<string> = [];
-    const files = await listScannedFiles(PACKAGE_ROOT);
-
-    for (const file of files) {
-      const content = await readFile(file, 'utf8');
-      const relativePath = path.relative(PACKAGE_ROOT, file);
-
-      const calls = listBareCalls(listScannableText(content, file));
-
-      for (const call of calls) {
-        violations.push(`${relativePath} -> ${call}`);
-      }
-    }
+  it('names a template or a tmpdir option on every mktemp call outside a labelled negative example', async () => {
+    const violations = await listPackageViolations(UNTEMPLATED_MKTEMP_SOURCE);
 
     const message =
-      'A `mktemp` directory call needs a template rooted at $TMPDIR; without one it picks a path the agent sandbox ' +
-      'denies. Write `mktemp -d "${TMPDIR:-/tmp}/<prefix>.XXXXXX"`, or open the block with `# Bad:` where the ' +
-      'failure is the point:\n  ' +
+      'A `mktemp` call needs a template rooted at $TMPDIR or a tmpdir option; without either it picks a path the ' +
+      'agent sandbox denies. Write `mktemp -d "${TMPDIR:-/tmp}/<prefix>.XXXXXX"` or pass `-p "$TMPDIR"`, or open ' +
+      'the block with `# Bad:` where the failure is the point:\n  ' +
+      violations.join('\n  ');
+    expect(violations, message).toEqual([]);
+  });
+
+  it('ends every mktemp template with its X run outside a labelled negative example', async () => {
+    const violations = await listPackageViolations(SUFFIXED_TEMPLATE_SOURCE);
+
+    const message =
+      'macOS `mktemp` substitutes only a trailing X run, so a template that continues past it names one fixed path. ' +
+      'End the template with its X run, or open the block with `# Bad:` where the failure is the point:\n  ' +
       violations.join('\n  ');
     expect(violations, message).toEqual([]);
   });
@@ -63,13 +71,27 @@ describe('scratch-directory conventions', () => {
   });
 
   it.each([
-    ['bare', 'tmpdir=$(mktemp -d)', 1],
-    ['long-option bare', 'mktemp --directory', 1],
-    ['prefix flag', 'mktemp -d -t probe', 1],
-    ['templated', 'mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX"', 0],
-    ['prose mention in inline code', 'bare `mktemp -d` picks a denied path', 0],
-  ])('counts a %s call', (_label, line, expected) => {
-    expect(listBareCalls(line)).toHaveLength(expected);
+    ['a bare file call', '$(mktemp)', 1, 0],
+    ['a bare directory call', 'tmpdir=$(mktemp -d)', 1, 0],
+    ['a long-option directory call', 'mktemp --directory', 1, 0],
+    ['a quiet file call', 'mktemp -q', 1, 0],
+    ['bundled flags', 'x=$(mktemp -dq)', 1, 0],
+    ['separate flags', 'x=$(mktemp -q -d) || exit', 1, 0],
+    ['a prefix flag', 'mktemp -t probe', 1, 0],
+    ['a bundled prefix flag', 'x=$(mktemp -dt probe)', 1, 0],
+    ['a redirected prefix flag', 'mktemp -d -t probe >out', 1, 0],
+    ['a template continuing past its X run', 'x=$(mktemp "${TMPDIR:-/tmp}/x.XXXXXX.patch")', 0, 1],
+    ['a templated call', 'mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX"', 0, 0],
+    ['a tmpdir option', 'mktemp -d -p "$TMPDIR"', 0, 0],
+    ['a long tmpdir option', 'mktemp -d --tmpdir', 0, 0],
+    ['a tmpdir option beside a prefix flag', 'mktemp -d -p "$TMPDIR" -t probe', 0, 0],
+    ['a path to the binary', 'chmod +x bin/mktemp', 0, 0],
+    ['a prose mention in inline code', 'bare `mktemp -d` picks a denied path', 0, 0],
+    ['an unquoted template closing a substitution', 'x=$(mktemp -d $dir/x.XXXXXX)', 0, 0],
+    ['a template with an earlier X run', 'mktemp -d "$TMPDIR/XXXprobe.XXXXXX"', 0, 0],
+  ])('classifies %s', (_label, line, untemplatedCount, suffixedCount) => {
+    expect(listMatches(UNTEMPLATED_MKTEMP_SOURCE, line)).toHaveLength(untemplatedCount);
+    expect(listMatches(SUFFIXED_TEMPLATE_SOURCE, line)).toHaveLength(suffixedCount);
   });
 
   it('exempts a labelled example without exempting its neighbour', () => {
@@ -87,46 +109,52 @@ describe('scratch-directory conventions', () => {
     const templated = buildFence('tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX")');
     const regressed = buildFence('tmpdir=$(mktemp -d)');
 
-    expect(listBareCalls(listScannableText(templated, 'x.md'))).toEqual([]);
-    expect(listBareCalls(listScannableText(regressed, 'x.md'))).toHaveLength(1);
+    expect(listMatches(UNTEMPLATED_MKTEMP_SOURCE, listScannableText(templated, 'x.md'))).toEqual([]);
+    expect(listMatches(UNTEMPLATED_MKTEMP_SOURCE, listScannableText(regressed, 'x.md'))).toHaveLength(1);
   });
 
   it('exempts nothing in a shell file', () => {
     const script = '# Bad: this label scopes to no block here\ntmpdir=$(mktemp -d)\n';
 
-    expect(listBareCalls(listScannableText(script, 'x.sh'))).toHaveLength(1);
+    expect(listMatches(UNTEMPLATED_MKTEMP_SOURCE, listScannableText(script, 'x.sh'))).toHaveLength(1);
   });
 });
 
 // region | Helpers
 
-/** Lists the templateless `mktemp` directory calls in a span of text, each trimmed to the text that matched. */
-function listBareCalls(text: string): ReadonlyArray<string> {
+/**
+ * Lists the matches of a pattern source in a span of text, each trimmed to the text that matched. The regex is compiled
+ * per call because a shared global regex carries `lastIndex` between uses, which would let one assertion decide another.
+ */
+function listMatches(source: string, text: string): ReadonlyArray<string> {
   return text
-    .matchAll(new RegExp(BARE_MKTEMP_SOURCE, 'gm'))
+    .matchAll(new RegExp(source, 'gm'))
     .map((match) => match[0].trim())
     .toArray();
 }
 
-/** Lists the Markdown and shell files under a root whose scratch-directory usage this suite governs. */
-async function listScannedFiles(root: string): Promise<ReadonlyArray<string>> {
-  const entries = await readdir(root, { recursive: true, withFileTypes: true });
+/** Lists the matches of a pattern source across the package's scanned files, each prefixed with its file's path. */
+async function listPackageViolations(source: string): Promise<ReadonlyArray<string>> {
+  const violations: Array<string> = [];
+  const files = await listScannedFiles(PACKAGE_ROOT);
 
-  return entries
-    .filter((entry) => entry.isFile() && SCANNED_EXTENSIONS.has(path.extname(entry.name)))
-    .map((entry) => path.join(entry.parentPath, entry.name))
-    .filter((file) =>
-      path
-        .relative(root, file)
-        .split(path.sep)
-        .every((segment) => !SKIPPED_DIRECTORIES.has(segment)),
-    );
+  for (const file of files) {
+    const content = await readFile(file, 'utf8');
+    const relativePath = path.relative(PACKAGE_ROOT, file);
+    const matches = listMatches(source, listScannableText(content, file));
+
+    for (const match of matches) {
+      violations.push(`${relativePath} -> ${match}`);
+    }
+  }
+
+  return violations;
 }
 
 /**
  * Returns a file's text with each labelled negative example removed. The label exempts the lines from itself to the
  * next blank one, so a fence pairing a `# Bad` block with a `# Good` one keeps the second under the scan. Only a
- * fenced block is eligible: at the top level of a Markdown file the same text is an `h1`, and a shell file has no
+ * fenced block is eligible: At the top level of a Markdown file the same text is an `h1`, and a shell file has no
  * fence to scope the label to, so it takes no exemption at all.
  */
 function listScannableText(content: string, file: string): string {
@@ -151,6 +179,21 @@ function listScannableText(content: string, file: string): string {
   }
 
   return kept.join('\n');
+}
+
+/** Lists the Markdown and shell files under a root whose scratch-directory usage this suite governs. */
+async function listScannedFiles(root: string): Promise<ReadonlyArray<string>> {
+  const entries = await readdir(root, { recursive: true, withFileTypes: true });
+
+  return entries
+    .filter((entry) => entry.isFile() && SCANNED_EXTENSIONS.has(path.extname(entry.name)))
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) =>
+      path
+        .relative(root, file)
+        .split(path.sep)
+        .every((segment) => !SKIPPED_DIRECTORIES.has(segment)),
+    );
 }
 
 // endregion | Helpers
