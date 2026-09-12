@@ -16,7 +16,7 @@ import { render } from '../change-grammar/render.ts';
 import { BREAKING_MARKER } from '../change-grammar/tokens.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
-import { type FlagSpec, type MatchedFlag, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
+import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
 import { readChangeRecordBlock, type RecordOverrides, renderChangeRecordBlock } from './change-record-block.ts';
 import { classifyCommits } from './classify.ts';
@@ -26,83 +26,63 @@ import { readLabelMap, resolveLabeledHead } from './read-label-map.ts';
 import { type MergeInput, type MergeOverrides, type MergeReport, resolveMerge } from './resolve-merge.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
-  type ClassifyOutcome,
+  type ConsolidateBranchOutcome,
   isSurface,
   type ParsedArgs,
-  type ParseOutcome,
-  type RecordBlockOutcome,
+  type ParseTitleOutcome,
+  type RenderBlockOutcome,
   type RenderedTitles,
   type ResolveMergeArgs,
+  type Subcommand,
   type Surface,
   SURFACES,
+  type TicketTypeOutcome,
 } from './types.ts';
 
-/** The flags this helper accepts; it reads nothing from stdin. */
-const FLAGS: readonly FlagSpec[] = [
-  { name: 'breaking', takesValue: false },
-  { name: 'classify', takesValue: true },
-  { name: 'head', takesValue: true },
-  { name: 'no-override-breaking', takesValue: false },
+/** The flags that set an override, which a `change-record` block records and a merge applies. */
+const OVERRIDE_FLAGS: readonly FlagSpec[] = [
   { name: 'override-breaking', takesValue: false },
   { name: 'override-scope', takesValue: true },
-  { name: 'override-title', takesValue: true },
   { name: 'override-type', takesValue: true },
-  { name: 'parse', takesValue: true },
-  { name: 'pr-body-file', takesValue: true },
-  { name: 'pr-label', takesValue: true },
-  { name: 'pr-number', takesValue: true },
-  { name: 'pr-title', takesValue: true },
-  { name: 'record-block', takesValue: false },
-  { name: 'resolve-merge', takesValue: true },
-  { name: 'scope', takesValue: true },
-  { name: 'ticket-label', takesValue: true },
-  { name: 'ticket-ref', takesValue: true },
-  { name: 'title', takesValue: true },
-  { name: 'type', takesValue: true },
 ];
-
-/** The flags that each select a mode other than rendering, so no two of them may appear together. */
-const MODE_FLAGS: readonly string[] = ['classify', 'parse', 'record-block', 'resolve-merge'];
-
-/** The flags that set an override, which a `change-record` block records and a merge applies. */
-const OVERRIDE_FLAGS: ReadonlySet<string> = new Set(['override-breaking', 'override-scope', 'override-type']);
 
 /** The name this helper reports itself under on stderr. */
 const PROGRAM = 'describe-change';
 
-/** The flags `--record-block` accepts: the mode itself, the head's record flags, and the overrides. */
-const RECORD_BLOCK_FLAGS: ReadonlySet<string> = new Set([
-  'breaking',
-  'record-block',
-  'scope',
-  'title',
-  'type',
-  ...OVERRIDE_FLAGS,
-]);
+/** The flags that set a record's title, scope, type, and breaking marker. */
+const RECORD_FLAGS: readonly FlagSpec[] = [
+  { name: 'breaking', takesValue: false },
+  { name: 'scope', takesValue: true },
+  { name: 'title', takesValue: true },
+  { name: 'type', takesValue: true },
+];
 
-/** The flags `--resolve-merge` accepts: the mode itself, the pull request's inputs, and the author's overrides. */
-const RESOLVE_MERGE_FLAGS: ReadonlySet<string> = new Set([
-  'head',
-  'no-override-breaking',
-  'override-title',
-  'pr-body-file',
-  'pr-label',
-  'pr-number',
-  'pr-title',
-  'resolve-merge',
-  'ticket-ref',
-  ...OVERRIDE_FLAGS,
-]);
-
-/** The flags that carry a pull request's inputs to `--resolve-merge` and mean nothing in any other mode. */
-const RESOLVE_MERGE_ONLY_FLAGS: ReadonlySet<string> = new Set([
-  'head',
-  'no-override-breaking',
-  'override-title',
-  'pr-body-file',
-  'pr-label',
-  'pr-title',
-]);
+/** Each subcommand's flags, and the reader of its scanned arguments, in the order the usage error lists them. */
+const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
+  'render-titles': {
+    flags: [...RECORD_FLAGS, { name: 'pr-number', takesValue: true }, { name: 'ticket-ref', takesValue: true }],
+    read: readRenderTitlesArgs,
+  },
+  'parse-title': { flags: [], read: readParseTitleArgs },
+  'consolidate-branch': { flags: [{ name: 'base', takesValue: true }], read: readConsolidateBranchArgs },
+  'resolve-ticket-type': { flags: [{ name: 'ticket-label', takesValue: true }], read: readResolveTicketTypeArgs },
+  'render-block': { flags: [...RECORD_FLAGS, ...OVERRIDE_FLAGS], read: readRenderBlockArgs },
+  'resolve-merge': {
+    flags: [
+      { name: 'base', takesValue: true },
+      { name: 'head', takesValue: true },
+      { name: 'no-override-breaking', takesValue: false },
+      ...OVERRIDE_FLAGS,
+      { name: 'override-title', takesValue: true },
+      { name: 'pr-body-file', takesValue: true },
+      { name: 'pr-label', takesValue: true },
+      { name: 'pr-number', takesValue: true },
+      { name: 'pr-title', takesValue: true },
+      { name: 'ticket-ref', takesValue: true },
+    ],
+    read: readResolveMergeArgs,
+  },
+};
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -128,196 +108,92 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv into what the run asks for.
+ * Parses the helper's argv into what the run asks for. The first argument names the subcommand, and the rest are
+ * scanned against that subcommand's flags alone, so a flag that only another subcommand takes is refused as unknown.
  *
- * Every record flag is optional, and a flag left off resolves its token to empty, so an invocation carrying no flags
- * renders each template against an empty record. `--type feat!` is accepted and split into the bare type and the
- * breaking flag, which `--breaking` sets directly.
- *
- * `--parse` names the surface whose template reads the subject, and the subject itself follows as the one positional.
- * It takes no record flags: a record flag alongside it would be silently unused.
- *
- * `--classify` names the base ref of the range to read, and takes `--ticket-label` as often as the ticket carries one.
- * It takes no record flags either.
- *
- * `--record-block` takes no value. It reads the head from `--title`, `--scope`, `--type`, and `--breaking`, and the
- * author's overrides from `--override-scope`, `--override-type`, and `--override-breaking`.
- *
- * `--resolve-merge` names the base ref of a pull request's range and reads the pull request from `--head`, `--pr-title`,
- * `--pr-body-file`, `--pr-number`, every `--pr-label`, and `--ticket-ref`. It takes no record flags, since the head comes
- * from the pull request, and reads the author's overrides from `--override-scope`, `--override-type`,
- * `--override-breaking` or `--no-override-breaking`, and `--override-title`. The override flags mean nothing in
- * rendering mode, and the four non-rendering modes are mutually exclusive.
+ * `render-titles` and `render-block` accept `--type feat!`, which the engine splits into the bare type and the breaking
+ * marker. An `--override-type` carrying the marker is refused, since the breaking overrides set it.
  *
  * @internal - Exported to allow testing.
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
-  const { positionals, flags } = scanFlags(argv, FLAGS);
-  const values = valueFlagMap(flags);
-
-  const modes = MODE_FLAGS.filter((name) => flags.some((flag) => flag.name === name));
-  if (modes.length > 1) {
-    throw new Error(`${modes.map((name) => `--${name}`).join(' and ')} each select a mode; pass one`);
+  const [subcommand, ...rest] = argv;
+  if (subcommand === undefined || !isSubcommand(subcommand)) {
+    throw new Error(buildUsageMessage(subcommand));
   }
-  if (values.classify !== undefined) {
-    return parseClassifyArgs(values.classify, positionals, flags);
-  }
-  if (values.parse !== undefined) {
-    return parseReadArgs(values.parse, positionals, flags);
-  }
-  if (flags.some((flag) => flag.name === 'record-block')) {
-    return parseRecordBlockArgs(positionals, flags);
-  }
-  if (values['resolve-merge'] !== undefined) {
-    return parseResolveMergeArgs(values['resolve-merge'], positionals, flags);
-  }
-  if (positionals[0] !== undefined) {
-    throw new Error(`unexpected argument: ${positionals[0]}`);
-  }
-  if (values['ticket-label'] !== undefined) {
-    throw new Error('--ticket-label resolves a ticket type for --classify, so it takes no meaning on its own');
-  }
-  const mergeInput = flags.find((flag) => RESOLVE_MERGE_ONLY_FLAGS.has(flag.name));
-  if (mergeInput !== undefined) {
-    throw new Error(`--${mergeInput.name} is an input to --resolve-merge, so it takes no meaning on its own`);
-  }
-  const override = flags.find((flag) => OVERRIDE_FLAGS.has(flag.name));
-  if (override !== undefined) {
-    throw new Error(
-      `--${override.name} sets an override for --record-block or --resolve-merge, so it takes no meaning on its own`,
-    );
-  }
-
-  return { mode: 'render', record: readRecordFlags(flags) };
+  const { flags, read } = SUBCOMMANDS[subcommand];
+  return read(scanFlags(rest, flags));
 }
 
 /**
- * Runs the helper end to end: parses args, resolves the templates from the project and global preferences files,
- * refuses any template the engine cannot round-trip, and then renders titles, reads a subject, classifies a commit
- * range, renders a `change-record` block, or resolves a merge.
+ * Runs the helper end to end: parses args, then runs the subcommand they name, loading only what that subcommand reads.
+ * A subcommand that loads the title templates refuses any template the engine cannot round-trip, so `render-block` and
+ * `resolve-ticket-type`, which load none, run whatever the templates hold.
  *
- * A run outside a repository warns and anchors the project lookup at `cwd` rather than failing, since a title still
- * renders from the global templates. An unreadable taxonomy likewise warns: rendering needs none, so only the
- * verification pass and `--parse` are lost.
+ * A run outside a repository warns and anchors the lookup at `cwd` rather than failing, since a title still renders from
+ * the global templates. An unreadable taxonomy warns under `render-titles`, which renders without one, and refuses every
+ * other subcommand that loads templates.
  *
  * @internal - Exported to allow testing.
  */
-export async function runDescribe(input: {
+export async function runDescribe(input: DescribeInput): Promise<DescribeResult> {
+  const args = parseArgs(input.argv);
+  switch (args.subcommand) {
+    case 'consolidate-branch':
+      return runConsolidateBranch(args.baseRef, input);
+    case 'parse-title':
+      return runParseTitle(args.surface, args.subject, input);
+    case 'render-block':
+      return { output: { block: renderChangeRecordBlock(args.block) }, warnings: [] };
+    case 'render-titles':
+      return runRenderTitles(args.record, input);
+    case 'resolve-merge':
+      return runResolveMerge(args.merge, input);
+    case 'resolve-ticket-type':
+      return runResolveTicketType(args.ticketLabels, input);
+  }
+}
+
+/** What a run reads: its argv, the directory it was invoked from, the taxonomy's directory, and the home directory. */
+export interface DescribeInput {
   argv: readonly string[];
   cwd: string;
   dataDir: string;
   home: string;
-}): Promise<DescribeResult> {
-  const args = parseArgs(input.argv);
-
-  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
-  const { templates, warnings } = await loadPreferences({ home: input.home, projectRoot });
-  if (warning !== undefined) {
-    warnings.unshift(warning);
-  }
-
-  const taxonomy = await loadTaxonomy(input.dataDir);
-  if (taxonomy === null) {
-    warnings.push(`no readable work-types.json under ${input.dataDir}; templates are not verified`);
-  } else {
-    refuseUnverifiableTemplates(templates, taxonomy);
-  }
-
-  if (args.mode === 'parse') {
-    if (taxonomy === null) {
-      throw new Error(`--parse resolves the type against the taxonomy; none is readable under ${input.dataDir}`);
-    }
-    return { output: readSubject(args.surface, templates[args.surface], args.subject, taxonomy), warnings };
-  }
-
-  if (args.mode === 'classify') {
-    if (taxonomy === null) {
-      throw new Error(`--classify ranks types against the taxonomy; none is readable under ${input.dataDir}`);
-    }
-    if (templates.commit === '') {
-      throw new Error('commit.title_format is empty, so a branch’s commits cannot be read back');
-    }
-    const output = await classifyRange({
-      baseRef: args.baseRef,
-      cwd: projectRoot,
-      taxonomy,
-      template: templates.commit,
-      ticketLabels: args.ticketLabels,
-    });
-    return { output, warnings };
-  }
-
-  if (args.mode === 'record-block') {
-    return { output: { block: renderChangeRecordBlock(args.block) }, warnings };
-  }
-
-  if (args.mode === 'resolve-merge') {
-    if (taxonomy === null) {
-      throw new Error(`--resolve-merge checks types against the taxonomy; none is readable under ${input.dataDir}`);
-    }
-    const output = await resolveMergeRun({ args: args.merge, cwd: input.cwd, projectRoot, taxonomy, templates });
-    return { output, warnings };
-  }
-
-  return {
-    output: {
-      commit_title: renderTemplate(templates.commit, args.record),
-      ticket_title: renderTemplate(templates.ticket, args.record),
-      pr_title: renderTemplate(templates.pr, args.record),
-      merge_title: renderTemplate(templates.merge, args.record),
-    },
-    warnings,
-  };
 }
 
 /** What a completed run writes: the JSON payload for stdout, and the diagnostics for stderr. */
 export interface DescribeResult {
-  output: ClassifyOutcome | MergeReport | ParseOutcome | RecordBlockOutcome | RenderedTitles;
+  output:
+    | ConsolidateBranchOutcome
+    | MergeReport
+    | ParseTitleOutcome
+    | RenderBlockOutcome
+    | RenderedTitles
+    | TicketTypeOutcome;
   warnings: string[];
 }
 
 // region | Helpers
 
-/**
- * Reads a range's commits, classifies them, and resolves the ticket type, in the shape the JSON output names. Each entry
- * is rendered back through the template that read it, so its `change` is canonical whatever the subject it came from.
- */
-async function classifyRange(input: {
-  baseRef: string;
-  cwd: string;
-  taxonomy: Taxonomy;
-  template: string;
-  ticketLabels: readonly string[];
-}): Promise<ClassifyOutcome> {
-  const commits = await readCommits({ baseRef: input.baseRef, cwd: input.cwd });
-  const nodes = compileTemplate(input.template);
-  const classification = classifyCommits(commits, nodes, input.taxonomy);
-  const ticketType = await resolveTicketType({
-    labelMapPath: path.join(input.cwd, '.meta', 'label-map.json'),
-    labels: input.ticketLabels,
-  });
+/** The project root, the templates it resolves to, the taxonomy where one is readable, and what loading reported. */
+interface LoadedTemplates {
+  projectRoot: string;
+  taxonomy: Taxonomy | null;
+  templates: Record<Surface, string>;
+  warnings: string[];
+}
 
-  return {
-    entries: classification.entries.map((entry) => ({
-      breaking: entry.record.breaking === true,
-      change: render(nodes, entry.record),
-      commit: entry.commit,
-      scope: entry.record.scope ?? null,
-      title: entry.record.title ?? null,
-      type: entry.record.type ?? null,
-    })),
-    head:
-      classification.head === undefined
-        ? null
-        : {
-            breaking: classification.head.breaking === true,
-            scope: classification.head.scope ?? null,
-            type: classification.head.type ?? null,
-          },
-    ticket_type: ticketType ?? null,
-    unclassified: classification.unclassified,
-    violations: classification.violations,
-  };
+/** One subcommand's flags, and the reader that turns its scanned arguments into what the run asks for. */
+interface SubcommandSpec {
+  flags: readonly FlagSpec[];
+  read: (scan: ScanResult) => ParsedArgs;
+}
+
+/** Builds the usage error for a missing or unknown subcommand, listing every subcommand the helper takes. */
+function buildUsageMessage(subcommand: string | undefined): string {
+  const usage = `usage: ${PROGRAM} <subcommand> [flags], where <subcommand> is one of ${Object.keys(SUBCOMMANDS).join(', ')}`;
+  return subcommand === undefined ? `a subcommand is required; ${usage}` : `unknown subcommand ${subcommand}; ${usage}`;
 }
 
 /**
@@ -367,125 +243,71 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Reads the `--classify` invocation: the base ref it names, and every `--ticket-label` the ticket carries. */
-function parseClassifyArgs(baseRef: string, positionals: readonly string[], flags: readonly MatchedFlag[]): ParsedArgs {
-  const other = flags.find((flag) => flag.name !== 'classify' && flag.name !== 'ticket-label');
-  if (other !== undefined) {
-    throw new Error(`--classify reads a commit range, so it takes no record flags; got --${other.name}`);
-  }
-  if (positionals[0] !== undefined) {
-    throw new Error(`unexpected argument: ${positionals[0]}`);
-  }
-
-  const ticketLabels: string[] = [];
-  for (const flag of flags) {
-    if (flag.name === 'ticket-label' && flag.value !== null) {
-      ticketLabels.push(flag.value);
-    }
-  }
-  return { baseRef, mode: 'classify', ticketLabels };
-}
-
-/** Reads the `--parse` invocation: the surface it names, and the single positional carrying the subject. */
-function parseReadArgs(surface: string, positionals: readonly string[], flags: readonly MatchedFlag[]): ParsedArgs {
-  if (!isSurface(surface)) {
-    throw new Error(`--parse must name one of ${SURFACES.join(', ')}`);
-  }
-  const other = flags.find((flag) => flag.name !== 'parse');
-  if (other !== undefined) {
-    throw new Error(`--parse reads a rendered subject, so it takes no record flags; got --${other.name}`);
-  }
-  const [subject, extra] = positionals;
-  if (subject === undefined) {
-    throw new Error('--parse takes the surface and the subject string to read');
-  }
-  if (extra !== undefined) {
-    throw new Error(`unexpected argument: ${extra}`);
-  }
-  return { mode: 'parse', subject, surface };
-}
-
-/** Reads the `--record-block` invocation: the head's record flags and the author's overrides. */
-function parseRecordBlockArgs(positionals: readonly string[], flags: readonly MatchedFlag[]): ParsedArgs {
-  const other = flags.find((flag) => !RECORD_BLOCK_FLAGS.has(flag.name));
-  if (other !== undefined) {
-    throw new Error(`--record-block records a head and its overrides, so it takes no --${other.name}`);
-  }
-  if (positionals[0] !== undefined) {
-    throw new Error(`unexpected argument: ${positionals[0]}`);
-  }
-
-  const values = valueFlagMap(flags);
-  const overrides: RecordOverrides = {
-    ...(flags.some((flag) => flag.name === 'override-breaking') && { breaking: true }),
-    ...(values['override-scope'] !== undefined && { scope: values['override-scope'] }),
-    ...(values['override-type'] !== undefined && { type: values['override-type'] }),
-  };
-  return { block: { head: readRecordFlags(flags), overrides }, mode: 'record-block' };
+/** Reports whether `value` names one of the helper's subcommands. */
+function isSubcommand(value: string): value is Subcommand {
+  return Object.hasOwn(SUBCOMMANDS, value);
 }
 
 /**
- * Reads the `--resolve-merge` invocation: the base ref it names, the pull request's inputs, and the author's overrides.
- * A type override takes a bare type, since `--override-breaking` and `--no-override-breaking` set the marker.
+ * Resolves the project root and the templates its preferences files configure, then refuses any configured template
+ * the engine cannot round-trip, where a taxonomy is readable to verify against.
  */
-function parseResolveMergeArgs(
-  baseRef: string,
-  positionals: readonly string[],
-  flags: readonly MatchedFlag[],
-): ParsedArgs {
-  const other = flags.find((flag) => !RESOLVE_MERGE_FLAGS.has(flag.name));
-  if (other !== undefined) {
-    throw new Error(`--resolve-merge reads the head from the pull request, so it takes no --${other.name}`);
-  }
-  if (positionals[0] !== undefined) {
-    throw new Error(`unexpected argument: ${positionals[0]}`);
-  }
-  if (baseRef.trim() === '') {
-    throw new Error('--resolve-merge takes the base ref of the pull request’s range');
+async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
+  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+  const { templates, warnings } = await loadPreferences({ home: input.home, projectRoot });
+  if (warning !== undefined) {
+    warnings.unshift(warning);
   }
 
-  const values = valueFlagMap(flags);
-  const prNumber = readRequiredValue(values, 'pr-number');
-  if (!/^\d+$/.test(prNumber)) {
-    throw new Error(`--pr-number takes the pull request’s number; got ${prNumber}`);
+  const taxonomy = await loadTaxonomy(input.dataDir);
+  if (taxonomy !== null) {
+    refuseUnverifiableTemplates(templates, taxonomy);
   }
-  const breakingFlags = new Set(
-    flags.filter((flag) => flag.name.endsWith('override-breaking')).map((flag) => flag.name),
-  );
-  if (breakingFlags.size > 1) {
-    throw new Error('--override-breaking and --no-override-breaking set the marker in opposite directions; pass one');
+  return { projectRoot, taxonomy, templates, warnings };
+}
+
+/** Loads the templates for a subcommand that cannot run without the taxonomy, prefixing the refusal with `reason`. */
+async function loadTemplatesWithTaxonomy(
+  input: DescribeInput,
+  reason: string,
+): Promise<LoadedTemplates & { taxonomy: Taxonomy }> {
+  const loaded = await loadTemplates(input);
+  const { taxonomy } = loaded;
+  if (taxonomy === null) {
+    throw new Error(`${reason}; none is readable under ${input.dataDir}`);
   }
-  for (const name of ['override-scope', 'override-title', 'override-type', 'ticket-ref']) {
-    if (values[name]?.trim() === '') {
-      throw new Error(`--${name} requires a value`);
-    }
-  }
+  return { ...loaded, taxonomy };
+}
+
+/** Reads the `consolidate-branch` invocation: the base ref of the range to read. */
+function readConsolidateBranchArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return {
+    baseRef: readRequiredValue('consolidate-branch', valueFlagMap(flags), 'base'),
+    subcommand: 'consolidate-branch',
+  };
+}
+
+/** Reads `--override-type`, refusing a type that carries the breaking marker. */
+function readOverrideType(values: Record<string, string>): string | undefined {
   const type = values['override-type']?.trim();
   if (type?.endsWith(BREAKING_MARKER) === true) {
     throw new Error('--override-type takes a bare type; pass --override-breaking for a breaking change');
   }
+  return type;
+}
 
-  const [breakingFlag] = breakingFlags;
-  const scope = values['override-scope']?.trim();
-  const title = values['override-title']?.trim();
-  const ticketRef = values['ticket-ref']?.trim();
-  const overrides: MergeOverrides = {
-    ...(breakingFlag !== undefined && { breaking: breakingFlag === 'override-breaking' }),
-    ...(scope !== undefined && { scope }),
-    ...(title !== undefined && { title }),
-    ...(type !== undefined && { type }),
-  };
-  const merge: ResolveMergeArgs = {
-    baseRef: baseRef.trim(),
-    headCommit: readRequiredValue(values, 'head'),
-    overrides,
-    prBodyFile: readRequiredValue(values, 'pr-body-file'),
-    prLabels: flags.flatMap((flag) => (flag.name === 'pr-label' && flag.value !== null ? [flag.value] : [])),
-    prNumber,
-    prTitle: readRequiredValue(values, 'pr-title'),
-    ...(ticketRef !== undefined && { ticketRef }),
-  };
-  return { merge, mode: 'resolve-merge' };
+/** Reads the `parse-title` invocation: the surface whose template reads the subject, then the subject itself. */
+function readParseTitleArgs({ positionals }: ScanResult): ParsedArgs {
+  const [surface, subject] = positionals;
+  if (surface === undefined || subject === undefined) {
+    throw new Error('parse-title takes the surface and the subject string to read');
+  }
+  if (!isSurface(surface)) {
+    throw new Error(`parse-title must name one of ${SURFACES.join(', ')}`);
+  }
+  refusePositionals(positionals.slice(2));
+  return { subcommand: 'parse-title', subject, surface };
 }
 
 /** Reads the record flags into a record, leaving out every field whose flag is absent. */
@@ -501,17 +323,98 @@ function readRecordFlags(flags: readonly MatchedFlag[]): ChangeRecord {
   };
 }
 
-/** Reads a value flag that the invocation requires, refusing one that is absent or blank. */
-function readRequiredValue(values: Record<string, string>, name: string): string {
+/** Reads the `render-block` invocation: the head's record flags and the author's overrides. */
+function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  const values = valueFlagMap(flags);
+  const type = readOverrideType(values);
+  const overrides: RecordOverrides = {
+    ...(flags.some((flag) => flag.name === 'override-breaking') && { breaking: true }),
+    ...(values['override-scope'] !== undefined && { scope: values['override-scope'] }),
+    ...(type !== undefined && { type }),
+  };
+  return { block: { head: readRecordFlags(flags), overrides }, subcommand: 'render-block' };
+}
+
+/**
+ * Reads the `render-titles` invocation into a record. Every flag is optional, and a flag left off resolves its token to
+ * empty, so an invocation carrying no flags renders each template against an empty record.
+ */
+function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return { record: readRecordFlags(flags), subcommand: 'render-titles' };
+}
+
+/** Collects every value of a repeatable flag, in the order the invocation passes them. */
+function readRepeatedValues(flags: readonly MatchedFlag[], name: string): string[] {
+  return flags.flatMap((flag) => (flag.name === name && flag.value !== null ? [flag.value] : []));
+}
+
+/** Reads a value flag that the subcommand requires, refusing one that is absent or blank. */
+function readRequiredValue(subcommand: Subcommand, values: Record<string, string>, name: string): string {
   const value = values[name]?.trim();
   if (value === undefined || value === '') {
-    throw new Error(`--resolve-merge requires --${name}`);
+    throw new Error(`${subcommand} requires --${name}`);
   }
   return value;
 }
 
+/**
+ * Reads the `resolve-merge` invocation: the pull request's range and inputs, and the author's overrides. A type override
+ * takes a bare type, since `--override-breaking` and `--no-override-breaking` set the marker.
+ */
+function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  const values = valueFlagMap(flags);
+  const baseRef = readRequiredValue('resolve-merge', values, 'base');
+  const prNumber = readRequiredValue('resolve-merge', values, 'pr-number');
+  if (!/^\d+$/.test(prNumber)) {
+    throw new Error(`--pr-number takes the pull request’s number; got ${prNumber}`);
+  }
+  const breakingFlags = new Set(
+    flags.filter((flag) => flag.name.endsWith('override-breaking')).map((flag) => flag.name),
+  );
+  if (breakingFlags.size > 1) {
+    throw new Error('--override-breaking and --no-override-breaking set the marker in opposite directions; pass one');
+  }
+  for (const name of ['override-scope', 'override-title', 'override-type', 'ticket-ref']) {
+    if (values[name]?.trim() === '') {
+      throw new Error(`--${name} requires a value`);
+    }
+  }
+  const type = readOverrideType(values);
+
+  const [breakingFlag] = breakingFlags;
+  const scope = values['override-scope']?.trim();
+  const title = values['override-title']?.trim();
+  const ticketRef = values['ticket-ref']?.trim();
+  const overrides: MergeOverrides = {
+    ...(breakingFlag !== undefined && { breaking: breakingFlag === 'override-breaking' }),
+    ...(scope !== undefined && { scope }),
+    ...(title !== undefined && { title }),
+    ...(type !== undefined && { type }),
+  };
+  const merge: ResolveMergeArgs = {
+    baseRef,
+    headCommit: readRequiredValue('resolve-merge', values, 'head'),
+    overrides,
+    prBodyFile: readRequiredValue('resolve-merge', values, 'pr-body-file'),
+    prLabels: readRepeatedValues(flags, 'pr-label'),
+    prNumber,
+    prTitle: readRequiredValue('resolve-merge', values, 'pr-title'),
+    ...(ticketRef !== undefined && { ticketRef }),
+  };
+  return { merge, subcommand: 'resolve-merge' };
+}
+
+/** Reads the `resolve-ticket-type` invocation: every label the ticket carries. */
+function readResolveTicketTypeArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return { subcommand: 'resolve-ticket-type', ticketLabels: readRepeatedValues(flags, 'ticket-label') };
+}
+
 /** Reads a subject back through one surface's template, reporting each field the record carries. */
-function readSubject(surface: Surface, template: string, subject: string, taxonomy: Taxonomy): ParseOutcome {
+function readSubject(surface: Surface, template: string, subject: string, taxonomy: Taxonomy): ParseTitleOutcome {
   if (template === '') {
     throw new Error(`${surface}.title_format is empty, so a ${surface} subject cannot be read back`);
   }
@@ -528,6 +431,13 @@ function readSubject(surface: Surface, template: string, subject: string, taxono
     title: record.title ?? null,
     type: record.type ?? null,
   };
+}
+
+/** Refuses a positional argument that the subcommand does not take. */
+function refusePositionals(positionals: readonly string[]): void {
+  if (positionals[0] !== undefined) {
+    throw new Error(`unexpected argument: ${positionals[0]}`);
+  }
 }
 
 /** Refuses every configured template the engine cannot round-trip, naming the surface, the template, and the defect. */
@@ -556,19 +466,81 @@ function resolveDefaultDataDir(): string {
 }
 
 /**
+ * Reads a range's commits and consolidates them, in the shape the JSON output names. Each entry is rendered back through
+ * the template that read it, so its `change` is canonical whatever the subject it came from.
+ */
+async function runConsolidateBranch(baseRef: string, input: DescribeInput): Promise<DescribeResult> {
+  const { projectRoot, taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
+    input,
+    'consolidate-branch ranks types against the taxonomy',
+  );
+  if (templates.commit === '') {
+    throw new Error('commit.title_format is empty, so a branch’s commits cannot be read back');
+  }
+  const commits = await readCommits({ baseRef, cwd: projectRoot });
+  const nodes = compileTemplate(templates.commit);
+  const classification = classifyCommits(commits, nodes, taxonomy);
+
+  const output: ConsolidateBranchOutcome = {
+    entries: classification.entries.map((entry) => ({
+      breaking: entry.record.breaking === true,
+      change: render(nodes, entry.record),
+      commit: entry.commit,
+      scope: entry.record.scope ?? null,
+      title: entry.record.title ?? null,
+      type: entry.record.type ?? null,
+    })),
+    head:
+      classification.head === undefined
+        ? null
+        : {
+            breaking: classification.head.breaking === true,
+            scope: classification.head.scope ?? null,
+            type: classification.head.type ?? null,
+          },
+    unclassified: classification.unclassified,
+    violations: classification.violations,
+  };
+  return { output, warnings };
+}
+
+/** Reads a subject back through the named surface's template. */
+async function runParseTitle(surface: Surface, subject: string, input: DescribeInput): Promise<DescribeResult> {
+  const { taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
+    input,
+    'parse-title resolves the type against the taxonomy',
+  );
+  return { output: readSubject(surface, templates[surface], subject, taxonomy), warnings };
+}
+
+/** Renders every surface's title from the record, warning rather than refusing where no taxonomy verifies the templates. */
+async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
+  const { taxonomy, templates, warnings } = await loadTemplates(input);
+  if (taxonomy === null) {
+    warnings.push(`no readable work-types.json under ${input.dataDir}; templates are not verified`);
+  }
+  return {
+    output: {
+      commit_title: renderTemplate(templates.commit, record),
+      ticket_title: renderTemplate(templates.ticket, record),
+      pr_title: renderTemplate(templates.pr, record),
+      merge_title: renderTemplate(templates.merge, record),
+    },
+    warnings,
+  };
+}
+
+/**
  * Resolves a merge from the invocation: reads the pull request's body from its file and its record block from the body,
  * resolves its labels through the repository's label map, derives its head from its commits, and hands all of it to
  * `resolveMerge`. The body file is read relative to the invoking directory, and the label map and the commits from the
  * repository root.
  */
-async function resolveMergeRun(input: {
-  args: ResolveMergeArgs;
-  cwd: string;
-  projectRoot: string;
-  taxonomy: Taxonomy;
-  templates: Record<Surface, string>;
-}): Promise<MergeReport> {
-  const { args } = input;
+async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Promise<DescribeResult> {
+  const { projectRoot, taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
+    input,
+    'resolve-merge checks types against the taxonomy',
+  );
   const bodyPath = path.resolve(input.cwd, args.prBodyFile);
   let body: string;
   try {
@@ -577,23 +549,29 @@ async function resolveMergeRun(input: {
     throw chainError(`--pr-body-file ${bodyPath} cannot be read`, error);
   }
 
-  const labelMap = await readLabelMap(path.join(input.projectRoot, '.meta', 'label-map.json'));
-  const derivation = await deriveMergeHead({
-    args,
-    cwd: input.projectRoot,
-    taxonomy: input.taxonomy,
-    template: input.templates.commit,
-  });
-  return resolveMerge({
+  const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
+  const derivation = await deriveMergeHead({ args, cwd: projectRoot, taxonomy, template: templates.commit });
+  const output = resolveMerge({
     block: readChangeRecordBlock(body),
     derivation,
     labeled: resolveLabeledHead(labelMap, args.prLabels),
     overrides: args.overrides,
     pr: { body, headCommit: args.headCommit, number: args.prNumber, title: args.prTitle },
-    taxonomy: input.taxonomy,
-    templates: input.templates,
+    taxonomy,
+    templates,
     ...(args.ticketRef !== undefined && { ticketRef: args.ticketRef }),
   });
+  return { output, warnings };
+}
+
+/** Resolves the work type that the ticket's labels name through the repository's label map. */
+async function runResolveTicketType(ticketLabels: readonly string[], input: DescribeInput): Promise<DescribeResult> {
+  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+  const ticketType = await resolveTicketType({
+    labelMapPath: path.join(projectRoot, '.meta', 'label-map.json'),
+    labels: ticketLabels,
+  });
+  return { output: { ticket_type: ticketType ?? null }, warnings: warning === undefined ? [] : [warning] };
 }
 
 // endregion | Helpers
