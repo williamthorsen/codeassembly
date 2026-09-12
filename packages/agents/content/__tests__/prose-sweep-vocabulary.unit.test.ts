@@ -19,7 +19,13 @@ const SUBAGENT = 'subagents/prose-reviser.md';
  * Rule names the subagent may report that the helper holds no detector for. Each is recordable, so the skill has to map
  * it to a unit; a name added here without that mapping is the divergence that this suite exists to catch.
  */
-const UNDETECTED_RULES: ReadonlyArray<string> = ['plain-speech', 'second-person'];
+const UNDETECTED_RULES: ReadonlyArray<string> = [
+  'capitalization-after-colon',
+  'plain-speech',
+  'second-person',
+  'sentence-case',
+  'where',
+];
 
 /** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
 const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
@@ -27,7 +33,7 @@ const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
 /** The sentences mapping each undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
 const UNIT_MAPPINGS: ReadonlyArray<string> = [
   '**A `plain-speech` rejection takes the `plain-speech` unit**',
-  '**A `second-person` rejection takes the unit of the fill block that states the rule**',
+  '**A rejection under any other rule takes the unit of the fill block that states the rule**',
 ];
 
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
