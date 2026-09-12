@@ -19,7 +19,13 @@ const SUBAGENT = 'subagents/prose-reviser.md';
  * Rule names the subagent may report that the helper holds no detector for. Each is recordable, so the skill has to map
  * it to a unit; a name added here without that mapping is the divergence that this suite exists to catch.
  */
-const UNDETECTED_RULES: ReadonlyArray<string> = ['plain-speech', 'second-person'];
+const UNDETECTED_RULES: ReadonlyArray<string> = [
+  'capitalization-after-colon',
+  'plain-speech',
+  'second-person',
+  'sentence-case',
+  'where',
+];
 
 /** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
 const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
@@ -27,7 +33,7 @@ const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
 /** The sentences mapping each undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
 const UNIT_MAPPINGS: ReadonlyArray<string> = [
   '**A `plain-speech` rejection takes the `plain-speech` unit**',
-  '**A `second-person` rejection takes the unit of the fill block that states the rule**',
+  '**A rejection under a rule not declared by any marker takes the unit of the fill block that states the rule**',
 ];
 
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
@@ -75,6 +81,15 @@ describe('prose-sweep rule vocabulary', () => {
     const missing = RULE_IDS.filter((rule) => !body.includes(rule));
 
     const message = `${SUBAGENT} never names ${missing.join(', ')}, so the sweeper meets a candidate under a rule not described by its own body`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('names every undetected rule in the subagent that reports it', async () => {
+    const body = await readContentFile(SUBAGENT);
+    // Match the backticked form: a bare `where` matches any prose occurrence and would assert nothing.
+    const missing = UNDETECTED_RULES.filter((rule) => !body.includes(`\`${rule}\``));
+
+    const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so a site it repairs is reported under an improvised name that the fold cannot map to a unit`;
     expect(missing, message).toEqual([]);
   });
 

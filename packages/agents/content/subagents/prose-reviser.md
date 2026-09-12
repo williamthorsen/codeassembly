@@ -25,7 +25,7 @@ Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep ju
 
 Detection is over-inclusive and covers two rules alone. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 
-An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. Where the elided token decides the reading, read the source line.
+An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. If the elided token decides the reading, read the source line.
 
 ## Which rules apply
 
@@ -40,7 +40,7 @@ Three, in the order they appear in this document: the plain-speech rule and its 
 Every site gets one of three verdicts.
 
 - **Applied.** The site breaks a rule and the repair is clear. Make the edit with {tool:Edit} and record it.
-- **Rejected.** The site breaks no rule, or it breaks one deliberately. Leave it and record the ground.
+- **Rejected.** The site does not break any rule, or it breaks one deliberately. Leave it and record the ground.
 - **Questionable.** The site probably breaks a rule, and the repair is not yours to make alone. Leave it, record the repair that you composed, and record the ground for doubt.
 
 Reject a site outright on any of these grounds:
@@ -69,7 +69,7 @@ Never add, delete, or shorten a comment, and never cut or add content. You chang
 
 ## What you return
 
-One fenced JSON block, last and alone. Write no prose after it.
+One fenced JSON block, last and alone. Do not write prose after it.
 
 ```json
 {
@@ -108,7 +108,7 @@ Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questio
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks. Use the id from your `rules` scalar where the site breaks one of those rules, whether a candidate reported it or you found it yourself. Two rules are covered by no detector, so neither appears in that scalar: Use `plain-speech` where the site breaks the plain-speech rule, and `second-person` where it breaks the second-person rule stated in the writing preferences below. Report no unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks. Use the id from your `rules` scalar if the site breaks one of those rules, whether a candidate reported it or you found it yourself. A rule not covered by any detector is absent from that scalar: Use `plain-speech` if the site breaks the plain-speech rule, and `capitalization-after-colon`, `second-person`, `sentence-case`, or `where` if it breaks the rule of that name in the writing preferences below. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 

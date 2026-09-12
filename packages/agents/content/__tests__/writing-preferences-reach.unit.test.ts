@@ -42,9 +42,10 @@ const RULES: ReadonlyArray<Rule> = [
       'Capitalize what follows as though the label were absent',
       'Documentation describes; it does not address',
       'Dropping the pronoun by hiding who acted',
+      'If it names the agent that the document instructs',
       'Never use title case',
       'Use sentence case',
-      'Where it names the agent that the document instructs',
+      'Use `where` only for a place; for any other relation, use the word that most clearly expresses it',
     ],
   },
 ];

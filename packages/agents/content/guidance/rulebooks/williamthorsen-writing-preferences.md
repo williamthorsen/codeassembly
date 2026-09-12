@@ -2,7 +2,7 @@
 slug: williamthorsen-writing-preferences
 description: William Thorsen's personal writing preferences for agent-authored prose.
 delivery: [ambient, hook]
-version: '3'
+version: '4'
 ---
 
 # William Thorsen's writing preferences
@@ -11,7 +11,7 @@ version: '3'
 
 Read what appears left of the colon. A label (such as a short tag naming a field, a category, or an option) is transparent: Capitalize what follows as though the label were absent. A clause puts the colon mid-sentence: Capitalize a complete sentence, keep a fragment or list lowercase. A lowercase code identifier keeps its own case on either branch.
 
-- **Label, fragment follows:** "Exception: Trivial predicate callbacks where the type is obvious."
+- **Label, fragment follows:** "Exception: Trivial predicate callbacks whose type is obvious."
 - **Clause, sentence follows:** "The cache is not the problem: The transport reconnects on every request."
 - **Clause, fragment follows:** "Two directories stay out of the sweep: fixtures and generated output."
 - **Code identifier:** "Run the formatter: `nmr fmt`."
@@ -20,7 +20,7 @@ Read what appears left of the colon. A label (such as a short tag naming a field
 
 <!-- rule: em-dash -->
 
-Don't use em-dashes; use appropriate punctuation instead. A dash separating an identifier from its label is a delimiter rather than punctuation: Use a colon. Where an em-dash is genuinely best, write it as `--`.
+Don't use em-dashes; use appropriate punctuation instead. A dash separating an identifier from its label is a delimiter rather than punctuation: Use a colon. If an em-dash is genuinely best, write it as `--`.
 
 <!-- include: ../../_partials/reduced-object-relative.md / -->
 
@@ -28,11 +28,11 @@ Don't use em-dashes; use appropriate punctuation instead. A dash separating an i
 
 Documentation describes; it does not address. Never write `you`, `your`, `yours`, or `yourself`, and never the contractions `you're`, `you've`, `you'll`, or `you'd`.
 
-Imperative mood is untouched, because it carries no pronoun: "Run the formatter" directs the reader without naming one.
+Imperative mood is untouched, because it does not carry a pronoun: "Run the formatter" directs the reader without naming one.
 
-**The addressee decides.** Ask who the pronoun names. Where it names the agent that the document instructs, a skill body or a subagent body directing its own executor, the pronoun is that document's address and stays. Where it names a reader of documentation, someone using the package or working on it, the pronoun goes.
+**The addressee decides.** Ask who the pronoun names. If it names the agent that the document instructs, a skill body or a subagent body directing its own executor, the pronoun is that document's address and stays. If it names a reader of documentation, someone using the package or working on it, the pronoun goes.
 
-**The replacement names an actor.** Say who or what acts: "the config caps the rule" rather than "you cap the rule". Where no actor belongs in the sentence, recast so the artifact is the subject: "the flag takes a path" rather than "you pass it a path".
+**The replacement names an actor.** Say who or what acts: "the config caps the rule" rather than "you cap the rule". If no actor belongs in the sentence, recast so the artifact is the subject: "the flag takes a path" rather than "you pass it a path".
 
 Two traps take a naive substitution:
 
@@ -46,3 +46,7 @@ Use sentence case for titles, headings, section headers, steps, labels, and inte
 - "Backend: Express API routes and server" not "Backend: Express API Routes And Server"
 - "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
 - "Customizing the Status Adapter for a new backend", not "Customizing the Status Adapter for a New Backend"
+
+## `where`
+
+Use `where` only for a place; for any other relation, use the word that most clearly expresses it.
