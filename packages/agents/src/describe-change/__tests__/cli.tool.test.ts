@@ -408,7 +408,7 @@ describe('consolidate-branch', () => {
     expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'fix' }] });
   });
 
-  it('yields a null head and no ticket type for a range holding no commits', async () => {
+  it('yields a null head for a range holding no commits', async () => {
     const { cwd, home } = await makeCommittedRepo([]);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
