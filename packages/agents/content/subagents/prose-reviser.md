@@ -25,7 +25,7 @@ Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep ju
 
 Detection is over-inclusive and covers two rules alone. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 
-An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. Where the elided token decides the reading, read the source line.
+An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. If the elided token decides the reading, read the source line.
 
 ## Which rules apply
 

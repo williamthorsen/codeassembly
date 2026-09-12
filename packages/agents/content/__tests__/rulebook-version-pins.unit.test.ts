@@ -83,8 +83,8 @@ const PINS = new Map<string, RulebookPin>([
 
 const DRIFT_MESSAGE =
   "A rulebook's deployed body no longer matches the pin recorded for it. Choose one remedy: bump the rulebook's " +
-  "`version` and re-pin both fields where the operative content moved, so every repository's record re-opens its " +
-  'coverage for review; or re-pin the hash alone where the edit left the operative content as it was. An edit to an ' +
+  "`version` and re-pin both fields if the operative content moved, so every repository's record re-opens its " +
+  'coverage for review; or re-pin the hash alone if the edit left the operative content as it was. An edit to an ' +
   'included partial counts as an edit to the body, which is why a rulebook can drift with its own file untouched.';
 
 const RESOLVED = resolveEveryRulebook();
@@ -149,7 +149,7 @@ describe('rulebook version pins', () => {
 
 // region | Helpers
 
-/** Hashes a resolved rulebook's body, or the empty string where the slug resolved to nothing. */
+/** Hashes a resolved rulebook's body, or the empty string if the slug resolved to nothing. */
 function hashBody(rulebook: ResolvedRulebook | undefined): string {
   return hashText(rulebook === undefined ? '' : rulebook.body);
 }
