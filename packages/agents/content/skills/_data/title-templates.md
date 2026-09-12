@@ -175,15 +175,15 @@ node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge origin/main 
 ```json
 {
   "head": { "breaking": false, "scope": "agents", "type": "feat" },
-  "recorded": { "breaking": false, "scope": "agents", "type": "feat" },
-  "derived": { "breaking": false, "scope": "agents", "type": "fix" },
+  "recorded": { "breaking": false, "scope": "agents", "type": "fix" },
+  "derived": { "breaking": false, "scope": "agents", "type": "feat" },
   "labeled": null,
   "title": "Add the parser",
   "ticket_ref": "#466",
   "merge_title": "#466 agents|feat: Add the parser (#470)",
   "body": "- Adds the parser.",
   "defects": [],
-  "notices": [{ "kind": "divergence", "used": "record", "shown": { "breaking": false, "scope": "agents", "type": "fix" } }]
+  "notices": [{ "kind": "divergence", "used": "derivation", "shown": { "breaking": false, "scope": "agents", "type": "fix" } }]
 }
 ```
 
