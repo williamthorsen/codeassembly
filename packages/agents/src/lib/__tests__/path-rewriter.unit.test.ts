@@ -140,9 +140,9 @@ describe(rewriteMarkdownPaths, () => {
 
 describe(rewriteTemplateVariables, () => {
   it('replaces {harness_home_dir} with tilde-prefixed homeDir', () => {
-    const content = '{harness_home_dir}/scripts/describe-change.mjs --scope agents --type feat';
+    const content = '{harness_home_dir}/scripts/describe-change.mjs render-titles --scope agents --type feat';
     expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(
-      '~/.claude/scripts/describe-change.mjs --scope agents --type feat',
+      '~/.claude/scripts/describe-change.mjs render-titles --scope agents --type feat',
     );
   });
 
@@ -276,14 +276,14 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      '{harness_home_dir}/scripts/describe-change.mjs --scope {scope} --type {type}',
+      '{harness_home_dir}/scripts/describe-change.mjs render-titles --scope {scope} --type {type}',
       'utf8',
     );
 
     await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', CLAUDE_VARIABLES);
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
-    expect(result).toBe('~/.claude/scripts/describe-change.mjs --scope {scope} --type {type}');
+    expect(result).toBe('~/.claude/scripts/describe-change.mjs render-titles --scope {scope} --type {type}');
   });
 
   it('applies both Markdown link and template variable rewrites', async () => {

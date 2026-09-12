@@ -31,7 +31,7 @@ Prose mentions of script names that are not invocations (e.g., ``"the `describe-
 
 Agent-invoked:
 
-- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, reads a rendered title back into its parts, classifies a commit range into the head to which its entries consolidate, renders the fenced `change-record` block that ends a pull-request body, and resolves what a pull request merges as from that block and the pull request's commits. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs`; the bundle carries no shebang.
+- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, reads a rendered title back into its parts, classifies a commit range into the head to which its entries consolidate, renders the fenced `change-record` block that ends a pull-request body, and resolves what a pull request merges as from that block and the pull request's commits. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs <subcommand>`, where [title-templates.md](../skills/_data/title-templates.md#invoking-the-bundle) names the subcommand for each; the bundle carries no shebang.
 - `get-ticket-id.sh`: Extracts a ticket ID from a branch name.
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields, plus scalar and list extension keys.
 - `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.

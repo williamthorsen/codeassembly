@@ -4,22 +4,7 @@ Commit titles, ticket titles, PR titles, and squash-merge titles are produced fr
 
 This file states how a title is rendered and read; [`title-voice.md`](./title-voice.md) states how the `{title}` text fed to these templates is composed.
 
-## Rendering a title
-
-Run the bundle with every input that is available; templates control which tokens are required:
-
-```bash
-node {harness_home_dir}/scripts/describe-change.mjs \
-  --title "{title}" \
-  --scope "{scope}" \
-  --type "{type}" \
-  --ticket-ref "{ticket_ref}" \
-  --pr-number "{pr_number}"
-```
-
-The bundle carries no shebang, so the `node` prefix is required.
-
-All flags are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so titles with spaces or shell-special characters survive. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to no scope, so the sentinel never reaches a rendered title.
+## Configuring the templates
 
 The bundle reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and `merge.title_format` from `.agents/preferences.yaml` at the repository root, then from `~/.agents/preferences.yaml`, falling back to the empty string. Resolution is per key, so a project file naming `commit.title_format` alone still inherits the other three from the global file, and a key present with an empty value opts that surface out.
 
@@ -36,6 +21,48 @@ merge:
 
 Quote every `title_format` value, single or double quotes alike. Unquoted, YAML reads `{title}` as a flow mapping rather than a token, and a space followed by `#` opens a comment.
 
+## Invoking the bundle
+
+`describe-change.mjs` takes a subcommand as its first argument, followed by that subcommand's arguments:
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs <subcommand> [flags]
+```
+
+The bundle carries no shebang, so the `node` prefix is required. Each subcommand accepts only the flags that its section below lists and refuses any other as unknown, a flag that another subcommand takes included. A missing or unknown subcommand exits non-zero with a usage error that lists the subcommands. A run that succeeds writes one JSON object to stdout, and warnings and errors go to stderr.
+
+| Subcommand                                    | Reports                                                   | Reads                                                       |
+| --------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- |
+| [`render-titles`](#render-titles)             | Each surface's title, rendered from one record            | The templates, and the taxonomy where it is readable        |
+| [`parse-title`](#parse-title)                 | A rendered title, read back into its record               | The templates and the taxonomy                              |
+| [`consolidate-branch`](#consolidate-branch)   | A commit range's entries and the head they consolidate to | The templates, the taxonomy, and the commits                |
+| [`resolve-ticket-type`](#resolve-ticket-type) | The work type that a ticket's labels name                 | The label map                                               |
+| [`render-block`](#render-block)               | The `change-record` block that ends a pull-request body   | Nothing                                                     |
+| [`resolve-merge`](#resolve-merge)             | What a pull request merges as                             | The templates, the taxonomy, the label map, and the commits |
+
+### What stops a run and what only warns
+
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type` and `render-block` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
+- An unreadable taxonomy draws a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, and `resolve-merge`.
+- A subcommand that reads the templates or the label map, run outside a repository, warns on stderr and anchors the `.agents/` and `.meta/label-map.json` lookups at the working directory, so the global templates still render.
+- A `title_format` resolving to anything but a string draws a warning on stderr, and the next source supplies the template.
+
+## `render-titles`
+
+`render-titles` renders every surface's title from one record. Run it with every input that is available; templates control which tokens are required:
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs render-titles \
+  --title "{title}" \
+  --scope "{scope}" \
+  --type "{type}" \
+  --ticket-ref "{ticket_ref}" \
+  --pr-number "{pr_number}"
+```
+
+Its flags are `--title`, `--scope`, `--type`, `--breaking`, `--ticket-ref`, and `--pr-number`, and all are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so titles with spaces or shell-special characters survive. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to no scope, so the sentinel never reaches a rendered title.
+
 Output is JSON:
 
 ```json
@@ -51,19 +78,12 @@ Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title
 
 If the bundle is not found, fall back to the bare `--title` value.
 
-### What stops a run and what only warns
+## `parse-title`
 
-- A configured template that the engine cannot invert stops the run, naming the surface, the template, and the defect. See [What the grammar refuses](#what-the-grammar-refuses).
-- Malformed YAML in a preferences file stops the run, naming the file.
-- A run outside a repository warns on stderr and anchors the `.agents/` lookup at the working directory, so the global templates still render.
-- A `title_format` resolving to anything but a string draws a warning on stderr, and the next source supplies the template.
-
-## Reading a title back
-
-`--parse` inverts one surface's template, so a rendered subject reads back into the record that produced it:
+`parse-title` inverts one surface's template, so a rendered subject reads back into the record that produced it. It takes the surface (`commit`, `ticket`, `pr`, or `merge`) and then the subject as positional arguments, and no flags:
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --parse commit "agents|feat: Add foo"
+node {harness_home_dir}/scripts/describe-change.mjs parse-title commit "agents|feat: Add foo"
 ```
 
 The output names every field, with `null` where the record carries none:
@@ -88,16 +108,15 @@ A subject not matched by the template reports `{"matched":false}` and exits 0. A
 
 **Where a parse could read a group as present or absent, present wins.** This is release-kit's reading, and it is what makes `agents|feat: Add foo` parse as scoped and typed rather than as a bare title. See [What the grammar does not support](#what-the-grammar-does-not-support) for the cost.
 
-## Classifying a commit range
+The run refuses a surface whose template is empty, since there is nothing to read the subject through, and refuses where no taxonomy is readable.
 
-`--classify` reads a range of commits through `commit.title_format` and reports what the branch adds up to. The base ref is the flag's value; the range is `{base-ref}..HEAD`.
+## `consolidate-branch`
+
+`consolidate-branch` reads a range of commits through `commit.title_format` and reports what the branch adds up to. Its one flag, `--base`, is required and names the base ref; the range is `{base-ref}..HEAD`.
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --classify origin/main \
-  --ticket-label feature --ticket-label scope:agents
+node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base origin/main
 ```
-
-`--ticket-label` is repeatable and carries the linked ticket's labels. The bundle reverse-looks-up the repository's `.meta/label-map.json` to report which work type they name, so it fetches nothing itself.
 
 ```json
 {
@@ -112,7 +131,6 @@ node {harness_home_dir}/scripts/describe-change.mjs --classify origin/main \
     }
   ],
   "head": { "breaking": false, "scope": "agents", "type": "feat" },
-  "ticket_type": "feat",
   "unclassified": [{ "commit": "b5ce73f", "subject": "wip" }],
   "violations": [{ "commit": "8d2227d", "policy": "forbidden", "type": "fix" }]
 }
@@ -132,16 +150,29 @@ node {harness_home_dir}/scripts/describe-change.mjs --classify origin/main \
 
 **A violation is reported and the run continues.** A `fix!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. The commit is already written, so refusing here would block the work behind a rebase; the entry is reported as written and never normalized.
 
-**`ticket_type` is `null` where the labels name no type and where they name more than one.** Two type labels on one ticket say that nobody has decided which it is.
+The run refuses outright where no taxonomy is readable, since the head has nothing to rank against, and where `commit.title_format` is empty, since no template would match any subject.
 
-The run refuses outright where no taxonomy is readable, since the head has nothing to rank against, and where `commit.title_format` is empty, since no template would match any subject. `--classify` takes no record flags and refuses the other modes; `--ticket-label` refuses to stand on its own.
+## `resolve-ticket-type`
 
-## Rendering the record block
-
-`--record-block` renders the fenced `change-record` block that ends a pull-request body. The flag takes no value: the head comes from the record flags, and the author's overrides from the `--override-*` flags.
+`resolve-ticket-type` reports the work type that a ticket's labels name. `--ticket-label` is its one flag, repeatable and optional, and carries the linked ticket's labels. The bundle reverse-looks-up the repository's `.meta/label-map.json` to report which work type they name, so it fetches nothing itself.
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --record-block \
+node {harness_home_dir}/scripts/describe-change.mjs resolve-ticket-type \
+  --ticket-label feature --ticket-label scope:agents
+```
+
+```json
+{ "ticket_type": "feat" }
+```
+
+**`ticket_type` is `null` where the labels name no type and where they name more than one.** Two type labels on one ticket say that nobody has decided which it is. A repository whose label map is absent or unparseable names no type, so its `ticket_type` is `null` as well.
+
+## `render-block`
+
+`render-block` renders the fenced `change-record` block that ends a pull-request body. The head comes from `--title`, `--scope`, `--type`, and `--breaking`, and the author's overrides from `--override-scope`, `--override-type`, and `--override-breaking`. Every flag is optional.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs render-block \
   --scope agents --type feat --title "Add the parser" \
   --override-type sec --override-breaking
 ```
@@ -154,14 +185,15 @@ The output is JSON whose `block` holds the fenced block, fences included:
 }
 ````
 
-`--override-type sec!` is accepted and splits into the override type and `--override-breaking`, as `--type` does. An override flag is refused outside this mode and `--resolve-merge`, and `--ticket-ref`, `--pr-number`, `--ticket-label`, `--override-title`, and the other modes are refused within it. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
+`--type feat!` is accepted and splits into the bare type and the marker. `--override-type` takes a bare type and refuses one spelled with `!`; pass `--override-breaking` for a breaking override. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
 
-## Resolving a merge
+## `resolve-merge`
 
-`--resolve-merge` reports what a pull request merges as. The flag's value is the base ref of the pull request's range, the pull request supplies the rest, and the author's choices at the approval gate arrive as overrides.
+`resolve-merge` reports what a pull request merges as. `--base` names the base ref of the pull request's range, the pull request supplies the rest, and the author's choices at the approval gate arrive as overrides.
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge origin/main \
+node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
+  --base origin/main \
   --head 63d2173e5f0c9a7b1d4e8f2a6c0b3d5e7f9a1c2b \
   --pr-number 470 \
   --pr-title "#466 Add the parser" \
@@ -170,7 +202,7 @@ node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge origin/main 
   --ticket-ref "#466"
 ```
 
-`--head` is the pull request's head commit. The commits are read from the local repository, so the head must be there for the derivation to run, and it need not be checked out. `--pr-body-file` names a file holding the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies where the pull-request title carries none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
+`--base`, `--head`, `--pr-number`, `--pr-title`, and `--pr-body-file` are required. `--head` is the pull request's head commit. The commits are read from the local repository, so the head must be there for the derivation to run, and it need not be checked out. `--pr-number` takes digits alone. `--pr-body-file` names a file holding the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies where the pull-request title carries none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
 
 ```json
 {
@@ -215,7 +247,7 @@ node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge origin/main 
 
 **A head commit that the local repository lacks is not an error.** The run reports `derivation-unavailable` and resolves from the record or the labels, so fetch the head before resolving. Any other git failure stops the run.
 
-The run refuses where no taxonomy is readable and where the body file cannot be read. An empty `commit.title_format` reports `derivation-unavailable` rather than refusing. `--resolve-merge` refuses the other modes and the record flags `--scope`, `--type`, `--breaking`, and `--title`, since the head comes from the pull request, and `--override-type` refuses a type spelled with `!`. `--head`, `--pr-title`, `--pr-body-file`, `--pr-label`, `--override-title`, and `--no-override-breaking` refuse to stand outside it.
+The run refuses where no taxonomy is readable and where the body file cannot be read. An empty `commit.title_format` reports `derivation-unavailable` rather than refusing. `--override-type` refuses a type spelled with `!`, and `--override-breaking` and `--no-override-breaking` refuse to appear together.
 
 ## Supported tokens
 
@@ -242,7 +274,7 @@ Groups nest, and a nested group decides its own fate. Under `[[{scope}|]{type}: 
 
 Write `\[` and `\]` for a literal bracket, and `\\` for a literal backslash.
 
-**No whitespace pass runs.** Output is exactly what the template describes, so each group carries its own separators: write `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That exactness is what lets `--parse` invert what the renderer produced.
+**No whitespace pass runs.** Output is exactly what the template describes, so each group carries its own separators: write `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That exactness is what lets `parse-title` invert what the renderer produced.
 
 ## The catalogue
 

@@ -39,17 +39,26 @@ Both are optional, and each is recorded as an override beside the derived head r
 
      Elsewhere, pass no labels. Where the fetch fails, continue without labels and say so; `ticket_type` is then absent.
 
-   - **Classify the range** into a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `classify-{timestamp}.json`. Pass one `--ticket-label` per label:
+   - **Classify the range** into a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `classify-{timestamp}.json`:
 
      ```bash
      classify_path="{absolute path from the scratch-directory step}"
-     node {harness_home_dir}/scripts/describe-change.mjs --classify {default_branch} \
-       --ticket-label "{label}" > "$classify_path" && cat "$classify_path"
+     node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base {default_branch} \
+       > "$classify_path" && cat "$classify_path"
      ```
 
-     [Classifying a commit range](../_data/title-templates.md#classifying-a-commit-range) states the output. The frontmatter call reads `changes` back from this file, so keep its path.
+     [`consolidate-branch`](../_data/title-templates.md#consolidate-branch) states the output. The frontmatter call reads `changes` back from this file, so keep its path.
 
-     Where the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a classification: `scope`, `type`, `breaking`, `changes`, and `ticket_type` are left out, and the ticket-type comparison below does not run.
+     Where the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a classification: `scope`, `type`, `breaking`, and `changes` are left out.
+
+   - **Resolve the ticket's type** where the fetch returned labels, passing one `--ticket-label` per label. Where there are none, skip the call; `ticket_type` is then absent.
+
+     ```bash
+     node {harness_home_dir}/scripts/describe-change.mjs resolve-ticket-type \
+       --ticket-label "{label}"
+     ```
+
+     Read `ticket_type` from the output, leaving it absent where it is `null`; [`resolve-ticket-type`](../_data/title-templates.md#resolve-ticket-type) states when it is. Where the call fails, relay its error and continue with `ticket_type` absent.
 
    - **Report** each `unclassified` commit and each `violations` entry to the developer, then continue. Where `head` is `null`, say that the branch yields no head, because no commit was classified; `scope`, `type`, and `breaking` are then left out of the frontmatter.
    - **Resolve the overrides.** `--scope` sets `scope_override`. `--type` sets `type_override`, and a `!` on it sets `breaking_override` rather than staying on the type. Record an override as given, even where it equals the head. The effective type is `type_override` where set, otherwise the head's `type`.
@@ -235,7 +244,7 @@ Prepend the script's output verbatim to the artifact body.
 - **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.
 - **`scope`**, **`type`**, and **`breaking`**: The step-2 classification's `head`, each absent where the head does not determine it, and `breaking` only where it is `true`. They record what the branch derived and never an override.
 - **`changes`**: Each entry's `change`, oldest first, read from the classification file.
-- **`ticket_type`**: The classification's `ticket_type`, absent where it is `null`.
+- **`ticket_type`**: The step-2 `ticket_type`, absent where it is `null` or unresolved.
 - **`scope_override`**, **`type_override`**, and **`breaking_override`**: The overrides resolved in step 2, each absent where unset, and `breaking_override` only where it is `true`.
 
 A consumer reads the classification by applying the overrides to the head, per [The effective record](../_data/change-record.md#the-effective-record).
