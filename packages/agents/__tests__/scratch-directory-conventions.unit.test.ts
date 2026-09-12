@@ -24,7 +24,7 @@ const PACKAGE_ROOT = new URL('../', import.meta.url).pathname;
  * one, so `bare \`mktemp -d\` fails under the sandbox` reads as the warning it is rather than as a call. The lookbehind
  * keeps paths out the same way, so `chmod +x bin/mktemp` names no call.
  */
-const UNTEMPLATED_MKTEMP_SOURCE = String.raw`(?<![\w./-])mktemp(?:[ \t]+(?:-[dqu]+|--(?:directory|dry-run|quiet)|-[dqu]*t[ \t]*[^\s|)>&;\x60]+))*[ \t]*(?:$|[|)>&;])`;
+const UNTEMPLATED_MKTEMP_SOURCE = String.raw`(?<![\w./-])mktemp(?:[ \t]+(?:-[dqu]+|--(?:directory|dry-run|quiet)|-[dqu]*t[ \t]*[^\s|)<>&;\x60]+))*[ \t]*(?:$|[|)<>&;#]|\d+[<>])`;
 
 /**
  * A `mktemp` template whose last X run is followed by more of the template, which ends at a quote, whitespace, a
@@ -80,8 +80,17 @@ describe('scratch-directory conventions', () => {
     ['a prefix flag', 'mktemp -t probe', 1, 0],
     ['a bundled prefix flag', 'x=$(mktemp -dt probe)', 1, 0],
     ['a redirected prefix flag', 'mktemp -d -t probe >out', 1, 0],
+    ['a call redirecting a numbered descriptor', 'dir=$(mktemp -d 2>/dev/null)', 1, 0],
+    ['a call redirecting its input', 'dir=$(mktemp -d <&-)', 1, 0],
+    ['a call followed by a comment', 'mktemp -d # scratch', 1, 0],
     ['a template continuing past its X run', 'x=$(mktemp "${TMPDIR:-/tmp}/x.XXXXXX.patch")', 0, 1],
     ['a templated call', 'mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX"', 0, 0],
+    [
+      'a templated call redirecting a numbered descriptor',
+      'mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX" 2>/dev/null',
+      0,
+      0,
+    ],
     ['a tmpdir option', 'mktemp -d -p "$TMPDIR"', 0, 0],
     ['a long tmpdir option', 'mktemp -d --tmpdir', 0, 0],
     ['a tmpdir option beside a prefix flag', 'mktemp -d -p "$TMPDIR" -t probe', 0, 0],
