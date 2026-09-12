@@ -43,7 +43,7 @@ Invoke the `{skill:summarize-change}` skill to produce a change summary, passing
 
 ### 4. Read frontmatter
 
-Read the YAML frontmatter from the change summary. Extract `title` and `commit`, the derived head's `scope`, `type`, and `breaking`, and the `scope_override`, `type_override`, and `breaking_override` fields. Any of the last six may be absent.
+Read the YAML frontmatter from the change summary. Extract `title`, the derived head's `scope`, `type`, and `breaking`, and the `scope_override`, `type_override`, and `breaking_override` fields. Any of the last six may be absent.
 
 ### 5. Resolve the effective record
 
@@ -98,10 +98,10 @@ If `ticket_ref` is non-null, append `\n\nCloses {ticket_ref}` to the body. The `
 
 If `ticket_ref` is null, skip: no closing line.
 
-Then render the `change-record` block from the change summary's `commit`, its head, and its overrides as recorded, never from the effective record:
+Then render the `change-record` block from the change summary's head and its overrides as recorded, never from the effective record:
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --record-block "{commit}" \
+node {harness_home_dir}/scripts/describe-change.mjs --record-block \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \

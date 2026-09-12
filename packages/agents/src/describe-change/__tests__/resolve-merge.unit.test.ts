@@ -68,21 +68,23 @@ describe(resolveMerge, () => {
   });
 
   describe('where the record and the derivation disagree', () => {
-    it('while the branch is unmoved, uses the record and shows the derivation', () => {
+    it('uses the derivation and shows the record', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), derived: { scope: 'agents', type: 'docs' } }),
       );
 
       expect(report).toMatchObject({
-        head: { breaking: false, scope: 'agents', type: 'feat' },
-        notices: [{ kind: 'divergence', shown: { breaking: false, scope: 'agents', type: 'docs' }, used: 'record' }],
+        head: { breaking: false, scope: 'agents', type: 'docs' },
+        notices: [
+          { kind: 'divergence', shown: { breaking: false, scope: 'agents', type: 'feat' }, used: 'derivation' },
+        ],
       });
     });
 
-    it('once the branch has moved, uses the derivation and shows the record', () => {
+    it('takes a breaking marker the derivation adds to the recorded head', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }, { commit: 'aaaaaaaa' }),
+          block: readBlock({ scope: 'agents', type: 'feat' }),
           derived: { breaking: true, scope: 'agents', type: 'feat' },
         }),
       );
@@ -95,46 +97,22 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('reads a recorded commit shorter than seven characters as moved', () => {
-      const report = resolveMerge(
-        buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }, { commit: 'e50299' }),
-          derived: { scope: 'kb', type: 'feat' },
-        }),
-      );
-
-      expect(report.notices).toMatchObject([{ kind: 'divergence', used: 'derivation' }]);
-    });
-
-    it('reads the branch as unmoved where the head commit is reported abbreviated', () => {
-      const report = resolveMerge(
-        buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }, { commit: HEAD_COMMIT.slice(0, 14) }),
-          derived: { scope: 'kb', type: 'feat' },
-          headCommit: HEAD_COMMIT.slice(0, 12),
-        }),
-      );
-
-      expect(report.notices).toMatchObject([{ kind: 'divergence', used: 'record' }]);
-    });
-
     it('compares a derivation that found no entries like any other head', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), derived: {} }));
 
       expect(report).toMatchObject({
         derived: { breaking: false, scope: null, type: null },
-        head: { scope: 'agents', type: 'feat' },
-        notices: [{ kind: 'divergence', shown: { breaking: false, scope: null, type: null }, used: 'record' }],
+        head: { breaking: false, scope: null, type: null },
+        notices: [
+          { kind: 'divergence', shown: { breaking: false, scope: 'agents', type: 'feat' }, used: 'derivation' },
+        ],
       });
     });
 
-    it('applies the record’s overrides to the derivation where it wins', () => {
+    it('applies the record’s overrides to the derivation that won', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock(
-            { scope: 'agents', type: 'docs' },
-            { commit: 'aaaaaaaa', overrides: { breaking: true, scope: '*' } },
-          ),
+          block: readBlock({ scope: 'agents', type: 'docs' }, { overrides: { breaking: true, scope: '*' } }),
           derived: { scope: 'kb', type: 'feat' },
         }),
       );
@@ -398,7 +376,7 @@ describe(resolveMerge, () => {
 
   describe('the body', () => {
     it('where ## What is the last heading, excludes the closing line and the record block', () => {
-      const block = renderChangeRecordBlock({ commit: 'e5029924', head: { type: 'feat' } });
+      const block = renderChangeRecordBlock({ head: { type: 'feat' } });
 
       const report = resolveMerge(
         buildInput({ prBody: `## What\n\n- Adds foo.\n- Adds bar.\n\nCloses #466\n\n${block}\n` }),
@@ -447,13 +425,12 @@ describe(resolveMerge, () => {
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {
     derived?: ChangeRecord;
-    headCommit?: string;
     prBody?: string;
     prTitle?: string;
     ticketRef?: string | null;
   } = {},
 ): MergeInput {
-  const { derived, headCommit, prBody, prTitle, ticketRef, ...rest } = changes;
+  const { derived, prBody, prTitle, ticketRef, ...rest } = changes;
   return {
     block: { kind: 'absent' },
     derivation: { head: derived ?? (rest.block?.kind === 'read' ? rest.block.block.head : {}), kind: 'derived' },
@@ -465,21 +442,17 @@ function buildInput(
     ...rest,
     pr: {
       body: prBody ?? BODY,
-      headCommit: headCommit ?? HEAD_COMMIT,
+      headCommit: HEAD_COMMIT,
       number: '470',
       title: prTitle ?? '#466 Add foo',
     },
   };
 }
 
-/** Builds a block reading recorded at a prefix of the head commit unless another commit is given. */
-function readBlock(
-  head: ChangeRecord,
-  options: { commit?: string; overrides?: RecordOverrides } = {},
-): ChangeRecordBlockReading {
+/** Builds a block reading holding the head given, with the author's overrides where any are given. */
+function readBlock(head: ChangeRecord, options: { overrides?: RecordOverrides } = {}): ChangeRecordBlockReading {
   return {
     block: {
-      commit: options.commit ?? 'e5029924',
       head,
       ...(options.overrides !== undefined && { overrides: options.overrides }),
     },

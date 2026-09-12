@@ -18,8 +18,8 @@ import type { HeadOutcome, Surface } from './types.ts';
  * the merge body, with the defects that block approval and the notices that the approval gate shows.
  *
  * With a readable `change-record` block, the recorded head and the derivation are compared before any override. Where
- * they agree, or where the derivation is unavailable, the record stands. Where they disagree, the record wins while the
- * branch is unmoved since it was recorded, and the derivation wins once the branch has moved; the losing head is shown.
+ * they agree, or where the derivation is unavailable, the record stands. Where they disagree, the derivation wins as the
+ * fresher of the two, and the record is shown.
  * Without a readable block, the type and its breaking marker come together from the labels where a type label resolved
  * and otherwise from the derivation, and the scope resolves on its own the same way; a disagreeing derivation is shown.
  *
@@ -45,7 +45,7 @@ export function resolveMerge(input: MergeInput): MergeReport {
   const resolved =
     record === undefined
       ? chooseFromLabels({ derived, labeled, notices })
-      : applyRecordOverrides(chooseFromRecord({ derived, headCommit: input.pr.headCommit, notices, record }), record);
+      : applyRecordOverrides(chooseFromRecord({ derived, notices, record }), record);
   const head = applyOverrides(resolved, input.overrides);
 
   const { candidate, ticketRef, title } = resolveTitle({ ...input, head, notices, recordTitle: record?.head.title });
@@ -101,7 +101,7 @@ export type MergeNotice =
   | { head: HeadOutcome; kind: 'candidate-head' }
   | { defect: string; kind: 'malformed-record' }
   | { kind: 'derivation-unavailable'; reason: string }
-  | { kind: 'divergence'; shown: HeadOutcome; used: 'derivation' | 'labels' | 'record' }
+  | { kind: 'divergence'; shown: HeadOutcome; used: 'derivation' | 'labels' }
   | { kind: 'title-fallback'; source: 'pr-title' | 'record' };
 
 /** The author's overrides, each outranking every other source for its own dimension. */
@@ -169,19 +169,18 @@ function chooseFromLabels(input: {
   return head;
 }
 
-/** Chooses between the recorded head and the derivation, reporting the one that lost where they disagree. */
+/**
+ * Chooses between the recorded head and the derivation, reporting the record where they disagree. The derivation wins
+ * wherever one is available, as the fresher of two derivations of the same branch; the record stands only where the
+ * commits could not be read.
+ */
 function chooseFromRecord(input: {
   derived: ChangeRecord | undefined;
-  headCommit: string;
   notices: MergeNotice[];
   record: ChangeRecordBlock;
 }): ChangeRecord {
   const recorded = toHead(input.record.head);
   if (input.derived === undefined || isSameHead(recorded, input.derived)) {
-    return recorded;
-  }
-  if (isUnmoved(input.record.commit, input.headCommit)) {
-    input.notices.push({ kind: 'divergence', shown: toOutcome(input.derived), used: 'record' });
     return recorded;
   }
   input.notices.push({ kind: 'divergence', shown: toOutcome(recorded), used: 'derivation' });
@@ -243,26 +242,6 @@ function isSameHead(left: ChangeRecord, right: ChangeRecord): boolean {
     left.scope === right.scope && left.type === right.type && (left.breaking === true) === (right.breaking === true)
   );
 }
-
-/**
- * Reports whether the pull request's head is still the commit from which the record was derived: the shorter of the two
- * hashes is at least seven characters long and a prefix of the longer. Either side may be abbreviated, since the record
- * holds a short hash and a platform may report the head commit abbreviated too.
- */
-function isUnmoved(recordedCommit: string, headCommit: string): boolean {
-  const [shorter, longer] = [recordedCommit.toLowerCase(), headCommit.toLowerCase()].toSorted(
-    (left, right) => left.length - right.length,
-  );
-  return (
-    shorter !== undefined &&
-    longer !== undefined &&
-    shorter.length >= MINIMUM_COMMIT_PREFIX &&
-    longer.startsWith(shorter)
-  );
-}
-
-/** The fewest characters a recorded commit may carry and still be compared with the head commit. */
-const MINIMUM_COMMIT_PREFIX = 7;
 
 /** Reads a scope override, where `*` names no scope. */
 function readScopeOverride(scope: string): string | undefined {

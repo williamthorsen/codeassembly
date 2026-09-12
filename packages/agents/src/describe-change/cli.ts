@@ -52,7 +52,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'pr-label', takesValue: true },
   { name: 'pr-number', takesValue: true },
   { name: 'pr-title', takesValue: true },
-  { name: 'record-block', takesValue: true },
+  { name: 'record-block', takesValue: false },
   { name: 'resolve-merge', takesValue: true },
   { name: 'scope', takesValue: true },
   { name: 'ticket-label', takesValue: true },
@@ -140,9 +140,8 @@ if (isEntryPoint()) {
  * `--classify` names the base ref of the range to read, and takes `--ticket-label` as often as the ticket carries one.
  * It takes no record flags either.
  *
- * `--record-block` names the commit from which the head was derived, reads the head from `--title`, `--scope`,
- * `--type`, and `--breaking`, and reads the author's overrides from `--override-scope`, `--override-type`, and
- * `--override-breaking`.
+ * `--record-block` takes no value. It reads the head from `--title`, `--scope`, `--type`, and `--breaking`, and the
+ * author's overrides from `--override-scope`, `--override-type`, and `--override-breaking`.
  *
  * `--resolve-merge` names the base ref of a pull request's range and reads the pull request from `--head`, `--pr-title`,
  * `--pr-body-file`, `--pr-number`, every `--pr-label`, and `--ticket-ref`. It takes no record flags, since the head comes
@@ -156,7 +155,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const { positionals, flags } = scanFlags(argv, FLAGS);
   const values = valueFlagMap(flags);
 
-  const modes = MODE_FLAGS.filter((name) => values[name] !== undefined);
+  const modes = MODE_FLAGS.filter((name) => flags.some((flag) => flag.name === name));
   if (modes.length > 1) {
     throw new Error(`${modes.map((name) => `--${name}`).join(' and ')} each select a mode; pass one`);
   }
@@ -166,8 +165,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (values.parse !== undefined) {
     return parseReadArgs(values.parse, positionals, flags);
   }
-  if (values['record-block'] !== undefined) {
-    return parseRecordBlockArgs(values['record-block'], positionals, flags);
+  if (flags.some((flag) => flag.name === 'record-block')) {
+    return parseRecordBlockArgs(positionals, flags);
   }
   if (values['resolve-merge'] !== undefined) {
     return parseResolveMergeArgs(values['resolve-merge'], positionals, flags);
@@ -406,21 +405,14 @@ function parseReadArgs(surface: string, positionals: readonly string[], flags: r
   return { mode: 'parse', subject, surface };
 }
 
-/** Reads the `--record-block` invocation: the commit it names, the head's record flags, and the author's overrides. */
-function parseRecordBlockArgs(
-  commit: string,
-  positionals: readonly string[],
-  flags: readonly MatchedFlag[],
-): ParsedArgs {
+/** Reads the `--record-block` invocation: the head's record flags and the author's overrides. */
+function parseRecordBlockArgs(positionals: readonly string[], flags: readonly MatchedFlag[]): ParsedArgs {
   const other = flags.find((flag) => !RECORD_BLOCK_FLAGS.has(flag.name));
   if (other !== undefined) {
     throw new Error(`--record-block records a head and its overrides, so it takes no --${other.name}`);
   }
   if (positionals[0] !== undefined) {
     throw new Error(`unexpected argument: ${positionals[0]}`);
-  }
-  if (commit.trim() === '') {
-    throw new Error('--record-block takes the commit from which the head was derived');
   }
 
   const values = valueFlagMap(flags);
@@ -429,7 +421,7 @@ function parseRecordBlockArgs(
     ...(values['override-scope'] !== undefined && { scope: values['override-scope'] }),
     ...(values['override-type'] !== undefined && { type: values['override-type'] }),
   };
-  return { block: { commit: commit.trim(), head: readRecordFlags(flags), overrides }, mode: 'record-block' };
+  return { block: { head: readRecordFlags(flags), overrides }, mode: 'record-block' };
 }
 
 /**

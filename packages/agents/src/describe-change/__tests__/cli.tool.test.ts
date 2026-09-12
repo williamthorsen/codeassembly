@@ -397,10 +397,9 @@ describe('--classify', () => {
 });
 
 describe('--record-block', () => {
-  it('reads the commit, the head’s record flags, and every override flag', () => {
+  it('reads the head’s record flags and every override flag', () => {
     const parsed = parseArgs([
       '--record-block',
-      'e5029924',
       '--scope',
       'agents',
       '--type',
@@ -417,7 +416,6 @@ describe('--record-block', () => {
 
     expect(parsed).toEqual({
       block: {
-        commit: 'e5029924',
         head: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' },
         overrides: { breaking: true, scope: 'kb', type: 'sec' },
       },
@@ -428,16 +426,20 @@ describe('--record-block', () => {
   it.each(['--ticket-ref', '--pr-number', '--ticket-label'])(
     'if %s is passed alongside it, refuses the flag',
     (flag) => {
-      expect(() => parseArgs(['--record-block', 'e5029924', flag, 'value'])).toThrow(/takes no --/);
+      expect(() => parseArgs(['--record-block', flag, 'value'])).toThrow(/takes no --/);
     },
   );
 
-  it('if the commit is blank, refuses the invocation', () => {
-    expect(() => parseArgs(['--record-block', ' '])).toThrow(/takes the commit/);
+  it('selects the mode from the valueless flag alone', () => {
+    expect(parseArgs(['--record-block'])).toEqual({ block: { head: {}, overrides: {} }, mode: 'record-block' });
+  });
+
+  it('if a value is passed inline, refuses it', () => {
+    expect(() => parseArgs(['--record-block=e5029924'])).toThrow(/does not take a value/);
   });
 
   it('if --classify is passed alongside it, refuses the invocation', () => {
-    expect(() => parseArgs(['--record-block', 'e5029924', '--classify', 'main'])).toThrow(/each select a mode/);
+    expect(() => parseArgs(['--record-block', '--classify', 'main'])).toThrow(/each select a mode/);
   });
 
   it('if an override flag is passed without it, refuses the flag', () => {
@@ -446,7 +448,7 @@ describe('--record-block', () => {
 
   it('renders the block from the head and the overrides as the JSON output’s block', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
-    const argv = ['--record-block', 'e5029924', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
+    const argv = ['--record-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
 
     const { output } = await runDescribe({
       argv: [...argv, '--override-type', 'sec', '--override-breaking'],
@@ -457,7 +459,6 @@ describe('--record-block', () => {
 
     expect(output).toStrictEqual({
       block: renderChangeRecordBlock({
-        commit: 'e5029924',
         head: { scope: 'agents', title: 'Add the parser', type: 'feat' },
         overrides: { breaking: true, type: 'sec' },
       }),
@@ -554,7 +555,7 @@ describe('--resolve-merge', () => {
   });
 
   it('if --override-title is passed alongside --record-block, refuses the flag', () => {
-    expect(() => parseArgs(['--record-block', 'e5029924', '--override-title', 'Add foo'])).toThrow(/takes no --/);
+    expect(() => parseArgs(['--record-block', '--override-title', 'Add foo'])).toThrow(/takes no --/);
   });
 
   it('resolves a merge end to end from a body file, reading the commits to a head that the checkout is not on', async () => {
@@ -564,10 +565,7 @@ describe('--resolve-merge', () => {
     ]);
     await mkdir(join(cwd, '.meta'), { recursive: true });
     await writeFile(join(cwd, '.meta', 'label-map.json'), JSON.stringify({ types: { docs: 'documentation' } }));
-    const block = renderChangeRecordBlock({
-      commit: headCommit.slice(0, 8),
-      head: { scope: 'agents', title: 'Add the parser', type: 'feat' },
-    });
+    const block = renderChangeRecordBlock({ head: { scope: 'agents', title: 'Add the parser', type: 'feat' } });
     const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\nCloses #466\n\n${block}\n`);
 
     const { output } = await runDescribe({
