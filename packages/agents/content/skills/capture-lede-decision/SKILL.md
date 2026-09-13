@@ -48,7 +48,7 @@ For the same reason, the corpus is outcome-selected: It contains only changes so
 
 Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
-The change's identity comes wholly from one source. Where any of `--type`, `--scope`, and `--breaking` is passed, it comes from those flags alone, and `--type` is required. Where none is, it comes from the change summary's frontmatter: `type_override` over `type`, `scope_override` over `scope`, and breaking where `breaking` or `breaking_override` is set. A scope of `*` from either source names no scope. `--ticket` falls back to the change summary on its own.
+The change's identity comes wholly from one source. Where any of `--type`, `--scope`, and `--breaking` is passed, it comes from those flags alone, and `--type` is required. Where none is, it comes from the change summary's frontmatter, whose override fields apply to `scope`, `type`, and `breaking` as [the effective record](../_data/change-record.md#the-effective-record) states. A scope of `*` from either source names no scope. `--ticket` falls back to the change summary on its own.
 
 ## Runtime dependencies
 

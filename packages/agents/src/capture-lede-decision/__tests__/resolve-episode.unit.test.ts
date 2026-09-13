@@ -97,7 +97,7 @@ describe(resolveEpisode, () => {
 
   it.each([
     ['as a field', 'type: feat\nbreaking: true'],
-    ['as an override', 'type: feat\nbreaking_override: true'],
+    ['as an override', 'type: feat\noverride_breaking: true'],
     ['as a marker spelled on the type', 'type: feat!'],
   ])('when the change summary records breaking %s, resolves the fallback type as breaking', async (_label, fields) => {
     const fixture = await createLedeFixture();
@@ -106,11 +106,32 @@ describe(resolveEpisode, () => {
     expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({ type: 'feat', breaking: true });
   });
 
-  it('when the change summary records overrides, takes them over the derived head', async () => {
+  it('when the change summary records overrides, takes them over the consolidated record', async () => {
     const fixture = await createLedeFixture();
-    await writeChangeSummary(fixture, 'type: fix\nscope: kb\ntype_override: feat\nscope_override: agents');
+    await writeChangeSummary(fixture, 'type: fix\nscope: kb\noverride_type: feat\noverride_scope: agents');
 
     expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({ type: 'feat', scope: 'agents' });
+  });
+
+  it('when the change summary overrides only the type, keeps the consolidated record’s marker', async () => {
+    const fixture = await createLedeFixture();
+    await writeChangeSummary(fixture, 'type: fix\nbreaking: true\nscope: agents\noverride_type: feat');
+
+    expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({ type: 'feat', breaking: true });
+  });
+
+  it('does not read the override keys under their former names', async () => {
+    const fixture = await createLedeFixture();
+    await writeChangeSummary(
+      fixture,
+      'type: fix\nscope: kb\ntype_override: feat\nscope_override: agents\nbreaking_override: true',
+    );
+
+    expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({
+      type: 'fix',
+      scope: 'kb',
+      breaking: false,
+    });
   });
 
   it('when the caller passes --type, ignores the change summary’s breaking fields', async () => {
@@ -157,7 +178,7 @@ describe(resolveEpisode, () => {
 
   it('reads a scope override of * from the change summary as no scope', async () => {
     const fixture = await createLedeFixture();
-    await writeChangeSummary(fixture, "type: feat\nscope: agents\nscope_override: '*'");
+    await writeChangeSummary(fixture, "type: feat\nscope: agents\noverride_scope: '*'");
 
     expect((await resolveWithoutIdentity(fixture)).identity).not.toHaveProperty('scope');
   });
