@@ -111,17 +111,13 @@ Writing is type-blind and lives in `@williamthorsen/kb/note-io`. `readNote(path)
 `loadAliases({ kbRoot })` reads `.kb/tag-aliases.yaml` into an `AliasMap`, rejecting collisions and self-aliases at load time; an absent file yields an empty map.
 `canonicalize(tag, aliases)` resolves a tag to its canonical form; `findAliasFor(tag, aliases)` returns the canonical form only when the input is a known alias.
 
-## Vault integrity and lints
+## Vault integrity
 
 `checkVaultIntegrity(notes)` runs whole-vault, type-blind checks over a `{ path, body, bodyStartLine }[]` note set: an unresolved `[[link]]` is an error (`wikilinks.unresolved`), and a basename shared by two or more notes is one vault-wide warning (`wikilinks.basename`). `buildVaultIndex(notes)` builds the basename → paths index the layer and curate's wikilink rewriter share.
 
 A second argument, `{ foreignStores, sourceVisibility }`, resolves [store-qualified links](#linking-into-another-store) against the stores they name; supplied none, the layer treats every target as store-local, which is what `buildVaultIndex`'s other consumers get.
 
 `scanWikilinks(body)` yields each link in a note body, with its store qualifier and target separated, and is the single definition of what counts as a link. `lookupKey(target)` reduces a target to the key that `VaultIndex` uses. The subpath exports `checkVaultIntegrity`, `buildVaultIndex`, `scanWikilinks`, and `lookupKey`, and not the parse primitives from which they are built: A consumer that detects or rewrites links calls `scanWikilinks`.
-
-The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
-
-`taxonomyFindings({ notes, taxonomy, config, taxonomyPath })` reports where a store's assertion folders and its declared taxonomy disagree (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Its findings carry `scope: 'vault'`: they describe the store rather than any one note, so a consumer that narrows a report to selected notes must keep them rather than filter them out by path.
 
 ```ts
 import { checkVaultIntegrity } from '@williamthorsen/kb/vault-integrity';
@@ -138,6 +134,8 @@ import { check } from '@williamthorsen/kb/check';
 
 const { notes, findings } = await check({ kbRoot });
 ```
+
+No subpath exports the lints, so `check`, and the `kb check` command built on it, is the only way to run them. Two type-blind per-note lints catch what write-time record validation can't: `tag-alias` (warning) reports alias-vocabulary drift, and `paths.user-home` (error) reports a hardcoded `/Users/{name}/` path in captured content. The `taxonomy.*` rules, all warnings, report where a store's assertion folders and its declared taxonomy disagree (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Their findings carry `scope: 'vault'`: they describe the store rather than any one note, so a consumer that narrows a report to selected notes must keep them rather than filter them out by path.
 
 A structural defect in any loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
 
