@@ -29,9 +29,6 @@ The package exposes thirteen subpath entries plus a root barrel:
 | `./taxonomy`        | `.kb/taxonomy.yaml` loading, comment-preserving declaration, and path mapping  |
 | `./vault-integrity` | Type-blind `[[link]]` scanning, resolution, and basename-uniqueness checks     |
 
-Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
-The library throws on errors; success/failure shaping is left to consumers.
-
 ## Knowledge-base discovery
 
 `findKbRoot({ startDir })` walks ancestor directories looking for a `.kb/` folder and returns the first match (or `null` at the filesystem root).
@@ -393,7 +390,3 @@ A store with no `package.json` runs steps 1, 2, and 7, and skips 3 through 6: it
 ## Error and exception model
 
 The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`, `loadTaxonomy`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. An underlying failure, such as a YAML parse error, is attached as the thrown error's `cause`. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
-
-## MCP wrappability
-
-Every public function input is a plain object with primitive or `unknown`-typed fields, and no function takes a callback. A future `kb-mcp` server can bind Zod-validated request payloads directly onto these inputs without refactoring.
