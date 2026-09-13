@@ -288,7 +288,7 @@ async function readLede(input: {
  * is passed, and otherwise the newest change-summary artifact's frontmatter, which is the only artifact in the chain
  * that carries typed fields. One identity never combines fields from both, so a caller passing a type for a change that
  * names no scope records no scope. The ticket falls back to the change summary on its own, being no part of the
- * record. A scope of `*` from either source names no scope.
+ * consolidated record. A scope of `*` from either source names no scope.
  *
  * The work type is resolved through the installed taxonomy rather than taken as spelled, so the identity carries the
  * canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change

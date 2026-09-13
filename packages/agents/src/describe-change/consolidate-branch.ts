@@ -9,8 +9,8 @@ import type { RawCommit } from './read-commits.ts';
  * Derives what a branch of commits adds up to: the entries it declares, the record they consolidate to, the subjects no
  * template matched, and the entries whose breaking marker disagrees with their type's policy.
  *
- * A commit carrying `Change:` trailers contributes those entries and not its subject. A condensed commit's subject is
- * the record its trailers already consolidate to, so reading both would count the branch against itself.
+ * A commit carrying `Change:` trailers contributes those entries and not its subject. A condensed commit's subject
+ * renders the record to which its trailers already consolidate, so reading both would count the branch against itself.
  *
  * A subject no template matches is reported rather than dropped, so a mistyped prefix is visible to its author instead
  * of silently shrinking the set the consolidated record is derived from. A violation likewise leaves its entry
