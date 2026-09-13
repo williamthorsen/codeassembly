@@ -24,8 +24,8 @@ import { consolidateBranch } from './consolidate-branch.ts';
 import { findDefects } from './find-defects.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
-import { readLabelMap, resolveLabeledHead } from './read-label-map.ts';
-import { type MergeInput, type MergeOverrides, type MergeReport, resolveMerge } from './resolve-merge.ts';
+import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
+import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
   type ConsolidateBranchOutcome,
@@ -177,11 +177,11 @@ export interface DescribeInput {
 export interface DescribeResult {
   output:
     | ConsolidateBranchOutcome
-    | MergeReport
     | ParseTitleOutcome
     | RenderBlockOutcome
     | RenderedTitles
     | ResolveEffectiveRecordOutcome
+    | ResolveMergeOutcome
     | TicketTypeOutcome;
   warnings: string[];
 }
@@ -209,16 +209,16 @@ function buildUsageMessage(subcommand: string | undefined): string {
 }
 
 /**
- * Derives the head that a pull request's commits consolidate to, reading the range to its head commit. A head commit
- * absent from the local repository, and an empty `commit.title_format`, leave the derivation unavailable with the reason
- * named, so the merge still resolves; any other git failure propagates.
+ * Consolidates a pull request's commits, reading the range to its head commit. A head commit absent from the local
+ * repository, and an empty `commit.title_format`, leave the commits unavailable with the reason named, so the merge
+ * still resolves; any other git failure propagates.
  */
-async function deriveMergeHead(input: {
+async function consolidatePullRequestCommits(input: {
   args: ResolveMergeArgs;
   cwd: string;
   taxonomy: Taxonomy;
   template: string;
-}): Promise<MergeInput['derivation']> {
+}): Promise<MergeInput['commits']> {
   if (input.template === '') {
     return {
       kind: 'unavailable',
@@ -228,7 +228,7 @@ async function deriveMergeHead(input: {
   try {
     const commits = await readCommits({ baseRef: input.args.baseRef, cwd: input.cwd, headRef: input.args.headCommit });
     const { consolidatedRecord } = consolidateBranch(commits, compileTemplate(input.template), input.taxonomy);
-    return { head: consolidatedRecord ?? {}, kind: 'derived' };
+    return { ...(consolidatedRecord !== undefined && { consolidatedRecord }), kind: 'read' };
   } catch (error) {
     if (error instanceof MissingCommitError) {
       return { kind: 'unavailable', reason: `the head commit ${error.ref} is not in the local repository` };
@@ -592,8 +592,8 @@ async function runResolveEffectiveRecord(
 }
 
 /**
- * Resolves a merge from the invocation: reads the pull request's body from its file and its record block from the body,
- * resolves its labels through the repository's label map, derives its head from its commits, and hands all of it to
+ * Resolves a merge from the invocation: reads the pull request's body from its file and its block from the body,
+ * resolves its labels through the repository's label map, consolidates its commits, and hands all of it to
  * `resolveMerge`. The body file is read relative to the invoking directory, and the label map and the commits from the
  * repository root.
  */
@@ -611,11 +611,11 @@ async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Pr
   }
 
   const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
-  const derivation = await deriveMergeHead({ args, cwd: projectRoot, taxonomy, template: templates.commit });
+  const commits = await consolidatePullRequestCommits({ args, cwd: projectRoot, taxonomy, template: templates.commit });
   const output = resolveMerge({
     block: readChangeRecordBlock(body),
-    derivation,
-    labeled: resolveLabeledHead(labelMap, args.prLabels),
+    commits,
+    labels: resolveLabeledRecord(labelMap, args.prLabels),
     overrides: args.overrides,
     pr: { body, headCommit: args.headCommit, number: args.prNumber, title: args.prTitle },
     taxonomy,

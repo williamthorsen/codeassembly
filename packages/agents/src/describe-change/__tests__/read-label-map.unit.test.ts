@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { type LabelMap, readLabelMap, resolveLabeledHead, resolveLabelKey } from '../read-label-map.ts';
+import { type LabelMap, readLabelMap, resolveLabeledRecord, resolveLabelKey } from '../read-label-map.ts';
 
 const MAP: LabelMap = {
   scopes: { agents: 'scope:agents', kb: 'scope:kb' },
@@ -76,17 +76,25 @@ describe(resolveLabelKey, () => {
   });
 });
 
-describe(resolveLabeledHead, () => {
+describe(resolveLabeledRecord, () => {
   it('resolves the type, the scope, and the breaking label together', () => {
-    expect(resolveLabeledHead(MAP, ['removal', 'scope:kb', 'breaking'])).toStrictEqual({
+    expect(resolveLabeledRecord(MAP, ['removal', 'scope:kb', 'breaking'])).toStrictEqual({
       breaking: true,
       scope: 'kb',
       type: 'drop',
     });
   });
 
-  it('leaves out each dimension that the labels do not resolve', () => {
-    expect(resolveLabeledHead(MAP, ['feature', 'fix', 'scope:agents'])).toStrictEqual({ scope: 'agents' });
+  it('reads a resolved type without the breaking label as not breaking', () => {
+    expect(resolveLabeledRecord(MAP, ['feature'])).toStrictEqual({ breaking: false, type: 'feat' });
+  });
+
+  it('reads the breaking label as breaking where no type resolves', () => {
+    expect(resolveLabeledRecord(MAP, ['breaking', 'scope:kb'])).toStrictEqual({ breaking: true, scope: 'kb' });
+  });
+
+  it('leaves out each field that the labels do not resolve', () => {
+    expect(resolveLabeledRecord(MAP, ['feature', 'fix', 'scope:agents'])).toStrictEqual({ scope: 'agents' });
   });
 });
 
