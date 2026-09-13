@@ -5,14 +5,4 @@ export {
   type VaultIntegrityNote,
   type VaultIntegrityOptions,
 } from './check-vault-integrity.ts';
-export {
-  countNewlines,
-  extractTarget,
-  hasNonMarkdownExtension,
-  lookupKey,
-  maskFencedCode,
-  maskInlineCode,
-  type ScannedWikilink,
-  scanWikilinks,
-  WIKILINK,
-} from './wikilink-parse.ts';
+export { lookupKey, type ScannedWikilink, scanWikilinks } from './wikilink-parse.ts';
