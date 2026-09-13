@@ -13,7 +13,7 @@ Grammatical register for comments written into source. Comment discipline decide
 
 <!-- rule: doc-descriptions -->
 
-Where a description leads with a verb, the verb is third-person indicative with the subject understood: "Builds the canonical payload shape", not "Build the canonical payload shape".
+When a description leads with a verb, the verb is third-person indicative with the subject understood: "Builds the canonical payload shape", not "Build the canonical payload shape".
 
 Existing imperative descriptions are drift, not local standard. Do not imitate them.
 

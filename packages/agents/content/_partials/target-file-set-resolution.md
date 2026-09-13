@@ -9,11 +9,11 @@ git ls-files -- <path>
 git ls-files --others --exclude-standard -- <path>
 ```
 
-The two forms together cover what git tracks plus what it would track, and both honor `.gitignore`, so `node_modules/`, `dist/`, and every other non-authored tree stay out for free.
+The two forms together cover what git tracks plus what it would track, and both honor `.gitignore`; as a result, `node_modules/`, `dist/`, and every other non-authored tree stay out for free.
 
 **What never enters the set.** Three kinds of file are held out, each because an edit to it would be discarded or would rewrite a record:
 
-- **Deployed output.** A file containing a `GENERATED FILE` or `<!-- codeassembly-` marker, and anything beneath a harness's own `skills/` or `scripts/` directory. The next sync overwrites it, so the edit belongs to the source from which it was copied.
+- **Deployed output.** A file containing a `GENERATED FILE` or `<!-- codeassembly-` marker, and anything beneath a harness's own `skills/` or `scripts/` directory. The next sync overwrites it; therefore, the edit belongs to the source from which it was copied.
 - **Sealed artifacts.** Anything beneath the artifact base directory, typically `~/ai-artifacts/`. A saved artifact records a moment and stays as written.
 - **Text that nobody here authored.** Vendored third-party sources, generated data, and test fixtures, whatever they contain.
 

@@ -17,9 +17,9 @@ Export by name. Never use a default export: Importers invent their own names, an
 
 A barrel (an `index.ts` that re-exports a directory's modules) is permitted only at a package's published entry point: a module named in the package's `exports` map, whether the root entry or a subpath. Everywhere else, an import names the defining module directly.
 
-Importing one symbol through a barrel loads every module the barrel re-exports.
+Importing one symbol through a barrel loads every module re-exported by the barrel.
 
-A barrel is also permitted at a vendor boundary that lint enforces: A directory containing the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary no lint rule protects gets no barrel.
+A barrel is also permitted at a vendor boundary that lint enforces: A directory containing the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement; therefore, a boundary protected by no lint rule gets no barrel.
 
 ## Import specifiers
 
@@ -29,10 +29,10 @@ This requires `allowImportingTsExtensions` and a build that rewrites extensions 
 
 ## Type safety
 
-Never use a type assertion (`as Type`, `<Type>value`): It claims a runtime guarantee the code cannot make. Where the type is not guaranteed, return `unknown` and let the caller narrow it with a type guard.
+Never use a type assertion (`as Type`, `<Type>value`): It claims a runtime guarantee that the code cannot make. When the type is not guaranteed, return `unknown` and let the caller narrow it with a type guard.
 
 ```typescript
-// ❌ Claims a type nothing verified
+// ❌ Claims a type that nothing verified
 function readConfig<T>(path: string): T {
   return JSON.parse(fs.readFileSync(path, 'utf8')) as T;
 }
@@ -47,9 +47,9 @@ function isConfig(value: unknown): value is Config {
 }
 ```
 
-Two exceptions, each with a comment saying why: a TypeScript limitation where the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.
+Two exceptions, each with a comment saying why: a TypeScript limitation in which the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.
 
-Never use `any`, a non-null assertion (use a runtime assertion instead), or a generic parameter that claims a guarantee the function cannot deliver. Model known variants as a union, and validate external data with a type guard or a schema library.
+Never use `any`, a non-null assertion (use a runtime assertion instead), or a generic parameter that claims a guarantee that the function cannot deliver. Model known variants as a union, and validate external data with a type guard or a schema library.
 
 Prefer `undefined` to `null` unless serialization requires otherwise.
 
