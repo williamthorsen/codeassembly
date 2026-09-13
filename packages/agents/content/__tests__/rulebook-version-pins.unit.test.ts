@@ -2,9 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { libraryResolver } from '../../src/lib/content-sources.ts';
-import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
-import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '../../src/lib/rulebook-deploy.ts';
+import type { ResolvedRulebook } from '../../src/lib/rulebook-deploy.ts';
+import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 
 // A rulebook's version names the guidance an agent holds, and `revise-prose` keys a repository's sweep coverage on it,
 // so a body that changes without a bump leaves every repository recorded as swept against rule text that has since
@@ -87,7 +86,7 @@ const DRIFT_MESSAGE =
   'coverage for review; or re-pin the hash alone if the edit left the operative content as it was. An edit to an ' +
   'included partial counts as an edit to the body, which is why a rulebook can drift with its own file untouched.';
 
-const RESOLVED = resolveEveryRulebook();
+const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
 describe('rulebook version pins', () => {
   it('pins every versioned rulebook', async () => {
@@ -162,18 +161,6 @@ function hashText(text: string): string {
 /** Renders a rulebook's pin as the literal that `PINS` takes, so a failure hands the author the line to paste. */
 function renderPin(rulebook: ResolvedRulebook): string {
   return `{ bodyHash: '${hashText(rulebook.body)}', version: '${rulebook.version}' }`;
-}
-
-/** Resolves every library rulebook by slug, each with its includes expanded and its frontmatter parsed off. */
-async function resolveEveryRulebook(): Promise<ReadonlyMap<string, ResolvedRulebook>> {
-  const resolver = libraryResolver(CONTENT_ROOT);
-  const slugs = (await enumerateCatalogSlugs(CONTENT_ROOT)).rulebook;
-  if (slugs === undefined || slugs.length === 0) {
-    // Every assertion here reports what it finds, so an empty catalog would leave the whole suite green.
-    throw new Error(`The catalog at ${CONTENT_ROOT} names no rulebook`);
-  }
-
-  return indexRulebooksBySlug(await Promise.all(slugs.map((slug) => resolveRulebook(slug, resolver))));
 }
 
 // endregion | Helpers
