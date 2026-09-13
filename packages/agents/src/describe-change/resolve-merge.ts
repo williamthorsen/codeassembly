@@ -50,23 +50,10 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   const { record: effective, sources } = applySourcedOverrides(base, input.overrides, 'flags');
 
   const prTitle = readPullRequestTitle(input);
-  if (prTitle === undefined) {
-    notices.push({ kind: 'pr-title-unparsed' });
-  } else if (prTitle.type !== undefined) {
-    const fields = findDifferingFields(prTitle, effective);
-    if (fields.length > 0) {
-      notices.push({ kind: 'pr-title-divergence', fields });
-    }
-  }
+  notices.push(...findPullRequestTitleNotices(prTitle, effective));
   const title = resolveTitle({ blockTitle: block?.title, overrides: input.overrides, pr: input.pr, prTitle });
   const ticketRef = resolveTicketRef({ prTitle, ticketRef: input.ticketRef });
 
-  const mergeRecord: ChangeRecord = {
-    ...effective,
-    prNumber: input.pr.number,
-    title: title.value,
-    ...(ticketRef !== undefined && { ticketRef: ticketRef.value }),
-  };
   return {
     effective_record: {
       title: title.value,
@@ -83,8 +70,13 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
       breaking: sources.breaking,
       ticket_ref: ticketRef?.source ?? null,
     },
-    merge_title:
-      input.templates.merge === '' ? title.value : render(compileTemplate(input.templates.merge), mergeRecord),
+    merge_title: renderMergeTitle({
+      effective,
+      prNumber: input.pr.number,
+      template: input.templates.merge,
+      ticketRef: ticketRef?.value,
+      title: title.value,
+    }),
     body: composeBody(input.pr.body),
     sources: {
       block: block === undefined ? null : toBlockOutcome(block),
@@ -284,6 +276,21 @@ function findDifferingFields(left: ChangeRecord, right: ChangeRecord): ComparedF
 }
 
 /**
+ * Reports a pull-request title that does not invert, or one whose typed prefix differs from the effective record on the
+ * fields listed.
+ */
+function findPullRequestTitleNotices(
+  prTitle: PullRequestTitleRecord | undefined,
+  effective: ChangeRecord,
+): MergeNotice[] {
+  if (prTitle === undefined) {
+    return [{ kind: 'pr-title-unparsed' }];
+  }
+  const fields = prTitle.type === undefined ? [] : findDifferingFields(prTitle, effective);
+  return fields.length === 0 ? [] : [{ kind: 'pr-title-divergence', fields }];
+}
+
+/**
  * Reports whether a trailing body line is blank or only closes tickets: a closing keyword, as a platform reads one,
  * followed by references and nothing else.
  */
@@ -342,6 +349,25 @@ function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undef
     breaking: titleBorne.breaking === true,
     title: titleBorne.title ?? inverted.title,
   };
+}
+
+/** Renders the effective record through `merge.title_format`, falling back to the bare title where that template is empty. */
+function renderMergeTitle(input: {
+  effective: ChangeRecord;
+  prNumber: string;
+  template: string;
+  ticketRef: string | undefined;
+  title: string;
+}): string {
+  if (input.template === '') {
+    return input.title;
+  }
+  return render(compileTemplate(input.template), {
+    ...input.effective,
+    prNumber: input.prNumber,
+    title: input.title,
+    ...(input.ticketRef !== undefined && { ticketRef: input.ticketRef }),
+  });
 }
 
 /** Resolves the ticket reference from the pull-request title, then from the invocation. */
