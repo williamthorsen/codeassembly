@@ -20,7 +20,7 @@ The package exposes thirteen subpath entries plus a root barrel:
 | `./create`          | `create`: scaffold a new store and register it in `kb.yaml`                    |
 | `./discovery`       | KB root discovery and `kb.yaml` registry loading, merging, and writing         |
 | `./filesystem`      | Filesystem-existence helpers with an explicit absence policy                   |
-| `./frontmatter`     | Note parsing into typed frontmatter and writing it back to YAML                |
+| `./frontmatter`     | Note parsing into typed frontmatter                                            |
 | `./layout`          | The store's on-disk layout: every path inside a `.kb/` store derives from here |
 | `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
 | `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
@@ -100,10 +100,11 @@ The relation is many-to-many (one response can address many problems, and one pr
 
 `parseNote({ path })` (or `parseNoteContent({ content })`) parses a note into a `ParsedNote` carrying typed `Frontmatter`:
 The `title`, `recordType`, `created`, `updated`, and `tags` fields are strongly typed and any other fields are preserved in an `extra` map.
-`writeFrontmatter({ frontmatter, body })` renders it back to a note string with a fixed field order and flow-style tags; the round trip is idempotent.
 
 Date fields surface as strings, never JS `Date` objects. YAML parse errors are recorded in `ParsedNote.frontmatterRaw.parseError` rather than thrown;
 missing files (when a path is given) throw.
+
+Writing is type-blind and lives in `@williamthorsen/kb/note-io`. `readNote(path)` (or `readNoteContent(content)`) splits a note into an insertion-ordered frontmatter field map and a body, and `writeNote(path, fields, body)` (or `renderNote(fields, body)`) renders them back, with string lists in flow style. A note written this way reads back to the same fields and body.
 
 ## Tags
 
@@ -367,7 +368,7 @@ The `[*.md]` exemption is the one entry that is not self-explanatory. Two traili
 embeddedLanguageFormatting: off
 ```
 
-It is not stylistic, and the scaffolded file carries this reasoning in its own header so it travels with the store. `embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. Formatted, a long `tags` or `addressed-by` list breaks across several lines, which `writeFrontmatter` puts back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note carrying a list past the print width churns on each pass.
+It is not stylistic, and the scaffolded file carries this reasoning in its own header so it travels with the store. `embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. Formatted, a long `tags` or `addressed-by` list breaks across several lines, which `renderNote` puts back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note carrying a list past the print width churns on each pass.
 
 A store that must keep a file that it cannot format, such as a lockfile or a fixture whose defect is the point, names it in a `.prettierignore`. That file is the escape hatch and is not scaffolded, since a fresh store has nothing to put in it.
 
