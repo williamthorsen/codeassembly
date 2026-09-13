@@ -46,7 +46,7 @@ export function resolveMerge(input: MergeInput): MergeReport {
       : applyOverrides(chooseFromRecord({ derived, notices, record }), record.overrides ?? {});
   const head = applyOverrides(resolved, input.overrides);
 
-  const { candidate, ticketRef, title } = resolveTitle({ ...input, head, notices, recordTitle: record?.head.title });
+  const { candidate, ticketRef, title } = resolveTitle({ ...input, head, notices, recordTitle: record?.title });
   if (candidate !== undefined) {
     notices.push({ head: toOutcome(candidate), kind: 'candidate-head' });
   }
@@ -59,7 +59,7 @@ export function resolveMerge(input: MergeInput): MergeReport {
   };
   return {
     head: toOutcome(head),
-    recorded: record === undefined ? null : toOutcome(toHead(record.head)),
+    recorded: record === undefined ? null : toOutcome(toHead(record.consolidatedRecord ?? {})),
     derived: derived === undefined ? null : toOutcome(derived),
     labeled:
       record === undefined && (labeled.scope !== undefined || labeled.type !== undefined) ? toOutcome(labeled) : null,
@@ -149,7 +149,7 @@ function chooseFromRecord(input: {
   notices: MergeNotice[];
   record: ChangeRecordBlock;
 }): ChangeRecord {
-  const recorded = toHead(input.record.head);
+  const recorded = toHead(input.record.consolidatedRecord ?? {});
   if (input.derived === undefined || isSameHead(recorded, input.derived)) {
     return recorded;
   }

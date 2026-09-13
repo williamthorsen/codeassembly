@@ -148,13 +148,13 @@ describe(resolveMerge, () => {
 
   describe('without a readable block', () => {
     it('reports a malformed block and resolves as though it were absent', () => {
-      const block: ChangeRecordBlockReading = { defect: '`head` is not a mapping', kind: 'malformed' };
+      const block: ChangeRecordBlockReading = { defect: '`title` is missing', kind: 'malformed' };
 
       const report = resolveMerge(buildInput({ block, derived: { scope: 'agents', type: 'feat' } }));
 
       expect(report).toMatchObject({
         head: { scope: 'agents', type: 'feat' },
-        notices: [{ defect: '`head` is not a mapping', kind: 'malformed-record' }],
+        notices: [{ defect: '`title` is missing', kind: 'malformed-record' }],
         recorded: null,
       });
     });
@@ -315,7 +315,7 @@ describe(resolveMerge, () => {
       const templates = { ...TEMPLATES, pr: '{ticket_ref} {title}' };
 
       const report = resolveMerge(
-        buildInput({ block: readBlock({ title: 'Add the parser', type: 'feat' }), prTitle: 'Add foo', templates }),
+        buildInput({ block: readBlock({ type: 'feat' }, { title: 'Add the parser' }), prTitle: 'Add foo', templates }),
       );
 
       expect(report).toMatchObject({
@@ -364,7 +364,7 @@ describe(resolveMerge, () => {
 
   describe('the body', () => {
     it('where ## What is the last heading, excludes the closing line and the record block', () => {
-      const block = renderChangeRecordBlock({ head: { type: 'feat' } });
+      const block = renderChangeRecordBlock({ consolidatedRecord: { type: 'feat' }, title: 'Add foo' });
 
       const report = resolveMerge(
         buildInput({ prBody: `## What\n\n- Adds foo.\n- Adds bar.\n\nCloses #466\n\n${block}\n` }),
@@ -407,8 +407,8 @@ describe(resolveMerge, () => {
 
 /**
  * Builds a merge input from the house templates and a taxonomy of one type per policy. A `derived` head stands for an
- * available derivation, which otherwise agrees with the block's head, and a `ticketRef` of null leaves the fallback
- * reference out.
+ * available derivation, which otherwise agrees with the block's consolidated record, and a `ticketRef` of null leaves
+ * the fallback reference out.
  */
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {
@@ -421,7 +421,10 @@ function buildInput(
   const { derived, prBody, prTitle, ticketRef, ...rest } = changes;
   return {
     block: { kind: 'absent' },
-    derivation: { head: derived ?? (rest.block?.kind === 'read' ? rest.block.block.head : {}), kind: 'derived' },
+    derivation: {
+      head: derived ?? (rest.block?.kind === 'read' ? (rest.block.block.consolidatedRecord ?? {}) : {}),
+      kind: 'derived',
+    },
     labeled: {},
     overrides: {},
     taxonomy: TAXONOMY,
@@ -437,11 +440,18 @@ function buildInput(
   };
 }
 
-/** Builds a block reading holding the head given, with the author's overrides where any are given. */
-function readBlock(head: ChangeRecord, options: { overrides?: RecordOverrides } = {}): ChangeRecordBlockReading {
+/**
+ * Builds a block reading holding the consolidated record given, with the author's overrides where any are given, and a
+ * title that defaults to the pull request's.
+ */
+function readBlock(
+  consolidatedRecord: ChangeRecord,
+  options: { overrides?: RecordOverrides; title?: string } = {},
+): ChangeRecordBlockReading {
   return {
     block: {
-      head,
+      consolidatedRecord,
+      title: options.title ?? 'Add foo',
       ...(options.overrides !== undefined && { overrides: options.overrides }),
     },
     kind: 'read',

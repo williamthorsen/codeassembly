@@ -527,7 +527,7 @@ describe('resolve-ticket-type', () => {
 });
 
 describe('render-block', () => {
-  it('reads the head’s record flags and every override flag', () => {
+  it('reads the title, the consolidated record’s flags, and every override flag', () => {
     const parsed = parseArgs([
       'render-block',
       '--scope',
@@ -546,8 +546,9 @@ describe('render-block', () => {
 
     expect(parsed).toEqual({
       block: {
-        head: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' },
+        consolidatedRecord: { breaking: true, scope: 'agents', type: 'feat' },
         overrides: { breaking: true, scope: 'kb', type: 'sec' },
+        title: 'Add the parser',
       },
       subcommand: 'render-block',
     });
@@ -560,12 +561,24 @@ describe('render-block', () => {
     },
   );
 
-  it('reads an invocation carrying no flags', () => {
-    expect(parseArgs(['render-block'])).toEqual({ block: { head: {}, overrides: {} }, subcommand: 'render-block' });
+  it('reads an invocation carrying only the title', () => {
+    expect(parseArgs(['render-block', '--title', 'Add foo'])).toEqual({
+      block: { consolidatedRecord: {}, overrides: {}, title: 'Add foo' },
+      subcommand: 'render-block',
+    });
+  });
+
+  it.each([
+    ['is missing', ['--type', 'feat']],
+    ['is blank', ['--title', ' ', '--type', 'feat']],
+  ])('if --title %s, refuses the invocation', (_label, flags) => {
+    expect(() => parseArgs(['render-block', ...flags])).toThrow('render-block requires --title');
   });
 
   it('if a value is passed inline to a valueless flag, refuses it', () => {
-    expect(() => parseArgs(['render-block', '--override-breaking=true'])).toThrow(/does not take a value/);
+    expect(() => parseArgs(['render-block', '--title', 'Add foo', '--override-breaking=true'])).toThrow(
+      /does not take a value/,
+    );
   });
 
   it('if the type override spells the marker, refuses it', () => {
@@ -574,7 +587,7 @@ describe('render-block', () => {
     );
   });
 
-  it('renders the block from the head and the overrides as the JSON output’s block', async () => {
+  it('renders the block from the title, the consolidated record, and the overrides as the JSON output’s block', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const argv = ['render-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
 
@@ -587,8 +600,9 @@ describe('render-block', () => {
 
     expect(output).toStrictEqual({
       block: renderChangeRecordBlock({
-        head: { scope: 'agents', title: 'Add the parser', type: 'feat' },
+        consolidatedRecord: { scope: 'agents', type: 'feat' },
         overrides: { breaking: true, type: 'sec' },
+        title: 'Add the parser',
       }),
     });
   });
@@ -604,7 +618,10 @@ describe('render-block', () => {
     });
 
     expect(output).toStrictEqual({
-      block: renderChangeRecordBlock({ head: { scope: 'agents', title: 'Add the parser', type: 'feat' } }),
+      block: renderChangeRecordBlock({
+        consolidatedRecord: { scope: 'agents', type: 'feat' },
+        title: 'Add the parser',
+      }),
     });
   });
 });
@@ -697,7 +714,10 @@ describe('resolve-merge', () => {
       'agents|fix: Correct the guard',
     ]);
     await writeLabelMap(cwd, { types: { docs: 'documentation' } });
-    const block = renderChangeRecordBlock({ head: { scope: 'agents', title: 'Add the parser', type: 'feat' } });
+    const block = renderChangeRecordBlock({
+      consolidatedRecord: { scope: 'agents', type: 'feat' },
+      title: 'Add the parser',
+    });
     const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\nCloses #466\n\n${block}\n`);
 
     const { output } = await runDescribe({

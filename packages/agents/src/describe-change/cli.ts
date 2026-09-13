@@ -327,17 +327,19 @@ function readRecordFlags(flags: readonly MatchedFlag[]): ChangeRecord {
   };
 }
 
-/** Reads the `render-block` invocation: the head's record flags and the author's overrides. */
+/** Reads the `render-block` invocation: the required title, the consolidated record's flags, and the author's overrides. */
 function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   const values = valueFlagMap(flags);
+  const title = readRequiredValue('render-block', values, 'title');
   const type = readOverrideType(values);
+  const { title: _title, ...consolidatedRecord } = readRecordFlags(flags);
   const overrides: RecordOverrides = {
     ...(flags.some((flag) => flag.name === 'override-breaking') && { breaking: true }),
     ...(values['override-scope'] !== undefined && { scope: values['override-scope'] }),
     ...(type !== undefined && { type }),
   };
-  return { block: { head: readRecordFlags(flags), overrides }, subcommand: 'render-block' };
+  return { block: { consolidatedRecord, overrides, title }, subcommand: 'render-block' };
 }
 
 /**
