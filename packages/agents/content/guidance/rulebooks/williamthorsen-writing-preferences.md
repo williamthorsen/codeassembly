@@ -2,7 +2,7 @@
 slug: williamthorsen-writing-preferences
 description: William Thorsen's personal writing preferences for agent-authored prose.
 delivery: [ambient, hook]
-version: '4'
+version: '5'
 ---
 
 # William Thorsen's writing preferences
@@ -48,6 +48,12 @@ Use sentence case for titles, headings, section headers, steps, labels, and inte
 - "Backend: Express API routes and server" not "Backend: Express API Routes And Server"
 - "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
 - "Customizing the Status Adapter for a new backend", not "Customizing the Status Adapter for a New Backend"
+
+## `so`
+
+<!-- rule: so -->
+
+Don't join two clauses with `so`, which marks no relation between them. Name the relation: "because" or "as a result" for a cause, "so that" or "to" for a purpose, and "; therefore," for an inference. "So that", the degree adverb ("so many"), and a `so` that stands for a clause ("do so", "if so") are outside the rule.
 
 ## `where`
 
