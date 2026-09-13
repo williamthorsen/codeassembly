@@ -129,9 +129,17 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
       "scope": "agents",
       "title": "Add the parser",
       "type": "feat"
+    },
+    {
+      "breaking": true,
+      "change": "agents|refactor!: Restructure the guard",
+      "commit": "8d2227d",
+      "scope": "agents",
+      "title": "Restructure the guard",
+      "type": "refactor"
     }
   ],
-  "consolidated_record": { "breaking": false, "scope": "agents", "type": "feat" },
+  "consolidated_record": { "breaking": true, "scope": "agents", "type": "refactor" },
   "unmatched": [{ "commit": "b5ce73f", "subject": "wip" }],
   "violations": [{ "commit": "8d2227d", "policy": "forbidden", "type": "refactor" }]
 }
