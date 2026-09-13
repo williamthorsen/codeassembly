@@ -35,12 +35,15 @@ describe(detectSecondPersonPronouns, () => {
     expect(detect('The template renders `you` as the actor.')).toStrictEqual([]);
   });
 
-  it.each(['content/skills/revise-prose/SKILL.md', 'content/subagents/prose-reviser.md', '.claude/agents/reviewer.md'])(
-    'passes over the skill or subagent body at %s, whose pronouns address its executor',
-    (file) => {
-      expect(detect('You read each file whole.', file)).toStrictEqual([]);
-    },
-  );
+  it.each([
+    'content/skills/revise-prose/SKILL.md',
+    'content/subagents/prose-reviser.md',
+    '.claude/agents/reviewer.md',
+    'content/skills/_partials/action-items.md',
+    'content/subagents/_partials/review-writes-hard-gate.md',
+  ])('passes over the skill or subagent body at %s, whose pronouns address its executor', (file) => {
+    expect(detect('You read each file whole.', file)).toStrictEqual([]);
+  });
 
   it.each([
     'packages/agents/README.md',

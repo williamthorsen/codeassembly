@@ -21,12 +21,12 @@ A rule has a detector; a unit is a versioned document whose coverage the record 
 
 ## Detectors
 
-| Rule                      | Reports                                                                                                                                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `em-dash`                 | Each sentence that contains an em-dash                                                                                                                                                   |
-| `reduced-object-relative` | Each head noun followed directly by a new noun phrase with no relativizer between them, its phrase running from the head noun through the verb                                           |
-| `second-person`           | Each sentence that contains `you`, `your`, `yours`, `yourself`, or `yourselves`, except in a `SKILL.md` or a Markdown file directly inside a `subagents/` or `.claude/agents/` directory |
-| `where`                   | Each sentence that contains the word `where`                                                                                                                                             |
+| Rule                      | Reports                                                                                                                                                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `em-dash`                 | Each sentence that contains an em-dash                                                                                                                                                                                                                             |
+| `reduced-object-relative` | Each head noun followed directly by a new noun phrase with no relativizer between them, its phrase running from the head noun through the verb                                                                                                                     |
+| `second-person`           | Each sentence that contains `you`, `your`, `yours`, `yourself`, or `yourselves`, except in a `SKILL.md`, a Markdown file directly inside a `subagents/` or `.claude/agents/` directory, or a partial directly inside `skills/_partials/` or `subagents/_partials/` |
+| `where`                   | Each sentence that contains the word `where`                                                                                                                                                                                                                       |
 
 No detector reports a match inside an inline code span. The three sentence detectors use the sentence as the candidate's phrase, because a rejection recorded against one character or one word would match every other occurrence in its file. Every candidate is a site for the sweeping subagent to judge: `where` and `second-person` report every use, including the ones that their rules allow.
 

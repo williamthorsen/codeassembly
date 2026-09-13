@@ -40,9 +40,11 @@ const MARKDOWN_EXTENSION = /\.(?:markdown|md)$/i;
 const SECOND_PERSON = /\byou(?:rs?|rself|rselves)?\b/giu;
 
 /**
- * Reports whether a repository-relative path names a skill body or a subagent body: a `SKILL.md`, or a Markdown file
- * directly inside a `subagents/` or `.claude/agents/` directory. Only the immediate parent counts, since a package
- * directory named `agents` holds documentation for readers too.
+ * Reports whether a repository-relative path names a skill body or a subagent body: a `SKILL.md`, a Markdown file
+ * directly inside a `subagents/` or `.claude/agents/` directory, or a partial directly inside `skills/_partials/` or
+ * `subagents/_partials/`, which the expander inlines into those bodies. The match reads the nearest directories alone,
+ * since a package directory named `agents` holds documentation for readers too. A `_partials/` directory under any
+ * other parent stays in scope, because a rulebook may include its partials.
  */
 function isAgentInstructionBody(file: string): boolean {
   const segments = file.split('/');
@@ -51,7 +53,9 @@ function isAgentInstructionBody(file: string): boolean {
   if (!MARKDOWN_EXTENSION.test(name)) return false;
 
   const parent = segments.at(-2);
-  return parent === 'subagents' || (parent === 'agents' && segments.at(-3) === '.claude');
+  const grandparent = segments.at(-3);
+  if (parent === '_partials') return grandparent === 'skills' || grandparent === 'subagents';
+  return parent === 'subagents' || (parent === 'agents' && grandparent === '.claude');
 }
 
 // endregion | Helpers
