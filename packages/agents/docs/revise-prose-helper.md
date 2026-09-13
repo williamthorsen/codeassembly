@@ -13,9 +13,9 @@ revise-prose.mjs record < fold.json
 
 `detect` is the default and may be omitted. A leading `detect` or `record` is read as the command, so a repository path that collides with either is written `./record`. Positional paths narrow the sweep, and with none it covers the repository.
 
-`--rule` names a rule to detect and the unit that owns it. `--unit` names a unit in force and its version. Both repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, since a rule has one unit. Declaring no unit detects `reduced-object-relative` alone and neither reads nor writes the record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation that names no rule declares no unit unless it declares one on its own.
+`--rule` names a rule and the unit that owns it, whether or not the helper has a detector for the rule. A rule name is lowercase kebab-case. `--unit` names a unit in force and its version. Both repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, since a rule has one unit. Declaring no unit detects `reduced-object-relative` alone and neither reads nor writes the record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit; therefore, an invocation that names no rule declares no unit unless it declares one on its own.
 
-A rule has a detector; a unit is a versioned document whose coverage the record tracks, and a unit may have no detector at all. The helper reads no rule document: The skill states what a rule says, and the detector registry in `rules.ts` defines what a rule finds.
+A detector rule is one that the registry in `rules.ts` holds; a unit is a versioned document whose coverage the record tracks, and a unit may have no detector at all. The helper reads no rule document: The skill states which rules exist and what each says, and the registry defines what a rule finds. `detect` runs the detectors of the named rules that the registry holds, and its output lists the rules under `rules`, as `detected` and `undetected`. A name under `undetected` that was meant as a detector rule is misspelt.
 
 `--batch-budget` is the ceiling on a batch's combined file bytes, defaulting to 98304 (96 KiB), roughly 24k tokens of file content.
 
@@ -62,7 +62,7 @@ rejections:
     ground: a quoted exhibit of the construction
 ```
 
-A unit's `rules` lists the detector rules that its sweeps ran, and is empty for a unit swept without a detector, such as `plain-speech`. A unit written without `rules` reads as having run no detector. Its `roots` are the path roots that sweeps at this version and with these rules have covered, `.` meaning the repository, and `swept-at` dates the most recent of those sweeps.
+A unit's `rules` lists the detector rules that its sweeps ran, and is empty for a unit swept without a detector, such as `plain-speech`. A rule named to a run without a detector is not listed: Listing it would stop a detector added for that rule later from running over files already covered. A unit written without `rules` reads as having run no detector. Its `roots` are the path roots that sweeps at this version and with these rules have covered, `.` meaning the repository, and `swept-at` dates the most recent of those sweeps.
 
 A rejection resolves to a candidate by its rule, its file, and its phrase. Both phrases are normalized before they are compared (inline code spans masked, NFC applied, whitespace collapsed), and they match when either contains the other. The recorded phrase is the text as it reads after the run's edits, so a repair under another rule in the same run does not invalidate it.
 
@@ -70,7 +70,7 @@ A `rule` is any lowercase kebab-case name that a bound rulebook declares, detect
 
 On read, with units named:
 
-- A batch is skipped when the record covers every file in it for every named unit: at that unit's current version, under one of its roots, and with every rule that the run names for that unit among its recorded `rules`.
+- A batch is skipped when the record covers every file in it for every named unit: at that unit's current version, under one of its roots, and with every detector rule that the run names for that unit among its recorded `rules`.
 - A candidate matching a rejection at its unit's current version is dropped.
 - A candidate matching a rejection recorded at an _older_ version is kept and marked `stale: true`, so a rule's revision re-opens the judgment for review rather than discarding it.
 - Every rejection that the record lists over a file that the sweep read, under a named unit at that unit's current version, is reported under `rejections` as `rule`, `file`, and `phrase`. A caller gives these to the sweeper, which leaves each site as it stands under the rule that its entry names rather than judging it again. This is the one way in which a rule with no detector saves a later run any work. A rejection recorded at an older version, or under a unit that the run does not name, is withheld, so the sweeper receives its site with no prior verdict.
@@ -101,7 +101,7 @@ On read, with units named:
 }
 ```
 
-Every unit states `rules`, an empty list included. A fold that omits it is refused as `invalid-record`, and nothing is written. A fold rejection has no version: The helper takes it from the fold's entry for the rejection's unit.
+Every unit states `rules`, an empty list included, and `record` keeps only the detector rules among them. A fold that omits it is refused as `invalid-record`, and nothing is written. A fold rejection has no version: The helper takes it from the fold's entry for the rejection's unit.
 
 Merging is by unit. A unit that the fold does not name keeps its coverage and its rejections, so a narrowed run never retracts what a wider one recorded.
 

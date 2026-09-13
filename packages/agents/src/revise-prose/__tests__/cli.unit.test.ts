@@ -44,8 +44,14 @@ describe(parseArgs, () => {
     expect(args.rules.map((named) => named.rule)).toStrictEqual(['em-dash', 'reduced-object-relative']);
   });
 
-  it('refuses a rule the helper holds no detector for', () => {
-    expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'sentence-case=writing'])).toThrow(/unknown rule/);
+  it('reads a rule the helper holds no detector for', () => {
+    const args = parseArgs(['--unit', 'writing=2', '--rule', 'sentence-case=writing']);
+
+    expect(args.rules).toStrictEqual([{ rule: 'sentence-case', unit: 'writing' }]);
+  });
+
+  it('refuses a rule name that is not lowercase kebab-case', () => {
+    expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'Sentence_Case=writing'])).toThrow(/kebab-case/);
   });
 
   it('refuses a rule naming a unit no flag declares', () => {

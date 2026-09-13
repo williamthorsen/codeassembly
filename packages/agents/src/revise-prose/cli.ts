@@ -32,10 +32,11 @@ import {
   parseRecord,
   parseRunFold,
   RECORD_PATH,
+  RULE_NAME_PATTERN,
   selectPriorRejections,
   stringifyRecord,
 } from './record.ts';
-import { detectRules, isRuleId, RULE_IDS } from './rules.ts';
+import { detectRules, isRuleId } from './rules.ts';
 import type {
   Batch,
   Candidate,
@@ -46,6 +47,7 @@ import type {
   ProseRecord,
   RecordResult,
   RuleId,
+  RunFold,
   SkipReason,
   SubjectShape,
 } from './types.ts';
@@ -87,8 +89,9 @@ if (isEntryPoint()) {
 /**
  * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units the caller holds.
  *
- * `--rule <name>=<unit>` names a rule to detect and the unit owning it; `--unit <name>=<version>` names a unit in
- * force and the version it is at. Both repeat. `--batch-budget <bytes>` overrides the default ceiling.
+ * `--rule <name>=<unit>` names a rule and the unit owning it, whether or not the helper has a detector for it;
+ * `--unit <name>=<version>` names a unit in force and the version it is at. Both repeat. `--batch-budget <bytes>`
+ * overrides the default ceiling.
  *
  * @internal - Exported to allow testing.
  */
@@ -96,7 +99,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const scanned = scanFlags(argv, FLAG_SPECS);
 
   const units = new Map<string, string>();
-  const rules: Array<{ rule: RuleId; unit: string }> = [];
+  const rules: Array<{ rule: string; unit: string }> = [];
   let budget = DEFAULT_BATCH_BUDGET;
 
   for (const flag of scanned.flags) {
@@ -114,8 +117,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       units.set(name, rest);
       continue;
     }
-    if (!isRuleId(name)) {
-      throw new Error(`unknown rule "${name}"; the helper detects ${RULE_IDS.join(', ')}`);
+    if (!RULE_NAME_PATTERN.test(name)) {
+      throw new Error(`rule "${name}" is not a lowercase kebab-case name`);
     }
     const owner = rules.find((named) => named.rule === name);
     if (owner !== undefined) {
@@ -170,13 +173,15 @@ export async function runDetect(input: {
       ...(input.home !== undefined && { home: input.home }),
     });
 
-    const rules = args.rules.length === 0 ? LEGACY_RULES : args.rules.map((named) => named.rule);
+    // Check coverage against the detector rules alone, which are the only rules `runRecord` records.
+    const detectable = selectDetectorRules(args.rules);
+    const rules = args.rules.length === 0 ? LEGACY_RULES : detectable.map((named) => named.rule);
     const detected = detectRules(spans, rules);
     const candidates = args.units.size === 0 ? detected : applyRejections(detected, record, args.units);
 
     const planned = planBatches({ files: scannedFiles, candidates, budget: args.budget });
     const batches = planned.filter((batch) =>
-      batch.files.some((file) => !isCoveredAt(record, args.units, args.rules, file)),
+      batch.files.some((file) => !isCoveredAt(record, args.units, detectable, file)),
     );
     const rejections = selectPriorRejections(
       record,
@@ -190,6 +195,13 @@ export async function runDetect(input: {
       candidates,
       rejections,
       batches,
+      rules: {
+        detected: rules.toSorted(),
+        undetected: args.rules
+          .map((named) => named.rule)
+          .filter((rule) => !isRuleId(rule))
+          .toSorted(),
+      },
       summary: summarize({ candidates, scanned: scannedFiles.length, skipped, batches, planned }),
     };
   } catch (error) {
@@ -202,14 +214,15 @@ export async function runDetect(input: {
 
 /**
  * Folds one run's outcome into the repository's record and writes it. This is the record's only write path, which is
- * what keeps its YAML deterministic rather than hand-edited into drift.
+ * what keeps its YAML deterministic rather than hand-edited into drift. A unit's coverage keeps only the rules for which the
+ * helper has a detector, which is what lets a detector added later run over files already covered.
  *
  * @internal - Exported to allow testing.
  */
 export function runRecord(input: { foldJson: string; root: string }): RecordResult {
   let record: ProseRecord;
   try {
-    record = composeRecord(readRecordFile(input.root), parseRunFold(input.foldJson));
+    record = composeRecord(readRecordFile(input.root), retainDetectorRules(parseRunFold(input.foldJson)));
   } catch (error) {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
@@ -260,6 +273,24 @@ async function readStdin(): Promise<string> {
     chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
   }
   return Buffer.concat(chunks).toString('utf8');
+}
+
+/** Drops from each unit of a fold the rules for which the helper has no detector. Rejections keep any rule. */
+function retainDetectorRules(fold: RunFold): RunFold {
+  const units = Object.fromEntries(
+    Object.entries(fold.units).map(([unit, coverage]) => [
+      unit,
+      { ...coverage, rules: coverage.rules.filter(isRuleId) },
+    ]),
+  );
+  return { ...fold, units };
+}
+
+/** Returns the named rules for which the helper has a detector, each with its unit. */
+function selectDetectorRules(
+  rules: ReadonlyArray<{ rule: string; unit: string }>,
+): Array<{ rule: RuleId; unit: string }> {
+  return rules.filter((named): named is { rule: RuleId; unit: string } => isRuleId(named.rule));
 }
 
 /**
