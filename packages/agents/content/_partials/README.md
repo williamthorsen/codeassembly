@@ -19,7 +19,7 @@ Because inlining is not free (every consumer contains the partial's full text), 
 
 Inline a spec **once per skill, as a section**, and point every use site at it with an in-file anchor (`[option format](#option-format)`). Anchor-only links pass through the link rewriter untouched. A skill with two use sites would otherwise contain the block twice, and a reference from inside a numbered procedure cannot contain a long block inline. An in-file anchor requires no extra read, because the content is already in context; the filesystem lookup is the defect, not the pointer.
 
-### Skill-local pointers are load-bearing
+### Skill-local pointers are required
 
 Several skill bodies (`collaborate`, `design-and-plan`, and `refine-plan` among them) contain a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional, and a DRY-driven refactor must not strip it. The rule and its rationale are stated in the `codeassembly-content-specification` rulebook, under "Skill-local reinforcement".
 

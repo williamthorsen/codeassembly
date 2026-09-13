@@ -7,7 +7,7 @@ version: '1'
 
 # README conventions
 
-A README answers two questions for a reader who arrived a moment ago: whether this is the right thing, and how to begin using it. The reader decides in about thirty seconds. What belongs is what serves that decision and the first successful use; the rest is reference, and reference belongs elsewhere.
+A README answers two questions for a reader who arrived a moment ago: whether this is the right thing, and how to begin using it. The reader decides in about thirty seconds. A README keeps what serves that decision and the first successful use; the rest is reference, and reference belongs elsewhere.
 
 ## Audience
 

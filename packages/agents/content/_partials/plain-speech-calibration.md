@@ -26,9 +26,9 @@ A paragraph of this library's own guidance. Before:
 
 After:
 
-> Behavioral rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. Where the boundary below requires a restatement, put it at the step that produces the output. An agent follows a rule more reliably when the rule appears next to the action that it governs than when the agent must follow a link to read it.
+> Behavioral rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. When the boundary below requires a restatement, put it at the step that produces the output. An agent follows a rule more reliably when the rule appears next to the action that it governs than when the agent must follow a link to read it.
 
-Four edits fall under cases 1 and 2, and one under case 3: "must be fetched" drops the agent, and the sentence's point is which party fetches. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. One edit belongs to no case here: The relativizer restored in "the action that it governs" comes from the writing preferences, which a sweep applies in the same pass.
+Four edits fall under cases 1 and 2, and one under case 3: "must be fetched" drops the agent, and the sentence's point is which party fetches. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. Two edits belong to no case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.
 
 ### Shapes to look for
 
@@ -45,7 +45,7 @@ Eight shapes recur in this corpus. Each is a search pattern rather than a rule: 
 
 ### Words to look for
 
-Nine words recur in this corpus where a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is no candidate.
+Nine words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is no candidate.
 
 - **carry**: "the change carries a flag". Instead: has, includes, declares, sets, states.
 - **cost**: "a cost to you", "the token cost". Instead: the unit itself, as in "takes 12 ms", "one round trip", "spends the reader's attention".

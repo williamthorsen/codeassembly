@@ -23,7 +23,7 @@ Worked examples, not a closed set:
 
 ## Tests
 
-A `__tests__/` directory sits beside the code it covers, one per directory that contains tested code. Never roll a package's tests up into a single `src/__tests__/`.
+A `__tests__/` directory is next to the code that it covers, one per directory that contains tested code. Never roll a package's tests up into a single `src/__tests__/`.
 
 A missing `__tests__/` sibling then signals uncovered code.
 
