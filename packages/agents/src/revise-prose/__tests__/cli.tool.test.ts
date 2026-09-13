@@ -127,7 +127,7 @@ describe(runDetect, () => {
       expect(rules).toStrictEqual({ detected: BOTH_RULES, undetected: ['sentence-case'] });
     });
 
-    it('detects nothing where every named rule lacks a detector, rather than the legacy rule', async () => {
+    it('detects nothing when every named rule lacks a detector, rather than the legacy rule', async () => {
       const { candidates, rules } = expectSuccess(
         await sweep(['--unit', 'writing=2', '--rule', 'sentence-case=writing']),
       );

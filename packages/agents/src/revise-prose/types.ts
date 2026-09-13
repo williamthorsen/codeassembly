@@ -63,7 +63,7 @@ export interface WhereCandidate extends CandidateBase {
   rule: 'where';
 }
 
-/** A rule the sweep detects. A rule has a detector; a unit, which the record tracks, need not. */
+/** A rule for which the sweep has a detector. A rule without one is named by a plain string, as a unit is. */
 export type RuleId = 'em-dash' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
