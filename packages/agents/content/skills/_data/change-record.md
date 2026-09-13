@@ -96,19 +96,21 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 
 ## Where the record is read
 
-`merge-pr` reads the block when it merges, through the `resolve-merge` subcommand of `describe-change.mjs` (see [`resolve-merge`](./title-templates.md#resolve-merge)), and compares it with a record consolidated afresh from the commits up to the pull request's head commit.
+`merge-pr` reads the block when it merges, through the `resolve-merge` subcommand of `describe-change.mjs` (see [`resolve-merge`](./title-templates.md#resolve-merge)), and compares it with a record consolidated afresh from the commits up to the pull request's head commit. The run reports what each source names and attributes each field of the effective record to the source that supplied it, under the names that [`resolve-merge`](./title-templates.md#resolve-merge) lists.
 
-**The body's last `change-record` block is the one read.** It is malformed where it never closes, where its payload is not a YAML mapping, where `title` is missing, empty, or not a string, where `consolidated_record` or `overrides` is not a mapping, and where a declared field has the wrong type. A malformed block is reported and resolved as though it were absent. A key that the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
+**The body's last `change-record` block is the one read.** It is malformed where it never closes, where its payload is not a YAML mapping, where `title` is missing, empty, or not a string, where `consolidated_record` or `overrides` is not a mapping, and where a declared field has the wrong type. A malformed block is reported as `malformed-block` and resolved as though it were absent. A key that the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
 
 **With a readable block**, the block's consolidated record and the record consolidated from the commits are compared on scope, type, and breaking, before any override:
 
 - If they agree, or if the commits cannot be read, the block's stands.
-- If they disagree, the commits' wins as the fresher of the two and the block's is shown. The block's consolidated record therefore decides a merge only when the commits could not be read, as on a fork whose head commit cannot be fetched.
+- If they disagree, the commits' wins as the fresher of the two, and a `divergence` notice names the fields on which the two differ. The block's consolidated record therefore decides a merge only when the commits could not be read, as on a fork whose head commit cannot be fetched.
 
-The block's overrides then apply to whichever won, as [The effective record](#the-effective-record) states.
+The comparison is of whole records, so every field is attributed to the one that stands, `block` or `commits`, including a field on which the other agrees. The block's overrides then apply to whichever stands, as [The effective record](#the-effective-record) states, and each field that they set is attributed to `block_overrides`.
 
-**Without a readable block**, the labels stand in for the block. The type and its breaking marker come together, from the labels if exactly one type label resolves and otherwise from the commits, so a marker never pairs with a type from the other source. The scope comes from its label if exactly one resolves, and otherwise from the commits. The breaking label is the literal `breaking`. A record consolidated from the commits that disagrees is shown.
+**Without a readable block**, the labels stand in for the block. The type and its breaking marker come together, from the labels if exactly one type label resolves and otherwise from the commits, so a marker never pairs with a type from the other source. The scope comes from its label if exactly one resolves, and otherwise from the commits. The breaking label is the literal `breaking`. Each field is attributed to `labels` or `commits` according to where it came from, so a type from the labels and a scope from the commits are reported as such. Where the chosen record disagrees with the commits', a `divergence` notice names the fields on which the two differ.
 
-**The merge's own overrides apply last** and outrank the block's, each on its own field, as [The effective record](#the-effective-record) states.
+**The merge's own overrides apply last** and outrank the block's, each on its own field, as [The effective record](#the-effective-record) states. Each field that they set is attributed to `flags`.
+
+**The pull-request title is read whether or not the merge overrides the title.** Its prefix is compared with the effective record, and a `pr-title-divergence` notice names the fields on which they differ. A title that does not invert through `pr.title_format` raises `pr-title-unparsed`.
 
 **The effective record must name a declared type and satisfy that type's breaking policy.** Otherwise the merge is not offered for approval until the author overrides it; nothing is normalized.

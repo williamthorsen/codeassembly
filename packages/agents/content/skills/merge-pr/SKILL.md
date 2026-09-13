@@ -61,7 +61,7 @@ For a GitHub PR whose `isCrossRepository` is true, fetch `pull/{number}/head` in
 
 ### 3. Resolve the merge
 
-`describe-change.mjs` resolves the head, the bare title, the merge-commit title, and the body in one run, by the rules in [Where the record is read](../_data/change-record.md#where-the-record-is-read). This step runs it and resolves nothing by itself.
+`describe-change.mjs` resolves the effective record, the merge-commit title, and the body in one run, by the rules in [Where the record is read](../_data/change-record.md#where-the-record-is-read). This step runs it and resolves nothing by itself.
 
 Write the PR body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-pr{number}-{timestamp}.md`. On GitHub, write it from the platform, so the body reaches the file byte for byte:
 
@@ -88,7 +88,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   [--override-title "{title}"]
 ```
 
-The guard is what keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body carries no `## What` and no `change-record` block: the helper would resolve the head from the labels alone, report no `malformed-record` notice, and send step 5 to the drafter. Where the guard refuses, emit `skill.completed` (payload `{"outcome":"stopped: PR body not read"}`) per [Lifecycle events](#lifecycle-events) and stop.
+The guard is what keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body carries no `## What` and no `change-record` block: the helper would resolve the effective record from the labels alone, report no `malformed-block` notice, and send step 5 to the drafter. Where the guard refuses, emit `skill.completed` (payload `{"outcome":"stopped: PR body not read"}`) per [Lifecycle events](#lifecycle-events) and stop.
 
 Pass each PR label from step 2 as a separate `--pr-label` flag. Pass `--ticket-ref` only where `ticket_ref` from session context is non-null and `headRefName` is `branch_name`, since a PR merged from another branch's checkout belongs to another ticket; the helper uses that reference only where the PR title carries none. Pass this skill's `--scope`, `--type`, `--breaking`, and `--no-breaking` as `--override-scope`, `--override-type`, `--override-breaking`, and `--no-override-breaking`, omitting each one that was not given.
 
@@ -98,12 +98,13 @@ A re-run driven by an answer at step 6's gate does not stop the skill. Report th
 
 The helper prints one JSON object. Read it from the command's output, with python3 (or jq) where a parser helps:
 
-- `head`: the effective `scope`, `type`, and `breaking`.
-- `title` and `merge_title`: the bare title and the rendered merge-commit title, which carries the breaking marker.
+- `effective_record`: the effective `title`, `scope`, `type`, `breaking`, `ticket_ref`, and `pr_number`.
+- `effective_sources`: the source that supplied each field of `effective_record` apart from `pr_number`, such as `block`, `commits`, `labels`, `pr_title`, or `flags`.
+- `merge_title`: the rendered merge-commit title, which carries the breaking marker.
 - `body`: the PR's `## What` section, without the `change-record` block and without the `Closes` line.
-- `defects`: each head that approval waits on the author to override.
+- `sources`: what the block, the commits, the labels, and the PR title each name, whether or not the resolution used them, each `null` where it was not read.
+- `defects`: each condition of `effective_record` that approval waits on the author to override.
 - `notices`: what the gate shows beside the proposal.
-- `recorded`, `derived`, and `labeled`: the heads that the block, the commits, and the labels name, each `null` where it did not apply.
 
 [`resolve-merge`](../_data/title-templates.md#resolve-merge) states every field.
 
@@ -132,9 +133,9 @@ A body is **thin** if it is empty or contains fewer than 30 characters of non-wh
 
 If the body is thin, compose fresh content through the drafter and cutter that `summarize-change` dispatches, rather than writing it here. The whole body is the lede, and those two are where the lede doctrine lives.
 
-Resolve the tier by looking up the report's `head.type` in [work-types.json](../_data/work-types.json).
+Resolve the tier by looking up the report's `effective_record.type` in [work-types.json](../_data/work-types.json).
 
-If `defects` leaves the head with no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change owes a public-tier reader, in a body that reaches the merge commit, the changelog, and release notes.
+If `defects` leaves the effective record with no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change owes a public-tier reader, in a body that reaches the merge commit, the changelog, and release notes.
 
 Dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -149,7 +150,7 @@ The block carries scalars only, and only these keys. Compose no prose into it: t
 Then cut that draft. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
 ```dispatch
-title: {the report's title}
+title: {the report's effective_record.title}
 tier: {the tier resolved above}
 ```
 
@@ -178,14 +179,14 @@ The composed body reaches the approval gate in step 6, where the user reads it b
 
 Settle every entry in `defects` before showing the proposal, one question at a time:
 
-- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types among the report's `recorded`, `derived`, and `labeled` heads and any `candidate-head` notice, plus an "other (specify)" option.
+- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `consolidated_record` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus an "other (specify)" option.
 - **`policy-violation`**: Name the type and the policy that it breaks. Offer the marker that the policy asks for (`--no-override-breaking` where it forbids the marker, `--override-breaking` where it requires it), the types from the list above, and an "other (specify)" option.
 
 Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`. The helper refuses a type carrying `!`, so passing the answer through would refuse the run rather than settle the defect.
 
 When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
-Re-run step 3 with each answer added to the override set, until `defects` is empty. Never offer the merge while `defects` holds an entry. Where an answer moves the head to another tier and step 5 drafted the body, re-run step 5's drafting against the new tier.
+Re-run step 3 with each answer added to the override set, until `defects` is empty. Never offer the merge while `defects` holds an entry. Where an answer moves the effective record to another tier and step 5 drafted the body, re-run step 5's drafting against the new tier.
 
 Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
 
@@ -207,15 +208,15 @@ Proposed merge for PR #{pr_number}:
 
 The triangle delimiters wrap the title and body, the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
 
-Render each notice there as one line, naming a head by its scope, type, and whether it is breaking:
+Render each notice there as one line. Where a line says where a field came from, name the source that `effective_sources` gives for that field:
 
-- **`malformed-record`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the head.
-- **`derivation-unavailable`**: The commits were not read (its `reason`), so the record or the labels stand unchecked.
-- **`divergence`**: The head comes from the source that `used` names; the head that `shown` names comes from the other.
-- **`candidate-head`**: The PR title's prefix names the head in `head`, which differs from the proposed one.
-- **`title-fallback`**: The PR title did not parse, so the title comes from the source that `source` names.
+- **`malformed-block`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the effective record.
+- **`commits-unavailable`**: The commits were not read (its `reason`), so the block or the labels stand unchecked.
+- **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
+- **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
+- **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
 
-A `divergence` or `candidate-head` notice names a head that the user can merge under instead, and the title is theirs to replace. Where the user answers the gate with such a head or a new title rather than a clear approval or decline, add it to the override set (a head as `--override-scope`, `*` for no scope, with `--override-type` and `--override-breaking` or `--no-override-breaking`; a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
+A `divergence` or `pr-title-divergence` notice names values that the user can merge under instead, and the title is theirs to replace. Where the user answers the gate with such values or a new title rather than a clear approval or decline, add them to the override set (a scope as `--override-scope`, `*` for no scope, a type as `--override-type`, a marker as `--override-breaking` or `--no-override-breaking`, and a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
 
 Render `{confirmation}` so the ask itself names every destructive side effect the approval authorizes. The permission auto-classifier grants only what the ask text names, so a branch deletion shown only in the `Delete:` line above is not authorized; the ask must name it too:
 
@@ -248,24 +249,24 @@ Where the new report carries a defect, return to step 6 and settle it before com
 
 The body comparison keys on the report's `body` rather than on the composed body because step 5's thin-body fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The helper's extraction is deterministic, so it has one. Keying on the `## What` section rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` reaches the merge commit.
 
-The window this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: the re-run reads the commits up to the head commit read in step 2, and a generated body is not re-derived on account of later commits. The delegate's own branch-sync check is where local and remote divergence surfaces.
+The window this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: the re-run reads the commits up to the head commit read in step 2, and a generated body is not recomposed on account of later commits. The delegate's own branch-sync check is where local and remote divergence surfaces.
 
-Where both derived values match the approved ones, continue to step 9 without saying anything. Where either differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values hold steady. Merging the newest version silently would publish text the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 6 does.
+Where both re-read values match the approved ones, continue to step 9 without saying anything. Where either differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values hold steady. Merging the newest version silently would publish text the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 6 does.
 
 ### 9. Call delegate
 
 Pass the following inputs to the selected delegate per the delegate interface:
 
-| Input               | Value                                                                  |
-| ------------------- | ---------------------------------------------------------------------- |
-| `pr_number`         | Resolved PR number                                                     |
-| `title`             | Rendered `merge_title` as step 8 last re-derived and the user approved |
-| `body`              | Composed body as step 8 last re-derived and the user approved          |
-| `strategy`          | Resolved strategy from step 4                                          |
-| `deletion_strategy` | Resolved value from step 4 (`both` \| `remote` \| `none`)              |
-| `ticket_id`         | From session context                                                   |
-| `project_slug`      | From session context                                                   |
-| `artifact_base_dir` | From session context                                                   |
+| Input               | Value                                                                |
+| ------------------- | -------------------------------------------------------------------- |
+| `pr_number`         | Resolved PR number                                                   |
+| `title`             | Rendered `merge_title` as step 8 last resolved and the user approved |
+| `body`              | Composed body as step 8 last resolved and the user approved          |
+| `strategy`          | Resolved strategy from step 4                                        |
+| `deletion_strategy` | Resolved value from step 4 (`both` \| `remote` \| `none`)            |
+| `ticket_id`         | From session context                                                 |
+| `project_slug`      | From session context                                                 |
+| `artifact_base_dir` | From session context                                                 |
 
 The orchestrator never passes a title that `defects` blocks, or a `prompt` sentinel, to the delegate: All values are concrete by this point.
 
@@ -286,9 +287,9 @@ Invoke `{skill:capture-lede-decision}` with:
 | `--artifact-dir` | `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` |
 | `--pr`           | Resolved PR number                                                 |
 | `--merge-commit` | The merge commit SHA from the delegate's completion report         |
-| `--type`         | The approved head's type                                           |
-| `--scope`        | The approved head's scope, only where it names one                 |
-| `--breaking`     | Only where the approved head is breaking                           |
+| `--type`         | The approved `effective_record`'s type                             |
+| `--scope`        | The approved `effective_record`'s scope, only where it names one   |
+| `--breaking`     | Only where the approved `effective_record` is breaking             |
 
 That skill owns the prompt and the record: It asks once, writes one event on a rating, and writes nothing on a skip. Do not ask again, and never supply a rating the author did not give: A lede that shipped unchanged under time pressure is not a rated lede.
 
@@ -296,7 +297,7 @@ Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle even
 
 ## Important
 
-- The orchestrator owns every decision that it presents (PR resolution, strategy and deletion strategy, body composition, the approval gate), and `describe-change.mjs` owns the resolution of the head, the title, and the body. Delegates own only execution (platform API calls + state validation).
+- The orchestrator owns every decision that it presents (PR resolution, strategy and deletion strategy, body composition, the approval gate), and `describe-change.mjs` owns the resolution of the effective record, the merge title, and the body. Delegates own only execution (platform API calls + state validation).
 - Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is held by another worktree. On Bitbucket, `both` has no counterpart at all and `merge-bb-pr` refuses it, naming `--delete remote` as the alternative.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
