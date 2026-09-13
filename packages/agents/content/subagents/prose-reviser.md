@@ -43,7 +43,7 @@ Every site gets one of three verdicts.
 - **Rejected.** The site does not break any rule, or it breaks one deliberately. Leave it and record the ground.
 - **Questionable.** The site probably breaks a rule, and the repair is not yours to make alone. Leave it, record the repair that you composed, and record the ground for doubt.
 
-For a `repeat` candidate, repair the reported sentence and not the earlier `so` that it repeats: The earlier one was not reported, and a reported site left as it stands is recorded as a rejection. The `so` detector does not report a lone `so` that follows a comma, a semicolon, a dash, or "and", or that opens a sentence. Check each one that you read for a purpose clause missing "that" and for an omitted step, and report nothing for one that the rule permits.
+For a `repeat` candidate, repair the reported sentence and not the earlier `so` that it repeats: The earlier one was not reported, and a reported site left as it stands is recorded as a rejection. If every earlier `so` that it repeats is a `bare` candidate that you repair with "so that" or "to", or a degree adverb, the sentence no longer repeats one: Judge it as a lone `so`. The `so` detector does not report a lone `so` that follows a comma, a semicolon, a dash, or "and", or that opens a sentence. Check each one that you read for a purpose clause missing "that" and for an omitted step, and report nothing for one that the rule permits.
 
 Reject a site outright on any of these grounds:
 
