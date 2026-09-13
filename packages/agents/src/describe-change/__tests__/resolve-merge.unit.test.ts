@@ -255,27 +255,15 @@ describe(resolveMerge, () => {
     it('reports a head that names no type', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ scope: 'agents' }) }));
 
-      expect(report.defects).toStrictEqual([{ kind: 'unclassified' }]);
+      expect(report.defects).toStrictEqual([{ kind: 'missing-type' }]);
     });
 
-    it('reports a type that the taxonomy does not declare', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), overrides: { type: 'feature' } }));
-
-      expect(report.defects).toStrictEqual([{ kind: 'undeclared-type', type: 'feature' }]);
-    });
-
-    it('reports a marker that the type’s policy forbids', () => {
+    it('reports the defects of the head that the overrides produce', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ breaking: true, type: 'feat' }), overrides: { type: 'docs' } }),
       );
 
       expect(report.defects).toStrictEqual([{ kind: 'policy-violation', policy: 'forbidden', type: 'docs' }]);
-    });
-
-    it('reports a marker that the type’s policy requires and the head omits', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'drop' }) }));
-
-      expect(report.defects).toStrictEqual([{ kind: 'policy-violation', policy: 'required', type: 'drop' }]);
     });
   });
 

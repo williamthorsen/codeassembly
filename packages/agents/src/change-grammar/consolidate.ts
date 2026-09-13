@@ -1,7 +1,7 @@
 import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
- * Derives the head record a branch of entries adds up to: the type that speaks for the branch, whether the branch is
+ * Derives the consolidated record of a branch's entries: the type that speaks for the branch, whether the branch is
  * breaking, and the scope where the entries agree on one.
  *
  * The type is the highest-ranked entry, never the most frequent one: breaking outranks non-breaking, then the tier's
@@ -11,7 +11,7 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * Exactly one distinct scope survives; a branch carrying two names none, since no scope describes it.
  */
 export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy): ChangeRecord {
-  const head: ChangeRecord = {};
+  const consolidated: ChangeRecord = {};
 
   const scopes = new Set<string>();
   for (const entry of entries) {
@@ -21,7 +21,7 @@ export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy
   }
   const [scope] = scopes;
   if (scopes.size === 1 && scope !== undefined) {
-    head.scope = scope;
+    consolidated.scope = scope;
   }
 
   let winner: RankedEntry | undefined;
@@ -32,13 +32,13 @@ export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy
     }
   }
   if (winner !== undefined) {
-    head.type = winner.key;
+    consolidated.type = winner.key;
     if (winner.breaking) {
-      head.breaking = true;
+      consolidated.breaking = true;
     }
   }
 
-  return head;
+  return consolidated;
 }
 
 // region | Helpers
@@ -82,7 +82,7 @@ interface Rank {
   tier: number;
 }
 
-/** The winning entry reduced to what the head record needs from it. */
+/** The winning entry reduced to what the consolidated record needs from it. */
 interface RankedEntry {
   breaking: boolean;
   key: string;

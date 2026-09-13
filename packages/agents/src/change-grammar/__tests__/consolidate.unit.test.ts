@@ -75,11 +75,11 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'fix' });
   });
 
-  it('yields an empty head for no entries', () => {
+  it('yields an empty record for no entries', () => {
     expect(consolidate([], TAXONOMY)).toStrictEqual({});
   });
 
-  it('yields an empty head where no entry names a declared type', () => {
+  it('yields an empty record where no entry names a declared type', () => {
     expect(consolidate([{ title: 'Add foo' }], TAXONOMY)).toStrictEqual({});
   });
 });
