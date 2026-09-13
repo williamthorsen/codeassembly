@@ -68,7 +68,13 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
     hook: 'comment-preferences',
     role: 'writes or judges source comments',
-    declaringBodies: COMMENT_AUTHORING_SUBAGENTS.map(toSubagentBody),
+    // The prose sweep judges comment register but writes no comment, which is why its two bodies are listed here rather
+    // than in COMMENT_AUTHORING_SUBAGENTS, whose members must also inject the comment-discipline doctrine.
+    declaringBodies: [
+      ...COMMENT_AUTHORING_SUBAGENTS.map(toSubagentBody),
+      { label: 'prose-reviser', relativePath: 'subagents/prose-reviser.md' },
+      { label: 'revise-prose', relativePath: 'skills/revise-prose/SKILL.md' },
+    ],
     boundRulebooks: [
       {
         slug: 'williamthorsen-comment-preferences',
@@ -154,7 +160,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
  * so this list is where the library records which ones are deliberate.
  */
 const AMBIENT_FILL_READERS: ReadonlyMap<string, string> = new Map([
-  ['revise-prose', 'resolves its units, their versions, and its detector rules from the fill in its own body'],
+  ['revise-prose', 'resolves its units, their versions, and its rule ids from the fills in its own body'],
 ]);
 
 /** The skill every reviewer subagent preloads, and so the one that delivers the hooks it declares to all of them. */

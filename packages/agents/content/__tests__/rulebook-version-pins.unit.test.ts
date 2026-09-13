@@ -2,9 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { libraryResolver } from '../../src/lib/content-sources.ts';
-import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
-import { indexRulebooksBySlug, type ResolvedRulebook, resolveRulebook } from '../../src/lib/rulebook-deploy.ts';
+import type { ResolvedRulebook } from '../../src/lib/rulebook-deploy.ts';
+import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 
 // A rulebook's version names the guidance an agent holds, and `revise-prose` keys a repository's sweep coverage on it,
 // so a body that changes without a bump leaves every repository recorded as swept against rule text that has since
@@ -28,7 +27,7 @@ interface RulebookPin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: 'd657ec6e2d7cd6e9bbf68ca6115d7225a533cd11687542f69310b88a3fd7b30d', version: '18' },
+    { bodyHash: 'e9a4193c79d927ad079c305f742d4a7c7807a3e087419988eb92e51190f0186f', version: '19' },
   ],
   [
     'commit-conventions',
@@ -57,7 +56,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-comment-preferences',
-    { bodyHash: '376461f9ea6c56c31ca85257cee96ac67659323449819eed303daa96a6ee91c2', version: '2' },
+    { bodyHash: 'a1aed1b5c81d9b8bfb7e5b868ff1f6f96335b2cdfd6be3997e64e0cbecad269d', version: '2' },
   ],
   [
     'williamthorsen-ticketing-preferences',
@@ -77,7 +76,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: 'b39d9892af3e1fc026f5a4bb67a02716157a3d6ab17e7a4debd78c9a3dfa9640', version: '5' },
+    { bodyHash: '7799ff1c576370844e3cc1bed83a37f779d8cabec3775cdf95fe30abd2ec2be2', version: '5' },
   ],
 ]);
 
@@ -87,7 +86,7 @@ const DRIFT_MESSAGE =
   'coverage for review; or re-pin the hash alone if the edit left the operative content as it was. An edit to an ' +
   'included partial counts as an edit to the body, which is why a rulebook can drift with its own file untouched.';
 
-const RESOLVED = resolveEveryRulebook();
+const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
 describe('rulebook version pins', () => {
   it('pins every versioned rulebook', async () => {
@@ -162,18 +161,6 @@ function hashText(text: string): string {
 /** Renders a rulebook's pin as the literal that `PINS` takes, so a failure hands the author the line to paste. */
 function renderPin(rulebook: ResolvedRulebook): string {
   return `{ bodyHash: '${hashText(rulebook.body)}', version: '${rulebook.version}' }`;
-}
-
-/** Resolves every library rulebook by slug, each with its includes expanded and its frontmatter parsed off. */
-async function resolveEveryRulebook(): Promise<ReadonlyMap<string, ResolvedRulebook>> {
-  const resolver = libraryResolver(CONTENT_ROOT);
-  const slugs = (await enumerateCatalogSlugs(CONTENT_ROOT)).rulebook;
-  if (slugs === undefined || slugs.length === 0) {
-    // Every assertion here reports what it finds, so an empty catalog would leave the whole suite green.
-    throw new Error(`The catalog at ${CONTENT_ROOT} names no rulebook`);
-  }
-
-  return indexRulebooksBySlug(await Promise.all(slugs.map((slug) => resolveRulebook(slug, resolver))));
 }
 
 // endregion | Helpers

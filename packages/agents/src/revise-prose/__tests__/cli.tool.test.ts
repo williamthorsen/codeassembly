@@ -121,6 +121,21 @@ describe(runDetect, () => {
       });
     });
 
+    it('reports which named rules it detected and which it holds no detector for', async () => {
+      const { rules } = expectSuccess(await sweep([...bothRules(), '--rule', 'sentence-case=writing']));
+
+      expect(rules).toStrictEqual({ detected: BOTH_RULES, undetected: ['sentence-case'] });
+    });
+
+    it('detects nothing when every named rule lacks a detector, rather than the legacy rule', async () => {
+      const { candidates, rules } = expectSuccess(
+        await sweep(['--unit', 'writing=2', '--rule', 'sentence-case=writing']),
+      );
+
+      expect(candidates).toStrictEqual([]);
+      expect(rules).toStrictEqual({ detected: [], undetected: ['sentence-case'] });
+    });
+
     it('plans a batch over the whole scanned set, not the candidate-bearing subset', async () => {
       await writeFile(path.join(scratch, 'docs/quiet.md'), 'A file with no candidate at all.\n', 'utf8');
       const { batches } = expectSuccess(await sweep(bothRules()));
@@ -167,6 +182,14 @@ describe(runDetect, () => {
       await writeRecord(recordFor(await rejectedPhrase(), '1'));
 
       expect(expectSuccess(await sweep(bothRules())).summary.batchesSkipped).toBe(0);
+    });
+
+    it('skips a covered batch although the run also names a rule without a detector', async () => {
+      await writeRecord(recordFor(await rejectedPhrase()));
+      const { summary } = expectSuccess(await sweep([...bothRules(), '--rule', 'sentence-case=writing']));
+
+      expect(summary.batchesSkipped).toBe(summary.batchesPlanned);
+      expect(summary.batchesPlanned).toBeGreaterThan(0);
     });
 
     it("skips nothing when the record's sweeps ran without a rule that the run names", async () => {
@@ -276,6 +299,26 @@ describe(runDetect, () => {
 
       expect(expectSuccess(await sweep(bothRules())).summary.byRule['reduced-object-relative']).toBe(0);
     });
+
+    it("records a unit's detector rules alone, and a rejection under a rule without a detector", async () => {
+      const undetected = await foldNamingUndetected();
+
+      runRecord({ foldJson: JSON.stringify(undetected), root: scratch });
+
+      const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'));
+      expect(written.units['writing']?.rules).toStrictEqual(BOTH_RULES);
+      expect(written.rejections.map((rejection) => rejection.rule)).toContain('sentence-case');
+    });
+
+    it('closes the loop for a run naming a rule without a detector: the next sweep skips what it covered', async () => {
+      const argv = [...bothRules(), '--rule', 'sentence-case=writing'];
+
+      runRecord({ foldJson: JSON.stringify(await foldNamingUndetected()), root: scratch });
+
+      const { summary } = expectSuccess(await sweep(argv));
+      expect(summary.batchesSkipped).toBe(summary.batchesPlanned);
+      expect(summary.batchesPlanned).toBeGreaterThan(0);
+    });
   });
 
   it('reports a root outside a git working tree as a structured failure', async () => {
@@ -309,6 +352,25 @@ describe(runDetect, () => {
           file: 'docs/guide.md',
           phrase: await rejectedPhrase(),
           ground: 'a quoted exhibit of the construction',
+        },
+      ],
+    };
+  }
+
+  /** The fold from `fold`, naming `sentence-case` beside the detector rules and rejecting one site under it. */
+  async function foldNamingUndetected(): Promise<RunFold> {
+    const base = await fold();
+    return {
+      ...base,
+      units: { writing: { version: '2', rules: [...BOTH_RULES, 'sentence-case'], roots: ['.'] } },
+      rejections: [
+        ...base.rejections,
+        {
+          rule: 'sentence-case',
+          unit: 'writing',
+          file: 'src/notes.md',
+          phrase: 'The cache is cold',
+          ground: 'a sentence, not a heading',
         },
       ],
     };

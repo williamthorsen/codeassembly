@@ -63,7 +63,7 @@ export interface WhereCandidate extends CandidateBase {
   rule: 'where';
 }
 
-/** A rule the sweep detects. A rule has a detector; a unit, which the record tracks, need not. */
+/** A rule for which the sweep has a detector. A rule without one is named by a plain string, as a unit is. */
 export type RuleId = 'em-dash' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
@@ -193,8 +193,11 @@ export type SubjectShape = 'quantified' | 'definite' | 'bare' | 'pronoun';
 export interface ParsedArgs {
   /** Paths narrowing the sweep; empty sweeps the whole repository. */
   paths: readonly string[];
-  /** The rules to detect, each naming the unit owning it. Empty detects the legacy rule alone. */
-  rules: ReadonlyArray<{ rule: RuleId; unit: string }>;
+  /**
+   * The rules named, each with the unit owning it, whether or not the helper has a detector for it. Empty detects the
+   * legacy rule alone.
+   */
+  rules: ReadonlyArray<{ rule: string; unit: string }>;
   /** The units in force, by name, each at the version the caller holds. Empty reads and writes no record. */
   units: ReadonlyMap<string, string>;
   /** Ceiling on a batch's combined file bytes. */
@@ -243,6 +246,11 @@ export interface DetectSuccess {
   rejections: readonly PriorRejection[];
   /** The batches left to adjudicate, those the record already covers having been dropped. */
   batches: readonly Batch[];
+  /**
+   * The rules that the run detected, and the named rules for which the helper has no detector, each sorted. A name in
+   * `undetected` that a rulebook meant as a detector rule is misspelt.
+   */
+  rules: { detected: readonly RuleId[]; undetected: readonly string[] };
   summary: CandidateSummary;
 }
 

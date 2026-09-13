@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '18'
+version: '19'
 ---
 
 # CodeAssembly content specification
@@ -176,6 +176,12 @@ Breadth is what a proposal justifies, not what it assumes. A contributing surfac
 `revise-prose` delivers `_partials/plain-speech.md` and `_partials/plain-speech-calibration.md` inside the prompts of `skills/revise-prose/SKILL.md` and `subagents/prose-reviser.md`, so those files state a rule and exhibit it at once. Check an edit to any of them by running the sweep over that set on the branch, rather than by reading the diff for violations: A hand check reads what the author was already looking at, where the sweep reads each file whole against every rule.
 
 A sweeper applies the doctrine deployed to its harness, so a branch that edits the doctrine deploys its own content before sweeping. Where the deployed copy is behind the branch, sync the branch's content to the project tier first; where `live` already matches the branch, the deployed copy is the branch's and the sweep runs as it stands. _(Convention; not enforced.)_
+
+## Declaring rule ids
+
+A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id for each rule that it states. The declaration is a `<!-- rule: <id> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading.
+
+The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and no id is declared twice across the library. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`.)_
 
 ## Skill-local reinforcement
 

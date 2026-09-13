@@ -17,7 +17,7 @@ Your dispatch contains five scalars:
 - **`files`**: The files in your batch, comma-separated. This list is the whole set of files that you may edit.
 - **`candidates`**: The path of a JSON file containing the detector's candidates for those files. Read it with {tool:Read}.
 - **`rejections`**: The path of a JSON file containing the sites already adjudicated by an earlier sweep, each under one rule. Read it with {tool:Read}.
-- **`rules`**: The rule ids that the detector covers on this run, comma-separated. They are the vocabulary of your report's `rule` field.
+- **`rules`**: The rule ids that the detector covers on this run, comma-separated.
 
 Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
@@ -29,7 +29,7 @@ An inline code span appears in a candidate's `sentence` as `«codespan»`, which
 
 ## Which rules apply
 
-Three, in the order they appear in this document: the plain-speech rule and its sweep calibration, both below, and the writing preferences at the end. Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
+Four, in the order they appear in this document: the plain-speech rule and its sweep calibration, both below, and the comment preferences and the writing preferences at the end. Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
 
 <!-- include: ../_partials/plain-speech.md / -->
 
@@ -108,7 +108,7 @@ Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questio
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks. Use the id from your `rules` scalar if the site breaks one of those rules, whether a candidate reported it or you found it yourself. A rule not covered by any detector is absent from that scalar: Use `plain-speech` if the site breaks the plain-speech rule, and `capitalization-after-colon` or `sentence-case` if it breaks the rule of that name in the writing preferences below. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks: the id in the `<!-- rule: <id> -->` marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. Use `plain-speech` if the site breaks the plain-speech rule. A rule whose heading has no marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 

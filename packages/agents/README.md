@@ -247,7 +247,7 @@ The library declares four hook names:
 
 | Hook                         | Concern                                      | Declared by                                                                           |
 | ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `comment-preferences`        | the register of comments written into source | the coder subagent and the five reviewer subagents                                    |
+| `comment-preferences`        | the register of comments written into source | the coder subagent, the five reviewer subagents, `prose-reviser`, and `revise-prose`  |
 | `implementation-preferences` | how code is written and judged               | the implementing and reviewing skills, the coder, and the five plan-shaping subagents |
 | `ticketing-preferences`      | how work is split across tickets             | the ticket-composing skills and `planner`                                             |
 | `writing-preferences`        | how agent-authored prose reads               | every subagent but the deployment canary, and `revise-prose`                          |

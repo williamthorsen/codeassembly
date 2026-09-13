@@ -11,10 +11,14 @@ Grammatical register for comments written into source. Comment discipline decide
 
 ## Doc descriptions
 
+<!-- rule: doc-descriptions -->
+
 Where a description leads with a verb, the verb is third-person indicative with the subject understood: "Builds the canonical payload shape", not "Build the canonical payload shape".
 
 Existing imperative descriptions are drift, not local standard. Do not imitate them.
 
 ## Inline comments
+
+<!-- rule: inline-comments -->
 
 An explanatory inline comment describing a logical step is imperative, not declarative or passive: "Validate arguments", not "Validates arguments" or "Argument validation".

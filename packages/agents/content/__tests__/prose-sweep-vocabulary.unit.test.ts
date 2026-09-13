@@ -4,30 +4,34 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { RULE_IDS } from '../../src/revise-prose/rules.ts';
-import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 
-// Three hand-written surfaces must agree on which rule names exist: the helper's detector registry, the vocabulary
-// `prose-reviser` reports, and the fold `revise-prose` composes from that report. A name the subagent reports that
-// step 1 of the skill maps to no unit reaches the helper naming a unit the fold does not cover, and the `record`
-// command refuses the whole fold. Nothing else holds the three together.
+// The rulebooks' `<!-- rule: <id> -->` markers are the one list of rule names. The helper's detector registry, the
+// names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within it:
+// a name that the skill maps to no unit makes the `record` command refuse the whole fold, and a rule stated without a
+// marker leaves the subagent no id to report its sites under.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
+const CALIBRATION = '_partials/plain-speech-calibration.md';
 const SKILL = 'skills/revise-prose/SKILL.md';
 const SUBAGENT = 'subagents/prose-reviser.md';
 
 /**
- * Rule names the subagent may report that the helper holds no detector for. Each is recordable, so the skill has to map
- * it to a unit; a name added here without that mapping is the divergence that this suite exists to catch.
+ * The rulebooks written for the hooks whose fills `revise-prose` sweeps. Named rather than discovered from their
+ * markers, so that a rulebook that loses every marker still fails.
  */
-const UNDETECTED_RULES: ReadonlyArray<string> = ['capitalization-after-colon', 'plain-speech', 'sentence-case'];
+const SWEPT_RULEBOOKS: ReadonlyArray<string> = [
+  'williamthorsen-comment-preferences',
+  'williamthorsen-writing-preferences',
+];
 
 /** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
 const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
 
-/** The sentences mapping each undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
+/** The sentences mapping each rule that has no marker to its unit, which step 1's rule-to-unit mapping does not reach. */
 const UNIT_MAPPINGS: ReadonlyArray<string> = [
   '**A `plain-speech` rejection takes the `plain-speech` unit**',
-  '**A rejection under a rule not declared by any marker takes the unit of the fill block that states the rule**',
+  "**A rejection under a heading's kebab-case id takes the unit of the fill block containing that heading**",
 ];
 
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
@@ -39,33 +43,31 @@ const REJECTIONS_SCALAR = '**`rejections`**';
 /** Matches every `"rule": "<name>"` field in a JSON example, whose captured group is the name. */
 const REPORTED_RULE_REGEX = /"rule":\s*"([^"]+)"/g;
 
-/** The rule names the helper holds a detector for, as plain strings, which is how the body names them. */
-const DETECTOR_RULES: ReadonlySet<string> = new Set(RULE_IDS);
+/** Matches a rule heading, whose captured group is the heading text. */
+const RULE_HEADING_REGEX = /^## (.+)$/;
 
-/** Content-root directories holding the rule documents a marker sits in. */
-const RULE_DOCUMENT_DIRS: ReadonlyArray<string> = ['_partials', 'guidance/rulebooks'];
+/** Matches a marker alone on its line, whose captured group is the id. A marker quoted inside a sentence declares nothing. */
+const RULE_MARKER_REGEX = /^<!--\s*rule:\s*([a-z][a-z0-9-]*)\s*-->$/;
 
-/** Matches every `<!-- rule: <id> -->` marker, whose captured group is the rule id. */
-const RULE_MARKER_REGEX = /<!--\s*rule:\s*(\S+)\s*-->/g;
+/** Matches the line naming a unit's version, whose captured group is the unit's name and, for `plain-speech`, its rule id. */
+const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*(\S+)\s+\S+\s*-->$/m;
+
+/** Stands in for a line inside a code fence, which is neither a heading nor a marker but is not blank. */
+const FENCED_LINE = '<fenced>';
+
+const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
 describe('prose-sweep rule vocabulary', () => {
-  it('keeps the undetected names free of a detector, so the constant stays true to its name', () => {
-    const detected = UNDETECTED_RULES.filter((name) => DETECTOR_RULES.has(name));
-
-    const message = `${detected.join(', ')} now has a detector, so it needs no entry in UNDETECTED_RULES`;
-    expect(detected, message).toEqual([]);
-  });
-
   it('reports only names the skill can map to a unit', async () => {
     const body = await readContentFile(SUBAGENT);
     const reported = body
       .matchAll(REPORTED_RULE_REGEX)
       .map(([, name]) => name)
       .toArray();
-    const known = new Set<string>([...DETECTOR_RULES, ...UNDETECTED_RULES]);
+    const known = new Set<string>([...(await readDeclaredIds()), await readPlainSpeechId()]);
     const unknown = reported.filter((name) => name !== undefined && !known.has(name));
 
-    const message = `${SUBAGENT} reports rule names the fold has never heard of: ${unknown.join(', ')}`;
+    const message = `${SUBAGENT} reports rule names that no marker declares: ${unknown.join(', ')}`;
     expect(unknown, message).toEqual([]);
     expect(reported.length, `${SUBAGENT} shows no report example, so this suite proves nothing`).toBeGreaterThan(0);
   });
@@ -75,14 +77,6 @@ describe('prose-sweep rule vocabulary', () => {
     const missing = listUnnamedRules(body, RULE_IDS);
 
     const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so the sweeper meets a candidate under a rule not described by its own body`;
-    expect(missing, message).toEqual([]);
-  });
-
-  it('names every undetected rule in the subagent that reports it', async () => {
-    const body = await readContentFile(SUBAGENT);
-    const missing = listUnnamedRules(body, UNDETECTED_RULES);
-
-    const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so a site it repairs is reported under an improvised name that the fold cannot map to a unit`;
     expect(missing, message).toEqual([]);
   });
 
@@ -110,7 +104,7 @@ describe('prose-sweep rule vocabulary', () => {
   });
 
   it('carries a marker for every detector rule', async () => {
-    const declared = await readDeclaredRuleIds();
+    const declared = new Set(await readDeclaredIds());
     const missing = RULE_IDS.filter((rule) => !declared.has(rule));
 
     const message = `no \`<!-- rule: <id> -->\` marker declares ${missing.join(', ')}, so step 1 of ${SKILL} names it to no run: its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry carries a rule that no document declares`;
@@ -118,7 +112,55 @@ describe('prose-sweep rule vocabulary', () => {
   });
 });
 
+describe('rule-id declarations', () => {
+  it.each(SWEPT_RULEBOOKS)('%s declares its rule ids', async (slug) => {
+    const rulebook = (await RESOLVED).get(slug);
+
+    const message = `${slug} declares no \`<!-- rule: <id> -->\` marker; therefore, none of its rules has an id that the sweep can report or record`;
+    expect(rulebook, `${slug} is not in the library`).toBeDefined();
+    expect(listDeclaredIds(rulebook?.body ?? ''), message).not.toEqual([]);
+  });
+
+  it('declares an id under every rule heading of a rulebook that declares any', async () => {
+    const undeclared = (await RESOLVED)
+      .values()
+      .filter((rulebook) => listDeclaredIds(rulebook.body).length > 0)
+      .flatMap((rulebook) => listUndeclaredHeadings(rulebook.body).map((heading) => `${rulebook.slug}: ${heading}`))
+      .toArray();
+
+    const message = `A rule heading has no \`<!-- rule: <id> -->\` marker on the first non-blank line beneath it; therefore, the sweep has no id under which to report its sites: ${undeclared.join('; ')}`;
+    expect(undeclared, message).toEqual([]);
+  });
+
+  it('declares each id once across the library', async () => {
+    const ids = await readDeclaredIds();
+    const duplicated = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
+
+    const message = `A rule id is declared more than once, which gives a rule that has one unit two of them: ${duplicated.join(', ')}`;
+    expect(duplicated, message).toEqual([]);
+  });
+});
+
 // region | Helpers
+
+/** Returns every rule id that a body declares, in order. */
+function listDeclaredIds(body: string): string[] {
+  return maskFencedLines(body).flatMap((line) => {
+    const id = RULE_MARKER_REGEX.exec(line)?.[1];
+    return id === undefined ? [] : [id];
+  });
+}
+
+/** Returns the text of every rule heading whose first non-blank line beneath it is not a marker. */
+function listUndeclaredHeadings(body: string): string[] {
+  const lines = maskFencedLines(body);
+  return lines.flatMap((line, index) => {
+    const heading = RULE_HEADING_REGEX.exec(line)?.[1];
+    if (heading === undefined) return [];
+    const next = lines.slice(index + 1).find((candidate) => candidate.trim() !== '');
+    return next !== undefined && RULE_MARKER_REGEX.test(next) ? [] : [heading];
+  });
+}
 
 /**
  * Returns the rules that a body never names in backticks. A bare id such as `so` occurs in any prose and would assert
@@ -128,26 +170,36 @@ function listUnnamedRules(body: string, rules: ReadonlyArray<string>): string[] 
   return rules.filter((rule) => !body.includes(`\`${rule}\``));
 }
 
+/** Splits a body into lines, replacing each line of a code fence with a placeholder that matches no heading or marker. */
+function maskFencedLines(body: string): string[] {
+  let fenced = false;
+  return body.split('\n').map((line) => {
+    if (line.trimStart().startsWith('```')) {
+      fenced = !fenced;
+      return FENCED_LINE;
+    }
+    return fenced ? FENCED_LINE : line;
+  });
+}
+
 /** Reads one content file by its path relative to the content root. */
 async function readContentFile(relativePath: string): Promise<string> {
   return readFile(path.join(CONTENT_ROOT, relativePath), 'utf8');
 }
 
-/** Reads every rule id declared by a `<!-- rule: <id> -->` marker across the rule documents. */
-async function readDeclaredRuleIds(): Promise<ReadonlySet<string>> {
-  const ids = new Set<string>();
+/** Reads every rule id that the library's rulebooks declare, a duplicate appearing once per declaration. */
+async function readDeclaredIds(): Promise<string[]> {
+  return (await RESOLVED)
+    .values()
+    .flatMap((rulebook) => listDeclaredIds(rulebook.body))
+    .toArray();
+}
 
-  for (const directory of RULE_DOCUMENT_DIRS) {
-    const files = await listMarkdownFiles(path.join(CONTENT_ROOT, directory));
-    for (const file of files) {
-      const markers = (await readFile(file, 'utf8')).matchAll(RULE_MARKER_REGEX);
-      for (const [, id] of markers) {
-        if (id !== undefined) ids.add(id);
-      }
-    }
-  }
-
-  return ids;
+/** Reads the `plain-speech` rule id from the unit-version line that names it. */
+async function readPlainSpeechId(): Promise<string> {
+  const id = UNIT_VERSION_REGEX.exec(await readContentFile(CALIBRATION))?.[1];
+  if (id === undefined) throw new Error(`${CALIBRATION} has no unit-version line naming its unit`);
+  return id;
 }
 
 // endregion | Helpers

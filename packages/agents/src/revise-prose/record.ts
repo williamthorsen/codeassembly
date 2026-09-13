@@ -25,11 +25,14 @@ import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
 
+/** The shape of a rule name: lowercase kebab-case, letter-led. */
+export const RULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
+
 /**
  * A rule name. Any rule a bound rulebook declares is recordable, detected or not, so the shape is all that is held
  * here: pinning the detector registry's names would make a unit's coverage of the record depend on holding a detector.
  */
-const RuleNameSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'rule must be a lowercase kebab-case name');
+const RuleNameSchema = z.string().regex(RULE_NAME_PATTERN, 'rule must be a lowercase kebab-case name');
 
 /** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
