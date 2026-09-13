@@ -35,11 +35,11 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "4.1.11",
     "@vitest/eslint-plugin": "1.6.27",
-    "@williamthorsen/eslint-config-typescript": "16.0.0",
+    "@williamthorsen/eslint-config-typescript": "17.0.0",
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/release-kit": "10.5.0",
-    "@williamthorsen/strict-lint": "13.0.1",
+    "@williamthorsen/release-kit": "10.6.0",
+    "@williamthorsen/strict-lint": "14.0.0",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
@@ -57,11 +57,11 @@
     "tsx": "4.23.13",
     "typescript": "6.0.3",
     "typescript-eslint": "8.69.0",
-    "v11y-check": "0.15.8",
+    "v11y-check": "0.16.0",
     "vite": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@12.2.1",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=24"
   }
