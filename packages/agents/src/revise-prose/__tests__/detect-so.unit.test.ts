@@ -22,6 +22,8 @@ describe(detectSoUses, () => {
     'The record is stale, and so the sweep runs again.',
     'The owning source decides it and so is supplied per skill.',
     'The cache is cold, so many requests are slow.',
+    'The cache is cold; so many requests are slow.',
+    'So many requests are slow.',
     'The run is so slow.',
   ])('reports "%s"', (text) => {
     expect(detect(text)).toHaveLength(1);
