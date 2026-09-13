@@ -90,7 +90,7 @@ export function findSentence(text: string, start: number, end: number): string {
  * it. The bounds are what a caller reads to locate the sentence; {@link findSentence} returns its text.
  */
 export function findSentenceBounds(text: string, start: number, end: number): { start: number; end: number } {
-  const boundary = /[.!?](?=\s|$)/g;
+  const boundary = new RegExp(SENTENCE_BOUNDARY);
   let sentenceStart = 0;
   let match = boundary.exec(text);
 
@@ -105,10 +105,7 @@ export function findSentenceBounds(text: string, start: number, end: number): { 
   // The start lands just past the preceding sentence's terminator, so the whitespace separating the two belongs to
   // neither. Trimming it here is what makes the start the offset of the sentence's own first character, which is the
   // offset a caller counts newlines to.
-  let trimmedStart = sentenceStart;
-  while (trimmedStart < sentenceEnd && /\s/.test(text[trimmedStart] ?? '')) trimmedStart += 1;
-
-  return { start: trimmedStart, end: sentenceEnd };
+  return { start: skipWhitespace(text, sentenceStart, sentenceEnd), end: sentenceEnd };
 }
 
 /** Collapses every whitespace run to one space and trims the ends, which is the form a reported span takes. */
@@ -124,10 +121,34 @@ export function isProseLiteral(text: string): boolean {
   return countWords(text) >= MIN_LITERAL_WORDS;
 }
 
+/**
+ * Returns the offsets bounding each sentence of `text`, in reading order, split at the boundaries at which
+ * {@link findSentenceBounds} splits. A run of whitespace alone is not a sentence and is omitted.
+ */
+export function listSentenceBounds(text: string): Array<{ start: number; end: number }> {
+  const ends = text
+    .matchAll(SENTENCE_BOUNDARY)
+    .map((boundary) => boundary.index + 1)
+    .toArray();
+  if (ends.at(-1) !== text.length) ends.push(text.length);
+
+  const bounds: Array<{ start: number; end: number }> = [];
+  let sentenceStart = 0;
+  for (const end of ends) {
+    const start = skipWhitespace(text, sentenceStart, end);
+    if (start < end) bounds.push({ start, end });
+    sentenceStart = end;
+  }
+  return bounds;
+}
+
 // region | Helpers
 
 /** Fewest words a string literal must carry to read as prose rather than as data. */
 const MIN_LITERAL_WORDS = 3;
+
+/** Matches a sentence terminator: a period, question mark, or exclamation mark before whitespace or the end. */
+const SENTENCE_BOUNDARY = /[.!?](?=\s|$)/g;
 
 /** Counts the word-like tokens in a string literal, which is how prose is told from data. */
 function countWords(text: string): number {
@@ -141,6 +162,13 @@ function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecA
     candidate = runs.exec(text);
   }
   return candidate;
+}
+
+/** Returns the offset of the first character at or after `from` that is not whitespace, stopping at `limit`. */
+function skipWhitespace(text: string, from: number, limit: number): number {
+  let offset = from;
+  while (offset < limit && /\s/.test(text[offset] ?? '')) offset += 1;
+  return offset;
 }
 
 // endregion | Helpers
