@@ -40,14 +40,24 @@ describe('the deployed bundle', () => {
   it('sweeps and reports JSON on the pre-rules invocation', () => {
     const result = sweepResult([]);
 
-    expect(result.summary.byRule).toStrictEqual({ 'em-dash': 0, 'reduced-object-relative': 1 });
+    expect(result.summary.byRule).toStrictEqual({
+      'em-dash': 0,
+      'reduced-object-relative': 1,
+      'second-person': 0,
+      where: 0,
+    });
     expect(result.batches.length).toBeGreaterThan(0);
   });
 
   it('detects the rules its invocation names', () => {
     const result = sweepResult(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
 
-    expect(result.summary.byRule).toStrictEqual({ 'em-dash': 1, 'reduced-object-relative': 0 });
+    expect(result.summary.byRule).toStrictEqual({
+      'em-dash': 1,
+      'reduced-object-relative': 0,
+      'second-person': 0,
+      where: 0,
+    });
   });
 
   it('reports an invalid invocation as a structured failure at exit 0', () => {

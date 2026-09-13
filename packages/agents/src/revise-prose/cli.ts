@@ -298,7 +298,7 @@ function summarize(input: {
   const counts = new Map<string, number>();
   // Keyed in the order the rulebook ranks the shapes, so a shape carried by no candidate still reads as zero.
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
-  const byRule: Record<RuleId, number> = { 'em-dash': 0, 'reduced-object-relative': 0 };
+  const byRule: Record<RuleId, number> = { 'em-dash': 0, 'reduced-object-relative': 0, 'second-person': 0, where: 0 };
 
   for (const candidate of input.candidates) {
     counts.set(candidate.file, (counts.get(candidate.file) ?? 0) + 1);

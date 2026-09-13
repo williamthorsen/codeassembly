@@ -19,13 +19,7 @@ const SUBAGENT = 'subagents/prose-reviser.md';
  * Rule names the subagent may report that the helper holds no detector for. Each is recordable, so the skill has to map
  * it to a unit; a name added here without that mapping is the divergence that this suite exists to catch.
  */
-const UNDETECTED_RULES: ReadonlyArray<string> = [
-  'capitalization-after-colon',
-  'plain-speech',
-  'second-person',
-  'sentence-case',
-  'where',
-];
+const UNDETECTED_RULES: ReadonlyArray<string> = ['capitalization-after-colon', 'plain-speech', 'sentence-case'];
 
 /** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
 const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';

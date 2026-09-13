@@ -72,7 +72,12 @@ describe(runDetect, () => {
       for (const field of LEGACY_SUMMARY_FIELDS) {
         expect(summary, `summary lost the legacy field "${field}"`).toHaveProperty(field);
       }
-      expect(summary.byRule).toStrictEqual({ 'em-dash': 0, 'reduced-object-relative': 1 });
+      expect(summary.byRule).toStrictEqual({
+        'em-dash': 0,
+        'reduced-object-relative': 1,
+        'second-person': 0,
+        where: 0,
+      });
     });
 
     it('detects the object relative alone, naming no rule', async () => {
@@ -106,7 +111,12 @@ describe(runDetect, () => {
     it('detects both rules where both are named', async () => {
       const { summary } = expectSuccess(await sweep(bothRules()));
 
-      expect(summary.byRule).toStrictEqual({ 'em-dash': 1, 'reduced-object-relative': 1 });
+      expect(summary.byRule).toStrictEqual({
+        'em-dash': 1,
+        'reduced-object-relative': 1,
+        'second-person': 0,
+        where: 0,
+      });
     });
 
     it('plans a batch over the whole scanned set, not the candidate-bearing subset', async () => {
