@@ -28,10 +28,10 @@ const SWEPT_RULEBOOKS: ReadonlyArray<string> = [
 /** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
 const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
 
-/** The sentences mapping each undetected rule to its unit, which step 1's rule-to-unit mapping does not reach. */
+/** The sentences mapping each rule that has no marker to its unit, which step 1's rule-to-unit mapping does not reach. */
 const UNIT_MAPPINGS: ReadonlyArray<string> = [
   '**A `plain-speech` rejection takes the `plain-speech` unit**',
-  '**A rejection under a rule not declared by any marker takes the unit of the fill block that states the rule**',
+  "**A rejection under a heading's kebab-case id takes the unit of the fill block containing that heading**",
 ];
 
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
