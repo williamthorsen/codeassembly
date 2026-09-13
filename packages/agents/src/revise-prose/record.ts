@@ -2,7 +2,7 @@
  * The per-repository sweep record, `.agents/revise-prose.yaml`.
  *
  * The record answers two questions on a later run: which paths a unit has already been swept over at its current
- * version, and which sites an adjudicator has already rejected. A rejected site need not be one a detector reports,
+ * version and with which detectors, and which sites an adjudicator has already rejected. A rejected site need not be one a detector reports,
  * so the second answer reaches a rule whose sites no candidate nominates. A version bump marks a unit's rejections stale
  * rather than deleting them, so a rule's revision re-opens its rejections for review instead of discarding the
  * judgment behind them.
@@ -34,10 +34,14 @@ const RuleNameSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'rule must be a low
 /** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
 
-/** A unit's coverage: the version swept, when it was last swept, and the path roots covered at that version. */
+/**
+ * A unit's coverage: the version swept, when it was last swept, the detector rules that its sweeps ran, and the path
+ * roots covered at that version. A unit written without `rules` reads as having run no detector.
+ */
 const UnitCoverageSchema = z.object({
   version: z.string().min(1),
   'swept-at': DateSchema,
+  rules: z.array(RuleNameSchema).default([]),
   roots: z.array(z.string().min(1)).min(1),
 });
 
@@ -66,10 +70,20 @@ const FoldRejectionSchema = z.object({
   ground: z.string().min(1),
 });
 
-/** What one run reports back for recording. */
+/**
+ * What one run reports back for recording. A unit's `rules` is required, so a fold that omits it is refused rather than
+ * recorded as a sweep that ran no detector, which would re-open the unit's coverage on every later run.
+ */
 export const RunFoldSchema = z.object({
   sweptAt: DateSchema,
-  units: z.record(z.string(), z.object({ version: z.string().min(1), roots: z.array(z.string().min(1)).min(1) })),
+  units: z.record(
+    z.string(),
+    z.object({
+      version: z.string().min(1),
+      rules: z.array(RuleNameSchema),
+      roots: z.array(z.string().min(1)).min(1),
+    }),
+  ),
   rejections: z.array(FoldRejectionSchema).default([]),
 });
 
@@ -117,9 +131,10 @@ export function applyRejections(
  * Merges a run's fold into the prior record and returns the result.
  *
  * A unit that the run did not name keeps its coverage and its rejections untouched, so a narrowed run never retracts what a
- * wider one recorded. For a unit that the run did name at the version already recorded, the run's roots join the recorded
- * ones, both sweeps having happened; a version bump replaces them, the earlier sweep having been taken against a rule
- * that has since changed.
+ * wider one recorded. For a unit that the run did name at the version and with the detector rules already recorded, the
+ * run's roots join the recorded ones, both sweeps having happened. A version bump replaces them, the earlier sweep having
+ * been taken against a rule that has since changed, and so does a change in the detector rules, the recorded roots
+ * having been swept with a different set of candidates.
  *
  * That unit's rejections under the roots swept by the run are replaced by the run's own: an adjudicator who did not
  * re-reject a site at this version has withdrawn it. A rejection outside those roots was never revisited, so it is
@@ -131,9 +146,19 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
   const units = { ...prior.units };
   for (const [unit, coverage] of Object.entries(fold.units)) {
     const priorCoverage = prior.units[unit];
+    const rules = normalizeRules(coverage.rules);
     const keptRoots =
-      priorCoverage !== undefined && priorCoverage.version === coverage.version ? priorCoverage.roots : [];
-    units[unit] = { version: coverage.version, 'swept-at': fold.sweptAt, roots: mergeRoots(keptRoots, coverage.roots) };
+      priorCoverage !== undefined &&
+      priorCoverage.version === coverage.version &&
+      composeKey(...normalizeRules(priorCoverage.rules)) === composeKey(...rules)
+        ? priorCoverage.roots
+        : [];
+    units[unit] = {
+      version: coverage.version,
+      'swept-at': fold.sweptAt,
+      rules,
+      roots: mergeRoots(keptRoots, coverage.roots),
+    };
   }
 
   const recorded: RecordedRejection[] = fold.rejections.map((rejection) => {
@@ -160,10 +185,17 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
 }
 
 /**
- * Reports whether every named unit covers `file` at the version the run holds for it. A unit whose recorded version
- * differs covers nothing, its sweep having been taken against a rule that has since changed.
+ * Reports whether every named unit covers `file` at the version that the run holds for it, with every rule that the run
+ * names for that unit among the detector rules that its sweeps ran. A unit whose recorded version differs covers nothing, its
+ * sweep having been taken against a rule that has since changed; a sweep that ran without a named rule's detector
+ * never saw that rule's candidates.
  */
-export function isCoveredAt(record: ProseRecord, unitVersions: ReadonlyMap<string, string>, file: string): boolean {
+export function isCoveredAt(
+  record: ProseRecord,
+  unitVersions: ReadonlyMap<string, string>,
+  rules: ReadonlyArray<{ rule: string; unit: string }>,
+  file: string,
+): boolean {
   if (unitVersions.size === 0) return false;
 
   for (const [unit, version] of unitVersions) {
@@ -172,7 +204,7 @@ export function isCoveredAt(record: ProseRecord, unitVersions: ReadonlyMap<strin
     if (coverage.roots.every((root) => !isUnderRoot(file, root))) return false;
   }
 
-  return true;
+  return rules.every(({ rule, unit }) => record.units[unit]?.rules.includes(rule) === true);
 }
 
 /** Reports whether a rejection was recorded at a version older than the one a run holds for its unit. */
@@ -258,7 +290,12 @@ export function stringifyRecord(record: ProseRecord): string {
       .toSorted(([left], [right]) => left.localeCompare(right))
       .map(([unit, coverage]) => [
         unit,
-        { version: coverage.version, 'swept-at': coverage['swept-at'], roots: coverage.roots },
+        {
+          version: coverage.version,
+          'swept-at': coverage['swept-at'],
+          rules: normalizeRules(coverage.rules),
+          roots: coverage.roots,
+        },
       ]),
   );
 
@@ -309,6 +346,11 @@ function mergeRoots(recorded: readonly string[], swept: readonly string[]): stri
  */
 function normalizeForMatch(phrase: string): string {
   return flattenWhitespace(maskCodeSpans(phrase.normalize('NFC')));
+}
+
+/** Dedupes and sorts a rule list, so two sweeps naming one set in different orders record and compare alike. */
+function normalizeRules(rules: readonly string[]): string[] {
+  return [...new Set(rules)].toSorted();
 }
 
 /**

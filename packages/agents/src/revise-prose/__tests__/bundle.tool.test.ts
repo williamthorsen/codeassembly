@@ -57,7 +57,7 @@ describe('the deployed bundle', () => {
   it('writes the record through its record command, reading the fold on standard input', async () => {
     const fold = {
       sweptAt: '2026-09-02',
-      units: { writing: { version: '2', roots: ['.'] } },
+      units: { writing: { version: '2', rules: ['em-dash'], roots: ['.'] } },
       rejections: [],
     };
     const result = run(['record'], JSON.stringify(fold));

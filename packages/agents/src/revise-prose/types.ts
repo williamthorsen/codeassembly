@@ -73,12 +73,17 @@ export interface ScannedFile {
   bytes: number;
 }
 
-/** What the record holds for one unit: the version swept, when it was last swept, and the path roots covered at that version. */
+/**
+ * What the record holds for one unit: the version swept, when it was last swept, the detector rules that its sweeps
+ * ran, and the path roots covered at that version.
+ */
 export interface UnitCoverage {
   /** The unit's version at the time of the sweep, opaque and never parsed as semver. */
   version: string;
   /** The ISO calendar date of the most recent sweep at this version. */
   'swept-at': string;
+  /** The rules whose detectors nominated candidates for these roots, sorted; empty when no detector ran. */
+  rules: readonly string[];
   /** The path roots that sweeps at this version have covered, `.` where one covered the repository. */
   roots: readonly string[];
 }
@@ -138,8 +143,8 @@ export interface FoldRejection {
 export interface RunFold {
   /** The ISO calendar date to record the sweep under. */
   sweptAt: string;
-  /** Per unit, the version swept and the path roots covered. */
-  units: Record<string, { version: string; roots: readonly string[] }>;
+  /** Per unit, the version swept, the detector rules the run named for it, and the path roots covered. */
+  units: Record<string, { version: string; rules: readonly string[]; roots: readonly string[] }>;
   rejections: readonly FoldRejection[];
 }
 

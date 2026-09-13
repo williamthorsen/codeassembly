@@ -175,7 +175,9 @@ export async function runDetect(input: {
     const candidates = args.units.size === 0 ? detected : applyRejections(detected, record, args.units);
 
     const planned = planBatches({ files: scannedFiles, candidates, budget: args.budget });
-    const batches = planned.filter((batch) => batch.files.some((file) => !isCoveredAt(record, args.units, file)));
+    const batches = planned.filter((batch) =>
+      batch.files.some((file) => !isCoveredAt(record, args.units, args.rules, file)),
+    );
     const rejections = selectPriorRejections(
       record,
       args.units,

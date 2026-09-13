@@ -9,6 +9,9 @@ import { runDetect, runRecord } from '../cli.ts';
 import { parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
 import type { DetectResult, DetectSuccess, ProseRecord, RunFold } from '../types.ts';
 
+/** The rules that `bothRules` names under unit `writing`, as a record's coverage lists them. */
+const BOTH_RULES: ReadonlyArray<string> = ['em-dash', 'reduced-object-relative'];
+
 const OBJECT_RELATIVE = 'The helper reports the source it names.';
 const EM_DASH_SENTENCE = 'The cache is cold\u{2014}so the transport reconnects.';
 
@@ -154,9 +157,17 @@ describe(runDetect, () => {
       expect(expectSuccess(await sweep(bothRules())).summary.batchesSkipped).toBe(0);
     });
 
+    it("skips nothing when the record's sweeps ran without a rule that the run names", async () => {
+      const record = recordFor(await rejectedPhrase());
+      record.units['writing'] = { version: '2', 'swept-at': '2026-09-02', rules: ['em-dash'], roots: ['.'] };
+      await writeRecord(record);
+
+      expect(expectSuccess(await sweep(bothRules())).summary.batchesSkipped).toBe(0);
+    });
+
     it('skips nothing where the record covers a narrower root', async () => {
       const record = recordFor(await rejectedPhrase());
-      record.units['writing'] = { version: '2', 'swept-at': '2026-09-02', roots: ['docs'] };
+      record.units['writing'] = { version: '2', 'swept-at': '2026-09-02', rules: BOTH_RULES, roots: ['docs'] };
       await writeRecord(record);
 
       const { batches } = expectSuccess(await sweep(bothRules()));
@@ -182,7 +193,7 @@ describe(runDetect, () => {
     it('reports a rejection under a rule no detector covers', async () => {
       const phrase = 'a figure the document displays on purpose';
       await writeRecord({
-        units: { writing: { version: '2', 'swept-at': '2026-09-02', roots: ['.'] } },
+        units: { writing: { version: '2', 'swept-at': '2026-09-02', rules: BOTH_RULES, roots: ['.'] } },
         rejections: [
           {
             rule: 'plain-speech',
@@ -236,6 +247,16 @@ describe(runDetect, () => {
       await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
     });
 
+    it('refuses a fold whose unit names no detector rules and writes nothing', async () => {
+      const unruled = { sweptAt: '2026-09-02', units: { writing: { version: '2', roots: ['.'] } }, rejections: [] };
+
+      expect(runRecord({ foldJson: JSON.stringify(unruled), root: scratch })).toMatchObject({
+        ok: false,
+        error: 'invalid-record',
+      });
+      await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
+    });
+
     it('closes the loop: recording a run suppresses its candidate on the next sweep', async () => {
       expect(expectSuccess(await sweep(bothRules())).summary.byRule['reduced-object-relative']).toBe(1);
 
@@ -268,7 +289,7 @@ describe(runDetect, () => {
   async function fold(): Promise<RunFold> {
     return {
       sweptAt: '2026-09-02',
-      units: { writing: { version: '2', roots: ['.'] } },
+      units: { writing: { version: '2', rules: BOTH_RULES, roots: ['.'] } },
       rejections: [
         {
           rule: 'reduced-object-relative',
@@ -318,7 +339,7 @@ function expectSuccess(result: DetectResult): DetectSuccess {
 /** A record covering the whole repository for unit `writing`, rejecting one site at `version`. */
 function recordFor(phrase: string, version = '2'): ProseRecord {
   return {
-    units: { writing: { version, 'swept-at': '2026-09-02', roots: ['.'] } },
+    units: { writing: { version, 'swept-at': '2026-09-02', rules: BOTH_RULES, roots: ['.'] } },
     rejections: [
       {
         rule: 'reduced-object-relative',
