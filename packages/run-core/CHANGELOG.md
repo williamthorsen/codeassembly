@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 — 2026-09-13
+
+### 🎉 Features
+
+- Add a rulebook stating what belongs in a README (#1660)
+
+  - Adds `readme-conventions` to the `recommended` collection as the `consult-readme-conventions` skill, which states what a README leads with, keeps, and omits for each of seven types: application, CLI tool, library, configuration package, monorepo root, content repository, and internal package.
+  - Directs an agent that writes a README to record the README's type on its first line as `<!-- readme-type: <slug> -->`, and an agent that revises one to follow that marker, adding it where it is missing.
+  - Makes `consult-readme-conventions` a dependency of `design-and-plan`, `plan`, and `update-project-guidance`, so that declaring any of the three also deploys it.
+
 ## 0.3.2 — 2026-09-01
 
 ### 🧪 Tests

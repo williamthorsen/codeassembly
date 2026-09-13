@@ -1,5 +1,56 @@
 [
   {
+    "version": "0.8.0",
+    "date": "2026-09-13",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Resolve wikilinks from a private store into a shared one (#1617)",
+            "body": "- Adds the store-qualified wikilink `[[store:Note title]]`, whose prefix names an entry in the merged `kb.yaml` registry, so that `kb check` resolves the link against that store rather than reporting `wikilinks.unresolved`.\n- Adds `visibility` to `.kb/config.yaml`, taking `shared` or `private` and defaulting to `private`, which sets the permitted direction: a link may point at a store as shareable as its own or more so.\n- Adds three findings for a qualified link that does not resolve, `wikilinks.unknown-store` and `wikilinks.disallowed-store` as errors and `wikilinks.store-unavailable` as a warning, so that a correct link into a store that this machine has not cloned is reported as unverifiable rather than broken.",
+            "hash": "147f346a2af4fb179d2908d96f3bc89b389f90bd"
+          },
+          {
+            "description": "Add a second-person rule to the writing preferences (#1634)",
+            "body": "- Bans the use of the 2nd person in user- and developer-facing documentation prose.\n- Adds `second-person` to the rule names that `revise-prose` and `prose-reviser` accept, alongside `plain-speech`, so a sweep repairs a site or records a rejection under it though no detector reports its sites.\n- Moves the rulebook's `version` to `3`, so that a bound repository re-sweeps and re-adjudicates the rejections recorded under the old version.",
+            "hash": "20dac3cd32a2cad6ccf705aa840109381316803d"
+          }
+        ]
+      },
+      {
+        "title": "🪦 Removed",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Remove the wikilink-parse primitives from the vault-integrity subpath (#1680)",
+            "body": "- Removes `countNewlines`, `extractTarget`, `hasNonMarkdownExtension`, `maskFencedCode`, `maskInlineCode`, and `WIKILINK` from `@williamthorsen/kb/vault-integrity`.\n\nMigration: Call `scanWikilinks` to find the wikilinks in a note body and their targets, in place of a scan assembled from the removed primitives.",
+            "breaking": true,
+            "migration": "Call `scanWikilinks` to find the wikilinks in a note body and their targets, in place of a scan assembled from the removed primitives.",
+            "hash": "f60dc85a23f225f8070d22df158db71e6a40eb9f"
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Remove jargon from description of note selection (#1640)",
+            "body": "- Replaces jargon with ordinary terms across `packages/kb`'s README and doc comments.",
+            "hash": "015c1ff8c1ca2eda17d585b18f18ced6ab09f2c1"
+          },
+          {
+            "description": "Correct the README's claims about kb's exported functions and inputs (#1684)",
+            "body": "- Replaces the description of `writeFrontmatter`, which no longer exists, with a description of note writing through `@williamthorsen/kb/note-io`, and limits the `./frontmatter` exports row to parsing.\n- Documents the lints as rules that run only inside `check`, replacing the signatures of `tagAliasFindings`, `pathsFindings`, and `taxonomyFindings`, which are not exported by any subpath.",
+            "hash": "02a9ed378ba0918dcf574839f2b11f061ba9ef33"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.7.0",
     "date": "2026-09-08",
     "sections": [
@@ -11,6 +62,7 @@
             "description": "Add kb scaffold to back-fill canonical files into an existing store (#1584)",
             "body": "- Adds the `kb scaffold` command, which writes the canonical files (`.kb/config.yaml` and `.kb/tag-aliases.yaml`) into a knowledge base. Files are created if missing, or replaced if `--force` is used.\n- Narrows what `kb create` reports to the paths that it actually created.\n\nMigration: import `renderAliasesSeed` and `renderConfigSeed` from `@williamthorsen/kb/scaffold` instead of `@williamthorsen/kb/create`.",
             "breaking": true,
+            "migration": "Import `renderAliasesSeed` and `renderConfigSeed` from `@williamthorsen/kb/scaffold` instead of `@williamthorsen/kb/create`.",
             "hash": "38d2dfe0fe275a5d3b13981e2e540000c906ce36"
           },
           {
@@ -27,6 +79,7 @@
           {
             "description": "Stop checking gitignored notes (#1587)",
             "body": "- Stops `kb check` from checking notes matching patterns in `.gitignore`. It now checks only those files that are tracked by git or new and not gitignored.\n- Makes a link pointing at a gitignored note report `wikilinks.unresolved`, since such a link is broken for every clone but the author's.\n- Fixes `kb check <path>` and `kb check --vs <ref>` for a note with an accented name, which on macOS matched nothing and could select unrelated files in its place.\n\nMigration: Track a gitignored note that other notes link to, or remove the wikilinks pointing at it.",
+            "migration": "Track a gitignored note that other notes link to, or remove the wikilinks pointing at it.",
             "hash": "1bd88cd98367d260bf3b2b7187f08848935b9e5f"
           }
         ]

@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.8.0 — 2026-09-13
+
+### 🎉 Features
+
+- Resolve wikilinks from a private store into a shared one (#1617)
+
+  - Adds the store-qualified wikilink `[[store:Note title]]`, whose prefix names an entry in the merged `kb.yaml` registry, so that `kb check` resolves the link against that store rather than reporting `wikilinks.unresolved`.
+  - Adds `visibility` to `.kb/config.yaml`, taking `shared` or `private` and defaulting to `private`, which sets the permitted direction: a link may point at a store as shareable as its own or more so.
+  - Adds three findings for a qualified link that does not resolve, `wikilinks.unknown-store` and `wikilinks.disallowed-store` as errors and `wikilinks.store-unavailable` as a warning, so that a correct link into a store that this machine has not cloned is reported as unverifiable rather than broken.
+
+- Add a second-person rule to the writing preferences (#1634)
+
+  - Bans the use of the 2nd person in user- and developer-facing documentation prose.
+  - Adds `second-person` to the rule names that `revise-prose` and `prose-reviser` accept, alongside `plain-speech`, so a sweep repairs a site or records a rejection under it though no detector reports its sites.
+  - Moves the rulebook's `version` to `3`, so that a bound repository re-sweeps and re-adjudicates the rejections recorded under the old version.
+
+### 🪦 Removed
+
+- 🚨 **Breaking:** Remove the wikilink-parse primitives from the vault-integrity subpath (#1680)
+
+  - Removes `countNewlines`, `extractTarget`, `hasNonMarkdownExtension`, `maskFencedCode`, `maskInlineCode`, and `WIKILINK` from `@williamthorsen/kb/vault-integrity`.
+
+  Migration: Call `scanWikilinks` to find the wikilinks in a note body and their targets, in place of a scan assembled from the removed primitives.
+
+### 📚 Documentation
+
+- Remove jargon from description of note selection (#1640)
+
+  - Replaces jargon with ordinary terms across `packages/kb`'s README and doc comments.
+
+- Correct the README's claims about kb's exported functions and inputs (#1684)
+
+  - Replaces the description of `writeFrontmatter`, which no longer exists, with a description of note writing through `@williamthorsen/kb/note-io`, and limits the `./frontmatter` exports row to parsing.
+  - Documents the lints as rules that run only inside `check`, replacing the signatures of `tagAliasFindings`, `pathsFindings`, and `taxonomyFindings`, which are not exported by any subpath.
+
 ## 0.7.0 — 2026-09-08
 
 ### 🎉 Features

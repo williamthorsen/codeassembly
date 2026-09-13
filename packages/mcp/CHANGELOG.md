@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.8 — 2026-09-13
+
+### Dependency updates
+
+- Bumped `codeassembly-run-core` to 0.4.0
+
 ## 0.2.7 — 2026-09-01
 
 ### 🧪 Tests

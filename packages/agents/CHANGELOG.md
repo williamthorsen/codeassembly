@@ -2,6 +2,231 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.15.0 — 2026-09-13
+
+### 🎉 Features
+
+- Add a mannered-prose test to the plain-speech rule and its calibration (#1610)
+
+  - Adds a mannered-prose test to the plain-speech rule.
+  - Bumps the `plain-speech` unit version, so that the next sweep re-checks files.
+
+- Resolve wikilinks from a private store into a shared one (#1617)
+
+  - Adds the store-qualified wikilink `[[store:Note title]]`, whose prefix names an entry in the merged `kb.yaml` registry, so that `kb check` resolves the link against that store rather than reporting `wikilinks.unresolved`.
+  - Adds `visibility` to `.kb/config.yaml`, taking `shared` or `private` and defaulting to `private`, which sets the permitted direction: a link may point at a store as shareable as its own or more so.
+  - Adds three findings for a qualified link that does not resolve, `wikilinks.unknown-store` and `wikilinks.disallowed-store` as errors and `wikilinks.store-unavailable` as a warning, so that a correct link into a store that this machine has not cloned is reported as unverifiable rather than broken.
+
+- Record plain-speech sweep rejections and reuse them on later sweeps (#1622)
+
+  - Adds `plain-speech` to the rules that the `.agents/revise-prose.yaml` sweep record stores, where it previously accepted only the two rules that `revise-prose` detects.
+  - Passes each sweep batch the sites that an earlier sweep already judged, so that `prose-reviser` skips them instead of judging them again.
+  - Omits from that list a rejection recorded at an older version of its rulebook unit, so that `prose-reviser` judges the site again after the unit's version changes.
+
+- Add an all-purpose-verb test and a word watchlist to plain speech (#1624)
+
+  - Adds a third test to the `plain-speech` rule, which targets vague verbs that can be used with any subject and object.
+  - Lists words to target in the `revise-prose` sweep calibration.
+  - Bumps the `plain-speech` unit to version 4, so that every repository's `.agents/revise-prose.yaml` re-opens its plain-speech coverage.
+
+- Add a second-person rule to the writing preferences (#1634)
+
+  - Bans the use of the 2nd person in user- and developer-facing documentation prose.
+  - Adds `second-person` to the rule names that `revise-prose` and `prose-reviser` accept, alongside `plain-speech`, so a sweep repairs a site or records a rejection under it though no detector reports its sites.
+  - Moves the rulebook's `version` to `3`, so that a bound repository re-sweeps and re-adjudicates the rejections recorded under the old version.
+
+- Retire the lede doctrine into the drafter and cutter (#1646)
+
+  - Moves the rules that only the deleted `skills/_data/lede-voice.md` stated into `lede-drafter.md`, so they now govern the subagent that writes a lede: per-work-type rules for what a bullet must state, and two further conditions on the migration paragraph.
+  - Replaces the hand-written composition in `merge-pr`'s thin-body fallback with the `lede-drafter` and `lede-cutter` dispatch pair that `summarize-change` uses, so no path publishes a merge body written against a checklist.
+  - Changes `capture-lede-decision`'s `doctrine-hash` to digest the deployed `lede-drafter.md` and `lede-cutter.md`, so a doctrine generation marks a change in what governed the draft, and adds `--subagents-dir` because the harness names that directory `agents` on Claude and `subagents` on Rovo.
+  - Corrects `commit-conventions.md` to state that a branch commit body feeds `summarize-change`'s drafter rather than the changelog, which under a squash merge is built from the merge commit alone, and bumps the rulebook to version 3.
+
+  Migration: Remove any include of `_partials/voice-checklist.md` from custom skills or rulebooks, since that partial is deleted along with `skills/_data/lede-voice.md`.
+
+- Add an optional form to the invocation-token grammar (#1650)
+
+  - Adds `{skill?:<slug>}` and `{subagent?:<slug>}`, which render exactly as their required forms do but leave the target out of the deploy closure, so a body names an ecosystem-specific artifact without also deploying it.
+  - Adds content format 2 to the formats that `codeassembly` accepts, so that a content root carrying an optional token declares 2 and an older `codeassembly` refuses the root rather than deploying the token's literal text.
+  - Confines the optional form to skill and subagent tokens, so `{rulebook?:<slug>}` fails the run with an error naming the two forms that take it.
+
+- 🚨 **Breaking:** Replace describe-change.sh with an engine-backed bundle (#1651)
+
+  - Adds `--parse <surface> <string>`, which reads a rendered commit, ticket, pull-request, or merge title back into the scope, type, breaking marker, title, ticket reference, and pull-request number that it carries.
+  - Adds a `--breaking` flag that sets the marker; `--type feat!` stays accepted and split.
+  - Moves this repository's commit and merge templates to the nested `[[{scope}|]{type}: ]` form, so a change with no scope keeps its work type, whereas the flat `[{scope}|{type}: ]` dropped the type along with the scope.
+  - Switches preference loading to the `yaml` library in place of a line scanner, so that a template survives every YAML quoting form and malformed YAML fails.
+  - Adds a round-trip check at preference load that stops the run on a template that the engine cannot invert.
+
+  Migration: Invoke `node {harness_home_dir}/scripts/describe-change.mjs` where content named `{harness_home_dir}/scripts/describe-change.sh`, since the bundle carries no shebang and will not run without the `node` prefix; change a piped-scope template from `[{scope}|{type}: ]` to `[[{scope}|]{type}: ]` to keep the work type on a change with no scope; and quote a `{title}` that a template names unquoted, which the loader now reports and skips rather than truncating in silence.
+
+- Fix a lede bullet to one outcome and decide its naming by consumption (#1654)
+
+  - Fixes the scope of a `lede-drafter` bullet to one outcome rather than one edit, so several edits serving one outcome are reported in a single bullet and a second outcome takes a second bullet.
+  - Decides `lede-drafter`'s backticking by what the reader consumes, so a package, command, or file that the reader uses is backticked and a token that a bullet merely names, such as a section heading or an internal value, is quoted; the rule previously left the decision to a list of kinds, which marked up a flag that the reader never sees.
+  - Directs `lede-drafter` to name what an artifact does for the reader in place of the internal call that the change edited.
+
+- 🚨 **Breaking:** Move the Atlassian skills into an opt-in collection (#1656)
+
+  - Adds the `atlassian` collection, whose members are `create-bitbucket-pr`, `merge-bb-pr`, `review-bb-pr`, and `update-jira-ticket`, removes the same four from `triage`, and cuts every edge that reached them.
+
+  Migration: Add `atlassian` to the `collections: use:` list of any declaration that relied on `create-pr`, `merge-pr`, `review-pr`, `create-ticket`, `align-ticket-with-implementation`, `design-and-plan`, or `refine-plan` to deploy a Bitbucket or Jira skill, or add the wanted skill to `skills: use:` instead, since declaring the collection deploys all four members, whereas the general skill deployed only the one that it named.
+
+- Derive a branch's change classification with the change-grammar engine (#1658)
+
+  - Adds a `--classify {base-ref}` mode to `describe-change.mjs`, which reports a branch's scope, type, and breaking flag as JSON, taking the highest-ranked type among its commits. It reports every subject that matches no `commit.title_format` template and every entry whose breaking marker disagrees with its type's policy.
+  - Adds a repeatable `--ticket-label` flag to `--classify`, which resolves a linked ticket's labels through `.meta/label-map.json` to a `ticket_type` that a caller can check against the branch's type. If the labels do not include a work type or name more than one, it reports nothing for the work type.
+  - Adds a repeatable `--extra-list-item KEY=VALUE` flag to `resolve-frontmatter.sh`, which appends one item per use to a frontmatter list and keeps an item that contains a comma whole, where `--extra-list` splits it.
+  - Maps the `drop` work type, which previously received no label, to `removal` and the `deprecate` work type to `deprecation` rather than `deprecate` in the label map written by `codeassembly generate label-map`. A repository that regenerates its map needs both labels in its tracker.
+
+- Add a rulebook stating what belongs in a README (#1660)
+
+  - Adds `readme-conventions` to the `recommended` collection as the `consult-readme-conventions` skill, which states what a README leads with, keeps, and omits for each of seven types: application, CLI tool, library, configuration package, monorepo root, content repository, and internal package.
+  - Directs an agent that writes a README to record the README's type on its first line as `<!-- readme-type: <slug> -->`, and an agent that revises one to follow that marker, adding it where it is missing.
+  - Makes `consult-readme-conventions` a dependency of `design-and-plan`, `plan`, and `update-project-guidance`, so that declaring any of the three also deploys it.
+
+- Record the derived classification in change summaries, PRs, and commits (#1661)
+
+  - Switches `summarize-change` from counting commit prefixes to classifying the branch's commits, and adds to the change summary's frontmatter a `changes` list of the classified changes and a `breaking` field that replaces the `!` on `type`.
+  - Adds `--scope` and `--type` to `summarize-change` and passes `create-pr`'s overrides to them, so each override is recorded beside the derived value in the change summary, and a type override now applies before the lede's tier is chosen from the type.
+  - Adds a step to `summarize-change` that records a GitHub ticket's type label as `ticket_type` and, in an interactive session where the label differs from the branch's type, asks the developer to keep the branch's type or take the ticket's before the lede is drafted.
+  - Makes `create-pr` end the pull-request body with a fenced `change-record` block that records the scope, type, and breaking marker derived for the branch, together with the commit from which they were derived and any override.
+  - Extends `condense-branch` to write one `Change:` trailer per classified change into the squashed commit's message, so that classifying the squashed commit returns the same changes as classifying the branch before the squash.
+  - Adds a step to `create-ticket` that decides the ticket's scope and type from the change that the ticket requests, rather than taking them from the conversation.
+
+- Add a streamline-guidance skill that cuts guidance bloat in steps (#1662)
+
+  - Adds a review step so that the skill applies only the cuts that the user chooses from one numbered table of proposed removals, rewordings, and merges.
+  - Adds four cumulative levels, selected with `--level`: `cautious` proposes at most two of the safest cuts per run; `conservative` cuts only text that directs nothing; `moderate`, the default, keeps every instruction available to the agent, stated once or enforced by a check; and `aggressive` cuts text that nothing shows to be necessary.
+  - Introduces `.agents/streamline-guidance.yaml`, which contains the cuts that the user declines, so that a later run does not propose one again while its text remains.
+  - Adds final steps that require an applied run to bump the `version` of each rulebook whose instructions a cut changed, pass the project's quality gate, and commit its edits as one commit.
+
+- Prescribe where as locative only in the writing preferences (#1665)
+
+  - Adds guidance to the `williamthorsen-writing-preferences` rulebook restricting the use of "where" to the locative sense.
+  - Names a report id in `prose-reviser` for each writing-preferences rule not covered by a detector, `capitalization-after-colon`, `second-person`, `sentence-case`, and `where`, in place of `second-person` alone, so a rejection under any of them reaches `revise-prose` under a stable name that maps to the unit stating the rule.
+  - Bumps the rulebook to version `4`, so `revise-prose` re-adjudicates a rejection recorded at the unit's earlier version rather than skipping it.
+
+- 🚨 **Breaking:** Take the merge title and classification from the pull request's record (#1668)
+
+  - Stops `merge-pr` from repeating in the merge title a `scope|type:` prefix already typed into the pull-request title, and from dropping the breaking marker.
+  - Adds a divergence notice to `merge-pr`'s approval gate, showing both classifications where the recorded one and the one derived from the branch's commits disagree, the record deciding the merge while the branch has not moved and the derivation deciding it once it has.
+  - Stops `merge-pr` from merging where the classification has no type, names a type absent from the taxonomy, or violates the repository's breaking-change policy, asking the author to settle each at the approval gate.
+  - Keeps the `change-record` block and the trailing `Closes` lines out of the merge body, which contains the pull request's `## What` section alone.
+  - Lets `capture-lede-decision` record a change that names no scope, and adds a `--breaking` flag beside the `!` suffix on `--type`.
+
+  Migration: Pass `--scope` alongside `--type` where `capture-lede-decision` should record a scope. A run passing any of `--type`, `--scope`, or `--breaking` now takes the whole identity from those flags instead of filling the rest from the change summary, and `--scope` or `--breaking` without `--type` fails.
+
+- 🚨 **Breaking:** Replace the describe-change modes with subcommands (#1676)
+
+  - Moves `ticket_type` from the `consolidate-branch` output to a separate `resolve-ticket-type` subcommand, which reads only the repository's label map.
+  - Stops a defective title template from refusing `render-block` and `resolve-ticket-type`, neither of which loads title templates.
+
+  Migration: In each skill or script not deployed by `codeassembly` that runs `describe-change.mjs`, start each invocation with a subcommand: `render-titles` for a run with no mode flag, `consolidate-branch --base {base}` for `--classify`, `parse-title <surface> <subject>` for `--parse`, `render-block` for `--record-block`, and `resolve-merge --base {base}` for `--resolve-merge {base}`. Read `ticket_type` from `resolve-ticket-type`, passing one `--ticket-label` per ticket label. A run that names no subcommand now exits 1 with a usage error instead of rendering titles, and `render-block` now refuses an `--override-type` that contains `!`.
+
+- Record sweep detector rules and add where and second-person detectors (#1677)
+
+  - Stops `revise-prose` from skipping a recorded file when the run names a detector rule that the file's last sweep did not run, so a detector added at an unchanged rulebook version still runs on files already swept.
+  - Adds `rules` to each unit's coverage in `.agents/revise-prose.yaml`, listing the detector rules that its sweeps ran, and treats a unit recorded without it as having run no detector, so the first sweep that names a detector rule covers previously recorded files again.
+  - Adds detectors for the `where` and `second-person` rules, so `prose-reviser` receives candidates for both, and exempts skill and subagent bodies, including partials under `skills/_partials/` and `subagents/_partials/`, from `second-person`, since their pronouns address the agent that the document instructs.
+
+- 🚨 **Breaking:** Rename the change record's fields and apply overrides in one place (#1678)
+
+  - Adds a `resolve-effective-record` subcommand to `describe-change.mjs`, which applies scope, type, and breaking-marker overrides to a record and reports the resulting `effective_record` with its `missing-type`, `undeclared-type`, and `policy-violation` defects.
+  - Renames the output keys of `describe-change.mjs consolidate-branch` from `head` and `unclassified` to `consolidated_record` and `unmatched`, and renames the `unclassified` defect that `resolve-merge` reports to `missing-type`.
+  - Changes the `change-record` block to a required `title` followed by `consolidated_record` and `overrides` groups, each omitted when empty, and makes `render-block` require `--title`.
+  - Renames the change summary's `scope_override`, `type_override`, and `breaking_override` frontmatter fields to `override_scope`, `override_type`, and `override_breaking` in every skill that writes or reads them, `capture-lede-decision` included.
+
+  Migration: Read `consolidated_record` and `unmatched` from `consolidate-branch` in place of `head` and `unclassified`; for a branch with no entries, `consolidated_record` is an object whose `scope`, `type`, and `breaking` are `null`, whereas `head` was `null`. Pass `--title` to `render-block`, and match `missing-type` in place of `unclassified` among `resolve-merge`'s defects. In each skill or script not deployed by `codeassembly` that reads the change summary's override fields, read `override_scope`, `override_type`, and `override_breaking`, and re-run `summarize-change` on a branch whose change summary predates this change. A pull request whose `change-record` block was written before this change reads as malformed at merge, which then resolves from the pull request's labels and commits.
+
+- 🚨 **Breaking:** Report which source supplied each field of a resolved merge (#1682)
+
+  - Adds an `effective_sources` field to the output of `describe-change.mjs resolve-merge`, which names the source that last set each of `title`, `scope`, `type`, `breaking`, and `ticket_ref`: `block`, `block_overrides`, `commits`, `labels`, `pr_title`, `pr_title_verbatim`, or `flags`.
+  - Replaces the output's `head`, `recorded`, `derived`, and `labeled` records with `effective_record`, which holds the resolved record, and `sources`, which holds the record read from each source (the pull request's change-record block, the commits, the labels, and the pull-request title) whether or not the resolution used it.
+  - Replaces the notices `candidate-head`, `derivation-unavailable`, `malformed-record`, and `title-fallback` with `commits-unavailable`, `malformed-block`, `pr-title-divergence`, and `pr-title-unparsed`, and reports `divergence` with `sources` and `fields` in place of `used` and `shown`.
+  - Extends the check of the pull-request title's prefix against the resolved record to runs with `--override-title`, so that `pr-title-divergence` and `pr-title-unparsed` are raised whether or not the title is overridden.
+
+  Migration: In any consumer of `describe-change.mjs resolve-merge` output, read the resolved record from `effective_record` instead of `head`, the bare title from `effective_record.title` instead of `title`, and the ticket reference from `effective_record.ticket_ref` instead of `ticket_ref`. Read the block, commits, and labels records from `sources` instead of `recorded`, `derived`, and `labeled`, and match the new notice codes. A record in `sources` is present whenever its source was read, and `sources.labels` is always present, so use `effective_sources` rather than the presence of a record to tell which source the resolution used.
+
+- Replace clause-joining so with a connective that names the relation (#1683)
+
+  - Refines the `williamthorsen-writing-preferences` rulebook to forbid ambiguous use of "so" and adds a corresponding detector to `revise-prose`.
+  - Bumps the `williamthorsen-writing-preferences` rulebook to version 5, which re-opens every repository's recorded sweep coverage for review.
+
+- Allow the breaking marker on fix and perf changes (#1686)
+
+  - Allows the breaking marker on `fix` and `perf` changes: `work-types.json` sets `breakingPolicy` to `optional` on both, and `consolidate-branch` and `resolve-effective-record` accept a `fix!` or `perf!`.
+  - Revises the breaking-changes section of the `commit-conventions` rulebook to list `fix` and `perf` as optional and to state why `deprecate` and the internal- and process-tier types still forbid the marker.
+
+### 🪦 Removed
+
+- 🚨 **Breaking:** Drop the commit field from the change-record block (#1670)
+
+  - Makes a merge take the head derived from the pull request's commits over the `head` recorded in the `change-record` block whenever the two disagree, and use the recorded value only when the commits cannot be read, as on a fork whose commits cannot be fetched.
+
+  Migration: Remove the value passed to `describe-change.mjs --record-block`. To set a pull request's head by hand, put it in the block's `overrides` rather than editing its `head`, which a merge now replaces with the derived head whenever the commits can be read.
+
+- 🚨 **Breaking:** Remove the wikilink-parse primitives from the vault-integrity subpath (#1680)
+
+  - Removes `countNewlines`, `extractTarget`, `hasNonMarkdownExtension`, `maskFencedCode`, `maskInlineCode`, and `WIKILINK` from `@williamthorsen/kb/vault-integrity`.
+
+  Migration: Call `scanWikilinks` to find the wikilinks in a note body and their targets, in place of a scan assembled from the removed primitives.
+
+### 🐛 Bug fixes
+
+- Record a breaking change's lede decision (#1608)
+
+  - Fixes the issue that `capture-lede-decision` refused every breaking change with `unresolved-identity`, which kept every breaking lede out of the decision corpus.
+  - Adds a `breaking` field and a `breaking` tag to such a record, so `kb-retrieve-events --tag breaking` recalls the breaking decisions on their own.
+
+- Repair the plain-speech calibration's prose and drop an exemption (#1618)
+
+  - Narrows what a `revise-prose` sweep leaves alone to two grounds: a domain term on which the corpus has settled, and a rewrite that would change what the text directs.
+  - Bumps the `unit-version: plain-speech` version to 3, which re-opens every repository's recorded plain-speech coverage for review.
+
+- Print a bash fence's value rather than capturing it into a variable (#1621)
+
+  - Fixes an issue where `create-gh-pr` and `create-ticket` failed TLS verification when creating a pull request or an issue. Each now invokes `gh` bare rather than capturing its output into a shell variable, which the sandbox `gh *` exclusion does not match.
+  - Fixes the issues that made the pull-request, ticket, and commit skills submit an empty title or ticket id and drop every label. Each step now prints the value it resolves, and each later step takes that value as literal text rather than through a shell variable.
+  - Fixes an issue where `create-commit` lost the commit message before `git commit` received it, and one where `condense-branch` let the shell expand backticks and `$(…)` in a body. Each now passes the message through a file.
+
+- Fix Bash invocations that read unassigned shell variables (#1625)
+
+  - Replaces the shell variables in the `resolve-frontmatter.sh` invocations across the skills and subagents with placeholders that the agent substitutes as literal text, since a Bash invocation expands such a variable to nothing.
+  - Corrects the bundled-helper invocation in the `kb-*` skills and `update-jira-ticket`, whose path expanded to a file that does not exist, so the call reached nothing.
+  - Names the diff base as `{default_branch}` in the skills that run a `git diff`, in place of a shell variable that a Bash invocation expands to nothing.
+
+- Sweep revise-prose's own doctrine files against the plain-speech rule (#1627)
+
+  - Aligns `revise-prose/SKILL.md`, `subagents/prose-reviser.md`, and `_partials/target-file-set-resolution.md` with `revise-prose`'s own doctrine.
+  - Modifies `codeassembly-content-specification` to require a sweep of the plain-speech rule, its calibration, or the associated skill and subagent if any of those files is edited.
+
+- Root every scratch directory at a template the agent sandbox permits (#1633)
+
+  - Fixes an issue where a failed `mktemp -d` routed an agent's verification writes into the working repo. Every skill and guidance file that prescribes a scratch directory now names a template rooted at `${TMPDIR:-/tmp}`.
+  - Fixes an issue where concurrent sessions overwrote each other's staged files in `revise-prose` and `capture-lede-decision`. Both now stage them in a directory created by `mktemp -d` rather than under the uid-scoped `$TMPDIR`.
+  - Fixes an issue where the empty-path hazard reached only a reader of the shellspec section. `shell-conventions` states it in its strict-mode rules, where a script author reads it: `cd ""` returns 0, so `set -e` does not catch a directory variable that came out empty.
+
+- Match a recorded rejection to its site by containment, not by a hash (#1635)
+
+  - Fixes an issue where `revise-prose` re-reported a site adjudicated by an earlier sweep as an open candidate, whenever the recorded phrase and the detector's span differed in length or in the form of an inline code span.
+  - Drops `hash` from the sweep record's schema, so the next `revise-prose record` run rewrites a record that still holds one without those lines.
+
+### 🏗️ Internal features
+
+- Add a change-grammar engine that renders and parses surface templates (#1645)
+
+  - Adds a `packages/agents/src/change-grammar`, whose `render` and `parse` functions walk one node tree compiled from a surface template, so that a rendered subject parses back into the record that produced it.
+  - Declares four template conventions (`pipedScope`, `conventionalCommits`, `typeOnly`, and `bracketedScope`) over a grammar whose groups nest, so a type keeps its prefix where a change does not name a scope and a `*` scope renders as nothing.
+  - Bounds the directory with a `files`-scoped ESLint block refusing an import from outside it, a Node builtin, and `process`, so that the engine can move to another repository unchanged.
+
+### 🧪 Tests
+
+- Flag every templateless mktemp call and suffixed template (#1672)
+
+  - Extends the `mktemp` guard in `scratch-directory-conventions.unit.test.ts`, which flagged only a call whose first flag was `-d` or `--directory`, to a call naming neither a template nor a `-p`/`--tmpdir` option, since the agent sandbox refuses such a call whatever its flags.
+  - Adds a scan that flags a template with text after its X run, such as `x.XXXXXX.patch`, since macOS substitutes only a trailing X run and such a template therefore names one fixed path.
+
 ## 0.14.0 — 2026-09-08
 
 ### 🎉 Features
