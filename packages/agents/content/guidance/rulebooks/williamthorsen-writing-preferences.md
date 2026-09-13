@@ -9,6 +9,8 @@ version: '5'
 
 ## Capitalization after a colon
 
+<!-- rule: capitalization-after-colon -->
+
 Read what appears left of the colon. A label (such as a short tag naming a field, a category, or an option) is transparent: Capitalize what follows as though the label were absent. A clause puts the colon mid-sentence: Capitalize a complete sentence, keep a fragment or list lowercase. A lowercase code identifier keeps its own case on either branch.
 
 - **Label, fragment follows:** "Exception: Trivial predicate callbacks whose type is obvious."
@@ -42,6 +44,8 @@ Two traps take a naive substitution:
 - **The surviving object gap.** "the rules you cap" and "the rules the config caps" are the same reduced object relative; therefore, the substitution leaves the second defect in place. Restore the relativizer, or apply the repairs in "Reduced object relatives" above.
 
 ## Sentence case
+
+<!-- rule: sentence-case -->
 
 Use sentence case for titles, headings, section headers, steps, labels, and interface elements. Never use title case. Preserve the case of proper nouns, named entities, and the actual titles of books and movies.
 
