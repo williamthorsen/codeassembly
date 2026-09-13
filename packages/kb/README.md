@@ -20,7 +20,7 @@ The package exposes thirteen subpath entries plus a root barrel:
 | `./create`          | `create`: scaffold a new store and register it in `kb.yaml`                    |
 | `./discovery`       | KB root discovery and `kb.yaml` registry loading, merging, and writing         |
 | `./filesystem`      | Filesystem-existence helpers with an explicit absence policy                   |
-| `./frontmatter`     | Note parsing into typed frontmatter and writing it back to YAML                |
+| `./frontmatter`     | Note parsing into typed frontmatter                                            |
 | `./layout`          | The store's on-disk layout: every path inside a `.kb/` store derives from here |
 | `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
 | `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
@@ -28,9 +28,6 @@ The package exposes thirteen subpath entries plus a root barrel:
 | `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
 | `./taxonomy`        | `.kb/taxonomy.yaml` loading, comment-preserving declaration, and path mapping  |
 | `./vault-integrity` | Type-blind `[[link]]` scanning, resolution, and basename-uniqueness checks     |
-
-Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
-The library throws on errors; success/failure shaping is left to consumers.
 
 ## Knowledge-base discovery
 
@@ -103,27 +100,24 @@ The relation is many-to-many (one response can address many problems, and one pr
 
 `parseNote({ path })` (or `parseNoteContent({ content })`) parses a note into a `ParsedNote` carrying typed `Frontmatter`:
 The `title`, `recordType`, `created`, `updated`, and `tags` fields are strongly typed and any other fields are preserved in an `extra` map.
-`writeFrontmatter({ frontmatter, body })` renders it back to a note string with a fixed field order and flow-style tags; the round trip is idempotent.
 
 Date fields surface as strings, never JS `Date` objects. YAML parse errors are recorded in `ParsedNote.frontmatterRaw.parseError` rather than thrown;
 missing files (when a path is given) throw.
+
+Writing is type-blind and lives in `@williamthorsen/kb/note-io`. `readNote(path)` (or `readNoteContent(content)`) splits a note into an insertion-ordered frontmatter field map and a body, and `writeNote(path, fields, body)` (or `renderNote(fields, body)`) renders them back, with string lists in flow style. A note written this way reads back to the same fields and body.
 
 ## Tags
 
 `loadAliases({ kbRoot })` reads `.kb/tag-aliases.yaml` into an `AliasMap`, rejecting collisions and self-aliases at load time; an absent file yields an empty map.
 `canonicalize(tag, aliases)` resolves a tag to its canonical form; `findAliasFor(tag, aliases)` returns the canonical form only when the input is a known alias.
 
-## Vault integrity and lints
+## Vault integrity
 
 `checkVaultIntegrity(notes)` runs whole-vault, type-blind checks over a `{ path, body, bodyStartLine }[]` note set: an unresolved `[[link]]` is an error (`wikilinks.unresolved`), and a basename shared by two or more notes is one vault-wide warning (`wikilinks.basename`). `buildVaultIndex(notes)` builds the basename → paths index the layer and curate's wikilink rewriter share.
 
 A second argument, `{ foreignStores, sourceVisibility }`, resolves [store-qualified links](#linking-into-another-store) against the stores they name; supplied none, the layer treats every target as store-local, which is what `buildVaultIndex`'s other consumers get.
 
 `scanWikilinks(body)` yields each link in a note body, with its store qualifier and target separated, and is the single definition of what counts as a link. `lookupKey(target)` reduces a target to the key that `VaultIndex` uses. The subpath exports `checkVaultIntegrity`, `buildVaultIndex`, `scanWikilinks`, and `lookupKey`, and not the parse primitives from which they are built: A consumer that detects or rewrites links calls `scanWikilinks`.
-
-The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
-
-`taxonomyFindings({ notes, taxonomy, config, taxonomyPath })` reports where a store's assertion folders and its declared taxonomy disagree (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Its findings carry `scope: 'vault'`: they describe the store rather than any one note, so a consumer that narrows a report to selected notes must keep them rather than filter them out by path.
 
 ```ts
 import { checkVaultIntegrity } from '@williamthorsen/kb/vault-integrity';
@@ -140,6 +134,8 @@ import { check } from '@williamthorsen/kb/check';
 
 const { notes, findings } = await check({ kbRoot });
 ```
+
+No subpath exports the lints, so `check`, and the `kb check` command built on it, is the only way to run them. Two type-blind per-note lints catch what write-time record validation can't: `tag-alias` (warning) reports alias-vocabulary drift, and `paths.user-home` (error) reports a hardcoded `/Users/{name}/` path in captured content. The `taxonomy.*` rules, all warnings, report where a store's assertion folders and its declared taxonomy disagree (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Their findings carry `scope: 'vault'`: they describe the store rather than any one note, so a consumer that narrows a report to selected notes must keep them rather than filter them out by path.
 
 A structural defect in any loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
 
@@ -370,7 +366,7 @@ The `[*.md]` exemption is the one entry that is not self-explanatory. Two traili
 embeddedLanguageFormatting: off
 ```
 
-It is not stylistic, and the scaffolded file carries this reasoning in its own header so it travels with the store. `embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. Formatted, a long `tags` or `addressed-by` list breaks across several lines, which `writeFrontmatter` puts back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note carrying a list past the print width churns on each pass.
+It is not stylistic, and the scaffolded file carries this reasoning in its own header so it travels with the store. `embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. Formatted, a long `tags` or `addressed-by` list breaks across several lines, which `renderNote` puts back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note carrying a list past the print width churns on each pass.
 
 A store that must keep a file that it cannot format, such as a lockfile or a fixture whose defect is the point, names it in a `.prettierignore`. That file is the escape hatch and is not scaffolded, since a fresh store has nothing to put in it.
 
@@ -393,7 +389,3 @@ A store with no `package.json` runs steps 1, 2, and 7, and skips 3 through 6: it
 ## Error and exception model
 
 The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`, `loadTaxonomy`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. An underlying failure, such as a YAML parse error, is attached as the thrown error's `cause`. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
-
-## MCP wrappability
-
-Every public function input is a plain object with primitive or `unknown`-typed fields, and no function takes a callback. A future `kb-mcp` server can bind Zod-validated request payloads directly onto these inputs without refactoring.
