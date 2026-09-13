@@ -20,11 +20,10 @@ export interface ClassifiedEntryOutcome {
   type: string | null;
 }
 
-/** What a branch of commits classified to, in the shape the JSON output names. */
-export interface ClassifyOutcome {
+/** What a branch of commits consolidated to, in the shape the JSON output names. */
+export interface ConsolidateBranchOutcome {
   entries: ClassifiedEntryOutcome[];
   head: HeadOutcome | null;
-  ticket_type: string | null;
   unclassified: Array<{ commit: string; subject: string }>;
   violations: Array<{ commit: string; policy: string; type: string }>;
 }
@@ -36,19 +35,17 @@ export interface HeadOutcome {
   type: string | null;
 }
 
-/**
- * What the invocation asks for: titles rendered from a record, one surface's subject read back into a record, a commit
- * range classified, a `change-record` block rendered, or a merge resolved.
- */
+/** What the invocation asks for: the subcommand it names, and what that subcommand reads from its arguments. */
 export type ParsedArgs =
-  | { baseRef: string; mode: 'classify'; ticketLabels: string[] }
-  | { block: ChangeRecordBlock; mode: 'record-block' }
-  | { merge: ResolveMergeArgs; mode: 'resolve-merge' }
-  | { mode: 'parse'; subject: string; surface: Surface }
-  | { mode: 'render'; record: ChangeRecord };
+  | { baseRef: string; subcommand: 'consolidate-branch' }
+  | { block: ChangeRecordBlock; subcommand: 'render-block' }
+  | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
+  | { record: ChangeRecord; subcommand: 'render-titles' }
+  | { subcommand: 'parse-title'; subject: string; surface: Surface }
+  | { subcommand: 'resolve-ticket-type'; ticketLabels: string[] };
 
 /** A subject read back through a surface's template, or the report that the template did not match it. */
-export type ParseOutcome =
+export type ParseTitleOutcome =
   | { matched: false }
   | {
       breaking: boolean;
@@ -61,11 +58,14 @@ export type ParseOutcome =
     };
 
 /** The fenced `change-record` block, under the key the JSON output names. */
-export interface RecordBlockOutcome {
+export interface RenderBlockOutcome {
   block: string;
 }
 
-/** The pull request that `--resolve-merge` reads, and the overrides that the author applies to it. */
+/** The rendered title for each surface, under the `<surface>_title` key the JSON output names. */
+export type RenderedTitles = Record<`${Surface}_title`, string>;
+
+/** The pull request that `resolve-merge` reads, and the overrides that the author applies to it. */
 export interface ResolveMergeArgs {
   baseRef: string;
   headCommit: string;
@@ -78,14 +78,19 @@ export interface ResolveMergeArgs {
   ticketRef?: string;
 }
 
-/** The rendered title for each surface, under the `<surface>_title` key the JSON output names. */
-export type RenderedTitles = Record<`${Surface}_title`, string>;
+/** One subcommand of the helper. */
+export type Subcommand = ParsedArgs['subcommand'];
 
 /** One surface a title template is configured for. */
 export type Surface = (typeof SURFACES)[number];
 
 /** The surfaces a title is configured for, in the order the rendered output names them. */
 export const SURFACES = ['commit', 'ticket', 'pr', 'merge'] as const;
+
+/** The work type that a ticket's labels name, under the key the JSON output names. */
+export interface TicketTypeOutcome {
+  ticket_type: string | null;
+}
 
 // region | Helpers
 

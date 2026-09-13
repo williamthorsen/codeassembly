@@ -2,19 +2,30 @@ import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
+import { isRecord } from '../../lib/type-guards.ts';
 import { renderChangeRecordBlock } from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
-import type { ClassifiedEntryOutcome, ClassifyOutcome } from '../types.ts';
+import type { ClassifiedEntryOutcome, ConsolidateBranchOutcome } from '../types.ts';
 
 const execFileAsync = promisify(execFile);
 
+/** The helper's source, which the running Node executes directly. */
+const CLI_PATH = fileURLToPath(new URL('../cli.ts', import.meta.url));
+
+/** The `consolidate-branch` invocation that reads the range from the fixture repository's `base` tag. */
+const CONSOLIDATE_BASE = ['consolidate-branch', '--base', 'base'];
+
 /** The taxonomy the installed helper reads, so the suite verifies against the types the repository actually declares. */
 const DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
+
+/** A commit template that the engine cannot round-trip, since nothing separates the scope from the type. */
+const DEFECTIVE_TEMPLATES = "commit:\n  title_format: '{scope}{type}: {title}'";
 
 const HOUSE_TEMPLATES = [
   "commit:\n  title_format: '[{scope}|{type}: ]{title}'",
@@ -23,9 +34,55 @@ const HOUSE_TEMPLATES = [
   "merge:\n  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'",
 ].join('\n');
 
-describe(parseArgs, () => {
+const SUBCOMMAND_NAMES = [
+  'render-titles',
+  'parse-title',
+  'consolidate-branch',
+  'resolve-ticket-type',
+  'render-block',
+  'resolve-merge',
+];
+
+describe('subcommand dispatch', () => {
+  it('if no subcommand is passed, refuses with a usage error listing every subcommand', () => {
+    expect(() => parseArgs([])).toThrow(
+      `a subcommand is required; usage: describe-change <subcommand> [flags], where <subcommand> is one of ${SUBCOMMAND_NAMES.join(', ')}`,
+    );
+  });
+
+  it('if a flag is passed in place of a subcommand, refuses it as unknown', () => {
+    expect(() => parseArgs(['--classify', 'main'])).toThrow(/^unknown subcommand --classify; usage: /);
+  });
+
+  it('if no subcommand is passed, exits non-zero and lists every subcommand on stderr', async () => {
+    const result = await runCli([]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe('');
+    for (const name of SUBCOMMAND_NAMES) {
+      expect(result.stderr).toContain(name);
+    }
+  });
+
+  it('if an unknown subcommand is passed, exits non-zero and lists every subcommand on stderr', async () => {
+    const result = await runCli(['--scope', 'agents']);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toMatch(/^describe-change: unknown subcommand --scope; usage: /);
+    for (const name of SUBCOMMAND_NAMES) {
+      expect(result.stderr).toContain(name);
+    }
+  });
+
+  it('matches a subcommand only in the first position', () => {
+    expect(() => parseArgs(['--title', 'Add foo', 'render-titles'])).toThrow(/unknown subcommand --title/);
+  });
+});
+
+describe('render-titles', () => {
   it('reads every record flag', () => {
     const parsed = parseArgs([
+      'render-titles',
       '--scope',
       'agents',
       '--type',
@@ -39,61 +96,61 @@ describe(parseArgs, () => {
     ]);
 
     expect(parsed).toEqual({
-      mode: 'render',
       record: { prNumber: '470', scope: 'agents', ticketRef: '#466', title: 'Add foo', type: 'feat' },
+      subcommand: 'render-titles',
     });
   });
 
   it('reads --breaking', () => {
-    expect(parseArgs(['--breaking', '--type', 'feat'])).toEqual({
-      mode: 'render',
+    expect(parseArgs(['render-titles', '--breaking', '--type', 'feat'])).toEqual({
       record: { breaking: true, type: 'feat' },
+      subcommand: 'render-titles',
     });
   });
 
   it('carries a marker spelled on the type through to the record', () => {
-    expect(parseArgs(['--type', 'feat!'])).toEqual({ mode: 'render', record: { type: 'feat!' } });
-  });
-
-  it('yields an empty record for an invocation with no flags', () => {
-    expect(parseArgs([])).toEqual({ mode: 'render', record: {} });
-  });
-
-  it('reads --parse with its surface and subject', () => {
-    expect(parseArgs(['--parse', 'commit', 'agents|feat: Add foo'])).toEqual({
-      mode: 'parse',
-      subject: 'agents|feat: Add foo',
-      surface: 'commit',
+    expect(parseArgs(['render-titles', '--type', 'feat!'])).toEqual({
+      record: { type: 'feat!' },
+      subcommand: 'render-titles',
     });
   });
 
+  it('yields an empty record for an invocation with no flags', () => {
+    expect(parseArgs(['render-titles'])).toEqual({ record: {}, subcommand: 'render-titles' });
+  });
+
   it('rejects an unknown flag', () => {
-    expect(() => parseArgs(['--titel', 'Add foo'])).toThrow(/unknown flag/);
-  });
-
-  it('rejects a surface --parse does not name', () => {
-    expect(() => parseArgs(['--parse', 'branch', 'Add foo'])).toThrow(/--parse must name one of/);
-  });
-
-  it('rejects a record flag alongside --parse', () => {
-    expect(() => parseArgs(['--parse', 'commit', 'Add foo', '--title', 'Add bar'])).toThrow(/takes no record flags/);
-  });
-
-  it('rejects --parse with no subject', () => {
-    expect(() => parseArgs(['--parse', 'commit'])).toThrow(/takes the surface and the subject string/);
+    expect(() => parseArgs(['render-titles', '--titel', 'Add foo'])).toThrow(/unknown flag/);
   });
 
   it('rejects a stray positional', () => {
-    expect(() => parseArgs(['Add foo'])).toThrow(/unexpected argument/);
+    expect(() => parseArgs(['render-titles', 'Add foo'])).toThrow(/unexpected argument/);
   });
-});
 
-describe(runDescribe, () => {
+  it.each(['--ticket-label', '--override-type', '--override-title', '--pr-label', '--base'])(
+    'if %s, which only another subcommand takes, is passed, refuses it as unknown',
+    (flag) => {
+      expect(() => parseArgs(['render-titles', '--title', 'Add foo', flag, 'value'])).toThrow(`unknown flag: ${flag}`);
+    },
+  );
+
   it('renders all four surfaces from the resolved templates', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['--scope', 'agents', '--type', 'feat', '--title', 'Add foo', '--ticket-ref', '#466', '--pr-number', '470'],
+      argv: [
+        'render-titles',
+        '--scope',
+        'agents',
+        '--type',
+        'feat',
+        '--title',
+        'Add foo',
+        '--ticket-ref',
+        '#466',
+        '--pr-number',
+        '470',
+      ],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -107,10 +164,10 @@ describe(runDescribe, () => {
     });
   });
 
-  it('reports the four keys with empty values for an invocation with no arguments', async () => {
+  it('reports the four keys with empty values for an invocation with no flags', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
-    const { output } = await runDescribe({ argv: [], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: ['render-titles'], cwd, dataDir: DATA_DIR, home });
 
     expect(output).toEqual({ commit_title: '', ticket_title: '', pr_title: '', merge_title: '' });
   });
@@ -121,7 +178,7 @@ describe(runDescribe, () => {
     await mkdir(nested, { recursive: true });
 
     const { output } = await runDescribe({
-      argv: ['--scope', 'agents', '--type', 'feat', '--title', 'Add foo'],
+      argv: ['render-titles', '--scope', 'agents', '--type', 'feat', '--title', 'Add foo'],
       cwd: nested,
       dataDir: DATA_DIR,
       home,
@@ -134,7 +191,7 @@ describe(runDescribe, () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['--breaking', '--scope', 'agents', '--type', 'feat', '--title', 'Add foo'],
+      argv: ['render-titles', '--breaking', '--scope', 'agents', '--type', 'feat', '--title', 'Add foo'],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -147,7 +204,7 @@ describe(runDescribe, () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['--scope', 'agents', '--type', 'feat!', '--title', 'Add foo'],
+      argv: ['render-titles', '--scope', 'agents', '--type', 'feat!', '--title', 'Add foo'],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -160,7 +217,7 @@ describe(runDescribe, () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['--scope', '*', '--type', 'feat', '--title', 'Add foo'],
+      argv: ['render-titles', '--scope', '*', '--type', 'feat', '--title', 'Add foo'],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -169,11 +226,77 @@ describe(runDescribe, () => {
     expect(output).toMatchObject({ commit_title: 'Add foo' });
   });
 
+  it('stops the run on a template the engine cannot round-trip, naming the surface and the defect', async () => {
+    const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
+
+    await expect(runDescribe({ argv: ['render-titles'], cwd, dataDir: DATA_DIR, home })).rejects.toThrow(
+      /commit\.title_format: Template .* places \{scope\} and \{type\} with no literal between them/,
+    );
+  });
+
+  it('warns rather than failing outside a repository', async () => {
+    const home = await makeHome(HOUSE_TEMPLATES);
+    const cwd = await mkdtemp(join(tmpdir(), 'describe-change-loose-'));
+
+    const { output, warnings } = await runDescribe({
+      argv: ['render-titles', '--scope', 'agents', '--type', 'feat', '--title', 'Add foo'],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({ commit_title: 'agents|feat: Add foo' });
+    expect(warnings).toEqual([expect.stringContaining('git could not resolve the repository root')]);
+  });
+
+  it('warns and skips verification when no taxonomy is readable', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
+
+    const { output, warnings } = await runDescribe({
+      argv: ['render-titles', '--title', 'Add foo'],
+      cwd,
+      dataDir,
+      home,
+    });
+
+    expect(output).toMatchObject({ ticket_title: 'Add foo' });
+    expect(warnings).toEqual([expect.stringContaining('no readable work-types.json')]);
+  });
+});
+
+describe('parse-title', () => {
+  it('reads the surface and the subject', () => {
+    expect(parseArgs(['parse-title', 'commit', 'agents|feat: Add foo'])).toEqual({
+      subcommand: 'parse-title',
+      subject: 'agents|feat: Add foo',
+      surface: 'commit',
+    });
+  });
+
+  it('rejects a surface that no template is configured for', () => {
+    expect(() => parseArgs(['parse-title', 'branch', 'Add foo'])).toThrow(/parse-title must name one of/);
+  });
+
+  it('rejects a record flag', () => {
+    expect(() => parseArgs(['parse-title', 'commit', 'Add foo', '--title', 'Add bar'])).toThrow(
+      'unknown flag: --title',
+    );
+  });
+
+  it('rejects an invocation with no subject', () => {
+    expect(() => parseArgs(['parse-title', 'commit'])).toThrow(/takes the surface and the subject string/);
+  });
+
+  it('rejects a positional after the subject', () => {
+    expect(() => parseArgs(['parse-title', 'commit', 'Add foo', 'Add bar'])).toThrow('unexpected argument: Add bar');
+  });
+
   it('reads a rendered subject back into a record', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['--parse', 'merge', '#466 agents|feat!: Add foo (#470)'],
+      argv: ['parse-title', 'merge', '#466 agents|feat!: Add foo (#470)'],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -194,7 +317,7 @@ describe(runDescribe, () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['--parse', 'merge', 'not a rendered merge subject'],
+      argv: ['parse-title', 'merge', 'not a rendered merge subject'],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -206,75 +329,43 @@ describe(runDescribe, () => {
   it('refuses to read back a surface whose template is empty', async () => {
     const { cwd, home } = await makeRepo("commit:\n  title_format: ''");
 
-    await expect(runDescribe({ argv: ['--parse', 'commit', 'Add foo'], cwd, dataDir: DATA_DIR, home })).rejects.toThrow(
-      /commit\.title_format is empty/,
-    );
+    await expect(
+      runDescribe({ argv: ['parse-title', 'commit', 'Add foo'], cwd, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(/commit\.title_format is empty/);
   });
 
-  it('stops the run on a template the engine cannot round-trip, naming the surface and the defect', async () => {
-    const { cwd, home } = await makeRepo("commit:\n  title_format: '{scope}{type}: {title}'");
-
-    await expect(runDescribe({ argv: [], cwd, dataDir: DATA_DIR, home })).rejects.toThrow(
-      /commit\.title_format: Template .* places \{scope\} and \{type\} with no literal between them/,
-    );
-  });
-
-  it('warns rather than failing outside a repository', async () => {
-    const home = await makeHome(HOUSE_TEMPLATES);
-    const cwd = await mkdtemp(join(tmpdir(), 'describe-change-loose-'));
-
-    const { output, warnings } = await runDescribe({
-      argv: ['--scope', 'agents', '--type', 'feat', '--title', 'Add foo'],
-      cwd,
-      dataDir: DATA_DIR,
-      home,
-    });
-
-    expect(output).toMatchObject({ commit_title: 'agents|feat: Add foo' });
-    expect(warnings).toEqual([expect.stringContaining('git could not resolve the repository root')]);
-  });
-
-  it('warns and skips verification when no taxonomy is readable', async () => {
-    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
-    const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
-
-    const { output, warnings } = await runDescribe({ argv: ['--title', 'Add foo'], cwd, dataDir, home });
-
-    expect(output).toMatchObject({ ticket_title: 'Add foo' });
-    expect(warnings).toEqual([expect.stringContaining('no readable work-types.json')]);
-  });
-
-  it('refuses --parse when no taxonomy is readable', async () => {
+  it('refuses when no taxonomy is readable', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
 
     await expect(
-      runDescribe({ argv: ['--parse', 'commit', 'agents|feat: Add foo'], cwd, dataDir, home }),
-    ).rejects.toThrow(/--parse resolves the type against the taxonomy/);
+      runDescribe({ argv: ['parse-title', 'commit', 'agents|feat: Add foo'], cwd, dataDir, home }),
+    ).rejects.toThrow(/parse-title resolves the type against the taxonomy/);
   });
 });
 
-describe('--classify', () => {
-  it('reads the base ref and every ticket label', () => {
-    const parsed = parseArgs(['--classify', 'main', '--ticket-label', 'feature', '--ticket-label', 'scope:agents']);
-
-    expect(parsed).toEqual({ baseRef: 'main', mode: 'classify', ticketLabels: ['feature', 'scope:agents'] });
+describe('consolidate-branch', () => {
+  it('reads the base ref', () => {
+    expect(parseArgs(['consolidate-branch', '--base', 'main'])).toEqual({
+      baseRef: 'main',
+      subcommand: 'consolidate-branch',
+    });
   });
 
-  it('reads an invocation carrying no ticket label', () => {
-    expect(parseArgs(['--classify', 'main'])).toEqual({ baseRef: 'main', mode: 'classify', ticketLabels: [] });
+  it('if --base is missing, refuses the invocation', () => {
+    expect(() => parseArgs(['consolidate-branch'])).toThrow('consolidate-branch requires --base');
   });
 
-  it('refuses a record flag alongside it', () => {
-    expect(() => parseArgs(['--classify', 'main', '--title', 'Add foo'])).toThrow(/takes no record flags; got --title/);
+  it('refuses a record flag', () => {
+    expect(() => parseArgs(['consolidate-branch', '--base', 'main', '--title', 'Add foo'])).toThrow(
+      'unknown flag: --title',
+    );
   });
 
-  it('refuses --parse alongside it', () => {
-    expect(() => parseArgs(['--classify', 'main', '--parse', 'commit'])).toThrow(/each select a mode/);
-  });
-
-  it('refuses --ticket-label on its own', () => {
-    expect(() => parseArgs(['--ticket-label', 'feature'])).toThrow(/takes no meaning on its own/);
+  it('refuses --ticket-label, which resolve-ticket-type takes', () => {
+    expect(() => parseArgs(['consolidate-branch', '--base', 'main', '--ticket-label', 'feature'])).toThrow(
+      'unknown flag: --ticket-label',
+    );
   });
 
   it('lets one feat speak for a branch carrying three fixes', async () => {
@@ -285,7 +376,7 @@ describe('--classify', () => {
       'agents|fix: Correct the third guard',
     ]);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toMatchObject({ head: { breaking: false, scope: 'agents', type: 'feat' } });
   });
@@ -293,7 +384,7 @@ describe('--classify', () => {
   it('carries the breaking marker onto the head', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toMatchObject({ head: { breaking: true, scope: 'agents', type: 'sec' } });
   });
@@ -301,7 +392,7 @@ describe('--classify', () => {
   it('lists an unmatched subject and keeps it out of the entries', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser', 'wip']);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toMatchObject({
       entries: [{ scope: 'agents', type: 'feat' }],
@@ -312,7 +403,7 @@ describe('--classify', () => {
   it('reports a fix carrying the marker its policy forbids', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|fix!: Correct the guard']);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'fix' }] });
   });
@@ -320,29 +411,9 @@ describe('--classify', () => {
   it('yields a null head for a range holding no commits', async () => {
     const { cwd, home } = await makeCommittedRepo([]);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
-    expect(output).toMatchObject({ entries: [], head: null, ticket_type: null, unclassified: [], violations: [] });
-  });
-
-  it('resolves the ticket type from the labels and the repository’s label map', async () => {
-    const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
-    await mkdir(join(cwd, '.meta'), { recursive: true });
-    await writeFile(join(cwd, '.meta', 'label-map.json'), JSON.stringify({ types: { feat: 'feature', fix: 'fix' } }));
-
-    const argv = ['--classify', 'base', '--ticket-label', 'fix', '--ticket-label', 'scope:agents'];
-    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
-
-    expect(output).toMatchObject({ head: { type: 'feat' }, ticket_type: 'fix' });
-  });
-
-  it('yields a null ticket type where the repository configures no label map', async () => {
-    const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
-
-    const argv = ['--classify', 'base', '--ticket-label', 'feature'];
-    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
-
-    expect(output).toMatchObject({ ticket_type: null });
+    expect(output).toStrictEqual({ entries: [], head: null, unclassified: [], violations: [] });
   });
 
   it('takes a commit’s Change trailers in place of its subject', async () => {
@@ -355,7 +426,7 @@ describe('--classify', () => {
       ].join('\n'),
     ]);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toMatchObject({
       entries: [{ type: 'feat' }, { type: 'fix' }],
@@ -366,40 +437,99 @@ describe('--classify', () => {
   it('when a subject carries a ticket reference, renders its change without it', async () => {
     const { cwd, home } = await makeCommittedRepo(['#466 agents|feat!: Add the parser']);
 
-    const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+    const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toMatchObject({ entries: [{ change: 'agents|feat!: Add the parser' }] });
   });
 
   it('when each entry’s change is written as a Change trailer, classifies back to the same entries', async () => {
-    const original = await classifyMessages([
+    const original = await consolidateMessages([
       'agents|feat!: Add the parser, the renderer, and the verifier',
       '#466 agents|fix: Correct the guard',
       'kb|docs: Describe the store',
     ]);
     const trailers = original.entries.map((entry) => `Change: ${entry.change}`);
 
-    const condensed = await classifyMessages([
+    const condensed = await consolidateMessages([
       ['agents|feat!: Condense the branch', '', 'Adds the parser.', '', ...trailers].join('\n'),
     ]);
 
     expect(condensed.entries.map(omitCommit)).toStrictEqual(original.entries.map(omitCommit));
   });
 
-  it('refuses --classify when no taxonomy is readable', async () => {
+  it('refuses when no taxonomy is readable', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
 
-    await expect(runDescribe({ argv: ['--classify', 'base'], cwd, dataDir, home })).rejects.toThrow(
-      /--classify ranks types against the taxonomy/,
+    await expect(runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir, home })).rejects.toThrow(
+      /consolidate-branch ranks types against the taxonomy/,
     );
   });
 });
 
-describe('--record-block', () => {
+describe('resolve-ticket-type', () => {
+  it('reads every ticket label', () => {
+    expect(parseArgs(['resolve-ticket-type', '--ticket-label', 'feature', '--ticket-label', 'scope:agents'])).toEqual({
+      subcommand: 'resolve-ticket-type',
+      ticketLabels: ['feature', 'scope:agents'],
+    });
+  });
+
+  it('reads an invocation carrying no ticket label', () => {
+    expect(parseArgs(['resolve-ticket-type'])).toEqual({ subcommand: 'resolve-ticket-type', ticketLabels: [] });
+  });
+
+  it('refuses --base, which consolidate-branch takes', () => {
+    expect(() => parseArgs(['resolve-ticket-type', '--base', 'main'])).toThrow('unknown flag: --base');
+  });
+
+  it('resolves the ticket type from the labels and the repository’s label map', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, { types: { feat: 'feature', fix: 'fix' } });
+
+    const argv = ['resolve-ticket-type', '--ticket-label', 'fix', '--ticket-label', 'scope:agents'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ ticket_type: 'fix' });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('reads the label map from the repository root rather than the invoking directory', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, { types: { feat: 'feature' } });
+    const nested = join(cwd, 'packages', 'agents');
+    await mkdir(nested, { recursive: true });
+
+    const argv = ['resolve-ticket-type', '--ticket-label', 'feature'];
+    const { output } = await runDescribe({ argv, cwd: nested, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ ticket_type: 'feat' });
+  });
+
+  it('yields a null ticket type where the repository configures no label map', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const argv = ['resolve-ticket-type', '--ticket-label', 'feature'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ ticket_type: null });
+  });
+
+  it('succeeds where a configured title template is defective', async () => {
+    const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
+    await writeLabelMap(cwd, { types: { feat: 'feature' } });
+
+    const argv = ['resolve-ticket-type', '--ticket-label', 'feature'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ ticket_type: 'feat' });
+  });
+});
+
+describe('render-block', () => {
   it('reads the head’s record flags and every override flag', () => {
     const parsed = parseArgs([
-      '--record-block',
+      'render-block',
       '--scope',
       'agents',
       '--type',
@@ -419,36 +549,34 @@ describe('--record-block', () => {
         head: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' },
         overrides: { breaking: true, scope: 'kb', type: 'sec' },
       },
-      mode: 'record-block',
+      subcommand: 'render-block',
     });
   });
 
-  it.each(['--ticket-ref', '--pr-number', '--ticket-label'])(
-    'if %s is passed alongside it, refuses the flag',
+  it.each(['--ticket-ref', '--pr-number', '--ticket-label', '--override-title', '--base'])(
+    'if %s is passed, refuses it as unknown',
     (flag) => {
-      expect(() => parseArgs(['--record-block', flag, 'value'])).toThrow(/takes no --/);
+      expect(() => parseArgs(['render-block', flag, 'value'])).toThrow(`unknown flag: ${flag}`);
     },
   );
 
-  it('selects the mode from the valueless flag alone', () => {
-    expect(parseArgs(['--record-block'])).toEqual({ block: { head: {}, overrides: {} }, mode: 'record-block' });
+  it('reads an invocation carrying no flags', () => {
+    expect(parseArgs(['render-block'])).toEqual({ block: { head: {}, overrides: {} }, subcommand: 'render-block' });
   });
 
-  it('if a value is passed inline, refuses it', () => {
-    expect(() => parseArgs(['--record-block=e5029924'])).toThrow(/does not take a value/);
+  it('if a value is passed inline to a valueless flag, refuses it', () => {
+    expect(() => parseArgs(['render-block', '--override-breaking=true'])).toThrow(/does not take a value/);
   });
 
-  it('if --classify is passed alongside it, refuses the invocation', () => {
-    expect(() => parseArgs(['--record-block', '--classify', 'main'])).toThrow(/each select a mode/);
-  });
-
-  it('if an override flag is passed without it, refuses the flag', () => {
-    expect(() => parseArgs(['--title', 'Add foo', '--override-type', 'feat'])).toThrow(/takes no meaning on its own/);
+  it('if the type override spells the marker, refuses it', () => {
+    expect(() => parseArgs(['render-block', '--title', 'Add foo', '--override-type', 'feat!'])).toThrow(
+      '--override-type takes a bare type; pass --override-breaking for a breaking change',
+    );
   });
 
   it('renders the block from the head and the overrides as the JSON output’s block', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
-    const argv = ['--record-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
+    const argv = ['render-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
 
     const { output } = await runDescribe({
       argv: [...argv, '--override-type', 'sec', '--override-breaking'],
@@ -464,10 +592,27 @@ describe('--record-block', () => {
       }),
     });
   });
+
+  it('succeeds where a configured title template is defective', async () => {
+    const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
+
+    const { output } = await runDescribe({
+      argv: ['render-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({
+      block: renderChangeRecordBlock({ head: { scope: 'agents', title: 'Add the parser', type: 'feat' } }),
+    });
+  });
 });
 
-describe('--resolve-merge', () => {
+describe('resolve-merge', () => {
   const REQUIRED = [
+    '--base',
+    'origin/main',
     '--head',
     'abc1234',
     '--pr-title',
@@ -480,8 +625,7 @@ describe('--resolve-merge', () => {
 
   it('reads the pull request’s inputs and every override', () => {
     const parsed = parseArgs([
-      '--resolve-merge',
-      'origin/main',
+      'resolve-merge',
       ...REQUIRED,
       '--pr-label',
       'feature',
@@ -509,53 +653,42 @@ describe('--resolve-merge', () => {
         prTitle: '#466 Add foo',
         ticketRef: '#466',
       },
-      mode: 'resolve-merge',
+      subcommand: 'resolve-merge',
     });
   });
 
-  it.each(['--head', '--pr-title', '--pr-body-file', '--pr-number'])(
+  it.each(['--base', '--head', '--pr-title', '--pr-body-file', '--pr-number'])(
     'if %s is missing, refuses the invocation',
     (flag) => {
       const index = REQUIRED.indexOf(flag);
-      const argv = ['--resolve-merge', 'origin/main', ...REQUIRED.toSpliced(index, 2)];
+      const argv = ['resolve-merge', ...REQUIRED.toSpliced(index, 2)];
 
-      expect(() => parseArgs(argv)).toThrow(`--resolve-merge requires ${flag}`);
+      expect(() => parseArgs(argv)).toThrow(`resolve-merge requires ${flag}`);
     },
   );
 
-  it.each(['--scope', '--type', '--title'])(
-    'if the record flag %s is passed alongside it, refuses the flag',
-    (flag) => {
-      expect(() => parseArgs(['--resolve-merge', 'origin/main', ...REQUIRED, flag, 'value'])).toThrow(
-        /reads the head from the pull request, so it takes no --/,
-      );
-    },
-  );
+  it.each(['--scope', '--type', '--title', '--ticket-label'])('if %s is passed, refuses it as unknown', (flag) => {
+    expect(() => parseArgs(['resolve-merge', ...REQUIRED, flag, 'value'])).toThrow(`unknown flag: ${flag}`);
+  });
 
   it('if both breaking overrides are passed, refuses the invocation', () => {
-    const argv = ['--resolve-merge', 'origin/main', ...REQUIRED, '--override-breaking', '--no-override-breaking'];
+    const argv = ['resolve-merge', ...REQUIRED, '--override-breaking', '--no-override-breaking'];
 
     expect(() => parseArgs(argv)).toThrow(/opposite directions/);
   });
 
   it('if the type override spells the marker, refuses it', () => {
-    const argv = ['--resolve-merge', 'origin/main', ...REQUIRED, '--override-type', 'feat!'];
+    const argv = ['resolve-merge', ...REQUIRED, '--override-type', 'feat!'];
 
-    expect(() => parseArgs(argv)).toThrow(/takes a bare type; pass --override-breaking/);
+    expect(() => parseArgs(argv)).toThrow(
+      '--override-type takes a bare type; pass --override-breaking for a breaking change',
+    );
   });
 
   it('if the pull-request number is not digits, refuses it', () => {
-    const argv = ['--resolve-merge', 'origin/main', ...REQUIRED.slice(0, -1), '#470'];
+    const argv = ['resolve-merge', ...REQUIRED.slice(0, -1), '#470'];
 
     expect(() => parseArgs(argv)).toThrow(/--pr-number takes the pull request’s number/);
-  });
-
-  it.each(['--override-title', '--pr-label'])('if %s is passed without it, refuses the flag', (flag) => {
-    expect(() => parseArgs(['--title', 'Add foo', flag, 'value'])).toThrow(/is an input to --resolve-merge/);
-  });
-
-  it('if --override-title is passed alongside --record-block, refuses the flag', () => {
-    expect(() => parseArgs(['--record-block', '--override-title', 'Add foo'])).toThrow(/takes no --/);
   });
 
   it('resolves a merge end to end from a body file, reading the commits to a head that the checkout is not on', async () => {
@@ -563,14 +696,14 @@ describe('--resolve-merge', () => {
       'agents|feat: Add the parser',
       'agents|fix: Correct the guard',
     ]);
-    await mkdir(join(cwd, '.meta'), { recursive: true });
-    await writeFile(join(cwd, '.meta', 'label-map.json'), JSON.stringify({ types: { docs: 'documentation' } }));
+    await writeLabelMap(cwd, { types: { docs: 'documentation' } });
     const block = renderChangeRecordBlock({ head: { scope: 'agents', title: 'Add the parser', type: 'feat' } });
     const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\nCloses #466\n\n${block}\n`);
 
     const { output } = await runDescribe({
       argv: [
-        '--resolve-merge',
+        'resolve-merge',
+        '--base',
         'base',
         '--head',
         headCommit,
@@ -608,7 +741,7 @@ describe('--resolve-merge', () => {
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
 
     const { output } = await runDescribe({
-      argv: ['--resolve-merge', 'base', '--head', absent, ...pullRequestFlags(bodyFile)],
+      argv: ['resolve-merge', '--base', 'base', '--head', absent, ...pullRequestFlags(bodyFile)],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -630,7 +763,7 @@ describe('--resolve-merge', () => {
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
 
     const { output } = await runDescribe({
-      argv: ['--resolve-merge', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
+      argv: ['resolve-merge', '--base', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
       cwd,
       dataDir: DATA_DIR,
       home,
@@ -646,7 +779,7 @@ describe('--resolve-merge', () => {
 
     await expect(
       runDescribe({
-        argv: ['--resolve-merge', 'base', '--head', headCommit, ...pullRequestFlags(join(cwd, 'absent.md'))],
+        argv: ['resolve-merge', '--base', 'base', '--head', headCommit, ...pullRequestFlags(join(cwd, 'absent.md'))],
         cwd,
         dataDir: DATA_DIR,
         home,
@@ -661,43 +794,53 @@ describe('--resolve-merge', () => {
 
     await expect(
       runDescribe({
-        argv: ['--resolve-merge', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
+        argv: ['resolve-merge', '--base', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
         cwd,
         dataDir,
         home,
       }),
-    ).rejects.toThrow(/--resolve-merge checks types against the taxonomy/);
+    ).rejects.toThrow(/resolve-merge checks types against the taxonomy/);
   });
 });
 
 // region | Helpers
 
-/** Classifies a throwaway repository holding one commit per message, returning the `--classify` output. */
-async function classifyMessages(messages: readonly string[]): Promise<ClassifyOutcome> {
+/** A finished helper process: what it wrote and how it exited. */
+interface CliResult {
+  exitCode: number;
+  stderr: string;
+  stdout: string;
+}
+
+/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing a fixture cannot supply. */
+async function commitAll(cwd: string, message: string): Promise<void> {
+  await execFileAsync('git', ['-C', cwd, 'add', '--all']);
+  await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);
+}
+
+/** Consolidates a throwaway repository holding one commit per message, returning the `consolidate-branch` output. */
+async function consolidateMessages(messages: readonly string[]): Promise<ConsolidateBranchOutcome> {
   const { cwd, home } = await makeCommittedRepo(messages);
-  const { output } = await runDescribe({ argv: ['--classify', 'base'], cwd, dataDir: DATA_DIR, home });
+  const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
   if (!('entries' in output)) {
-    throw new Error(`--classify did not report entries: ${JSON.stringify(output)}`);
+    throw new Error(`consolidate-branch did not report entries: ${JSON.stringify(output)}`);
   }
   return output;
 }
 
-/** Drops the commit hash from an entry, which differs between two repositories holding the same entries. */
-function omitCommit(entry: ClassifiedEntryOutcome): Omit<ClassifiedEntryOutcome, 'commit'> {
-  const { commit: _commit, ...rest } = entry;
-  return rest;
-}
-
-/** Creates a temp home directory holding `.agents/preferences.yaml` with `content`. */
-async function makeHome(content: string): Promise<string> {
-  const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
-  await writeAgentsPreferences(home, content);
-  return home;
+/** Reports whether a thrown value is a failed child process carrying its output and exit code. */
+function isExecError(error: unknown): error is { code: number; stderr: string; stdout: string } {
+  return (
+    isRecord(error) &&
+    typeof error.code === 'number' &&
+    typeof error.stderr === 'string' &&
+    typeof error.stdout === 'string'
+  );
 }
 
 /**
  * Creates a throwaway repository carrying the house templates, one commit per message, and a `base` tag before the
- * first of them, so `--classify base` reads exactly the messages given.
+ * first of them, so `consolidate-branch --base base` reads exactly the messages given.
  */
 async function makeCommittedRepo(messages: readonly string[]): Promise<{ cwd: string; home: string }> {
   const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
@@ -715,10 +858,11 @@ async function makeCommittedRepo(messages: readonly string[]): Promise<{ cwd: st
   return { cwd, home };
 }
 
-/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing a fixture cannot supply. */
-async function commitAll(cwd: string, message: string): Promise<void> {
-  await execFileAsync('git', ['-C', cwd, 'add', '--all']);
-  await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);
+/** Creates a temp home directory holding `.agents/preferences.yaml` with `content`. */
+async function makeHome(content: string): Promise<string> {
+  const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
+  await writeAgentsPreferences(home, content);
+  return home;
 }
 
 /**
@@ -748,9 +892,34 @@ async function makeRepo(content: string): Promise<{ cwd: string; home: string }>
   return { cwd, home };
 }
 
-/** Returns the pull-request flags that `--resolve-merge` requires beside `--head`, reading the body from `bodyFile`. */
+/** Drops the commit hash from an entry, which differs between two repositories holding the same entries. */
+function omitCommit(entry: ClassifiedEntryOutcome): Omit<ClassifiedEntryOutcome, 'commit'> {
+  const { commit: _commit, ...rest } = entry;
+  return rest;
+}
+
+/** Returns the pull-request flags that `resolve-merge` requires beside `--base` and `--head`, reading the body from `bodyFile`. */
 function pullRequestFlags(bodyFile: string): string[] {
   return ['--pr-title', '#466 Add the parser', '--pr-body-file', bodyFile, '--pr-number', '470'];
+}
+
+/** Runs the helper's source under the running Node, capturing its output and exit code. */
+async function runCli(argv: readonly string[]): Promise<CliResult> {
+  try {
+    const { stderr, stdout } = await execFileAsync(process.execPath, [CLI_PATH, ...argv]);
+    return { exitCode: 0, stderr, stdout };
+  } catch (error) {
+    if (isExecError(error)) {
+      return { exitCode: error.code, stderr: error.stderr, stdout: error.stdout };
+    }
+    throw error;
+  }
+}
+
+/** Writes `content` to `.agents/preferences.yaml` under `root`. */
+async function writeAgentsPreferences(root: string, content: string): Promise<void> {
+  await mkdir(join(root, '.agents'), { recursive: true });
+  await writeFile(join(root, '.agents', 'preferences.yaml'), `${content}\n`, 'utf8');
 }
 
 /** Writes `content` to a pull-request body file under a scratch directory and returns its path. */
@@ -761,10 +930,10 @@ async function writeBody(content: string): Promise<string> {
   return bodyFile;
 }
 
-/** Writes `content` to `.agents/preferences.yaml` under `root`. */
-async function writeAgentsPreferences(root: string, content: string): Promise<void> {
-  await mkdir(join(root, '.agents'), { recursive: true });
-  await writeFile(join(root, '.agents', 'preferences.yaml'), `${content}\n`, 'utf8');
+/** Writes `labelMap` to the repository's `.meta/label-map.json`. */
+async function writeLabelMap(root: string, labelMap: unknown): Promise<void> {
+  await mkdir(join(root, '.meta'), { recursive: true });
+  await writeFile(join(root, '.meta', 'label-map.json'), JSON.stringify(labelMap));
 }
 
 // endregion | Helpers

@@ -18,7 +18,7 @@ Condense the current branch into a single commit with a comprehensive message.
 
      ```bash
      classify_path="{absolute path from the scratch-directory step}"
-     node {harness_home_dir}/scripts/describe-change.mjs --classify {default_branch} > "$classify_path" && cat "$classify_path"
+     node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base {default_branch} > "$classify_path" && cat "$classify_path"
      ```
 
      Where the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a classification: the subject renders with no head, and the message carries no trailer.

@@ -76,7 +76,8 @@ Then run the helper, opening with the assignment and the guard:
 ```bash
 body_path="{absolute path from the write step}"
 [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
-node {harness_home_dir}/scripts/describe-change.mjs --resolve-merge "{remote}/{baseRefName}" \
+node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
+  --base "{remote}/{baseRefName}" \
   --head "{headRefOid}" \
   --pr-number "{number}" \
   --pr-title "{title}" \
@@ -104,7 +105,7 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 - `notices`: what the gate shows beside the proposal.
 - `recorded`, `derived`, and `labeled`: the heads that the block, the commits, and the labels name, each `null` where it did not apply.
 
-[Resolving a merge](../_data/title-templates.md#resolving-a-merge) states every field.
+[`resolve-merge`](../_data/title-templates.md#resolve-merge) states every field.
 
 The overrides passed to this run are the merge's **override set**. Each later run of this step, for a choice at the gate or for step 8's re-read, passes the whole set with that run's addition, and the same `--head`.
 

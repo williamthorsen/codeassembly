@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { SUBCOMMANDS as DESCRIBE_CHANGE_SUBCOMMANDS } from '../../src/describe-change/cli.ts';
 import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
 
 // Helper scripts in `packages/agents/content/scripts/` are installed to `~/<harness_home>/scripts/`, a directory not
@@ -29,8 +30,14 @@ interface Violation {
 }
 
 // Recognize executable context after the script name: a CLI flag, line continuation, quoted arg, shell variable, or shell
-// operator. Anything else (a closing backtick, prose word, punctuation) is treated as a non-invocation mention.
+// operator. Apart from a subcommand in `SUBCOMMANDS_BY_SCRIPT`, anything else (a closing backtick, prose word,
+// punctuation) is treated as a non-invocation mention.
 const INVOCATION_SUFFIX = /^(?:--|-[A-Za-z]|\\\s*$|"|'|\$[A-Za-z_(@{*]|\||>|<|;|&)/;
+
+/** The subcommands of each helper that takes one, any of which directly after the script name is executable context. */
+const SUBCOMMANDS_BY_SCRIPT: Readonly<Record<string, ReadonlyArray<string>>> = {
+  'describe-change.mjs': Object.keys(DESCRIBE_CHANGE_SUBCOMMANDS),
+};
 
 describe('helper-script invocation conventions', () => {
   it('every executable invocation of a known helper script uses the {harness_home_dir}/scripts/ prefix', async () => {
@@ -61,6 +68,18 @@ describe('helper-script invocation conventions', () => {
 
     it('does not flag punctuation-terminated prose', () => {
       expect(followsInvocationPattern('.')).toBe(false);
+    });
+
+    it('flags a bare subcommand invocation', () => {
+      expect(followsInvocationPattern(' render-titles --title foo', ['render-titles'])).toBe(true);
+    });
+
+    it('flags a bare subcommand invocation taking positionals', () => {
+      expect(followsInvocationPattern(' parse-title commit subject', ['parse-title'])).toBe(true);
+    });
+
+    it('does not flag a word that only begins with a subcommand name', () => {
+      expect(followsInvocationPattern(' render-titles-like prose', ['render-titles'])).toBe(false);
     });
   });
 });
@@ -106,7 +125,7 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
           const prefixStart = idx - REQUIRED_PREFIX.length;
           if (prefixStart >= 0 && line.slice(prefixStart, idx) === REQUIRED_PREFIX) continue;
           const after = line.slice(searchFrom);
-          if (!followsInvocationPattern(after)) continue;
+          if (!followsInvocationPattern(after, SUBCOMMANDS_BY_SCRIPT[script])) continue;
           violations.push({ file: relPath, line: index + 1, text: line.trim() });
         }
       }
@@ -115,9 +134,13 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
   return violations;
 }
 
-function followsInvocationPattern(after: string): boolean {
+/** Reports whether the text after a script name is executable context: an invocation suffix, or one of the script's subcommands. */
+function followsInvocationPattern(after: string, subcommands: ReadonlyArray<string> = []): boolean {
   const trimmed = after.replace(/^[ \t]+/, '');
-  return INVOCATION_SUFFIX.test(trimmed);
+  return (
+    INVOCATION_SUFFIX.test(trimmed) ||
+    subcommands.some((name) => trimmed.startsWith(name) && !/^[\w-]/.test(trimmed.slice(name.length)))
+  );
 }
 
 function formatViolations(violations: ReadonlyArray<Violation>): string {

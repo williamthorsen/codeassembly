@@ -32,7 +32,7 @@ Change: agents|fix: Correct the guard
 
 ## The `change-record` block
 
-A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML, and the `--record-block` mode of `describe-change.mjs` renders it; see [Rendering the record block](./title-templates.md#rendering-the-record-block).
+A pull-request body carrying the record ends with a fenced block naming `change-record` as its info string. The payload is YAML, and the `render-block` subcommand of `describe-change.mjs` renders it; see [`render-block`](./title-templates.md#render-block).
 
 ````markdown
 ```change-record
@@ -76,7 +76,7 @@ An override is kept as the author set it, even where it equals the head. The hea
 
 ## Where the record is read
 
-`merge-pr` reads the block when it merges, through the `--resolve-merge` mode of `describe-change.mjs` (see [Resolving a merge](./title-templates.md#resolving-a-merge)), and compares it with a head derived afresh from the commits up to the pull request's head commit.
+`merge-pr` reads the block when it merges, through the `resolve-merge` subcommand of `describe-change.mjs` (see [`resolve-merge`](./title-templates.md#resolve-merge)), and compares it with a head derived afresh from the commits up to the pull request's head commit.
 
 **The body's last `change-record` block is the one read.** It is malformed where it never closes, where its payload is not a YAML mapping, where `head` is not a mapping, and where a declared field has the wrong type. A malformed block is reported and resolved as though it were absent. A key that the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
 

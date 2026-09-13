@@ -54,7 +54,7 @@ Apply the overrides to the head per [The effective record](../_data/change-recor
 Call `describe-change.mjs` to render the PR title from the configured `pr.title_format` template. Pass every input that is available, from the effective record; the template controls which tokens are required:
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs \
+node {harness_home_dir}/scripts/describe-change.mjs render-titles \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \
@@ -101,7 +101,7 @@ If `ticket_ref` is null, skip: no closing line.
 Then render the `change-record` block from the change summary's head and its overrides as recorded, never from the effective record:
 
 ```bash
-node {harness_home_dir}/scripts/describe-change.mjs --record-block \
+node {harness_home_dir}/scripts/describe-change.mjs render-block \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \
