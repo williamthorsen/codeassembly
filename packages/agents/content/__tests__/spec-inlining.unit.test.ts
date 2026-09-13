@@ -55,7 +55,7 @@ const OPTION_FORMAT: Spec = {
     '**Your own cost never ranks the options.**',
     // What sorts an ordering question, stated as a test rather than a list of cases. An enumeration here contradicts
     // the gate it is appended to, which is how a combine-or-split call lost its recommendation.
-    'Where the order changes the code or the total effort',
+    'When the order changes the code or the total effort',
     // What the gate requires of the menu it produces for a timing-only ordering. Without it a menu satisfies the gate
     // while carrying the agent's lean, which the marker table's ■■□ row licenses.
     'render the options unmarked',
