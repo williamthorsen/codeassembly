@@ -39,6 +39,7 @@ const SUBCOMMAND_NAMES = [
   'parse-title',
   'consolidate-branch',
   'resolve-ticket-type',
+  'resolve-effective-record',
   'render-block',
   'resolve-merge',
 ];
@@ -528,6 +529,157 @@ describe('resolve-ticket-type', () => {
     const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toStrictEqual({ ticket_type: 'feat' });
+  });
+});
+
+describe('resolve-effective-record', () => {
+  it('reads the record flags and every override flag', () => {
+    const parsed = parseArgs([
+      'resolve-effective-record',
+      '--title',
+      'Add the parser',
+      '--scope',
+      'agents',
+      '--type',
+      'feat',
+      '--breaking',
+      '--override-scope',
+      'kb',
+      '--override-type',
+      'sec',
+      '--override-breaking',
+    ]);
+
+    expect(parsed).toEqual({
+      overrides: { breaking: true, scope: 'kb', type: 'sec' },
+      record: { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' },
+      subcommand: 'resolve-effective-record',
+    });
+  });
+
+  it('reads an invocation carrying no flags', () => {
+    expect(parseArgs(['resolve-effective-record'])).toEqual({
+      overrides: {},
+      record: {},
+      subcommand: 'resolve-effective-record',
+    });
+  });
+
+  it('sets no override for an override flag whose value is blank', () => {
+    expect(parseArgs(['resolve-effective-record', '--override-scope', ' ', '--override-type', ''])).toEqual({
+      overrides: {},
+      record: {},
+      subcommand: 'resolve-effective-record',
+    });
+  });
+
+  it.each(['--ticket-ref', '--pr-number', '--no-override-breaking', '--override-title', '--base'])(
+    'if %s is passed, refuses it as unknown',
+    (flag) => {
+      expect(() => parseArgs(['resolve-effective-record', flag, 'value'])).toThrow(`unknown flag: ${flag}`);
+    },
+  );
+
+  it('rejects a stray positional', () => {
+    expect(() => parseArgs(['resolve-effective-record', 'feat'])).toThrow('unexpected argument: feat');
+  });
+
+  it('if the type override spells the marker, refuses it', () => {
+    expect(() => parseArgs(['resolve-effective-record', '--override-type', 'feat!'])).toThrow(
+      '--override-type takes a bare type; pass --override-breaking for a breaking change',
+    );
+  });
+
+  it('applies the overrides and reports every field of the effective record', async () => {
+    const argv = [
+      'resolve-effective-record',
+      '--title',
+      'Add the parser',
+      '--scope',
+      'agents',
+      '--type',
+      'feat',
+      '--override-type',
+      'sec',
+      '--override-breaking',
+    ];
+
+    const { output, warnings } = await runDescribe({ argv, cwd: process.cwd(), dataDir: DATA_DIR, home: tmpdir() });
+
+    expect(output).toStrictEqual({
+      effective_record: {
+        title: 'Add the parser',
+        scope: 'agents',
+        type: 'sec',
+        breaking: true,
+        ticket_ref: null,
+        pr_number: null,
+      },
+      defects: [],
+    });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('keeps a marker spelled on the type where only the type is overridden, and clears the scope for *', async () => {
+    const argv = ['resolve-effective-record', '--scope', 'agents', '--type', 'feat!', '--override-scope', '*'];
+
+    const { output } = await runDescribe({
+      argv: [...argv, '--override-type', 'sec'],
+      cwd: process.cwd(),
+      dataDir: DATA_DIR,
+      home: tmpdir(),
+    });
+
+    expect(output).toMatchObject({ effective_record: { breaking: true, scope: null, title: null, type: 'sec' } });
+  });
+
+  it.each([
+    { argv: ['--scope', 'agents'], defects: [{ kind: 'missing-type' }], name: 'names no type' },
+    {
+      argv: ['--type', 'feature'],
+      defects: [{ kind: 'undeclared-type', type: 'feature' }],
+      name: 'names an undeclared type',
+    },
+    {
+      argv: ['--type', 'fix', '--override-breaking'],
+      defects: [{ kind: 'policy-violation', policy: 'forbidden', type: 'fix' }],
+      name: 'carries a marker that its type forbids',
+    },
+  ])('reports the defect of an effective record that $name', async ({ argv, defects }) => {
+    const { output } = await runDescribe({
+      argv: ['resolve-effective-record', ...argv],
+      cwd: process.cwd(),
+      dataDir: DATA_DIR,
+      home: tmpdir(),
+    });
+
+    expect(output).toMatchObject({ defects });
+  });
+
+  it('succeeds where a configured title template is defective', async () => {
+    const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
+
+    const { output } = await runDescribe({
+      argv: ['resolve-effective-record', '--type', 'feat'],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({ defects: [], effective_record: { type: 'feat' } });
+  });
+
+  it('refuses when no taxonomy is readable', async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
+
+    await expect(
+      runDescribe({
+        argv: ['resolve-effective-record', '--type', 'feat'],
+        cwd: process.cwd(),
+        dataDir,
+        home: tmpdir(),
+      }),
+    ).rejects.toThrow(/resolve-effective-record checks types against the taxonomy; none is readable/);
   });
 });
 

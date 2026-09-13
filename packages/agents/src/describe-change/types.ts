@@ -1,5 +1,6 @@
 import type { ChangeRecord } from '../change-grammar/types.ts';
-import type { ChangeRecordBlock } from './change-record-block.ts';
+import type { ChangeRecordBlock, RecordOverrides } from './change-record-block.ts';
+import type { RecordDefect } from './find-defects.ts';
 import type { MergeOverrides } from './resolve-merge.ts';
 
 /** Reports whether `value` names one of the configured surfaces. */
@@ -22,6 +23,16 @@ export interface ConsolidateBranchOutcome {
 export interface ConsolidatedRecordOutcome {
   breaking: boolean | null;
   scope: string | null;
+  type: string | null;
+}
+
+/** An effective record, in the shape the JSON output names: every field of a record, each `null` where nothing sets it. */
+export interface EffectiveRecordOutcome {
+  breaking: boolean;
+  pr_number: string | null;
+  scope: string | null;
+  ticket_ref: string | null;
+  title: string | null;
   type: string | null;
 }
 
@@ -50,6 +61,7 @@ export type ParsedArgs =
   | { baseRef: string; subcommand: 'consolidate-branch' }
   | { block: ChangeRecordBlock; subcommand: 'render-block' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
+  | { overrides: RecordOverrides; record: ChangeRecord; subcommand: 'resolve-effective-record' }
   | { record: ChangeRecord; subcommand: 'render-titles' }
   | { subcommand: 'parse-title'; subject: string; surface: Surface }
   | { subcommand: 'resolve-ticket-type'; ticketLabels: string[] };
@@ -74,6 +86,12 @@ export interface RenderBlockOutcome {
 
 /** The rendered title for each surface, under the `<surface>_title` key the JSON output names. */
 export type RenderedTitles = Record<`${Surface}_title`, string>;
+
+/** The effective record and the defects that block its approval, under the keys the JSON output names. */
+export interface ResolveEffectiveRecordOutcome {
+  effective_record: EffectiveRecordOutcome;
+  defects: RecordDefect[];
+}
 
 /** The pull request that `resolve-merge` reads, and the overrides that the author applies to it. */
 export interface ResolveMergeArgs {
