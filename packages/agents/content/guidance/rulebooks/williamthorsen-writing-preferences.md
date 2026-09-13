@@ -34,12 +34,12 @@ Imperative mood is untouched, because it does not carry a pronoun: "Run the form
 
 **The addressee decides.** Ask who the pronoun names. If it names the agent that the document instructs, a skill body or a subagent body directing its own executor, the pronoun is that document's address and stays. If it names a reader of documentation, someone using the package or working on it, the pronoun goes.
 
-**The replacement names an actor.** Say who or what acts: "the config caps the rule" rather than "you cap the rule". If no actor belongs in the sentence, recast so the artifact is the subject: "the flag takes a path" rather than "you pass it a path".
+**The replacement names an actor.** Say who or what acts: "the config caps the rule" rather than "you cap the rule". If no actor belongs in the sentence, recast so that the artifact is the subject: "the flag takes a path" rather than "you pass it a path".
 
 Two traps take a naive substitution:
 
 - **The agentless passive.** Dropping the pronoun by hiding who acted trades one defect for another: "your rules are capped" becomes "the rules are capped", which names nobody. Plain speech rejects that passive; name the actor instead.
-- **The surviving object gap.** "the rules you cap" and "the rules the config caps" are the same reduced object relative, so the substitution leaves the second defect in place. Restore the relativizer, or apply the repairs in "Reduced object relatives" above.
+- **The surviving object gap.** "the rules you cap" and "the rules the config caps" are the same reduced object relative; therefore, the substitution leaves the second defect in place. Restore the relativizer, or apply the repairs in "Reduced object relatives" above.
 
 ## Sentence case
 

@@ -19,7 +19,7 @@ const RULE = '_partials/plain-speech.md';
 const PINNED_CALIBRATION_HASH = 'ba4dbcae353a3ff3b3792c24fc44e6af1191f0384dbb2ec426431a337148757f';
 
 /** The version declared by the calibration, and the rule text that version was calibrated against. */
-const PINNED_RULE_HASH = 'e4360dc3f21b0267e87bbd3716d00ff8710e46dd0a18a4ea0c689fabab4c318d';
+const PINNED_RULE_HASH = '33e34215b43fbe2cb49b74311c73d94d85088e9b3fe7f87d54a1b319ce9c52fd';
 const PINNED_VERSION = '4';
 
 /** Matches the calibration's opening version marker, whose captured group is the version. */

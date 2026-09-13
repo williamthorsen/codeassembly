@@ -30,7 +30,7 @@ With no path, the sweep covers the whole repository. That is this skill's defaul
 
 ### 1. Read the units and the rules from this document
 
-Both come from this document, never from a list held elsewhere. A rule document opts into a detector by naming the rule, so a heading change cannot silently drop a rule, and a project bound to a different rulebook gets candidates only for the rules that it declares.
+Both come from this document, never from a list held elsewhere. Because a rule document opts into a detector by naming the rule, a heading change cannot silently drop a rule, and a project bound to a different rulebook gets candidates only for the rules that it declares.
 
 - **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names.
 - **Each `<!-- rulebook:<slug> -->` block** in the writing-preferences fill at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit, since nothing can key a record on it: Name that slug in the closing summary, and sweep it without recording coverage for it.
@@ -57,13 +57,13 @@ An empty `batches` array ends the run: Report the summary in one line and stop. 
 
 **Under `--dry-run`, the run ends here.** Emit the summary and one candidate table per file, per [Summary format](#summary-format), and stop. Do not dispatch a subagent, do not write a record, and edit nothing. One helper run is the whole cost, whereas a report-then-apply pair would run the sweep twice.
 
-**An apply run needs a clean tree.** If `git status --porcelain` reports anything, stop and report it. Step 4's gate reads `git diff --name-only` as the wave's own work, so an edit already in the tree either trips that gate or, if it is inside a batch's file list, is committed with that batch under the sweep's message. `--dry-run` returns above and edits nothing, so this stop holds only for an apply run.
+**An apply run needs a clean tree.** If `git status --porcelain` reports anything, stop and report it. Because step 4's gate reads `git diff --name-only` as the wave's own work, an edit already in the tree either trips that gate or, if it is inside a batch's file list, is committed with that batch under the sweep's message. `--dry-run` returns above and edits nothing; therefore, this stop holds only for an apply run.
 
 ### 3. Pilot the first batch
 
 Run the pilot if `.agents/revise-prose.yaml` is absent, or if its `units:` block names none of this run's units. A rerun skips this step and goes to step 4.
 
-Dispatch batch 0 alone, per step 4's dispatch shape, and run step 4's checks over it as a wave of one. Accumulate its `rejected` and `questionable` entries for step 5, as step 4 does for every later wave, so the pilot's questionables appear in the closing table. Then show the user its report and `git diff --stat`, and ask for a go-ahead before committing that batch and before dispatching anything else.
+Dispatch batch 0 alone, per step 4's dispatch shape, and run step 4's checks over it as a wave of one. Accumulate its `rejected` and `questionable` entries for step 5, as step 4 does for every later wave, so that the pilot's questionables appear in the closing table. Then show the user its report and `git diff --stat`, and ask for a go-ahead before committing that batch and before dispatching anything else.
 
 On a no-go, ask the user before reverting, then revert that batch's files and stop. A miscalibrated subagent is worth catching once per repository, which is the whole reason the first batch runs alone.
 
@@ -71,7 +71,7 @@ On a no-go, ask the user before reverting, then revert that batch's files and st
 
 Send up to four `{tool:Task}` calls with `subagent_type: prose-reviser` in one message. A harness that returns each before the next is the series case; do not attempt to detect which one you are on.
 
-Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even if the batch inherits none, so every dispatch names the same keys. `{scratch}` is a scratch directory created once for the run with `mktemp -d "${TMPDIR:-/tmp}/revise-prose.XXXXXX"`, written out as an absolute path in each place below and in each dispatch block, since these writes and the subagent's reads all go through a file tool that does not expand shell syntax.
+Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even if the batch inherits none, so that every dispatch names the same keys. `{scratch}` is a scratch directory created once for the run with `mktemp -d "${TMPDIR:-/tmp}/revise-prose.XXXXXX"`, written out as an absolute path in each place below and in each dispatch block, since these writes and the subagent's reads all go through a file tool that does not expand shell syntax.
 
 Dispatch each batch with this block:
 
@@ -89,7 +89,7 @@ rules: {rule-id}, {rule-id}
 
 **Once the whole wave has returned:**
 
-1. **Check the diff against the wave.** Run `git diff --name-only`. Every batch in the wave has already edited by now, so the gate is the union of their file lists rather than any one batch's. If the diff names a file outside that union, stop the run and report which file changed; commit nothing.
+1. **Check the diff against the wave.** Run `git diff --name-only`. Every batch in the wave has already edited by now; therefore, the gate is the union of their file lists rather than any one batch's. If the diff names a file outside that union, stop the run and report which file changed; commit nothing.
 2. **Check each report against its own batch.** If a batch's `applied` entries name a file outside that batch's `files` list, stop the run and report which batch strayed; commit nothing. The union check above cannot see this, because the stray file is inside the wave.
 3. **Commit each batch in index order.** Stage that batch's files alone and commit them per `{skill:create-commit}`, with type `docs` and the scope that `create-commit` derives from those files.
 4. **Accumulate** the wave's `rejected` and `questionable` entries for step 5.
@@ -97,7 +97,7 @@ rules: {rule-id}, {rule-id}
 ### 5. Close the run
 
 1. **Present the questionables** in one table grouped by ground, per [Summary format](#summary-format). The user accepts or rejects each.
-2. **Apply the accepted repairs** with the {tool:Edit} tool, phrase to phrase from each entry's `phrase` and `repair`. Stop at the first edit that does not match, so the user sees what diverged.
+2. **Apply the accepted repairs** with the {tool:Edit} tool, phrase to phrase from each entry's `phrase` and `repair`. Stop at the first edit that does not match, so that the user sees what diverged.
 3. **Compose the fold** and pipe it to the helper's `record` command, which is the record's only write path:
 
    ```bash
@@ -110,7 +110,7 @@ rules: {rule-id}, {rule-id}
 
    `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which does not name a unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not cover: step 1 names the unit directly rather than through a `<!-- rule: <id> -->` marker. **A rejection under a rule not declared by any marker takes the unit of the fill block that states the rule**, which that mapping does not cover either: the rule does not have a marker, because it is not covered by any detector and the helper rejects an argument naming one.
 
-   **Fold every rejection, whatever rule it names.** A rejection resolves to a site by its rule, its file, and its phrase, so a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, so a span wider than the one reported by the detector still resolves to it. Step 4 hands the recorded sites to the next sweep of that batch.
+   **Fold every rejection, whatever rule it names.** Because a rejection resolves to a site by its rule, its file, and its phrase, a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, and therefore a span wider than the one reported by the detector still resolves to it. Step 4 hands the recorded sites to the next sweep of that batch.
 
 4. **Commit the closing repairs and the record together**, per `{skill:create-commit}`.
 5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A repaired string that a test asserts on fails there; repair the test expectation and commit that separately.
@@ -138,7 +138,7 @@ Recorded in `.agents/revise-prose.yaml`: plain-speech 1, williamthorsen-writing-
 5 files held out: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
-Give the held-out clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
+Give the held-out clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened cannot read as a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 
@@ -151,7 +151,7 @@ Present the questionables as one table grouped by ground, before the per-batch t
 
 Ask for the numbers to apply, and treat every unnamed row as rejected.
 
-Under `--dry-run` there is nothing yet to adjudicate, so the run reports the candidates instead: one table per file, ordered as the helper reported them, with the rule, the line, and the phrase. If the total is large, the user reads `byFile` and `byShape` to narrow the next run.
+Because there is nothing yet to adjudicate under `--dry-run`, the run reports the candidates instead: one table per file, ordered as the helper reported them, with the rule, the line, and the phrase. If the total is large, the user reads `byFile` and `byShape` to narrow the next run.
 
 ```
 | Rule                    | Line | Phrase                              |
