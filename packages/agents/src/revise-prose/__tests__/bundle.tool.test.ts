@@ -44,6 +44,7 @@ describe('the deployed bundle', () => {
       'em-dash': 0,
       'reduced-object-relative': 1,
       'second-person': 0,
+      so: 0,
       where: 0,
     });
     expect(result.batches.length).toBeGreaterThan(0);
@@ -56,6 +57,7 @@ describe('the deployed bundle', () => {
       'em-dash': 1,
       'reduced-object-relative': 0,
       'second-person': 0,
+      so: 0,
       where: 0,
     });
   });

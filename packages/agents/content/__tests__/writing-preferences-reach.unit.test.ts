@@ -41,6 +41,7 @@ const RULES: ReadonlyArray<Rule> = [
       'Capitalize a complete sentence, keep a fragment or list lowercase',
       'Capitalize what follows as though the label were absent',
       'Documentation describes; it does not address',
+      "Don't join two clauses with `so`, which marks no relation between them",
       'Dropping the pronoun by hiding who acted',
       'If it names the agent that the document instructs',
       'Never use title case',

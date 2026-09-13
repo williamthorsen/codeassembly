@@ -21,11 +21,11 @@ Your dispatch contains five scalars:
 
 Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its unit that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
-Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span named by the list is adjudicated normally under every remaining rule, and a site that the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so you receive it with no prior verdict at all.
+Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other; therefore, a span named by the list is adjudicated normally under every remaining rule, and a site that the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list; as a result, you receive it with no prior verdict at all.
 
 Detection covers only the rules in your `rules` scalar, and it nominates sites rather than deciding them. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 
-An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. If the elided token decides the reading, read the source line.
+An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so that its tokens do not read as prose. The source keeps the code. If the elided token decides the reading, read the source line.
 
 ## Which rules apply
 
@@ -47,7 +47,7 @@ Reject a site outright on any of these grounds:
 
 - **Not the construction.** The candidate's verb is the sentence's own, or its head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like a reduced object relative and are neither.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that fell inside an extracted span.
-- **Outside the rule.** For a reduced object relative, the gap fills no argument position. For an em-dash, the character is inside text that the document quotes rather than composes. For `where`, the word names a place. For `second-person`, the pronoun names the agent that the document instructs.
+- **Outside the rule.** For `reduced-object-relative`, the gap fills no argument position. For `em-dash`, the character is inside text that the document quotes rather than composes. For `where`, the word names a place. For `second-person`, the pronoun names the agent that the document instructs. For `so`, the use is one that the rule excludes.
 - **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each include it on purpose, and repairing one destroys what it was written to show.
 
 Four grounds put a site in the questionable list rather than the applied one:

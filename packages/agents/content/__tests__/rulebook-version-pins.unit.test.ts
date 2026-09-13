@@ -77,7 +77,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: '38e931984e9a443f9a954e05b458d6e1ec64c8be81e161b932d21bdeb1250712', version: '4' },
+    { bodyHash: 'b39d9892af3e1fc026f5a4bb67a02716157a3d6ab17e7a4debd78c9a3dfa9640', version: '5' },
   ],
 ]);
 
