@@ -7,79 +7,130 @@ import { extractSection } from '../lib/markdown-sections.ts';
 import {
   type ChangeRecordBlock,
   type ChangeRecordBlockReading,
+  type RecordOverrides,
   stripChangeRecordBlocks,
 } from './change-record-block.ts';
 import { findDefects, type RecordDefect } from './find-defects.ts';
-import type { HeadOutcome, Surface } from './types.ts';
+import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from './types.ts';
 
 /**
- * Resolves what a pull request merges as: the effective head, the bare title and ticket reference, the merge title, and
- * the merge body, with the defects that block approval and the notices that the approval gate shows.
+ * Resolves what a pull request merges as: the effective record and the source of each of its fields, the merge title and
+ * body, what each source names, the defects that block approval, and the notices that the approval gate shows.
  *
- * With a readable `change-record` block, the recorded head and the derivation are compared before any override. Where
- * they agree, or where the derivation is unavailable, the record stands. Where they disagree, the derivation wins as the
- * fresher of the two, and the record is shown.
+ * With a readable block, the block's consolidated record and the commits' are compared before any override. Where they
+ * agree, or where the commits are unavailable, the block's stands. Where they disagree, the commits' wins as the fresher
+ * of the two, and the divergence is shown.
  * Without a readable block, the type and its breaking marker come together from the labels where a type label resolved
- * and otherwise from the derivation, and the scope resolves on its own the same way; a disagreeing derivation is shown.
+ * and otherwise from the commits, and the scope resolves on its own the same way; a disagreement with the commits is
+ * shown.
  *
- * The record's overrides then apply to the winning head, and the caller's overrides apply last, through `applyOverrides`.
+ * The block's overrides then apply, and the caller's apply last, through `applyOverrides`. Each field is attributed to
+ * the source that set it last.
  *
- * The bare title comes from inverting the pull-request title through `pr.title_format`. A scope and type read from it,
- * through that template where it names `{type}` and otherwise through `commit.title_format`, never stay in the title;
- * where they differ from the effective head, they are offered as a candidate head. A caller's title outranks all of it.
+ * The title comes from the caller's override, then from the pull-request title inverted through `pr.title_format`, then
+ * from the block, then from the pull-request title as given. A scope and type read from the pull-request title, through
+ * that template where it names `{type}` and otherwise through `commit.title_format`, never stay in the title; where they
+ * differ from the effective record, the divergence is shown.
  */
-export function resolveMerge(input: MergeInput): MergeReport {
+export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   const notices: MergeNotice[] = [];
   if (input.block.kind === 'malformed') {
-    notices.push({ defect: input.block.defect, kind: 'malformed-record' });
+    notices.push({ kind: 'malformed-block', defect: input.block.defect });
   }
-  const derived = input.derivation.kind === 'derived' ? toHead(input.derivation.head) : undefined;
-  if (input.derivation.kind === 'unavailable') {
-    notices.push({ kind: 'derivation-unavailable', reason: input.derivation.reason });
+  if (input.commits.kind === 'unavailable') {
+    notices.push({ kind: 'commits-unavailable', reason: input.commits.reason });
   }
 
-  const record = input.block.kind === 'read' ? input.block.block : undefined;
-  const labeled = toHead(input.labeled);
-  const resolved =
-    record === undefined
-      ? chooseFromLabels({ derived, labeled, notices })
-      : applyOverrides(chooseFromRecord({ derived, notices, record }), record.overrides ?? {});
-  const head = applyOverrides(resolved, input.overrides);
+  const block = input.block.kind === 'read' ? input.block.block : undefined;
+  const commits = input.commits.kind === 'read' ? readCommitsRecord(input.commits.consolidatedRecord) : undefined;
+  const base =
+    block === undefined
+      ? chooseFromLabels({ commits, labels: input.labels, notices })
+      : applySourcedOverrides(chooseFromBlock({ block, commits, notices }), block.overrides ?? {}, 'block_overrides');
+  const { record: effective, sources } = applySourcedOverrides(base, input.overrides, 'flags');
 
-  const { candidate, ticketRef, title } = resolveTitle({ ...input, head, notices, recordTitle: record?.title });
-  if (candidate !== undefined) {
-    notices.push({ head: toOutcome(candidate), kind: 'candidate-head' });
+  const prTitle = readPullRequestTitle(input);
+  if (prTitle === undefined) {
+    notices.push({ kind: 'pr-title-unparsed' });
+  } else if (prTitle.type !== undefined) {
+    const fields = findDifferingFields(prTitle, effective);
+    if (fields.length > 0) {
+      notices.push({ kind: 'pr-title-divergence', fields });
+    }
   }
+  const title = resolveTitle({ blockTitle: block?.title, overrides: input.overrides, pr: input.pr, prTitle });
+  const ticketRef = resolveTicketRef({ prTitle, ticketRef: input.ticketRef });
 
   const mergeRecord: ChangeRecord = {
-    ...head,
+    ...effective,
     prNumber: input.pr.number,
-    title,
-    ...(ticketRef !== undefined && { ticketRef }),
+    title: title.value,
+    ...(ticketRef !== undefined && { ticketRef: ticketRef.value }),
   };
   return {
-    head: toOutcome(head),
-    recorded: record === undefined ? null : toOutcome(toHead(record.consolidatedRecord ?? {})),
-    derived: derived === undefined ? null : toOutcome(derived),
-    labeled:
-      record === undefined && (labeled.scope !== undefined || labeled.type !== undefined) ? toOutcome(labeled) : null,
-    title,
-    ticket_ref: ticketRef ?? null,
-    merge_title: input.templates.merge === '' ? title : render(compileTemplate(input.templates.merge), mergeRecord),
+    effective_record: {
+      title: title.value,
+      scope: effective.scope ?? null,
+      type: effective.type ?? null,
+      breaking: effective.breaking === true,
+      ticket_ref: ticketRef?.value ?? null,
+      pr_number: input.pr.number,
+    },
+    effective_sources: {
+      title: title.source,
+      scope: sources.scope,
+      type: sources.type,
+      breaking: sources.breaking,
+      ticket_ref: ticketRef?.source ?? null,
+    },
+    merge_title:
+      input.templates.merge === '' ? title.value : render(compileTemplate(input.templates.merge), mergeRecord),
     body: composeBody(input.pr.body),
-    defects: findDefects(head, input.taxonomy),
+    sources: {
+      block: block === undefined ? null : toBlockOutcome(block),
+      commits: commits === undefined ? null : toSourceRecordOutcome(commits),
+      labels: toSourceRecordOutcome(input.labels),
+      pr_title: prTitle === undefined ? null : toPullRequestTitleOutcome(prTitle),
+    },
+    defects: findDefects(effective, input.taxonomy),
     notices,
   };
+}
+
+/** The block as read, in the shape the JSON output names: `consolidated_record` is `null` where the block holds none. */
+export interface BlockOutcome {
+  consolidated_record: { breaking: boolean; scope: string | null; type: string | null } | null;
+  overrides: RecordOverrides;
+  title: string;
+}
+
+/** A field of a consolidated record, on which two sources are compared. */
+export type ComparedField = 'breaking' | 'scope' | 'type';
+
+/** What supplied a field of the effective record. `flags` names the invocation's overrides and its `--ticket-ref`. */
+export type EffectiveSource =
+  'block' | 'block_overrides' | 'commits' | 'flags' | 'labels' | 'pr_title' | 'pr_title_verbatim';
+
+/** The source of each field of the effective record, each `null` where nothing supplied it. */
+export interface EffectiveSourcesOutcome {
+  breaking: EffectiveSource | null;
+  scope: EffectiveSource | null;
+  ticket_ref: EffectiveSource | null;
+  title: EffectiveSource;
+  type: EffectiveSource | null;
 }
 
 /** What a merge resolves from. */
 export interface MergeInput {
   /** The pull-request body's last `change-record` block, as read. */
   block: ChangeRecordBlockReading;
-  /** The head that the pull request's commits consolidate to, or the reason that none could be derived. */
-  derivation: { head: ChangeRecord; kind: 'derived' } | { kind: 'unavailable'; reason: string };
-  /** The head that the pull request's labels resolve to. */
-  labeled: ChangeRecord;
+  /**
+   * The record to which the pull request's commits consolidate, absent where they hold no entry, or the reason that the
+   * commits could not be read.
+   */
+  commits: { consolidatedRecord?: ChangeRecord; kind: 'read' } | { kind: 'unavailable'; reason: string };
+  /** The record that the pull request's labels name, as `resolveLabeledRecord` resolves it. */
+  labels: ChangeRecord;
   overrides: MergeOverrides;
   pr: { body: string; headCommit: string; number: string; title: string };
   taxonomy: Taxonomy;
@@ -90,75 +141,127 @@ export interface MergeInput {
 
 /** Something the approval gate shows the author without blocking approval. */
 export type MergeNotice =
-  | { head: HeadOutcome; kind: 'candidate-head' }
-  | { defect: string; kind: 'malformed-record' }
-  | { kind: 'derivation-unavailable'; reason: string }
-  | { kind: 'divergence'; shown: HeadOutcome; used: 'derivation' | 'labels' }
-  | { kind: 'title-fallback'; source: 'pr-title' | 'record' };
+  | { kind: 'commits-unavailable'; reason: string }
+  | { fields: ComparedField[]; kind: 'divergence'; sources: ['block' | 'labels', 'commits'] }
+  | { defect: string; kind: 'malformed-block' }
+  | { fields: ComparedField[]; kind: 'pr-title-divergence' }
+  | { kind: 'pr-title-unparsed' };
 
-/** The author's overrides, each outranking every other source for its own dimension. */
+/** The author's overrides, each outranking every other source for its own field. */
 export interface MergeOverrides extends Overrides {
   title?: string;
 }
 
-/** The resolved merge, in the shape the JSON output names. */
-export interface MergeReport {
-  body: string;
-  defects: RecordDefect[];
-  derived: HeadOutcome | null;
-  head: HeadOutcome;
-  labeled: HeadOutcome | null;
-  merge_title: string;
-  notices: MergeNotice[];
-  recorded: HeadOutcome | null;
+/** What each source names, whether or not the resolution used it, each `null` where the source was not read. */
+export interface MergeSourcesOutcome {
+  block: BlockOutcome | null;
+  commits: ConsolidatedRecordOutcome | null;
+  labels: ConsolidatedRecordOutcome;
+  pr_title: PullRequestTitleOutcome | null;
+}
+
+/** The record that the pull-request title carries, in the shape the JSON output names. */
+export interface PullRequestTitleOutcome {
+  breaking: boolean | null;
+  scope: string | null;
   ticket_ref: string | null;
   title: string;
+  type: string | null;
+}
+
+/** The resolved merge, in the shape the JSON output names. */
+export interface ResolveMergeOutcome {
+  body: string;
+  defects: RecordDefect[];
+  effective_record: EffectiveRecordOutcome;
+  effective_sources: EffectiveSourcesOutcome;
+  merge_title: string;
+  notices: MergeNotice[];
+  sources: MergeSourcesOutcome;
 }
 
 // region | Helpers
 
+/** Applies overrides to a record, attributing each field that they set to `source`. */
+function applySourcedOverrides(
+  attributed: AttributedRecord,
+  overrides: Overrides,
+  source: EffectiveSource,
+): AttributedRecord {
+  return {
+    record: applyOverrides(attributed.record, overrides),
+    sources: {
+      breaking: overrides.breaking === undefined ? attributed.sources.breaking : source,
+      scope: overrides.scope === undefined ? attributed.sources.scope : source,
+      type: overrides.type === undefined ? attributed.sources.type : source,
+    },
+  };
+}
+
+/** A consolidated record, with each of its fields attributed to the source that set it. */
+interface AttributedRecord {
+  record: ChangeRecord;
+  sources: Record<ComparedField, EffectiveSource | null>;
+}
+
 /**
- * Chooses the head without a readable block: the type and its marker from the labels where a type label resolved,
- * otherwise from the derivation, and the scope from its label where one resolved, otherwise from the derivation.
+ * Chooses between the block's consolidated record and the commits', reporting the fields on which they disagree. The
+ * commits' wins wherever they were read, as the fresher of two consolidations of the same branch; the block's stands
+ * only where they agree or where the commits could not be read.
+ */
+function chooseFromBlock(input: {
+  block: ChangeRecordBlock;
+  commits: ChangeRecord | undefined;
+  notices: MergeNotice[];
+}): AttributedRecord {
+  const blockRecord = toComparedFields(input.block.consolidatedRecord ?? {});
+  const fields = input.commits === undefined ? [] : findDifferingFields(blockRecord, input.commits);
+  if (input.commits === undefined || fields.length === 0) {
+    return { record: blockRecord, sources: { breaking: 'block', scope: 'block', type: 'block' } };
+  }
+  input.notices.push({ kind: 'divergence', sources: ['block', 'commits'], fields });
+  return { record: input.commits, sources: { breaking: 'commits', scope: 'commits', type: 'commits' } };
+}
+
+/**
+ * Chooses the record without a readable block: the type and its marker from the labels where a type label resolved,
+ * otherwise from the commits, and the scope from its label where one resolved, otherwise from the commits.
  */
 function chooseFromLabels(input: {
-  derived: ChangeRecord | undefined;
-  labeled: ChangeRecord;
+  commits: ChangeRecord | undefined;
+  labels: ChangeRecord;
   notices: MergeNotice[];
-}): ChangeRecord {
-  const typed = input.labeled.type === undefined ? (input.derived ?? {}) : input.labeled;
-  const scope = input.labeled.scope ?? input.derived?.scope;
-  const head: ChangeRecord = {
+}): AttributedRecord {
+  const commitsSource = input.commits === undefined ? null : 'commits';
+  const typed = input.labels.type === undefined ? (input.commits ?? {}) : input.labels;
+  const typeSource = input.labels.type === undefined ? commitsSource : 'labels';
+  const scope = input.labels.scope ?? input.commits?.scope;
+  const record: ChangeRecord = {
     ...(typed.type !== undefined && typed.breaking === true && { breaking: true }),
     ...(scope !== undefined && { scope }),
     ...(typed.type !== undefined && { type: typed.type }),
   };
-  if (input.derived !== undefined && !isSameHead(head, input.derived)) {
-    input.notices.push({ kind: 'divergence', shown: toOutcome(input.derived), used: 'labels' });
+  if (input.commits !== undefined) {
+    const fields = findDifferingFields(record, input.commits);
+    if (fields.length > 0) {
+      input.notices.push({ kind: 'divergence', sources: ['labels', 'commits'], fields });
+    }
   }
-  return head;
-}
-
-/**
- * Chooses between the recorded head and the derivation, reporting the record where they disagree. The derivation wins
- * wherever one is available, as the fresher of two derivations of the same branch; the record stands only where the
- * commits could not be read.
- */
-function chooseFromRecord(input: {
-  derived: ChangeRecord | undefined;
-  notices: MergeNotice[];
-  record: ChangeRecordBlock;
-}): ChangeRecord {
-  const recorded = toHead(input.record.consolidatedRecord ?? {});
-  if (input.derived === undefined || isSameHead(recorded, input.derived)) {
-    return recorded;
-  }
-  input.notices.push({ kind: 'divergence', shown: toOutcome(recorded), used: 'derivation' });
-  return input.derived;
+  return {
+    record,
+    sources: {
+      breaking: typeSource,
+      scope: input.labels.scope === undefined ? commitsSource : 'labels',
+      type: typeSource,
+    },
+  };
 }
 
 /** Matches a keyword with which a platform closes the tickets that follow it, with an optional colon. */
 const CLOSING_KEYWORD = /^(?:close[ds]?|fix(?:e[ds])?|resolve[ds]?):?$/i;
+
+/** The fields on which two sources are compared, in the order that a notice lists them. */
+const COMPARED_FIELDS: readonly ComparedField[] = ['scope', 'type', 'breaking'];
 
 /**
  * Composes the merge body from the pull request's `## What` section, with every `change-record` block removed and the
@@ -171,6 +274,13 @@ function composeBody(body: string): string {
     lines.pop();
   }
   return lines.join('\n').trim();
+}
+
+/** Lists the fields on which two records disagree, reading an absent marker as not breaking. */
+function findDifferingFields(left: ChangeRecord, right: ChangeRecord): ComparedField[] {
+  return COMPARED_FIELDS.filter((field) =>
+    field === 'breaking' ? (left.breaking === true) !== (right.breaking === true) : left[field] !== right[field],
+  );
 }
 
 /**
@@ -194,39 +304,30 @@ function isDroppedTrailingLine(line: string): boolean {
   );
 }
 
-/** Reports whether two heads name the same scope, type, and breaking marker. */
-function isSameHead(left: ChangeRecord, right: ChangeRecord): boolean {
-  return (
-    left.scope === right.scope && left.type === right.type && (left.breaking === true) === (right.breaking === true)
-  );
+/** The record that the pull-request title carries, which always names a bare title. */
+type PullRequestTitleRecord = ChangeRecord & { title: string };
+
+/** Reads the commits' consolidated record, whose marker a branch with entries always determines. */
+function readCommitsRecord(consolidatedRecord: ChangeRecord | undefined): ChangeRecord {
+  return consolidatedRecord === undefined
+    ? {}
+    : { ...toComparedFields(consolidatedRecord), breaking: consolidatedRecord.breaking === true };
 }
 
 /**
- * Resolves the bare title, the ticket reference, and any candidate head that the pull-request title carries. Where the
- * title does not invert, the recorded title stands in for it, and the title itself where no record is readable.
+ * Reads the record that the pull-request title carries: the bare title and the ticket reference, inverted through
+ * `pr.title_format`, and the scope, type, and marker of any prefix. Yields nothing where the title does not invert to a
+ * bare title.
  */
-function resolveTitle(input: {
-  head: ChangeRecord;
-  notices: MergeNotice[];
-  overrides: MergeOverrides;
-  pr: { title: string };
-  recordTitle: string | undefined;
-  taxonomy: Taxonomy;
-  templates: Record<Surface, string>;
-  ticketRef?: string;
-}): { candidate?: ChangeRecord; ticketRef?: string; title: string } {
-  const inverted =
-    input.templates.pr === '' ? undefined : parse(compileTemplate(input.templates.pr), input.pr.title, input.taxonomy);
-  const ticketRef = inverted?.ticketRef ?? input.ticketRef;
-  const withTicketRef = ticketRef === undefined ? {} : { ticketRef };
-
-  if (input.overrides.title !== undefined) {
-    return { ...withTicketRef, title: input.overrides.title };
+function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undefined {
+  if (input.templates.pr === '') {
+    return undefined;
   }
+  const inverted = parse(compileTemplate(input.templates.pr), input.pr.title, input.taxonomy);
   if (inverted?.title === undefined) {
-    input.notices.push({ kind: 'title-fallback', source: input.recordTitle === undefined ? 'pr-title' : 'record' });
-    return { ...withTicketRef, title: input.recordTitle ?? input.pr.title };
+    return undefined;
   }
+  const withTicketRef = inverted.ticketRef === undefined ? {} : { ticketRef: inverted.ticketRef };
 
   const titleBorne =
     inverted.type === undefined && input.templates.commit !== ''
@@ -235,16 +336,75 @@ function resolveTitle(input: {
   if (titleBorne?.type === undefined) {
     return { ...withTicketRef, title: inverted.title };
   }
-  const title = titleBorne.title ?? inverted.title;
-  const candidate = toHead(titleBorne);
-  return isSameHead(candidate, input.head) ? { ...withTicketRef, title } : { ...withTicketRef, candidate, title };
+  return {
+    ...toComparedFields(titleBorne),
+    ...withTicketRef,
+    breaking: titleBorne.breaking === true,
+    title: titleBorne.title ?? inverted.title,
+  };
+}
+
+/** Resolves the ticket reference from the pull-request title, then from the invocation. */
+function resolveTicketRef(input: {
+  prTitle: PullRequestTitleRecord | undefined;
+  ticketRef: string | undefined;
+}): SourcedValue | undefined {
+  if (input.prTitle?.ticketRef !== undefined) {
+    return { source: 'pr_title', value: input.prTitle.ticketRef };
+  }
+  return input.ticketRef === undefined ? undefined : { source: 'flags', value: input.ticketRef };
+}
+
+/**
+ * Resolves the bare title from the caller's override, then from the pull-request title's bare title, then from the
+ * block, then from the pull-request title as given.
+ */
+function resolveTitle(input: {
+  blockTitle: string | undefined;
+  overrides: MergeOverrides;
+  pr: { title: string };
+  prTitle: PullRequestTitleRecord | undefined;
+}): SourcedValue {
+  if (input.overrides.title !== undefined) {
+    return { source: 'flags', value: input.overrides.title };
+  }
+  if (input.prTitle !== undefined) {
+    return { source: 'pr_title', value: input.prTitle.title };
+  }
+  if (input.blockTitle !== undefined) {
+    return { source: 'block', value: input.blockTitle };
+  }
+  return { source: 'pr_title_verbatim', value: input.pr.title };
+}
+
+/** A value, and the source that supplied it. */
+interface SourcedValue {
+  source: EffectiveSource;
+  value: string;
 }
 
 /** Matches a ticket reference: `#123`, `owner/repo#123`, `ABC-123`, or a URL. */
 const TICKET_REFERENCE = /^(?:(?:[\w.-]+\/[\w.-]+)?#\d+|[A-Z][A-Z\d]*-\d+|https?:\/\/\S+)$/;
 
-/** Keeps only the head's dimensions of a record: the scope, the type, and the breaking marker. */
-function toHead(record: ChangeRecord): ChangeRecord {
+/** Renders the block in the shape the JSON output names, reading an absent marker within its record as not breaking. */
+function toBlockOutcome(block: ChangeRecordBlock): BlockOutcome {
+  const { consolidatedRecord } = block;
+  return {
+    title: block.title,
+    consolidated_record:
+      consolidatedRecord === undefined
+        ? null
+        : {
+            scope: consolidatedRecord.scope ?? null,
+            type: consolidatedRecord.type ?? null,
+            breaking: consolidatedRecord.breaking === true,
+          },
+    overrides: { ...block.overrides },
+  };
+}
+
+/** Keeps only the fields on which two sources are compared: the scope, the type, and a marker that is set. */
+function toComparedFields(record: ChangeRecord): ChangeRecord {
   return {
     ...(record.breaking === true && { breaking: true }),
     ...(record.scope !== undefined && { scope: record.scope }),
@@ -252,9 +412,20 @@ function toHead(record: ChangeRecord): ChangeRecord {
   };
 }
 
-/** Renders a head in the shape the JSON output names. */
-function toOutcome(head: ChangeRecord): HeadOutcome {
-  return { breaking: head.breaking === true, scope: head.scope ?? null, type: head.type ?? null };
+/** Renders the pull-request title's record in the shape the JSON output names. */
+function toPullRequestTitleOutcome(record: PullRequestTitleRecord): PullRequestTitleOutcome {
+  return {
+    title: record.title,
+    ticket_ref: record.ticketRef ?? null,
+    scope: record.scope ?? null,
+    type: record.type ?? null,
+    breaking: record.breaking ?? null,
+  };
+}
+
+/** Renders a source's record in the shape the JSON output names, where a marker that the source leaves unset is `null`. */
+function toSourceRecordOutcome(record: ChangeRecord): ConsolidatedRecordOutcome {
+  return { scope: record.scope ?? null, type: record.type ?? null, breaking: record.breaking ?? null };
 }
 
 // endregion | Helpers

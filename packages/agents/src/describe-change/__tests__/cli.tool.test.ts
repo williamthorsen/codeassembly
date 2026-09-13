@@ -899,20 +899,39 @@ describe('resolve-merge', () => {
     });
 
     expect(output).toStrictEqual({
-      head: { breaking: false, scope: 'agents', type: 'feat' },
-      recorded: { breaking: false, scope: 'agents', type: 'feat' },
-      derived: { breaking: false, scope: 'agents', type: 'feat' },
-      labeled: null,
-      title: 'Add the parser',
-      ticket_ref: '#466',
+      effective_record: {
+        title: 'Add the parser',
+        scope: 'agents',
+        type: 'feat',
+        breaking: false,
+        ticket_ref: '#466',
+        pr_number: '470',
+      },
+      effective_sources: {
+        title: 'pr_title',
+        scope: 'block',
+        type: 'block',
+        breaking: 'block',
+        ticket_ref: 'pr_title',
+      },
       merge_title: '#466 agents|feat: Add the parser (#470)',
       body: '- Adds the parser.',
+      sources: {
+        block: {
+          title: 'Add the parser',
+          consolidated_record: { scope: 'agents', type: 'feat', breaking: false },
+          overrides: {},
+        },
+        commits: { scope: 'agents', type: 'feat', breaking: false },
+        labels: { scope: null, type: 'docs', breaking: false },
+        pr_title: { title: 'Add the parser', ticket_ref: '#466', scope: null, type: null, breaking: null },
+      },
       defects: [],
       notices: [],
     });
   });
 
-  it('where the head commit is absent from the repository, resolves without a derivation and says so', async () => {
+  it('where the head commit is absent from the repository, resolves without the commits and says so', async () => {
     const { cwd, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const absent = '0123456789abcdef0123456789abcdef01234567';
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
@@ -924,10 +943,10 @@ describe('resolve-merge', () => {
       home,
     });
 
-    expect(output).toMatchObject({ derived: null, notices: [{ kind: 'derivation-unavailable' }] });
+    expect(output).toMatchObject({ notices: [{ kind: 'commits-unavailable' }], sources: { commits: null } });
   });
 
-  it('where commit.title_format is empty, resolves without a derivation rather than refusing', async () => {
+  it('where commit.title_format is empty, resolves without the commits rather than refusing', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     await writeAgentsPreferences(
       cwd,
@@ -947,7 +966,7 @@ describe('resolve-merge', () => {
     });
 
     expect(output).toMatchObject({
-      notices: [{ kind: 'derivation-unavailable', reason: expect.stringContaining('commit.title_format is empty') }],
+      notices: [{ kind: 'commits-unavailable', reason: expect.stringContaining('commit.title_format is empty') }],
     });
   });
 

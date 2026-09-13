@@ -32,14 +32,16 @@ export async function readLabelMap(path: string): Promise<LabelMap> {
 }
 
 /**
- * Resolves the head that a pull request's labels name: a type and a scope, each under the one-distinct-value rule, and
- * `breaking` where the `breaking` label that `create-pr` applies is present.
+ * Resolves the record that a pull request's labels name: a type and a scope, each under the one-distinct-value rule, and
+ * the marker, which is `true` where the `breaking` label that `create-pr` applies is present, `false` where a type label
+ * resolved without it, and absent otherwise.
  */
-export function resolveLabeledHead(map: LabelMap, labels: readonly string[]): ChangeRecord {
+export function resolveLabeledRecord(map: LabelMap, labels: readonly string[]): ChangeRecord {
   const scope = resolveLabelKey(map.scopes, labels);
   const type = resolveLabelKey(map.types, labels);
+  const hasBreakingLabel = labels.includes(BREAKING_LABEL);
   return {
-    ...(labels.includes(BREAKING_LABEL) && { breaking: true }),
+    ...((hasBreakingLabel || type !== undefined) && { breaking: hasBreakingLabel }),
     ...(scope !== undefined && { scope }),
     ...(type !== undefined && { type }),
   };

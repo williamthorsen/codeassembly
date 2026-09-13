@@ -49,13 +49,6 @@ export interface EntryOutcome {
   type: string | null;
 }
 
-/** A head, in the shape the JSON output names: the scope, type, and breaking marker of a change, and no title. */
-export interface HeadOutcome {
-  breaking: boolean;
-  scope: string | null;
-  type: string | null;
-}
-
 /** What the invocation asks for: the subcommand it names, and what that subcommand reads from its arguments. */
 export type ParsedArgs =
   | { baseRef: string; subcommand: 'consolidate-branch' }
