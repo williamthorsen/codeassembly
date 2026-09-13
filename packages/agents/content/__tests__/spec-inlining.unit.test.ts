@@ -197,7 +197,7 @@ const DIFF_AUDIT_PARTIAL = '_partials/diff-audit-checklist.md';
 /** Phrases distinctive enough that a file containing one has restated the checklist rather than included it. */
 const DIFF_AUDIT_PHRASES: ReadonlyArray<string> = [
   'A green gate is not this audit',
-  'the site you were pointed at is a sample of its class',
+  'the site that you were pointed at is a sample of its class',
   'This audit is bounded by your own edit',
 ];
 

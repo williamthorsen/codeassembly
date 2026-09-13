@@ -104,7 +104,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     boundRulebooks: [
       {
         slug: 'williamthorsen-code-layout-preferences',
-        rule: 'A `__tests__/` directory sits beside the code it covers',
+        rule: 'A `__tests__/` directory is next to the code that it covers',
       },
       { slug: 'williamthorsen-typescript-preferences', rule: 'Never use a type assertion' },
     ],
