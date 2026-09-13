@@ -10,7 +10,7 @@ const TAXONOMY: Taxonomy = {
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
     { breakingPolicy: 'required', key: 'drop', tier: 'public' },
-    { breakingPolicy: 'forbidden', key: 'fix', tier: 'public' },
+    { breakingPolicy: 'optional', key: 'fix', tier: 'public' },
     { breakingPolicy: 'optional', key: 'sec', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },
   ],
@@ -55,15 +55,15 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ type: 'feat' });
   });
 
-  it('reports a fix that carries the marker its policy forbids, leaving the entry as written', () => {
-    const result = consolidateBranch(buildCommits(['agents|fix!: Correct the guard']), NODES, TAXONOMY);
+  it('reports a refactor that carries the marker its policy forbids, leaving the entry as written', () => {
+    const result = consolidateBranch(buildCommits(['agents|refactor!: Restructure the guard']), NODES, TAXONOMY);
 
-    expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'forbidden', type: 'fix' }]);
+    expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'forbidden', type: 'refactor' }]);
     expect(result.entries[0]?.record).toStrictEqual({
       breaking: true,
       scope: 'agents',
-      title: 'Correct the guard',
-      type: 'fix',
+      title: 'Restructure the guard',
+      type: 'refactor',
     });
   });
 

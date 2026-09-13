@@ -33,7 +33,7 @@
     },
     {
       "aliases": ["bugfix"],
-      "breakingPolicy": "forbidden",
+      "breakingPolicy": "optional",
       "emoji": "🐛",
       "key": "fix",
       "label": "Bug fixes",
@@ -49,7 +49,7 @@
     },
     {
       "aliases": ["performance"],
-      "breakingPolicy": "forbidden",
+      "breakingPolicy": "optional",
       "emoji": "⚡",
       "key": "perf",
       "label": "Performance",
