@@ -35,7 +35,7 @@ Both come from this document, never from a list held elsewhere. Because a rule d
 - **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names.
 - **Each `<!-- rulebook:<slug> -->` block** in the comment-preferences and writing-preferences fills at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit, since nothing can key a record on it: Name that slug in the closing summary, and sweep it without recording coverage for it.
 - **Each `<!-- rule: <id> -->` marker** in a bound rulebook's body names a rule to the helper, whether or not the helper has a detector for it. The rule's unit is the block containing the marker.
-- **A rule heading with no marker beneath it** declares no id. Its id is the heading's text in kebab case, with any backticks dropped, and its unit is the block containing the heading. Do not name it to the helper.
+- **A rule heading with no marker beneath it** declares no id. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper.
 
 If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone and does not name a rule.
 
