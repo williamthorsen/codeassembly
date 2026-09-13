@@ -76,6 +76,7 @@ describe(runDetect, () => {
         'em-dash': 0,
         'reduced-object-relative': 1,
         'second-person': 0,
+        so: 0,
         where: 0,
       });
     });
@@ -115,6 +116,7 @@ describe(runDetect, () => {
         'em-dash': 1,
         'reduced-object-relative': 1,
         'second-person': 0,
+        so: 0,
         where: 0,
       });
     });

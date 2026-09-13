@@ -72,16 +72,15 @@ describe('prose-sweep rule vocabulary', () => {
 
   it('names every detector rule in the subagent that adjudicates it', async () => {
     const body = await readContentFile(SUBAGENT);
-    const missing = RULE_IDS.filter((rule) => !body.includes(rule));
+    const missing = listUnnamedRules(body, RULE_IDS);
 
-    const message = `${SUBAGENT} never names ${missing.join(', ')}, so the sweeper meets a candidate under a rule not described by its own body`;
+    const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so the sweeper meets a candidate under a rule not described by its own body`;
     expect(missing, message).toEqual([]);
   });
 
   it('names every undetected rule in the subagent that reports it', async () => {
     const body = await readContentFile(SUBAGENT);
-    // Match the backticked form: a bare `where` matches any prose occurrence and would assert nothing.
-    const missing = UNDETECTED_RULES.filter((rule) => !body.includes(`\`${rule}\``));
+    const missing = listUnnamedRules(body, UNDETECTED_RULES);
 
     const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so a site it repairs is reported under an improvised name that the fold cannot map to a unit`;
     expect(missing, message).toEqual([]);
@@ -120,6 +119,14 @@ describe('prose-sweep rule vocabulary', () => {
 });
 
 // region | Helpers
+
+/**
+ * Returns the rules that a body never names in backticks. A bare id such as `so` occurs in any prose and would assert
+ * nothing.
+ */
+function listUnnamedRules(body: string, rules: ReadonlyArray<string>): string[] {
+  return rules.filter((rule) => !body.includes(`\`${rule}\``));
+}
 
 /** Reads one content file by its path relative to the content root. */
 async function readContentFile(relativePath: string): Promise<string> {

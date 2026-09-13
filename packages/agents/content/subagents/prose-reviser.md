@@ -47,7 +47,7 @@ Reject a site outright on any of these grounds:
 
 - **Not the construction.** The candidate's verb is the sentence's own, or its head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like a reduced object relative and are neither.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that fell inside an extracted span.
-- **Outside the rule.** For a reduced object relative, the gap fills no argument position. For an em-dash, the character is inside text that the document quotes rather than composes. For `where`, the word names a place. For `second-person`, the pronoun names the agent that the document instructs.
+- **Outside the rule.** For `reduced-object-relative`, the gap fills no argument position. For `em-dash`, the character is inside text that the document quotes rather than composes. For `where`, the word names a place. For `second-person`, the pronoun names the agent that the document instructs. For `so`, the use is one that the rule excludes.
 - **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each include it on purpose, and repairing one destroys what it was written to show.
 
 Four grounds put a site in the questionable list rather than the applied one:
