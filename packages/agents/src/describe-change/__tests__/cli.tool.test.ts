@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { isRecord } from '../../lib/type-guards.ts';
 import { renderChangeRecordBlock } from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
-import type { ClassifiedEntryOutcome, ConsolidateBranchOutcome } from '../types.ts';
+import type { ConsolidateBranchOutcome, EntryOutcome } from '../types.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -51,7 +51,7 @@ describe('subcommand dispatch', () => {
   });
 
   it('if a flag is passed in place of a subcommand, refuses it as unknown', () => {
-    expect(() => parseArgs(['--classify', 'main'])).toThrow(/^unknown subcommand --classify; usage: /);
+    expect(() => parseArgs(['--base', 'main'])).toThrow(/^unknown subcommand --base; usage: /);
   });
 
   it('if no subcommand is passed, exits non-zero and lists every subcommand on stderr', async () => {
@@ -378,15 +378,15 @@ describe('consolidate-branch', () => {
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
-    expect(output).toMatchObject({ head: { breaking: false, scope: 'agents', type: 'feat' } });
+    expect(output).toMatchObject({ consolidated_record: { breaking: false, scope: 'agents', type: 'feat' } });
   });
 
-  it('carries the breaking marker onto the head', async () => {
+  it('carries the breaking marker onto the consolidated record', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
-    expect(output).toMatchObject({ head: { breaking: true, scope: 'agents', type: 'sec' } });
+    expect(output).toMatchObject({ consolidated_record: { breaking: true, scope: 'agents', type: 'sec' } });
   });
 
   it('lists an unmatched subject and keeps it out of the entries', async () => {
@@ -396,7 +396,7 @@ describe('consolidate-branch', () => {
 
     expect(output).toMatchObject({
       entries: [{ scope: 'agents', type: 'feat' }],
-      unclassified: [{ subject: 'wip' }],
+      unmatched: [{ subject: 'wip' }],
     });
   });
 
@@ -408,12 +408,17 @@ describe('consolidate-branch', () => {
     expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'fix' }] });
   });
 
-  it('yields a null head for a range holding no commits', async () => {
+  it('yields a consolidated record whose fields are all null for a range holding no commits', async () => {
     const { cwd, home } = await makeCommittedRepo([]);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
-    expect(output).toStrictEqual({ entries: [], head: null, unclassified: [], violations: [] });
+    expect(output).toStrictEqual({
+      entries: [],
+      consolidated_record: { breaking: null, scope: null, type: null },
+      unmatched: [],
+      violations: [],
+    });
   });
 
   it('takes a commit’s Change trailers in place of its subject', async () => {
@@ -430,7 +435,7 @@ describe('consolidate-branch', () => {
 
     expect(output).toMatchObject({
       entries: [{ type: 'feat' }, { type: 'fix' }],
-      head: { scope: 'agents', type: 'feat' },
+      consolidated_record: { scope: 'agents', type: 'feat' },
     });
   });
 
@@ -442,7 +447,7 @@ describe('consolidate-branch', () => {
     expect(output).toMatchObject({ entries: [{ change: 'agents|feat!: Add the parser' }] });
   });
 
-  it('when each entry’s change is written as a Change trailer, classifies back to the same entries', async () => {
+  it('when each entry’s change is written as a Change trailer, consolidates back to the same entries', async () => {
     const original = await consolidateMessages([
       'agents|feat!: Add the parser, the renderer, and the verifier',
       '#466 agents|fix: Correct the guard',
@@ -913,7 +918,7 @@ async function makeRepo(content: string): Promise<{ cwd: string; home: string }>
 }
 
 /** Drops the commit hash from an entry, which differs between two repositories holding the same entries. */
-function omitCommit(entry: ClassifiedEntryOutcome): Omit<ClassifiedEntryOutcome, 'commit'> {
+function omitCommit(entry: EntryOutcome): Omit<EntryOutcome, 'commit'> {
   const { commit: _commit, ...rest } = entry;
   return rest;
 }

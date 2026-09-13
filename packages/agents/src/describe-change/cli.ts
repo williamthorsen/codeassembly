@@ -19,7 +19,7 @@ import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
 import { readChangeRecordBlock, type RecordOverrides, renderChangeRecordBlock } from './change-record-block.ts';
-import { classifyCommits } from './classify.ts';
+import { consolidateBranch } from './consolidate-branch.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readLabelMap, resolveLabeledHead } from './read-label-map.ts';
@@ -219,8 +219,8 @@ async function deriveMergeHead(input: {
   }
   try {
     const commits = await readCommits({ baseRef: input.args.baseRef, cwd: input.cwd, headRef: input.args.headCommit });
-    const { head } = classifyCommits(commits, compileTemplate(input.template), input.taxonomy);
-    return { head: head ?? {}, kind: 'derived' };
+    const { consolidatedRecord } = consolidateBranch(commits, compileTemplate(input.template), input.taxonomy);
+    return { head: consolidatedRecord ?? {}, kind: 'derived' };
   } catch (error) {
     if (error instanceof MissingCommitError) {
       return { kind: 'unavailable', reason: `the head commit ${error.ref} is not in the local repository` };
@@ -482,10 +482,11 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
   }
   const commits = await readCommits({ baseRef, cwd: projectRoot });
   const nodes = compileTemplate(templates.commit);
-  const classification = classifyCommits(commits, nodes, taxonomy);
+  const consolidation = consolidateBranch(commits, nodes, taxonomy);
+  const { consolidatedRecord } = consolidation;
 
   const output: ConsolidateBranchOutcome = {
-    entries: classification.entries.map((entry) => ({
+    entries: consolidation.entries.map((entry) => ({
       breaking: entry.record.breaking === true,
       change: render(nodes, entry.record),
       commit: entry.commit,
@@ -493,16 +494,16 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
       title: entry.record.title ?? null,
       type: entry.record.type ?? null,
     })),
-    head:
-      classification.head === undefined
-        ? null
+    consolidated_record:
+      consolidatedRecord === undefined
+        ? { breaking: null, scope: null, type: null }
         : {
-            breaking: classification.head.breaking === true,
-            scope: classification.head.scope ?? null,
-            type: classification.head.type ?? null,
+            breaking: consolidatedRecord.breaking === true,
+            scope: consolidatedRecord.scope ?? null,
+            type: consolidatedRecord.type ?? null,
           },
-    unclassified: classification.unclassified,
-    violations: classification.violations,
+    unmatched: consolidation.unmatched,
+    violations: consolidation.violations,
   };
   return { output, warnings };
 }

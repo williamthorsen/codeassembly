@@ -7,25 +7,35 @@ export function isSurface(value: string): value is Surface {
   return SURFACE_NAMES.includes(value);
 }
 
+/** What a branch of commits consolidated to, in the shape the JSON output names. */
+export interface ConsolidateBranchOutcome {
+  entries: EntryOutcome[];
+  consolidated_record: ConsolidatedRecordOutcome;
+  unmatched: Array<{ commit: string; subject: string }>;
+  violations: Array<{ commit: string; policy: string; type: string }>;
+}
+
 /**
- * One entry the classification found, flattened onto the commit that declared it. `change` is the entry rendered back
- * through `commit.title_format`, the form a `Change:` trailer takes.
+ * A consolidated record, in the shape the JSON output names: the scope, type, and breaking marker of a branch, each
+ * `null` where the branch has no entries to determine it.
  */
-export interface ClassifiedEntryOutcome {
+export interface ConsolidatedRecordOutcome {
+  breaking: boolean | null;
+  scope: string | null;
+  type: string | null;
+}
+
+/**
+ * One entry of a branch, flattened onto the commit that declared it. `change` is the entry rendered back through
+ * `commit.title_format`, the form a `Change:` trailer takes.
+ */
+export interface EntryOutcome {
   breaking: boolean;
   change: string;
   commit: string;
   scope: string | null;
   title: string | null;
   type: string | null;
-}
-
-/** What a branch of commits consolidated to, in the shape the JSON output names. */
-export interface ConsolidateBranchOutcome {
-  entries: ClassifiedEntryOutcome[];
-  head: HeadOutcome | null;
-  unclassified: Array<{ commit: string; subject: string }>;
-  violations: Array<{ commit: string; policy: string; type: string }>;
 }
 
 /** A head, in the shape the JSON output names: the scope, type, and breaking marker of a change, and no title. */
