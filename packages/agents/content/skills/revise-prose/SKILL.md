@@ -102,11 +102,11 @@ rules: {rule-id}, {rule-id}
 
    ```bash
    cat <<'EOF' | node {harness_home_dir}/skills/revise-prose/revise-prose.mjs record
-   {"sweptAt":"{today}","units":{"{name}":{"version":"{version}","roots":["{root}"]}},"rejections":[]}
+   {"sweptAt":"{today}","units":{"{name}":{"version":"{version}","rules":["{rule-id}"],"roots":["{root}"]}},"rejections":[]}
    EOF
    ```
 
-   `sweptAt` is today's ISO calendar date. `units` names every unit from step 1 with its current version and its `roots`: the invocation's narrowing paths, or `["."]` for a whole-repository sweep.
+   `sweptAt` is today's ISO calendar date. `units` names every unit from step 1 with its current version, its `rules`, and its `roots`. `rules` lists the rules that step 1 named to the helper for that unit, or `[]` for a unit named with no rule, such as `plain-speech`; the helper refuses a fold that omits it. `roots` lists the invocation's narrowing paths, or `["."]` for a whole-repository sweep.
 
    `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which does not name a unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not cover: step 1 names the unit directly rather than through a `<!-- rule: <id> -->` marker. **A rejection under a rule not declared by any marker takes the unit of the fill block that states the rule**, which that mapping does not cover either: the rule does not have a marker, because it is not covered by any detector and the helper rejects an argument naming one.
 

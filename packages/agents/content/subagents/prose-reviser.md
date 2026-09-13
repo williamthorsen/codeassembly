@@ -23,7 +23,7 @@ Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a
 
 Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other, so a span named by the list is adjudicated normally under every remaining rule, and a site that the candidates also report is yours to judge under the rule that reported it. A site whose rule has changed version since is absent from the list, so you receive it with no prior verdict at all.
 
-Detection is over-inclusive and covers two rules alone. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
+Detection covers only the rules in your `rules` scalar, and it nominates sites rather than deciding them. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
 
 An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so its tokens do not read as prose. The source keeps the code. If the elided token decides the reading, read the source line.
 
@@ -47,7 +47,7 @@ Reject a site outright on any of these grounds:
 
 - **Not the construction.** The candidate's verb is the sentence's own, or its head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like a reduced object relative and are neither.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that fell inside an extracted span.
-- **Outside the rule.** For a reduced object relative, the gap fills no argument position. For an em-dash, the character is inside text that the document quotes rather than composes.
+- **Outside the rule.** For a reduced object relative, the gap fills no argument position. For an em-dash, the character is inside text that the document quotes rather than composes. For `where`, the word names a place. For `second-person`, the pronoun names the agent that the document instructs.
 - **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each include it on purpose, and repairing one destroys what it was written to show.
 
 Four grounds put a site in the questionable list rather than the applied one:
@@ -108,7 +108,7 @@ Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questio
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks. Use the id from your `rules` scalar if the site breaks one of those rules, whether a candidate reported it or you found it yourself. A rule not covered by any detector is absent from that scalar: Use `plain-speech` if the site breaks the plain-speech rule, and `capitalization-after-colon`, `second-person`, `sentence-case`, or `where` if it breaks the rule of that name in the writing preferences below. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks. Use the id from your `rules` scalar if the site breaks one of those rules, whether a candidate reported it or you found it yourself. A rule not covered by any detector is absent from that scalar: Use `plain-speech` if the site breaks the plain-speech rule, and `capitalization-after-colon` or `sentence-case` if it breaks the rule of that name in the writing preferences below. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 
