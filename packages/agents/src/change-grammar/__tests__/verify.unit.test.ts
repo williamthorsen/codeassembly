@@ -8,7 +8,7 @@ const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
   types: [
     { aliases: ['feature'], breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { aliases: ['bugfix'], breakingPolicy: 'forbidden', key: 'fix', tier: 'public' },
+    { aliases: ['bugfix'], breakingPolicy: 'optional', key: 'fix', tier: 'public' },
     { aliases: ['doc'], breakingPolicy: 'forbidden', key: 'docs', tier: 'process' },
   ],
 };

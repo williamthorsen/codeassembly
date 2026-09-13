@@ -8,14 +8,17 @@ const TAXONOMY: Taxonomy = {
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
     { breakingPolicy: 'required', key: 'drop', tier: 'public' },
-    { breakingPolicy: 'forbidden', key: 'fix', tier: 'public' },
-    { key: 'refactor', tier: 'internal' },
+    { breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },
+    { key: 'tests', tier: 'internal' },
   ],
 };
 
 describe(validate, () => {
-  it('reports a fix carrying the marker its policy forbids', () => {
-    expect(validate({ breaking: true, type: 'fix' }, TAXONOMY)).toStrictEqual({ policy: 'forbidden', type: 'fix' });
+  it('reports a refactor carrying the marker its policy forbids', () => {
+    expect(validate({ breaking: true, type: 'refactor' }, TAXONOMY)).toStrictEqual({
+      policy: 'forbidden',
+      type: 'refactor',
+    });
   });
 
   it('reports a drop omitting the marker its policy requires', () => {
@@ -23,10 +26,10 @@ describe(validate, () => {
   });
 
   it('leaves the record untouched rather than normalizing the violation away', () => {
-    const record = { breaking: true, title: 'Correct the guard', type: 'fix' };
+    const record = { breaking: true, title: 'Restructure the guard', type: 'refactor' };
     validate(record, TAXONOMY);
 
-    expect(record).toStrictEqual({ breaking: true, title: 'Correct the guard', type: 'fix' });
+    expect(record).toStrictEqual({ breaking: true, title: 'Restructure the guard', type: 'refactor' });
   });
 
   it('accepts a drop carrying its required marker', () => {
@@ -39,7 +42,7 @@ describe(validate, () => {
   });
 
   it('treats a type declaring no policy as optional', () => {
-    expect(validate({ breaking: true, type: 'refactor' }, TAXONOMY)).toBeUndefined();
+    expect(validate({ breaking: true, type: 'tests' }, TAXONOMY)).toBeUndefined();
   });
 
   it('reports nothing for a type the taxonomy does not declare', () => {
