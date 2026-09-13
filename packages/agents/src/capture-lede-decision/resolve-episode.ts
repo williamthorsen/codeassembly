@@ -4,7 +4,9 @@ import path from 'node:path';
 
 import { readNoteContent } from '@williamthorsen/kb/note-io';
 
-import { SCOPE_WILDCARD } from '../change-grammar/tokens.ts';
+import { applyOverrides } from '../change-grammar/apply-overrides.ts';
+import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
+import type { ChangeRecord } from '../change-grammar/types.ts';
 import { extractString } from '../kb-shared/note-helpers.ts';
 import { readHomeProvenance, readHomeProvenanceAt } from '../lib/home-provenance.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
@@ -197,19 +199,16 @@ async function readAgentsVersion(input: {
 }
 
 /**
- * Reads the effective type, scope, and breaking marker, and the `ticket_id`, from the newest change-summary artifact's
- * frontmatter. An override field outranks the derived head it overrides, and the marker is set where either `breaking`
- * or `breaking_override` sets it; a type spelled with `!` carries its own marker to the resolver. A scope of `*` names
- * no scope.
+ * Reads the effective record and the `ticket_id` from the newest change-summary artifact's frontmatter: the consolidated
+ * record's `scope`, `type`, and `breaking`, with `override_scope`, `override_type`, and `override_breaking` applied
+ * through `applyOverrides`. A type spelled with `!` carries its own marker to the resolver.
  *
  * The read is field-blind rather than routed through the knowledge base's record parser: a change summary is an
  * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields an
  * artifact never carries.
  */
-async function readChangeSummaryFields(
-  artifactDir: string,
-): Promise<{ breaking: boolean; type: string | null; scope: string | null; ticket: string | null }> {
-  const absent = { breaking: false, type: null, scope: null, ticket: null };
+async function readChangeSummaryFields(artifactDir: string): Promise<{ record: ChangeRecord; ticket: string | null }> {
+  const absent = { record: {}, ticket: null };
 
   const artifactPath = await findNewestArtifact({ artifactDir, suffix: '_change-summary' });
   if (artifactPath === null) {
@@ -221,12 +220,21 @@ async function readChangeSummaryFields(
   }
 
   const { fields } = readNoteContent(content);
-  return {
-    breaking: fields.breaking === true || fields.breaking_override === true,
-    type: extractString(fields, 'type_override') ?? extractString(fields, 'type'),
-    scope: readScope(extractString(fields, 'scope_override') ?? extractString(fields, 'scope')),
-    ticket: readIdentifier(fields, 'ticket_id'),
-  };
+  const scope = extractString(fields, 'scope');
+  const type = extractString(fields, 'type');
+  const overrideScope = extractString(fields, 'override_scope');
+  const overrideType = extractString(fields, 'override_type');
+  const consolidatedRecord = normalizeChangeRecord({
+    ...(fields.breaking === true && { breaking: true }),
+    ...(scope !== null && { scope }),
+    ...(type !== null && { type }),
+  });
+  const record = applyOverrides(consolidatedRecord, {
+    ...(fields.override_breaking === true && { breaking: true }),
+    ...(overrideScope !== null && { scope: overrideScope }),
+    ...(overrideType !== null && { type: overrideType }),
+  });
+  return { record, ticket: readIdentifier(fields, 'ticket_id') };
 }
 
 /**
@@ -239,12 +247,6 @@ function readIdentifier(fields: Record<string, unknown>, key: string): string | 
     return String(value);
   }
   return extractString(fields, key);
-}
-
-/** Reads a scope as the identity records it: the `*` scope and an empty one name no scope. */
-function readScope(scope: string | null): string | null {
-  const trimmed = scope?.trim();
-  return trimmed === undefined || ['', SCOPE_WILDCARD].includes(trimmed) ? null : trimmed;
 }
 
 /** Reads a file as UTF-8, yielding `null` when it does not exist. */
@@ -286,7 +288,7 @@ async function readLede(input: {
  * is passed, and otherwise the newest change-summary artifact's frontmatter, which is the only artifact in the chain
  * that carries typed fields. One identity never combines fields from both, so a caller passing a type for a change that
  * names no scope records no scope. The ticket falls back to the change summary on its own, being no part of the
- * classification.
+ * consolidated record. A scope of `*` from either source names no scope.
  *
  * The work type is resolved through the installed taxonomy rather than taken as spelled, so the identity carries the
  * canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
@@ -311,11 +313,15 @@ async function resolveIdentity(input: {
   const summary = await readChangeSummaryFields(input.artifactDir);
   const fromFlags = input.type !== undefined || input.scope !== undefined || input.breaking === true;
   const source = fromFlags
-    ? { breaking: input.breaking === true, scope: readScope(input.scope ?? null), type: input.type ?? null }
-    : summary;
+    ? normalizeChangeRecord({
+        ...(input.breaking === true && { breaking: true }),
+        ...(input.scope !== undefined && { scope: input.scope }),
+        ...(input.type !== undefined && { type: input.type }),
+      })
+    : summary.record;
 
   const type = source.type;
-  if (type === null) {
+  if (type === undefined) {
     return {
       ok: false,
       error: 'unresolved-identity',
@@ -350,8 +356,8 @@ async function resolveIdentity(input: {
     identity: {
       type: resolved.workType.key,
       tier: resolved.workType.tier,
-      breaking: resolved.breaking || source.breaking,
-      ...(source.scope !== null && { scope: source.scope }),
+      breaking: resolved.breaking || source.breaking === true,
+      ...(source.scope !== undefined && { scope: source.scope }),
       pr: input.pr,
       mergeCommit: input.mergeCommit,
       ...(ticket !== null && { ticket }),

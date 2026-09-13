@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compileTemplate } from '../../change-grammar/compile-template.ts';
 import type { Taxonomy } from '../../change-grammar/types.ts';
-import { classifyCommits } from '../classify.ts';
+import { consolidateBranch } from '../consolidate-branch.ts';
 import type { RawCommit } from '../read-commits.ts';
 
 const TAXONOMY: Taxonomy = {
@@ -18,9 +18,9 @@ const TAXONOMY: Taxonomy = {
 
 const NODES = compileTemplate('[[{scope}|]{type}: ]{title}');
 
-describe(classifyCommits, () => {
+describe(consolidateBranch, () => {
   it('lets one feat speak for a branch carrying three fixes', () => {
-    const result = classifyCommits(
+    const result = consolidateBranch(
       buildCommits([
         'agents|fix: Correct the guard',
         'agents|feat: Add the parser',
@@ -31,32 +31,32 @@ describe(classifyCommits, () => {
       TAXONOMY,
     );
 
-    expect(result.head).toStrictEqual({ scope: 'agents', type: 'feat' });
+    expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
     expect(result.entries).toHaveLength(4);
   });
 
-  it('carries the breaking marker onto the head', () => {
-    const result = classifyCommits(
+  it('carries the breaking marker onto the consolidated record', () => {
+    const result = consolidateBranch(
       buildCommits(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']),
       NODES,
       TAXONOMY,
     );
 
-    expect(result.head).toStrictEqual({ breaking: true, scope: 'agents', type: 'sec' });
+    expect(result.consolidatedRecord).toStrictEqual({ breaking: true, scope: 'agents', type: 'sec' });
   });
 
   it('names no scope where the entries disagree on one', () => {
-    const result = classifyCommits(
+    const result = consolidateBranch(
       buildCommits(['agents|feat: Add the parser', 'kb|feat: Add the reader']),
       NODES,
       TAXONOMY,
     );
 
-    expect(result.head).toStrictEqual({ type: 'feat' });
+    expect(result.consolidatedRecord).toStrictEqual({ type: 'feat' });
   });
 
   it('reports a fix that carries the marker its policy forbids, leaving the entry as written', () => {
-    const result = classifyCommits(buildCommits(['agents|fix!: Correct the guard']), NODES, TAXONOMY);
+    const result = consolidateBranch(buildCommits(['agents|fix!: Correct the guard']), NODES, TAXONOMY);
 
     expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'forbidden', type: 'fix' }]);
     expect(result.entries[0]?.record).toStrictEqual({
@@ -68,29 +68,29 @@ describe(classifyCommits, () => {
   });
 
   it('reports a drop that omits the marker its policy requires', () => {
-    const result = classifyCommits(buildCommits(['agents|drop: Remove the legacy reader']), NODES, TAXONOMY);
+    const result = consolidateBranch(buildCommits(['agents|drop: Remove the legacy reader']), NODES, TAXONOMY);
 
     expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'required', type: 'drop' }]);
   });
 
   it('lists a subject no template matched and keeps it out of the entries', () => {
-    const result = classifyCommits(buildCommits(['agents|feat: Add the parser', 'wip']), NODES, TAXONOMY);
+    const result = consolidateBranch(buildCommits(['agents|feat: Add the parser', 'wip']), NODES, TAXONOMY);
 
-    expect(result.unclassified).toStrictEqual([{ commit: 'commit1', subject: 'wip' }]);
+    expect(result.unmatched).toStrictEqual([{ commit: 'commit1', subject: 'wip' }]);
     expect(result.entries).toHaveLength(1);
-    expect(result.head).toStrictEqual({ scope: 'agents', type: 'feat' });
+    expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
-  it('yields no head for a branch whose every subject went unmatched', () => {
-    const result = classifyCommits(buildCommits(['wip', 'more wip']), NODES, TAXONOMY);
+  it('yields no consolidated record for a branch whose every subject went unmatched', () => {
+    const result = consolidateBranch(buildCommits(['wip', 'more wip']), NODES, TAXONOMY);
 
-    expect(result.head).toBeUndefined();
+    expect(result.consolidatedRecord).toBeUndefined();
     expect(result.entries).toStrictEqual([]);
-    expect(result.unclassified).toHaveLength(2);
+    expect(result.unmatched).toHaveLength(2);
   });
 
-  it('yields no head for an empty range', () => {
-    expect(classifyCommits([], NODES, TAXONOMY).head).toBeUndefined();
+  it('yields no consolidated record for an empty range', () => {
+    expect(consolidateBranch([], NODES, TAXONOMY).consolidatedRecord).toBeUndefined();
   });
 
   it('takes a commit’s trailers in place of its subject', () => {
@@ -102,10 +102,10 @@ describe(classifyCommits, () => {
       },
     ];
 
-    const result = classifyCommits(commits, NODES, TAXONOMY);
+    const result = consolidateBranch(commits, NODES, TAXONOMY);
 
     expect(result.entries.map((entry) => entry.record.type)).toStrictEqual(['feat', 'fix']);
-    expect(result.head).toStrictEqual({ scope: 'agents', type: 'feat' });
+    expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
   it('reads a subject alongside another commit’s trailers', () => {
@@ -114,10 +114,10 @@ describe(classifyCommits, () => {
       { hash: 'plain', subject: 'agents|refactor: Extract the reader', trailers: [] },
     ];
 
-    const result = classifyCommits(commits, NODES, TAXONOMY);
+    const result = consolidateBranch(commits, NODES, TAXONOMY);
 
     expect(result.entries.map((entry) => entry.commit)).toStrictEqual(['condensed', 'plain']);
-    expect(result.head).toStrictEqual({ scope: 'agents', type: 'feat' });
+    expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 });
 

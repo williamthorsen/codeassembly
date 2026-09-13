@@ -31,20 +31,21 @@ node {harness_home_dir}/scripts/describe-change.mjs <subcommand> [flags]
 
 The bundle carries no shebang, so the `node` prefix is required. Each subcommand accepts only the flags that its section below lists and refuses any other as unknown, a flag that another subcommand takes included. A missing or unknown subcommand exits non-zero with a usage error that lists the subcommands. A run that succeeds writes one JSON object to stdout, and warnings and errors go to stderr.
 
-| Subcommand                                    | Reports                                                   | Reads                                                       |
-| --------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- |
-| [`render-titles`](#render-titles)             | Each surface's title, rendered from one record            | The templates, and the taxonomy where it is readable        |
-| [`parse-title`](#parse-title)                 | A rendered title, read back into its record               | The templates and the taxonomy                              |
-| [`consolidate-branch`](#consolidate-branch)   | A commit range's entries and the head they consolidate to | The templates, the taxonomy, and the commits                |
-| [`resolve-ticket-type`](#resolve-ticket-type) | The work type that a ticket's labels name                 | The label map                                               |
-| [`render-block`](#render-block)               | The `change-record` block that ends a pull-request body   | Nothing                                                     |
-| [`resolve-merge`](#resolve-merge)             | What a pull request merges as                             | The templates, the taxonomy, the label map, and the commits |
+| Subcommand                                              | Reports                                                 | Reads                                                       |
+| ------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| [`render-titles`](#render-titles)                       | Each surface's title, rendered from one record          | The templates, and the taxonomy where it is readable        |
+| [`parse-title`](#parse-title)                           | A rendered title, read back into its record             | The templates and the taxonomy                              |
+| [`consolidate-branch`](#consolidate-branch)             | A commit range's entries and their consolidated record  | The templates, the taxonomy, and the commits                |
+| [`resolve-ticket-type`](#resolve-ticket-type)           | The work type that a ticket's labels name               | The label map                                               |
+| [`resolve-effective-record`](#resolve-effective-record) | A record with its overrides applied, and its defects    | The taxonomy                                                |
+| [`render-block`](#render-block)                         | The `change-record` block that ends a pull-request body | Nothing                                                     |
+| [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
 
 ### What stops a run and what only warns
 
-- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type` and `render-block` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, and `render-block` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
-- An unreadable taxonomy draws a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, and `resolve-merge`.
+- An unreadable taxonomy draws a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `resolve-effective-record`, and `resolve-merge`.
 - A subcommand that reads the templates or the label map, run outside a repository, warns on stderr and anchors the `.agents/` and `.meta/label-map.json` lookups at the working directory, so the global templates still render.
 - A `title_format` resolving to anything but a string draws a warning on stderr, and the next source supplies the template.
 
@@ -112,7 +113,7 @@ The run refuses a surface whose template is empty, since there is nothing to rea
 
 ## `consolidate-branch`
 
-`consolidate-branch` reads a range of commits through `commit.title_format` and reports what the branch adds up to. Its one flag, `--base`, is required and names the base ref; the range is `{base-ref}..HEAD`.
+`consolidate-branch` reads a range of commits through `commit.title_format` and reports the branch's entries and their [consolidated record](./change-record.md#terms). Its one flag, `--base`, is required and names the base ref; the range is `{base-ref}..HEAD`.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base origin/main
@@ -130,8 +131,8 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
       "type": "feat"
     }
   ],
-  "head": { "breaking": false, "scope": "agents", "type": "feat" },
-  "unclassified": [{ "commit": "b5ce73f", "subject": "wip" }],
+  "consolidated_record": { "breaking": false, "scope": "agents", "type": "feat" },
+  "unmatched": [{ "commit": "b5ce73f", "subject": "wip" }],
   "violations": [{ "commit": "8d2227d", "policy": "forbidden", "type": "fix" }]
 }
 ```
@@ -140,17 +141,17 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
 
 **Each entry's `change` is the entry rendered back through `commit.title_format`.** It is the form that a `Change:` trailer and the change summary's `changes` field take verbatim, and it reads back to the same entry. A ticket reference stripped from the subject does not reappear in it.
 
-**A merge commit contributes no entry.** Its subject matches no template and its author cannot rewrite it, so reporting it as unclassifiable would train a reader to skim a list that exists to be read. The commits a merge brought in stay in the range on their own.
+**A merge commit contributes no entry.** Its subject matches no template and its author cannot rewrite it, so reporting it as unmatched would train a reader to skim a list that exists to be read. The commits a merge brought in stay in the range on their own.
 
-**A commit carrying `Change:` trailers contributes those entries and not its subject.** A condensed commit's subject is the head its trailers already consolidate to, so reading both would count the branch against itself. See [The `Change:` trailer](./change-record.md#the-change-trailer).
+**A commit carrying `Change:` trailers contributes those entries and not its subject.** A condensed commit's subject renders the record to which its trailers already consolidate, so reading both would count the branch against itself. See [The `Change:` trailer](./change-record.md#the-change-trailer).
 
-**The head ranks; it does not count.** One `feat` speaks for a branch carrying three `fix` commits, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. `head` is `null` where no entry was found, which is how a branch with no classified commits is told from one whose head names no scope. The head names no title: a caller takes that from the change summary.
+**The consolidated record ranks; it does not count.** One `feat` speaks for a branch carrying three `fix` commits, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. Every field of `consolidated_record` is `null` when no entry was found, which is how a branch with no entries is told from one whose consolidated record names no scope. The consolidated record names no title: a caller takes that from the change summary.
 
-**A subject no template matched is listed rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set the head is derived from.
+**A subject no template matched is listed in `unmatched` rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set that the consolidated record is derived from.
 
 **A violation is reported and the run continues.** A `fix!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. The commit is already written, so refusing here would block the work behind a rebase; the entry is reported as written and never normalized.
 
-The run refuses outright where no taxonomy is readable, since the head has nothing to rank against, and where `commit.title_format` is empty, since no template would match any subject.
+The run refuses outright if no taxonomy is readable, since the entries have nothing to rank against, and if `commit.title_format` is empty, since no template would match any subject.
 
 ## `resolve-ticket-type`
 
@@ -167,9 +168,45 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-ticket-type \
 
 **`ticket_type` is `null` where the labels name no type and where they name more than one.** Two type labels on one ticket say that nobody has decided which it is. A repository whose label map is absent or unparseable names no type, so its `ticket_type` is `null` as well.
 
+## `resolve-effective-record`
+
+`resolve-effective-record` applies a change summary's overrides to its consolidated record and reports the [effective record](./change-record.md#the-effective-record) with its defects. The record comes from `--title`, `--scope`, `--type`, and `--breaking`, and the author's overrides from `--override-scope`, `--override-type`, and `--override-breaking`. Every flag is optional.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs resolve-effective-record \
+  --scope agents --type feat --title "Add the parser" \
+  --override-type sec --override-breaking
+```
+
+```json
+{
+  "effective_record": {
+    "title": "Add the parser",
+    "scope": "agents",
+    "type": "sec",
+    "breaking": true,
+    "ticket_ref": null,
+    "pr_number": null
+  },
+  "defects": []
+}
+```
+
+**`effective_record` holds every field of a record.** `ticket_ref` and `pr_number` are always `null`, since only a merge knows them. Any other field that neither the record nor an override sets is `null`, apart from `breaking`, which is then `false`.
+
+**`defects` lists what would block approval of the effective record**:
+
+| Kind               | Meaning                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| `missing-type`     | The effective record names no type.                                                      |
+| `undeclared-type`  | `work-types.json` does not declare the effective type; `type` names it.                  |
+| `policy-violation` | The breaking marker disagrees with the type's `breakingPolicy`; `policy` names the rule. |
+
+`--type feat!` is accepted and splits into the bare type and the marker. `--override-type` takes a bare type and refuses one spelled with `!`; pass `--override-breaking` for a breaking override. An override flag whose value is blank sets no override. The run reads no title template and no repository, so a defective template does not stop it, and it refuses if no taxonomy is readable.
+
 ## `render-block`
 
-`render-block` renders the fenced `change-record` block that ends a pull-request body. The head comes from `--title`, `--scope`, `--type`, and `--breaking`, and the author's overrides from `--override-scope`, `--override-type`, and `--override-breaking`. Every flag is optional.
+`render-block` renders the fenced `change-record` block that ends a pull-request body. `--title` is required. The consolidated record comes from `--scope`, `--type`, and `--breaking`, and the author's overrides from `--override-scope`, `--override-type`, and `--override-breaking`; each of these is optional.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs render-block \
@@ -181,11 +218,11 @@ The output is JSON whose `block` holds the fenced block, fences included:
 
 ````json
 {
-  "block": "```change-record\nhead:\n  scope: agents\n  type: feat\n  title: Add the parser\noverrides:\n  type: sec\n  breaking: true\n```"
+  "block": "```change-record\ntitle: Add the parser\nconsolidated_record:\n  scope: agents\n  type: feat\noverrides:\n  type: sec\n  breaking: true\n```"
 }
 ````
 
-`--type feat!` is accepted and splits into the bare type and the marker. `--override-type` takes a bare type and refuses one spelled with `!`; pass `--override-breaking` for a breaking override. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
+The run refuses a missing or blank `--title`. `--type feat!` is accepted and splits into the bare type and the marker. `--override-type` takes a bare type and refuses one spelled with `!`; pass `--override-breaking` for a breaking override. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
 
 ## `resolve-merge`
 
@@ -219,19 +256,13 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
 }
 ```
 
-**`head` is the effective head**, resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states. `recorded` is the block's head, `derived` is the head to which the commits in `{base-ref}..{head}` consolidate, and `labeled` is the head that the labels name where no block is readable and the labels name a type or a scope. Each is `null` otherwise.
+**`head` is the effective head**, resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states. `recorded` is the block's consolidated record, `derived` is the record to which the commits in `{base-ref}..{head}` consolidate, and `labeled` is the head that the labels name where no block is readable and the labels name a type or a scope. Each is `null` otherwise.
 
 **`title` is the bare title.** The pull-request title inverts through `pr.title_format`, which also yields `ticket_ref`. A scope and type read from the title, through `pr.title_format` where it names `{type}` and otherwise through `commit.title_format`, never stay in `title`. `merge_title` renders `title` through `merge.title_format` with the effective head, the marker included, and falls back to `title` where that template is empty.
 
 **`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that hold only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
 
-**`defects` block approval.** Each names a head that the author must override before the merge is offered:
-
-| Kind               | Meaning                                                                                  |
-| ------------------ | ---------------------------------------------------------------------------------------- |
-| `unclassified`     | The effective head names no type.                                                        |
-| `undeclared-type`  | `work-types.json` does not declare the effective type; `type` names it.                  |
-| `policy-violation` | The breaking marker disagrees with the type's `breakingPolicy`; `policy` names the rule. |
+**`defects` block approval.** Each names a head that the author must override before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists.
 
 **`notices` inform the gate** and block nothing:
 
@@ -243,7 +274,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
 | `candidate-head`         | The pull-request title carries a scope and type that differ from the effective head; `head` names them.                                          |
 | `title-fallback`         | The pull-request title does not invert through `pr.title_format`; `source` names whether the recorded title or the pull-request title stands in. |
 
-**Each override outranks every source on its own dimension.** `--override-scope *` clears the scope. `--override-type` takes a bare type and keeps the resolved marker, while `--override-breaking` and `--no-override-breaking` set the marker in either direction. `--override-title` replaces the bare title, and no candidate head is read from the pull-request title.
+**Each override outranks every source on its own field**, as [The effective record](./change-record.md#the-effective-record) states; `--no-override-breaking` removes the marker. `--override-title` replaces the bare title, and no candidate head is read from the pull-request title.
 
 **A head commit that the local repository lacks is not an error.** The run reports `derivation-unavailable` and resolves from the record or the labels, so fetch the head before resolving. Any other git failure stops the run.
 

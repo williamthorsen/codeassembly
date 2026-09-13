@@ -1,16 +1,15 @@
+import { applyOverrides, type Overrides } from '../change-grammar/apply-overrides.ts';
 import { compileTemplate } from '../change-grammar/compile-template.ts';
 import { parse } from '../change-grammar/parse.ts';
 import { render } from '../change-grammar/render.ts';
-import { SCOPE_WILDCARD } from '../change-grammar/tokens.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
-import { validate } from '../change-grammar/validate.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
 import {
   type ChangeRecordBlock,
   type ChangeRecordBlockReading,
-  type RecordOverrides,
   stripChangeRecordBlocks,
 } from './change-record-block.ts';
+import { findDefects, type RecordDefect } from './find-defects.ts';
 import type { HeadOutcome, Surface } from './types.ts';
 
 /**
@@ -23,8 +22,7 @@ import type { HeadOutcome, Surface } from './types.ts';
  * Without a readable block, the type and its breaking marker come together from the labels where a type label resolved
  * and otherwise from the derivation, and the scope resolves on its own the same way; a disagreeing derivation is shown.
  *
- * The record's overrides then apply to the winning head, and the caller's overrides apply last, each dimension on its
- * own: a scope of `*` clears the scope, and `breaking` sets the marker in either direction.
+ * The record's overrides then apply to the winning head, and the caller's overrides apply last, through `applyOverrides`.
  *
  * The bare title comes from inverting the pull-request title through `pr.title_format`. A scope and type read from it,
  * through that template where it names `{type}` and otherwise through `commit.title_format`, never stay in the title;
@@ -45,10 +43,10 @@ export function resolveMerge(input: MergeInput): MergeReport {
   const resolved =
     record === undefined
       ? chooseFromLabels({ derived, labeled, notices })
-      : applyRecordOverrides(chooseFromRecord({ derived, notices, record }), record);
+      : applyOverrides(chooseFromRecord({ derived, notices, record }), record.overrides ?? {});
   const head = applyOverrides(resolved, input.overrides);
 
-  const { candidate, ticketRef, title } = resolveTitle({ ...input, head, notices, recordTitle: record?.head.title });
+  const { candidate, ticketRef, title } = resolveTitle({ ...input, head, notices, recordTitle: record?.title });
   if (candidate !== undefined) {
     notices.push({ head: toOutcome(candidate), kind: 'candidate-head' });
   }
@@ -61,7 +59,7 @@ export function resolveMerge(input: MergeInput): MergeReport {
   };
   return {
     head: toOutcome(head),
-    recorded: record === undefined ? null : toOutcome(toHead(record.head)),
+    recorded: record === undefined ? null : toOutcome(toHead(record.consolidatedRecord ?? {})),
     derived: derived === undefined ? null : toOutcome(derived),
     labeled:
       record === undefined && (labeled.scope !== undefined || labeled.type !== undefined) ? toOutcome(labeled) : null,
@@ -73,12 +71,6 @@ export function resolveMerge(input: MergeInput): MergeReport {
     notices,
   };
 }
-
-/** A condition that blocks approval until the author overrides the head. */
-export type MergeDefect =
-  | { kind: 'policy-violation'; policy: 'forbidden' | 'required'; type: string }
-  | { kind: 'unclassified' }
-  | { kind: 'undeclared-type'; type: string };
 
 /** What a merge resolves from. */
 export interface MergeInput {
@@ -105,18 +97,14 @@ export type MergeNotice =
   | { kind: 'title-fallback'; source: 'pr-title' | 'record' };
 
 /** The author's overrides, each outranking every other source for its own dimension. */
-export interface MergeOverrides {
-  breaking?: boolean;
-  /** A scope of `*` clears the scope. */
-  scope?: string;
+export interface MergeOverrides extends Overrides {
   title?: string;
-  type?: string;
 }
 
 /** The resolved merge, in the shape the JSON output names. */
 export interface MergeReport {
   body: string;
-  defects: MergeDefect[];
+  defects: RecordDefect[];
   derived: HeadOutcome | null;
   head: HeadOutcome;
   labeled: HeadOutcome | null;
@@ -128,24 +116,6 @@ export interface MergeReport {
 }
 
 // region | Helpers
-
-/** Applies the author's overrides to a head, dimension by dimension. */
-function applyOverrides(head: ChangeRecord, overrides: MergeOverrides): ChangeRecord {
-  const scope = overrides.scope === undefined ? head.scope : readScopeOverride(overrides.scope);
-  const type = overrides.type ?? head.type;
-  const breaking = overrides.breaking ?? head.breaking === true;
-  return { ...(breaking && { breaking }), ...(scope !== undefined && { scope }), ...(type !== undefined && { type }) };
-}
-
-/** Applies the record's overrides to the winning head, which can add the breaking marker but not remove it. */
-function applyRecordOverrides(head: ChangeRecord, block: ChangeRecordBlock): ChangeRecord {
-  const overrides: RecordOverrides = block.overrides ?? {};
-  return applyOverrides(head, {
-    ...(overrides.breaking === true && { breaking: true }),
-    ...(overrides.scope !== undefined && { scope: overrides.scope }),
-    ...(overrides.type !== undefined && { type: overrides.type }),
-  });
-}
 
 /**
  * Chooses the head without a readable block: the type and its marker from the labels where a type label resolved,
@@ -179,7 +149,7 @@ function chooseFromRecord(input: {
   notices: MergeNotice[];
   record: ChangeRecordBlock;
 }): ChangeRecord {
-  const recorded = toHead(input.record.head);
+  const recorded = toHead(input.record.consolidatedRecord ?? {});
   if (input.derived === undefined || isSameHead(recorded, input.derived)) {
     return recorded;
   }
@@ -201,18 +171,6 @@ function composeBody(body: string): string {
     lines.pop();
   }
   return lines.join('\n').trim();
-}
-
-/** Reports the defect that blocks approval of the effective head, if any. */
-function findDefects(head: ChangeRecord, taxonomy: Taxonomy): MergeDefect[] {
-  if (head.type === undefined) {
-    return [{ kind: 'unclassified' }];
-  }
-  if (taxonomy.types.every((entry) => entry.key !== head.type)) {
-    return [{ kind: 'undeclared-type', type: head.type }];
-  }
-  const violation = validate(head, taxonomy);
-  return violation === undefined ? [] : [{ kind: 'policy-violation', policy: violation.policy, type: violation.type }];
 }
 
 /**
@@ -241,11 +199,6 @@ function isSameHead(left: ChangeRecord, right: ChangeRecord): boolean {
   return (
     left.scope === right.scope && left.type === right.type && (left.breaking === true) === (right.breaking === true)
   );
-}
-
-/** Reads a scope override, where `*` names no scope. */
-function readScopeOverride(scope: string): string | undefined {
-  return scope === SCOPE_WILDCARD ? undefined : scope;
 }
 
 /**

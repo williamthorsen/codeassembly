@@ -10,16 +10,18 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 
+import { applyOverrides } from '../change-grammar/apply-overrides.ts';
 import { compileTemplate } from '../change-grammar/compile-template.ts';
 import { parse } from '../change-grammar/parse.ts';
 import { render } from '../change-grammar/render.ts';
-import { BREAKING_MARKER } from '../change-grammar/tokens.ts';
+import { BREAKING_MARKER, normalizeChangeRecord } from '../change-grammar/tokens.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
 import { readChangeRecordBlock, type RecordOverrides, renderChangeRecordBlock } from './change-record-block.ts';
-import { classifyCommits } from './classify.ts';
+import { consolidateBranch } from './consolidate-branch.ts';
+import { findDefects } from './find-defects.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readLabelMap, resolveLabeledHead } from './read-label-map.ts';
@@ -32,6 +34,7 @@ import {
   type ParseTitleOutcome,
   type RenderBlockOutcome,
   type RenderedTitles,
+  type ResolveEffectiveRecordOutcome,
   type ResolveMergeArgs,
   type Subcommand,
   type Surface,
@@ -39,7 +42,7 @@ import {
   type TicketTypeOutcome,
 } from './types.ts';
 
-/** The flags that set an override, which a `change-record` block records and a merge applies. */
+/** The flags that set an override, which a `change-record` block records and a resolved record applies. */
 const OVERRIDE_FLAGS: readonly FlagSpec[] = [
   { name: 'override-breaking', takesValue: false },
   { name: 'override-scope', takesValue: true },
@@ -70,6 +73,7 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
   'parse-title': { flags: [], read: readParseTitleArgs },
   'consolidate-branch': { flags: [{ name: 'base', takesValue: true }], read: readConsolidateBranchArgs },
   'resolve-ticket-type': { flags: [{ name: 'ticket-label', takesValue: true }], read: readResolveTicketTypeArgs },
+  'resolve-effective-record': { flags: [...RECORD_FLAGS, ...OVERRIDE_FLAGS], read: readResolveEffectiveRecordArgs },
   'render-block': { flags: [...RECORD_FLAGS, ...OVERRIDE_FLAGS], read: readRenderBlockArgs },
   'resolve-merge': {
     flags: [
@@ -115,8 +119,9 @@ if (isEntryPoint()) {
  * Parses the helper's argv into what the run asks for. The first argument names the subcommand, and the rest are
  * scanned against that subcommand's flags alone, so a flag that only another subcommand takes is refused as unknown.
  *
- * `render-titles` and `render-block` accept `--type feat!`, which the engine splits into the bare type and the breaking
- * marker. An `--override-type` carrying the marker is refused, since the breaking overrides set it.
+ * `render-titles`, `resolve-effective-record`, and `render-block` accept `--type feat!`, which the engine splits into the
+ * bare type and the breaking marker. An `--override-type` carrying the marker is refused, since the breaking overrides
+ * set it.
  *
  * @internal - Exported to allow testing.
  */
@@ -132,11 +137,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Runs the helper end to end: parses args, then runs the subcommand they name, loading only what that subcommand reads.
  * A subcommand that loads the title templates refuses any template the engine cannot round-trip, so a defective template
- * refuses neither `render-block` nor `resolve-ticket-type`, which load none.
+ * refuses none of `render-block`, `resolve-effective-record`, and `resolve-ticket-type`, which load none.
  *
  * A subcommand that reads the repository warns outside one and anchors its lookups at `cwd` rather than failing, since a
  * title still renders from the global templates. An unreadable taxonomy warns under `render-titles`, which renders
- * without one, and refuses every other subcommand that loads templates.
+ * without one, and refuses `resolve-effective-record` and every other subcommand that loads templates.
  *
  * @internal - Exported to allow testing.
  */
@@ -151,6 +156,8 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
       return { output: { block: renderChangeRecordBlock(args.block) }, warnings: [] };
     case 'render-titles':
       return runRenderTitles(args.record, input);
+    case 'resolve-effective-record':
+      return runResolveEffectiveRecord(args, input);
     case 'resolve-merge':
       return runResolveMerge(args.merge, input);
     case 'resolve-ticket-type':
@@ -174,6 +181,7 @@ export interface DescribeResult {
     | ParseTitleOutcome
     | RenderBlockOutcome
     | RenderedTitles
+    | ResolveEffectiveRecordOutcome
     | TicketTypeOutcome;
   warnings: string[];
 }
@@ -219,8 +227,8 @@ async function deriveMergeHead(input: {
   }
   try {
     const commits = await readCommits({ baseRef: input.args.baseRef, cwd: input.cwd, headRef: input.args.headCommit });
-    const { head } = classifyCommits(commits, compileTemplate(input.template), input.taxonomy);
-    return { head: head ?? {}, kind: 'derived' };
+    const { consolidatedRecord } = consolidateBranch(commits, compileTemplate(input.template), input.taxonomy);
+    return { head: consolidatedRecord ?? {}, kind: 'derived' };
   } catch (error) {
     if (error instanceof MissingCommitError) {
       return { kind: 'unavailable', reason: `the head commit ${error.ref} is not in the local repository` };
@@ -327,17 +335,31 @@ function readRecordFlags(flags: readonly MatchedFlag[]): ChangeRecord {
   };
 }
 
-/** Reads the `render-block` invocation: the head's record flags and the author's overrides. */
-function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
-  refusePositionals(positionals);
+/**
+ * Reads the record flags and the override flags that `render-block` and `resolve-effective-record` share. An override
+ * flag whose value is blank sets no override.
+ */
+function readRecordWithOverrides(flags: readonly MatchedFlag[]): { overrides: RecordOverrides; record: ChangeRecord } {
   const values = valueFlagMap(flags);
+  const scope = values['override-scope']?.trim();
   const type = readOverrideType(values);
   const overrides: RecordOverrides = {
     ...(flags.some((flag) => flag.name === 'override-breaking') && { breaking: true }),
-    ...(values['override-scope'] !== undefined && { scope: values['override-scope'] }),
-    ...(type !== undefined && { type }),
+    ...(scope !== undefined && scope !== '' && { scope }),
+    ...(type !== undefined && type !== '' && { type }),
   };
-  return { block: { head: readRecordFlags(flags), overrides }, subcommand: 'render-block' };
+  return { overrides, record: readRecordFlags(flags) };
+}
+
+/** Reads the `render-block` invocation: the required title, the consolidated record's flags, and the author's overrides. */
+function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  const title = readRequiredValue('render-block', valueFlagMap(flags), 'title');
+  const {
+    overrides,
+    record: { title: _title, ...consolidatedRecord },
+  } = readRecordWithOverrides(flags);
+  return { block: { consolidatedRecord, overrides, title }, subcommand: 'render-block' };
 }
 
 /**
@@ -361,6 +383,12 @@ function readRequiredValue(subcommand: Subcommand, values: Record<string, string
     throw new Error(`${subcommand} requires --${name}`);
   }
   return value;
+}
+
+/** Reads the `resolve-effective-record` invocation: the record flags and the author's overrides. */
+function readResolveEffectiveRecordArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return { ...readRecordWithOverrides(flags), subcommand: 'resolve-effective-record' };
 }
 
 /** Reads the `resolve-merge` invocation: the pull request's range and inputs, and the author's overrides. */
@@ -480,10 +508,11 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
   }
   const commits = await readCommits({ baseRef, cwd: projectRoot });
   const nodes = compileTemplate(templates.commit);
-  const classification = classifyCommits(commits, nodes, taxonomy);
+  const consolidation = consolidateBranch(commits, nodes, taxonomy);
+  const { consolidatedRecord } = consolidation;
 
   const output: ConsolidateBranchOutcome = {
-    entries: classification.entries.map((entry) => ({
+    entries: consolidation.entries.map((entry) => ({
       breaking: entry.record.breaking === true,
       change: render(nodes, entry.record),
       commit: entry.commit,
@@ -491,16 +520,16 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
       title: entry.record.title ?? null,
       type: entry.record.type ?? null,
     })),
-    head:
-      classification.head === undefined
-        ? null
+    consolidated_record:
+      consolidatedRecord === undefined
+        ? { breaking: null, scope: null, type: null }
         : {
-            breaking: classification.head.breaking === true,
-            scope: classification.head.scope ?? null,
-            type: classification.head.type ?? null,
+            breaking: consolidatedRecord.breaking === true,
+            scope: consolidatedRecord.scope ?? null,
+            type: consolidatedRecord.type ?? null,
           },
-    unclassified: classification.unclassified,
-    violations: classification.violations,
+    unmatched: consolidation.unmatched,
+    violations: consolidation.violations,
   };
   return { output, warnings };
 }
@@ -528,6 +557,37 @@ async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Prom
       merge_title: renderTemplate(templates.merge, record),
     },
     warnings,
+  };
+}
+
+/**
+ * Applies the overrides to the record and reports the effective record with its defects. Only the taxonomy is loaded,
+ * which the defects are checked against, so the run reads no title template and no repository.
+ */
+async function runResolveEffectiveRecord(
+  args: { overrides: RecordOverrides; record: ChangeRecord },
+  input: DescribeInput,
+): Promise<DescribeResult> {
+  const taxonomy = await loadTaxonomy(input.dataDir);
+  if (taxonomy === null) {
+    throw new Error(
+      `resolve-effective-record checks types against the taxonomy; none is readable under ${input.dataDir}`,
+    );
+  }
+  const effective = applyOverrides(normalizeChangeRecord(args.record), args.overrides);
+  return {
+    output: {
+      effective_record: {
+        title: effective.title ?? null,
+        scope: effective.scope ?? null,
+        type: effective.type ?? null,
+        breaking: effective.breaking === true,
+        ticket_ref: null,
+        pr_number: null,
+      },
+      defects: findDefects(effective, taxonomy),
+    },
+    warnings: [],
   };
 }
 

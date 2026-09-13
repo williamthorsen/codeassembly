@@ -134,7 +134,7 @@ If the body is thin, compose fresh content through the drafter and cutter that `
 
 Resolve the tier by looking up the report's `head.type` in [work-types.json](../_data/work-types.json).
 
-Where `defects` leaves the head with no declared type (`unclassified` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change owes a public-tier reader, in a body that reaches the merge commit, the changelog, and release notes.
+If `defects` leaves the head with no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change owes a public-tier reader, in a body that reaches the merge commit, the changelog, and release notes.
 
 Dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -178,7 +178,7 @@ The composed body reaches the approval gate in step 6, where the user reads it b
 
 Settle every entry in `defects` before showing the proposal, one question at a time:
 
-- **`unclassified` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types among the report's `recorded`, `derived`, and `labeled` heads and any `candidate-head` notice, plus an "other (specify)" option.
+- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types among the report's `recorded`, `derived`, and `labeled` heads and any `candidate-head` notice, plus an "other (specify)" option.
 - **`policy-violation`**: Name the type and the policy that it breaks. Offer the marker that the policy asks for (`--no-override-breaking` where it forbids the marker, `--override-breaking` where it requires it), the types from the list above, and an "other (specify)" option.
 
 Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`. The helper refuses a type carrying `!`, so passing the answer through would refuse the run rather than settle the defect.
