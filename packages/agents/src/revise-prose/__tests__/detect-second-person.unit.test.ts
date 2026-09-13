@@ -50,6 +50,7 @@ describe(detectSecondPersonPronouns, () => {
     'content/skills/revise-prose/notes.md',
     'content/subagents/prose-reviser.ts',
     'docs/agents/guide.md',
+    'content/_partials/concision.md',
   ])('reports a pronoun in %s, which is no skill or subagent body', (file) => {
     expect(detect('You read each file whole.', file)).toHaveLength(1);
   });
