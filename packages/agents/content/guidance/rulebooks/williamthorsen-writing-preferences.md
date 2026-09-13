@@ -26,6 +26,8 @@ Don't use em-dashes; use appropriate punctuation instead. A dash separating an i
 
 ## Second person
 
+<!-- rule: second-person -->
+
 Documentation describes; it does not address. Never write `you`, `your`, `yours`, or `yourself`, and never the contractions `you're`, `you've`, `you'll`, or `you'd`.
 
 Imperative mood is untouched, because it does not carry a pronoun: "Run the formatter" directs the reader without naming one.
@@ -48,5 +50,7 @@ Use sentence case for titles, headings, section headers, steps, labels, and inte
 - "Customizing the Status Adapter for a new backend", not "Customizing the Status Adapter for a New Backend"
 
 ## `where`
+
+<!-- rule: where -->
 
 Use `where` only for a place; for any other relation, use the word that most clearly expresses it.

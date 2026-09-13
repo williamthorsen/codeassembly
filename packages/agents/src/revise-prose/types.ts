@@ -5,7 +5,7 @@
 // needs to decide without reading the file: the sentence, the matched phrase, and the shape that ranks the cost.
 
 /** A detected site, discriminated on the rule whose detector reported it. */
-export type Candidate = EmDashCandidate | ObjectRelativeCandidate;
+export type Candidate = EmDashCandidate | ObjectRelativeCandidate | SecondPersonCandidate | WhereCandidate;
 
 /** What every candidate carries, whichever rule found it. */
 export interface CandidateBase {
@@ -47,8 +47,18 @@ export interface ObjectRelativeCandidate extends CandidateBase {
   verb: string;
 }
 
+/** One second-person site. Its phrase is the whole sentence, one pronoun being nothing a rejection could resolve against. */
+export interface SecondPersonCandidate extends CandidateBase {
+  rule: 'second-person';
+}
+
+/** One `where` site. Its phrase is the whole sentence, one word being nothing a rejection could resolve against. */
+export interface WhereCandidate extends CandidateBase {
+  rule: 'where';
+}
+
 /** A rule the sweep detects. A rule has a detector; a unit, which the record tracks, need not. */
-export type RuleId = 'em-dash' | 'reduced-object-relative';
+export type RuleId = 'em-dash' | 'reduced-object-relative' | 'second-person' | 'where';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
 export interface Batch {
@@ -73,12 +83,17 @@ export interface ScannedFile {
   bytes: number;
 }
 
-/** What the record holds for one unit: the version swept, when it was last swept, and the path roots covered at that version. */
+/**
+ * What the record holds for one unit: the version swept, when it was last swept, the detector rules that its sweeps
+ * ran, and the path roots covered at that version.
+ */
 export interface UnitCoverage {
   /** The unit's version at the time of the sweep, opaque and never parsed as semver. */
   version: string;
   /** The ISO calendar date of the most recent sweep at this version. */
   'swept-at': string;
+  /** The rules whose detectors nominated candidates for these roots, sorted; empty when no detector ran. */
+  rules: readonly string[];
   /** The path roots that sweeps at this version have covered, `.` where one covered the repository. */
   roots: readonly string[];
 }
@@ -138,8 +153,8 @@ export interface FoldRejection {
 export interface RunFold {
   /** The ISO calendar date to record the sweep under. */
   sweptAt: string;
-  /** Per unit, the version swept and the path roots covered. */
-  units: Record<string, { version: string; roots: readonly string[] }>;
+  /** Per unit, the version swept, the detector rules the run named for it, and the path roots covered. */
+  units: Record<string, { version: string; rules: readonly string[]; roots: readonly string[] }>;
   rejections: readonly FoldRejection[];
 }
 

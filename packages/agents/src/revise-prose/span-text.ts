@@ -4,6 +4,7 @@
  * A span preserves its source's own newlines, so an offset within it maps back to a source line by counting the
  * newlines before it. Every function here reads offsets in that coordinate space.
  */
+import type { ProseSpan } from './types.ts';
 
 /** Counts the newlines in `text`. */
 export function countNewlines(text: string): number {
@@ -47,6 +48,34 @@ export function findCodeSpans(text: string): ReadonlyArray<{ start: number; end:
   }
 
   return spans;
+}
+
+/**
+ * Returns each sentence of a span that holds a match of `pattern` outside an inline code span, in reading order, with
+ * the source line on which the sentence begins. A sentence holding two matches is returned once, since a rule whose
+ * phrase is the sentence would otherwise report two candidates adjudicating the same text. `pattern` must carry the
+ * global flag.
+ */
+export function findMatchingSentences(span: ProseSpan, pattern: RegExp): Array<{ line: number; sentence: string }> {
+  const codeSpans = findCodeSpans(span.text);
+  const sentences: Array<{ line: number; sentence: string }> = [];
+  let reportedSentenceStart = -1;
+
+  for (const match of span.text.matchAll(pattern)) {
+    const index = match.index;
+    if (codeSpans.some((code) => index >= code.start && index < code.end)) continue;
+
+    const bounds = findSentenceBounds(span.text, index, index + match[0].length);
+    if (bounds.start === reportedSentenceStart) continue;
+    reportedSentenceStart = bounds.start;
+
+    sentences.push({
+      line: span.line + countNewlinesBefore(span.text, bounds.start),
+      sentence: flattenWhitespace(span.text.slice(bounds.start, bounds.end)),
+    });
+  }
+
+  return sentences;
 }
 
 /** Returns the sentence containing the range `start` to `end`, with its whitespace flattened. */
