@@ -133,7 +133,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
   ],
   "consolidated_record": { "breaking": false, "scope": "agents", "type": "feat" },
   "unmatched": [{ "commit": "b5ce73f", "subject": "wip" }],
-  "violations": [{ "commit": "8d2227d", "policy": "forbidden", "type": "fix" }]
+  "violations": [{ "commit": "8d2227d", "policy": "forbidden", "type": "refactor" }]
 }
 ```
 
@@ -149,7 +149,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
 
 **A subject no template matched is listed in `unmatched` rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set that the consolidated record is derived from.
 
-**A violation is reported and the run continues.** A `fix!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. The commit is already written, so refusing here would block the work behind a rebase; the entry is reported as written and never normalized.
+**A violation is reported and the run continues.** A `refactor!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. The commit is already written, so refusing here would block the work behind a rebase; the entry is reported as written and never normalized.
 
 The run refuses outright if no taxonomy is readable, since the entries have nothing to rank against, and if `commit.title_format` is empty, since no template would match any subject.
 
