@@ -401,12 +401,12 @@ describe('consolidate-branch', () => {
     });
   });
 
-  it('reports a fix carrying the marker its policy forbids', async () => {
-    const { cwd, home } = await makeCommittedRepo(['agents|fix!: Correct the guard']);
+  it('reports a refactor carrying the marker its policy forbids', async () => {
+    const { cwd, home } = await makeCommittedRepo(['agents|refactor!: Restructure the guard']);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
 
-    expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'fix' }] });
+    expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'refactor' }] });
   });
 
   it('yields a consolidated record whose fields are all null for a range holding no commits', async () => {
@@ -641,8 +641,8 @@ describe('resolve-effective-record', () => {
       name: 'names an undeclared type',
     },
     {
-      argv: ['--type', 'fix', '--override-breaking'],
-      defects: [{ kind: 'policy-violation', policy: 'forbidden', type: 'fix' }],
+      argv: ['--type', 'refactor', '--override-breaking'],
+      defects: [{ kind: 'policy-violation', policy: 'forbidden', type: 'refactor' }],
       name: 'carries a marker that its type forbids',
     },
   ])('reports the defect of an effective record that $name', async ({ argv, defects }) => {
