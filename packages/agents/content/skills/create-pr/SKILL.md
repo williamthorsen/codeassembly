@@ -11,14 +11,14 @@ dependencies:
 
 Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
 
-The pull request carries the change's classification as [the change record](../_data/change-record.md) states it.
+The pull request carries the change's consolidated record and overrides as [the change record](../_data/change-record.md) states them.
 
 ## Optional arguments
 
 - `--scope {scope}`: Override the scope that `summarize-change` derives.
 - `--type {type}`: Override the work type that `summarize-change` derives. A `!` on it (`feat!`) also adds the breaking marker.
 
-Both are passed to `summarize-change`, which records them as overrides beside the derived head.
+Both are passed to `summarize-change`, which records them as overrides beside the consolidated record.
 
 ## Process
 
@@ -43,11 +43,26 @@ Invoke the `{skill:summarize-change}` skill to produce a change summary, passing
 
 ### 4. Read frontmatter
 
-Read the YAML frontmatter from the change summary. Extract `title`, the derived head's `scope`, `type`, and `breaking`, and the `scope_override`, `type_override`, and `breaking_override` fields. Any of the last six may be absent.
+Read the YAML frontmatter from the change summary. Extract `title`, the consolidated record's `scope`, `type`, and `breaking`, and the `override_scope`, `override_type`, and `override_breaking` fields. Any of the last six may be absent.
 
 ### 5. Resolve the effective record
 
-Apply the overrides to the head per [The effective record](../_data/change-record.md#the-effective-record): the effective scope is `scope_override` where present, otherwise `scope`; the effective type is `type_override` where present, otherwise `type`; and the change is breaking where `breaking` or `breaking_override` is `true`. Steps 6 and 7 use the effective record, and step 9 records the head and the overrides apart.
+Resolve the effective record from the frontmatter:
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs resolve-effective-record \
+  --title "{title}" \
+  --scope "{scope}" \
+  --type "{type}" \
+  --breaking \
+  --override-scope "{override_scope}" \
+  --override-type "{override_type}" \
+  --override-breaking
+```
+
+Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Read `effective_record` from the output; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states its fields. Steps 6 and 7 use the effective record, and step 9 records the consolidated record and the overrides apart.
+
+If the call fails, emit `skill.completed` (payload `{"outcome":"stopped: effective record not resolved"}`) per [Lifecycle events](#lifecycle-events), then stop and report its error: the title and the labels both depend on the effective record.
 
 ### 6. Render PR title
 
@@ -98,7 +113,7 @@ If `ticket_ref` is non-null, append `\n\nCloses {ticket_ref}` to the body. The `
 
 If `ticket_ref` is null, skip: no closing line.
 
-Then render the `change-record` block from the change summary's head and its overrides as recorded, never from the effective record:
+Then render the `change-record` block from the change summary's consolidated record and its overrides as recorded, never from the effective record:
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs render-block \
@@ -106,13 +121,13 @@ node {harness_home_dir}/scripts/describe-change.mjs render-block \
   --scope "{scope}" \
   --type "{type}" \
   --breaking \
-  --override-scope "{scope_override}" \
-  --override-type "{type_override}" \
+  --override-scope "{override_scope}" \
+  --override-type "{override_type}" \
   --override-breaking \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
 ```
 
-Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only where that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even where the head carries only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found or the call fails, leave the block out and say so.
+Always pass `--title`, which the block requires. Omit each other flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even if the block carries only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found or the call fails, leave the block out and say so.
 
 ### 10. Call delegate
 
