@@ -148,7 +148,7 @@ export interface MergeOverrides extends Overrides {
 export interface MergeSourcesOutcome {
   block: BlockOutcome | null;
   commits: ConsolidatedRecordOutcome | null;
-  labels: ConsolidatedRecordOutcome;
+  labels: SourceRecordOutcome;
   pr_title: PullRequestTitleOutcome | null;
 }
 
@@ -170,6 +170,16 @@ export interface ResolveMergeOutcome {
   merge_title: string;
   notices: MergeNotice[];
   sources: MergeSourcesOutcome;
+}
+
+/**
+ * The scope, type, and breaking marker that a source names, in the shape the JSON output names, each `null` where the
+ * source does not determine it.
+ */
+export interface SourceRecordOutcome {
+  breaking: boolean | null;
+  scope: string | null;
+  type: string | null;
 }
 
 // region | Helpers
@@ -450,7 +460,7 @@ function toPullRequestTitleOutcome(record: PullRequestTitleRecord): PullRequestT
 }
 
 /** Renders a source's record in the shape the JSON output names, where a marker that the source leaves unset is `null`. */
-function toSourceRecordOutcome(record: ChangeRecord): ConsolidatedRecordOutcome {
+function toSourceRecordOutcome(record: ChangeRecord): SourceRecordOutcome {
   return { scope: record.scope ?? null, type: record.type ?? null, breaking: record.breaking ?? null };
 }
 
