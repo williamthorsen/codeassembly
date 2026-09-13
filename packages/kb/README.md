@@ -1,3 +1,5 @@
+<!-- readme-type: library -->
+
 # @williamthorsen/kb
 
 Foundation library for knowledge-base tooling.
@@ -25,7 +27,7 @@ The package exposes thirteen subpath entries plus a root barrel:
 | `./scaffold`        | The canonical set held by a store, and the idempotent writer over it           |
 | `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
 | `./taxonomy`        | `.kb/taxonomy.yaml` loading, comment-preserving declaration, and path mapping  |
-| `./vault-integrity` | Type-blind `[[link]]` resolution and basename-uniqueness over a note set       |
+| `./vault-integrity` | Type-blind `[[link]]` scanning, resolution, and basename-uniqueness checks     |
 
 Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
 The library throws on errors; success/failure shaping is left to consumers.
@@ -116,6 +118,8 @@ missing files (when a path is given) throw.
 `checkVaultIntegrity(notes)` runs whole-vault, type-blind checks over a `{ path, body, bodyStartLine }[]` note set: an unresolved `[[link]]` is an error (`wikilinks.unresolved`), and a basename shared by two or more notes is one vault-wide warning (`wikilinks.basename`). `buildVaultIndex(notes)` builds the basename → paths index the layer and curate's wikilink rewriter share.
 
 A second argument, `{ foreignStores, sourceVisibility }`, resolves [store-qualified links](#linking-into-another-store) against the stores they name; supplied none, the layer treats every target as store-local, which is what `buildVaultIndex`'s other consumers get.
+
+`scanWikilinks(body)` yields each link in a note body, with its store qualifier and target separated, and is the single definition of what counts as a link. `lookupKey(target)` reduces a target to the key that `VaultIndex` uses. The subpath exports `checkVaultIntegrity`, `buildVaultIndex`, `scanWikilinks`, and `lookupKey`, and not the parse primitives from which they are built: A consumer that detects or rewrites links calls `scanWikilinks`.
 
 The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
 
