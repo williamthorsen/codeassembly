@@ -25,6 +25,6 @@ After a merge, say nothing about worktree or branch state and never offer to man
 
 When the work would be better done upstream, in a package or repository on which this one depends, the default order is upstream first: Merge the upstream change, publish it, upgrade the dependency here, then make the downstream change against the upgraded version. Propose that order, and do not propose merging a downstream workaround ahead of it.
 
-Downstream first reads as faster because something is merged sooner, but it requires two downstream changes rather than one: the workaround, then its removal once the upstream change is merged. It also commits the upstream decision to being made without the downstream requirement in hand, so upstream cannot weigh that requirement against its own constraints, and may settle on a shape that the consumer keeps working around.
+Downstream first reads as faster because something is merged sooner, but it requires two downstream changes rather than one: the workaround, then its removal once the upstream change is merged. It also forces upstream to decide without the downstream requirement in hand, so upstream cannot weigh that requirement against its own constraints, and may settle on a shape that the consumer keeps working around.
 
 The order remains the developer's call, and a condition can displace the default: an upstream that is unowned, unresponsive, or on a release cadence that will not accommodate the work. Name the condition and let them decide, rather than resolving it by reverting to downstream first.

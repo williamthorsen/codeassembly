@@ -12,7 +12,7 @@ members:
 
 # Recommended
 
-The public collection. Membership claims an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works.
+The public collection. Membership claims that an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works.
 
 Membership is per-artifact and enumerated in full rather than by dependency root, so the closure check reads a set that no artifact's dependency edges can extend unnoticed.
 

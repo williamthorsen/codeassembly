@@ -1,6 +1,6 @@
 ## Comment discipline
 
-These rules apply to every comment you write **into source**: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment, and the same audit applies to it.
+These rules apply to every comment that you write **into source**: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment, and the same audit applies to it.
 
 The reader is an engineer six months from now with no transcript, no session, and no memory of the change. Write for that reader.
 
@@ -16,7 +16,7 @@ Add descriptions of constants only if the description helps a reader understand 
 
 ### Three tests
 
-Apply all three to every comment you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Each one must justify its place.
+Apply all three to every comment that you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Each one must justify its place.
 
 **1. The stranger test: Would this interest only someone who watched the change happen?** Then cut it.
 
@@ -26,7 +26,7 @@ State the code as it **is**, in the present tense; never as it was, as it might 
 
 **2. The deletion test: Would a reader lose anything if the comment were gone?** Then cut it.
 
-A comment that paraphrases the line below it, restates the test's own name, or re-describes what a well-named function that it calls already documents tells the reader nothing. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
+A comment tells the reader nothing if it paraphrases the line below it, restates the test's own name, or re-describes what a well-named function that it calls already documents. Inline comments answer _why_, never _what_. One line by default; exceed it only when a genuinely multi-part constraint will not compress.
 
 **3. The one-location test: Is this fact already documented where it belongs?** Then cut it.
 
