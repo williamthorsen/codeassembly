@@ -8,7 +8,7 @@ This README is for maintainers of this directory. It is not referenced by any `<
 
 Inlined into every rendered platform guidance file via the directive expander, which puts it in every session that loads one of those files. It has no destination of its own; `install` deployed a copy to `~/.agents/AGENTS.md` until that tier was retired, and both `install` and `uninstall` now remove what it left there.
 
-A subagent loads no platform guidance file, so a section that its role's work needs is inlined from `_partials/` instead. This file composes from those same partials rather than restating them, which keeps the two routes from drifting: A section that reaches some subagent lives in a partial included by both hosts, and one that reaches none stays written out here. `content/test-utils/shared-doctrine-carriers.ts` records the per-role coverage, and `content/__tests__/shared-doctrine-reach.unit.test.ts` asserts it along with the order in which the sections render.
+A subagent loads no platform guidance file, so a section that its role's work needs is inlined from `_partials/` instead. This file composes from those same partials rather than restating them, which keeps the two routes from drifting: A section that reaches some subagent is in a partial included by both hosts, and one that reaches none stays written out here. `content/test-utils/shared-doctrine-carriers.ts` records the per-role coverage, and `content/__tests__/shared-doctrine-reach.unit.test.ts` asserts it along with the order in which the sections render.
 
 ## Ambient delivery: Harness regions
 

@@ -17,8 +17,8 @@ Never scaffold a flat `src/`; later readers would extend flatness as convention.
 
 Worked examples, not a closed set:
 
-- `integrations/`: code that interfaces with an external library
-- `portable/`: generic code, potentially extractable into a package of its own
+- `integrations/`: Code that interfaces with an external library
+- `portable/`: Generic code, potentially extractable into a package of its own
 - Domain-grouped feature directories, such as `services/`, `pages/`, and `components/`, subdivided by feature as they grow
 
 ## Tests

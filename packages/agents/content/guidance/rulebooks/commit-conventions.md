@@ -63,7 +63,7 @@ Pick the type that best describes the commit's dominant purpose. When more than 
 Whether a commit can take a breaking-change marker (`!`, e.g., `feat!`, `drop!`) is set per-type by the `breakingPolicy` field in `work-types.json`:
 
 - **`required`**: `drop`. Removing a public surface always breaks consumers; the marker is therefore mandatory.
-- **`optional`**: `feat`, `fix`, `sec`, `perf`. Any of these can break consumers, and the marker records when one does. A fix can break consumers who relied on the defective behavior, and a performance change can break a contract as the means of its gain.
+- **`optional`**: `feat`, `fix`, `sec`, `perf`. Any of these can break consumers, and the marker records when one does. A fix can break consumers who relied on the defective behavior, and a performance change can break a contract to achieve its gain.
 - **`forbidden`**: `deprecate` and every internal- and process-tier type. Deprecating a surface keeps it working, and removing it is a `drop`. Internal- and process-tier work does not face consumers; a change that breaks consumers faces them and therefore takes a public-tier type.
 
 ### AI agent instructions

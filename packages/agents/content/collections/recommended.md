@@ -12,11 +12,11 @@ members:
 
 # Recommended
 
-The public collection. Membership claims an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works.
+The public collection. Membership claims that an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works.
 
 Membership is per-artifact and enumerated in full rather than by dependency root, so the closure check reads a set that no artifact's dependency edges can extend unnoticed.
 
-The skills belong here on different grounds. A rulebook of the personal collection names `capture-feedback` in a body token, and `capture-feedback` names `capture-event` in another. Because no collection can be closed over an artifact of lesser standing, both were promoted. `capture-event`'s promotion was forced by that chain rather than chosen on its own merits. It is the one member to re-examine first. `capture-feedback` qualifies on its own terms: It names no store, declares the registry needed by a capture, and routes a record by a rule that any registry can answer.
+The skills belong here on different grounds. A rulebook of the personal collection names `capture-feedback` in a body token, and `capture-feedback` names `capture-event` in another. Because no collection can be closed over an artifact of lesser standing, both were promoted. `capture-event`'s promotion was forced by that chain rather than chosen on its own merits. It is the one member to re-examine first. `capture-feedback` qualifies on its own terms: It names no store, declares the registry needed by a capture, and sends a record to a store by a rule that any registry can resolve.
 
 `generated-content-policy` qualifies on its own terms too: What it states is a mechanism that every consumer meets, not a preference, and the guidance that a reader needs beyond the trigger is in the linked reference rather than in the ambient body loaded by every session.
 
