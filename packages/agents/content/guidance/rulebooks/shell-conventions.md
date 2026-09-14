@@ -2,7 +2,7 @@
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
 delivery: skill
-version: '3'
+version: '4'
 ---
 
 # Shell script conventions
@@ -100,9 +100,9 @@ main "$@"
 
 ### Strict mode does not catch an empty path
 
-`set -e` stops a script at a command that fails, and a command handed an empty path mostly succeeds. `cd ""` returns 0 and leaves the working directory where it was, so a script whose directory variable came out empty runs on, and every later relative write lands in the invoking directory instead of the one it meant. `rm -rf "$dir/"*` and `mkdir -p "$dir/sub"` read an empty value the same way.
+`set -e` stops a script at a command that fails, and a command handed an empty path mostly succeeds. `cd ""` returns 0 and leaves the working directory where it was, so a script whose directory variable came out empty runs on, and every later relative write goes to the invoking directory instead of the intended one. `rm -rf "$dir/"*` and `mkdir -p "$dir/sub"` read an empty value the same way.
 
-Read a path that must be non-empty as `${dir:?message}`, which aborts where the bare expansion continues. This holds wherever the value comes from, and it matters most for a directory a command produced, since that is where the empty value comes from a failure the script did not see.
+Read a path that must be non-empty as `${dir:?message}`, which aborts, whereas the bare expansion continues. This holds wherever the value comes from, and it matters most for a directory produced by a command, since in that case the empty value comes from a failure that the script did not see.
 
 ## Help and exit codes
 
@@ -174,7 +174,7 @@ esac
 ## Error messages
 
 - **Always to stderr**: `echo "..." >&2`
-- **Prefix with `$PROG:`**, so a reader of piped output can tell which script wrote the message.
+- **Prefix with `$PROG:`**, so that a reader of piped output can tell which script wrote the message.
 - **Be actionable**: Tell the user what to do, not just what went wrong.
 
 ```bash
@@ -203,7 +203,7 @@ Use `command -v` (POSIX), not `which` (non-standard behavior across platforms).
 
 ## The `functions/` library
 
-Reusable utilities belong in `functions/` and are sourced at runtime. Scripts resolve their own repo root so they always use co-versioned code, regardless of which worktree they run from:
+Reusable utilities belong in `functions/` and are sourced at runtime. Scripts resolve their own repo root so that they always use co-versioned code, regardless of which worktree they run from:
 
 ```bash
 _self="$0"; [[ "$_self" != */* ]] && _self="$(command -v "$0")"
@@ -241,26 +241,26 @@ Agent-specific modules belong in `agents/functions/`:
 
 The strict-mode rule above governs a standalone script. A shellspec hook is a function in a file that shellspec sources, and it cannot use `set -e`: The option is shell-global, so setting it inside a hook changes shellspec's own behavior for the rest of the run.
 
-Guard the step whose failure would let a later one act on bad state. A hook without a guard continues to its next statement after a failed one, and shellspec reports the hook's status only once every statement has run, so the writes have already happened by the time the failure is reported.
+Guard the step whose failure would let a later one act on bad state. A hook without a guard continues to its next statement after a failed one, and shellspec reports the hook's status only once every statement has run. By the time the failure is reported, the writes have already happened.
 
 That step is usually the one establishing the workspace. Once it succeeds, a later failure is contained inside the temporary directory, so the example below guards the first step and no other.
 
 ```bash
-# Bad: the bare call fails under an agent sandbox, leaving `tmpdir` empty, and the writes land in the invoking directory
+# Bad: The bare call fails under an agent sandbox, leaving `tmpdir` empty, and the writes go to the invoking directory
 setup_workspace() {
   tmpdir=$(mktemp -d)
   cd "$tmpdir"
   mkdir -p src
 }
 
-# Good: the hook returns at the failed step, and shellspec aborts the example before any write
+# Good: The hook returns at the failed step, and shellspec aborts the example before any write
 setup_workspace() {
   enter_tmpdir || return 1
   mkdir -p src
 }
 ```
 
-Return non-zero rather than calling `exit`: `return` is what shellspec reads as a failed hook. A failed `BeforeEach` aborts the example body, and `AfterEach` does not run after one, so a cleanup helper never sees a half-built workspace.
+Return non-zero rather than calling `exit`: `return` is what shellspec reads as a failed hook. Because a failed `BeforeEach` aborts the example body and `AfterEach` does not run after one, a cleanup helper never sees a half-built workspace.
 
 Build the workspace through the shared helpers in `spec/spec_helper.sh` rather than calling `mktemp` in the hook. `make_tmpdir` and `remove_tmpdir` create and remove a temporary directory; `enter_tmpdir` and `leave_tmpdir` additionally make it the working directory and restore the previous one.
 

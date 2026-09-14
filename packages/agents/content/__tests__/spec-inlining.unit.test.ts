@@ -55,7 +55,7 @@ const OPTION_FORMAT: Spec = {
     '**Your own cost never ranks the options.**',
     // What sorts an ordering question, stated as a test rather than a list of cases. An enumeration here contradicts
     // the gate it is appended to, which is how a combine-or-split call lost its recommendation.
-    'Where the order changes the code or the total effort',
+    'When the order changes the code or the total effort',
     // What the gate requires of the menu it produces for a timing-only ordering. Without it a menu satisfies the gate
     // while carrying the agent's lean, which the marker table's ■■□ row licenses.
     'render the options unmarked',
@@ -197,7 +197,7 @@ const DIFF_AUDIT_PARTIAL = '_partials/diff-audit-checklist.md';
 /** Phrases distinctive enough that a file containing one has restated the checklist rather than included it. */
 const DIFF_AUDIT_PHRASES: ReadonlyArray<string> = [
   'A green gate is not this audit',
-  'the site you were pointed at is a sample of its class',
+  'the site that you were pointed at is a sample of its class',
   'This audit is bounded by your own edit',
 ];
 

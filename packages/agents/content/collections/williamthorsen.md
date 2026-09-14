@@ -17,8 +17,8 @@ members:
 
 # William Thorsen
 
-The personal collection. Membership claims an artifact was examined and found deliberately fitted to one author rather than generally applicable. What disqualifies each member from `recommended` is the reason it belongs here: The eight rulebooks state one author's preferences as rules another team would answer differently, and `people-report` serves a domain one author works in rather than one every project shares.
+The personal collection. Membership claims an artifact was examined and found deliberately fitted to one author rather than generally applicable. What disqualifies each member from `recommended` is the reason it belongs here: The eight rulebooks state one author's preferences as rules that another team would answer differently, and `people-report` serves a domain in which one author works rather than one that every project shares.
 
-Its closure contains `capture-feedback` and `capture-event` in `recommended` and nothing else, which is what makes declaring it safe alongside the public collection.
+Its closure contains `capture-feedback` and `capture-event` in `recommended` and nothing else, which makes declaring it safe alongside the public collection.
 
 Every member is invoked often enough to justify its standing line in the skill index. An artifact that is deliberate but rarely wanted belongs outside every collection, declared directly where it is needed.

@@ -2,7 +2,7 @@
 slug: williamthorsen-code-layout-preferences
 description: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order. Consult before creating a file or directory, before placing a test, helper, or fixture, and before ordering declarations in a module.'
 delivery: [hook, skill]
-version: '3'
+version: '4'
 ---
 
 # William Thorsen's code layout preferences
@@ -11,7 +11,7 @@ Where code lives and what it is called, at three scales: the directory tree, the
 
 ## Source layout
 
-Group source by role. A directory holding unrelated modules because they were added at the same time is not a grouping.
+Group source by role. A directory containing unrelated modules because they were added at the same time is not a grouping.
 
 Never scaffold a flat `src/`; later readers would extend flatness as convention.
 
@@ -23,7 +23,7 @@ Worked examples, not a closed set:
 
 ## Tests
 
-A `__tests__/` directory sits beside the code it covers, one per directory that contains tested code. Never roll a package's tests up into a single `src/__tests__/`.
+A `__tests__/` directory is next to the code that it covers, one per directory that contains tested code. Never roll a package's tests up into a single `src/__tests__/`.
 
 A missing `__tests__/` sibling then signals uncovered code.
 
@@ -37,17 +37,17 @@ Helpers belong in a `test-utils/` directory, at the first tier that fits:
 2. At the nearest common ancestor of the tests that import them, when several directories do.
 3. In a private package of its own, once consumers span packages.
 
-`test-utils/` is always a directory, never a single `test-utils.ts`, so filenames name subjects rather than audience. One concern per file.
+`test-utils/` is always a directory, never a single `test-utils.ts`, so that filenames name subjects rather than audience. One concern per file.
 
 A helper reached through a `../../` path into a sibling module's `test-utils/` has outgrown its tier.
 
 ## Fixtures
 
-Fixture **data** -- JSON, Markdown, sample sources, directory trees -- belongs in `__tests__/fixtures/`, so one exemption covers tests and fixture data alike.
+Fixture **data** -- JSON, Markdown, sample sources, directory trees -- belongs in `__tests__/fixtures/`, so that one exemption covers tests and fixture data alike.
 
 Fixture **builders** are code, and follow the test-helper rule above.
 
-A deliberately-invalid input that a tool cannot parse takes a delimited `.malformed` marker in its name, so lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema takes no marker and stays covered.
+A deliberately-invalid input that a tool cannot parse takes a delimited `.malformed` marker in its name, so that lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema takes no marker and stays covered.
 
 ## File naming
 
@@ -95,6 +95,6 @@ Identifier naming (no abbreviations, kind-bearing tails, unit-of-measure suffixe
 
 ## What binds only through configuration
 
-State the directory names and the marker above in the project's own coverage and lint configuration; unwired, they bind nothing.
+State the directory names and the marker above in the project's own coverage and lint configuration; otherwise, they bind nothing.
 
 Anchor those globs on a delimiter rather than on a bare substring, which over-matches by accident.

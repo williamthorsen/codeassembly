@@ -2,12 +2,12 @@
 slug: commit-conventions
 description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
 delivery: skill
-version: '5'
+version: '6'
 ---
 
 # Git commit conventions
 
-A commit that lands on the default branch is extracted into the changelog and, for release-notes-contributing work types, into release notes. Under a squash merge that is the merge commit alone, whose body `merge-pr` composes from the pull request's `## What`; the branch commits a squash collapses reach no changelog and no release notes. A branch commit reaches `summarize-change`'s lede drafter instead, which reads the branch's commit log to answer what the pull request is about. Write with that reader in mind.
+A commit on the default branch is extracted into the changelog and, for release-notes-contributing work types, into release notes. Under a squash merge that is the merge commit alone, whose body `merge-pr` composes from the pull request's `## What`; the branch commits collapsed by a squash appear in no changelog and no release notes. A branch commit is input to `summarize-change`'s lede drafter instead, which reads the branch's commit log to answer what the pull request is about. Write with that reader in mind.
 
 ## Commit metadata
 
@@ -15,7 +15,7 @@ A commit that lands on the default branch is extracted into the changelog and, f
 
 ## Commit title
 
-Voice, length, content discipline, and the ticket-reference rule are stated in [`title-voice.md`](../../skills/_data/title-voice.md), which governs the authored string across every surface it is rendered into. Two rules are commit-specific:
+Voice, length, content discipline, and the ticket-reference rule are stated in [`title-voice.md`](../../skills/_data/title-voice.md), which governs the authored string across every surface into which it is rendered. Two rules are commit-specific:
 
 - Render via `describe-change.mjs`; see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
 - Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
@@ -26,7 +26,7 @@ The branch name records the ticket. Include the ID at the end of the commit body
 
 ## Commit body
 
-**Body voice.** The body is a source the lede drafter reads, not an entry a reader meets. Report what the commit did, completely and factually, and leave the selecting to the drafter: it drops what the change's reader would not act on, and a fact the body omits is one no lede recovers.
+**Body voice.** The body is a source that the lede drafter reads, not an entry that a reader meets. Report what the commit did, completely and factually, and leave the selecting to the drafter: It drops what the change's reader would not act on, and a fact omitted by the body is one that no lede recovers.
 
 ### Body mechanics
 
