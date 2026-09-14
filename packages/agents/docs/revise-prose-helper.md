@@ -62,7 +62,7 @@ rejections:
     ground: a quoted exhibit of the construction
 ```
 
-A unit's `rules` lists the detector rules that its sweeps ran, and is empty for a unit swept without a detector, such as `plain-speech`. `record` does not list a rule named to a run without a detector: If it did, `detect` would treat the files already covered as covered for that rule, and a detector added for the rule later would never run over them. `detect` treats a unit written without `rules` as having run no detector. Its `roots` are the path roots that sweeps at this version and with these rules have covered, `.` meaning the repository, and `swept-at` is the date of the most recent of those sweeps.
+A unit's `rules` lists the detector rules that its sweeps ran, and is empty for a unit swept without a detector, such as `plain-speech`. `record` does not list a rule named to a run without a detector: If it did, `detect` would treat the files already covered as covered for that rule, and a detector added for the rule later would never run over them. Both commands read a unit written without `rules` as having run no detector. Its `roots` are the path roots that sweeps at this version and with these rules have covered, `.` meaning the repository, and `swept-at` is the date of the most recent of those sweeps.
 
 A rejection resolves to a candidate by its rule, its file, and its phrase. Both phrases are normalized before they are compared (inline code spans masked, NFC applied, whitespace collapsed), and they match when either contains the other. The recorded phrase is the text as it reads after the run's edits, so a repair under another rule in the same run does not invalidate it.
 

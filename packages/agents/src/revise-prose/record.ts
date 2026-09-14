@@ -40,7 +40,7 @@ const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO 
 
 /**
  * A unit's coverage: the version swept, when it was last swept, the detector rules that its sweeps ran, and the path
- * roots covered at that version. `detect` treats a unit written without `rules` as having run no detector.
+ * roots covered at that version. A unit written without `rules` parses as having run no detector.
  */
 const UnitCoverageSchema = z.object({
   version: z.string().min(1),
