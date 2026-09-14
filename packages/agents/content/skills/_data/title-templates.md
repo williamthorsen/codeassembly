@@ -151,7 +151,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
 
 **A merge commit contributes no entry.** Its subject matches no template and its author cannot rewrite it, so reporting it as unmatched would train a reader to skim a list that exists to be read. The commits brought in by a merge stay in the range on their own.
 
-**A commit with `Change:` trailers contributes those entries and not its subject.** Because a condensed commit's subject renders the record to which its trailers already consolidate, reading both would count the branch's changes twice. See [The `Change:` trailer](./change-record.md#the-change-trailer).
+**A commit with `Change:` trailers contributes those entries and not its subject.** Because a condensed commit's subject renders the record to which its trailers already consolidate, reading both would count the branch's entries twice. See [The `Change:` trailer](./change-record.md#the-change-trailer).
 
 **The consolidated record ranks; it does not count.** One `feat` outranks three `fix` commits on the same branch, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. Every field of `consolidated_record` is `null` when no entry was found, which is how a caller distinguishes a branch with no entries from one whose consolidated record names no scope. The consolidated record names no title: A caller takes that from the change summary.
 

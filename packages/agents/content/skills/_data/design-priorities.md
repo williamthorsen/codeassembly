@@ -52,7 +52,7 @@ B. Extract a small dedicated module with a narrow interface and inject it.
 1. ■■■ Extract a module:
    - ➕ narrow interface
    - ➕ testable in isolation
-   - ➕ untangles concerns the god-class already conflates
+   - ➕ untangles concerns that the god-class already conflates
 2. □□□ Extend the god-class:
    - ➖ deepens an existing SRP violation; convenience gain is one-off, complexity cost compounds
 ```
@@ -61,7 +61,7 @@ The factual lists about each option are similar; the **ranking** flips because t
 
 ## Designing as if from the beginning
 
-When designing a change, ask: _how would we have written this if the new behavior had been there from the start?_ Aim the design at that target.
+When designing a change, ask: _How would we have written this if the new behavior had been there from the start?_ Aim the design at that target.
 
 Three patterns signal a design that hasn't reached it:
 

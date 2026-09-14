@@ -54,9 +54,9 @@ A criterion that is merely unbuilt contributes no line. The work is unfinished, 
 
 Render the list per [option format](#option-format). Each option has a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific deviation presents a tradeoff that survives the option-format tests (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default applies to pros and cons alone: It never suppresses the proposed-edit preview, which is required content.
 
-**Name the artifact the edit writes.** Option 1's rendered line ends with its target: `on {ticket_ref}` when a ticket of record resolves, whichever artifact supplied the spec source, and `in the local ticket snapshot` when none does. A ticket of record is the manifest's `ticket_url`, or `ticket_id` with `scm`; when auto-resolve passed over a remote candidate on recency, it already has one.
+**Name the artifact that the edit writes.** Option 1's rendered line ends with its target: `on {ticket_ref}` when a ticket of record resolves, whichever artifact supplied the spec source, and `in the local ticket snapshot` when none does. A ticket of record is the manifest's `ticket_url`, or `ticket_id` with `scm`; when auto-resolve passed over a remote candidate on recency, it already has one.
 
-**Offer the local-only form where the snapshot may be the contract.** When the review measured against the local snapshot while a remote candidate existed, nest one invocation line under option 1; omit it otherwise:
+**Offer the local-only form when the snapshot may be the contract.** When the review measured against the local snapshot while a remote candidate existed, nest one invocation line under option 1; omit it otherwise:
 
 ```
 1. 📝 ■■□ Update the acceptance criteria on {ticket_ref}
@@ -64,7 +64,7 @@ Render the list per [option format](#option-format). Each option has a marker (�
 2. ⏭️ ■□□ Leave as-is
 ```
 
-A selection qualified `local` runs the delegate with `--write-target=local`.
+For a selection qualified `local`, run the delegate with `--write-target=local`.
 
 Example (rendered for the recommendation case):
 
@@ -163,12 +163,12 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Options: Local-branch variant (review-branch)
 
-| #   | Emoji | Option                                                      | Description                                                                                                              |
-| --- | ----- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 1   | 🚀    | Implement directly and commit                               | Fix the findings in this session and commit the fix                                                                      |
-| 2   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition                                                                          |
-| 3   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch                                                                   |
-| 4   | 🎫    | Create a follow-up ticket                                   | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule |
+| #   | Emoji | Option                                                      | Description                                                                                                             |
+| --- | ----- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🚀    | Implement directly and commit                               | Fix the findings in this session and commit the fix                                                                     |
+| 2   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition                                                                         |
+| 3   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch                                                                  |
+| 4   | 🎫    | Create a follow-up ticket                                   | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the next matching rule decides the rest |
 
 #### Options: PR variant (review-pr)
 
@@ -176,7 +176,7 @@ The option set depends on whether the review covers a pull request. Select the v
 | --- | ----- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | 📋    | Post findings on the PR       | Post the findings as comments anchored to file and line. On Bitbucket, use the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md); GitHub has no posting mechanism yet (see #1018) |
 | 2   | 🚀    | Implement directly and commit | Fix the findings in this session and commit the fix                                                                                                                                                            |
-| 3   | 🎫    | Create a follow-up ticket     | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the rest route by the next matching rule                                                                                       |
+| 3   | 🎫    | Create a follow-up ticket     | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the next matching rule decides the rest                                                                                        |
 
 #### Output format
 

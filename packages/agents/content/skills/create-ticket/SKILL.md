@@ -81,8 +81,8 @@ Determine where to create the remote ticket:
 Three relationships are available, each stated from the new ticket's side:
 
 - **parent**: The new ticket is a child of an existing ticket.
-- **blocked-by**: The new ticket cannot proceed until an existing ticket lands.
-- **blocking**: An existing ticket cannot proceed until the new ticket lands.
+- **blocked-by**: The new ticket cannot proceed until the work of an existing ticket is merged.
+- **blocking**: An existing ticket cannot proceed until the work of the new ticket is merged.
 
 Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 

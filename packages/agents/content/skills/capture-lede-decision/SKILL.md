@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture a lede decision
 
-Record how good the lede that shipped is. A bundled helper does the mechanical work: It reads the lede that the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present what shipped and relay the author's rating.
+Record how good the lede in the merged pull request is. A bundled helper does the mechanical work: It reads the lede that the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present what shipped and relay the author's rating.
 
 Every lede decision belongs to one corpus, the `codeassembly` event store, whichever repository the pull request merged in. The helper targets it without being told, so a caller never chooses a destination.
 
@@ -14,7 +14,7 @@ Every lede decision belongs to one corpus, the `codeassembly` event store, which
 
 ## What the rating grades
 
-The rating grades the lede that shipped, whichever hand wrote it: the merged lede when the author rewrote it before merge, and the agent's lede when it shipped as written. It is one of five levels, lowest to highest:
+The rating grades the lede in the merged pull request, whichever hand wrote it: the merged lede when the author rewrote it before merge, and the agent's lede when it was merged as written. It is one of five levels, lowest to highest:
 
 `poor`, `adequate`, `good`, `strong`, `exemplary`
 
@@ -30,21 +30,21 @@ For the same reason, the corpus is outcome-selected: It contains only changes th
 
 ## Arguments
 
-| Argument             | Description                                                                               | Required |
-| -------------------- | ----------------------------------------------------------------------------------------- | -------- |
-| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.         | Yes      |
-| `--pr`               | The pull-request number.                                                                  | Yes      |
-| `--merge-commit`     | The merge commit's SHA.                                                                   | Yes      |
-| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.      | Mode     |
-| `--quality`          | The author's rating of the lede that shipped. Mutually exclusive with `--inspect`.        | Mode     |
-| `--store`            | Names a corpus registered under some other name; `@default` is refused.                   | No       |
-| `--type`             | Work type. `--type feat!` is accepted as `--type feat --breaking`.                        | Identity |
-| `--scope`            | Package or surface scope. Omit it for a change that names no scope; `*` names none.       | Identity |
-| `--breaking`         | Marks the change breaking.                                                                | Identity |
-| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                | No       |
-| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.         | No       |
-| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact. | No       |
-| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                      | Injected |
+| Argument             | Description                                                                                      | Required |
+| -------------------- | ------------------------------------------------------------------------------------------------ | -------- |
+| `--artifact-dir`     | The ticket's artifact directory, containing the pull-request and merge artifacts.                | Yes      |
+| `--pr`               | The pull-request number.                                                                         | Yes      |
+| `--merge-commit`     | The merge commit's SHA.                                                                          | Yes      |
+| `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.             | Mode     |
+| `--quality`          | The author's rating of the lede in the merged pull request. Mutually exclusive with `--inspect`. | Mode     |
+| `--store`            | Names a corpus registered under some other name; `@default` is refused.                          | No       |
+| `--type`             | Work type. `--type feat!` is accepted as `--type feat --breaking`.                               | Identity |
+| `--scope`            | Package or surface scope. Omit it for a change that names no scope; `*` names none.              | Identity |
+| `--breaking`         | Marks the change breaking.                                                                       | Identity |
+| `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                       | No       |
+| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.                | No       |
+| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact.        | No       |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                             | Injected |
 
 Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 
@@ -76,14 +76,14 @@ On `store.reachable: false`, report `store.message` on one line and stop here, b
 
 ### 2. Present what shipped and ask
 
-Read `episode.differ`. When it is `true`, show the agent's lede and the merged lede; when it is `false`, show the single lede. Then ask for a rating of the lede that shipped, adding a comment if the author wants to say what was wrong:
+Read `episode.differ`. When it is `true`, show the agent's lede and the merged lede; when it is `false`, show the single lede. Then ask for a rating of the lede in the merged pull request, adding a comment if the author wants to say what was wrong:
 
 1. `poor`
 2. `adequate`
 3. `good`
 4. `strong`
 5. `exemplary`
-6. Skip (you did not evaluate it, or this was a content change)
+6. Skip
 
 Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a rating that the author did not make.
 

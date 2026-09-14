@@ -233,7 +233,7 @@ The first two read the script's JSON output and write the YAML frontmatter thems
 
 Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and deployed as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose tool set includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
-There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and a missing one starts a recovery rather than a hard stop.
+There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and when it is missing, `resolve-frontmatter.sh` recovers rather than stopping.
 
 Invocation surface:
 
@@ -801,7 +801,7 @@ A finding therefore has one of exactly two shapes, and consumers may rely on the
 
 A named change still has to be worth making. Decide at this gate whether it is, having established at the [Proposed-change gate](#proposed-change-gate) that a change exists.
 
-A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as taking on a burden of proof, weighed against that full cost, never against its line length.
+A finding costs more than its line length: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as taking on a burden of proof, weighed against that full cost, never against its line length.
 
 This gate is the [concision principle](./concision.md) applied to findings: A finding, like any detail, costs every reader attention once that cost outweighs the decision that it enables.
 

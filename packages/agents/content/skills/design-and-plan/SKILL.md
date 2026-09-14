@@ -158,7 +158,7 @@ Then save both artifacts:
 
    Prepend the resolved frontmatter to each artifact content before writing.
 
-   Once both artifacts are saved, emit `artifact.written` for each (payloads `{"path":"<ticket path>","kind":"ticket"}` and `{"path":"<plan path>","kind":"plan"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"designed-and-planned"}`) on the same turn, before the next-steps prompt below. Emitting completion at the save point folds an abandoned session to a finished state.
+   Once both artifacts are saved, emit `artifact.written` for each (payloads `{"path":"<ticket path>","kind":"ticket"}` and `{"path":"<plan path>","kind":"plan"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"designed-and-planned"}`) on the same turn, before the next-steps prompt below. Because completion is emitted at the save point, the lifecycle fold resolves an abandoned session to a finished state.
 
 4. Report paths and present next steps (the next-steps menu is an ask; the standing rule above applies, with payload `{"prompt":"next-steps"}`).
 

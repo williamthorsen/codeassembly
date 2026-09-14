@@ -41,7 +41,7 @@ Change: agents|fix: Correct the guard
 
 `condense-branch` writes one per entry when it squashes a branch, so a condensed branch stays readable. Because Git parses them as trailers, the block may follow any number of body paragraphs.
 
-**A commit with trailers contributes them in place of its subject.** Its subject renders the record to which those trailers already consolidate. Reading both would count the branch against itself.
+**A commit with trailers contributes them in place of its subject.** Its subject renders the record to which those trailers already consolidate. Reading both would count the branch's entries twice.
 
 ## The `change-record` block
 

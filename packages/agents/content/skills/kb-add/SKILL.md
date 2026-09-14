@@ -29,7 +29,7 @@ A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The
 
 ### KB selection
 
-By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When no `.kb/` is discovered and no `--kb` is given, the helper refuses to write rather than guessing a destination. `--kb <name>` names a specific entry from the merged `kb.yaml` registry and overrides discovery; `--kb @default` is the only way to reach the registry's `default_kb`. The chosen KB is shown in the proposal so that you can redirect the user via `--kb` if it is wrong.
+By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When no `.kb/` is discovered and no `--kb` is given, the helper refuses to write rather than guessing a destination. `--kb <name>` names a specific entry from the merged `kb.yaml` registry and overrides discovery; `--kb @default` is the only way to reach the registry's `default_kb`. The chosen KB is shown in the proposal so that the user can redirect the write via `--kb` if it is wrong.
 
 ## Runtime dependencies
 
