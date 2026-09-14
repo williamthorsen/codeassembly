@@ -54,7 +54,7 @@ const LEDE_DECISION_STORE = 'codeassembly';
 export interface ParsedArgs {
   /** `inspect` resolves and reports the episode; `commit` records the author's rating. */
   mode: 'inspect' | 'commit';
-  /** The author's rating of the lede that shipped; `null` in inspect mode. */
+  /** The author's rating of the lede in the merged pull request; `null` in inspect mode. */
   quality: LedeQuality | null;
   artifactDir: string;
   pr: string;

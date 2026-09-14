@@ -77,7 +77,7 @@ export interface InspectSuccess {
 export interface CommitSuccess {
   ok: true;
   mode: 'commit';
-  /** The author's rating of the lede that shipped. */
+  /** The author's rating of the lede in the merged pull request. */
   quality: LedeQuality;
   /** Derived from whether the ledes differ, so it always agrees with the sections the record carries. */
   verdict: LedeVerdict;

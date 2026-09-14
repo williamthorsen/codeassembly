@@ -19,7 +19,7 @@ Create an implementation plan from a ticket or task. `plan` is the standalone pl
 
 ## Resolve the task source
 
-Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description. Once the source is resolved, emit `skill.started` (payload `{"skill":"plan"}`) per [Lifecycle events](#lifecycle-events).
+Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session needs no ticket argument. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description. Once the source is resolved, emit `skill.started` (payload `{"skill":"plan"}`) per [Lifecycle events](#lifecycle-events).
 
 When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions have no provenance.
 
@@ -81,7 +81,7 @@ Example: `20260223-143000Z_migrate-auth-to-oauth2_plan.md`
 
 ## Completion
 
-Once the plan is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"plan"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"plan-saved"}`) on the same turn, before the next-steps prompt below. Emitting completion at the save point folds an abandoned session to a finished state.
+Once the plan is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"plan"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"plan-saved"}`) on the same turn, before the next-steps prompt below. Because completion is emitted at the save point, the lifecycle fold resolves an abandoned session to a finished state.
 
 Report the file path when done.
 

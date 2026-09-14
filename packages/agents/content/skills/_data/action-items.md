@@ -2,7 +2,7 @@
 
 The user runs several sessions at once and skims. An ask stated only in the prose is an ask missed, and a response with no block tells the user that the turn needs nothing from them.
 
-The render contract comes first; the doctrine behind it follows. Skills that close a turn by asking include the contract inlined, so what they consult here is the doctrine.
+The render contract comes first; the doctrine behind it follows. Skills that close a turn by asking include the contract inlined, so they consult this file only for the doctrine.
 
 <!-- include: ../_partials/action-items.md / -->
 
