@@ -56,7 +56,7 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
   {
     caller: {
       path: '_partials/next-steps-after-review.md',
-      phrase: 'runs the delegate with `--write-target=local`',
+      phrase: 'run the delegate with `--write-target=local`',
     },
     callee: {
       path: 'align-ticket-with-implementation/SKILL.md',
