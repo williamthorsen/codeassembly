@@ -96,9 +96,8 @@ export const RunFoldSchema = z.object({
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
  *
- * A candidate can match both, a version bump carrying the earlier rejection forward beside the one that the run
- * re-recorded under a phrase of its own. The live rejection decides, so whether the site is suppressed follows from
- * the record's content rather than from its order.
+ * A candidate can match both a live rejection and a stale one recorded beside it. The live rejection decides, so
+ * whether the site is suppressed follows from the record's content rather than from its order.
  */
 export function applyRejections(
   candidates: readonly Candidate[],
