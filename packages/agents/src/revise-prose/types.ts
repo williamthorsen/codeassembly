@@ -141,6 +141,14 @@ export interface PriorRejection {
   phrase: string;
 }
 
+/** One file as the `record` command reads it to decide whether a rejection's site still exists. */
+export interface SiteText {
+  /** The file's extracted prose: its spans joined by newlines, each with its inline code spans masked. */
+  prose: string;
+  /** The file's content as read. */
+  content: string;
+}
+
 /** The per-repository sweep record. */
 export interface ProseRecord {
   /** Coverage by unit name. */

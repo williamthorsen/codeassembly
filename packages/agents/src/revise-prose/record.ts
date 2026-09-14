@@ -5,7 +5,8 @@
  * version and with which detectors, and which sites an adjudicator has already rejected. A rejected site need not be one a detector reports,
  * so the second answer reaches a rule whose sites no candidate nominates. A version bump marks a unit's rejections stale
  * rather than deleting them, so a rule's revision re-opens its rejections for review instead of discarding the
- * judgment behind them.
+ * judgment behind them. A sweep at the new version is that review, and recording it retires the stale rejections under
+ * its roots.
  *
  * A rejection resolves to a site by containment rather than by an exact string: see {@link applyRejections}. The record
  * and the detector describe one site in spans of different lengths, so a phrase is what a reader locates the site by
@@ -20,7 +21,7 @@ import { z } from 'zod';
 
 import { maskCodeSpans } from './mask-code-spans.ts';
 import { flattenWhitespace } from './span-text.ts';
-import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold } from './types.ts';
+import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold, SiteText } from './types.ts';
 
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
@@ -95,9 +96,8 @@ export const RunFoldSchema = z.object({
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
  *
- * A candidate can match both, a version bump carrying the earlier rejection forward beside the one that the run
- * re-recorded under a phrase of its own. The live rejection decides, so whether the site is suppressed follows from
- * the record's content rather than from its order.
+ * A candidate can match both a live rejection and a stale one recorded beside it. The live rejection decides, so
+ * whether the site is suppressed follows from the record's content rather than from its order.
  */
 export function applyRejections(
   candidates: readonly Candidate[],
@@ -139,13 +139,18 @@ export function applyRejections(
  * been taken against a rule that has since changed, and so does a change in the detector rules, the recorded roots
  * having been swept with a different set of candidates.
  *
- * That unit's rejections under the roots swept by the run are replaced by the run's own: an adjudicator who did not
- * re-reject a site at this version has withdrawn it. A rejection outside those roots was never revisited, so it is
- * carried forward, which is what keeps a run narrowed to one directory from retracting the judgment recorded
- * everywhere else. Rejections recorded at an older version survive both, which is what makes a version bump a review
- * rather than a deletion.
+ * A prior rejection under the roots that the run swept for its unit is kept at the unit's current version while
+ * `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and a batch that the record
+ * already covers is never dispatched. One at an older version is retired: the run reviewed it at the new version, and a
+ * site that it rejected again is in the fold. `hasSite` is consulted for a current-version rejection under those roots
+ * alone. A rejection outside them was never revisited, so it is carried forward, which is what keeps a run narrowed to
+ * one directory from retracting the judgment recorded everywhere else.
  */
-export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
+export function composeRecord(
+  prior: ProseRecord,
+  fold: RunFold,
+  hasSite: (rejection: RecordedRejection) => boolean,
+): ProseRecord {
   const units = { ...prior.units };
   for (const [unit, coverage] of Object.entries(fold.units)) {
     const priorCoverage = prior.units[unit];
@@ -172,19 +177,30 @@ export function composeRecord(prior: ProseRecord, fold: RunFold): ProseRecord {
     return { ...rejection, 'unit-version': version };
   });
 
-  // A key the run re-recorded supersedes whatever the record held for it. Without this, a version bump followed by a
-  // re-rejection leaves the record holding two entries for one site, the withdrawn version alongside the standing one.
+  // A key the run re-recorded supersedes whatever the record held for it, which would otherwise stand beside the new
+  // entry as a second one for the same site.
   const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
   const carried = prior.rejections.filter((rejection) => {
     if (rerecorded.has(rejectionKey(rejection))) return false;
 
     const coverage = fold.units[rejection.unit];
-    if (coverage === undefined || rejection['unit-version'] !== coverage.version) return true;
+    if (coverage === undefined || coverage.roots.every((root) => !isUnderRoot(rejection.file, root))) return true;
 
-    return coverage.roots.every((root) => !isUnderRoot(rejection.file, root));
+    return rejection['unit-version'] === coverage.version && hasSite(rejection);
   });
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };
+}
+
+/**
+ * Reports whether a file still holds a recorded phrase: in its extracted prose, normalized as a detector's phrase is
+ * compared, or in its content, with only whitespace and Unicode form normalized. The content reading finds a phrase
+ * reported verbatim across the comment markers that extraction strips.
+ */
+export function containsPhrase(text: SiteText, phrase: string): boolean {
+  if (flattenWhitespace(text.prose.normalize('NFC')).includes(normalizeForMatch(phrase))) return true;
+
+  return flattenWhitespace(text.content.normalize('NFC')).includes(flattenWhitespace(phrase.normalize('NFC')));
 }
 
 /**
@@ -358,8 +374,7 @@ function normalizeRules(rules: readonly string[]): string[] {
 
 /**
  * One rejection's identity within the record: its rule, its file, and its normalized phrase. Normalizing here is what
- * lets a re-record retire the entry it supersedes across a repair that only reflowed the line, the sole path on which
- * a rejection recorded at an older version is retired at all.
+ * lets a re-record retire the entry it supersedes across a repair that only reflowed the line.
  */
 function rejectionKey(rejection: RecordedRejection): string {
   return composeKey(rejection.rule, rejection.file, normalizeForMatch(rejection.phrase));

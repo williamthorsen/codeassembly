@@ -104,6 +104,23 @@ export async function collectProse(input: {
 }
 
 /**
+ * Extracts every block of prose from one file's content, classifying the file as {@link collectProse} does: by its
+ * extension, or by its shebang where it has none. A file that no extractor reads, and YAML that the parser cannot read,
+ * yield no spans.
+ */
+export function extractFileProse(input: { file: string; content: string }): ProseSpan[] {
+  const kind = path.extname(input.file) === '' ? classifyByShebang(input.content) : classifyByExtension(input.file);
+  if (kind === undefined) return [];
+
+  try {
+    return extractProse({ ...input, kind });
+  } catch (error) {
+    if (error instanceof UnparsableYamlError) return [];
+    throw error;
+  }
+}
+
+/**
  * Extracts every block of prose from one file's content, each carrying the line on which it begins. Inline code spans
  * are masked on the way out, so no detector reads a span's content as words whatever kind the file is. Throws
  * {@link UnparsableYamlError} where the content is YAML that the parser cannot read.

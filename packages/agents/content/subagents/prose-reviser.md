@@ -56,7 +56,7 @@ Four grounds put a site in the questionable list rather than the applied one:
 
 - **A plausible exhibit.** The site reads as an exhibit, and the surrounding text does not say so.
 - **A repair that changes meaning.** The plain wording would resolve an ambiguity that the original left open, or the head noun is ambiguous and the repair picks one reading.
-- **A file that is mostly rejections.** More than half of one file's candidates were rejected, which usually means the file is a rule, a fixture, or a corpus rather than ordinary prose. Report that file's remaining repairs here.
+- **A file that is mostly rejections.** More than half of one file's candidates without `stale: true` were rejected, which usually means the file is a rule, a fixture, or a corpus rather than ordinary prose. Report that file's remaining repairs here. A stale candidate counts toward neither the rejected candidates nor the total, because an earlier sweep has already judged its site.
 - **An elided code span that decides the reading.** The source line does not settle whether the site breaks the rule.
 
 ## What you may not do
