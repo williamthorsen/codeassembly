@@ -1,6 +1,6 @@
 units:
   plain-speech:
-    version: '4'
+    version: '6'
     swept-at: 2026-09-14
     rules: []
     roots:
@@ -8,12 +8,8 @@ units:
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
-      - packages/agents/content/skills/revise-prose/SKILL.md
-      - packages/agents/content/subagents/lede-cutter.md
-      - packages/agents/content/subagents/lede-drafter.md
-      - packages/agents/content/subagents/prose-reviser.md
   williamthorsen-comment-preferences:
-    version: '2'
+    version: '3'
     swept-at: 2026-09-14
     rules: []
     roots:
@@ -22,7 +18,7 @@ units:
       - packages/agents/content/collections
       - packages/agents/content/guidance
   williamthorsen-writing-preferences:
-    version: '6'
+    version: '8'
     swept-at: 2026-09-14
     rules:
       - em-dash
@@ -36,66 +32,6 @@ units:
       - packages/agents/content/collections
       - packages/agents/content/guidance
 rejections:
-  - rule: inline-comments
-    unit: williamthorsen-comment-preferences
-    file: packages/agents/content/guidance/rulebooks/shell-conventions.md
-    phrase: '# Core logic'
-    ground: a section label in a script template rather than a comment describing a step
-    unit-version: '2'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: '"the change carries a flag"'
-    ground: "a marked exhibit: the watchlist's own example of the use it forbids"
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: '"the file carries a section"'
-    ground: "a marked exhibit: the before half of case 2's own before/after pair"
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: '**carry**'
-    ground: 'not prose: the watchlist headword naming the word to search for, not a use of it'
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech-calibration.md
-    phrase: what the text directs
-    ground: '"direct" is used in its literal sense of giving authoritative instruction, which is what a guidance text does; the subject performs the verb and no plainer term names the relation'
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech.md
-    phrase: '"the change carries a flag"'
-    ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech.md
-    phrase: '"The file carries a section"'
-    ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech.md
-    phrase: '"the record carries a version"'
-    ground: "a marked exhibit: the rule's own example of the all-purpose verb it forbids"
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/_partials/plain-speech.md
-    phrase: not "bears" or "carries"
-    ground: "a marked exhibit: the rule's own example of the verbs it forbids"
-    unit-version: '4'
-  - rule: plain-speech
-    unit: plain-speech
-    file: packages/agents/content/collections/atlassian.md
-    phrase: Nothing outside this collection reaches a member.
-    ground: 'graph-reachability sense settled in this corpus: the content specification states the same criterion as "Nothing outside it reaches its members", and collection-dispositions.unit.test.ts reports "triage''s closure reaches skill:vendor"'
-    unit-version: '4'
   - rule: plain-speech
     unit: plain-speech
     unit-version: '4'
@@ -136,392 +72,386 @@ rejections:
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/comment-discipline.md
     phrase: restates the lookup already expressed
-    ground: 'not the construction: "expressed" is a passive participle with a by-phrase'
-    unit-version: '6'
+    ground: 'not the construction: a passive participle with a by-phrase'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: action it governs
-    ground: "a marked exhibit: the worked example's Before paragraph, whose repair the After paragraph shows"
-    unit-version: '6'
+    ground: 'a marked exhibit: the Before paragraph of the worked example, which the After paragraph repairs'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: plain one exists
-    ground: 'not the construction: "exists" is the clause''s own intransitive verb, with no gap'
-    unit-version: '6'
+    ground: 'not the construction: an ordinary subject and verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/_partials/plain-speech.md
+    phrase: join the recorded ones
+    ground: 'not the construction: "join" is the quoted clause''s own verb, inside a quoted exhibit'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: agent every time it performs
-    ground: 'not the construction: "every time it performs the act" is a temporal adjunct, not a relative on "agent"'
-    unit-version: '6'
+    ground: "not the construction: 'every time it performs the act' is an adjunct clause; 'act' is the overt object"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: content it is
-    ground: 'not the construction: "what kind of content it is" is an embedded interrogative, not a relative on a lexical head'
-    unit-version: '6'
+    ground: "not the construction: 'what kind of content it is' is an interrogative clause, not a relative clause on a lexical head"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: expander rejects unrecognized
-    ground: 'not the construction: "rejects" is the sentence''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'rejects' is the sentence's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: expander reports structured
-    ground: 'not the construction: "reports" is the sentence''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'reports' is the sentence's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: link it does not bind
-    ground: 'not the construction: "behind a link" is a fronted prepositional phrase and "it does not bind" is the main clause'
-    unit-version: '6'
+    ground: "not the construction: 'it' is the subject of the main clause after the fronted phrase 'behind a link'"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: means a deeply nested
-    ground: 'not the construction: a complement clause of "means"'
-    unit-version: '6'
+    ground: "not the construction: a complement clause of 'means', not a relative clause"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: moment the agent acts
     ground: 'outside the rule: a temporal adjunct relative whose gap fills no argument position'
-    unit-version: '6'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: pipeline expands include
-    ground: 'not the construction: "expands" is the sentence''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'expands' is the sentence's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: skill-shaped one resolves
-    ground: 'not the construction: "resolves" is the clause''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'resolves' is the clause's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: skill's links resolve
-    ground: 'not the construction: "resolve" is the clause''s own verb'
-    unit-version: '6'
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/_partials/README.md
-    phrase: source file, the install pipeline performs
-    ground: 'not the construction: a fronted prepositional phrase before the main clause (the garden path is repaired under plain-speech)'
+    ground: "not the construction: 'resolve' is the clause's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: use the partial's empty-slot defaults
-    ground: 'not the construction: "use" is an imperative verb'
-    unit-version: '6'
+    ground: "not the construction: 'use' is an imperative verb with its object"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: dependency no exported tier module imports
-    ground: 'a marked exhibit: the ranked shapes are declared exhibits of the construction'
-    unit-version: '6'
+    ground: a marked exhibit of the construction
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: idiom developers recognize
-    ground: 'a marked exhibit: the ranked shapes are declared exhibits of the construction'
-    unit-version: '6'
+    ground: a marked exhibit of the construction
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: mock it is
-    ground: "a marked exhibit: the rule's own counterexample"
-    unit-version: '6'
+    ground: a marked exhibit of the construction
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: parallel forms are
-    ground: 'not the construction: "are" is the sentence''s own verb'
-    unit-version: '6'
+    ground: 'not the construction: an ordinary subject and copula'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: source it names
-    ground: "a marked exhibit: the rule's own counterexample"
-    unit-version: '6'
+    ground: a marked exhibit of the construction
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: source it names
-    ground: 'a marked exhibit: the ranked shapes are declared exhibits of the construction'
-    unit-version: '6'
+    ground: a marked exhibit of the construction
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: ticket the branch name encodes
-    ground: 'a marked exhibit: the ranked shapes are declared exhibits of the construction'
-    unit-version: '6'
+    ground: a marked exhibit of the construction
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/target-file-set-resolution.md
     phrase: widen it afterwards
     ground: 'not the construction: a verb, its object, and an adverb'
-    unit-version: '6'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/recommended.md
     phrase: dependency edges can extend
-    ground: 'not the construction: the relativizer is overt ("a set that no artifact''s dependency edges can extend unnoticed")'
-    unit-version: '6'
+    ground: 'not the construction: the relative clause already has "that"'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/recommended.md
     phrase: developer goes missing
-    ground: 'not the construction: "goes" is the clause''s own verb'
-    unit-version: '6'
+    ground: 'not the construction: "goes" is the main verb of the clause'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/recommended.md
     phrase: guidance-hook bindings do not cross
-    ground: 'not the construction: "Because" opens an adverbial clause whose subject is "guidance-hook bindings"'
-    unit-version: '6'
+    ground: 'not the construction: an ordinary subject and verb'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/triage.md
     phrase: minus the vetted collections
-    ground: 'not the construction: a preposition and its object'
-    unit-version: '6'
+    ground: 'not the construction: a prepositional phrase'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/williamthorsen.md
     phrase: state one author's
-    ground: 'not the construction: a verb and the start of its object'
-    unit-version: '6'
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/README.md
     phrase: remove a copy deployed
-    ground: 'not the construction: "deployed" is a passive participle with a by-phrase'
-    unit-version: '6'
+    ground: 'not the construction: a passive participle with a by-phrase'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: absent one falls
-    ground: 'not the construction: "falls" is the clause''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'falls back' is the clause's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: assert an absence tolerate
-    ground: 'not the construction: the relative has an overt "that" and "tolerate" is the main verb'
-    unit-version: '6'
+    ground: "not the construction: 'tolerate' is the sentence's own verb after the relative 'that assert an absence'"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: collection deploys unexamined
-    ground: 'not the construction: "deploys" is the clause''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'deploys' is the clause's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: entry exists to pull an artifact
-    ground: 'not the construction: "exists" is the clause''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'exists' is the clause's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: guidance-hook fill's demoted
-    ground: 'not the construction: "demoted" is a participle'
-    unit-version: '6'
+    ground: "not the construction: an elliptical possessive ('a guidance-hook fill's [headings] demoted one level')"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: naming a skill delivered
-    ground: 'not the construction: "delivered" is a participle'
-    unit-version: '6'
+    ground: "not the construction: 'delivered' is a passive participle with an agentive by-phrase"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: not a detector covers
-    ground: 'not the construction: "whether or not a detector covers it" is an adverbial clause'
-    unit-version: '6'
+    ground: "not the construction: 'whether or not a detector covers it' is an adverbial clause with an overt object"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: one it survives
-    ground: 'not the construction: "a relative one" closes the phrase "unlike a relative one", and "it survives" is the main clause'
-    unit-version: '6'
+    ground: "not the construction: 'it' is the subject of the clause after the fronted 'unlike a relative one'"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: plus the skill name
-    ground: 'not the construction: "the skill name" is a compound noun, and its relative takes the overt "under which"'
-    unit-version: '6'
+    ground: "not the construction: the relative is pied-piped ('under which the named rulebook deploys')"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: root the path takes
-    ground: 'not the construction: "which root the path takes" is an embedded interrogative'
-    unit-version: '6'
+    ground: "not the construction: 'which root the path takes' is an interrogative clause"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: rulebook it has
-    ground: 'not the construction: "which version of a rulebook it has" is an embedded interrogative'
-    unit-version: '6'
+    ground: "not the construction: 'which version of a rulebook it has' is an interrogative clause"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: rulebook the local binding supplied
-    ground: 'outside the rule: "whichever rulebook" is a fused relative that admits no relativizer'
-    unit-version: '6'
+    ground: "outside the rule: 'whichever rulebook' is a fused head that admits no relativizer"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: skill's links resolve
-    ground: 'not the construction: "resolve" is the clause''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'resolve' is the clause's own verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: three-backtick one depends
-    ground: the relative already has the pied-piped relativizer "on which"
-    unit-version: '6'
+    ground: "not the construction: the relative is pied-piped ('on which ... depends')"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: vetted collections may overlap
-    ground: 'not the construction: "may overlap" is the clause''s own verb'
-    unit-version: '6'
+    ground: "not the construction: 'overlap' is the clause's own intransitive verb"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: whenever an edit changes
-    ground: 'outside the rule: an adjunct clause introduced by "whenever"'
-    unit-version: '6'
+    ground: "not the construction: 'whenever' opens an adverbial clause"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: wherever it appears
-    ground: 'outside the rule: a free-relative adjunct'
-    unit-version: '6'
+    ground: "not the construction: 'wherever' opens a free relative of place"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: wherever nothing fills
-    ground: 'outside the rule: a free-relative adjunct'
-    unit-version: '6'
+    ground: "not the construction: 'wherever' opens a free relative of place with an overt object"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: wherever the target deploys
-    ground: 'outside the rule: a free-relative adjunct'
-    unit-version: '6'
+    ground: "not the construction: 'wherever' opens a free relative of place"
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/generated-content-policy.md
     phrase: marker signifies generated
-    ground: 'not the construction: "signifies" is the sentence''s own verb'
-    unit-version: '6'
+    ground: 'not the construction: an ordinary subject and verb'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: entry points are
-    ground: 'not the construction: a noun and its copula'
-    unit-version: '6'
+    ground: 'not the construction: the subject and copula of a where-clause'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: moment a flag changes
-    ground: 'outside the rule: an adjunct relative of time, whose gap fills no argument position'
-    unit-version: '6'
+    ground: 'outside the rule: an adjunct relative on a time noun, whose gap fills no argument position'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: problem it solves
-    ground: 'not the construction: an embedded question headed by "what", not a relative clause'
-    unit-version: '6'
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/readme-conventions.md
-    phrase: wherever a reader installs
-    ground: 'not the construction: a free relative adverbial'
+    ground: 'not the construction: an embedded question with interrogative "what", not a relative clause'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/shell-conventions.md
     phrase: case the empty value comes
-    ground: 'not the construction: "in that case" is an adverbial phrase ending before a main clause'
-    unit-version: '6'
+    ground: 'not the construction: "in that case" is an adverbial followed by a main clause'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/shell-conventions.md
     phrase: complement the universal style rules
     ground: 'not the construction: a verb and its object'
-    unit-version: '6'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/shell-conventions.md
     phrase: wherever the value comes
-    ground: 'not the construction: "wherever" is no lexical head noun'
-    unit-version: '6'
+    ground: 'not the construction: a free relative introduced by "wherever"'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/shell-conventions.md
     phrase: worktree they run
-    ground: 'not the construction: an embedded question headed by "which", not a relative clause'
-    unit-version: '6'
+    ground: 'not the construction: an embedded question with interrogative "which"'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
     phrase: roll a package's tests
     ground: 'not the construction: a verb and its object'
-    unit-version: '6'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: let the developer choose
-    ground: 'not the construction: a causative verb with its object and complement'
-    unit-version: '6'
+    ground: 'not the construction: a causative verb with its object and infinitive'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-tooling-preferences.md
     phrase: tool an agent reaches
-    ground: 'not the construction: an embedded question headed by "which", not a relative clause'
-    unit-version: '6'
+    ground: 'not the construction: an embedded question with interrogative "which"'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-typescript-preferences.md
     phrase: invent their own names
     ground: 'not the construction: a verb and its object'
-    unit-version: '6'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-workflow-preferences.md
     phrase: consumer keeps working
-    ground: 'not the construction: "keeps" is the relative clause''s own verb, after an overt "that"'
-    unit-version: '6'
+    ground: 'not the construction: the relative clause already has "that"'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-writing-preferences.md
-    phrase: rules the config caps
-    ground: 'a marked exhibit: the sentence names it as a reduced object relative'
-    unit-version: '6'
+    phrase: cap the config sets
+    ground: 'a marked exhibit: the text names it as a reduced object relative'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/shared/AGENTS.md
     phrase: point its work is handed
-    ground: 'outside the rule: an adjunct relative of time, whose gap fills no argument position'
-    unit-version: '6'
+    ground: 'outside the rule: an adjunct relative on a time point, whose gap fills no argument position'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/shared/AGENTS.md
     phrase: written it stays
-    ground: 'not the construction: "once written" is a participial clause before the main clause'
-    unit-version: '6'
+    ground: 'not the construction: a reduced adverbial clause followed by the main clause'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     unit-version: '2'
@@ -603,552 +533,438 @@ rejections:
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/comment-discipline.md
-    phrase: Apply all three to every comment you write or keep.
+    phrase: Apply all three to every comment that you write or keep.
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/comment-discipline.md
-    phrase: 'These rules apply to every comment you write **into source**: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding.'
+    phrase: 'These rules apply to every comment that you write **into source**: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding.'
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/concision.md
     phrase: If you find yourself trimming, you started too loose.
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/diff-audit-checklist.md
     phrase: '**Claims.** Every statement about the change is read from the diff, not from what you set out to do.'
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/diff-audit-checklist.md
     phrase: '**Class.** When the change corrects a defect, the site that you were pointed at is a sample of its class.'
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/diff-audit-checklist.md
     phrase: 'A green gate is not this audit: A suite that passes reports that nothing broke, not that the record which you are about to write is true.'
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/diff-audit-checklist.md
     phrase: Audit the other members before reporting, or the next reviewer finds the one that you left.
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/diff-audit-checklist.md
     phrase: Before reporting what a change did, read the change back, and repair what you find before writing the report.
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/diff-audit-checklist.md
     phrase: 'The input is the hunks that you just wrote, not the change under review: This audit is bounded by your own edit, and one that grows past it becomes a second review pass.'
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/live-repo-writes.md
     phrase: Once the artifact exists, downstream effects may fire before you can undo it; some release configurations are immutable (published tags produce permanent artifacts).
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/live-repo-writes.md
     phrase: Other sessions, file watchers, CI, release tooling, or IDE extensions on the user's machine can observe in-progress mutations, even if you intend to clean up after.
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '"priced on your ledger" becomes "measured by you".'
-    ground: 'a marked exhibit: a quoted before-and-after pair'
-    unit-version: '6'
+    ground: 'a marked exhibit: a quoted before-and-after example'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: '**cost**: "a cost to you", "the token cost".'
     ground: 'a marked exhibit: a quoted search example'
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/reduced-object-relative.md
     phrase: 'Two neighboring constructions fall outside the rule, each on a ground of its own: the fused head ("everything I know", "all you need"), which is its own relative pronoun and admits no relativizer, and the adjunct relative ("the reason it fails", "the way it works"), whose gap fills no argument position.'
-    ground: 'a marked exhibit: "all you need" is a quoted example of the fused head'
-    unit-version: '6'
+    ground: 'a marked exhibit: a quoted example of the fused head'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/technical-recommendations.md
     phrase: When unsure whether your knowledge is current, say so and look it up rather than presenting a possibly outdated approach as the answer.
     ground: the pronoun names the agent that the partial instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/generated-content-policy.md
     phrase: A `<!-- codeassembly-` marker signifies generated content, as does any file in your harness's `skills/` or `scripts/` directory.
-    ground: the ambient rulebook instructs the agent, and the pronoun names that agent's harness
-    unit-version: '6'
+    ground: the pronoun names the agent that the ambient rulebook instructs
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/shell-conventions.md
     phrase: '**Extend rather than inline.** If you write a utility that could be reused across scripts, add it to an existing module or create a new one in `functions/`.'
     ground: the pronoun names the agent that the skill-delivered rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: '"Apply these revisions (say no if you''d like to adjust something else first)?'
-    ground: 'a marked exhibit: an example prompt listed under "Examples:"'
-    unit-version: '6'
+    ground: 'a marked exhibit: a quoted example prompt in which the pronoun names the user'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: '"Do you want me to start implementation?'
-    ground: 'a marked exhibit: an example prompt listed under "Examples:"'
-    unit-version: '6'
+    ground: 'a marked exhibit: a quoted example prompt in which the pronoun names the user'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: '"Which color scheme would you prefer?'
-    ground: 'a marked exhibit: an example prompt listed under "Examples:"'
-    unit-version: '6'
+    ground: 'a marked exhibit: a quoted example prompt in which the pronoun names the user'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: '**Numbered options (2 or more choices)**: Follow the recommendation-gradient convention, marking each option ■■■/■■□/■□□/□□□ at the strength you actually hold.'
+    phrase: '**Numbered options (2 or more choices)**: Follow the recommendation-gradient convention, marking each option ■■■/■■□/■□□/□□□ at the strength that you actually hold.'
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: A menu is for a call you cannot make.
+    phrase: A menu is for a call that you cannot make.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
-  - rule: second-person
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: Asking is cheap for you and expensive for them; therefore, when the call is close, decide.
-    ground: the pronoun names the agent that the ambient rulebook instructs
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: Asking is cheap for you and expensive for them.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
-  - rule: second-person
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: Elapsed time, round trips, and your effort are measured by you
-    ground: the pronoun names the agent that the ambient rulebook instructs
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: Elapsed time, round trips, and your effort are measured by you, and that measure counts the developer's context switch and review cycles as nothing, so measuring one does not make the call yours, and a more accurate measurement still cannot rank them.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: Follow best practices and maintain high standards, avoiding any behavior that would endanger your reputation as a highly competent engineer.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: Make the case once, plainly, with your real reasoning, then stop.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
+    phrase: Never rank the options by your own elapsed time, round trips, or effort.
+    ground: the pronoun names the agent that the ambient rulebook instructs
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: The developer relies on you to be a trusted advisor and sounding board.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: 'This gate governs judgment asks alone: An ask that authorizes a consequential or hard-to-reverse action is theirs however confident you are, as is a templated next-steps menu.'
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: When the ranking follows from evidence that you hold -- correctness, a codebase convention, a governing document that already decided it, or a consequence that you can read in the code, such as coupling, review coherence, or total effort -- state the decision in one line with its reason and proceed, putting the rejected alternative in a clause rather than a numbered option.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
-  - rule: second-person
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: Your own cost never ranks the options.
-    ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-workflow-preferences.md
     phrase: When the user asks "Did you do X?", answer the question.
-    ground: the pronoun names the agent that the ambient rulebook instructs, inside a quoted user question
-    unit-version: '6'
+    ground: "a marked exhibit: the pronoun is inside the user's quoted question"
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-workflow-preferences.md
     phrase: When work appears that the ticket didn't name, fold it into the current change by default; spin off a separate ticket only for an affirmative reason beyond the ticket's silence, and when you do, create it immediately rather than parking it in the conversation.
     ground: the pronoun names the agent that the ambient rulebook instructs
-    unit-version: '6'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-writing-preferences.md
     phrase: '**The agentless passive.** Dropping the pronoun by hiding who acted trades one defect for another: "your rules are capped" becomes "the rules are capped", which names nobody.'
-    ground: "a marked exhibit: the rule's own counterexample"
-    unit-version: '6'
+    ground: 'a marked exhibit: a quoted example of the failed substitution'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-writing-preferences.md
-    phrase: '**The replacement names an actor.** Say who or what acts: "the config caps the rule" rather than "you cap the rule".'
-    ground: "a marked exhibit: the rule's own counterexample"
-    unit-version: '6'
+    phrase: '**The replacement names an actor.** Say who or what acts: "the config sets a cap on the rule" rather than "you cap the rule".'
+    ground: 'a marked exhibit: the quoted wording that the rule replaces'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-writing-preferences.md
-    phrase: '**The surviving object gap.** "the rules you cap" and "the rules the config caps" are the same reduced object relative; therefore, the substitution leaves the second defect in place.'
-    ground: "a marked exhibit: the rule's own counterexample"
-    unit-version: '6'
+    phrase: '**The surviving object gap.** "the cap you set" and "the cap the config sets" are the same reduced object relative; therefore, the substitution leaves the second defect in place.'
+    ground: 'a marked exhibit: a quoted example of the failed substitution'
+    unit-version: '8'
   - rule: second-person
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-writing-preferences.md
-    phrase: 'If no actor belongs in the sentence, recast so that the artifact is the subject: "the flag takes a path" rather than "you pass it a path".'
-    ground: "a marked exhibit: the rule's own counterexample"
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/_partials/comment-discipline.md
-    phrase: So is any defense of the edit, any counterfactual whose other branch was never possible, and any narration of how or where the code is run.
-    ground: '`so` stands for a predicate ("so is") and joins no clauses'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/_partials/README.md
-    phrase: and so is every hook under `install`
-    ground: 'outside the rule: so stands for a clause'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/_partials/README.md
-    phrase: where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there.
-    ground: a lone so that states a direct result once the so that it repeated, at line 58, is repaired
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/README.md
-    phrase: "A project's root `AGENTS.md` is the one neutral destination: One body of text serves every harness, so it cannot contain a harness-scoped path, and content that needs one belongs in an ambient rulebook instead."
-    ground: the so that it repeated, at line 18, is removed by the applied repair there; as a lone so it states a direct result
-    unit-version: '6'
+    phrase: 'If no actor belongs in the sentence, recast so that the artifact is the subject of a verb that it performs or one that states a relation, as plain speech requires: "the flag takes a path" rather than "you pass it a path".'
+    ground: 'a marked exhibit: the quoted wording that the rule replaces'
+    unit-version: '8'
   - rule: so
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: An anchor-only target is never rewritten, so unlike a relative one it survives either intact.
-    ground: a lone so that states a direct result once the two earlier uses in its paragraph are repaired
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: and so does naming two
-    ground: 'outside the rule: so stands for a clause'
+    phrase: and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
+    ground: the earlier uses are 'and so does', which stand for a clause and fall outside the rule; the remaining so states a direct result
+    unit-version: '8'
   - rule: so
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: is a type error at its `HarnessConfig` literal, so the build fails
-    ground: the two earlier uses are "so does", which stand for a clause; this lone so follows a comma and states a direct result
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: It renders to a different slug on each harness, so no single fragment addresses it everywhere.
-    ground: a lone so that states a direct result once the so that it repeated, at line 84, is repaired
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: Naming none fails the run, and so does naming two
-    ground: 'outside the rule: "so does" stands for a clause'
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: so does a rulebook token written in the optional form
-    ground: 'outside the rule: so stands for a clause (both so does instances)'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: the body checked is the expanded one, so an anchor authored
-    ground: a lone so that states a direct result once the so that it repeated, at line 78, is repaired
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: The skill that it deploys is discovered by name, so an invocation resolves wherever it was deployed
-    ground: a lone so that states a direct result once the so that it repeated, at line 68, is repaired
-    unit-version: '6'
-  - rule: so
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/shell-conventions.md
-    phrase: Once it succeeds, a later failure is contained inside the temporary directory, so the example below guards the first step and no other.
-    ground: a lone so that states a direct result once the so that it repeated, at line 244, is repaired
-    unit-version: '6'
+    phrase: the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it
+    ground: the nearby earlier so is 'and so does naming two', which stands for a clause and falls outside the rule; this lone so states a direct result
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/comment-discipline.md
     phrase: So is any defense of the edit, any counterfactual whose other branch was never possible, and any narration of how or where the code is run.
-    ground: 'names a place: the environment in which the code is run'
-    unit-version: '6'
+    ground: 'names a place: the location in which the code runs'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/comment-discipline.md
     phrase: 'The one-location test: Is this fact already documented where it belongs?** Then cut it.'
-    ground: 'names a place: the location to which the fact belongs'
-    unit-version: '6'
+    ground: 'names a place: the location in the documentation'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: 'Two edits belong to no case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.'
-    ground: 'a marked exhibit: the sentence quotes the word as the subject of an edit rather than using it'
-    unit-version: '6'
+    ground: 'a marked exhibit: the quoted word is mentioned, not used'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/plain-speech-calibration.md
     phrase: Where the boundary below calls for a restatement, it lands at the step that produces the output.
-    ground: "a marked exhibit: the worked example's Before paragraph"
-    unit-version: '6'
+    ground: 'a marked exhibit: the Before paragraph of the worked example'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
-    phrase: at the harness home root, where a source-tree-relative target names nothing
-    ground: 'names a place: the harness home root'
-    unit-version: '6'
+    phrase: Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it.
+    ground: "outside the rule: parallels 'anywhere' and names the bodies in which a directive appears"
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
-    phrase: it simply does nothing where nothing can bind it
-    ground: 'names a place: a body in which nothing can bind the hook, paired with "anywhere"'
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/_partials/README.md
-    phrase: its nesting is already visible where it is written
-    ground: 'names a place: the position in the host where the heading is written'
+    phrase: "Inside a partial: Marks where the caller's slot content is substituted."
+    ground: 'outside the rule: names the position in the partial at which slot content is substituted'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
-    phrase: Marks where the caller's slot content is substituted
-    ground: 'names a place: the position in the partial'
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/_partials/README.md
-    phrase: Marks where the caller's slot content is substituted.
-    ground: 'names a place: the position in the partial'
+    phrase: Its nesting is already visible where it is written.
+    ground: 'outside the rule: names the place in the host at which the heading is written'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
     phrase: Place every directive where the next host heading is at or above that level.
-    ground: 'names a place: a position in the host body'
-    unit-version: '6'
+    ground: 'outside the rule: names a position in the host document'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
-    phrase: visible where it is written
-    ground: 'names a place: the location in the host at which the heading is authored'
-    unit-version: '6'
+    phrase: That file is inlined into each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there.
+    ground: "outside the rule: 'where' refers to the harness home root, a place"
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/_partials/README.md
-    phrase: without knowing where its caller is
-    ground: "names a place: the caller's directory"
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/collections/atlassian.md
-    phrase: A consumer should declare this collection only where one of those products is in use.
-    ground: 'names a place: the projects and machines in which a product is in use'
-    unit-version: '6'
+    phrase: This means a deeply nested partial can include a sibling partial without knowing where its caller is.
+    ground: "outside the rule: asks for the caller's location in the source tree"
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/recommended.md
-    phrase: "Membership claims an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works."
-    ground: 'both uses name places: the location that a reader consults, and the environments in which the artifact works'
-    unit-version: '6'
+    phrase: "Membership claims that an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works."
+    ground: 'both uses name a place: the location that a reader consults, and the environments to which the artifact deploys'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/triage.md
     phrase: The not-yet-examined collection, and where new content starts.
-    ground: 'names a place: the collection in which new content starts'
-    unit-version: '6'
+    ground: 'names a place: the collection in which new content is placed'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/collections/williamthorsen.md
     phrase: An artifact that is deliberate but rarely wanted belongs outside every collection, declared directly where it is needed.
-    ground: 'names a place: the project or machine that needs the artifact'
-    unit-version: '6'
+    ground: 'names a place: the consumer in which the declaration is made'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: anchored where that run wrote it
-    ground: 'names a place: the directory to which the run wrote the skill'
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: appear where a reader looks before invoking
-    ground: 'names a place: the documentation location that a reader checks'
-    unit-version: '6'
+    phrase: A consumer declares it only where that vendor's products are in use
+    ground: 'outside the rule: names the projects and machines in which the products are in use'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: declared directly where wanted
-    ground: 'names a place: the project that wants the artifact'
-    unit-version: '6'
+    ground: 'outside the rule: names the projects in which the artifact is wanted'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: including where one opens a link target
-    ground: 'names a place: the position at the start of a link target'
-    unit-version: '6'
+    phrase: Every rule below belongs to one of three classes, marked where it appears.
+    ground: 'outside the rule: names the place in the document at which each rule appears'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: It deploys where it works
-    ground: 'names a place: the harnesses on which it works, contrasted with "everywhere"'
-    unit-version: '6'
+    phrase: expand per harness, including where one opens a link target.
+    ground: 'outside the rule: names a position in the text, the start of a link target'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: It is where new content starts
-    ground: 'names a place: the collection into which new content is first placed'
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: It renders only where a declaration supplies the deployed rulebook set
-    ground: 'names a place: the set of bodies in which the token renders, which the following which-clause enumerates'
+    phrase: 'It deploys where it works:'
+    ground: 'outside the rule: names the deployment destinations, the harnesses'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: marked where it appears
-    ground: "names a place: each rule's position in the document"
-    unit-version: '6'
+    phrase: It is where new content starts, and it shrinks by promotion rather than growing.
+    ground: 'outside the rule: names a container, the collection in which new content starts'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: matches where they deploy under every harness home
-    ground: 'names a place: the deployed location'
-    unit-version: '6'
+    phrase: Its prerequisites appear where a reader looks before invoking, rather than appearing only on failure.
+    ground: 'outside the rule: names the place at which a reader looks'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: Name such a skill only where the surrounding text already scopes it to that harness.
-    ground: "names a place: a position in the body's text"
-    unit-version: '6'
+    ground: 'outside the rule: names the passages in the body at which the skill may be named'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: only where that vendor's products are in use
-    ground: 'names a place: the projects or workplaces that use the products'
-    unit-version: '6'
+    phrase: One naming a skill delivered by the same run is anchored where that run wrote it
+    ground: 'outside the rule: names the location to which the run wrote the skill'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: Place every directive where the next host heading is at or above that level.
-    ground: 'names a place: a position in the host body'
-    unit-version: '6'
+    ground: 'outside the rule: names a position in the host document'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
+    phrase: the two trees whose source layout matches where they deploy under every harness home.
+    ground: 'outside the rule: names the deployment location under the harness home'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/live-worktree-policy.md
     phrase: How a repository with a `live` worktree deploys, and where changes to it are authored.
     ground: 'names a place: the worktree in which changes are authored'
-    unit-version: '6'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: Detail about one symbol's behavior, such as its edge cases, its failure modes, and the reason for a rule that it enforces, belongs in that symbol's doc comment, where a caller reads it while using the symbol.
-    ground: 'names a place: the doc comment'
-    unit-version: '6'
+    ground: 'names a place: the doc comment as the location a caller reads'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: Move the section, and leave a link where a reader looking for it would have found it.
     ground: "names a place: the section's former location"
-    unit-version: '6'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: One bootstrap command, and where each package's README is
     ground: 'names a place: the location of each README'
-    unit-version: '6'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: What belongs in a README, how its shape follows from what it describes, and where detail goes when it leaves.
-    ground: 'names a place: the file to which detail moves'
-    unit-version: '6'
+    ground: 'names a place: the destination file for detail'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/readme-conventions.md
     phrase: When agents are the only likely readers, the README states what the thing is and where its entry points are, and stops.
     ground: 'names a place: the location of the entry points'
-    unit-version: '6'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/shell-conventions.md
     phrase: '`cd ""` returns 0 and leaves the working directory where it was, so a script whose directory variable came out empty runs on, and every later relative write goes to the invoking directory instead of the intended one.'
     ground: "names a place: the working directory's location"
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    unit-version: '5'
-    file: packages/agents/content/guidance/rulebooks/shell-conventions.md
-    phrase: '`cd ""` returns 0 and leaves the working directory where it was; as a result, a script whose directory variable came out empty runs on, and every later relative write goes to the invoking directory instead of the intended one.'
-    ground: names the location of the working directory
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
     phrase: Test helper code never belongs inside `__tests__/`, where it would go uncovered.
-    ground: 'names a place: the directory'
-    unit-version: '6'
+    ground: 'names a place: the `__tests__/` directory'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
     phrase: 'Where code lives and what it is called, at three scales: the directory tree, the file, and the declarations inside it.'
     ground: 'names a place: the location of code'
-    unit-version: '6'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
     phrase: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order.'
     ground: 'names a place: the location of code'
-    unit-version: '6'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/williamthorsen-tooling-preferences.md
-    phrase: 'Reach for `grep` or `find` only where the faster tool is genuinely unavailable: a machine without it, or a portable script whose consumers may not have it.'
-    ground: 'names a place: the colon lists a machine and a script'
-    unit-version: '6'
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/williamthorsen-typescript-preferences.md
     phrase: 'Two exceptions, each with a comment saying why: a TypeScript limitation in which the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.'
-    ground: 'names a place: test code as a location in the codebase'
-    unit-version: '6'
+    ground: 'names a place: "test code" names the test files in the codebase'
+    unit-version: '8'
