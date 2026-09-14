@@ -15,7 +15,7 @@ import { isRecord } from '../lib/type-guards.ts';
  * were written, so a reverse-chronological walk would run backwards across commits and forwards inside one.
  *
  * A merge commit contributes nothing. Its subject matches no template and its author cannot rewrite it, so reporting
- * it as unmatched would train a reader to skim the list that exists to be read. The commits a merge brought in
+ * it as unmatched would train a reader to skim the list that exists to be read. The commits brought in by a merge
  * stay in the range on their own.
  *
  * Git parses the trailers itself through `%(trailers:key=Change,valueonly)`, so a folded trailer and a trailer block

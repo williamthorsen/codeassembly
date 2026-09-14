@@ -37,7 +37,7 @@ The store's `.kb/config.yaml` decides which notes are curated: By default, only 
 
 ## Detection categories
 
-The helper reports findings across six categories. Each finding has a rule code and a severity. A `[[store:Target]]` link resolves against the store that its prefix names in the `kb.yaml` registry, and only into a store as shareable as this one; see the kb package's README for the rule.
+The helper reports findings across six categories. Each finding has a rule code and a severity. A `[[store:Target]]` link resolves against the store named by its prefix in the `kb.yaml` registry, and only into a store as shareable as this one; see the kb package's README for the rule.
 
 | Rule code                       | Severity | Meaning                                                                                |
 | ------------------------------- | -------- | -------------------------------------------------------------------------------------- |

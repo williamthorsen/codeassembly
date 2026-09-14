@@ -127,7 +127,7 @@ export interface MergeInput {
   pr: { body: string; headCommit: string; number: string; title: string };
   taxonomy: Taxonomy;
   templates: Record<Surface, string>;
-  /** The ticket reference that applies where the pull-request title yields none. */
+  /** The ticket reference to be used when the pull-request title does not contain one. */
   ticketRef?: string;
 }
 
@@ -332,8 +332,8 @@ function readCommitsRecord(consolidatedRecord: ChangeRecord | undefined): Change
 }
 
 /**
- * Reads the record that the pull-request title carries: the bare title and the ticket reference, inverted through
- * `pr.title_format`, and the scope, type, and marker of any prefix. Yields nothing where the title does not invert to a
+ * Reads the record that the pull-request title contains: the bare title and the ticket reference, inverted through
+ * `pr.title_format`, and the scope, type, and marker of any prefix. Yields nothing when the title does not invert to a
  * bare title.
  */
 function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undefined {
@@ -361,7 +361,7 @@ function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undef
   };
 }
 
-/** Renders the effective record through `merge.title_format`, falling back to the bare title where that template is empty. */
+/** Renders the effective record through `merge.title_format`, falling back to the bare title when that template is empty. */
 function renderMergeTitle(input: {
   effective: ChangeRecord;
   prNumber: string;

@@ -247,7 +247,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   --ticket-ref "#466"
 ```
 
-`--base`, `--head`, `--pr-number`, `--pr-title`, and `--pr-body-file` are required. `--head` is the pull request's head commit. The commits are read from the local repository, so the head commit must be there for them to be read, and it need not be checked out. `--pr-number` takes digits alone. `--pr-body-file` names a file containing the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies when the pull-request title contains none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
+`--base`, `--head`, `--pr-number`, `--pr-title`, and `--pr-body-file` are required. `--head` is the pull request's head commit. The commits are read from the local repository, so the head commit must be there for them to be read, and it need not be checked out. `--pr-number` takes digits alone. `--pr-body-file` names a file containing the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the ticket reference to be used when the pull-request title does not contain one. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
 
 ```json
 {
@@ -301,7 +301,7 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 **`sources` reports what each source names**, whether or not the resolution used it. A source is `null` only when it was not read: `block` when the body contains no block or a malformed one, `commits` when the commits cannot be read, and `pr_title` when the title does not invert. Within a record, a field that the source does not determine is `null`, `breaking` included.
 
-- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block contains none and whose `breaking` is `false` when the block omits it, and its `overrides`, which lists only the keys that are set.
+- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block has no consolidated record and whose `breaking` is `false` when the block omits it, and its `overrides`, which lists only the keys that are set.
 - `commits` is the record to which the commits between `--base` and `--head` consolidate. Every field is `null` when the range contains no entry.
 - `labels` is the record that the labels name, and is never `null`. `type` and `scope` each resolve when exactly one label of their section names a key. `breaking` is `true` with the `breaking` label, `false` when a type label resolves without it, and `null` otherwise.
 - `pr_title` is the record that the pull-request title contains: the bare `title` and the `ticket_ref`, and the `scope`, `type`, and `breaking` of any typed prefix, each `null` when the title contains no prefix. It is read under `--override-title` too.

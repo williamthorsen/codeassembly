@@ -86,7 +86,7 @@ Append `--extra copies_remote=true` when the remote write in [Write targets](#wr
 
 ### Write targets
 
-The skill writes two artifacts: the ticket of record on its platform, and a local ticket artifact at the path derived in [Path resolution](#path-resolution). The frontmatter belongs to the local artifact alone; the body written to the platform contains none.
+The skill writes two artifacts: the ticket of record on its platform, and a local ticket artifact at the path derived in [Path resolution](#path-resolution). The frontmatter belongs to the local artifact alone; the body written to the platform has no frontmatter.
 
 **The ticket of record** resolves from the session-context manifest, from `ticket_url` or from `ticket_id` with `scm`, whichever artifact supplied the source content in step 1: A caller can name a local snapshot while a remote issue exists.
 

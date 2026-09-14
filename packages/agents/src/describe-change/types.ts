@@ -95,7 +95,7 @@ export interface ResolveMergeArgs {
   prLabels: string[];
   prNumber: string;
   prTitle: string;
-  /** The ticket reference that applies where the pull-request title carries none. */
+  /** The ticket reference to be used when the pull-request title does not contain one. */
   ticketRef?: string;
 }
 
