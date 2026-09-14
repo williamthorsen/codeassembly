@@ -171,7 +171,7 @@ Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 
 
 Redispatch on either failure -- `rejection: not-a-subset` for a bullet the cutter wrote, `rejection: empty-cut` for a return carrying none -- at most twice across the two. After a second failure, take the draft uncut and report the failure to the user.
 
-The composed body reaches the approval gate in step 6, where the user reads it before anything is published, so no audit of the draft runs here.
+Do not audit the draft here: The user reads the composed body at the approval gate in step 6, before anything is published.
 
 <!-- include: ../_partials/nested-list-indent.md / -->
 

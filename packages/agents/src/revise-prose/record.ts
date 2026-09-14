@@ -40,7 +40,7 @@ const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO 
 
 /**
  * A unit's coverage: the version swept, when it was last swept, the detector rules that its sweeps ran, and the path
- * roots covered at that version. A unit written without `rules` reads as having run no detector.
+ * roots covered at that version. `detect` treats a unit written without `rules` as having run no detector.
  */
 const UnitCoverageSchema = z.object({
   version: z.string().min(1),
@@ -133,15 +133,16 @@ export function applyRejections(
 /**
  * Merges a run's fold into the prior record and returns the result.
  *
- * A unit that the run did not name keeps its coverage and its rejections untouched, so a narrowed run never retracts what a
- * wider one recorded. For a unit that the run did name at the version and with the detector rules already recorded, the
- * run's roots join the recorded ones, both sweeps having happened. A version bump replaces them, the earlier sweep having
- * been taken against a rule that has since changed, and so does a change in the detector rules, the recorded roots
- * having been swept with a different set of candidates.
+ * Leaves the coverage and the rejections of a unit that the run did not name untouched, so a narrowed run never
+ * retracts what a wider one recorded. For a unit that the run did name at the version and with the detector rules
+ * already recorded, adds the run's roots to the recorded ones, both sweeps having happened. After a version bump,
+ * replaces the recorded roots with the run's, the earlier sweep having been taken against a rule that has since
+ * changed, and does the same after a change in the detector rules, the recorded roots having been swept with a
+ * different set of candidates.
  *
  * A prior rejection under the roots that the run swept for its unit is kept at the unit's current version while
- * `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and a batch that the record
- * already covers is never dispatched. One at an older version is retired: the run reviewed it at the new version, and a
+ * `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and the agent never
+ * dispatches a batch that the record already covers. One at an older version is retired: the run reviewed it at the new version, and a
  * site that it rejected again is in the fold. `hasSite` is consulted for a current-version rejection under those roots
  * alone. A rejection outside them was never revisited, so it is carried forward, which is what keeps a run narrowed to
  * one directory from retracting the judgment recorded everywhere else.

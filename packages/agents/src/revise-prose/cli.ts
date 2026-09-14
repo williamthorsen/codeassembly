@@ -7,12 +7,12 @@
  * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files they
  * name or contain; with none, the sweep covers the whole repository.
  *
- * Declaring no unit detects the reduced object relative alone and neither reads nor writes the record, which is what
- * holds the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule
- * declares no unit unless it names one on its own.
+ * With no unit declared, `detect` runs the reduced-object-relative detector alone and neither reads nor writes the
+ * record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming
+ * no rule declares no unit unless it names one on its own.
  *
  * JSON on stdout is the only output: the human-readable report is the agent's, composed once each candidate has been
- * adjudicated. The helper revises no prose. Repairs land through the agent's own editing tool, which keeps one write
+ * adjudicated. The helper revises no prose. The agent applies repairs with its own editing tool, which keeps one write
  * path and leaves the harness its file tracking.
  */
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
@@ -245,8 +245,8 @@ export function runRecord(input: { foldJson: string; root: string }): RecordResu
 // region | Helpers
 
 /**
- * Builds the predicate by which a record write decides whether a rejection's site still exists, reading each file at
- * most once. A file that cannot be read holds no site.
+ * Builds the predicate with which `record` decides whether a rejection's site still exists, reading each file at most
+ * once. The predicate finds no site in a file that it cannot read.
  */
 function buildSitePredicate(root: string): (rejection: RecordedRejection) => boolean {
   const texts = new Map<string, SiteText | undefined>();

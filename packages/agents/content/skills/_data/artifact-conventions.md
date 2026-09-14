@@ -799,7 +799,7 @@ A finding therefore has one of exactly two shapes, and consumers may rely on the
 
 ### Actionability gate
 
-A named change still has to be worth making. This gate is where that is decided; the [Proposed-change gate](#proposed-change-gate) has already established that a change exists.
+A named change still has to be worth making. Decide at this gate whether it is, having established at the [Proposed-change gate](#proposed-change-gate) that a change exists.
 
 A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as taking on a burden of proof, weighed against that full cost, never against its line length.
 

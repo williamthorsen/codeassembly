@@ -249,7 +249,7 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 **Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, which takes it as an object rather than a bare key: `"parent": { "key": "{parent}" }`. A reference Jira rejects then costs the relationship alone, as this step's general rule intends. Report the parent skipped where the update tool exposes no parent field.
 
-`acli` is the exception, and the only one: `acli jira workitem edit` carries no `--parent`, so the parent rides the step-6 creation call behind the pre-flight stated there. Report it skipped where that pre-flight rejected the reference.
+`acli` is the exception, and the only one: `acli jira workitem edit` has no `--parent` flag, so set the parent with the step-6 creation call instead, after the pre-flight that step 6 states. Report it skipped if that pre-flight rejected the reference.
 
 **blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool where one is available, `acli` next, a reported skip only where neither is. The link client need not be the one that created the work item, because a link call carries no description and the creation client's format contract does not reach it.
 
