@@ -7,9 +7,9 @@
  * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files they
  * name or contain; with none, the sweep covers the whole repository.
  *
- * With no unit declared, `detect` runs the reduced-object-relative detector alone and neither reads nor writes the
- * record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming
- * no rule declares no unit unless it names one on its own.
+ * With no unit declared, `detect` runs the reduced-object-relative detector alone and does not read the record, which
+ * keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule
+ * declares no unit unless it names one on its own.
  *
  * JSON on stdout is the only output: the human-readable report is the agent's, composed once each candidate has been
  * adjudicated. The helper revises no prose. The agent applies repairs with its own editing tool, which keeps one write
