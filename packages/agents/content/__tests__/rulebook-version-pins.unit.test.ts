@@ -27,11 +27,11 @@ interface RulebookPin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: 'e9a4193c79d927ad079c305f742d4a7c7807a3e087419988eb92e51190f0186f', version: '19' },
+    { bodyHash: '35bf26ff2331a1d240e6bca2a263cac0962dd90a959f953715f85bb2d543e5c5', version: '20' },
   ],
   [
     'commit-conventions',
-    { bodyHash: '7a52e2accc38332f052297ecb1b617417adc1d2dc2340d77044e996ff29f0eed', version: '5' },
+    { bodyHash: '630e5db1761a39f8e4ee50ffd4a31dd22903e6775d17d1ee279cb636c352ed6a', version: '6' },
   ],
   [
     'generated-content-policy',
@@ -39,28 +39,28 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'live-worktree-policy',
-    { bodyHash: 'bd46288d3fedfc65a9f7beada2b07a203aa2bb7c897378e34264e28d1e2b517c', version: '1' },
+    { bodyHash: 'f6423f87b76fe9c1735a891f58493a4e4f3b3db2065bbfab1600a5bf5f3f22b2', version: '2' },
   ],
   [
     'readme-conventions',
-    { bodyHash: '016d8beed9c457cfd1b81d5b2f1bed282f89d4ef482549448f1e7293c952a3c3', version: '1' },
+    { bodyHash: 'd48a6fe25f76ec35b2d5140635ba01aba9f933b59527fdaa3ff3fb86e726b327', version: '2' },
   ],
-  ['shell-conventions', { bodyHash: 'aeef69f32baee5b75e4dd3975c2af42097dc6cdea6be97aa78ff7a0160ea136f', version: '3' }],
+  ['shell-conventions', { bodyHash: '58e417219cce10f115ffddb9a946bc0162aee792644c19803f3312979e823616', version: '4' }],
   [
     'williamthorsen-code-layout-preferences',
-    { bodyHash: '24e2dd3891ca3f5bd8bbc30d6cb9c08cffd67df94748a049385d7c82924c47e0', version: '3' },
+    { bodyHash: 'fedbd28b2c4690b481cc1fbee0c9575f879e4295a4e8522ecad754e40e1309cc', version: '4' },
   ],
   [
     'williamthorsen-collaboration-preferences',
-    { bodyHash: 'b2a5f3e2b3276dcf96fdea241ffbedc1c9438d6a17ff76a5efedda689a444484', version: '3' },
+    { bodyHash: 'cc7243a86429cb0f2ddeb97619a4e993f87fa46f260f86a9c83f2ddee0947067', version: '4' },
   ],
   [
     'williamthorsen-comment-preferences',
-    { bodyHash: 'a1aed1b5c81d9b8bfb7e5b868ff1f6f96335b2cdfd6be3997e64e0cbecad269d', version: '2' },
+    { bodyHash: 'c7de4585d9a6b43480dd0cbe3950a893ab7cf1c1547e010e6b6eb62c139083b1', version: '3' },
   ],
   [
     'williamthorsen-ticketing-preferences',
-    { bodyHash: '233accc5a734488eb3e771d6434aa7820b7c04b8be34202f6aa06e1c35e56735', version: '1' },
+    { bodyHash: '1ac392cec7c42907cb81dc83385065c908f984de828f711f207890c213d97024', version: '2' },
   ],
   [
     'williamthorsen-tooling-preferences',
@@ -68,15 +68,15 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-typescript-preferences',
-    { bodyHash: '80efabf4ff3943daaf8383ffe0d176a8a552579447042e988f11c84697a8f56b', version: '3' },
+    { bodyHash: '978019f53427b8d4091f032d702d36f21b657cffe18034533c4d304aca5c4c2f', version: '4' },
   ],
   [
     'williamthorsen-workflow-preferences',
-    { bodyHash: 'f317cb5f34f7ea7e1234398d2dd716b218590b32025e445f6c766e4a3a6cdc50', version: '3' },
+    { bodyHash: 'c410c8a6a8e68d36cc1db4bfb60b054457510490149a290d5bb2a5d817319fc3', version: '4' },
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: '6e9599dfbd899ef87b983b01ed984f7c8648f5f435f6b6b345b054cbdb62f428', version: '6' },
+    { bodyHash: '126ef21afc4924caf96f6a5daab7c6d2ea130f6597f9fc13f6b0300fca5c5d7f', version: '7' },
   ],
 ]);
 

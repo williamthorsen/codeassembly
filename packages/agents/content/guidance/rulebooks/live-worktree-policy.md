@@ -2,7 +2,7 @@
 slug: live-worktree-policy
 description: How a repository with a `live` worktree deploys, and where changes to it are authored.
 delivery: ambient
-version: '1'
+version: '2'
 ---
 
 # Live worktree policy
