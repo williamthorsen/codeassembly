@@ -1,9 +1,36 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractProse } from '../collect-prose.ts';
+import { extractFileProse, extractProse } from '../collect-prose.ts';
 import { UnparsableYamlError } from '../extract-yaml.ts';
 import { CODE_SPAN_PLACEHOLDER } from '../mask-code-spans.ts';
 import type { ProseKind } from '../types.ts';
+
+describe(extractFileProse, () => {
+  it('reads a file as the kind that its extension names', () => {
+    const spans = extractFileProse({ file: 'src/index.ts', content: '// Resolves the source it names.\nexport {};\n' });
+
+    expect(joinText(spans)).toContain('Resolves the source it names.');
+  });
+
+  it('reads an extensionless file as shell when its shebang names one', () => {
+    const spans = extractFileProse({
+      file: 'bin/sync',
+      content: '#!/usr/bin/env bash\n# Resolves the source it names.\n',
+    });
+
+    expect(joinText(spans)).toContain('Resolves the source it names.');
+  });
+
+  it('yields no spans for an extension that no extractor reads', () => {
+    expect(extractFileProse({ file: 'data.csv', content: 'Resolves the source it names.\n' })).toStrictEqual([]);
+  });
+
+  it('yields no spans for YAML that the parser cannot read', () => {
+    expect(
+      extractFileProse({ file: 'broken.yaml', content: 'aliases:\n  git: [vcs, version-control\n' }),
+    ).toStrictEqual([]);
+  });
+});
 
 describe(extractProse, () => {
   describe('markdown', () => {

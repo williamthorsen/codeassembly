@@ -24,10 +24,11 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { DEFAULT_BATCH_BUDGET, planBatches } from './batch.ts';
-import { collectProse, NotARepositoryError } from './collect-prose.ts';
+import { collectProse, extractFileProse, NotARepositoryError } from './collect-prose.ts';
 import {
   applyRejections,
   composeRecord,
+  containsPhrase,
   isCoveredAt,
   parseRecord,
   parseRunFold,
@@ -45,9 +46,11 @@ import type {
   FileCount,
   ParsedArgs,
   ProseRecord,
+  RecordedRejection,
   RecordResult,
   RuleId,
   RunFold,
+  SiteText,
   SkipReason,
   SubjectShape,
 } from './types.ts';
@@ -215,14 +218,19 @@ export async function runDetect(input: {
 /**
  * Folds one run's outcome into the repository's record and writes it. This is the record's only write path, which is
  * what keeps its YAML deterministic rather than hand-edited into drift. A unit's coverage keeps only the rules for which the
- * helper has a detector, which is what lets a detector added later run over files already covered.
+ * helper has a detector, which is what lets a detector added later run over files already covered. A prior rejection's
+ * site is looked for in its file as the file stands when the command runs.
  *
  * @internal - Exported to allow testing.
  */
 export function runRecord(input: { foldJson: string; root: string }): RecordResult {
   let record: ProseRecord;
   try {
-    record = composeRecord(readRecordFile(input.root), retainDetectorRules(parseRunFold(input.foldJson)), () => true);
+    record = composeRecord(
+      readRecordFile(input.root),
+      retainDetectorRules(parseRunFold(input.foldJson)),
+      buildSitePredicate(input.root),
+    );
   } catch (error) {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
@@ -235,6 +243,20 @@ export function runRecord(input: { foldJson: string; root: string }): RecordResu
 }
 
 // region | Helpers
+
+/**
+ * Builds the predicate by which a record write decides whether a rejection's site still exists, reading each file at
+ * most once. A file that cannot be read holds no site.
+ */
+function buildSitePredicate(root: string): (rejection: RecordedRejection) => boolean {
+  const texts = new Map<string, SiteText | undefined>();
+
+  return (rejection) => {
+    if (!texts.has(rejection.file)) texts.set(rejection.file, readSiteText(root, rejection.file));
+    const text = texts.get(rejection.file);
+    return text !== undefined && containsPhrase(text, rejection.phrase);
+  };
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
@@ -263,6 +285,21 @@ function readRecordFile(root: string): ProseRecord {
     return { units: {}, rejections: [] };
   }
   return parseRecord(content);
+}
+
+/** Reads one repository file's content and extracted prose, or returns undefined where the file cannot be read. */
+function readSiteText(root: string, file: string): SiteText | undefined {
+  let content: string;
+  try {
+    content = readFileSync(path.join(root, file), 'utf8');
+  } catch {
+    return undefined;
+  }
+
+  const prose = extractFileProse({ file, content })
+    .map((span) => span.text)
+    .join('\n');
+  return { prose, content };
 }
 
 /** Reads standard input to EOF, which is how the `record` command receives the run's fold. */

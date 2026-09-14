@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyRejections,
   composeRecord,
+  containsPhrase,
   isCoveredAt,
   isStaleRejection,
   parseRecord,
@@ -452,6 +453,20 @@ describe(composeRecord, () => {
     );
 
     expect(record.rejections).toStrictEqual([older]);
+  });
+});
+
+describe(containsPhrase, () => {
+  it('finds a phrase reported verbatim across comment markers, which extraction strips', () => {
+    const text = { prose: 'Resolves the source it names.', content: '/**\n * Resolves the source\n * it names.\n */' };
+
+    expect(containsPhrase(text, 'the source\n * it names')).toBe(true);
+  });
+
+  it('finds no phrase that neither the prose nor the content holds', () => {
+    const text = { prose: 'Resolves the source that it names.', content: '// Resolves the source that it names.' };
+
+    expect(containsPhrase(text, 'the source it names')).toBe(false);
   });
 });
 

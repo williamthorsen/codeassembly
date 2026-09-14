@@ -292,6 +292,71 @@ describe(runDetect, () => {
       await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
     });
 
+    it('keeps an inherited rejection whose phrase the file still holds, though the run reported none', async () => {
+      const phrase = await rejectedPhrase();
+      await writeRecord(recordFor(phrase));
+
+      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+
+      expect(await readRecordedPhrases()).toStrictEqual([phrase]);
+    });
+
+    it('drops an inherited rejection once the file no longer holds its phrase', async () => {
+      await writeRecord(recordFor(await rejectedPhrase()));
+      const foldJson = JSON.stringify(await foldRejectingNothing());
+      await writeFile(path.join(scratch, 'docs/guide.md'), 'The helper reports the source that it names.\n', 'utf8');
+
+      runRecord({ foldJson, root: scratch });
+
+      expect(await readRecordedPhrases()).toStrictEqual([]);
+    });
+
+    it('drops an inherited rejection whose file is gone', async () => {
+      await writeRecord(recordFor(await rejectedPhrase()));
+      const foldJson = JSON.stringify(await foldRejectingNothing());
+      await rm(path.join(scratch, 'docs/guide.md'));
+
+      runRecord({ foldJson, root: scratch });
+
+      expect(await readRecordedPhrases()).toStrictEqual([]);
+    });
+
+    it('keeps an inherited rejection whose phrase runs across a wrapped block comment', async () => {
+      const file = 'src/wrapped.ts';
+      await writeFile(
+        path.join(scratch, file),
+        '/**\n * Resolves the source\n * it names in the header.\n */\nexport const header = 1;\n',
+        'utf8',
+      );
+      await writeRecord(recordFor('the source it names', '2', file));
+
+      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+
+      expect(await readRecordedPhrases()).toStrictEqual(['the source it names']);
+    });
+
+    it("keeps an inherited rejection whose phrase elides an inline code span, as a candidate's sentence does", async () => {
+      const file = 'docs/reasons.md';
+      const phrase = 'the «codespan» reasons it lists';
+      await writeFile(path.join(scratch, file), 'Each check reports the `unavailable` reasons it lists.\n', 'utf8');
+      await writeRecord(recordFor(phrase, '2', file));
+
+      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+
+      expect(await readRecordedPhrases()).toStrictEqual([phrase]);
+    });
+
+    it('keeps an inherited rejection whose phrase holds an inline code span as the source writes it', async () => {
+      const file = 'docs/reasons.md';
+      const phrase = 'the `unavailable` reasons it lists';
+      await writeFile(path.join(scratch, file), `Each check reports ${phrase}.\n`, 'utf8');
+      await writeRecord(recordFor(phrase, '2', file));
+
+      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+
+      expect(await readRecordedPhrases()).toStrictEqual([phrase]);
+    });
+
     it('closes the loop: recording a run suppresses its candidate on the next sweep', async () => {
       expect(expectSuccess(await sweep(bothRules())).summary.byRule['reduced-object-relative']).toBe(1);
 
@@ -376,6 +441,17 @@ describe(runDetect, () => {
     };
   }
 
+  /** The fold from `fold`, reporting no rejection, as a run reports a batch that leaves every inherited site alone. */
+  async function foldRejectingNothing(): Promise<RunFold> {
+    return { ...(await fold()), rejections: [] };
+  }
+
+  /** Reads back the phrases of the rejections in the written record. */
+  async function readRecordedPhrases(): Promise<string[]> {
+    const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'));
+    return written.rejections.map((rejection) => rejection.phrase);
+  }
+
   /**
    * The phrase the detector reports for the fixture's object-relative site. Read from a sweep rather than written out,
    * so a change to the span a detector reports fails the assertion instead of silently missing the rejection.
@@ -410,8 +486,8 @@ function expectSuccess(result: DetectResult): DetectSuccess {
   return result;
 }
 
-/** A record covering the whole repository for unit `writing`, rejecting one site at `version`. */
-function recordFor(phrase: string, version = '2'): ProseRecord {
+/** A record covering the whole repository for unit `writing`, rejecting one site in `file` at `version`. */
+function recordFor(phrase: string, version = '2', file = 'docs/guide.md'): ProseRecord {
   return {
     units: { writing: { version, 'swept-at': '2026-09-02', rules: BOTH_RULES, roots: ['.'] } },
     rejections: [
@@ -419,7 +495,7 @@ function recordFor(phrase: string, version = '2'): ProseRecord {
         rule: 'reduced-object-relative',
         unit: 'writing',
         'unit-version': version,
-        file: 'docs/guide.md',
+        file,
         phrase,
         ground: 'a quoted exhibit of the construction',
       },

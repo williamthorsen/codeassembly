@@ -21,7 +21,7 @@ import { z } from 'zod';
 
 import { maskCodeSpans } from './mask-code-spans.ts';
 import { flattenWhitespace } from './span-text.ts';
-import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold } from './types.ts';
+import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold, SiteText } from './types.ts';
 
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
@@ -191,6 +191,17 @@ export function composeRecord(
   });
 
   return { units, rejections: sortRejections([...carried, ...recorded]) };
+}
+
+/**
+ * Reports whether a file still holds a recorded phrase: in its extracted prose, normalized as a detector's phrase is
+ * compared, or in its content, with only whitespace and Unicode form normalized. The content reading finds a phrase
+ * reported verbatim across the comment markers that extraction strips.
+ */
+export function containsPhrase(text: SiteText, phrase: string): boolean {
+  if (flattenWhitespace(text.prose.normalize('NFC')).includes(normalizeForMatch(phrase))) return true;
+
+  return flattenWhitespace(text.content.normalize('NFC')).includes(flattenWhitespace(phrase.normalize('NFC')));
 }
 
 /**
