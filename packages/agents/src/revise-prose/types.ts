@@ -56,7 +56,15 @@ export interface SecondPersonCandidate extends CandidateBase {
 /** One `so` site. Its phrase is the whole sentence, one word being nothing a rejection could resolve against. */
 export interface SoCandidate extends CandidateBase {
   rule: 'so';
+  /** Why the sentence was reported, which tells the adjudicator what to check. */
+  trigger: SoTrigger;
 }
+
+/**
+ * `bare`: a `so` that nothing before it marks as joining a result, which is almost always a purpose clause missing
+ * "that". `repeat`: a `so` in the same sentence as another or in one of the three sentences after one.
+ */
+export type SoTrigger = 'bare' | 'repeat';
 
 /** One `where` site. Its phrase is the whole sentence, one word being nothing a rejection could resolve against. */
 export interface WhereCandidate extends CandidateBase {

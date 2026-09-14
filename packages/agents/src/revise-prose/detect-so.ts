@@ -1,29 +1,25 @@
 /**
  * `so` detection.
  *
- * The rule forbids a `so` that joins two clauses and leaves every other use alone. Only a reading tells the uses apart,
- * except when a neighboring word settles it: "so that", "so-called", "do so", "if so", and the degree adverb before a
- * quantity word. The detector passes over those and reports every other sentence holding the word, leaving the sense
- * to the adjudicator.
+ * The rule permits a `so` that states a direct result and limits how often a clause-joining `so` recurs. Because no
+ * neighboring word tells a result from an imprecise use after a comma, the detector reports only what a neighboring
+ * word or the distance between sites settles: a bare `so`, which nothing before it marks as a result, and a `so` within
+ * the rule's gap after another. A use that a neighboring word places outside the rule ("so that", "so-called", "do so",
+ * "if so", and the degree adverb before a quantity word) is neither reported nor counted.
  */
-import { findMatchingSentences } from './span-text.ts';
+import { countNewlinesBefore, findCodeSpans, flattenWhitespace, listSentenceBounds } from './span-text.ts';
 import type { ProseSpan, SoCandidate } from './types.ts';
 
 /**
- * Scans every span for a `so` that may join two clauses, returning one candidate per sentence that holds one, in
- * reading order. The phrase is the sentence because one word resolves to nothing: A rejection recorded against it would
- * match every other `so` in the file.
+ * Scans every span for a bare `so` or a `so` within the rule's gap after another, returning one candidate per sentence
+ * that holds one, grouped by file and in reading order within each. The phrase is the sentence because one word
+ * resolves to nothing: A rejection recorded against it would match every other `so` in the file.
  */
 export function detectSoUses(spans: readonly ProseSpan[]): SoCandidate[] {
-  return spans.flatMap((span) =>
-    findMatchingSentences(span, SO).map(({ line, sentence }): SoCandidate => ({
-      rule: 'so',
-      file: span.file,
-      line,
-      phrase: sentence,
-      sentence,
-    })),
-  );
+  return Map.groupBy(spans, (span) => span.file)
+    .values()
+    .flatMap(detectInFile)
+    .toArray();
 }
 
 // region | Helpers
@@ -48,6 +44,15 @@ const PRO_FORM_PRECEDERS: ReadonlyArray<string> = [
   'says',
 ];
 
+/** Matches text ending in a mark that joins a following `so` to a result: a comma, a semicolon, a dash, or "and". */
+const RESULT_MARKER = /(?:[,;–—]|--|\band)\s*$/iu;
+
+/**
+ * The rule's gap, in sentences. The rule asks for at least three sentences between one clause-joining `so` and the
+ * next, which a site in any of the three sentences before another breaks.
+ */
+const RULE_GAP_SENTENCES = 3;
+
 /** The word in any case, less every use that a neighboring word places outside the rule. */
 const SO = new RegExp(
   String.raw`(?<!\b(?:${PRO_FORM_PRECEDERS.join('|')})\s+)` +
@@ -55,5 +60,69 @@ const SO = new RegExp(
     String.raw`(?!-|\s+that\b)`,
   'giu',
 );
+
+/** One sentence of a span, with the count of `so` sites that it holds and whether any of them is bare. */
+interface SiteSentence {
+  file: string;
+  hasBareSite: boolean;
+  line: number;
+  siteCount: number;
+  text: string;
+}
+
+/**
+ * Returns one file's candidates, counting sentences across its spans in line order. A sentence is reported when it
+ * holds a bare site, two sites, or a site after another within the gap.
+ */
+function detectInFile(spans: readonly ProseSpan[]): SoCandidate[] {
+  const sentences = spans.toSorted((a, b) => a.line - b.line).flatMap(listSiteSentences);
+  const candidates: SoCandidate[] = [];
+
+  for (const [index, sentence] of sentences.entries()) {
+    if (sentence.siteCount === 0) continue;
+
+    const preceding = sentences.slice(Math.max(0, index - RULE_GAP_SENTENCES), index);
+    const isRepeat = sentence.siteCount > 1 || preceding.some((other) => other.siteCount > 0);
+    if (!sentence.hasBareSite && !isRepeat) continue;
+
+    candidates.push({
+      rule: 'so',
+      file: sentence.file,
+      line: sentence.line,
+      phrase: sentence.text,
+      sentence: sentence.text,
+      // A purpose repair removes the site, which also removes any repeat that it formed.
+      trigger: sentence.hasBareSite ? 'bare' : 'repeat',
+    });
+  }
+
+  return candidates;
+}
+
+/** Reports whether a site is bare, given its sentence's text before it: a word precedes it, and no result marker does. */
+function isBareSite(textBefore: string): boolean {
+  return /[\p{L}\p{N}]/u.test(textBefore) && !RESULT_MARKER.test(textBefore);
+}
+
+/** Lists every sentence of a span in reading order, sites or none, so that a file's sentences can be counted. */
+function listSiteSentences(span: ProseSpan): SiteSentence[] {
+  const codeSpans = findCodeSpans(span.text);
+  const siteIndexes = span.text
+    .matchAll(SO)
+    .map((match) => match.index)
+    .filter((index) => codeSpans.every((code) => index < code.start || index >= code.end))
+    .toArray();
+
+  return listSentenceBounds(span.text).map(({ start, end }): SiteSentence => {
+    const sites = siteIndexes.filter((index) => index >= start && index < end);
+    return {
+      file: span.file,
+      hasBareSite: sites.some((index) => isBareSite(span.text.slice(start, index))),
+      line: span.line + countNewlinesBefore(span.text, start),
+      siteCount: sites.length,
+      text: flattenWhitespace(span.text.slice(start, end)),
+    };
+  });
+}
 
 // endregion | Helpers

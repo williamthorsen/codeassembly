@@ -2,7 +2,7 @@
 slug: williamthorsen-writing-preferences
 description: William Thorsen's personal writing preferences for agent-authored prose.
 delivery: [ambient, hook]
-version: '5'
+version: '6'
 ---
 
 # William Thorsen's writing preferences
@@ -53,11 +53,15 @@ Use sentence case for titles, headings, section headers, steps, labels, and inte
 - "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
 - "Customizing the Status Adapter for a new backend", not "Customizing the Status Adapter for a New Backend"
 
-## `so`
+## `so` and other connectives
 
 <!-- rule: so -->
 
-Don't join two clauses with `so`, which marks no relation between them. Name the relation: "because" or "as a result" for a cause, "so that" or "to" for a purpose, and "; therefore," for an inference. "So that", the degree adverb ("so many"), and a `so` that stands for a clause ("do so", "if so") are outside the rule.
+Join two clauses with `so` only when the second states a direct result of the first: "The entry is not a top-level segment, so the exclusion does not cover it." For a purpose, write "so that" or "to": "The link points to `.live` so that apps read the stable worktree." If the second clause follows only through a step that the sentence leaves out, state that step rather than change the conjunction.
+
+Use connectives sparingly. When most sentences in a paragraph end with a consequence, the paragraph reads as a chain of justifications, and the repeated word distracts even when each use is correct. Keep a connective only when a reader would not infer the link from the order of the sentences. Leave at least three sentences between one clause-joining `so` and the next, and do not meet that limit by swapping in another connective: Split the sentence, lead with "because", or drop the link.
+
+A degree adverb ("so many") and a `so` that stands for a clause ("do so", "if so") are outside the rule.
 
 ## `where`
 
