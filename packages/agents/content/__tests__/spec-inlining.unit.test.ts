@@ -52,7 +52,7 @@ const OPTION_FORMAT: Spec = {
     'Never add a bullet to fill a slot',
     // The gate's one observed blind spot. Without it the agent prices each option on its own ledger, where elapsed
     // time and round trips are scarce, and treats having measured one as license to rank.
-    '**Your own cost never ranks the options.**',
+    '**Never rank the options by your own elapsed time, round trips, or effort.**',
     // What sorts an ordering question, stated as a test rather than a list of cases. An enumeration here contradicts
     // the gate it is appended to, which is how a combine-or-split call lost its recommendation.
     'When the order changes the code or the total effort',

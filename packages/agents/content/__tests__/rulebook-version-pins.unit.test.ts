@@ -27,11 +27,11 @@ interface RulebookPin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: '968df790867da6c9502377b7ee1761f804e5fd71c0422daa211016d0137cc42e', version: '21' },
+    { bodyHash: 'b17aadf80d9445453a12ab65228bf850b9a7320850748af1947809f6324840a3', version: '21' },
   ],
   [
     'commit-conventions',
-    { bodyHash: 'f435e9003f66be24f5a8f2128fdb02c5b714851a2b94de55a12afa02a7a3f38e', version: '6' },
+    { bodyHash: '39f197e4d6eb3f1fea988d051edea69328fe023dff10a568dceb71ef5acdbb29', version: '6' },
   ],
   [
     'generated-content-policy',
@@ -39,7 +39,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'live-worktree-policy',
-    { bodyHash: '2f57238bf432f178e0a6b45f13fe460f6d49a7d81aa93d26eb44c05374822a38', version: '2' },
+    { bodyHash: '9bf4e540df49c6b7cb4f9ace460c083f796adab52a6c7abbe6dd4270117a27c0', version: '2' },
   ],
   [
     'readme-conventions',
@@ -48,11 +48,11 @@ const PINS = new Map<string, RulebookPin>([
   ['shell-conventions', { bodyHash: 'c19e983da4149b03d4a3105d2a9c115a8b5545f036d8cfcace21d0da03e8f073', version: '4' }],
   [
     'williamthorsen-code-layout-preferences',
-    { bodyHash: 'b72091d25511bf942d3a29791e3a228dac90358fb52de7eabbc33e1f5bdc316a', version: '4' },
+    { bodyHash: '44695db7aa8d63ef175922dbb8862c672f006b6c3f2f94304cac0a9388f71efa', version: '4' },
   ],
   [
     'williamthorsen-collaboration-preferences',
-    { bodyHash: '740df18faa73b9a75691d6dc418f47590d6645e9b1a709df9e73bb71c10cb003', version: '4' },
+    { bodyHash: 'fb649ce231fcebb210d79690ad77a62f0016f4e385488a5cd59512e5bd35a6c7', version: '4' },
   ],
   [
     'williamthorsen-comment-preferences',
@@ -64,7 +64,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-tooling-preferences',
-    { bodyHash: '642d02b4d962bd39a15e98b5118646eef36c1d4188261d87d2bebf9da2d3cec7', version: '1' },
+    { bodyHash: 'd62d615298a35a5c21ba0350ea9bcd0ab26eee044703716e9b2a4377922ee4c1', version: '1' },
   ],
   [
     'williamthorsen-typescript-preferences',
@@ -72,7 +72,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-workflow-preferences',
-    { bodyHash: 'b72b41b05bfc17de4d78bf9019f93631740bdad14b3383228719846c3f8c782d', version: '4' },
+    { bodyHash: '719159dd46eed3bab3a76be3abd973fbabab9d573f448c5dc0a3dd296a0b73db', version: '4' },
   ],
   [
     'williamthorsen-writing-preferences',
