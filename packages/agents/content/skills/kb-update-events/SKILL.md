@@ -61,11 +61,11 @@ On `ok: true`, report the per-event outcomes. A per-event `error` is one of:
 - `invalid-id`: The id is not a bare filename stem (contains a path separator). Correct the id.
 - `not-found`: No event at the resolved path. Confirm the id and store.
 - `parse`: The file is not a valid event record. Inspect it.
-- `validation`: The rendered record failed re-validation (unexpected); surface the message.
+- `validation`: The rendered record failed re-validation (unexpected); report the message.
 
-On `ok: false`, route by the `error` code:
+On `ok: false`, act on the `error` code:
 
-- `invalid-args`: Surface the message and propose a corrected invocation.
+- `invalid-args`: Report the message and propose a corrected invocation.
 - `missing-store`: `--store` was omitted; the message lists the registered stores.
 - `store-not-registered`: The named store is not in `kb.yaml`.
 - `readonly-store`: The store is marked readonly; edits are refused.

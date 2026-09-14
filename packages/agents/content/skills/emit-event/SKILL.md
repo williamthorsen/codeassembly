@@ -6,18 +6,18 @@ user-invocable: false
 
 # Emit a lifecycle event
 
-Append one lifecycle event to the live event log, so a watching surface can render what a session is doing while it is doing it. A bundled helper does the mechanical work: It fills in the repo, branch, session, and working directory, stamps the event with a ULID and a timestamp, and appends a single line to the session's log. You supply the `--type` and, when the type has detail, a `--payload`.
+Append one lifecycle event to the live event log, so that a watching surface can render what a session is doing while it is doing it. A bundled helper does the mechanical work: It fills in the repo, branch, session, and working directory, stamps the event with a ULID and a timestamp, and appends a single line to the session's log. You supply the `--type` and, when the type has detail, a `--payload`.
 
-This is a fire-and-forget append. It emits no artifact, prompts for nothing, and (by contract) cannot fail in a way that stops the skill it observes.
+This is a fire-and-forget append. It emits no artifact, prompts for nothing, and (by contract) cannot fail in a way that stops the skill that it observes.
 
 ## The never-block contract
 
-Telemetry must never break the work it watches. The helper therefore **always exits 0** and always prints a JSON result to stdout:
+Telemetry must never break the work that it watches. The helper therefore **always exits 0** and always prints a JSON result to stdout:
 
 - `{"ok": true, "id": "...", "path": "..."}`: The event was appended.
 - `{"ok": false, "error": "...", "message": "..."}`: It was not, and the reason is on stderr.
 
-**Never branch on the result.** Do not retry, do not report the failure to the user, and do not let it change what the skill does next. A failed emission means one line is missing from a telemetry log; it is not a problem the user asked you to solve. Read the result only if you are debugging the emitter itself.
+**Never branch on the result.** Do not retry, do not report the failure to the user, and do not let it change what the skill does next. A failed emission means one line is missing from a telemetry log; it is not a problem that the user asked you to solve. Read the result only if you are debugging the emitter itself.
 
 ## Arguments
 
@@ -39,17 +39,17 @@ A value-bearing flag accepts both `--type value` and `--type=value`.
 | `skill.started`    | A skill begins. Payload: the skill name, and any argument that framed the run.                                           |
 | `skill.progress`   | _(Optional.)_ A milestone worth showing mid-run; not part of the standard instrumented set. Payload: what just finished. |
 | `skill.completed`  | A skill finishes. Payload: the outcome.                                                                                  |
-| `artifact.written` | A file the user will want to open has been written. Payload: its path and kind.                                          |
+| `artifact.written` | A file that the user will want to open has been written. Payload: its path and kind.                                     |
 | `input.requested`  | The skill has asked the user something and is waiting.                                                                   |
 | `pr.created`       | A pull request has been opened. Payload: its number and URL.                                                             |
 | `turn.completed`   | **Relayed, not yours.** The agent finished responding.                                                                   |
 | `session.ended`    | **Relayed, not yours.** A session exited, switched, or forked.                                                           |
 
-The four relayed types are emitted by the hook relay the CLI installs into the harness, which fires at boundaries no skill is running to observe. **Never emit one from a skill**: You would double-count a boundary the harness already reports. They are listed here so you recognize them when reading a log, not so you can produce them.
+The four relayed types are emitted by the hook relay that the CLI installs into the harness. The relay fires at boundaries that no skill is running to observe. **Never emit one from a skill**: You would double-count a boundary already reported by the harness. They are listed here so that you recognize them when reading a log, not so that you can produce them.
 
 A skill emits `input.requested` when it asks and waits, but no matching `input.received`: The relayed `turn.started` marks the resume, so the skill has nothing to add.
 
-The vocabulary is convention, not a gate: The helper warns on stderr for an undeclared type and appends the event anyway. Prefer a declared type (a watching surface only renders what it recognizes), but emit a new one rather than dropping an event the vocabulary does not yet cover.
+The vocabulary is convention, not a gate: The helper warns on stderr for an undeclared type and appends the event anyway. Prefer a declared type (a watching surface only renders what it recognizes), but emit a new one rather than dropping an event that the vocabulary does not yet cover.
 
 ## The envelope
 
@@ -79,7 +79,7 @@ Each event is one JSON line:
 
 ### 1. Choose the type and compose the payload
 
-Pick the type from the vocabulary above. Put the detail a watcher would want in `--payload` as a JSON object: A bare array or scalar is refused, because the payload's shape is the contract a consumer reads. Keep it small: The payload is a status line, not a report.
+Pick the type from the vocabulary above. Put the detail that a watcher would want in `--payload` as a JSON object: A bare array or scalar is refused, because the payload's shape is the contract read by a consumer. Keep it small: The payload is a status line, not a report.
 
 ### 2. Invoke the helper
 
@@ -90,7 +90,7 @@ node {harness_home_dir}/skills/emit-event/emit-event.mjs \
   --payload '{"skill":"<name>"}'
 ```
 
-Quote the payload in single quotes so its double quotes survive the shell.
+Quote the payload in single quotes so that its double quotes survive the shell.
 
 ### 3. Carry on
 

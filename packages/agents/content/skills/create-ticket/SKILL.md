@@ -19,7 +19,7 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 | `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                     |
 | `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                       |
 
-Each takes ticket references in the project's own form (`#123`, `ABC-123`), comma-separated where more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
+Each takes ticket references in the project's own form (`#123`, `ABC-123`), comma-separated when more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
 
 <!-- guidance-hook: ticketing-preferences -->
 
@@ -30,7 +30,7 @@ Each takes ticket references in the project's own form (`#123`, `ABC-123`), comm
 Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 6).
 
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `artifact_base_dir`, and `ticket_base_url` from the manifest JSON emitted on stdout
-- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6. Read `branch_name` and `default_branch` too, which the step-6 guard compares.
+- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket from which the current branch is derived (empty when the branch encodes no ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6. Read `branch_name` and `default_branch` too, which the step-6 guard compares.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 - From the same file, read `integrations.jira.project_key` and `integrations.jira.issue_types`. Both are optional, and both are consumed only by step 6's Jira path, which states what each falls back to.
 
@@ -58,7 +58,7 @@ Create the ticket body describing WHAT needs to be done: problem, context, and a
 
 Also draft the ticket string, per [`title-voice.md`](../_data/title-voice.md), for use in step 6.
 
-Then decide the ticket's scope and type, for use in steps 5 and 6. The type is the [work type](../_data/work-types.json) of the change that the ticket asks for: a ticket reporting a defect is `fix`, and one asking for a new capability is `feat`. Append `!` only where the proposed change breaks consumers and the type's `breakingPolicy` admits the marker. The scope is the workspace that the change belongs to, per [Scope values](../_data/title-templates.md#scope-values); a change spanning more than one takes `*`, which renders and labels no scope. The pull request that implements the ticket compares its derived type with the type label applied here.
+Then decide the ticket's scope and type, for use in steps 5 and 6. The type is the [work type](../_data/work-types.json) of the change that the ticket asks for: a ticket reporting a defect is `fix`, and one asking for a new capability is `feat`. Append `!` only when the proposed change breaks consumers and the type's `breakingPolicy` admits the marker. The scope is the workspace that the change belongs to, per [Scope values](../_data/title-templates.md#scope-values); a change spanning more than one takes `*`, which renders and labels no scope. The pull request that implements the ticket compares its derived type with the type label applied here.
 
 ### 3. Resolve platform
 
@@ -86,9 +86,9 @@ Three relationships are available, each stated from the new ticket's side:
 
 Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 
-**Most tickets have none, and that case is silent.** Where nothing applies, continue to step 5 without asking.
+**Most tickets have none, and for those, say nothing.** When nothing applies, continue to step 5 without asking.
 
-Where one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so a wrong target is visible while it is still free to correct. Where the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
+When one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so that a wrong target is visible while it is still free to correct. If the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -117,11 +117,11 @@ Render one `--label "{label_name}"` flag per resolved label, and write them into
 
 ### 6. Create remote ticket
 
-Both platforms render the same title and persist the same branch association; only creation itself differs. Render the title, follow the path step 3 resolved, then finish at [Persist the branch association](#persist-the-branch-association).
+The title and the branch association are the same for both platforms; only creation itself differs. Render the title, follow the path resolved in step 3, then finish at [Persist the branch association](#persist-the-branch-association).
 
 #### Render the ticket title
 
-Render with `describe-change.mjs`. Ticket creation does **not** pass `--ticket-ref`; the new ticket has no ref yet (that's what this step assigns).
+Render with `describe-change.mjs`. Do **not** pass `--ticket-ref` when creating a ticket; the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs render-titles --title "{title}" --scope "{scope}" --type "{type}" \
@@ -154,35 +154,35 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
 ##### Resolve the project key
 
-Take `integrations.jira.project_key` (step 1) where it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `ABC-` yields `ABC`. Where neither is configured there is no project to create in; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
+Take `integrations.jira.project_key` (step 1) when it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `ABC-` yields `ABC`. When neither is configured, there is no project to create in; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
 
 ##### Resolve the issue type
 
 Read `integrations.jira.issue_types` (step 1) and stop at the first of these that yields a name:
 
-1. The entry keyed by the work type decided in step 2, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` answers a `fix` work type, and one keyed `fix` answers a `bugfix` type.
+1. The entry keyed by the work type decided in step 2, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` matches a `fix` work type, and one keyed `fix` matches a `bugfix` type.
 2. The map's `default` entry.
 3. The literal `Task`.
 
-Do not choose a type from the ticket's content. A team-managed project need not carry `Story` or `Bug`, and a name it does not carry fails the creation call.
+Do not choose a type from the ticket's content. A team-managed project need not define `Story` or `Bug`, and a name that it does not define fails the creation call.
 
 ##### Create the work item
 
-Identify the client per {skill?:update-jira-ticket}, which ranks the three client shapes and states the description format each one takes. Where it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
+Identify the client per {skill?:update-jira-ticket}, which ranks the three client shapes and states the description format that each one takes. If it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
 
 Every client takes `ticket_title` as the summary, the resolved project key, the resolved issue type, and the step-2 body as the description in that skill's assigned format:
 
 - **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
 - **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
-- **`acli`**: convert the body to ADF, write the ADF to a scratch file per [gh body file](#gh-body-file), and pass the file. An unset path costs the work item's description on a work item that then exists without one.
+- **`acli`**: Convert the body to ADF, write the ADF to a scratch file per [gh body file](#gh-body-file), and pass the file. With an unset path, the work item is still created, but without its description.
 
-  Where step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` carries no `--parent` flag, so this is the only call that can set one, and a reference Jira rejects costs the work item rather than the relationship unless it is checked first:
+  If step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` has no `--parent` flag, so this is the only call that can set one, and a reference rejected by Jira fails the creation of the work item, not only the relationship, unless it is checked first:
 
   ```bash
   acli jira workitem view "{parent}"
   ```
 
-  A zero exit adds `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: create the work item without the flag, and report the parent as skipped per step 7.
+  On a zero exit, add `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: Create the work item without the flag, and report the parent as skipped per step 7.
 
   ```bash
   adf_path="{absolute path from the write step}"
@@ -197,17 +197,17 @@ Every client takes `ticket_title` as the summary, the resolved project key, the 
   printf '%s\n' "$output"
   ```
 
-  Capture the create call's output before parsing it, as the snippet does, and print both the parsed key and the raw response. The parse prints the key on the first line; where it yields none, read the key out of the response printed after it, which holds everything the one invocation returned. Assigning the parse instead prints nothing, leaving neither to read. Never run the create command a second time to obtain the key: that creates a second work item.
+  Capture the create call's output before parsing it, as the snippet does, and print both the parsed key and the raw response. The parse prints the key on the first line; if it yields none, read the key out of the response printed after it, which contains everything the one invocation returned. Assigning the parse instead prints nothing, leaving neither to read. Never run the create command a second time to obtain the key: That creates a second work item.
 
 ##### Record the identifiers
 
-`ticket_id` is the returned key verbatim (e.g. `ABC-123`). The key already carries its project prefix, so the `ticket_ref_prefix` reconstruction the GitHub path performs does not apply here.
+`ticket_id` is the returned key verbatim (e.g. `ABC-123`). The key already includes its project prefix, so the `ticket_ref_prefix` reconstruction performed by the GitHub path does not apply here.
 
-`url` is the URL the client returns. Where the client returns none, join `ticket_base_url` (step 1) to the key. Where neither yields one, the work item still exists: report it created by key with no URL, and skip the persist below.
+`url` is the URL returned by the client. If the client returns none, join `ticket_base_url` (step 1) to the key. If neither yields one, the work item still exists: Report it created by key with no URL, and skip the persist below.
 
 #### Persist the branch association
 
-Persist the new ticket's URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` the path above produced, and `branch_name` against `default_branch` (both step 1). The second comparison strips `default_branch`'s remote first, taking everything after its first `/`, since `default_branch` is remote-qualified (`origin/main`) where `branch_name` is bare (`main`). Comparing the two as written matches on no branch and silently disables the guard.
+Persist the new ticket's URL into the branch manifest so that later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` produced by the path above, and `branch_name` against `default_branch` (both step 1). The second comparison strips `default_branch`'s remote first, taking everything after its first `/`, since `default_branch` is remote-qualified (`origin/main`) whereas `branch_name` is bare (`main`). Comparing the two as written matches on no branch and silently disables the guard.
 
 - When the branch is not the default branch, and `branch_ticket_id` is either empty (the branch encodes no ticket) or equal to `ticket_id` (the branch is already linked to this ticket), persist:
 
@@ -217,21 +217,21 @@ Persist the new ticket's URL into the branch manifest so later sessions reuse it
 
 - When the branch is the default branch, the new ticket is a backlog ticket by construction: That branch is derived from no ticket, so it has no association to record. Skip the persist and report it, e.g. `Ticket {ticket_id} created on default branch {branch_name}; skipped branch-manifest association.`
 
-- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket {ticket_id} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
+- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so that it does not overwrite the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket {ticket_id} created while on a branch linked to ticket {branch_ticket_id}; skipped branch-manifest association.`
 
-The deriver refuses the write on the default branch regardless, per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url). Deciding it here is what produces the reported skip rather than a stderr diagnostic the completion output never sees.
+The deriver refuses the write on the default branch regardless, per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url). Deciding it here produces the reported skip rather than a stderr diagnostic that never appears in the completion output.
 
-Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare where `ticket_ref_prefix` is `#` or absent, prefixed where it is a project key. Comparing a bare number holds only in the first case and silently skips every persist in the second.
+Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare when `ticket_ref_prefix` is `#` or absent, prefixed when it is a project key. Comparing a bare number holds only in the first case and silently skips every persist in the second.
 
-Skip this section entirely where no URL was resolved; there is nothing to store.
+Skip this section entirely when no URL was resolved; there is nothing to store.
 
 ### 7. Apply relationships
 
 Skip this step when step 4 decided none.
 
-Where no remote ticket exists (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship step 4 decided, each with that as its reason, and report them. A relationship the user confirmed never disappears without a line in the completion output.
+When no remote ticket exists (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship that step 4 decided, each with that as its reason, and report them. A relationship confirmed by the user never disappears without a line in the completion output.
 
-Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference the platform rejects then costs the link alone; the same reference passed to the creation call would cost the ticket. Jira's clients force an exception for the parent, and the Jira path below states what replaces the guarantee there.
+Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference rejected by the platform then fails only the link; the same reference passed to the creation call would fail the creation of the ticket. Jira's clients force an exception for the parent, and the Jira path below states what replaces the guarantee there.
 
 #### GitHub path
 
@@ -241,21 +241,21 @@ One call applies every relationship decided:
 gh issue edit {number} --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
 ```
 
-Omit any flag whose relationship step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
+Omit the flag for any relationship that step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
 
-These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; reaching for that endpoint is the detour this note exists to prevent.
+These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; reaching for that endpoint is the detour that this note exists to prevent.
 
 #### Jira path
 
-**Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, which takes it as an object rather than a bare key: `"parent": { "key": "{parent}" }`. A reference Jira rejects then costs the relationship alone, as this step's general rule intends. Report the parent skipped where the update tool exposes no parent field.
+**Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, which takes it as an object rather than a bare key: `"parent": { "key": "{parent}" }`. A reference rejected by Jira then fails only the relationship, as this step's general rule intends. Report the parent skipped when the update tool exposes no parent field.
 
 `acli` is the exception, and the only one: `acli jira workitem edit` has no `--parent` flag, so set the parent with the step-6 creation call instead, after the pre-flight that step 6 states. Report it skipped if that pre-flight rejected the reference.
 
-**blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool where one is available, `acli` next, a reported skip only where neither is. The link client need not be the one that created the work item, because a link call carries no description and the creation client's format contract does not reach it.
+**blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool when one is available, `acli` next, a reported skip only when neither is. The link client need not be the one that created the work item, because a link call includes no description and the creation client's format contract does not apply to it.
 
-Through a connected tool, use the link type named `Blocks`, falling back to a type whose outward description reads `blocks` where the site carries no type of that name; `getIssueLinkTypes` lists them. Place the blocker in `inwardIssue` and the blocked work item in `outwardIssue`, the mapping the tool's own argument documentation states and a live call confirms.
+Through a connected tool, use the link type named `Blocks`, falling back to a type whose outward description reads `blocks` when the site has no type of that name; `getIssueLinkTypes` lists them. Place the blocker in `inwardIssue` and the blocked work item in `outwardIssue`, the mapping stated by the tool's own argument documentation and confirmed by a live call.
 
-The two clients take opposite argument orders for the same relationship: `acli --out` names the blocker, where a connected tool's `inwardIssue` does. A link type's inward and outward descriptions describe how Jira stores the link, and only `acli`'s argument names follow that orientation, so take each client's mapping from its own documentation and the descriptions only to select the type.
+The two clients take opposite argument orders for the same relationship: `acli --out` names the blocker, whereas a connected tool's `inwardIssue` does. A link type's inward and outward descriptions describe how Jira stores the link, and only `acli`'s argument names follow that orientation, so take each client's mapping from its own documentation and the descriptions only to select the type.
 
 Through `acli`:
 
@@ -263,9 +263,9 @@ Through `acli`:
 acli jira workitem link create --out "{blocker}" --in "{blocked}" --type Blocks --yes
 ```
 
-`--out` names the blocker, so the two relationships differ only in which side the new key occupies: blocked-by puts the referenced key in `--out`, and blocking puts the new key there.
+Because `--out` names the blocker, the two relationships differ only in which side the new key occupies: blocked-by puts the referenced key in `--out`, and blocking puts the new key there.
 
-Where no client offers a link surface, report each link as skipped, naming the client.
+If no client offers a link surface, report each link as skipped, naming the client.
 
 #### Other platforms
 
@@ -273,11 +273,11 @@ Use whatever the platform's own tooling offers for parent and blocking relations
 
 #### When a relationship cannot be established
 
-A relationship the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link costs less than losing the ticket. Include every skipped relationship and its reason in the completion output; that report is how a platform's missing relationship surface becomes visible.
+A relationship that the platform cannot express, and a call that fails, are each recorded and skipped. Never abort the run over one: The ticket already exists by this point, and losing the link does less harm than losing the ticket. Include every skipped relationship and its reason in the completion output; that report makes a platform's missing relationship surface visible.
 
 ### 8. Save local artifacts
 
-Compute `ticket_ref` for the heading from `ticket_id` and `ticket_ref_prefix` (both already in scope from step 1) using the same logic the bundled deriver applies:
+Compute `ticket_ref` for the heading from `ticket_id` and `ticket_ref_prefix` (both already in scope from step 1) using the same logic applied by the bundled deriver:
 
 - If `ticket_ref_prefix == '#'`: `ticket_ref = '#' + ticket_id`
 - Otherwise: `ticket_ref = ticket_id`
@@ -306,9 +306,9 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "{model_id}" --override ticket_id="{ticket_id}" --override ticket_ref="{ticket_ref}"` via Bash, substituting the just-created ticket's `ticket_id` (step 6) and `ticket_ref` (computed above). Prepend the output verbatim to the artifact body.
 
-The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
+The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values that its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would take the branch's id instead of its own. `branch` is left un-overridden so that it stays as authoring provenance. This applies to both the ticket artifact (step 8) and the plan artifact (step 9).
 
-Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, where step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the [no-remote fallback](#fallback-no-remote-platform) alone, which saves a snapshot with no ticket of record to copy.
+Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, when step 6 created a remote ticket. It records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the [no-remote fallback](#fallback-no-remote-platform) alone, which saves a snapshot with no ticket of record to copy.
 
 ### 9. Save plan (if present)
 
@@ -318,7 +318,7 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 {YYYYMMDD-HHMMSSZ}_{slug}_plan.md
 ```
 
-Then attach it as a comment on the remote ticket, through the platform step 3 resolved.
+Then attach it as a comment on the remote ticket, through the platform resolved in step 3.
 
 **GitHub.** Write the comment body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-issue{number}-{timestamp}.md`; do not inline the comment into the shell command:
 
@@ -328,7 +328,7 @@ body_path="{absolute path from the write step}"
 gh issue comment {number} --body-file "$body_path"
 ```
 
-**Jira.** Comment through the client that created the work item, in the format {skill?:update-jira-ticket} assigns that client: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
+**Jira.** Comment through the client that created the work item, in the format assigned to that client by {skill?:update-jira-ticket}: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
 
 The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path carried between Bash invocations resolves to nothing either way.
 
@@ -338,7 +338,7 @@ adf_path="{absolute path from the write step}"
 acli jira workitem comment create --key "{ticket_id}" --body-file "$adf_path"
 ```
 
-**Neither.** Where the client offers no comment surface, or the [no-remote fallback](#fallback-no-remote-platform) left nothing to comment on, the plan is saved locally alone. Report that in the completion output rather than passing over the attachment in silence.
+**Neither.** When the client offers no comment surface, or the [no-remote fallback](#fallback-no-remote-platform) left nothing to comment on, the plan is saved locally alone. Report that in the completion output rather than passing over the attachment in silence.
 
 Plan comment format:
 
@@ -357,12 +357,12 @@ Plan artifact: `{saved plan path}`
 
 ### Fallback: No remote platform
 
-If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD}-{4 random hex}` (e.g., `20260226-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created, and report every relationship step 4 decided as skipped per step 7.
+If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD}-{4 random hex}` (e.g., `20260226-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created, and report every relationship that step 4 decided as skipped per step 7.
 
 ## Completion
 
 ```
-Remote ticket created: {URL}               <- only if remote creation succeeded; {ticket_id} where no URL resolved
+Remote ticket created: {URL}               <- only if remote creation succeeded; {ticket_id} when no URL resolved
 Ticket saved: {ticket artifact path}
 Plan saved: {plan artifact path}           <- only if plan existed
 Plan comment skipped: {reason}             <- only if a plan was saved but not attached
