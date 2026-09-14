@@ -13,7 +13,7 @@ A README answers two questions for a reader who arrived a moment ago: whether th
 
 A README is written for people. `AGENTS.md` is the agent-facing companion, and it takes the context that an agent needs and a human reader does not: exact test invocations, constraints on what to modify, conventions that a contributor absorbs from the code but that an agent must be told.
 
-The split is not a matter of taste. An agent loads `AGENTS.md` in full at every session; as a result, a line there takes up context every time, whereas a human reads a README once and skims it later. Assigning content to a file by who reads it keeps both files short.
+The split is not a matter of taste. An agent loads `AGENTS.md` in full at every session, so a line there takes up context every time, whereas a human reads a README once and skims it later. Assigning content to a file by who reads it keeps both files short.
 
 When agents are the only likely readers, the README states what the thing is and where its entry points are, and stops. A stub is the correct shape there, not a gap to fill.
 

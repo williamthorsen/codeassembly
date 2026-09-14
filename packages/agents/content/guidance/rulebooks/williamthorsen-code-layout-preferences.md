@@ -56,7 +56,7 @@ A file takes the name of its main export. A file with no single main export take
 - `LaneCard.tsx` exports `LaneCard`
 - `status-adapter.ts` exports the adapter's several functions
 
-Components take PascalCase because their exports are PascalCase; therefore, no framework exception is needed.
+Components take PascalCase because their exports are PascalCase, so no framework exception is needed.
 
 Name a file for its subject, never for its audience. `test-utils.ts` names who reads it; `scaffolding.ts` names what it contains.
 

@@ -316,7 +316,7 @@ The shipped `all` collection carries `'@library'`; declaring `collections: use: 
 
 ### Dependencies
 
-A rulebook, skill, or subagent may declare dependencies on other artifacts in its frontmatter, grouped by artifact type. Because resolution follows these edges transitively — deduped, with cycle detection — declaring one artifact pulls in its whole closure:
+A rulebook, skill, or subagent may declare dependencies on other artifacts in its frontmatter, grouped by artifact type. Resolution follows these edges transitively — deduped, with cycle detection — so declaring one artifact pulls in its whole closure:
 
 ```yaml
 dependencies:

@@ -19,7 +19,7 @@ A barrel (an `index.ts` that re-exports a directory's modules) is permitted only
 
 Importing one symbol through a barrel loads every module re-exported by the barrel.
 
-A barrel is also permitted at a vendor boundary that lint enforces: A directory containing the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement; therefore, a boundary protected by no lint rule gets no barrel.
+A barrel is also permitted at a vendor boundary that lint enforces: A directory containing the sole permitted import site for an external dependency is a module boundary in the same sense as a package entry point. The permission rests on the enforcement, so a boundary protected by no lint rule gets no barrel.
 
 ## Import specifiers
 

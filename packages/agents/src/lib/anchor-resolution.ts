@@ -33,7 +33,7 @@ interface FenceScan {
  * offending target is reported together, so an author fixing an artifact sees the whole list rather than one per run,
  * and a target repeated across the body is reported once.
  *
- * A fence that nothing closes throws too. Everything below it reads as code; as a result, no anchor there can be checked, and a
+ * A fence that nothing closes throws too. Everything below it reads as code, so no anchor there can be checked, and a
  * silent pass over an unchecked remainder is indistinguishable from a clean one.
  *
  * `body` is checked before any rewriting, and where the pipeline expands includes, after that expansion. Rewriting

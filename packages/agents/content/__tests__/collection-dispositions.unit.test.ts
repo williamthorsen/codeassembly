@@ -11,7 +11,7 @@ import { resolveClosure, type ResolvedClosure } from '../../src/lib/dependency-r
 import { listVisibleMarkdownFiles } from '../../src/lib/fs-helpers.ts';
 import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
 
-// Because declaring a collection is a claim about its members, an artifact in none of them is deploying under a claim
+// Declaring a collection is a claim about its members, so an artifact in none of them is deploying under a claim
 // nobody made. These two checks are what make the claim real rather than nominal: coverage catches the artifact that
 // was added with no disposition, and closure catches the unexamined artifact that a vetted collection reaches through
 // an edge. Neither can be replaced by reading the collection files, because both defects are invisible there.
