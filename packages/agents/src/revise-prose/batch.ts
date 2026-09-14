@@ -16,13 +16,13 @@ export const DEFAULT_BATCH_BUDGET = 96 * 1_024;
 /**
  * Partitions `files` into batches under `budget`, deterministically and in the order the sweep resolved them.
  *
- * The recurring batches lead. Files linked by a shared sentence form a component, which no batch boundary crosses, so
- * every copy of one sentence is adjudicated together and no file reaches two writers. Components pack under the budget
- * like any other batch; a single component that outgrows it becomes one oversized batch, splitting it being what the
- * grouping exists to prevent.
+ * Puts the recurring batches first. Groups files linked by a shared sentence into a component that no batch boundary
+ * crosses, so one subagent adjudicates every copy of a sentence and no two subagents edit the same file. Packs
+ * components under the budget like any other batch, and makes a single component that outgrows it into one oversized
+ * batch, splitting it being what the grouping exists to prevent.
  *
- * The rest pack whole directories, so a batch boundary falls on a directory boundary except where one directory alone
- * exceeds the budget.
+ * Packs the remaining files by whole directory. A batch boundary falls on a directory boundary except when one
+ * directory alone exceeds the budget.
  *
  * Throws where `budget` is not a positive integer, a batch of no bytes being unsatisfiable rather than empty.
  */

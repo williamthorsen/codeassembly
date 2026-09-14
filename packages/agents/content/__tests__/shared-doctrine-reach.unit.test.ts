@@ -60,6 +60,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
       'This rule takes precedence over the register of the surrounding documents',
       'still be **mannered prose**',
       'A verb that fits any subject and object states no relation between them',
+      'an imperative there would give the action to the reader',
       'a tool **reports** its findings (not "the findings arrive")',
     ],
   },
