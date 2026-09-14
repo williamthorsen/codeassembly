@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '20'
+version: '21'
 ---
 
 # CodeAssembly content specification
@@ -154,6 +154,8 @@ Only the rulebook row is validated on parse; a `members:` block is validated whe
 A rulebook's `version` tracks the operative content of its deployed body: Bump it whenever an edit changes what the rulebook asks of an agent, and leave it when the edit was cosmetic. The field exists to prevent two different bodies from reporting one version, and `revise-prose` keys a repository's sweep coverage on the value, so an un-bumped change leaves every repository recorded as swept against rule text that has since changed.
 
 The deployed body is the body after includes expand. Editing a partial is therefore a content change for every rulebook that includes it, and the version changes although the rulebook's own file is untouched. A file that the body links to rather than inlines, such as a `_data/` reference, is outside the body and requires no bump. _(Enforced by `rulebook-version-pins.unit.test.ts`.)_
+
+A `revise-prose` repair does not change what a rulebook asks, because the sweep's calibration rules out any rewrite that would change what the text directs. Keep the version and re-pin the body hash alone: Once the version rises, `revise-prose` no longer counts the coverage that the same sweep recorded. _(Convention; not enforced.)_
 
 ## Naming
 
