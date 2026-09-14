@@ -839,12 +839,6 @@ rejections:
   - rule: where
     unit: williamthorsen-writing-preferences
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: A consumer declares it only where that vendor's products are in use
-    ground: 'outside the rule: names the projects and machines in which the products are in use'
-    unit-version: '8'
-  - rule: where
-    unit: williamthorsen-writing-preferences
-    file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: declared directly where wanted
     ground: 'outside the rule: names the projects in which the artifact is wanted'
     unit-version: '8'

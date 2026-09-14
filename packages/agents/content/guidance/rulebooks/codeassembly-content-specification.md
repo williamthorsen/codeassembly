@@ -128,7 +128,7 @@ Deciding a disposition takes two reading passes, and the second is the one that 
 
 - Nothing outside it reaches its members: No other collection enumerating its own members has a closure containing one, so a consumer that does not declare it never deploys one.
 - Its closure contains only opt-in and public members.
-- A consumer declares it only where that vendor's products are in use, since each member takes a line in the skill index of every session.
+- A consumer declares it only if that vendor's products are in use, since each member takes a line in the skill index of every session.
 
 The first criterion is enforced rather than observed, because a single invocation token restored to its required form would undo it silently. _(Enforced by `collection-dispositions.unit.test.ts`.)_
 
