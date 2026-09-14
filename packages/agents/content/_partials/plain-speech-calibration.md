@@ -1,4 +1,4 @@
-<!-- unit-version: plain-speech 5 -->
+<!-- unit-version: plain-speech 6 -->
 
 ## Plain-speech sweep calibration
 
@@ -7,8 +7,8 @@ How one sweep applies the rule above, so that two sweepers give the same verdict
 ### Rewrite these
 
 1. **A figurative verb when a plain one exists.** "detail taxes the reader" becomes "detail wastes the reader's attention". "the lede writes itself" becomes "the lede follows".
-2. **A subject that cannot perform the verb.** "the file carries a section" becomes "the file contains a section". "the block governs" becomes "the block takes precedence". "Findings arrive as warnings" becomes "The function reports warnings": Findings arrive nowhere, and the original drops the function that produced them.
-3. **A missing actor that the reader needs.** Rewrite when the sentence omits an actor that the reader must know and cannot recover from context. "Refinement happens later, in bulk" becomes "A later pass refines them in bulk", because the point is which pass does it.
+2. **A verb that does not fit its subject.** "the file carries a section" becomes "the file contains a section". "the block governs" becomes "the block takes precedence".
+3. **A subject that does not perform the action, or a missing actor that the reader needs.** Rewrite when the sentence gives an action to something that does not perform it, or omits an actor that the reader must know and cannot recover from context. "Findings arrive as warnings" becomes "The function reports warnings": Findings arrive nowhere, and the original drops the function that produced them. In a skill body, "the parent rides the creation call" becomes "Set the parent in the creation call", because the agent sets it. "Refinement happens later, in bulk" becomes "A later pass refines them in bulk", because the point is which pass does it.
 4. **A constructed figure when a literal phrase exists.** The rule's mannered-prose test, applied to a site. `gate`, `sweep`, `tier`, `lede`, `drift`, and `live` are settled vocabulary and stay, whatever their figurative origin.
 
 Passive voice is not a defect on its own, and case 3 is no license to convert it. Keep the passive when the actor is obvious or beside the point, when the patient is the paragraph's topic, or when it puts a long phrase at the end of the sentence.
@@ -28,7 +28,7 @@ After:
 
 > Behavioral rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. When the boundary below requires a restatement, put it at the step that produces the output. An agent follows a rule more reliably when the rule appears next to the action that it governs than when the agent must follow a link to read it.
 
-Four edits fall under cases 1 and 2, and one under case 3: "must be fetched" drops the agent, and the sentence's point is which party fetches. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. Two edits belong to no case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.
+Three edits fall under cases 1 and 2, and two under case 3: "lands" gives the placement to the restatement rather than to the agent that places it, and "must be fetched" drops the agent from a sentence whose point is which party fetches. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. Two edits belong to no case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.
 
 ### Shapes to look for
 
