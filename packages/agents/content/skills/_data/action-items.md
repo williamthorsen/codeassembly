@@ -1,6 +1,6 @@
 # Action items
 
-The user runs several sessions at once and skims. An ask stated only in the prose is an ask missed, and a response with no block tells the user the turn needs nothing from them.
+The user runs several sessions at once and skims. An ask stated only in the prose is an ask missed, and a response with no block tells the user that the turn needs nothing from them.
 
 The render contract comes first; the doctrine behind it follows. Skills that close a turn by asking include the contract inlined, so what they consult here is the doctrine.
 
@@ -8,7 +8,7 @@ The render contract comes first; the doctrine behind it follows. Skills that clo
 
 ## Sweep before sending
 
-The failure this convention prevents is not bad formatting. It is an ask the agent never recognized as an ask, so no formatting rule ever applied. Before ending a turn, scan the draft for anything that invites a response and move every hit into the block.
+The failure prevented by this convention is not bad formatting. It is an ask that the agent never recognized as an ask. No formatting rule ever applied to it. Before ending a turn, scan the draft for anything that invites a response and move every hit into the block.
 
 Soft offers are the hardest form to spot. Each phrases a question as a statement:
 
@@ -20,9 +20,9 @@ Soft offers are the hardest form to spot. Each phrases a question as a statement
 - "if you'd like…"
 - "I've not done X" (leaving the offer implicit)
 
-Each is an action item. Restate it in the block as the concrete action it proposes, and strike the offer from the prose. The observation that prompted it may stay; that is signal. The ask may not.
+Each is an action item. Restate it in the block as the concrete action that it proposes, and strike the offer from the prose. The observation that prompted it may stay; that is signal. The ask may not.
 
-The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence the agent already holds is a decision it declined to make, and it costs the user an evaluation to hand back what a clause would have carried. Strike it, state the decision in the prose with its reason, and leave the block to the items only the user can settle. A block emptied this way is a turn with no ask, which is a report rather than a failure.
+The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence that the agent already holds is a decision that it declined to make, and handing it back makes the user evaluate what a clause would have stated. Strike it, state the decision in the prose with its reason, and leave the block to the items that only the user can settle. A block emptied this way is a turn with no ask, which is a report rather than a failure.
 
 ## Items
 
@@ -36,20 +36,20 @@ An item is a question, punctuated as one, naming the concrete action:
 
 ### Kinds
 
-| Prefix | Kind                                                                                        | Marker                                                            |
-| ------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `A`    | An action you propose to take: A "yes" makes you act.                                       | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
-| `Q`    | Information or a judgment you need: A "yes" only informs you; nothing happens on your side. | `🤔`                                                              |
+| Prefix | Kind                                                                                             | Marker                                                            |
+| ------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `A`    | An action you propose to take: A "yes" makes you act.                                            | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
+| `Q`    | Information or a judgment that you need: A "yes" only informs you; nothing happens on your side. | `🤔`                                                              |
 
-The prefix follows from the marker, so choosing it requires no classification the agent was not already making. A-items come first: They are what the turn is blocked on.
+The prefix follows from the marker, so choosing it requires no classification that the agent was not already making. A-items come first: The turn is blocked on them.
 
 A statement that is not an ask (a status note, a merge-ready report) is neither `A` nor `Q`; it stays in the prose, never the block. The prefix and marker always agree: An `A` never takes `🤔`, a `Q` never takes `👍🏼👎🏼`.
 
 A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line: "A1 y, A2 2". A single-item block has no prefix, since there is nothing to disambiguate.
 
-**Blocks with more than one list.** A canonical block can contain several independently-numbered lists, such as a next-steps menu offering a remote-issue select and a next-action select. Each list is an item, so the render contract's identifier rule applies to it unchanged: Canonical blocks are not exempt, and a bare `Remote issue:` label is not an identifier the reader can cite.
+**Blocks with more than one list.** A canonical block can contain several independently-numbered lists, such as a next-steps menu offering a remote-issue select and a next-action select. Each list is an item, so the render contract's identifier rule applies to it unchanged: Canonical blocks are not exempt, and a bare `Remote issue:` label is not an identifier that the reader can cite.
 
-**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, where the user picks any subset ("reply with numbers, or 'all'"). Its actions have no options of their own, so the bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. The letter prefix is what a single-select list needs and a multi-select does not: In the first it separates the list identifier from the option numbers beneath it; in the second there are no option numbers to separate it from.
+**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, in which the user picks any subset ("reply with numbers, or 'all'"). Its actions have no options of their own. The bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. A single-select list needs the letter prefix, and a multi-select does not: In the first it separates the list identifier from the option numbers beneath it; in the second there are no option numbers to separate it from.
 
 ## Rendering
 
@@ -59,9 +59,9 @@ Structure is fixed at three tiers (item, options, reasoning) and never goes deep
 
 ## Deference
 
-Where a skill defines a canonical presentation for its action items, that block takes precedence for the turn. An ad-hoc ask joins it rather than opening a second one; a response never ends with two competing blocks. The next-steps menus after a plan and after a review, `assess-ticket`'s follow-up actions, and `wrap-up`'s action menu are canonical blocks, but the test is whether the skill defines the presentation, not whether it appears here.
+When a skill defines a canonical presentation for its action items, that block takes precedence for the turn. Add an ad-hoc ask to it rather than opening a second one; a response never ends with two competing blocks. The next-steps menus after a plan and after a review, `assess-ticket`'s follow-up actions, and `wrap-up`'s action menu are canonical blocks, but the test is whether the skill defines the presentation, not whether it appears here.
 
-A canonical block keeps its own identifiers. Where its items already have stable ids (`refine-plan` keys each question to a plan-review finding such as `C1` or `X2`), those ids identify the items, and the `A`/`Q` prefixes do not displace them.
+A canonical block keeps its own identifiers. When its items already have stable ids (`refine-plan` keys each question to a plan-review finding such as `C1` or `X2`), those ids identify the items, and the `A`/`Q` prefixes do not displace them.
 
 ## Worked example
 

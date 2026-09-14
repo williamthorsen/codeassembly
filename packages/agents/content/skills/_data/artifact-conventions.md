@@ -59,9 +59,9 @@ Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored pat
 
 ## Path resolution
 
-Skills resolve artifact directories by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON it emits on stdout. This is the canonical method for all artifact path resolution. The deriver writes the manifest to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect; subsequent invocations short-circuit by reading the cached manifest.
+Skills resolve artifact directories by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON that it emits on stdout. This is the canonical method for all artifact path resolution. The deriver writes the manifest to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect; subsequent invocations short-circuit by reading the cached manifest.
 
-For contexts where neither the deriver nor a cached manifest is available (e.g., standalone scripts without Node.js), the manual fallback is:
+When neither the deriver nor a cached manifest is available (e.g., standalone scripts without Node.js), the manual fallback is:
 
 1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
 2. If not found there, read from `~/.agents/preferences.yaml`
@@ -71,11 +71,11 @@ For contexts where neither the deriver nor a cached manifest is available (e.g.,
 
 ### Reader tolerance and authoring-time validation
 
-The session-context deriver reads only the fields it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `scm`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated: This file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
+The session-context deriver reads only the fields that it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `scm`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated: This file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
 
-Schema validation against `schemas/preferences.json` is an authoring-time concern, surfaced by the `$schema` reference at the top of the YAML (for editor LSPs) and by `preferences-schema.unit.test.ts` against the project-checked-in `.agents/preferences.yaml`. The reader does not validate against the schema at runtime; doing so would fail on legitimate keys owned by other tools.
+Schema validation against `schemas/preferences.json` is an authoring-time concern: Editor LSPs validate through the `$schema` reference at the top of the YAML, and `preferences-schema.unit.test.ts` validates the project-checked-in `.agents/preferences.yaml`. The reader does not validate against the schema at runtime; doing so would fail on legitimate keys owned by other tools.
 
-The reader does still hard-fail on malformed YAML, missing git state, and shape problems on fields it consumes (e.g., `artifacts.base_dir` set to a non-string, `scm` set to a value outside the `github | bitbucket` enum). Per-field errors name the offending key path so the user can locate the issue without reading the whole file.
+The reader does still hard-fail on malformed YAML, missing git state, and shape problems on the fields that it consumes (e.g., `artifacts.base_dir` set to a non-string, `scm` set to a value outside the `github | bitbucket` enum). Per-field errors name the offending key path so that the user can locate the issue without reading the whole file.
 
 ### Ticket-scoped paths
 
@@ -116,7 +116,7 @@ Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in sess
 - **slug**: Kebab-case descriptor drawn from work context, e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
 - **artifact-type**: One of the registered types (see below)
 
-Where the ticket directory already holds artifacts for this change, reuse their slug; derive a fresh one only where the change's descriptor has moved. One change carries one name, which keeps it legible where the enclosing path is not in view: an editor tab, a search result, an export.
+When the ticket directory already contains artifacts for this change, reuse their slug; derive a fresh one only when the change's descriptor has moved. One change has one name, which keeps it legible where the enclosing path is not in view: an editor tab, a search result, an export.
 
 ### Run artifacts (review workflow)
 
@@ -182,7 +182,7 @@ run_id: <run id> # optional: present in orchestrated runs
 ---
 ```
 
-Directly below the closing `---` comes the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode. An artifact carrying no frontmatter, such as the `pull-request` and `merge` records, opens with the marker instead:
+Directly below the closing `---` comes the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode. An artifact that has no frontmatter, such as the `pull-request` and `merge` records, opens with the marker instead:
 
 <!-- include: ../../_partials/seal-marker.md / -->
 
@@ -201,23 +201,23 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 | `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                            |
 | `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                         |
 | `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                            |
-| `provenance.model`         | no       | The model identifier authoring the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                                  |
+| `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                       |
 | `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                                                    |
 | `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                           |
 | `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                |
 | `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                          |
-| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that hold the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md). |
-| `author`                   | no       | Human author of the work. Used by review artifacts where the reviewing surface records the code author.                                                                                  |
-| `commits`                  | no       | List of short SHAs the artifact summarizes. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                    |
+| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that have the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md). |
+| `author`                   | no       | Human author of the work. Used by review artifacts when the reviewing surface records the code author.                                                                                   |
+| `commits`                  | no       | List of short SHAs summarized by the artifact. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                 |
 | `run_id`                   | no       | Orchestrated run ID. Present in orchestrated runs and in artifacts that link back to one.                                                                                                |
 
 ### `commit` vs. `commits`
 
-`commit` is a singular top-level field holding the short HEAD SHA at write time. Every artifact has one. `commits` is an optional list used only by devlogs, recording the SHAs whose changes the devlog summarizes. The two coexist and never conflict.
+`commit` is a singular top-level field containing the short HEAD SHA at write time. Every artifact has one. `commits` is an optional list used only by devlogs, recording the SHAs whose changes the devlog summarizes. The two coexist and never conflict.
 
 ### PR resolution
 
-`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that hold the URL while composing frontmatter: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
+`resolve-frontmatter.sh` does not resolve `pr`. The field is set only by PR-aware skills that have the URL while composing frontmatter: `review-branch` and `respond-to-review` pass it via `--override pr=<url>`. Every other artifact omits `pr`. See [`pr-resolution.md`](pr-resolution.md) for the full contract.
 
 ### Bespoke frontmatter composition
 
@@ -231,7 +231,7 @@ The first two read the script's JSON output and write the YAML frontmatter thems
 
 ## Manifest creation
 
-Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and shipped as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose toolbelt includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
+Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and deployed as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose tool set includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
 There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and a missing one starts a recovery rather than a hard stop.
 
@@ -241,7 +241,7 @@ Invocation surface:
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 ```
 
-The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). One case rewrites on a cached read: A default-branch manifest holding a `ticket_url` or `pr_url` is repaired, once, per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
+The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). In one case the deriver rewrites the file on a cached read: A default-branch manifest containing a `ticket_url` or `pr_url` is repaired, once, per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
 
 When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first: The deriver is the single derivation surface and is safe to call from any context.
 
@@ -257,16 +257,16 @@ Plan-specific `provenance.skill` values include `design-and-plan`, `plan`, `plan
 
 ## Devlog frontmatter
 
-This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter). Devlogs typically populate `commits` (the SHAs the devlog summarizes) in addition to the universally-required fields. `provenance.skill` is `create-devlog`; `provenance.isInteractive` is `true`. `commits` is omitted for `working-tree` invocations.
+This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter). Devlogs typically include `commits` (the SHAs that the devlog summarizes) in addition to the universally-required fields. `provenance.skill` is `create-devlog`; `provenance.isInteractive` is `true`. `commits` is omitted for `working-tree` invocations.
 
 ## Deferred-findings frontmatter
 
 This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extensions. The artifact is written when at least one finding became a created ticket or at least one finding was dropped; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
 
-| Field             | Required | Description                                                                                                                                                                              |
-| ----------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session_type`    | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                                                                         |
-| `tickets_created` | no       | List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` or `[F1, T2, R1]`). Omitted when empty. |
+| Field             | Required | Description                                                                                                                                                                                   |
+| ----------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_type`    | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                                                                              |
+| `tickets_created` | no       | List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs that it addresses. `items` is always a list (e.g., `[F1]` or `[F1, T2, R1]`). Omitted when empty. |
 
 `provenance.skill` is `wrap-up`; `provenance.isInteractive` is `true`.
 
@@ -302,7 +302,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                            |
 | `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                              |
 
-`scope`, `type`, and `breaking` hold the [consolidated record](change-record.md#terms), and each override is recorded beside the field that it overrides rather than in its place. A skill that needs the effective record reads it from [`resolve-effective-record`](title-templates.md#resolve-effective-record) rather than applying the overrides itself.
+`scope`, `type`, and `breaking` contain the [consolidated record](change-record.md#terms), and each override is recorded beside the field that it overrides rather than in its place. A skill that needs the effective record reads it from [`resolve-effective-record`](title-templates.md#resolve-effective-record) rather than applying the overrides itself.
 
 The frontmatter stays flat, whereas the `change-record` block nests the consolidated record and the overrides, because the artifact store is an Obsidian vault and Obsidian's Properties editor does not handle nested maps.
 
@@ -316,9 +316,9 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | --------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
 | `copies_remote` | no       | `true` when the artifact's body is a copy of the ticket of record as written. Omitted otherwise; there is no `false`. |
 
-**The field is a claim about the body, not a timestamp.** A remote that already holds the snapshot's content can only move ahead of it, so the claim stays true however far the remote later advances, and `review-branch` reads it as a precedence rule rather than as a value to compare. This is why the snapshot records _that_ it copied rather than _when_: An exact source timestamp would cost a re-fetch after every remote write, since `gh issue edit` returns no `updatedAt`, and would misstate what the snapshot holds where a concurrent edit landed between the write and that fetch.
+**The field is a claim about the body, not a timestamp.** A remote that already contains the snapshot's content can only move ahead of it, so the claim stays true however far the remote later advances, and `review-branch` reads it as a precedence rule rather than as a value to compare. This is why the snapshot records _that_ it copied rather than _when_: An exact source timestamp would require a re-fetch after every remote write, since `gh issue edit` returns no `updatedAt`, and would misstate what the snapshot contains when a concurrent edit was made between the write and that fetch.
 
-**Omission is meaningful, and is the default.** The field is set where the artifact's body and the ticket of record's body are known to agree, whether because a remote write of that body succeeded or because the body was adopted from the remote unchanged. A snapshot whose body neither reached the remote nor came from it is the newer contract and says so by carrying nothing: A write that failed, and a producer that deliberately kept its revision local, both leave the field off. A snapshot written before the field existed carries nothing either and compares by filename recency exactly as it does today.
+**Omission is meaningful, and is the default.** The field is set when the artifact's body and the ticket of record's body are known to agree, whether because a remote write of that body succeeded or because the body was adopted from the remote unchanged. A snapshot whose body was neither written to the remote nor taken from it is the newer contract, which the absent field indicates: A write that failed, and a producer that deliberately kept its revision local, both leave the field off. A snapshot written before the field existed does not have the field either, and `review-branch` compares it by filename recency exactly as it does today.
 
 `align-ticket-with-implementation`, `create-ticket`, and `design-and-plan` write the field, each from what it already knows at save time about that agreement; each states its own condition. All three emit it through the frontmatter script's `--extra copies_remote=true` flag, the extension surface that the consumer fields above already use.
 
@@ -652,7 +652,7 @@ Companion file in the same run directory. Each line is a JSON object (JSONL form
 
 ### Event types
 
-All 13 valid event types and their required fields. Fields suffixed with `?` are optional. Usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs where the orchestrator captures {tool:Task} result metrics; older runs omit them:
+All 13 valid event types and their required fields. Fields suffixed with `?` are optional. Usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs in which the orchestrator captures {tool:Task} result metrics; older runs omit them:
 
 | Event type             | Key fields                                                                                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -695,7 +695,7 @@ V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ## Artifact types
 
-The [Mutability](#mutability) rule applies to every type below: A saved artifact is a point-in-time record, never revised to match anything downstream of it, and revision writes a new artifact rather than editing one.
+The [Mutability](#mutability) rule applies to every type below: A saved artifact is a point-in-time record, never revised to match anything downstream of it, and a revision is a new artifact rather than an edit to one.
 
 ### Run artifacts (in run directories)
 
@@ -791,11 +791,11 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 
 ### Proposed-change gate
 
-A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs (see [Insight gate](#insight-gate)), and drop it otherwise.
+A finding is a proposed change. Name the change before writing the finding: A problem is an observation, not a finding, when you cannot pair it with a change that you would make. Record it as an insight when it contains knowledge that a future reader needs (see [Insight gate](#insight-gate)), and drop it otherwise.
 
-Naming the change is not settling it. Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, such as which callers can recover or which of two contracts is the intended one, name the alternatives and leave the choice to them. That is a finding, and the reviewer states whose call it is rather than picking for them. Alternatives are named because the author knows something the reviewer does not, never because the reviewer could not settle on a fix.
+Naming the change is not settling it. When more than one change would resolve the problem and choosing among them depends on knowledge that the author has, such as which callers can recover or which of two contracts is the intended one, name the alternatives and leave the choice to them. That is a finding, and the reviewer states whose call it is rather than picking for them. Alternatives are named because the author knows something the reviewer does not, never because the reviewer could not settle on a fix.
 
-A finding therefore has one of exactly two shapes, and consumers may rely on the pair being exhaustive: a single named change, or a choice among named alternatives the author decides. Only the absence of any envisioned change disqualifies a finding.
+A finding therefore has one of exactly two shapes, and consumers may rely on the pair being exhaustive: a single named change, or a choice among named alternatives for the author to make. Only the absence of any envisioned change disqualifies a finding.
 
 ### Actionability gate
 
@@ -803,22 +803,22 @@ A named change still has to be worth making. Decide at this gate whether it is, 
 
 A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as taking on a burden of proof, weighed against that full cost, never against its line length.
 
-This gate is the [concision principle](./concision.md) applied to findings: A finding, like any detail, costs every reader attention once that cost outweighs the decision it enables.
+This gate is the [concision principle](./concision.md) applied to findings: A finding, like any detail, costs every reader attention once that cost outweighs the decision that it enables.
 
-**Hedging language is a delete trigger, not a softening device.** If a finding's own body qualifies it out of relevance, it does not belong. Drop it. If the condition genuinely holds now, drop the qualifier instead and state the finding plainly. Disqualifying tells include:
+**Hedging language is a delete trigger, not a softening device.** If a finding's own qualifiers make it irrelevant, it does not belong. Drop it. If the condition genuinely holds now, drop the qualifier instead and state the finding plainly. Disqualifying signs include:
 
 - "No action this PR / no action required / not actionable here"
 - "Just capturing a thought" / "mentioning so the next contributor…"
-- "Call it out only if X" / "consider when Y" / "would matter once Z" / "revisit if/when…", where the named condition is not currently met
+- "Call it out only if X" / "consider when Y" / "would matter once Z" / "revisit if/when…", when the named condition is not currently met
 - A body that endorses the current state ("the current shape is correct") and then proposes a change anyway: incoherent, since no recommendation remains once you have endorsed the status quo
 
 Self-test before writing each finding: _Would I make this change right now if it were my code?_ If no, it is not a finding.
 
 Where dropped content goes: An observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
 
-This holds at the whole-review level too: A review that surfaces no findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
+This holds at the whole-review level too: A review that reports no findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
 
-Apply this gate **hardest** to R and S, where the low criticality bar invites filler.
+Apply this gate **hardest** to R and S, whose low criticality bar invites filler.
 
 ### Category criteria
 
@@ -856,7 +856,7 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 - Better naming or code organization
 - Additional test cases for edge cases
 - Documentation improvements
-- **Gate:** Raise only when the change aligns with a codebase convention the code violates, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
+- **Gate:** Raise only when the change aligns with a codebase convention violated by the code, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
 
 **Legacy (`-L` suffix).** Pre-existing code observation:
 
@@ -875,7 +875,7 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 | W (no F)                | `medium`    | Real issues to address     |
 | F                       | `high`      | Must fix before merge      |
 
-Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` so that an unattended fix cycle does not touch pre-existing code, while a legacy-only review still renders the post-review findings menu with its full option pool, where a human can weigh a drive-by. The two axes differ on purpose.
+Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` so that an unattended fix cycle does not touch pre-existing code, while a legacy-only review still renders the post-review findings menu with its full option pool, in which a human can weigh a drive-by. The two axes differ on purpose.
 
 ### Re-review severity escalation
 
@@ -893,11 +893,11 @@ Consumers that present insights (`wrap-up`, `summarize-chat`, review skills and 
 
 ### Insight gate
 
-An insight is the deliberate complement to a finding: A finding gives the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate): "no severity, no action" is exactly the low bar that invites filler.
+An insight is the deliberate complement to a finding: A finding gives the author a decision to act on now; an insight preserves knowledge that a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate): "no severity, no action" is exactly the low bar that invites filler.
 
-Emit an insight only when it is **non-obvious knowledge a future reader is materially worse off without**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
+Emit an insight only when it is **non-obvious knowledge without which a future reader is materially worse off**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
 
-**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change the author should weigh, it is an `S`, not an insight. When in doubt with any action implied, classify it as `S`.
+**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change that the author should weigh, it is an `S`, not an insight. When in doubt with any action implied, classify it as `S`.
 
 Insights never have criticality, never block a merge, and never count toward a review score or the [Overall criticality mapping](#overall-criticality-mapping).
 
@@ -908,13 +908,13 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 ### Mutability
 
-A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote it was published to, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
+A saved artifact is a point-in-time record of what its author produced at the moment of writing. It is never reconciled with anything downstream of it: not a later human edit to the remote to which it was published, not a rebase that leaves `baseSha` and `commit` unresolvable, not a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-The seal marker each artifact carries puts this in the file rather than only in standing guidance. What it forbids is editing a record to match something downstream of it, which a flow still composing its own artifact has not reached: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` carries no marker at all, being the planning loop's working state.
+Each artifact contains a seal marker, which states this in the file rather than only in standing guidance. The marker forbids editing a record to match something downstream of it, which a flow still composing its own artifact has not reached: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` contains no marker at all, being the planning loop's working state.
 
-Revision writes a new artifact rather than editing one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan it refines intact.
+A revision is a new artifact rather than an edit to one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan that it refines intact.
 
-Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; a `pull-request` body rewritten to match a human's later edit reports `differ: false` for a lede that was in fact revised, so the record derives an `accepted` verdict for a lede the author rewrote. The corruption raises no error and is undetectable in any session that no longer holds the original text. Where a lede is genuinely needed and the artifacts do not carry it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
+Overwriting a record also breaks consumers. `capture-lede-decision` derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; if a `pull-request` body is rewritten to match a human's later edit, `capture-lede-decision` reports `differ: false` for a lede that was in fact revised, so it records an `accepted` verdict for a lede that the author rewrote. The corruption raises no error and is undetectable in any session that no longer has the original text. When a lede is genuinely needed and the artifacts do not contain it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
 
 ## Portability
 
