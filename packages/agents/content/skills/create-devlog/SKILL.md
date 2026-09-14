@@ -44,7 +44,7 @@ The devlog file begins with YAML frontmatter conforming to the canonical schema;
 
 ## Guidance
 
-- Compose tight from the start ([concision principle](../_data/concision.md)): A devlog records the lessons and outcome, not a play-by-play
+- Compose tight from the start ([concision principle](../_data/concision.md)): A devlog records the lessons and outcome, not a step-by-step account
 - Include code snippets only for important lessons learned
 - Never include lengthy code snippets
 - Focus on the most important findings
@@ -85,9 +85,9 @@ The devlog frontmatter conforms to the [universal artifact frontmatter](../_data
 
 Resolve `{run_id}` from the `--run-id={id}` argument (empty when not supplied). Resolve `{commits}` according to the mode:
 
-- No argument (last commit): the output of `git log -n 1 --format=%h`.
-- `<n>` (last N commits): the output of `git log -n N --format=%h | paste -sd, -`.
-- `working-tree`: no value.
+- No argument (last commit): The output of `git log -n 1 --format=%h`.
+- `<n>` (last N commits): The output of `git log -n N --format=%h | paste -sd, -`.
+- `working-tree`: No value.
 
 Run via Bash, writing each resolved value into the call as literal text:
 
@@ -100,7 +100,7 @@ Run via Bash, writing each resolved value into the call as literal text:
   --override "run_id={run_id}"
 ```
 
-Drop the `--extra-list` flag entirely in `working-tree` mode, where `{commits}` has no value; passing it empty emits `commits: []`. Keep `--override "run_id="` with its empty value where no `--run-id` was supplied, because an empty override force-omits the field, which dropping the flag would not.
+Drop the `--extra-list` flag entirely in `working-tree` mode, in which `{commits}` has no value; passing it empty emits `commits: []`. Keep `--override "run_id="` with its empty value when no `--run-id` was supplied, because an empty override force-omits the field, which dropping the flag would not.
 
 Prepend the script's output verbatim to the artifact body. Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`.
 

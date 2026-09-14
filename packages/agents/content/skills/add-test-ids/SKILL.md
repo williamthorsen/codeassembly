@@ -6,7 +6,7 @@ user-invocable: true
 
 # Add test IDs
 
-Add `data-test-id` attributes to components in files you're working on.
+Add `data-test-id` attributes to components in files that you're working on.
 
 ## Rules
 

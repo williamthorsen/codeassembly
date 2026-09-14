@@ -13,13 +13,13 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 
 ## Arguments
 
-| Flag                           | Effect                                                                                                                                                                                                                                                                                      | Default                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `--write-target=remote\|local` | Which artifact alignment writes, per [Write targets](#write-targets). `local` saves the local ticket artifact alone and leaves the ticket of record as it stands, for a ticket the user cannot or must not edit; `remote` requires a ticket of record to resolve and stops where none does. | The ticket of record where one resolves, else the local artifact alone |
+| Flag                           | Effect                                                                                                                                                                                                                                                                                          | Default                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `--write-target=remote\|local` | Which artifact alignment writes, per [Write targets](#write-targets). `local` saves the local ticket artifact alone and leaves the ticket of record as it stands, for a ticket that the user cannot or must not edit; `remote` requires a ticket of record to resolve and stops when none does. | The ticket of record when one resolves, else the local artifact alone |
 
 ## Process
 
-1. **Resolve the source ticket**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_url`, and `ticket_id` from the manifest JSON it emits on stdout. Resolve the ticket the caller names, or failing that the manifest's, per [ticket source resolution](../_data/ticket-source-resolution.md). Whether a source ticket resolves is what selects the branch in [Two branches](#two-branches). Where resolution is ambiguous or fails, take the alignment branch and ask: A lookup that fell through must not be read as licence to author a proposal over one that already exists.
+1. **Resolve the source ticket**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_url`, and `ticket_id` from the manifest JSON that it emits on stdout. Resolve the ticket named by the caller, or failing that the manifest's, per [ticket source resolution](../_data/ticket-source-resolution.md). Whether a source ticket resolves selects the branch in [Two branches](#two-branches). If resolution is ambiguous or fails, take the alignment branch and ask: A lookup that fell through must not be read as licence to author a proposal over one that already exists.
 
 2. **Analyze branch changes**:
 
@@ -27,7 +27,7 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 git diff {default_branch}...HEAD
 ```
 
-3. **Write the ticket** on the branch step 1 selected, describing issues that were addressed, then write it to the targets [Saving](#saving) names
+3. **Write the ticket** on the branch selected by step 1, describing issues that were addressed, then write it to the targets named in [Saving](#saving)
 
 ## Output structure
 
@@ -51,17 +51,17 @@ When aligning to an existing implementation, _the implementation_ is the code on
 
 What the skill does turns on whether a prior ticket exists, not on how the caller scoped the call.
 
-**Generation, where no prior ticket exists.** The work reached the branch without a ticket, so every section is authored now from the implementation and nothing is overwritten. The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach the branch actually took, not a proposal still under consideration.
+**Generation, when no prior ticket exists.** The work was done on the branch without a ticket, so every section is authored now from the implementation and nothing is overwritten. The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach that the branch actually took, not a proposal still under consideration.
 
-**Alignment, where a prior ticket exists.** `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when the ticket was written. Reproduce all three verbatim from the source ticket and revise `## Acceptance criteria` alone, because the criteria alone are the contract an implementation can falsify. A proposal does not become wrong because the implementer did something else, and revising it destroys the only record of what was foreseen. A section the source ticket omits stays omitted: Alignment revises the record and adds nothing to it. The saved artifact is still a complete ticket; only its revision is partial.
+**Alignment, when a prior ticket exists.** `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when the ticket was written. Reproduce all three verbatim from the source ticket and revise `## Acceptance criteria` alone, because the criteria alone are the contract that an implementation can falsify. A proposal does not become wrong because the implementer did something else, and revising it destroys the only record of what was foreseen. A section missing from the source ticket stays omitted: Alignment revises the record and adds nothing to it. The saved artifact is still a complete ticket; only its revision is partial.
 
-Where the implementation diverges from what was proposed, report that divergence in the pull-request description, whose job is to describe the change under review. Do not raise it as a ticket edit, and do not offer it as an option. A reviewer reads the diff to learn what the code does, so an implementation outgrowing its proposal is an ordinary finding rather than a defect in the ticket.
+When the implementation diverges from what was proposed, report that divergence in the pull-request description, whose job is to describe the change under review. Do not raise it as a ticket edit, and do not offer it as an option. A reviewer reads the diff to learn what the code does, so an implementation outgrowing its proposal is an ordinary finding rather than a defect in the ticket.
 
-The source ticket is the one the caller names. A review names it in its `## Specification compliance` section, which records the source the review measured against, the remote issue or the local snapshot.
+The source ticket is the one that the caller names. A review names it in its `## Specification compliance` section, which records the source against which the review measured, the remote issue or the local snapshot.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
-**Ratified-delta mode.** When the caller supplies a delta it has already put to the user, such as a review's proposed-edit preview, the previewed delta is the whole of the revision. Apply exactly its lines and reproduce every other criterion and section verbatim. Seek no further divergence between the ticket and the implementation: What the caller's user consented to is those lines, not alignment as such. When applying a line reveals a change the delta does not contain, stop and report it rather than widening the edit.
+**Ratified-delta mode.** When the caller supplies a delta that it has already put to the user, such as a review's proposed-edit preview, the previewed delta is the whole of the revision. Apply exactly its lines and reproduce every other criterion and section verbatim. Seek no further divergence between the ticket and the implementation: The caller's user consented to those lines, not to alignment as such. When applying a line reveals a change that the delta does not contain, stop and report it rather than widening the edit.
 
 Invoked with no delta, alignment revises whichever criteria the implementation falsifies. The mode bounds how much of `## Acceptance criteria` changes; it never widens what alignment may touch.
 
@@ -80,23 +80,23 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with-implementation --interactive true --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
-Append `--extra copies_remote=true` where the remote write in [Write targets](#write-targets) succeeded, which records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the generation branch, where no ticket of record exists to copy; under `--write-target=local`, whose snapshot is the newer contract by design; and where the remote write failed, leaving the remote without the body that the artifact holds. Writing the remote before saving the local artifact is what makes the outcome known in time to record it.
+Append `--extra copies_remote=true` when the remote write in [Write targets](#write-targets) succeeded, which records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). Omit it on the generation branch, which has no ticket of record to copy; under `--write-target=local`, whose snapshot is the newer contract by design; and when the remote write failed, leaving the remote without the body that the artifact contains. Writing the remote before saving the local artifact makes the outcome known in time to record it.
 
 ## Saving
 
 ### Write targets
 
-The skill writes two artifacts: the ticket of record on its platform, and a local ticket artifact at the path [Path resolution](#path-resolution) derives. The frontmatter belongs to the local artifact alone; the body written to the platform carries none.
+The skill writes two artifacts: the ticket of record on its platform, and a local ticket artifact at the path derived in [Path resolution](#path-resolution). The frontmatter belongs to the local artifact alone; the body written to the platform contains none.
 
 **The ticket of record** resolves from the session-context manifest, from `ticket_url` or from `ticket_id` with `scm`, whichever artifact supplied the source content in step 1: A caller can name a local snapshot while a remote issue exists.
 
 **Alignment writes it; generation does not.** On the alignment branch, apply the criteria revision to the remote's current body and write it per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write). Generation has no ticket of record to write.
 
-**Consent comes from the caller.** Ratified-delta mode carries the user's consent to the remote write, so no further ask precedes it. Invoked with no delta, render the criteria revision as a delta and confirm before writing.
+**Consent comes from the caller.** In ratified-delta mode, the user has already consented to the remote write, so no further ask precedes it. Invoked with no delta, render the criteria revision as a delta and confirm before writing.
 
-**`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly and, where no ticket of record resolves, stops and reports the missing target rather than falling back to the local artifact.
+**`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly and, when no ticket of record resolves, stops and reports the missing target rather than falling back to the local artifact.
 
-**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; where no remote resolved, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason.
+**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; when no remote resolved, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason.
 
 ### Path resolution
 
