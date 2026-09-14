@@ -1,15 +1,15 @@
 # PR resolution
 
-Shared contract for the `pr:` frontmatter field. `resolve-frontmatter.sh` does **not** resolve `pr:`; it has no network, MCP, `gh`, or `curl` access, and most artifacts are written before a PR exists. The field is a best-effort human backlink, populated only where a PR URL is genuinely in hand.
+Shared contract for the `pr:` frontmatter field. `resolve-frontmatter.sh` does **not** resolve `pr:`; it has no network, MCP, `gh`, or `curl` access, and most artifacts are written before a PR exists. The field is a best-effort human backlink, populated only when a PR URL is genuinely available.
 
 ## Who sets `pr:`
 
-A skill supplies the URL by passing `--override pr=<url>` to `resolve-frontmatter.sh`; the script writes it verbatim into the frontmatter and omits the field when no override is given. Only two writers hold a URL at the moment they compose frontmatter:
+A skill supplies the URL by passing `--override pr=<url>` to `resolve-frontmatter.sh`; the script writes it verbatim into the frontmatter and omits the field when no override is given. Only two writers have a URL at the moment they compose frontmatter:
 
-- **`review-branch`** (when invoked via `review-pr`): sets `pr:` from the PR metadata `review-pr` resolved. In ticket-only / direct mode it holds no URL and omits the field.
-- **`respond-to-review`**: Forwards `pr:` from the review artifact it responds to (that review has `pr:` when it was produced via `review-pr`). Omits it when the review has none.
+- **`review-branch`** (when invoked via `review-pr`): Sets `pr:` from the PR metadata resolved by `review-pr`. In ticket-only / direct mode it has no URL and omits the field.
+- **`respond-to-review`**: Forwards `pr:` from the review artifact to which it responds (that review has `pr:` when it was produced via `review-pr`). Omits it when the review has none.
 
-Every other artifact-writing skill omits `pr:`; it holds no URL at write time. The PR-creation and merge artifacts record the URL as a prose line in their own bodies; they do not use frontmatter.
+Every other artifact-writing skill omits `pr:`; it has no URL at write time. The PR-creation and merge artifacts record the URL as a prose line in their own bodies; they do not use frontmatter.
 
 ## URL formats
 

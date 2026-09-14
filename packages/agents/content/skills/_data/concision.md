@@ -1,10 +1,10 @@
 # Concision
 
-Detail adds value up to a peak, then wastes the reader's attention: Past the peak, added detail hides the signal it was meant to convey. Add detail only while it adds signal. Weigh each sentence by the signal it adds, not its length.
+Detail adds value up to a peak, then wastes the reader's attention: Past the peak, added detail hides the signal that it was meant to convey. Add detail only while it adds signal. Weigh each sentence by how much signal it adds, not by its length.
 
 ## Compose tight the first time
 
-Compose from a skeleton, not a full draft you trim later. Start with the one sentence the reader cannot act without, then add only what changes what they do next. If you find yourself trimming, you started too loose.
+Compose from a skeleton, not a full draft that you trim later. Start with the one sentence without which the reader cannot act, then add only what changes what they do next. If you find yourself trimming, you started too loose.
 
 ## Proportionality
 
@@ -20,4 +20,4 @@ For each sentence, ask: Would removing it change what the reader does, or must k
 
 ## Cut noise, never signal
 
-This overrides the cut-list and self-test: Never drop a decision, constraint, or actionable fact for brevity, even when applying them would remove it. Detail is routed, not omitted: Each artifact's doctrine names where cut detail belongs.
+This overrides the cut-list and self-test: Never drop a decision, constraint, or actionable fact for brevity, even when applying them would remove it. Detail is moved elsewhere, not omitted: Each artifact's doctrine names where cut detail belongs.

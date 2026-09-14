@@ -17,26 +17,26 @@ A file is deployed when any of the following holds.
 - `<!-- codeassembly-subagent:{slug} -->` in a subagent's file
 - `<!-- codeassembly-rulebook:{slug} -->` in a rulebook delivered as a skill
 
-A rulebook that declares a version follows its `<!-- codeassembly-rulebook:{slug} -->` marker with `<!-- rulebook-version: {version} -->`, so a reader can name the version of the guidance in front of them.
+In a rulebook that declares a version, the `<!-- codeassembly-rulebook:{slug} -->` marker is followed by `<!-- rulebook-version: {version} -->`, so that a reader can name the version of the guidance in front of them.
 
-**It is under a harness's `skills/` tree.** Both commands populate that tree and mark only part of what they leave there: A skill's root `SKILL.md` contains an ownership marker while its nested Markdown and bundled scripts contain none, the shared `_data/` tree and the helper directories with no `SKILL.md` are `install`'s, and a declared source's support entries go under `_sources/`. The one thing there that is not deployed is a skill added by hand, whose `SKILL.md` contains no ownership marker.
+**It is under a harness's `skills/` tree.** Both commands populate that tree and mark only part of what they leave there: A skill's root `SKILL.md` contains an ownership marker while its nested Markdown and bundled scripts contain none, the shared `_data/` tree and the helper directories with no `SKILL.md` are `install`'s, and a declared source's support entries are under `_sources/`. The one thing there that is not deployed is a skill added by hand, whose `SKILL.md` contains no ownership marker.
 
 **It is in a harness's `scripts/` directory.** `install` copies those files verbatim and marks none of them, whatever the extension.
 
-A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region is inside an otherwise hand-authored guidance file. Inside it, each rulebook's block runs from `<!-- rulebook:{slug} -->` to `<!-- /rulebook:{slug} -->`, with `<!-- rulebook-version: {version} -->` directly below the open marker where the rulebook declares a version. A guidance-hook fill spliced into a skill or subagent body writes the same block.
+A region can be generated inside a file that is not. `sync` rewrites everything between `<!-- codeassembly-ambient:start -->` and `<!-- codeassembly-ambient:end -->` on every run, and in a project that region is inside an otherwise hand-authored guidance file. Inside it, each rulebook's block runs from `<!-- rulebook:{slug} -->` to `<!-- /rulebook:{slug} -->`, with `<!-- rulebook-version: {version} -->` directly below the open marker when the rulebook declares a version. A guidance-hook fill spliced into a skill or subagent body contains the same block.
 
 One deployed file has neither a marker nor a marked artifact around it: `install --link` writes a symlink rather than a copy. Its target is a build output under `dist/`, so an edit there survives until the next build and no longer.
 
 ## Finding the source
 
-An `install`-deployed file's marker carries a `Source:` line naming the file it was built from: a link into `packages/agents/content/` for a library file, and the path within the source, the source's name, and the source directory for one a declared source owns. A script has no marker: A shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `src/<name>/cli.ts` entry that `packages/agents/scripts/bundle-skill-helpers.ts` maps to it.
+An `install`-deployed file's marker contains a `Source:` line naming the file from which it was built: a link into `packages/agents/content/` for a library file, and the path within the source, the source's name, and the source directory for one owned by a declared source. A script has no marker: A shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `src/<name>/cli.ts` entry that `packages/agents/scripts/bundle-skill-helpers.ts` maps to it.
 
-A `sync`-deployed artifact has no such line either. Read the resolution report from the dry run for the domain the file is in: `codeassembly sync --dry-run` for a file under a project's harness directory, and `codeassembly sync --global --dry-run` for one under the home directory. A dry run of the wrong domain lists other artifacts, or none at all where that domain declares nothing. The report names each deployed artifact's origin:
+A `sync`-deployed artifact has no such line either. Read the resolution report from the dry run for the file's domain: `codeassembly sync --dry-run` for a file under a project's harness directory, and `codeassembly sync --global --dry-run` for one under the home directory. A dry run of the wrong domain lists other artifacts, or none at all when that domain declares nothing. The report names each deployed artifact's origin:
 
-- `← library` is the built-in library, shipped in `packages/agents/content/` of `williamthorsen/codeassembly`
+- `← library` is the built-in library, located in `packages/agents/content/` of `williamthorsen/codeassembly`
 - `← source "<name>"` is the `sources:` or `packages:` entry of that name in the `codeassembly.yaml` scope chain
 
-An ambient region's source is the rulebooks its `<!-- rulebook:{slug} -->` blocks name, each resolved through the same report.
+An ambient region's source is the rulebooks named by its `<!-- rulebook:{slug} -->` blocks, each resolved through the same report.
 
 ## Getting a change in
 
