@@ -27,7 +27,7 @@ interface RulebookPin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: '3462edd7034b915e9b3763c52db0c15e0acf35a2a2474a20ad0d96a22b243f39', version: '20' },
+    { bodyHash: '2180cf512c51eea3b8b787feb4f55775b4dd51685f9f481a52a40c74372be41d', version: '20' },
   ],
   [
     'commit-conventions',
@@ -39,20 +39,20 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'live-worktree-policy',
-    { bodyHash: '6aa2875ba894d4274153d1a3b56cc77e96097a6177fc7f895a5d73b0e0e482d4', version: '2' },
+    { bodyHash: '2f57238bf432f178e0a6b45f13fe460f6d49a7d81aa93d26eb44c05374822a38', version: '2' },
   ],
   [
     'readme-conventions',
-    { bodyHash: 'b9b45e2507f387b9ebbcbc8d15421c467bcc94f15ce7f543e8bfe47d9d4d1937', version: '2' },
+    { bodyHash: '52782185ccfb9035606eb01610e0332abc8c90684909daeaa70e3456cada3bf4', version: '2' },
   ],
-  ['shell-conventions', { bodyHash: 'a9890c63f2a04f739ee97d0f28a230482d4bee705321c8af95a3ce84e14eb7ae', version: '4' }],
+  ['shell-conventions', { bodyHash: 'c19e983da4149b03d4a3105d2a9c115a8b5545f036d8cfcace21d0da03e8f073', version: '4' }],
   [
     'williamthorsen-code-layout-preferences',
-    { bodyHash: '24c927de9d85a8510b2535eab5199683f70e28660fa8a2074ac52510b6c60bf1', version: '4' },
+    { bodyHash: 'b72091d25511bf942d3a29791e3a228dac90358fb52de7eabbc33e1f5bdc316a', version: '4' },
   ],
   [
     'williamthorsen-collaboration-preferences',
-    { bodyHash: 'c73b0acf313dfbb77125c5c39bf51aed76f5f191fedf451206ba34d37cf3aa3a', version: '4' },
+    { bodyHash: '740df18faa73b9a75691d6dc418f47590d6645e9b1a709df9e73bb71c10cb003', version: '4' },
   ],
   [
     'williamthorsen-comment-preferences',
@@ -68,7 +68,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-typescript-preferences',
-    { bodyHash: '3dd37d073db36de66449816392c1ca5ce6ffca1a9110d718b96e34e611505896', version: '4' },
+    { bodyHash: '9ae7ee862d8ae5c16a478b1d9c1a8f5a3d0642d5d78a69ee5ec2fd52bd656ee1', version: '4' },
   ],
   [
     'williamthorsen-workflow-preferences',

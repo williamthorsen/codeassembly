@@ -68,7 +68,7 @@ function myFunction() {
   /* ... */
 }
 
-// ✅ Correct - Variable has type annotation
+// ✅ Correct: Variable has type annotation
 const MyComponent: React.FC = () => {
   /* ... */
 };

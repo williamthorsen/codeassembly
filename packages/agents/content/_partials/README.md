@@ -15,7 +15,7 @@ A runtime link is an optional read. When the model already has a strong prior fo
 
 Doctrine is not automatically reference material. A doctrine applied by the agent every time it performs the act (comment discipline, whenever it writes a comment) binds only when it is already in context, and behind a link it does not bind at all, however well written. A doctrine consulted only when a decision arises stays in `_data/`.
 
-Inlining is not free (every consumer contains the partial's full text), so content that the agent needs only sometimes stays in `_data/`. A spec that is partly apply-time and partly reference splits into those two parts: The binding contract becomes a partial, and the reference material stays in `_data/` and includes the partial, so there is still one source of truth. If a doctrine has no reference-only part, it is a partial outright and no `_data/` doc remains.
+Inlining is not free (every consumer contains the partial's full text), so content that the agent needs only sometimes stays in `_data/`. A spec that is partly apply-time and partly reference splits into those two parts: The binding contract becomes a partial, and the reference material stays in `_data/` and includes the partial. There is still one source of truth. If a doctrine has no reference-only part, it is a partial outright and no `_data/` doc remains.
 
 Inline a spec **once per skill, as a section**, and point every use site at it with an in-file anchor (`[option format](#option-format)`). Anchor-only links pass through the link rewriter untouched. A skill with two use sites would otherwise contain the block twice, and a reference from inside a numbered procedure cannot contain a long block inline. An in-file anchor requires no extra read, because the content is already in context; the filesystem lookup is the defect, not the pointer.
 
@@ -41,9 +41,9 @@ The `<!-- children -->` placeholder is a partial-side directive. It appears at m
 
 If a host heading follows a directive and is deeper than the shallowest heading that the injection contributes, it renders as a subsection of the injected content rather than of the host body. Place every directive where the next host heading is at or above that level. The `codeassembly-content-specification` rulebook states the rule that an author follows, under "Injection-point placement"; this section explains the level computation behind it.
 
-The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored -- `subagents/_partials/review-writes-scaffold.md` opens at `###`, so the `###` sections following it are its correct siblings -- and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so fill inside the host. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
+The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored, and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so fill inside the host. For example, `subagents/_partials/review-writes-scaffold.md` opens at `###`, and the `###` sections following it are its correct siblings. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
 
-Slot content is the caller's own text and contributes nothing here: A heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it, so its nesting is already visible where it is written. `content/__tests__/injection-point-placement.unit.test.ts` enforces the rule.
+Slot content is the caller's own text and contributes nothing here: A heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it. Its nesting is already visible where it is written. `content/__tests__/injection-point-placement.unit.test.ts` enforces the rule.
 
 ## Path resolution
 
@@ -55,11 +55,11 @@ A partial's own includes are resolved relative to that partial's directory, not 
 
 Two things that a partial may contain are resolved against the host that inlines it rather than against the partial, so neither survives a move between host kinds.
 
-A **relative Markdown link** cannot serve both a skill host and a rulebook host. A skill's links resolve against `<slug>/SKILL.md` in skills-dir space; a rulebook's resolve against `guidance/rulebooks/<slug>.md` in content-root space. One authored target therefore names two different files, and a skill-shaped one resolves outside a rulebook's linkable roots, so the run fails. Write the target as `{harness_home_dir}/...` inside inline code when a partial must refer to a file from both.
+A **relative Markdown link** cannot serve both a skill host and a rulebook host. A skill's links resolve against `<slug>/SKILL.md` in skills-dir space; a rulebook's resolve against `guidance/rulebooks/<slug>.md` in content-root space. One authored target therefore names two different files, and a skill-shaped one resolves outside a rulebook's linkable roots and fails the run. Write the target as `{harness_home_dir}/...` inside inline code when a partial must refer to a file from both.
 
 A partial that `guidance/shared/AGENTS.md` inlines contains no relative link at all. That file is inlined into each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there. `shared-guidance-policy.unit.test.ts` scans the expanded body and fails a relative target that it finds.
 
-A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. Only a host that resolves a declaration knows the deployed rulebook set, and `install` deploys a support entry without resolving one, so the token renders in the skill but breaks the support entry's install.
+A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. The deployed rulebook set is available only to a host that resolves a declaration, and `install` deploys a support entry without resolving one. The token renders in the skill but breaks the support entry's install.
 
 ## Path references in installed content
 
@@ -154,7 +154,7 @@ The grammar reserves additional tokens for future use. Partial authors must not 
 
 - `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->`: Reserved for future named-slot support.
 - `<!-- children -->`: The canonical default-slot placeholder. Use exactly this token; do not invent variants.
-- `<!-- guidance-hook: name -->`: The guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook declared by a partial is declared by each body that inlines it. A line that resembles the directive but does not match its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than deployed as a stray comment. a directive that nothing binds is removed line by line, so a blank line separating two directives remains in the unbound render; a new directive goes on the line adjacent to the one that it joins. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+- `<!-- guidance-hook: name -->`: The guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. It resolves after includes expand, so a hook declared by a partial is declared by each body that inlines it. A line that resembles the directive but does not match its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than deployed as a stray comment. Because a directive that nothing binds is removed line by line, a blank line separating two directives remains in the unbound render; a new directive goes on the line adjacent to the one that it joins. Keep the two grammars disjoint: A slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
 
 ### Partial or guidance hook
 

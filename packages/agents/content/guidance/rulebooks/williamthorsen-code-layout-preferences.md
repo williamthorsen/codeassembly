@@ -95,6 +95,6 @@ Identifier naming (no abbreviations, kind-bearing tails, unit-of-measure suffixe
 
 ## What binds only through configuration
 
-State the directory names and the marker above in the project's own coverage and lint configuration; unwired, they bind nothing.
+State the directory names and the marker above in the project's own coverage and lint configuration; otherwise, they bind nothing.
 
 Anchor those globs on a delimiter rather than on a bare substring, which over-matches by accident.

@@ -41,7 +41,7 @@ The marker records a decision rather than a fact. When it no longer fits what th
 
 ## The first screen
 
-The opening makes up to three moves, in order. The first applies to every type; the second and third apply wherever a reader installs, imports, or runs the thing.
+The opening makes up to three moves, in order. The first applies to every type; the second and third apply to every type that a reader installs, imports, or runs.
 
 1. **One sentence of identity.** What this is and who it serves. "A lightweight CLI that converts Markdown to PDF" tells a reader more than a paragraph of welcome.
 2. **How to get it running.** The install command, the import line, or the bootstrap command, whichever the type calls for.
@@ -57,7 +57,7 @@ Detail about one symbol's behavior, such as its edge cases, its failure modes, a
 
 Length is a symptom worth examining, with one hard limit: The npm registry truncates a published package's README at 65,536 characters, silently and mid-sentence, and `wc -m README.md` measures it. Within that limit, a configuration package whose README runs long because per-option detail is its subject is correct as it stands; an application README of the same length usually contains a reference manual.
 
-Move the section, and leave a link where a reader looking for it would have found it. A pointer costs one line, and a reader who concludes the answer does not exist costs more.
+Move the section, and leave a link where a reader looking for it would have found it. A pointer takes one line, and a reader who concludes that the answer does not exist loses more than that.
 
 ## What never belongs
 

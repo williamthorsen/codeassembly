@@ -1,6 +1,6 @@
 ## Target file set
 
-Resolve the set of files that the run may edit, once and before reading any of them, and never widen it afterwards.
+Before reading any file, resolve once the set of files that the run may edit, and never widen it afterwards.
 
 **Expanding a path argument.** A path naming a file adds that file. A path naming a directory adds what git lists beneath it:
 
