@@ -9,7 +9,7 @@ This README is the canonical reference for the partial system. The expander is i
 Shared Markdown belongs in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is; the choice decides whether the agent reliably sees it at all.
 
 - **`_partials/`: Content that the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists to work through, and the doctrine for an act that it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
-- **`_data/`: Content that the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
+- **`_data/`: Content that the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Accessed through a runtime Markdown link and read only when the situation calls for it.
 
 A runtime link is an optional read. When the model already has a strong prior for what the content looks like (and it does, for anything resembling a standard option menu or output block), it generates from that prior instead of following the link. Emphasis is not a remedy: A `<HARD-GATE>` reading "follow its options and output format exactly; do not improvise" preceded one such link, and the agent improvised the block anyway. Never put must-reproduce content behind a runtime link.
 
@@ -41,7 +41,7 @@ The `<!-- children -->` placeholder is a partial-side directive. It appears at m
 
 If a host heading follows a directive and is deeper than the shallowest heading that the injection contributes, it renders as a subsection of the injected content rather than of the host body. Place every directive where the next host heading is at or above that level. The `codeassembly-content-specification` rulebook states the rule that an author follows, under "Injection-point placement"; this section explains the level computation behind it.
 
-The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored, and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so fill inside the host. For example, `subagents/_partials/review-writes-scaffold.md` opens at `###`, and the `###` sections following it are its correct siblings. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
+The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored, and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so are filled inside the host. For example, `subagents/_partials/review-writes-scaffold.md` opens at `###`, and the `###` sections following it are its correct siblings. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
 
 Slot content is the caller's own text and contributes nothing here: A heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it. Its nesting is already visible where it is written. `content/__tests__/injection-point-placement.unit.test.ts` enforces the rule.
 

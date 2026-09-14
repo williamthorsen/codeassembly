@@ -71,7 +71,7 @@ A link to a sibling rulebook is rejected too, and its error names the `{rulebook
 
 A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.unit.test.ts`, which also resolves a fragment on such a target to exactly one heading in the file into which it points. _(Enforced by test.)_
 
-One limitation is worth knowing before writing a rulebook that documents linking: Rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Because invocation tokens rewrite the same way, an example token keeps the `<slug>` placeholder rather than naming a real artifact.
+One limitation is worth knowing before writing a rulebook that documents linking: Rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Because invocation tokens are rewritten the same way, an example token keeps the `<slug>` placeholder rather than naming a real artifact.
 
 ## Anchor links
 
@@ -126,7 +126,7 @@ Deciding a disposition takes two reading passes, and the second is the one that 
 
 **An opt-in collection** (`atlassian` here) claims fit to one vendor ecosystem rather than to one author or to everyone:
 
-- Nothing outside it reaches its members: No other collection enumerating its own members resolves a closure containing one, so a consumer that does not declare it never deploys one.
+- Nothing outside it reaches its members: No other collection enumerating its own members has a closure containing one, so a consumer that does not declare it never deploys one.
 - Its closure contains only opt-in and public members.
 - A consumer declares it only where that vendor's products are in use, since each member takes a line in the skill index of every session.
 
@@ -177,7 +177,7 @@ A proposal justifies its breadth rather than assuming it. A contributing surface
 
 `revise-prose` delivers `_partials/plain-speech.md` and `_partials/plain-speech-calibration.md` inside the prompts of `skills/revise-prose/SKILL.md` and `subagents/prose-reviser.md`, so those files state a rule and exhibit it at once. Check an edit to any of them by running the sweep over that set on the branch, rather than by reading the diff for violations: A hand check reads what the author was already looking at, while the sweep reads each file whole against every rule.
 
-Because a sweeper applies the doctrine deployed to its harness, a branch that edits the doctrine deploys its own content before sweeping. If the deployed copy is behind the branch, sync the branch's content to the project tier first; if `live` already matches the branch, the deployed copy is the branch's and the sweep runs as it stands. _(Convention; not enforced.)_
+Because a sweeper applies the doctrine deployed to its harness, deploy the content of a branch that edits the doctrine before sweeping that branch. If the deployed copy is behind the branch, sync the branch's content to the project tier first; if `live` already matches the branch, the deployed copy is the branch's and the sweep runs as it stands. _(Convention; not enforced.)_
 
 ## Declaring rule ids
 
@@ -195,6 +195,6 @@ When a step's guidance is a matter of local taste rather than library doctrine -
 
 ## Injection-point placement
 
-Injected content brings its own headings: a partial's as authored, and a guidance-hook fill's demoted one level, so a bound rulebook's title appears at `##`. If a host heading follows a directive and is deeper than the injected content's shallowest heading, it renders as a subsection of the injection rather than of the host. For a hook, it renders under whichever rulebook the local binding supplied, which makes one body read differently on two machines.
+Injected content contributes its own headings: a partial's as authored, and a guidance-hook fill's demoted one level, so a bound rulebook's title appears at `##`. If a host heading follows a directive and is deeper than the injected content's shallowest heading, it renders as a subsection of the injection rather than of the host. For a hook, it renders under whichever rulebook the local binding supplied, which makes one body read differently on two machines.
 
 Place every directive where the next host heading is at or above that level. If a section would otherwise nest, promote it or move the directive below it. The level that decides is what the injection contributes, not a fixed `##`: A partial opening at `###` and declaring no hook legitimately takes `###` siblings after it. _(Enforced by `injection-point-placement.unit.test.ts`.)_
