@@ -184,7 +184,11 @@ describe(applyRejections, () => {
 
 describe(composeRecord, () => {
   it('records a unit the run covered', () => {
-    const record = composeRecord(EMPTY, fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }));
+    const record = composeRecord(
+      EMPTY,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
+      hasEverySite,
+    );
 
     expect(record.units['writing']).toStrictEqual({ version: '2', 'swept-at': '2026-09-02', rules: [], roots: ['.'] });
   });
@@ -193,6 +197,7 @@ describe(composeRecord, () => {
     const record = composeRecord(
       EMPTY,
       fold({ units: { writing: { version: '2', rules: [], roots: ['src', 'docs'] } } }),
+      hasEverySite,
     );
 
     expect(record.units['writing']?.roots).toStrictEqual(['docs', 'src']);
@@ -204,7 +209,11 @@ describe(composeRecord, () => {
       rejections: [],
     };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['src'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['src'] } } }),
+      hasEverySite,
+    );
 
     expect(record.units['writing']).toStrictEqual({
       version: '2',
@@ -220,7 +229,11 @@ describe(composeRecord, () => {
       rejections: [],
     };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      hasEverySite,
+    );
 
     expect(record.units['writing']?.roots).toStrictEqual(['.']);
   });
@@ -231,7 +244,11 @@ describe(composeRecord, () => {
       rejections: [],
     };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      hasEverySite,
+    );
 
     expect(record.units['writing']?.roots).toStrictEqual(['docs']);
   });
@@ -240,6 +257,7 @@ describe(composeRecord, () => {
     const record = composeRecord(
       EMPTY,
       fold({ units: { writing: { version: '2', rules: ['where', 'em-dash', 'where'], roots: ['.'] } } }),
+      hasEverySite,
     );
 
     expect(record.units['writing']?.rules).toStrictEqual(['em-dash', 'where']);
@@ -254,6 +272,7 @@ describe(composeRecord, () => {
     const record = composeRecord(
       prior,
       fold({ units: { writing: { version: '2', rules: ['em-dash', 'where'], roots: ['src'] } } }),
+      hasEverySite,
     );
 
     expect(record.units['writing']).toMatchObject({ rules: ['em-dash', 'where'], roots: ['src'] });
@@ -268,6 +287,7 @@ describe(composeRecord, () => {
     const record = composeRecord(
       prior,
       fold({ units: { writing: { version: '2', rules: ['em-dash', 'where'], roots: ['src'] } } }),
+      hasEverySite,
     );
 
     expect(record.units['writing']?.roots).toStrictEqual(['docs', 'src']);
@@ -279,26 +299,63 @@ describe(composeRecord, () => {
       rejections: [rejection({ unit: 'plain-speech', 'unit-version': '1' })],
     };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
+      hasNoSite,
+    );
 
     expect(record.units['plain-speech']).toStrictEqual(prior.units['plain-speech']);
     expect(record.rejections).toContainEqual(prior.rejections[0]);
   });
 
-  it("replaces a swept unit's rejections at the same version, a site not re-rejected being withdrawn", () => {
-    const kept = rejection({ file: 'docs/a.md' });
-    const withdrawn = rejection({ file: 'docs/b.md', phrase: 'the level against which it is probed' });
-    const prior: ProseRecord = { units: {}, rejections: [kept, withdrawn] };
+  it("keeps a swept unit's rejection at the current version while its site exists, though the run did not report it", () => {
+    const standing = rejection({ file: 'docs/a.md' });
+    const repaired = rejection({ file: 'docs/b.md', phrase: 'the level against which it is probed' });
+    const prior: ProseRecord = { units: {}, rejections: [standing, repaired] };
 
     const record = composeRecord(
       prior,
-      fold({
-        units: { writing: { version: '2', rules: [], roots: ['.'] } },
-        rejections: [foldRejection({ file: 'docs/a.md' })],
-      }),
+      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      (site) => site.file === 'docs/a.md',
     );
 
-    expect(record.rejections).toStrictEqual([kept]);
+    expect(record.rejections).toStrictEqual([standing]);
+  });
+
+  it('keeps every rejection whose site exists when the run swept the whole repository and reported none', () => {
+    const inDocs = rejection({ file: 'docs/a.md' });
+    const inSource = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
+    const prior: ProseRecord = { units: {}, rejections: [inDocs, inSource] };
+
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
+      hasEverySite,
+    );
+
+    expect(record.rejections).toStrictEqual([inDocs, inSource]);
+  });
+
+  it('consults the site of a current-version rejection under the swept roots alone', () => {
+    const consulted: RecordedRejection[] = [];
+    const current = rejection({ file: 'docs/a.md' });
+    const prior: ProseRecord = {
+      units: {},
+      rejections: [
+        current,
+        rejection({ file: 'docs/b.md', 'unit-version': '1' }),
+        rejection({ file: 'src/c.ts' }),
+        rejection({ unit: 'plain-speech', rule: 'plain-speech', file: 'docs/d.md' }),
+      ],
+    };
+
+    composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }), (site) => {
+      consulted.push(site);
+      return true;
+    });
+
+    expect(consulted).toStrictEqual([current]);
   });
 
   it('records the phrase reported by the fold, at the version of the unit that it names', () => {
@@ -308,6 +365,7 @@ describe(composeRecord, () => {
         units: { writing: { version: '2', rules: [], roots: ['.'] } },
         rejections: [foldRejection({ phrase: 'the ticket that the branch name encodes' })],
       }),
+      hasEverySite,
     );
 
     expect(record.rejections[0]).toMatchObject({
@@ -324,21 +382,22 @@ describe(composeRecord, () => {
           units: { writing: { version: '2', rules: [], roots: ['.'] } },
           rejections: [foldRejection({ unit: 'plain-speech' })],
         }),
+        hasEverySite,
       ),
     ).toThrow(/which the fold does not cover/);
   });
 
   it('retires the entry it supersedes across a reflow, a rewrapped line naming the same site', () => {
-    const older = rejection({ 'unit-version': '1', phrase: 'the source\n  that it names' });
-    const prior: ProseRecord = { units: {}, rejections: [older] };
+    const standing = rejection({ phrase: 'the source\n  that it names', ground: 'an earlier ground' });
+    const prior: ProseRecord = { units: {}, rejections: [standing] };
 
     const record = composeRecord(
       prior,
       fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } }, rejections: [foldRejection()] }),
+      hasEverySite,
     );
 
-    expect(record.rejections).toHaveLength(1);
-    expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
+    expect(record.rejections).toStrictEqual([rejection()]);
   });
 
   it('holds one entry per site when a bump is followed by a re-rejection of the same site', () => {
@@ -348,37 +407,49 @@ describe(composeRecord, () => {
     const record = composeRecord(
       prior,
       fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } }, rejections: [foldRejection()] }),
+      hasEverySite,
     );
 
     expect(record.rejections).toHaveLength(1);
     expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
   });
 
-  it('carries forward a rejection outside the roots swept by the run, which the run never revisited', () => {
+  it('carries forward a rejection outside the roots swept by the run, whatever its site, the run never having revisited it', () => {
     const inside = rejection({ file: 'docs/a.md' });
     const outside = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
     const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      hasNoSite,
+    );
 
     expect(record.rejections).toStrictEqual([outside]);
   });
 
-  it('withdraws a rejection anywhere in the repository when the run swept the whole of it', () => {
-    const inside = rejection({ file: 'docs/a.md' });
-    const outside = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
-    const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
+  it('retires a rejection recorded at an older version under the swept roots, the run having reviewed it', () => {
+    const older = rejection({ 'unit-version': '1' });
+    const prior: ProseRecord = { units: {}, rejections: [older] };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
+      hasEverySite,
+    );
 
     expect(record.rejections).toStrictEqual([]);
   });
 
-  it('keeps a rejection recorded at an older version, a bump being a review rather than a deletion', () => {
-    const older = rejection({ unit: 'writing', 'unit-version': '1' });
+  it('keeps a rejection recorded at an older version outside the swept roots, which the run did not review', () => {
+    const older = rejection({ file: 'src/b.ts', 'unit-version': '1' });
     const prior: ProseRecord = { units: {}, rejections: [older] };
 
-    const record = composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }));
+    const record = composeRecord(
+      prior,
+      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      hasEverySite,
+    );
 
     expect(record.rejections).toStrictEqual([older]);
   });
@@ -484,6 +555,7 @@ describe(stringifyRecord, () => {
         units: { writing: { version: '2', rules: [], roots: ['.'] } },
         rejections: [foldRejection()],
       }),
+      hasEverySite,
     );
 
     expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
@@ -496,6 +568,7 @@ describe(stringifyRecord, () => {
         units: { 'plain-speech': { version: '3', rules: [], roots: ['.'] } },
         rejections: [foldRejection({ rule: 'plain-speech', unit: 'plain-speech' })],
       }),
+      hasEverySite,
     );
 
     expect(record.rejections[0]).toMatchObject({ rule: 'plain-speech', 'unit-version': '3' });
@@ -542,6 +615,16 @@ function candidate(overrides: Partial<ObjectRelativeCandidate> = {}): Candidate 
 /** Builds a record covering the whole repository for unit `writing` at version 2, with `rules` detected. */
 function coveredRecord(rules: readonly string[]): ProseRecord {
   return { units: { writing: { version: '2', 'swept-at': '2026-09-02', rules, roots: ['.'] } }, rejections: [] };
+}
+
+/** Reports every rejection's site as present. */
+function hasEverySite(): boolean {
+  return true;
+}
+
+/** Reports every rejection's site as gone. */
+function hasNoSite(): boolean {
+  return false;
 }
 
 /** Builds a run fold, defaulting the date every assertion above reads. */

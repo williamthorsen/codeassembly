@@ -222,7 +222,7 @@ export async function runDetect(input: {
 export function runRecord(input: { foldJson: string; root: string }): RecordResult {
   let record: ProseRecord;
   try {
-    record = composeRecord(readRecordFile(input.root), retainDetectorRules(parseRunFold(input.foldJson)));
+    record = composeRecord(readRecordFile(input.root), retainDetectorRules(parseRunFold(input.foldJson)), () => true);
   } catch (error) {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
