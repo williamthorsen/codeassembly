@@ -2,7 +2,7 @@
 slug: commit-conventions
 description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
 delivery: skill
-version: '6'
+version: '7'
 ---
 
 # Git commit conventions
@@ -54,6 +54,8 @@ See [`work-types.json`](../../skills/_data/work-types.json) for the canonical ta
 - **Internal**: Not consumer-facing.
 - **Process**: Tooling and supporting work.
 
+<!-- include: ../../_partials/work-type-choice.md / -->
+
 ### Precedence
 
 Pick the type that best describes the commit's dominant purpose. When more than one type applies, tiebreak in favor of the higher tier (public > internal > process), then by earlier listing within a tier.
@@ -65,7 +67,3 @@ Whether a commit can take a breaking-change marker (`!`, e.g., `feat!`, `drop!`)
 - **`required`**: `drop`. Removing a public surface always breaks consumers; the marker is therefore mandatory.
 - **`optional`**: `feat`, `fix`, `sec`, `perf`. Any of these can break consumers, and the marker records when one does. A fix can break consumers who relied on the defective behavior, and a performance change can break a contract to achieve its gain.
 - **`forbidden`**: `deprecate` and every internal- and process-tier type. Deprecating a surface keeps it working, and removing it is a `drop`. Internal- and process-tier work does not face consumers; a change that breaks consumers faces them and therefore takes a public-tier type.
-
-### AI agent instructions
-
-Instructions for AI agents (typically in Markdown format) should be treated equivalently to source code, not as documentation. Such instructions intended for use by other projects are considered consumer-facing.

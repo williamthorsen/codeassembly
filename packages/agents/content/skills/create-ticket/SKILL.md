@@ -60,6 +60,8 @@ Also draft the ticket string, per [`title-voice.md`](../_data/title-voice.md), f
 
 Then decide the ticket's scope and type, for use in steps 5 and 6. The type is the [work type](../_data/work-types.json) of the change that the ticket asks for: a ticket reporting a defect is `fix`, and one asking for a new capability is `feat`. Append `!` only when the proposed change breaks consumers and the type's `breakingPolicy` admits the marker. The scope is the workspace that the change belongs to, per [Scope values](../_data/title-templates.md#scope-values); a change spanning more than one takes `*`, which renders and labels no scope. The pull request that implements the ticket compares its derived type with the type label applied here.
 
+<!-- include: ../../_partials/work-type-choice.md / -->
+
 ### 3. Resolve platform
 
 Determine where to create the remote ticket:
