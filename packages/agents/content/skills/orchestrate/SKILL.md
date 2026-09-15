@@ -57,7 +57,7 @@ The wrapper skill (e.g., `orchestrate-dev`) resolves effort presets and applies 
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
 2. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so those tiers still receive opportunistic fix cycles. `low` stays selectable for a project that wants the deferrable tiers to gate, through the argument or the preference file, and an explicit value always takes precedence over the default.
+3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so that those tiers still receive opportunistic fix cycles. A project that wants the deferrable tiers to gate can still select `low` through the argument or the preference file, and an explicit value always takes precedence over the default.
 
 ### Resolving models
 
@@ -165,7 +165,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
 ## Run initialization
 
-1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: Run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one. Then emit `skill.started` (payload `{"skill":"orchestrate-dev"}` or `{"skill":"orchestrate-review"}`, naming the wrapper skill that invoked this engine) per [Lifecycle events](#lifecycle-events).
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: Run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}`. Pass this concrete SHA to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one. Then emit `skill.started` (payload `{"skill":"orchestrate-dev"}` or `{"skill":"orchestrate-review"}`, naming the wrapper skill that invoked this engine) per [Lifecycle events](#lifecycle-events).
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
 3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan**, step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
 
@@ -200,7 +200,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    Store the result as `{planTrust}` (one of `"high"`, `"medium"`, `"low"`).
 
-   Do this detection and evaluation before `init_run`, so the flags are recorded correctly in the run header.
+   Do this detection and evaluation before `init_run`, so that the flags are recorded correctly in the run header.
 
 4. **Initialize run via MCP**: Attempt to call MCP tool `init_run` with:
 
@@ -225,7 +225,7 @@ Prefix the status line with a colored emoji for visual distinction:
    }
    ```
 
-   When omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/ai-artifacts`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
+   When `baseDir` is omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/ai-artifacts`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
 
    **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Initialize `{seq} = 1`.
 
@@ -237,7 +237,7 @@ Prefix the status line with a colored emoji for visual distinction:
    mkdir -p .claude/tmp && echo "{run-dir}" > .claude/tmp/active-run-dir
    ```
 
-   Only write the breadcrumb after a successful `init_run` (MCP available). Do not write it on the MCP-unavailable fallback path, where no run directory is created and there is no `run_id` to resolve.
+   Only write the breadcrumb after a successful `init_run` (MCP available). Do not write it on the MCP-unavailable fallback path, on which no run directory is created and there is no `run_id` to resolve.
 
    **Failure path when MCP is unavailable** (tool not found / server not connected): Resolve `mcp_policy` (see "Resolving MCP policy" above) and apply the policy:
    - `required`: Emit `skill.completed` (payload `{"outcome":"stopped: MCP unavailable"}`) per [Lifecycle events](#lifecycle-events), then abort with a clear message explaining that MCP is unavailable and the policy requires it.
@@ -378,7 +378,7 @@ When an external plan exists with `{planTrust}` of `"low"`, always run Architect
 
 When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. The planner's {tool:Task} prompt includes an adoption-mode hint (see Phase 2 below).
 
-When an external plan exists with `{planTrust}` of `"low"`, always run Planning so the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
+When an external plan exists with `{planTrust}` of `"low"`, always run Planning so that the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
 
 ### High-trust plan conversion
 
@@ -525,8 +525,8 @@ Pass the following engine-managed variables to the module:
 
 - `{seq}`: Current artifact sequence counter (the module continues incrementing from this value)
 - `{ticket-requirements-path}`: Full path to ticket-requirements artifact (empty string if unavailable)
-- `{plan-md-path}`: full path to orchestration-plan.md artifact (empty string if planning was skipped)
-- `{aspect_reviewers}`: resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
+- `{plan-md-path}`: Full path to orchestration-plan.md artifact (empty string if planning was skipped)
+- `{aspect_reviewers}`: Resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }`, in which `false` means deactivate, `true` means always activate, and absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
 - `{authored-by-pipeline}`: `true` when the pipeline spec includes `implementation`; `false` otherwise. Signals whether the code under review was authored by the orchestrated pipeline (used by the test reviewer for classification).
 - `{lookup-path}`: `{harness_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
 - `{reviewer-context-sidecar-path}`: Full path to the most recent `*_coder_reviewer-context.md` artifact (empty string if none).
@@ -537,13 +537,13 @@ Pass the fully resolved models map to the module. The module uses `{models.revie
 
 ### review-cycle: Resolving `{change-summary-path}`
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry whose `role` is `coder` and whose `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
 
 When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by sequence number, so the last entry in sorted order is the most recent). If no match is found, set `{change-summary-path}` to an empty string.
 
 ### review-cycle: Resolving `{reviewer-context-sidecar-path}`
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `reviewer-context`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist, set to an empty string.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry whose `role` is `coder` and whose `type` is `reviewer-context`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist, set to an empty string.
 
 When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_reviewer-context.md`. Select the most recent match by filename (lexicographic sort by sequence number). If no match is found, set `{reviewer-context-sidecar-path}` to an empty string.
 
@@ -650,8 +650,8 @@ Dispatch the savings-analyzer subagent as a background {tool:Task} and immediate
 - `model: {models.savings_analyzer}` (resolved from the `savings_analyzer` key, defaults to `haiku`)
 - `prompt:` Provide:
   - the run directory path (`{run-dir}`),
-  - the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number; the subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory),
-  - and the frontmatter values the subagent must stamp into its artifact. The `savings-analyzer` subagent has no Bash tool and cannot resolve these itself; the orchestrator has already resolved all of them while preparing the run-summary frontmatter (see [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) below) and forwards them verbatim:
+  - the next sequence number after the run-summary (`{NN+1}`, in which `{NN}` is the run-summary sequence number; the subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory),
+  - and the frontmatter values that the subagent must stamp into its artifact. The `savings-analyzer` subagent has no Bash tool and cannot resolve these itself; the orchestrator has already resolved all of them while preparing the run-summary frontmatter (see [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) below) and forwards them verbatim:
     - `branch`: From session context (`branch_name`).
     - `commit`: Short SHA of HEAD, already resolved for the run-summary.
     - `baseSha`: Short SHA of `origin/main`, already resolved for the run-summary. Omit if resolution failed.
@@ -699,9 +699,9 @@ Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The 
 What belongs here:
 
 - Architectural patterns discovered or validated
-- Design trade-offs surfaced during review
+- Design trade-offs raised during review
 - Conventions or project-specific patterns learned
-- Non-obvious knowledge a reviewer flagged as an insight
+- Non-obvious knowledge flagged by a reviewer as an insight
 - Technical debt or risks identified but not in scope to address}
 
 ## Deferred items
@@ -744,7 +744,7 @@ phase: summary
 
 Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
 
-Then emit `skill.completed` (payload `{"outcome":"<completed|failed|needs_manual_review>"}`, matching the run status) per [Lifecycle events](#lifecycle-events), on the MCP-unavailable path too, where `complete_run` itself is skipped.
+Then emit `skill.completed` (payload `{"outcome":"<completed|failed|needs_manual_review>"}`, matching the run status) per [Lifecycle events](#lifecycle-events), on the MCP-unavailable path too, on which `complete_run` itself is skipped.
 
 **Clean up breadcrumb** (MCP success path only): After `complete_run`, remove the breadcrumb file:
 
