@@ -61,6 +61,11 @@
             "enum": ["forbidden", "optional", "required"],
             "type": "string"
           },
+          "description": {
+            "description": "The changes that the type covers, read by an agent choosing a type for a change.",
+            "minLength": 1,
+            "type": "string"
+          },
           "emoji": {
             "description": "Single-character (or short) emoji used in section headers and changelog rendering.",
             "minLength": 1,
@@ -86,7 +91,7 @@
             "type": "string"
           }
         },
-        "required": ["aliases", "breakingPolicy", "emoji", "key", "label", "tier"],
+        "required": ["aliases", "breakingPolicy", "description", "emoji", "key", "label", "tier"],
         "type": "object"
       },
       "type": "array"
