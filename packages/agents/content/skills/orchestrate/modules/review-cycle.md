@@ -10,6 +10,7 @@ The orchestrate engine must provide these context variables before entering this
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `{task}`                          | Task description                                                                                                    |
 | `{run-dir}`                       | Run directory returned by `init_run`                                                                                |
+| `{run-id}`                        | Run ID, named in every subagent dispatch prompt                                                                     |
 | `{seq}`                           | Current artifact sequence counter (continue incrementing from this value)                                           |
 | `{ticket-requirements-path}`      | Full path to ticket-requirements artifact (empty string if unavailable)                                             |
 | `{plan-md-path}`                  | Full path to orchestration-plan.md artifact (empty string if planning was skipped)                                  |
@@ -201,6 +202,8 @@ Call {tool:Task} with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `
 >
 > Diff base (merge-base SHA): `{merge-base-sha}`
 >
+> Run ID: `{run-id}`
+>
 > Write your review to: `{run-dir}/{NN}_reviewer_review.md`
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit the entire block when `{reviewer-context}` is empty; do not emit an empty heading.}
@@ -215,6 +218,8 @@ Call {tool:Task} with `subagent_type: aspect-silent-failure-reviewer`, `max_turn
 > {changed-files}
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
+>
+> Run ID: `{run-id}`
 >
 > Write your findings to: `{run-dir}/{NN}_silent-failure-reviewer_silent-failure-review.md`
 >
@@ -235,6 +240,8 @@ Call {tool:Task} with `subagent_type: aspect-test-reviewer`, `max_turns: 45`, `m
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
+> Run ID: `{run-id}`
+>
 > Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
@@ -249,6 +256,8 @@ Call {tool:Task} with `subagent_type: aspect-code-reviewer`, `max_turns: 45`, `m
 > {changed-files}
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
+>
+> Run ID: `{run-id}`
 >
 > Write your findings to: `{run-dir}/{NN}_code-reviewer_code-review.md`
 >
@@ -322,6 +331,8 @@ Call {tool:Task} with `subagent_type: orchestrated-coder`, `max_turns: 150`, `mo
 > {If code reviewer had actionable findings: Aspect code reviewer findings: Read `{code-review-path}`}
 >
 > {Only include sections for reviewers that produced actionable findings.}
+>
+> Run ID: `{run-id}`
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
@@ -401,6 +412,8 @@ Call {tool:Task} with `subagent_type: code-simplification-reviewer`, `max_turns:
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
+> Run ID: `{run-id}`
+>
 > Write your findings to: `{run-dir}/{NN}_code-simplification-reviewer_code-simplification-review.md`
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
@@ -416,6 +429,8 @@ Call {tool:Task} with `subagent_type: orchestrated-coder`, `max_turns: 150`, `mo
 > Code-simplifier findings: Read `{simplifier-review-path}`
 >
 > These are polish changes: The code has already passed all reviews. Apply simplifications that clearly improve readability without changing behavior.
+>
+> Run ID: `{run-id}`
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
@@ -460,6 +475,8 @@ Call {tool:Task} with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `
 > - Unintended consequences: What could go wrong at system boundaries? Second-order effects?
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
+>
+> Run ID: `{run-id}`
 >
 > Write your review to: `{run-dir}/{NN}_reviewer_holistic-review.md`
 >

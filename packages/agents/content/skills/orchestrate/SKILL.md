@@ -227,7 +227,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    When `baseDir` is omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/ai-artifacts`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
 
-   **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Initialize `{seq} = 1`.
+   **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables, with `runDir` as `{run-dir}` and `runId` as `{run-id}`. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Initialize `{seq} = 1`.
 
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
 
@@ -247,12 +247,6 @@ Prefix the status line with a colored emoji for visual distinction:
    - Set `{mcp-available}` = `false`.
    - Initialize `{seq} = 1`.
    - Do NOT write `run-index.json` or `run-log.jsonl`: The MCP server creates these; the fallback does not replicate them.
-
-   **Write breadcrumb**: Once `{run-dir}` exists, regardless of which path created it, write the active run directory to a breadcrumb file so that `resolve-frontmatter.sh` can resolve the active run's `run_id` when stamping artifact frontmatter:
-
-   ```
-   mkdir -p .claude/tmp && echo "{run-dir}" > .claude/tmp/active-run-dir
-   ```
 
    **Runtime errors** (non-MCP failures such as bad arguments or disk errors): Abort immediately; these are not MCP policy issues.
 
@@ -565,6 +559,8 @@ Call {tool:Task} with `subagent_type: orchestrated-architect`, `max_turns: 30`, 
 >
 > {If `config.externalPlan` is true: External plan (validate assumptions): Read `{external-plan-path}`}
 >
+> Run ID: `{run-id}`
+>
 > Write your analysis to: `{run-dir}/{NN}_architect_architecture.md`
 
 After: Store the full path as `{architecture-path}`; increment `{seq}`. Extract `Impact` using {tool:Task} return parsing. Parse usage from the {tool:Task} result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
@@ -589,6 +585,8 @@ Call {tool:Task} with `subagent_type: orchestrated-planner`, `max_turns: 40`, `m
 >
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
+> Run ID: `{run-id}`
+>
 > Write plan files to: `{run-dir}/{NN}_planner_orchestration-plan.md` and `{run-dir}/{NN}_planner_orchestration-plan.json`
 
 After: Store the full paths as `{plan-md-path}` and `{plan-json-path}` (both share the same `{NN}`); increment `{seq}` once for the pair. Extract `Steps` using {tool:Task} return parsing. Parse usage from the {tool:Task} result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { stepCount: {N} } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the plan artifacts.
@@ -605,6 +603,8 @@ Call {tool:Task} with `subagent_type: orchestrated-coder`, `max_turns: 150`, `mo
 >
 > {If `{plan-md-path}` is set: Implementation plan: Read `{plan-md-path}`}
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
+>
+> Run ID: `{run-id}`
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 >
@@ -654,7 +654,7 @@ Dispatch the savings-analyzer subagent as a background {tool:Task} and immediate
     - `commit`: Short SHA of HEAD, already resolved for the run-summary.
     - `baseSha`: Short SHA of `origin/main`, already resolved for the run-summary. Omit if resolution failed.
     - `ticket_id` and `ticket_ref`: From session context. Omit either when null.
-    - `run_id`: The run ID for the current orchestrated run.
+    - `run_id`: `{run-id}`.
 
 Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The frontmatter conforms to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
@@ -722,7 +722,7 @@ Include:
 
 This section states the frontmatter resolution for both orchestrator-written artifacts, the run-manifest (step 5) and the run-summary (Phase 5), which use identical field-resolution logic.
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false --override "run_id={run-id}"` via Bash. Prepend the output verbatim to the artifact body.
 
 The orchestrator's `provenance.model` is omitted: The run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 
@@ -743,12 +743,6 @@ phase: summary
 Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
 
 Then emit `skill.completed` (payload `{"outcome":"<completed|failed|needs_manual_review>"}`, matching the run status) per [Lifecycle events](#lifecycle-events), on the MCP-unavailable path too, on which `complete_run` itself is skipped.
-
-**Clean up breadcrumb**: Then remove the breadcrumb file, whatever the value of `{mcp-available}`:
-
-```
-rm -f .claude/tmp/active-run-dir
-```
 
 ## Phase 6: Wrap-up (prompted, conditional)
 
