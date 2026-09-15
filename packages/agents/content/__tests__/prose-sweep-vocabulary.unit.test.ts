@@ -7,10 +7,10 @@ import { RULE_IDS } from '../../src/revise-prose/rules.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts';
 
-// The rulebooks' `<!-- rule: <id> -->` markers are the one list of rule names. The helper's detector registry, the
-// names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within it:
-// a name that the skill maps to no unit makes the `record` command refuse the whole fold, and a rule stated without a
-// marker leaves the subagent no id to report its sites under.
+// The rulebooks' `<!-- rule: <id> <version> -->` markers are the one list of rule names. The helper's detector registry,
+// the names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within
+// it: a name that the skill maps to no unit makes the `record` command refuse the whole fold, and a rule stated without
+// a marker leaves the subagent no id to report its sites under.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
@@ -43,6 +43,9 @@ const REJECTIONS_SCALAR = '**`rejections`**';
 
 /** Matches every `"rule": "<name>"` field in a JSON example, whose captured group is the name. */
 const REPORTED_RULE_REGEX = /"rule":\s*"([^"]+)"/g;
+
+/** Matches a sweep version: a positive integer, which gives "rises" an order. */
+const SWEEP_VERSION_REGEX = /^[1-9][0-9]*$/;
 
 /** Matches the line naming a unit's version, whose captured group is the unit's name and, for `plain-speech`, its rule id. */
 const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*(\S+)\s+\S+\s*-->$/m;
@@ -99,7 +102,7 @@ describe('prose-sweep rule vocabulary', () => {
     const declared = new Set(await readDeclaredIds());
     const missing = RULE_IDS.filter((rule) => !declared.has(rule));
 
-    const message = `no \`<!-- rule: <id> -->\` marker declares ${missing.join(', ')}, so step 1 of ${SKILL} names it to no run: its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry carries a rule that no document declares`;
+    const message = `no \`<!-- rule: <id> <version> -->\` marker declares ${missing.join(', ')}, so step 1 of ${SKILL} names it to no run: its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry carries a rule that no document declares`;
     expect(missing, message).toEqual([]);
   });
 });
@@ -108,7 +111,7 @@ describe('rule-id declarations', () => {
   it.each(SWEPT_RULEBOOKS)('%s declares its rule ids', async (slug) => {
     const rulebook = (await RESOLVED).get(slug);
 
-    const message = `${slug} declares no \`<!-- rule: <id> -->\` marker; therefore, none of its rules has an id that the sweep can report or record`;
+    const message = `${slug} declares no \`<!-- rule: <id> <version> -->\` marker; therefore, none of its rules has an id that the sweep can report or record`;
     expect(rulebook, `${slug} is not in the library`).toBeDefined();
     expect(listDeclaredIds(rulebook?.body ?? ''), message).not.toEqual([]);
   });
@@ -120,8 +123,22 @@ describe('rule-id declarations', () => {
       .flatMap((rulebook) => listUndeclaredHeadings(rulebook.body).map((heading) => `${rulebook.slug}: ${heading}`))
       .toArray();
 
-    const message = `A rule heading has no \`<!-- rule: <id> -->\` marker on the first non-blank line beneath it; therefore, the sweep has no id under which to report its sites: ${undeclared.join('; ')}`;
+    const message = `A rule heading has no \`<!-- rule: <id> <version> -->\` marker on the first non-blank line beneath it; therefore, the sweep has no id under which to report its sites: ${undeclared.join('; ')}`;
     expect(undeclared, message).toEqual([]);
+  });
+
+  it('declares a sweep version on every marker in the library', async () => {
+    const unversioned = (await RESOLVED)
+      .values()
+      .flatMap((rulebook) =>
+        listRuleMarkers(rulebook.body)
+          .filter((marker) => marker.version === undefined || !SWEEP_VERSION_REGEX.test(marker.version))
+          .map((marker) => `${rulebook.slug}: ${marker.id} (${marker.version ?? 'no version'})`),
+      )
+      .toArray();
+
+    const message = `A rule marker declares no positive-integer sweep version. Write the marker as \`<!-- rule: <id> <version> -->\`, starting a new rule at 1: ${unversioned.join('; ')}`;
+    expect(unversioned, message).toEqual([]);
   });
 
   it('declares each id once across the library', async () => {

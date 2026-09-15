@@ -1,6 +1,6 @@
 ## Reduced object relatives
 
-<!-- rule: reduced-object-relative -->
+<!-- rule: reduced-object-relative 1 -->
 
 A relative clause with an object gap takes an overt relativizer: "the source that it names", never "the source it names". The test is mechanical: Between the head noun and the embedded subject, look for `that` or `which`. This is a house convention, not a claim about ordinary English, which permits the contact clause freely.
 

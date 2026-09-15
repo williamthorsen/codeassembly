@@ -9,7 +9,7 @@ version: '8'
 
 ## Capitalization after a colon
 
-<!-- rule: capitalization-after-colon -->
+<!-- rule: capitalization-after-colon 1 -->
 
 Read what appears left of the colon. A label (such as a short tag naming a field, a category, or an option) is transparent: Capitalize what follows as though the label were absent. A clause puts the colon mid-sentence: Capitalize a complete sentence, keep a fragment or list lowercase. A lowercase code identifier keeps its own case on either branch.
 
@@ -20,7 +20,7 @@ Read what appears left of the colon. A label (such as a short tag naming a field
 
 ## Em-dashes
 
-<!-- rule: em-dash -->
+<!-- rule: em-dash 1 -->
 
 Don't use em-dashes; use appropriate punctuation instead. A dash separating an identifier from its label is a delimiter rather than punctuation: Use a colon. If an em-dash is genuinely best, write it as `--`.
 
@@ -28,7 +28,7 @@ Don't use em-dashes; use appropriate punctuation instead. A dash separating an i
 
 ## Second person
 
-<!-- rule: second-person -->
+<!-- rule: second-person 1 -->
 
 Documentation describes; it does not address. Never write `you`, `your`, `yours`, or `yourself`, and never the contractions `you're`, `you've`, `you'll`, or `you'd`.
 
@@ -45,7 +45,7 @@ A naive substitution fails in two ways:
 
 ## Sentence case
 
-<!-- rule: sentence-case -->
+<!-- rule: sentence-case 1 -->
 
 Use sentence case for titles, headings, section headers, steps, labels, and interface elements. Never use title case. Preserve the case of proper nouns, named entities, and the actual titles of books and movies.
 
@@ -55,7 +55,7 @@ Use sentence case for titles, headings, section headers, steps, labels, and inte
 
 ## `so` and other connectives
 
-<!-- rule: so -->
+<!-- rule: so 1 -->
 
 Join two clauses with `so` only when the second states a direct result of the first: "The entry is not a top-level segment, so the exclusion does not cover it." For a purpose, write "so that" or "to": "The link points to `.live` so that apps read the stable worktree." If the second clause follows only through a step that the sentence leaves out, state that step rather than change the conjunction.
 
@@ -65,6 +65,6 @@ A degree adverb ("so many") and a `so` that stands for a clause ("do so", "if so
 
 ## `where`
 
-<!-- rule: where -->
+<!-- rule: where 1 -->
 
 Use `where` only for a place; for any other relation, use the word that most clearly expresses it.
