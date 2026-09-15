@@ -53,7 +53,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'live-worktree-policy',
-    { bodyHash: '9bf4e540df49c6b7cb4f9ace460c083f796adab52a6c7abbe6dd4270117a27c0', version: '2' },
+    { bodyHash: '968e7a5bcc19d7562ceb19c3c97163803e4c484c5dfc6cdcc4a1856f326d91aa', version: '2' },
   ],
   [
     'readme-conventions',
