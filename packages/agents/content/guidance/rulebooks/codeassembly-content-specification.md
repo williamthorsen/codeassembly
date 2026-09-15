@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '21'
+version: '22'
 ---
 
 # CodeAssembly content specification
@@ -155,7 +155,7 @@ A rulebook's `version` tracks the operative content of its deployed body: Bump i
 
 The deployed body is the body after includes expand. Editing a partial is therefore a content change for every rulebook that includes it, and the version changes although the rulebook's own file is untouched. A file that the body links to rather than inlines, such as a `_data/` reference, is outside the body and requires no bump. _(Enforced by `rulebook-version-pins.unit.test.ts`.)_
 
-A `revise-prose` repair does not change what a rulebook asks, because the sweep's calibration rules out any rewrite that would change what the text directs. Keep the version and re-pin the body hash alone: Once the version rises, `revise-prose` no longer counts the coverage that the same sweep recorded. _(Convention; not enforced.)_
+A `revise-prose` repair does not change what a rulebook asks, because the sweep's calibration rules out any rewrite that would change what the text directs. Keep the rulebook's `version` and each rule's sweep version, and re-pin only the hashes that changed: Once the rulebook's version rises, `revise-prose` no longer counts the coverage that the same sweep recorded. _(Convention; not enforced.)_
 
 ## Naming
 
@@ -179,11 +179,13 @@ A proposal justifies its breadth rather than assuming it. A contributing surface
 
 Because a sweeper applies the doctrine deployed to its harness, deploy the content of a branch that edits the doctrine before sweeping that branch. If the deployed copy is behind the branch, sync the branch's content to the project tier first; if `live` already matches the branch, the deployed copy is the branch's and the sweep runs as it stands. _(Convention; not enforced.)_
 
-## Declaring rule ids
+## Declaring rule ids and sweep versions
 
-A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id for each rule that it states. The declaration is a `<!-- rule: <id> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading.
+A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading.
 
 The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and no id is declared twice across the library. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`.)_
+
+A sweep version is a positive integer, and a new rule starts at `1`. Raise it when some text that complied with the rule's old wording could fail the new one, including through an edit outside every rule section, such as to a rulebook's introduction, and raise it when unsure. Leave it for a relaxation, a clarification, or a rewording. The `plain-speech` unit's `unit-version` follows the same test. Because a rule that becomes stricter changes what its rulebook asks, the rulebook's `version` rises with every sweep-version rise. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`, which requires the version, and by `rulebook-version-pins.unit.test.ts`, which pins each rule's section against it.)_
 
 ## Skill-local reinforcement
 
