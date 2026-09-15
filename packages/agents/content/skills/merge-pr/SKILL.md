@@ -179,8 +179,12 @@ Do not audit the draft here: The user reads the composed body at the approval ga
 
 Settle every entry in `defects` before showing the proposal, one question at a time:
 
-- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `consolidated_record` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus an "other (specify)" option.
+- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `consolidated_record` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus the type that the diff takes under the test below when no source names it, and an "other (specify)" option.
 - **`policy-violation`**: Name the type and the policy that it breaks. Offer the marker that the policy asks for (`--no-override-breaking` where it forbids the marker, `--override-breaking` where it requires it), the types from the list above, and an "other (specify)" option.
+
+Mark each type option by applying this test to the diff, not by how many sources name the type:
+
+<!-- include: ../../_partials/work-type-choice.md / -->
 
 Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`. The helper refuses a type carrying `!`, so passing the answer through would refuse the run rather than settle the defect.
 

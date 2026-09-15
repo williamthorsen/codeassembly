@@ -18,6 +18,7 @@ type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: Json
 interface WorkTypeRecord {
   aliases: string[];
   breakingPolicy: string;
+  description: string;
   emoji: string;
   excludedFromChangelog?: boolean;
   key: string;
@@ -108,12 +109,13 @@ describe('work-types.schema.json', () => {
     },
     {
       description: 'rejects a type record missing a required field',
-      // Guards `types[].required: ["aliases", "breakingPolicy", "emoji", "key", "label", "tier"]`.
+      // Guards `types[].required: ["aliases", "breakingPolicy", "description", "emoji", "key", "label", "tier"]`.
       // Builds a record without `breakingPolicy`.
       input: buildMinimalDoc({
         types: [
           {
             aliases: ['feature'],
+            description: 'A change that gives consumers a new capability.',
             emoji: '🎉',
             key: 'feat',
             label: 'Features',
@@ -121,6 +123,27 @@ describe('work-types.schema.json', () => {
           },
         ],
       }),
+    },
+    {
+      description: 'rejects a type record missing `description`',
+      // Guards `description` in `types[].required`, which no other case omits.
+      input: buildMinimalDoc({
+        types: [
+          {
+            aliases: ['feature'],
+            breakingPolicy: 'optional',
+            emoji: '🎉',
+            key: 'feat',
+            label: 'Features',
+            tier: 'public',
+          },
+        ],
+      }),
+    },
+    {
+      description: 'rejects a type record whose `description` is an empty string',
+      // Guards `types[].description.minLength: 1`.
+      input: buildMinimalDoc({ types: [buildTypeRecord({ description: '' })] }),
     },
     {
       description: 'rejects a type record with an unknown field',
@@ -294,6 +317,7 @@ function buildTypeRecord(overrides: Record<string, JsonValue> = {}): JsonValue {
   return {
     aliases: [],
     breakingPolicy: 'optional',
+    description: 'A change that gives consumers a new capability.',
     emoji: '🎉',
     key: 'feat',
     label: 'Features',
