@@ -35,10 +35,10 @@ This skill is the canonical home of the shared review process. `review-pr` invok
      - _Local candidate_: The most recent `*_ticket.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. Its `last_updated` is the filename's `YYYYMMDD-HHMMSSZ` prefix converted to ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`), so it shares the remote candidate's format; treat an unparseable prefix as no local candidate. (The artifact filename keeps the compact form per `artifact-conventions.md`; only the recorded `last_updated` is normalized.) Read its frontmatter as well as its filename: `copies_remote` decides the selection below, per [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter).
      - _Selection_:
        - If `--spec-source=remote|local` is set, use that candidate. If the named candidate is unavailable (e.g. `--spec-source=local` with no snapshot, or `--spec-source=remote` with a failed/offline fetch or null `ticket_id`), stop and report the missing source rather than silently using the other side: An explicit instruction must not be redirected to the wrong contract. State the remedy (drop the flag to re-enable recency) in the message.
-       - Otherwise, where a remote candidate exists and the local candidate's frontmatter carries `copies_remote: true`, use the remote candidate. The snapshot's body is a copy of the ticket of record, so the remote holds at least the content that the snapshot froze, and the snapshot's later write time records the copying rather than a newer contract. A snapshot carrying no such claim falls through to the comparison below.
-       - Otherwise use the candidate with the newer `last_updated`. Both values are ISO 8601 at the same precision, so they compare chronologically as plain strings: no per-format parsing. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
+       - Otherwise, if a remote candidate exists and the local candidate's frontmatter sets `copies_remote: true`, use the remote candidate. The snapshot's body is a copy of the ticket of record, so the remote contains at least the content that the snapshot froze, and the snapshot's later write time records the copying rather than a newer contract. A snapshot that makes no such claim falls through to the comparison below.
+       - Otherwise use the candidate with the newer `last_updated`. Because both values are ISO 8601 at the same precision, they compare chronologically as plain strings: no per-format parsing. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
        - If only one candidate exists, use it. This single-candidate fallback also covers a failed/offline remote fetch and a null `ticket_id`.
-     - Append the chosen candidate as a `ticket` source with its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, hold that rejected candidate's `content` in-process for the divergence check. Hold raw content rather than extracted criteria: The comparison runs at render time under the extraction rule that the compliance table states, so both candidates are read by one rule. It stays in working memory, not in the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout never appears on that branch.
+     - Append the chosen candidate as a `ticket` source with its `provenance` and `last_updated`. When the chosen source is the local snapshot and a remote candidate existed, keep that rejected candidate's `content` in-process for the divergence check. Keep raw content rather than extracted criteria: The comparison runs at render time under the extraction rule that the compliance table states, so both candidates are read by one rule. It stays in working memory, not in the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`). When the chosen source is the remote candidate, retain nothing; the callout never appears on that branch.
    - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
@@ -46,7 +46,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 4. **Read prior artifacts**: If a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
-7. **Challenge your own findings**: Re-read each finding and delete every one you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
+7. **Challenge your own findings**: Re-read each finding and delete every one that you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
 8. **Assign a score** out of 10.
 9. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 10. **Save the review** per the [Saving](#saving) section.
@@ -58,7 +58,7 @@ The artifact's frontmatter conforms to the [universal artifact frontmatter](../_
 
 Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `{author}` from `git log --format='%an' "{default_branch}..HEAD" | sort -u | paste -sd, -` (unique authors of the commits under review). When invoked via `review-pr`, take `{pr_url}` from `pr_metadata.url` (the PR under review); otherwise it has no value.
 
-Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag where `{pr_url}` has no value:
+Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag if `{pr_url}` has no value:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
@@ -103,7 +103,7 @@ Uniquely number all issues for easy reference. See [finding scheme](../_data/art
 
 Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix), and the 💡 insights icon from [knowledge items](../_data/artifact-conventions.md#knowledge-items); render them as shown. Each finding under "Action required" and "Areas for improvement" follows the canonical per-finding template shown below; see [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) for the rules governing the `Location:` field.
 
-When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it, e.g., `# Code review: {description}`.
+When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so that the heading reads naturally without it, e.g., `# Code review: {description}`.
 
 The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author={author}"` to the script to populate the review-artifact `author` field.
 
@@ -161,7 +161,7 @@ The body following the frontmatter has this structure:
 
 ## Insights
 
-{Knowledge worth preserving that is not a finding (a pattern, gotcha, or architectural learning surfaced during review). Gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score. Omit this section entirely when there are none.}
+{Knowledge worth preserving that is not a finding (a pattern, gotcha, or architectural learning found during review). Gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score. Omit this section entirely when there are none.}
 
 ### I1: {title}
 
@@ -182,9 +182,9 @@ Score: X/10
 
 {The label is `{source_type}: {short identifier}`, for example, `ticket: #553` or `pr_description: PR #1024`. Use the source's natural identifier so a reader can tell at a glance which specification a row evaluates against.}
 
-**Source:** {Render the source's `provenance` and `last_updated` (echoed verbatim; `last_updated` is already ISO 8601) so the reader knows what contract this section measured against, e.g. `remote issue (last updated 2026-06-07T01:56:34Z)`, ``local snapshot `20260606-090337Z_..._ticket.md` (last updated 2026-06-06T09:03:37Z)``, or `local source (last updated …)` for an explicit file/plain-text `--ticket` that has no snapshot filename. Omit the "last updated" clause when `last_updated` is null.}
+**Source:** {Render the source's `provenance` and `last_updated` (echoed verbatim; `last_updated` is already ISO 8601) so that the reader knows what contract this section measured against, e.g. `remote issue (last updated 2026-06-07T01:56:34Z)`, ``local snapshot `20260606-090337Z_..._ticket.md` (last updated 2026-06-06T09:03:37Z)``, or `local source (last updated …)` for an explicit file/plain-text `--ticket` that has no snapshot filename. Omit the "last updated" clause when `last_updated` is null.}
 
-{When the chosen source is the local snapshot and a remote candidate existed, compare their acceptance criteria by the same extraction rule the table below uses. Add a callout only when they differ materially: a criterion on one side with no counterpart on the other (absence on either side counts), or worded so the verdict could differ. Rewording that cannot change a verdict is not material. The callout names the difference with a ⚠️, states that this review measured against the snapshot rather than the published ticket, and points to `--spec-source=remote` to re-resolve against the remote. Say nothing when the criteria agree, whatever the timestamps. Omit entirely when the chosen source is the remote candidate, when there was no competing candidate (single source or explicit `--ticket`), or for a `pr_description` source.}
+{When the chosen source is the local snapshot and a remote candidate existed, compare their acceptance criteria by the same extraction rule that the table below uses. Add a callout only when they differ materially: a criterion on one side with no counterpart on the other (absence on either side counts), or worded differently enough that the verdict could differ. Rewording that cannot change a verdict is not material. The callout names the difference with a ⚠️, states that this review measured against the snapshot rather than the published ticket, and points to `--spec-source=remote` to re-resolve against the remote. Say nothing when the criteria agree, whatever the timestamps. Omit entirely when the chosen source is the remote candidate, when there was no competing candidate (single source or explicit `--ticket`), or for a `pr_description` source.}
 
 #### Acceptance criteria
 
@@ -199,7 +199,7 @@ Assign the status against the criterion's substantive guarantee, not its wording
 ⚠️ Partial and ❌ Not addressed mean the guarantee is undelivered. Two situations produce them, and the Notes cell states which, because only one is a deviation:
 
 - **Unbuilt**: The work is incomplete. At review time this is ordinary, and the contract is not in question.
-- **In conflict**: The implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
+- **In conflict**: The implementation took a direction that the criterion contradicts, such that a reader who has the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
 
 Extract criteria from whatever structure the source uses (numbered lists, checkboxes, prose). If the source does not have clearly delimited acceptance criteria, derive them from its problem statement and solution description. PR descriptions typically expose criteria as the bullet items under `## What`, `## Summary`, or an explicit acceptance-criteria heading; fall back to the description body when no list is present.
 
@@ -235,15 +235,15 @@ Cell encoding:
 
 Baseline-selection rule: Ticket is baseline when it mentions the aspect; otherwise PR description is baseline. An aspect introduced only by the implementation belongs in `## Specification compliance`'s "Unplanned work" sub-section, not here.
 
-Implementation-column ordering: always `{ticket-state}, {PR-state}` regardless of which is meaningful, so the scan rhythm stays consistent across rows.
+Implementation-column ordering: always `{ticket-state}, {PR-state}` regardless of which is meaningful, so that every row reads in the same order.
 
-Only rows where at least two of (ticket, PR description, implementation) differ belong in this table. Fully-aligned aspects appear in `## Specification compliance`, not here.
+Only rows in which at least two of (ticket, PR description, implementation) differ belong in this table. Fully-aligned aspects appear in `## Specification compliance`, not here.
 
 ### Details
 
-**D{n}: {aspect label}.** {Free-form prose elaborating aspects the Summary cell cannot fit. Each entry keys to a `D{n}` ID for cross-reference.}
+**D{n}: {aspect label}.** {Free-form prose elaborating aspects that the Summary cell cannot fit. Each entry keys to a `D{n}` ID for cross-reference.}
 
-Paraphrasing is not divergence: Evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to surface through the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
+Paraphrasing is not divergence: Evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to be reported in the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
 ```
 
 ### Clean reviews
@@ -277,7 +277,7 @@ The score is an honest, at-a-glance quality signal.
 - A no-findings review is 10/10.
 - Every authored finding that survives the self-challenge lowers the score, weighted by severity from `F` (heaviest) down to `S` (lightest). No tier is score-neutral: A finding worth raising is a finding worth a deduction.
 - Score only the change under review; Legacy and other pre-existing observations never affect the score.
-- Never suppress a real finding to protect a perfect score. An honest 8 beats a flattering 10.
+- Never suppress a real finding to protect a perfect score. An honest 8 is better than a flattering 10.
 
 ## Saving
 
@@ -294,7 +294,7 @@ The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id); never construct a path with a literal `null` segment.
 2. Find or create a run directory:
    - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): Save into it
-   - **If no active run exists**: Create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
+   - **If no active run exists**: Create a new run directory named `{timestamp}-interactive`, in which timestamp matches this review's timestamp
 3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files: The chronological sequence of files is the history.

@@ -31,13 +31,13 @@ Both are optional, and each is recorded as an override beside the consolidated r
    ```
 
    Check commit messages for additional context. Then consolidate the branch, in this order:
-   - **Fetch the ticket's labels** where `scm` is `github` and `ticket_id` is non-null:
+   - **Fetch the ticket's labels** when `scm` is `github` and `ticket_id` is non-null:
 
      ```bash
      gh issue view {ticket_id} --json labels --jq '.labels[].name'
      ```
 
-     Elsewhere, pass no labels. Where the fetch fails, continue without labels and say so; `ticket_type` is then absent.
+     Otherwise, pass no labels. If the fetch fails, continue without labels and say so; `ticket_type` is then absent.
 
    - **Consolidate the range** into a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `consolidation-{timestamp}.json`:
 
@@ -51,14 +51,14 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
      If the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a consolidated record: `scope`, `type`, `breaking`, and `changes` are left out.
 
-   - **Resolve the ticket's type** where the fetch returned labels, passing one `--ticket-label` per label. Where there are none, skip the call; `ticket_type` is then absent.
+   - **Resolve the ticket's type** if the fetch returned labels, passing one `--ticket-label` per label. If there are none, skip the call; `ticket_type` is then absent.
 
      ```bash
      node {harness_home_dir}/scripts/describe-change.mjs resolve-ticket-type \
        --ticket-label "{label}"
      ```
 
-     Read `ticket_type` from the output, leaving it absent where it is `null`; [`resolve-ticket-type`](../_data/title-templates.md#resolve-ticket-type) states when it is. Where the call fails, relay its error and continue with `ticket_type` absent.
+     Read `ticket_type` from the output, leaving it absent if it is `null`; [`resolve-ticket-type`](../_data/title-templates.md#resolve-ticket-type) states when it is. If the call fails, relay its error and continue with `ticket_type` absent.
 
    - **Report** each `unmatched` subject and each `violations` entry to the developer, then continue. If every field of `consolidated_record` is `null`, say that the branch yields no entries; `scope`, `type`, and `breaking` are then left out of the frontmatter.
    - **Resolve the overrides.** `--scope` sets `override_scope`. `--type` sets `override_type`, and a `!` on it sets `override_breaking` rather than staying on the type. Record an override as given, even if it equals the consolidated record.
@@ -76,15 +76,15 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
      Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`. The effective type is the output's `effective_record.type`; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states the output. If the call fails, relay its error and continue with no effective type.
 
-   - **Compare the ticket's type.** If `ticket_type` is non-null and differs from the effective type, including when there is no effective type, ask the developer which to keep, following [option format](#option-format): the effective type, or the ticket's. Mark the two options by applying [Work type test](#work-type-test) to the diff, not by which source names the type. Taking the ticket's sets `override_type` to `ticket_type` and re-runs `resolve-effective-record` with it. Ask here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask records both and asks nothing.
+   - **Compare the ticket's type.** If `ticket_type` is non-null and differs from the effective type, including when there is no effective type, ask the developer which to keep, following [option format](#option-format): the effective type, or the ticket's. Mark the two options by applying [Work type test](#work-type-test) to the diff, not by which source names the type. If the developer takes the ticket's, set `override_type` to `ticket_type` and re-run `resolve-effective-record` with it. Ask here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask records both and asks nothing.
    - **Check the breaking policy.** Report each `policy-violation` in the last run's `defects`, such as the one that a `refactor` override on a breaking consolidated record produces, and change nothing.
 
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why` and `## Details`** per the output format below. The lede (`## What`) arrives from a dispatch in step 5, so `## Details` must exist before step 6 can run.
+4. **Compose `## Why` and `## Details`** per the output format below. The `lede-drafter` subagent composes the lede (`## What`) in step 5, so `## Details` must exist before step 6 can run.
 
-5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); where there is none, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
+5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); if there is none, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 
    ```dispatch
    type: {resolved type}
@@ -92,32 +92,32 @@ Both are optional, and each is recorded as an override beside the consolidated r
    ticket-source: {ticket URL or reference}
    ```
 
-   **The block carries scalars only, and only these keys.** Omit `type` and `ticket-source` where they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: the drafter gathers every fact itself, and a sentence written here would seed the draft with this session's weighting, which is the failure the fresh context exists to avoid. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set, so a new flag is added deliberately rather than by a passing test.
+   **The block contains scalars only, and only these keys.** Omit `type` and `ticket-source` if they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here would introduce this session's weighting into the draft, which is the failure that the fresh context exists to avoid. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set, so a new flag is added deliberately rather than by a passing test.
 
-   **A redispatch carries the passages that failed, in a fence below the block.** Step 6 decides which:
+   **A redispatch includes the passages that failed, in a fence below the block.** Step 6 decides which:
 
    ```rejected
    - {the first passage that failed}
    ```
 
-   Copy each passage character for character from the draft it came from, one per line, and send only the passages that failed: a bullet the drafter never sees is one it cannot change, which is what keeps a bullet that passed from coming back changed. The migration paragraph travels the same way where it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage it replaces, and take every other bullet from the draft unchanged. Where the return carries a different number of passages than you sent, none of them can be placed: redispatch with `rejection: unmatched-return`, which counts against the two step 6 allows and exits where step 6 does.
+   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a bullet that it never sees, which keeps a bullet that passed from coming back changed. Send the migration paragraph the same way if it is what failed. The drafter returns one replacement per passage, in the order sent; put each in the place of the passage that it replaces, and take every other bullet from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
 
-   Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source it could not reach.
+   Take the drafter's `## Lede` section as the content of `## What`, and read its `## Report` for any source that it could not access.
 
-6. **Audit the draft.** Four checks apply to the `## What` returned in step 5, and each names the rejection code its failure raises, where a redispatch is the repair rather than an edit of your own. The drafter composed from the commit log and the diffstat and never read the diff, so this is also where the draft meets it.
+6. **Audit the draft.** Four checks apply to the `## What` returned in step 5, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. The drafter composed from the commit log and the diffstat and never read the diff, so this audit is also the step that checks the draft against the diff.
 
-   - **Verification.** Read each claim against the diff from step 2. Strike a claim the diff contradicts, and correct one that it states differently. Never add: A fact the draft left out was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed. A sentence that reaches past the commit log and the diffstat without the diff contradicting it is not one to strike: `rejection: unsupported-claim`.
-   - **Coverage.** Every fact the lede reports appears in `## Details` too, carrying the mechanics the lede left out. Add to `## Details` what is missing there. Overlap between the two sections is progressive disclosure working, so neither section is trimmed to remove it: A reader meets the summary first and the full story second, and both cover the same ground at different depths.
-   - **Subject.** Read each bullet with "This pull request" in front of it. Where that sentence is false, the verb names what the system does rather than what the change did: `rejection: subject`. A change that adds something which itself acts, a command, a check, a rule, a hook, is where this fails most often, because the added thing's behavior is true, interesting, and reads as a correct lede while standing in for the change.
-   - **Voice.** A figurative verb, or an invented term where a plain one exists: `rejection: voice`.
+   - **Verification.** Read each claim against the diff from step 2. Strike a claim that the diff contradicts, and correct one that it states differently. Never add: A fact omitted from the draft was left out by the reader of the change's shape, and supplying it here restores the weighting that the fresh-context dispatch removed. A sentence that states more than the commit log and the diffstat show, without the diff contradicting it, is not one to strike: `rejection: unsupported-claim`.
+   - **Coverage.** Every fact reported by the lede appears in `## Details` too, with the mechanics that the lede left out. Add to `## Details` what is missing there. Overlap between the two sections is progressive disclosure working, so neither section is trimmed to remove it: A reader meets the summary first and the full story second, and both cover the same facts at different levels of detail.
+   - **Subject.** Read each bullet with "This pull request" in front of it. If that sentence is false, the verb names what the system does rather than what the change did: `rejection: subject`. This check fails most often on a change that adds something which itself acts, such as a command, a check, a rule, or a hook, because the added thing's behavior is true, interesting, and reads as a correct lede while standing in for the change.
+   - **Voice.** A figurative verb, or an invented term when a plain one exists: `rejection: voice`.
 
-   Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Do not rewrite the prose yourself: the draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting the dispatch removed.
+   Striking, correcting, and adding to `## Details` are the whole of your authority. Every other failure is a redispatch, never an edit. Do not rewrite the prose yourself: The draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting that the dispatch removed.
 
-   Repeat step 5 with `rejection:` set to the code the failed check names, and with the passages that failed in the `rejected` fence that step describes.
+   Repeat step 5 with `rejection:` set to the code that the failed check names, and with the passages that failed in the `rejected` fence that step describes.
 
-   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then carry `## What` into step 7. A return you could never place leaves each passage as the fence carried it, which is what the developer is shown. A passage the audit rejected reaches step 7 only once the developer has been asked.
+   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones that you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then continue to step 7 with `## What`. If you could never place a return, show the developer each passage as the fence contained it. Take a passage rejected by the audit into step 7 only after asking the developer.
 
-7. **Cut `## What` via `lede-cutter`**: The verified draft reports every fact the drafter judged worth writing; a lede carries only the ones its reader acts on. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
+7. **Cut `## What` via `lede-cutter`**: The verified draft reports every fact that the drafter judged worth writing; a lede contains only the ones on which its reader acts. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
    ```dispatch
    title: {the title composed in step 3, without the ticket reference}
@@ -129,25 +129,25 @@ Both are optional, and each is recorded as an override beside the consolidated r
    - {the second bullet}
    ```
 
-   Copy each candidate from the verified draft character for character, one per line, and number none of them: the cutter returns the survivors verbatim, and anything added here has to be stripped back out. Add `rejection: {code}` on a redispatch and on no other dispatch, taking the code from the check that failed below.
+   Copy each candidate from the verified draft character for character, one per line, and number none of them: The cutter returns the survivors verbatim, and anything added here has to be stripped back out. Add `rejection: {code}` on a redispatch and on no other dispatch, taking the code from the check that failed below.
 
-   **The migration paragraph is not a candidate.** Where the lede carries one, hold it aside and re-attach it below the surviving bullets. Only `## What` reaches the merge commit and the changelog, so that paragraph is the whole channel to a consumer whose build just broke, and it survives every cut.
+   **The migration paragraph is not a candidate.** If the lede contains one, hold it aside and re-attach it below the surviving bullets. Because only `## What` appears in the merge commit and the changelog, that paragraph is the only text addressed to a consumer whose build just broke, and it survives every cut.
 
-   **A single-bullet lede skips the dispatch.** The cut leaves at least one bullet, so a lede that already has one has nothing to give up.
+   **Skip the dispatch for a single-bullet lede.** The cut leaves at least one bullet, so a lede that already has one has nothing to give up.
 
-   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path it was written to:
+   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path to which it was written:
 
    ```bash
    grep -Fxv -f "{candidates_file}" "{returned_file}"
    ```
 
-   Each line it prints is a bullet the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status.
+   Each printed line is a bullet that the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case. Read the printed lines rather than the exit status.
 
-   **Count the returned bullets too.** The empty set is a subset, so the comparison above passes a return carrying no bullets at all. An empty `## What` reaches `merge-pr`, which reads a body under 30 characters as thin and composes a fresh one from the diff, so the pipeline's output is discarded without a word.
+   **Count the returned bullets too.** The empty set is a subset, so the comparison above passes a return containing no bullets at all. An empty `## What` is passed on to `merge-pr`, which reads a body under 30 characters as thin and composes a fresh one from the diff, silently discarding the pipeline's output.
 
-   Redispatch on either failure -- `rejection: not-a-subset` for a bullet the cutter wrote, `rejection: empty-cut` for a return carrying none -- at most twice across the two; after a second failure, take the verified draft uncut and report the failure to the developer.
+   Redispatch on either failure -- `rejection: not-a-subset` for a bullet written by the cutter, `rejection: empty-cut` for a return containing none -- at most twice across the two; after a second failure, take the verified draft uncut and report the failure to the developer.
 
-   Take the surviving bullets as the content of `## What`, in the order they were sent, and read the cutter's `## Report` for what it dropped. Relay that to the developer: this is the one step that removes content, and the saved summary shows only what survived it.
+   Take the surviving bullets as the content of `## What`, in the order in which they were sent, and read the cutter's `## Report` for what it dropped. Relay that to the developer: This is the one step that removes content, and the saved summary shows only what survived it.
 
 8. **Save** per the [Saving](#saving) section.
 
@@ -202,13 +202,13 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ## Guidance
 
-- When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so they read naturally without it.
+- When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so that they read naturally without it.
 - The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
 - Subsection headings use `{emoji} {label}` from the matching [work-types.json](../_data/work-types.json) `types[]` entry. For any subsection not enumerated in the example template above, look up the entry by work-type key and use its `emoji` and `label`.
 - Order Details subsections per `work-types.json` tier order: public → internal → process.
-- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: An entry that step 2's `consolidate-branch` output reports with `breaking: true`, or a commit with a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection: The prefix tags it inline rather than relocating it to a separate section. The prefix does not carry the migration: `## Details` reaches no consumer, so a breaking change states what the consumer does in a `Migration:` paragraph in `## What`.
+- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: An entry that step 2's `consolidate-branch` output reports with `breaking: true`, or a commit with a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection: The prefix tags it inline rather than relocating it to a separate section. The prefix does not include the migration: No consumer reads `## Details`, so a breaking change states what the consumer does in a `Migration:` paragraph in `## What`.
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 
@@ -230,7 +230,7 @@ The block is structured as:
 
 Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below.
 
-Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 consolidation file inside the same call, so no entry is retyped into a command, in which a backtick, `$`, or `"` would be expanded or would end the argument. A file that a failed consolidation left empty yields no `changes`:
+Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 consolidation file inside the same call, so that no entry is retyped into a command, in which a backtick, `$`, or `"` would be expanded or would end the argument. A file that a failed consolidation left empty yields no `changes`:
 
 ```bash
 consolidation_path="{absolute path of the step-2 consolidation file}"
@@ -253,7 +253,7 @@ fi
   --extra "override_breaking=true"
 ```
 
-Dropping a flag is what keeps an absent field out of the emitted frontmatter. `--extra "breaking=true"` and `--extra "override_breaking=true"` appear only if that field is `true`.
+Dropping a flag keeps an absent field out of the emitted frontmatter. `--extra "breaking=true"` and `--extra "override_breaking=true"` appear only if that field is `true`.
 
 Prepend the script's output verbatim to the artifact body.
 
@@ -262,7 +262,7 @@ Prepend the script's output verbatim to the artifact body.
 - **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.
 - **`scope`**, **`type`**, and **`breaking`**: The step-2 `consolidated_record`, each absent if it is `null`, and `breaking` only if it is `true`. They record the consolidated record and never an override.
 - **`changes`**: Each entry's `change`, oldest first, read from the consolidation file.
-- **`ticket_type`**: The step-2 `ticket_type`, absent where it is `null` or unresolved.
+- **`ticket_type`**: The step-2 `ticket_type`, absent if it is `null` or unresolved.
 - **`override_scope`**, **`override_type`**, and **`override_breaking`**: The overrides resolved in step 2, each absent if unset, and `override_breaking` only if it is `true`.
 
 A skill that needs the effective record reads it from [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record), run on these fields.
