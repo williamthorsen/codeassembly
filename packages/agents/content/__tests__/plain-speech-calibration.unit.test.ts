@@ -26,16 +26,16 @@ const PINNED_VERSION = '6';
 const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*plain-speech\s+(\S+)\s*-->$/m;
 
 const CALIBRATION_DRIFT_MESSAGE =
-  `${CALIBRATION} no longer matches the text pinned here. Choose one remedy: ` +
-  `bump the calibration's \`unit-version\` marker (and \`PINNED_VERSION\` here) where the checking standard moved, ` +
-  `so every repository's record re-opens its plain-speech coverage for review; or re-pin ` +
-  `\`PINNED_CALIBRATION_HASH\` alone where the edit left the checking standard as it was.`;
+  `${CALIBRATION} no longer matches the text pinned here. Choose one remedy: bump the calibration's ` +
+  `\`unit-version\` marker (and \`PINNED_VERSION\` here) if some text that complied with the old calibration could ` +
+  `fail the new one, or if unsure, so every repository's record re-opens its plain-speech coverage for review; or ` +
+  `re-pin \`PINNED_CALIBRATION_HASH\` alone for a relaxation, a clarification, or a rewording.`;
 
 const RULE_DRIFT_MESSAGE =
-  `${RULE} no longer matches the text that ${CALIBRATION} was calibrated against. Choose one remedy: ` +
-  `bump the calibration's \`unit-version\` marker (and \`PINNED_VERSION\` here) where the rule's operative content ` +
-  `moved, so every repository's record re-opens its plain-speech coverage for review; or re-pin ` +
-  `\`PINNED_RULE_HASH\` alone where the edit left the operative content as it was.`;
+  `${RULE} no longer matches the text against which ${CALIBRATION} was calibrated. Choose one remedy: bump the ` +
+  `calibration's \`unit-version\` marker (and \`PINNED_VERSION\` here) if some text that complied with the old rule ` +
+  `could fail the new one, or if unsure, so every repository's record re-opens its plain-speech coverage for review; ` +
+  `or re-pin \`PINNED_RULE_HASH\` alone for a relaxation, a clarification, or a rewording.`;
 
 describe('plain-speech calibration', () => {
   it('declares the pinned unit version', async () => {
