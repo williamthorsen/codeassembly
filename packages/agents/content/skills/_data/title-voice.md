@@ -13,4 +13,4 @@ The rules apply to both authored strings: the ticket string, which becomes the i
 - **Specific over categorical.** "Disambiguate phase name mismatch between agents and factory layers", not "Phase name disambiguation".
 - **No ephemeral references.** The title must make sense to a reader who has only a `git log`: no ticket ID, pull-request number, review-finding ID, or run identifier. It contains no ticket reference; a template adds one to any surface that shows it.
 - **No backticks.** Write an identifier bare: "Add listConsoleLines to toolbelt.vitest". In a body, backtick identifiers as usual.
-- **No external actions.** A ticket updated or a notification sent belongs to neither string.
+- **No external actions.** Neither string mentions an action such as updating a ticket or sending a notification.
