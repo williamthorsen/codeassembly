@@ -744,7 +744,7 @@ Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "f
 
 Then emit `skill.completed` (payload `{"outcome":"<completed|failed|needs_manual_review>"}`, matching the run status) per [Lifecycle events](#lifecycle-events), on the MCP-unavailable path too, on which `complete_run` itself is skipped.
 
-**Clean up breadcrumb** (MCP success path only): After `complete_run`, remove the breadcrumb file:
+**Clean up breadcrumb**: Then remove the breadcrumb file, whatever the value of `{mcp-available}`:
 
 ```
 rm -f .claude/tmp/active-run-dir
