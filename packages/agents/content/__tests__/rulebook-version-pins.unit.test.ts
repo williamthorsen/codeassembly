@@ -6,10 +6,9 @@ import type { ResolvedRulebook } from '../../src/lib/rulebook-deploy.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleSections } from '../test-utils/rule-markers.ts';
 
-// A rulebook's version names the guidance an agent holds, and `revise-prose` keys a repository's sweep coverage on it,
-// so a body that changes without a bump leaves every repository recorded as swept against rule text that has since
-// moved. The include expansion is what makes the gap invisible: editing a partial changes the deployed body of every
-// rulebook that includes it while touching no rulebook file.
+// A rulebook's version names the guidance an agent holds, so a body that changes without a bump reports one version for
+// two different bodies. The include expansion is what makes the gap invisible: editing a partial changes the deployed
+// body of every rulebook that includes it while touching no rulebook file.
 //
 // The pins below are what force the look. A body edit fails this suite until the author decides which of the two
 // remedies applies, and the failure message states both.
@@ -42,7 +41,7 @@ interface RulePin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: '8b082cc3d3405a023a0c3ff92423d0ddbecc808a4b93b107e2b84b6d190e2eba', version: '22' },
+    { bodyHash: '5e4a2f9a49ea1c0de506f139c73bd5d0e3ee21ca21eae1961d48eca9357b5c47', version: '22' },
   ],
   [
     'commit-conventions',
@@ -126,9 +125,11 @@ const RULE_PINS = new Map<string, RulePin>([
 
 const DRIFT_MESSAGE =
   "A rulebook's deployed body no longer matches the pin recorded for it. Choose one remedy: bump the rulebook's " +
-  "`version` and re-pin both fields if the operative content moved, so every repository's record re-opens its " +
-  'coverage for review; or re-pin the hash alone if the edit left the operative content as it was. An edit to an ' +
-  'included partial counts as an edit to the body, which is why a rulebook can drift with its own file untouched.';
+  '`version` and re-pin both fields if the operative content moved; or re-pin the hash alone if the edit left the ' +
+  'operative content as it was. If the edit lies outside every rule section and some text that complied with a rule ' +
+  "could now fail it, also raise that rule's sweep version, which is what re-opens the rule's coverage in every " +
+  "repository's record. An edit to an included partial counts as an edit to the body, which is why a rulebook can " +
+  'drift with its own file untouched.';
 
 const RULE_DRIFT_MESSAGE =
   "A rule's section no longer matches the pin recorded for it. Choose one remedy: raise the sweep version on the " +
