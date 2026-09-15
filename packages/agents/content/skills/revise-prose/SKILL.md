@@ -20,7 +20,7 @@ Apply is the default. `--dry-run` produces the report alone.
 | `--batch-budget <bytes>` | Ceiling on a batch's combined file bytes. Passed to the helper unchanged. | No       |
 | `--dry-run`              | Report and stop: no subagent, no edit, no record write.                   | No       |
 
-With no path, the sweep covers the whole repository. That is this skill's default, because the eradication case is a full sweep. It is how this skill differs from `{skill:revise-comments}`, whose default is the current branch's diff.
+With no path, the sweep covers the whole repository. That is this skill's default, because removing every violation from a repository requires a full sweep. It is how this skill differs from `{skill:revise-comments}`, whose default is the current branch's diff.
 
 ## Ordering with `revise-comments`
 
@@ -34,7 +34,7 @@ Both come from this document, never from a list kept elsewhere. Because a rule d
 
 - **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names.
 - **Each `<!-- rulebook:<slug> -->` block** in the comment-preferences and writing-preferences fills at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit, since nothing can key a record on it: Name that slug in the closing summary, and sweep it without recording coverage for it.
-- **Each `<!-- rule: <id> <version> -->` marker** in a bound rulebook's body declares a rule to name to the helper, whether or not the helper has a detector for it. A marker that declares no version reads `<!-- rule: <id> -->`. Either way, name the rule to the helper by its id alone. The rule's unit is the block containing the marker.
+- **Each `<!-- rule: <id> <version> -->` marker** in a bound rulebook's body declares a rule, whether or not the helper has a detector for it. A marker that declares no version reads `<!-- rule: <id> -->`. Either way, name the rule to the helper by its id alone. The rule's unit is the block containing the marker.
 - **A rule heading with no marker beneath it** declares no id. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper.
 
 If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone and does not name a rule.
@@ -111,7 +111,7 @@ rules: {rule-id}, {rule-id}
 
    `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which does not name a unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not cover: Step 1 names the unit directly rather than through a rule marker. **A rejection under a heading's kebab-case id takes the unit of the fill block containing that heading**, as step 1 states for a rule heading with no marker beneath it.
 
-   **Fold every rejection, whatever rule it names.** Because a rejection resolves to a site by its rule, its file, and its phrase, a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, and therefore a span wider than the one reported by the detector still resolves to it. Step 4 hands the recorded sites to the next sweep of that batch.
+   **Fold every rejection, whatever rule it names.** Because a rejection resolves to a site by its rule, its file, and its phrase, a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, and therefore a span wider than the one reported by the detector still resolves to it. On the next sweep, step 4 writes the recorded sites to the rejections file of each batch that covers them.
 
 4. **Commit the closing repairs and the record together**, per `{skill:create-commit}`.
 5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A test that asserts on a repaired string fails there; repair the test expectation and commit that separately.
