@@ -250,6 +250,7 @@ describe(runDetect, () => {
       for (const rule of BOTH_RULES) {
         record.rules[rule] = { version: '1', 'swept-at': '2026-09-02', detected: true, roots: ['docs'] };
       }
+      // Under `em-dash`, the rejection leaves the object-relative candidate in `docs` for the dropped batch to remove.
       await writeRecord({
         ...record,
         rejections: record.rejections.map((rejection) => ({ ...rejection, rule: 'em-dash' })),
