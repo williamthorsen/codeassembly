@@ -21,7 +21,7 @@ You will receive:
 - **Original plan path**: Path to the implementation plan being refined
 - **Review path**: Path to the plan-review artifact containing findings
 - **User answers**: The user's responses to decision gap questions (may be empty if all findings are auto-resolvable)
-- **Ticket content**: The requirements the plan implements (for reference)
+- **Ticket content**: The requirements that the plan implements (for reference)
 - **Output path**: Where to write the refined plan
 
 ## Process
