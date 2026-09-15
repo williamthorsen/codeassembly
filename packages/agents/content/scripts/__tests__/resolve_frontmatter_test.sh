@@ -164,23 +164,6 @@ The output should equal "$(expected_json)"
 End
 End
 
-Describe "resolve_run_id"
-BeforeEach "enter_tmpdir"
-AfterEach "leave_tmpdir"
-
-It "returns empty when no breadcrumb exists"
-When call resolve_run_id
-The output should equal ""
-End
-
-It "returns the run-dir basename when the breadcrumb exists"
-mkdir -p .claude/tmp
-echo "/some/path/20260516-143946Z" >.claude/tmp/active-run-dir
-When call resolve_run_id
-The output should equal "20260516-143946Z"
-End
-End
-
 Describe "resolve_base_sha"
 It "returns empty for unresolvable refs (no stderr leak)"
 When call resolve_base_sha "origin/this-ref-does-not-exist-anywhere"
@@ -756,7 +739,7 @@ AfterEach "cleanup_missing_manifest"
 
 It "derives and writes the manifest on cache miss, then succeeds"
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
-When run main --skill foo --interactive true --override "run_id="
+When run main --skill foo --interactive true
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
@@ -773,7 +756,7 @@ resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p packages/nested/deep
 subdir_run() {
   pushd packages/nested/deep >/dev/null
-  main --skill foo --interactive true --override "run_id="
+  main --skill foo --interactive true
   local rc=$?
   popd >/dev/null
   return $rc
@@ -794,7 +777,7 @@ It "recovers when the cached manifest contains corrupt JSON"
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p .agents
 printf '{ "ticket_id": "broken' >.agents/main.branch-manifest.json
-When run main --skill foo --interactive true --override "run_id="
+When run main --skill foo --interactive true
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
@@ -834,18 +817,32 @@ cleanup_main_e2e() {
 BeforeEach "setup_main_e2e"
 AfterEach "cleanup_main_e2e"
 
-It "emits extension fields end-to-end and force-omits run_id via --override KEY="
+It "emits extension fields end-to-end and force-omits a resolved field via --override KEY="
 When run main \
   --skill foo \
   --interactive true \
   --extra "alpha=1" \
   --extra-list "tags=a,b" \
-  --override "run_id="
+  --override "ticket_id="
 The status should be success
 The output should include "skill: foo"
 The output should include "isInteractive: true"
 The output should include "alpha: 1"
 The output should include "tags: [a, b]"
+The output should not include "ticket_id"
+End
+
+It "emits run_id only when supplied via --override run_id="
+When run main --skill foo --interactive true --override "run_id=20260516-143946Z"
+The status should be success
+The output should include "run_id: 20260516-143946Z"
+End
+
+It "omits run_id when a leftover run breadcrumb is present and no --override run_id is given"
+mkdir -p .claude/tmp
+echo "/some/path/20260516-143946Z" >.claude/tmp/active-run-dir
+When run main --skill foo --interactive true
+The status should be success
 The output should not include "run_id"
 End
 
@@ -854,8 +851,7 @@ When run main \
   --skill foo \
   --interactive true \
   --extra-list-item "changes=first" \
-  --extra-list-item "changes=second" \
-  --override "run_id="
+  --extra-list-item "changes=second"
 The status should be success
 The output should include "changes: [first, second]"
 End
@@ -864,8 +860,7 @@ It "keeps an --extra-list-item value carrying a comma whole"
 When run main \
   --skill foo \
   --interactive true \
-  --extra-list-item "changes=agents|feat: Add a parser, a renderer, and a verifier" \
-  --override "run_id="
+  --extra-list-item "changes=agents|feat: Add a parser, a renderer, and a verifier"
 The status should be success
 The output should include "changes: ['agents|feat: Add a parser, a renderer, and a verifier']"
 End
@@ -874,8 +869,7 @@ It "emits a single --extra-list-item as a one-item list"
 When run main \
   --skill foo \
   --interactive true \
-  --extra-list-item "changes=only" \
-  --override "run_id="
+  --extra-list-item "changes=only"
 The status should be success
 The output should include "changes: [only]"
 End
@@ -884,14 +878,13 @@ It "emits pr only when supplied via --override pr="
 When run main \
   --skill foo \
   --interactive true \
-  --override "run_id=" \
   --override "pr=https://github.com/o/r/pull/7"
 The status should be success
 The output should include "pr: https://github.com/o/r/pull/7"
 End
 
 It "omits pr when no --override pr is given"
-When run main --skill foo --interactive true --override "run_id="
+When run main --skill foo --interactive true
 The status should be success
 The output should not include "pr:"
 End
@@ -899,7 +892,7 @@ End
 It "resolves the manifest when invoked from a nested subdirectory"
 mkdir -p packages/nested/deep
 pushd packages/nested/deep >/dev/null
-result=$(main --skill foo --interactive true --override "run_id=" 2>&1)
+result=$(main --skill foo --interactive true 2>&1)
 status=$?
 popd >/dev/null
 When call test "$status" -eq 0
