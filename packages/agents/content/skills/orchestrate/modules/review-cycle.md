@@ -53,7 +53,7 @@ The block is assembled from two independent sources by the helper script `{harne
 
 1. **Recompute the changed-file list:** The dispatch site already has `{changed-files}` available (Phase 4 computes it once at the start of the parallel review; Phase 4a recomputes it before the simplifier dispatch; Phase 4b recomputes it before the holistic dispatch). Write the value to a temp file `{run-dir}/.tmp_changed-files.txt`. The temp file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
 
-2. **Invoke the helper script:** Capture stdout into `{reviewer-context}` and redirect stderr to a temp file so the failure-handling step below can read it:
+2. **Invoke the helper script:** Capture stdout into `{reviewer-context}` and redirect stderr to a temp file so that the failure-handling step below can read it:
 
    ```
    # Only include --sidecar when {reviewer-context-sidecar-path} is non-empty;
@@ -183,7 +183,7 @@ Call MCP tool emit_event with:
   event: { event: "reviewer_dispatched", reviewer: "{reviewer-name}" }
 ```
 
-Send all activated {tool:Task} calls in a single message so they run concurrently. Each agent examines the branch diff independently.
+Send all activated {tool:Task} calls in a single message so that they run concurrently. Each agent examines the branch diff independently.
 
 Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer using these names and this order: `{core-review-path}` (core reviewer, always), `{sf-review-path}` (silent-failure reviewer, if activated), `{test-review-path}` (test reviewer, if activated), `{code-review-path}` (code reviewer, if activated). Skipped reviewers do not consume a sequence number; increment `{seq}` only for activated reviewers.
 
@@ -299,7 +299,7 @@ Before applying these rules, check the iteration budget. If N iterations have be
 - **criticality >= approval_threshold** AND no review rounds remain: Exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then run selective re-review. These findings are opportunistic, worth fixing if budget allows.
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
-- **criticality < budget_threshold**: Proceed to Phase 4a (report only, no fix attempt). This includes `none`, where reviewers produced no authored findings.
+- **criticality < budget_threshold**: Proceed to Phase 4a (report only, no fix attempt). This includes `none`, in which case reviewers produced no authored findings.
 
 ### Consolidated coder fixes
 
@@ -397,7 +397,7 @@ Call {tool:Task} with `subagent_type: code-simplification-reviewer`, `max_turns:
 > Files changed:
 > {changed-files}
 >
-> All review findings have been addressed. Focus on reducing unnecessary complexity: dead code, overly defensive patterns, verbose constructs that have simpler equivalents, and abstractions that don't earn their weight.
+> All review findings have been addressed. Focus on reducing unnecessary complexity: dead code, overly defensive patterns, verbose constructs that have simpler equivalents, and abstractions that don't justify their complexity.
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
@@ -477,7 +477,7 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 - **criticality >= approval_threshold** AND no review rounds remain: Delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted; the holistic review is a final sanity check, not a gating review.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then re-review using remaining budget (opportunistic).
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Set `{review-status}` to `converged` (findings do not block approval).
-- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none`, where reviewers produced no authored findings.
+- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none`, in which case reviewers produced no authored findings.
 
 When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
 

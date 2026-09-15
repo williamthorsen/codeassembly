@@ -294,7 +294,7 @@ The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id); never construct a path with a literal `null` segment.
 2. Find or create a run directory:
    - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): Save into it
-   - **If no active run exists**: Create a new run directory named `{timestamp}-interactive`, in which timestamp matches this review's timestamp
+   - **If no active run exists**: Create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
 3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files: The chronological sequence of files is the history.

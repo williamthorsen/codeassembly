@@ -24,7 +24,7 @@ Match your client to one of these shapes:
 - **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): Takes the description together with `contentFormat: "markdown" | "adf"` -- top-level on `createJiraIssue`, under `fields` on `editJiraIssue`. No HTML surface. → Follow the [Markdown path](#markdown-path).
 - **`description_html`-based tool**: `create_jira_issue` / `update_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
 
-If more than one is available, prefer the `contentFormat` tool: It takes Markdown directly, whereas `acli` needs ADF, so `acli` is the fallback for a machine with no connected Jira server.
+If more than one is available, prefer the `contentFormat` tool: It takes Markdown directly, whereas `acli` needs ADF. Because the `contentFormat` tool needs a connected Jira server, `acli` is the fallback for a machine without one.
 
 ## ADF path
 

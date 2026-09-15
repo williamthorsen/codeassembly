@@ -82,7 +82,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why` and `## Details`** per the output format below. The `lede-drafter` subagent composes the lede (`## What`) in step 5, so `## Details` must exist before step 6 can run.
+4. **Compose `## Why` and `## Details`** per the output format below. The `lede-drafter` subagent composes the lede (`## What`) in step 5, and step 6 checks that every fact in it appears in `## Details`, so `## Details` must exist before step 6 can run.
 
 5. **Compose `## What` via `lede-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); if there is none, use `internal`. Then dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
 

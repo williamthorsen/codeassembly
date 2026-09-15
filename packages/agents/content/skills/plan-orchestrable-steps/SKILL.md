@@ -54,7 +54,7 @@ Read `{artifact-dir}/orchestration-plan.json`. Present to the user:
 - **Steps**: Numbered list with titles, file counts, and dependency info
 - **Dependency graph**: Which steps can run in parallel vs. which are sequential
 - **Risks**: Items that need user attention
-- **Questions**: Items the planner could not resolve from codebase analysis
+- **Questions**: Items that the planner could not resolve from codebase analysis
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
 <!-- include: ../_partials/action-items.md / -->

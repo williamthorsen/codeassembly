@@ -123,7 +123,7 @@ Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `b
 
 <!-- include: ../_partials/bitbucket-delete-both-refusal.md / -->
 
-`scm` is known from step 1 and the strategy from this step, so the refusal needs no further input here. Deferring it to the delegate would have step 6 ask the user to authorize deleting a local branch that the platform cannot touch, and refuse after they answered. `merge-bb-pr` keeps the same guard for a caller that invokes it without this orchestrator.
+`scm` is known from step 1 and the strategy from this step, so the refusal needs no further input here. If the delegate refused instead, step 6 would ask the user to authorize deleting a local branch that the platform cannot touch, and the delegate would refuse after the user answered. `merge-bb-pr` keeps the same guard for a caller that invokes it without this orchestrator.
 
 ### 5. Compose merge-commit body
 

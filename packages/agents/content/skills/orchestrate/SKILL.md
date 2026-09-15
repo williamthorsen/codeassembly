@@ -526,7 +526,7 @@ Pass the following engine-managed variables to the module:
 - `{seq}`: Current artifact sequence counter (the module continues incrementing from this value)
 - `{ticket-requirements-path}`: Full path to ticket-requirements artifact (empty string if unavailable)
 - `{plan-md-path}`: Full path to orchestration-plan.md artifact (empty string if planning was skipped)
-- `{aspect_reviewers}`: Resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }`, in which `false` means deactivate, `true` means always activate, and absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
+- `{aspect_reviewers}`: Resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
 - `{authored-by-pipeline}`: `true` when the pipeline spec includes `implementation`; `false` otherwise. Signals whether the code under review was authored by the orchestrated pipeline (used by the test reviewer for classification).
 - `{lookup-path}`: `{harness_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
 - `{reviewer-context-sidecar-path}`: Full path to the most recent `*_coder_reviewer-context.md` artifact (empty string if none).
@@ -650,7 +650,7 @@ Dispatch the savings-analyzer subagent as a background {tool:Task} and immediate
 - `model: {models.savings_analyzer}` (resolved from the `savings_analyzer` key, defaults to `haiku`)
 - `prompt:` Provide:
   - the run directory path (`{run-dir}`),
-  - the next sequence number after the run-summary (`{NN+1}`, in which `{NN}` is the run-summary sequence number; the subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory),
+  - the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number; the subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory),
   - and the frontmatter values that the subagent must stamp into its artifact. The `savings-analyzer` subagent has no Bash tool and cannot resolve these itself; the orchestrator has already resolved all of them while preparing the run-summary frontmatter (see [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) below) and forwards them verbatim:
     - `branch`: From session context (`branch_name`).
     - `commit`: Short SHA of HEAD, already resolved for the run-summary.

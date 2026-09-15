@@ -1,7 +1,7 @@
 units:
   plain-speech:
     version: '6'
-    swept-at: 2026-09-14
+    swept-at: 2026-09-15
     rules: []
     roots:
       - packages/agents/content/_partials
@@ -62,9 +62,42 @@ units:
       - packages/agents/content/skills/kb-retrieve
       - packages/agents/content/skills/kb-retrieve-events
       - packages/agents/content/skills/kb-update-events
+      - packages/agents/content/skills/merge-bb-pr
+      - packages/agents/content/skills/merge-gh-pr
+      - packages/agents/content/skills/merge-pr
+      - packages/agents/content/skills/migrate-feedback-memories
+      - packages/agents/content/skills/orchestrate
+      - packages/agents/content/skills/orchestrate-dev
+      - packages/agents/content/skills/orchestrate-review
+      - packages/agents/content/skills/people-report
+      - packages/agents/content/skills/plan
+      - packages/agents/content/skills/plan-orchestrable-steps
+      - packages/agents/content/skills/refine-plan
+      - packages/agents/content/skills/respond-to-review
+      - packages/agents/content/skills/review-bb-pr
+      - packages/agents/content/skills/review-branch
+      - packages/agents/content/skills/review-criteria
+      - packages/agents/content/skills/review-gh-pr
+      - packages/agents/content/skills/review-permissions
+      - packages/agents/content/skills/review-pr
+      - packages/agents/content/skills/revise-comments
+      - packages/agents/content/skills/revise-prose
+      - packages/agents/content/skills/save-artifact
+      - packages/agents/content/skills/save-plan
+      - packages/agents/content/skills/software-engineering
+      - packages/agents/content/skills/streamline-guidance
+      - packages/agents/content/skills/summarize-change
+      - packages/agents/content/skills/summarize-chat
+      - packages/agents/content/skills/systematic-debugging
+      - packages/agents/content/skills/testing-conventions
+      - packages/agents/content/skills/typescript-testing-conventions
+      - packages/agents/content/skills/update-jira-ticket
+      - packages/agents/content/skills/update-project-guidance
+      - packages/agents/content/skills/upgrade-dependencies
+      - packages/agents/content/skills/wrap-up
   williamthorsen-comment-preferences:
     version: '3'
-    swept-at: 2026-09-14
+    swept-at: 2026-09-15
     rules: []
     roots:
       - packages/agents/content/_partials
@@ -125,9 +158,42 @@ units:
       - packages/agents/content/skills/kb-retrieve
       - packages/agents/content/skills/kb-retrieve-events
       - packages/agents/content/skills/kb-update-events
+      - packages/agents/content/skills/merge-bb-pr
+      - packages/agents/content/skills/merge-gh-pr
+      - packages/agents/content/skills/merge-pr
+      - packages/agents/content/skills/migrate-feedback-memories
+      - packages/agents/content/skills/orchestrate
+      - packages/agents/content/skills/orchestrate-dev
+      - packages/agents/content/skills/orchestrate-review
+      - packages/agents/content/skills/people-report
+      - packages/agents/content/skills/plan
+      - packages/agents/content/skills/plan-orchestrable-steps
+      - packages/agents/content/skills/refine-plan
+      - packages/agents/content/skills/respond-to-review
+      - packages/agents/content/skills/review-bb-pr
+      - packages/agents/content/skills/review-branch
+      - packages/agents/content/skills/review-criteria
+      - packages/agents/content/skills/review-gh-pr
+      - packages/agents/content/skills/review-permissions
+      - packages/agents/content/skills/review-pr
+      - packages/agents/content/skills/revise-comments
+      - packages/agents/content/skills/revise-prose
+      - packages/agents/content/skills/save-artifact
+      - packages/agents/content/skills/save-plan
+      - packages/agents/content/skills/software-engineering
+      - packages/agents/content/skills/streamline-guidance
+      - packages/agents/content/skills/summarize-change
+      - packages/agents/content/skills/summarize-chat
+      - packages/agents/content/skills/systematic-debugging
+      - packages/agents/content/skills/testing-conventions
+      - packages/agents/content/skills/typescript-testing-conventions
+      - packages/agents/content/skills/update-jira-ticket
+      - packages/agents/content/skills/update-project-guidance
+      - packages/agents/content/skills/upgrade-dependencies
+      - packages/agents/content/skills/wrap-up
   williamthorsen-writing-preferences:
     version: '8'
-    swept-at: 2026-09-14
+    swept-at: 2026-09-15
     rules:
       - em-dash
       - reduced-object-relative
@@ -193,6 +259,39 @@ units:
       - packages/agents/content/skills/kb-retrieve
       - packages/agents/content/skills/kb-retrieve-events
       - packages/agents/content/skills/kb-update-events
+      - packages/agents/content/skills/merge-bb-pr
+      - packages/agents/content/skills/merge-gh-pr
+      - packages/agents/content/skills/merge-pr
+      - packages/agents/content/skills/migrate-feedback-memories
+      - packages/agents/content/skills/orchestrate
+      - packages/agents/content/skills/orchestrate-dev
+      - packages/agents/content/skills/orchestrate-review
+      - packages/agents/content/skills/people-report
+      - packages/agents/content/skills/plan
+      - packages/agents/content/skills/plan-orchestrable-steps
+      - packages/agents/content/skills/refine-plan
+      - packages/agents/content/skills/respond-to-review
+      - packages/agents/content/skills/review-bb-pr
+      - packages/agents/content/skills/review-branch
+      - packages/agents/content/skills/review-criteria
+      - packages/agents/content/skills/review-gh-pr
+      - packages/agents/content/skills/review-permissions
+      - packages/agents/content/skills/review-pr
+      - packages/agents/content/skills/revise-comments
+      - packages/agents/content/skills/revise-prose
+      - packages/agents/content/skills/save-artifact
+      - packages/agents/content/skills/save-plan
+      - packages/agents/content/skills/software-engineering
+      - packages/agents/content/skills/streamline-guidance
+      - packages/agents/content/skills/summarize-change
+      - packages/agents/content/skills/summarize-chat
+      - packages/agents/content/skills/systematic-debugging
+      - packages/agents/content/skills/testing-conventions
+      - packages/agents/content/skills/typescript-testing-conventions
+      - packages/agents/content/skills/update-jira-ticket
+      - packages/agents/content/skills/update-project-guidance
+      - packages/agents/content/skills/upgrade-dependencies
+      - packages/agents/content/skills/wrap-up
 rejections:
   - rule: capitalization-after-colon
     unit: williamthorsen-writing-preferences
@@ -200,6 +299,24 @@ rejections:
     file: packages/agents/content/skills/_partials/next-steps-after-review.md
     phrase: '**T1: test code.**'
     ground: the text after a finding ID is a lowercase surface value from the list that the section defines (source, test, comment, docs, config), and every finding label in the examples takes the same form
+  - rule: capitalization-after-colon
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: '{Non-obvious things that trip up agents: Build-order dependencies'
+    ground: what precedes the colon is a label, so the capital is correct
+    unit-version: '8'
+  - rule: capitalization-after-colon
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: '`package.json` (each workspace package): name, description, key dependencies'
+    ground: the words after the colon are package.json field names, which keep their lowercase
+    unit-version: '8'
+  - rule: capitalization-after-colon
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: '`package.json` (root): name, workspaces, scripts, engines, type'
+    ground: the words after the colon are package.json field names, which keep their lowercase
+    unit-version: '8'
   - rule: em-dash
     unit: williamthorsen-writing-preferences
     unit-version: '8'
@@ -254,6 +371,24 @@ rejections:
     file: packages/agents/content/skills/_data/design-priorities.md
     phrase: Correctness determines what it costs to live with the system over its remaining life.
     ground: '"cost" is literal expense here, and with the sentence on convenience it states the doctrine''s argument'
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: a needless capture dedups away on the next run
+    ground: the repair names no more of an actor than the original does; the skill does not state what removes the capture
+    unit-version: '6'
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: which is when that voice enters the comments
+    ground: the repair adds a hedge that the original does not make
+    unit-version: '6'
+  - rule: plain-speech
+    unit: plain-speech
+    file: packages/agents/content/skills/testing-conventions/mistakes.md
+    phrase: Treat timeout increases as a red flag that the test is doing unnecessary work
+    ground: 'a quoted record: a dated log entry'
+    unit-version: '6'
   - rule: plain-speech
     unit: plain-speech
     unit-version: '4'
@@ -1336,28 +1471,556 @@ rejections:
     ground: "not the construction: 'captured' is a participle"
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
-    unit-version: '2'
-    file: packages/agents/content/skills/revise-prose/SKILL.md
-    phrase: failure it contains
-    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
+    file: packages/agents/content/skills/merge-bb-pr/SKILL.md
+    phrase: for a disabled strategy the platform returns its own error
+    ground: 'not the construction: "the platform returns" is the clause''s own subject and verb'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
-    unit-version: '2'
+    file: packages/agents/content/skills/merge-bb-pr/SKILL.md
+    phrase: keep their own messages
+    ground: 'not the construction: "keep" is the sentence''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-gh-pr/SKILL.md
+    phrase: call the GitHub refs
+    ground: 'not the construction: an imperative verb with its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: as step 8 last resolved and the user approved
+    ground: 'not the construction: an "as" clause with no lexical head'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: match the approved ones
+    ground: 'not the construction: "ones" is the object of "match"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: Never fold this case into "not merged"
+    ground: 'not the construction: "fold" is the main verb and "this case" its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: Never offer the merge while `defects` contains an entry.
+    ground: 'not the construction: a "while" adverbial clause with no object gap'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: step 3 reads the PR's
+    ground: 'not the construction: "reads" is the verb of its own clause'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: whether or not the resolution used them
+    ground: 'not the construction: a "whether or not" clause with no head noun'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: which reader the draft is written for
+    ground: 'not the construction: an embedded question, not a relative clause'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: which step 6 maps rather than passes through
+    ground: 'not the construction: the relativizer "which" is present'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: event both records the memory's
+    ground: 'not the construction: "records" is the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: evidence the guidance is not taking
+    ground: 'not the construction: a content clause complementing "evidence", with no gap'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: for a label shared by two stores it returns
+    ground: 'not the construction: "it returns" is the clause''s own subject and verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: migration removes captured
+    ground: 'not the construction: "removes" is the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: wherever it runs
+    ground: 'outside the rule: a fused-head adjunct with no lexical head noun'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate-dev/SKILL.md
+    phrase: effort those tiers still receive
+    ground: 'not the construction: "effort" is the object of "at", and "those tiers" is the subject of the main clause'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate-dev/SKILL.md
+    phrase: how much work the run may do
+    ground: 'not the construction: an embedded question headed by "how much"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate-dev/SKILL.md
+    phrase: run-summary contains deferred
+    ground: 'not the construction: "contains" is the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 4 batch's completed
+    ground: 'not the construction: a possessive with a participial adjective'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: change-summary artifacts produced
+    ground: 'not the construction: "produced" is a passive participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: file paths cited
+    ground: 'not the construction: "cited" is a passive participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: following reviewers identified
+    ground: 'not the construction: "identified" is the sentence''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: Phase 4 dispatch remains
+    ground: 'not the construction: "remains" is the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: re-run the reviewer-context assembly steps
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: source files changed
+    ground: 'not the construction: "changed" is the table cell''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: use the freshly computed
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: whenever the coder acted
+    ground: 'not the construction: an adverbial clause'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/SKILL.md
+    phrase: engine receives already-resolved
+    ground: 'not the construction: "receives" is the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/SKILL.md
+    phrase: model each subagent uses
+    ground: 'not the construction: an embedded question headed by "which"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/SKILL.md
+    phrase: write a reviewer-context sidecar
+    ground: 'not the construction: an imperative verb with its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/people-report/SKILL.md
+    phrase: given the available fields
+    ground: 'not the construction: a prepositional "given" phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/plan-orchestrable-steps/SKILL.md
+    phrase: Write the updated plan
+    ground: 'not the construction: an imperative verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/refine-plan/SKILL.md
+    phrase: plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions
+    ground: 'not the construction: a coordinated noun phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/refine-plan/SKILL.md
+    phrase: plus the plan provenance extensions
+    ground: 'not the construction: a coordinated noun phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/refine-plan/SKILL.md
+    phrase: plus the stamping logic
+    ground: 'not the construction: a coordinated noun phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/refine-plan/SKILL.md
+    phrase: plus the top-level canonical fields
+    ground: 'not the construction: a coordinated noun phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: alongside any code changes made
+    ground: 'not the construction: "made" is a participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section
+    ground: 'not the construction: a noun phrase with a prepositional phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: the field-resolution steps in the Frontmatter resolution section
+    ground: 'not the construction: a noun phrase with a prepositional phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: the same invocation in step 1 already populated the manifest file
+    ground: 'not the construction: "populated" is the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: there's no current evidence the function needs auth-specific context
+    ground: 'not the construction: a content clause complementing "evidence", inside a quoted reviewer recommendation'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-bb-pr/SKILL.md
+    phrase: step 3 may have matched
+    ground: 'not the construction: the relative clause already has "which"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-bb-pr/SKILL.md
+    phrase: the full 40 characters expected by a consumer
+    ground: 'not the construction: "expected" is a passive participle with its agent'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: but substitute the local fallback below
+    ground: 'not the construction: an imperative verb with its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: claim falls through to the comparison
+    ground: 'not the construction: "falls through" is the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: falls through to the comparison below
+    ground: 'not the construction: "falls through" is the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section
+    ground: 'not the construction: a noun phrase with a prepositional phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: the field-resolution steps in the Frontmatter resolution section
+    ground: 'not the construction: a noun phrase with a prepositional phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: which criteria the specification compliance section marked in conflict with the implementation
+    ground: 'not the construction: an embedded question, not a relative clause'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-criteria/SKILL.md
+    phrase: copy an example value
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-criteria/SKILL.md
+    phrase: drop it otherwise
+    ground: 'not the construction: an imperative verb, object, and adverb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-permissions/SKILL.md
+    phrase: Code permissions allow
+    ground: 'not the construction: "Claude Code permissions allow list" is a compound noun'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-pr/SKILL.md
+    phrase: step 1 does not need
+    ground: 'not the construction: "step 1" is the subject of the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-pr/SKILL.md
+    phrase: which contract it measured against
+    ground: 'not the construction: an embedded question with no head noun'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-comments/SKILL.md
+    phrase: alongside the summary rather than repaired
+    ground: 'not the construction: "repaired" is a participle coordinated with "reported"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
     file: packages/agents/content/skills/revise-prose/SKILL.md
-    phrase: hands the recorded sites
+    phrase: On failure it contains
+    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-prose/SKILL.md
+    phrase: On success it contains
+    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-prose/SKILL.md
+    phrase: Step 4 hands the recorded sites
     ground: 'not the construction: "hands" is the sentence''s own verb and "the recorded sites" its object'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
-    unit-version: '2'
-    file: packages/agents/content/skills/revise-prose/SKILL.md
-    phrase: success it contains
-    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
-  - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    unit-version: '2'
     file: packages/agents/content/skills/revise-prose/SKILL.md
     phrase: whatever rule it names
     ground: 'outside the rule: "whatever rule" is a fused head, which admits no relativizer'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-prose/SKILL.md
+    phrase: whether or not the helper has a detector for it
+    ground: 'not the construction: a conditional clause, not a relative'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/save-artifact/SKILL.md
+    phrase: use their non-ticket category paths
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/save-plan/SKILL.md
+    phrase: plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions
+    ground: 'not the construction: a coordinated noun phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/save-plan/SKILL.md
+    phrase: plus the plan provenance extensions
+    ground: 'not the construction: a coordinated noun phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/streamline-guidance/SKILL.md
+    phrase: how much evidence a cut needs
+    ground: 'not the construction: an embedded question with no head noun'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/streamline-guidance/SKILL.md
+    phrase: On failure it contains
+    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/streamline-guidance/SKILL.md
+    phrase: 'On success it contains:'
+    ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/streamline-guidance/SKILL.md
+    phrase: You make the judgment calls
+    ground: 'not the construction: "judgment calls" is the object of the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/summarize-change/SKILL.md
+    phrase: an invented term when a plain one exists
+    ground: 'not the construction: an intransitive clause with no gap'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/summarize-change/SKILL.md
+    phrase: both cover the same facts
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/summarize-change/SKILL.md
+    phrase: the same invocation in step 1 already populated the manifest file
+    ground: 'not the construction: "populated" is the clause''s own verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/summarize-chat/SKILL.md
+    phrase: the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section
+    ground: 'not the construction: a noun phrase with a prepositional modifier'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/summarize-chat/SKILL.md
+    phrase: the field-resolution steps in the Frontmatter resolution section
+    ground: 'not the construction: a noun phrase with a prepositional phrase'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/testing-conventions/SKILL.md
+    phrase: nothing that the arbitrary one does not
+    ground: 'not the construction: the relative already has "that"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/testing-conventions/SKILL.md
+    phrase: whatever the code now produces would make
+    ground: 'outside the rule: "whatever the code now produces" is a fused relative'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/typescript-testing-conventions/SKILL.md
+    phrase: Each test should always run the same number of assertions
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: removes the evidence needed
+    ground: 'not the construction: "needed" is a participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: the failure class remains unidentified
+    ground: 'not the construction: "remains" is the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: The HTML tools additionally need
+    ground: 'not the construction: "need" is the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: 'The rule classes are:'
+    ground: 'not the construction: "rule classes" is a compound noun and the subject of "are"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: whatever convention the agent already uses
+    ground: 'outside the rule: a fused relative headed by "whatever"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: which option the user picked
+    ground: 'not the construction: an embedded question with no head noun'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: the approved edits applied
+    ground: 'not the construction: an absolute "with" phrase whose head is a participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: the file two commits ago leaves
+    ground: 'not the construction: "leaves" is the main verb of "A drive-by edit"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: The freshness check reads committed history
+    ground: 'not the construction: "reads" is the main verb and "committed" a participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/upgrade-dependencies/SKILL.md
+    phrase: confirm it actually returned results
+    ground: 'not the construction: a complement clause of "confirm"'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/upgrade-dependencies/SKILL.md
+    phrase: use the PM's sanctioned allowance mechanism
+    ground: 'not the construction: "sanctioned" is an adjectival participle'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/upgrade-dependencies/SKILL.md
+    phrase: Verify which kind you have
+    ground: 'not the construction: an embedded interrogative'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: No wrap-up items identified for this session.
+    ground: 'not the construction: a reduced passive participle in a string that the skill prints'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: outside orchestration, this is the sole structured insight source
+    ground: 'not the construction: "is" is the main verb'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: post it with the call below
+    ground: 'not the construction: a verb and its object'
+    unit-version: '8'
+  - rule: reduced-object-relative
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: whichever the user selected
+    ground: 'outside the rule: a fused relative head that admits no relativizer'
+    unit-version: '8'
   - rule: reduced-object-relative
     unit: williamthorsen-writing-preferences
     unit-version: '3'
@@ -1694,6 +2357,54 @@ rejections:
     file: packages/agents/content/skills/_partials/bitbucket-delete-both-refusal.md
     phrase: remove the local branch yourself
     ground: the pronoun addresses the user in a refusal message that the agent relays, not a reader of documentation
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: See your classification guidance for details.
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your findings to: `{run-dir}/{NN}_code-reviewer_code-review.md`'
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your findings to: `{run-dir}/{NN}_code-simplification-reviewer_code-simplification-review.md`'
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your findings to: `{run-dir}/{NN}_silent-failure-reviewer_silent-failure-review.md`'
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`'
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your response to: `{run-dir}/{NN}_coder_change-summary.md`'
+    ground: 'outside the rule: the pronoun names the coder subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your review to: `{run-dir}/{NN}_reviewer_holistic-review.md`'
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
+  - rule: second-person
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: 'Write your review to: `{run-dir}/{NN}_reviewer_review.md`'
+    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    unit-version: '8'
   - rule: so
     unit: williamthorsen-writing-preferences
     unit-version: '8'
@@ -1772,6 +2483,54 @@ rejections:
     file: packages/agents/content/skills/kb-curate/SKILL.md
     phrase: is left untouched, so remediation never changes a vault's link style
     ground: the earlier so on line 69 is now 'so that', so this is a lone so after a comma that states a direct result
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-gh-pr/SKILL.md
+    phrase: Rebased commits retain their original messages, so the composed merge body has nothing to attach to.
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: A Bitbucket fork's head cannot be fetched from `{remote}`, so fetch the base branch alone.
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: Otherwise the merge has already happened, so this step can only add a record.
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: The permission auto-classifier grants only what the ask text names, so a branch deletion shown only in the `Delete:` line above is not authorized
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: It resolves from `~/.agents/kb.yaml` independently of the working directory, so the capture writes the event to the same store wherever it runs.
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/revise-comments/SKILL.md
+    phrase: Line numbers refer to the pre-edit file, so each row is checked against `git diff` output before the table is emitted
+    ground: the repair changes the conjunction and drops the stated reason rather than stating the omitted step
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/summarize-change/SKILL.md
+    phrase: The empty set is a subset, so the comparison above passes
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
+  - rule: so
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: not against the repository root, so an include written in `.claude/CLAUDE.md` must point up
+    ground: states a direct result, and no earlier clause-joining so remains within three sentences
+    unit-version: '8'
   - rule: where
     unit: williamthorsen-writing-preferences
     unit-version: '8'
@@ -2096,3 +2855,111 @@ rejections:
     file: packages/agents/content/skills/kb-add/SKILL.md
     phrase: Ask the user where the note should go
     ground: 'names a place: the destination knowledge base'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: by the rules in [Where the record is read](../_data/change-record.md#where-the-record-is-read)
+    ground: a quoted heading of another document, used as link text
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: by the rules in Where the record is read
+    ground: a quoted heading of another document, used as link text
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: When a line says where a field came from
+    ground: 'names a place: the origin of a field'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate-review/SKILL.md
+    phrase: (where `{merge-base-sha}` is resolved from `--diff-base` or the project's default branch)
+    ground: a definitional where, stating what a placeholder in the preceding expression stands for, which the developer accepts as standard
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/modules/review-cycle.md
+    phrase: (where N is the configured `max-review-rounds`)
+    ground: a definitional where, stating what a variable in the preceding expression stands for, which the developer accepts as standard
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/SKILL.md
+    phrase: (`{NN+1}` where `{NN}` is the run-summary sequence number;
+    ground: a definitional where, stating what a placeholder in the preceding expression stands for, which the developer accepts as standard
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/orchestrate/SKILL.md
+    phrase: '`{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means'
+    ground: a definitional where, stating what the values in the preceding expression stand for, which the developer accepts as standard
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: Save into the same run directory where the review was found
+    ground: 'names a place: a directory'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: "`{timestamp}-interactive` where timestamp matches this review's timestamp"
+    ground: a definitional where, stating what a placeholder in the preceding expression stands for, which the developer accepts as standard
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/review-criteria/SKILL.md
+    phrase: where dropped content goes
+    ground: 'names a place: the destination to which content is moved'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/testing-conventions/SKILL.md
+    phrase: Then ask where the expected result comes from.
+    ground: 'names a place: an interrogative asking where the result comes from'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: and where the rest goes
+    ground: 'names a place: the destination to which content goes'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: from where the importing file is
+    ground: 'names a place: the location of the importing file'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: Name where each one belongs
+    ground: 'names a place: the destination file for each recommendation'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: states where to run it
+    ground: 'names a place: the directory in which to run the command'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: Unquantified prose is audited where the repo has moved under it, not everywhere.
+    ground: 'names a place: the sections of the file, in contrast with "everywhere"'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: determines where it appears in the action menu
+    ground: 'names a place: the position in the action menu'
+    unit-version: '8'
+  - rule: where
+    unit: williamthorsen-writing-preferences
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: Where to write
+    ground: 'names a place: the artifact path'
+    unit-version: '8'

@@ -26,7 +26,7 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 
 ## Effort presets
 
-Effort defines a ceiling on permitted investment. The orchestrator right-sizes to the task; the effort level determines how far it is allowed to go. Each effort level is a preset bundle of settings. Any setting can be individually overridden via explicit CLI arguments (e.g., `--effort=low --architecture=required`).
+Effort sets an upper limit on how much work the run may do. The orchestrator scales its work to the task; the effort level determines how far it is allowed to go. Each effort level is a preset bundle of settings. Any setting can be individually overridden via explicit CLI arguments (e.g., `--effort=low --architecture=required`).
 
 | Setting            | `low`    | `medium` (default) | `high`   |
 | ------------------ | -------- | ------------------ | -------- |
@@ -37,7 +37,7 @@ Effort defines a ceiling on permitted investment. The orchestrator right-sizes t
 | architecture       | optional | optional           | optional |
 | planning           | optional | optional           | optional |
 
-The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion: Even at high effort, a one-line fix does not need architectural review.
+The rule: Thresholds fall as effort rises; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion: Even at high effort, a one-line fix does not need architectural review.
 
 ### Effort x findings
 
@@ -97,4 +97,4 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 
 ## After the run
 
-The orchestrate engine automatically offers `{skill:wrap-up}` when the run-summary contains deferred items or insights (Phase 6). For sessions where the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `{skill:wrap-up}` manually.
+The orchestrate engine automatically offers `{skill:wrap-up}` when the run-summary contains deferred items or insights (Phase 6). For sessions in which the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `{skill:wrap-up}` manually.
