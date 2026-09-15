@@ -9,8 +9,8 @@ import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts
 
 // The rulebooks' `<!-- rule: <id> <version> -->` markers are the one list of rule names. The helper's detector registry,
 // the names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within
-// it: a name that the skill maps to no unit makes the `record` command refuse the whole fold, and a rule stated without
-// a marker leaves the subagent no id to report its sites under.
+// it: a rejection under a rule that the skill leaves out of the fold's versioned rules makes the `record` command refuse
+// the whole fold, and a rule stated without a marker leaves the subagent no id to report its sites under.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
@@ -26,13 +26,17 @@ const SWEPT_RULEBOOKS: ReadonlyArray<string> = [
   'williamthorsen-writing-preferences',
 ];
 
-/** The sentence in the skill that folds every rejection. Pinned so a rewrite that reinstates a filter fails here. */
-const FOLD_EVERY = '**Fold every rejection, whatever rule it names.**';
+/**
+ * The sentence in the skill that folds every rejection under a versioned rule. Pinned so a rewrite that reinstates a
+ * filter by detector fails here.
+ */
+const FOLD_EVERY =
+  '**Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.**';
 
-/** The sentences mapping each rule that has no marker to its unit, which step 1's rule-to-unit mapping does not reach. */
-const UNIT_MAPPINGS: ReadonlyArray<string> = [
-  '**A `plain-speech` rejection takes the `plain-speech` unit**',
-  "**A rejection under a heading's kebab-case id takes the unit of the fill block containing that heading**",
+/** The skill's text versioning `plain-speech`, which no marker declares, in the invocation and in the fold. */
+const PLAIN_SPEECH_VERSIONING: ReadonlyArray<string> = [
+  '--rule plain-speech@{version}=plain-speech',
+  '`plain-speech` included',
 ];
 
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
@@ -75,15 +79,15 @@ describe('prose-sweep rule vocabulary', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('folds a rejection under every name the subagent reports', async () => {
+  it('folds a rejection under every versioned name the subagent reports', async () => {
     const body = await readContentFile(SKILL);
 
     expect(body, `${SKILL} no longer folds every rejection, so a judgment is discarded again`).toContain(FOLD_EVERY);
-    for (const mapping of UNIT_MAPPINGS) {
+    for (const versioning of PLAIN_SPEECH_VERSIONING) {
       expect(
         body,
-        `${SKILL} maps no unit onto an undetected rule, so the fold names a unit it does not cover and the record command refuses it`,
-      ).toContain(mapping);
+        `${SKILL} does not version \`plain-speech\`, so the fold's rules leave it out and the record command refuses a plain-speech rejection`,
+      ).toContain(versioning);
     }
   });
 

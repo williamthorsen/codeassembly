@@ -18,67 +18,106 @@ import type {
   ObjectRelativeCandidate,
   ProseRecord,
   RecordedRejection,
+  RuleCoverage,
   RunFold,
+  SweepVersions,
 } from '../types.ts';
 
-const EMPTY: ProseRecord = { units: {}, rejections: [] };
+const EMPTY: ProseRecord = { rules: {}, rejections: [] };
+
+const NO_VERSIONS: SweepVersions = { units: new Map(), rules: new Map() };
+
+/** Rules in unit `writing`, one with a detector and one without. */
+const WRITING_RULES: RunFold['rules'] = {
+  'em-dash': { unit: 'writing', version: '1' },
+  'sentence-case': { unit: 'writing', version: '1' },
+};
 
 describe(parseRecord, () => {
   it('reads an absent record as the empty one', () => {
-    expect(parseRecord('')).toStrictEqual(EMPTY);
+    expect(parseRecord('', NO_VERSIONS)).toStrictEqual(EMPTY);
   });
 
-  it('reads a record naming units alone', () => {
+  it('reads a record naming rules alone', () => {
     const record = parseRecord(
-      'units:\n  writing:\n    version: "2"\n    swept-at: 2026-09-02\n    roots:\n      - "."\n',
+      'rules:\n  em-dash:\n    version: "2"\n    swept-at: 2026-09-02\n    detected: true\n    roots:\n      - "."\n',
+      NO_VERSIONS,
     );
 
-    expect(record.units['writing']).toStrictEqual({ version: '2', 'swept-at': '2026-09-02', rules: [], roots: ['.'] });
+    expect(record.rules['em-dash']).toStrictEqual({
+      version: '2',
+      'swept-at': '2026-09-02',
+      detected: true,
+      roots: ['.'],
+    });
     expect(record.rejections).toStrictEqual([]);
-  });
-
-  it('reads the detector rules that a unit records', () => {
-    const record = parseRecord(
-      'units:\n  writing:\n    version: "2"\n    swept-at: 2026-09-02\n    rules: [em-dash, where]\n    roots: ["."]\n',
-    );
-
-    expect(record.units['writing']?.rules).toStrictEqual(['em-dash', 'where']);
   });
 
   it('refuses a record whose date is not an ISO calendar date', () => {
     expect(() =>
-      parseRecord('units:\n  writing:\n    version: "2"\n    swept-at: yesterday\n    roots: ["."]\n'),
+      parseRecord(
+        'rules:\n  em-dash:\n    version: "2"\n    swept-at: yesterday\n    detected: true\n    roots: ["."]\n',
+        NO_VERSIONS,
+      ),
     ).toThrow(/ISO calendar date/);
   });
 
   it('reads a rejection under a rule the helper holds no detector for', () => {
-    const record = parseRecord(rejectionYaml({ rule: 'plain-speech', unit: 'plain-speech' }));
+    const record = parseRecord(rejectionYaml({ rule: 'plain-speech' }), NO_VERSIONS);
 
     expect(record.rejections[0]?.rule).toBe('plain-speech');
   });
 
   it('refuses a rejection whose rule is not a kebab-case name', () => {
-    expect(() => parseRecord(rejectionYaml({ rule: 'Plain Speech' }))).toThrow(/kebab-case/);
-  });
-
-  it('reads a record still holding a hash, which the schema no longer defines', () => {
-    const record = parseRecord(rejectionYaml({ hash: '0123456789abcdef' }));
-
-    expect(record.rejections[0]).not.toHaveProperty('hash');
+    expect(() => parseRecord(rejectionYaml({ rule: 'Plain Speech' }), NO_VERSIONS)).toThrow(/kebab-case/);
   });
 
   it('names the record in its failure, so a malformed file is findable', () => {
-    expect(() => parseRecord('units: [not, a, map]')).toThrow(new RegExp(RECORD_PATH.replace('.', String.raw`\.`)));
+    expect(() => parseRecord('rules: [not, a, map]', NO_VERSIONS)).toThrow(
+      new RegExp(RECORD_PATH.replace('.', String.raw`\.`)),
+    );
+  });
+
+  it('converts a record keyed on unit versions against the versions that the run holds', () => {
+    const versions: SweepVersions = {
+      units: new Map([['writing', '8']]),
+      rules: new Map([['em-dash', { unit: 'writing', version: '1' }]]),
+    };
+    const legacy =
+      'units:\n  writing:\n    version: "8"\n    swept-at: 2026-09-02\n    rules: [em-dash]\n    roots: ["."]\n';
+
+    expect(parseRecord(legacy, versions).rules['em-dash']).toStrictEqual({
+      version: '1',
+      'swept-at': '2026-09-02',
+      detected: true,
+      roots: ['.'],
+    });
+  });
+
+  it('refuses a malformed record keyed on unit versions', () => {
+    expect(() => parseRecord('units: [not, a, map]', NO_VERSIONS)).toThrow(/Invalid sweep record/);
+  });
+
+  it('reads a record keyed on unit versions still holding a hash, which neither schema defines', () => {
+    const legacy =
+      'units: {}\nrejections:\n  - rule: em-dash\n    unit: writing\n    unit-version: "2"\n    file: docs/guide.md\n' +
+      '    phrase: the source\n    ground: an exhibit\n    hash: "0123456789abcdef"\n';
+
+    expect(parseRecord(legacy, NO_VERSIONS).rejections[0]).not.toHaveProperty('hash');
+  });
+
+  it('refuses a record holding both units and rules, neither shape accounting for the other', () => {
+    expect(() => parseRecord('units: {}\nrules: {}\n', NO_VERSIONS)).toThrow(/both units and rules/);
   });
 });
 
 describe(applyRejections, () => {
-  const versions = new Map([['writing', '2']]);
+  const versions = new Map([['reduced-object-relative', '1']]);
 
   it('suppresses a site whose recorded phrase runs wider than the span reported by the detector', () => {
     const applied = applyRejections(
       [candidate({ phrase: 'rule it names' })],
-      { units: {}, rejections: [rejection({ phrase: 'whatever rule it names' })] },
+      { rules: {}, rejections: [relativeRejection({ phrase: 'whatever rule it names' })] },
       versions,
     );
 
@@ -89,7 +128,7 @@ describe(applyRejections, () => {
     const sentence = 'The cache is cold, so the transport reconnects.';
     const applied = applyRejections(
       [{ rule: 'em-dash', file: 'docs/guide.md', line: 3, phrase: sentence, sentence }],
-      { units: {}, rejections: [rejection({ rule: 'em-dash', phrase: 'so the transport reconnects' })] },
+      { rules: {}, rejections: [rejection({ phrase: 'so the transport reconnects' })] },
       versions,
     );
 
@@ -99,7 +138,7 @@ describe(applyRejections, () => {
   it('suppresses a site across an inline code span, which the detector elides and the record holds whole', () => {
     const applied = applyRejections(
       [candidate({ phrase: 'enumerate their «codespan» reasons' })],
-      { units: {}, rejections: [rejection({ phrase: 'enumerate their `unavailable` reasons' })] },
+      { rules: {}, rejections: [relativeRejection({ phrase: 'enumerate their `unavailable` reasons' })] },
       versions,
     );
 
@@ -109,7 +148,7 @@ describe(applyRejections, () => {
   it('suppresses a site across a reflow, so a repair that only rewraps a line keeps the rejection', () => {
     const applied = applyRejections(
       [candidate()],
-      { units: {}, rejections: [rejection({ phrase: 'the source\n  that it names' })] },
+      { rules: {}, rejections: [relativeRejection({ phrase: 'the source\n  that it names' })] },
       versions,
     );
 
@@ -119,7 +158,7 @@ describe(applyRejections, () => {
   it('suppresses a site across a Unicode normalization difference', () => {
     const applied = applyRejections(
       [candidate({ phrase: 'the caf\u{E9} that it names' })],
-      { units: {}, rejections: [rejection({ phrase: 'the cafe\u{301} that it names' })] },
+      { rules: {}, rejections: [relativeRejection({ phrase: 'the cafe\u{301} that it names' })] },
       versions,
     );
 
@@ -129,7 +168,7 @@ describe(applyRejections, () => {
   it('leaves a site under a rule that the rejection does not name, one verdict settling one rule', () => {
     const applied = applyRejections(
       [candidate()],
-      { units: {}, rejections: [rejection({ rule: 'em-dash' })] },
+      { rules: {}, rejections: [relativeRejection({ rule: 'em-dash' })] },
       versions,
     );
 
@@ -139,7 +178,7 @@ describe(applyRejections, () => {
   it('leaves a site in a file that the rejection does not name', () => {
     const applied = applyRejections(
       [candidate()],
-      { units: {}, rejections: [rejection({ file: 'docs/other.md' })] },
+      { rules: {}, rejections: [relativeRejection({ file: 'docs/other.md' })] },
       versions,
     );
 
@@ -149,17 +188,17 @@ describe(applyRejections, () => {
   it('leaves a site whose span the recorded phrase does not reach', () => {
     const applied = applyRejections(
       [candidate({ phrase: 'the level against which it is probed' })],
-      { units: {}, rejections: [rejection()] },
+      { rules: {}, rejections: [relativeRejection()] },
       versions,
     );
 
     expect(applied).toHaveLength(1);
   });
 
-  it('marks a site recorded at an older unit version stale, which re-opens it for review', () => {
+  it('marks a site recorded at an older version of its rule stale, which re-opens it for review', () => {
     const applied = applyRejections(
       [candidate()],
-      { units: {}, rejections: [rejection({ 'unit-version': '1' })] },
+      { rules: {}, rejections: [relativeRejection({ 'rule-version': '0' })] },
       versions,
     );
 
@@ -170,10 +209,10 @@ describe(applyRejections, () => {
     const applied = applyRejections(
       [candidate()],
       {
-        units: {},
+        rules: {},
         rejections: [
-          rejection({ 'unit-version': '1', phrase: 'the source that it names, as an earlier sweep left it' }),
-          rejection(),
+          relativeRejection({ 'rule-version': '0', phrase: 'the source that it names, as an earlier sweep left it' }),
+          relativeRejection(),
         ],
       },
       versions,
@@ -184,141 +223,80 @@ describe(applyRejections, () => {
 });
 
 describe(composeRecord, () => {
-  it('records a unit the run covered', () => {
-    const record = composeRecord(
-      EMPTY,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
-      hasEverySite,
-    );
+  it('records each rule the run versioned, with whether the helper holds its detector', () => {
+    const record = composeRecord(EMPTY, fold({ rules: WRITING_RULES }), hasEverySite, hasEmDashDetector);
 
-    expect(record.units['writing']).toStrictEqual({ version: '2', 'swept-at': '2026-09-02', rules: [], roots: ['.'] });
-  });
-
-  it('sorts the roots it records, so a rewrite does not depend on the order of the run', () => {
-    const record = composeRecord(
-      EMPTY,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['src', 'docs'] } } }),
-      hasEverySite,
-    );
-
-    expect(record.units['writing']?.roots).toStrictEqual(['docs', 'src']);
-  });
-
-  it("joins a narrowed run's roots onto those already recorded at the same version", () => {
-    const prior: ProseRecord = {
-      units: { writing: { version: '2', 'swept-at': '2026-09-01', rules: [], roots: ['docs'] } },
-      rejections: [],
-    };
-
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['src'] } } }),
-      hasEverySite,
-    );
-
-    expect(record.units['writing']).toStrictEqual({
-      version: '2',
-      'swept-at': '2026-09-02',
-      rules: [],
-      roots: ['docs', 'src'],
+    expect(record.rules).toStrictEqual({
+      'em-dash': { version: '1', 'swept-at': '2026-09-02', detected: true, roots: ['.'] },
+      'sentence-case': { version: '1', 'swept-at': '2026-09-02', detected: false, roots: ['.'] },
     });
   });
 
+  it('sorts the roots it records, so a rewrite does not depend on the order of the run', () => {
+    const record = composeRecord(EMPTY, fold({ roots: ['src', 'docs'] }), hasEverySite, hasEmDashDetector);
+
+    expect(record.rules['em-dash']?.roots).toStrictEqual(['docs', 'src']);
+  });
+
+  it("joins a narrowed run's roots onto those already recorded at the same version", () => {
+    const prior: ProseRecord = { rules: { 'em-dash': coverage({ roots: ['docs'] }) }, rejections: [] };
+
+    const record = composeRecord(prior, fold({ roots: ['src'] }), hasEverySite, hasEmDashDetector);
+
+    expect(record.rules['em-dash']).toStrictEqual(coverage({ 'swept-at': '2026-09-02', roots: ['docs', 'src'] }));
+  });
+
   it('drops a joined root that another one already contains', () => {
-    const prior: ProseRecord = {
-      units: { writing: { version: '2', 'swept-at': '2026-09-01', rules: [], roots: ['.'] } },
-      rejections: [],
-    };
+    const prior: ProseRecord = { rules: { 'em-dash': coverage({ roots: ['.'] }) }, rejections: [] };
+
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector);
+
+    expect(record.rules['em-dash']?.roots).toStrictEqual(['.']);
+  });
+
+  it('replaces the recorded roots when the sweep version rises, the earlier sweep covering a rule that has changed', () => {
+    const prior: ProseRecord = { rules: { 'em-dash': coverage({ version: '1', roots: ['.'] }) }, rejections: [] };
 
     const record = composeRecord(
       prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      fold({ roots: ['docs'], rules: { 'em-dash': { unit: 'writing', version: '2' } } }),
       hasEverySite,
+      hasEmDashDetector,
     );
 
-    expect(record.units['writing']?.roots).toStrictEqual(['.']);
+    expect(record.rules['em-dash']).toMatchObject({ version: '2', roots: ['docs'] });
   });
 
-  it('replaces the recorded roots when the version moves, the earlier sweep covering a rule that has changed', () => {
+  it('replaces the recorded roots when the detector state differs, the earlier sweep having seen other candidates', () => {
+    const prior: ProseRecord = { rules: { 'em-dash': coverage({ detected: false, roots: ['docs'] }) }, rejections: [] };
+
+    const record = composeRecord(prior, fold({ roots: ['src'] }), hasEverySite, hasEmDashDetector);
+
+    expect(record.rules['em-dash']).toMatchObject({ detected: true, roots: ['src'] });
+  });
+
+  it('leaves the coverage and rejections of a rule the run did not version untouched', () => {
     const prior: ProseRecord = {
-      units: { writing: { version: '1', 'swept-at': '2026-09-01', rules: [], roots: ['.'] } },
-      rejections: [],
+      rules: { 'plain-speech': coverage({ version: '5', detected: false, 'swept-at': '2026-01-01' }) },
+      rejections: [rejection({ rule: 'plain-speech', 'rule-version': '5' })],
     };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
-      hasEverySite,
-    );
+    const record = composeRecord(prior, fold({}), hasNoSite, hasEmDashDetector);
 
-    expect(record.units['writing']?.roots).toStrictEqual(['docs']);
-  });
-
-  it('records the detector rules that the run named, sorted and deduplicated', () => {
-    const record = composeRecord(
-      EMPTY,
-      fold({ units: { writing: { version: '2', rules: ['where', 'em-dash', 'where'], roots: ['.'] } } }),
-      hasEverySite,
-    );
-
-    expect(record.units['writing']?.rules).toStrictEqual(['em-dash', 'where']);
-  });
-
-  it('replaces the recorded roots when the detector rules differ, the earlier sweep having seen other candidates', () => {
-    const prior: ProseRecord = {
-      units: { writing: { version: '2', 'swept-at': '2026-09-01', rules: ['em-dash'], roots: ['docs'] } },
-      rejections: [],
-    };
-
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: ['em-dash', 'where'], roots: ['src'] } } }),
-      hasEverySite,
-    );
-
-    expect(record.units['writing']).toMatchObject({ rules: ['em-dash', 'where'], roots: ['src'] });
-  });
-
-  it('joins the roots of two sweeps naming one rule set in different orders', () => {
-    const prior: ProseRecord = {
-      units: { writing: { version: '2', 'swept-at': '2026-09-01', rules: ['where', 'em-dash'], roots: ['docs'] } },
-      rejections: [],
-    };
-
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: ['em-dash', 'where'], roots: ['src'] } } }),
-      hasEverySite,
-    );
-
-    expect(record.units['writing']?.roots).toStrictEqual(['docs', 'src']);
-  });
-
-  it('leaves a unit the run did not name untouched', () => {
-    const prior: ProseRecord = {
-      units: { 'plain-speech': { version: '1', 'swept-at': '2026-01-01', rules: [], roots: ['.'] } },
-      rejections: [rejection({ unit: 'plain-speech', 'unit-version': '1' })],
-    };
-
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
-      hasNoSite,
-    );
-
-    expect(record.units['plain-speech']).toStrictEqual(prior.units['plain-speech']);
+    expect(record.rules['plain-speech']).toStrictEqual(prior.rules['plain-speech']);
     expect(record.rejections).toContainEqual(prior.rejections[0]);
   });
 
-  it("keeps a swept unit's rejection at the current version while its site exists, though the run did not report it", () => {
+  it("keeps a swept rule's rejection at the current version while its site exists, though the run did not report it", () => {
     const standing = rejection({ file: 'docs/a.md' });
     const repaired = rejection({ file: 'docs/b.md', phrase: 'the level against which it is probed' });
-    const prior: ProseRecord = { units: {}, rejections: [standing, repaired] };
+    const prior: ProseRecord = { rules: {}, rejections: [standing, repaired] };
 
     const record = composeRecord(
       prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
+      fold({ roots: ['docs'] }),
       (site) => site.file === 'docs/a.md',
+      hasEmDashDetector,
     );
 
     expect(record.rejections).toStrictEqual([standing]);
@@ -327,13 +305,9 @@ describe(composeRecord, () => {
   it('keeps every rejection whose site exists when the run swept the whole repository and reported none', () => {
     const inDocs = rejection({ file: 'docs/a.md' });
     const inSource = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
-    const prior: ProseRecord = { units: {}, rejections: [inDocs, inSource] };
+    const prior: ProseRecord = { rules: {}, rejections: [inDocs, inSource] };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
-      hasEverySite,
-    );
+    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector);
 
     expect(record.rejections).toStrictEqual([inDocs, inSource]);
   });
@@ -342,115 +316,95 @@ describe(composeRecord, () => {
     const consulted: RecordedRejection[] = [];
     const current = rejection({ file: 'docs/a.md' });
     const prior: ProseRecord = {
-      units: {},
+      rules: {},
       rejections: [
         current,
-        rejection({ file: 'docs/b.md', 'unit-version': '1' }),
+        rejection({ file: 'docs/b.md', 'rule-version': '0' }),
         rejection({ file: 'src/c.ts' }),
-        rejection({ unit: 'plain-speech', rule: 'plain-speech', file: 'docs/d.md' }),
+        rejection({ rule: 'plain-speech', file: 'docs/d.md' }),
       ],
     };
 
-    composeRecord(prior, fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }), (site) => {
-      consulted.push(site);
-      return true;
-    });
+    composeRecord(
+      prior,
+      fold({ roots: ['docs'] }),
+      (site) => {
+        consulted.push(site);
+        return true;
+      },
+      hasEmDashDetector,
+    );
 
     expect(consulted).toStrictEqual([current]);
   });
 
-  it('records the phrase reported by the fold, at the version of the unit that it names', () => {
+  it('records the phrase reported by the fold, at the sweep version of the rule that it names', () => {
     const record = composeRecord(
-      { units: {}, rejections: [] },
-      fold({
-        units: { writing: { version: '2', rules: [], roots: ['.'] } },
-        rejections: [foldRejection({ phrase: 'the ticket that the branch name encodes' })],
-      }),
+      EMPTY,
+      fold({ rejections: [foldRejection({ phrase: 'The cache is cold, as a heading might read' })] }),
       hasEverySite,
+      hasEmDashDetector,
     );
 
     expect(record.rejections[0]).toMatchObject({
-      phrase: 'the ticket that the branch name encodes',
-      'unit-version': '2',
+      phrase: 'The cache is cold, as a heading might read',
+      'rule-version': '1',
     });
   });
 
-  it('refuses a fold whose rejection names a unit it does not cover', () => {
+  it('refuses a fold whose rejection names a rule it does not version', () => {
     expect(() =>
       composeRecord(
-        { units: {}, rejections: [] },
-        fold({
-          units: { writing: { version: '2', rules: [], roots: ['.'] } },
-          rejections: [foldRejection({ unit: 'plain-speech' })],
-        }),
+        EMPTY,
+        fold({ rejections: [foldRejection({ rule: 'plain-speech' })] }),
         hasEverySite,
+        hasEmDashDetector,
       ),
-    ).toThrow(/which the fold does not cover/);
+    ).toThrow(/which the fold does not version/);
   });
 
   it('retires the entry it supersedes across a reflow, a rewrapped line naming the same site', () => {
-    const standing = rejection({ phrase: 'the source\n  that it names', ground: 'an earlier ground' });
-    const prior: ProseRecord = { units: {}, rejections: [standing] };
+    const standing = rejection({ phrase: 'The cache\n  is cold', ground: 'an earlier ground' });
+    const prior: ProseRecord = { rules: {}, rejections: [standing] };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } }, rejections: [foldRejection()] }),
-      hasEverySite,
-    );
+    const record = composeRecord(prior, fold({ rejections: [foldRejection()] }), hasEverySite, hasEmDashDetector);
 
     expect(record.rejections).toStrictEqual([rejection()]);
   });
 
-  it('holds one entry per site when a bump is followed by a re-rejection of the same site', () => {
-    const older = rejection({ 'unit-version': '1' });
-    const prior: ProseRecord = { units: {}, rejections: [older] };
+  it('holds one entry per site when a raised version is followed by a re-rejection of the same site', () => {
+    const older = rejection({ 'rule-version': '0' });
+    const prior: ProseRecord = { rules: {}, rejections: [older] };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } }, rejections: [foldRejection()] }),
-      hasEverySite,
-    );
+    const record = composeRecord(prior, fold({ rejections: [foldRejection()] }), hasEverySite, hasEmDashDetector);
 
     expect(record.rejections).toHaveLength(1);
-    expect(record.rejections[0]).toMatchObject({ 'unit-version': '2' });
+    expect(record.rejections[0]).toMatchObject({ 'rule-version': '1' });
   });
 
   it('carries forward a rejection outside the roots swept by the run, whatever its site, the run never having revisited it', () => {
     const inside = rejection({ file: 'docs/a.md' });
     const outside = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
-    const prior: ProseRecord = { units: {}, rejections: [inside, outside] };
+    const prior: ProseRecord = { rules: {}, rejections: [inside, outside] };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
-      hasNoSite,
-    );
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasNoSite, hasEmDashDetector);
 
     expect(record.rejections).toStrictEqual([outside]);
   });
 
   it('retires a rejection recorded at an older version under the swept roots, the run having reviewed it', () => {
-    const older = rejection({ 'unit-version': '1' });
-    const prior: ProseRecord = { units: {}, rejections: [older] };
+    const prior: ProseRecord = { rules: {}, rejections: [rejection({ 'rule-version': '0' })] };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['.'] } } }),
-      hasEverySite,
-    );
+    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector);
 
     expect(record.rejections).toStrictEqual([]);
   });
 
   it('keeps a rejection recorded at an older version outside the swept roots, which the run did not review', () => {
-    const older = rejection({ file: 'src/b.ts', 'unit-version': '1' });
-    const prior: ProseRecord = { units: {}, rejections: [older] };
+    const older = rejection({ file: 'src/b.ts', 'rule-version': '0' });
+    const prior: ProseRecord = { rules: {}, rejections: [older] };
 
-    const record = composeRecord(
-      prior,
-      fold({ units: { writing: { version: '2', rules: [], roots: ['docs'] } } }),
-      hasEverySite,
-    );
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector);
 
     expect(record.rejections).toStrictEqual([older]);
   });
@@ -471,91 +425,122 @@ describe(containsPhrase, () => {
 });
 
 describe(isCoveredAt, () => {
-  const versions = new Map([['writing', '2']]);
+  const versions = new Map([
+    ['em-dash', '1'],
+    ['sentence-case', '1'],
+  ]);
 
-  it('covers a file under a recorded root at the current version, with every named rule detected', () => {
-    const record = coveredRecord(['em-dash', 'where']);
+  it("covers a file under a recorded root at each rule's current version, with each held detector having run", () => {
+    const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ detected: false }) });
 
-    expect(isCoveredAt(record, versions, [{ rule: 'em-dash', unit: 'writing' }], 'docs/guide.md')).toBe(true);
+    expect(isCoveredAt(record, versions, hasEmDashDetector, 'docs/guide.md')).toBe(true);
   });
 
-  it('covers nothing when the run names a rule that no recorded sweep detected', () => {
-    const record = coveredRecord(['em-dash']);
-    const rules = [
-      { rule: 'em-dash', unit: 'writing' },
-      { rule: 'where', unit: 'writing' },
-    ];
+  it('covers nothing for a rule whose recorded sweep did not run the detector that the helper now holds', () => {
+    const record = coveredRecord({ 'em-dash': coverage({ detected: false }), 'sentence-case': coverage() });
 
-    expect(isCoveredAt(record, versions, rules, 'docs/guide.md')).toBe(false);
+    expect(isCoveredAt(record, versions, hasEmDashDetector, 'docs/guide.md')).toBe(false);
   });
 
-  it('covers a file for a unit that the run names without a rule, whatever rules its sweeps detected', () => {
-    expect(isCoveredAt(coveredRecord(['em-dash']), versions, [], 'docs/guide.md')).toBe(true);
+  it('covers nothing once one rule is recorded at another version, whatever the others record', () => {
+    const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ version: '2' }) });
+
+    expect(isCoveredAt(record, versions, hasEmDashDetector, 'docs/guide.md')).toBe(false);
+  });
+
+  it('covers nothing outside every recorded root', () => {
+    const record = coveredRecord({
+      'em-dash': coverage({ roots: ['docs'] }),
+      'sentence-case': coverage({ detected: false, roots: ['docs'] }),
+    });
+
+    expect(isCoveredAt(record, versions, hasEmDashDetector, 'src/notes.md')).toBe(false);
+  });
+
+  it('covers nothing for a run that versions no rule', () => {
+    const record = coveredRecord({ 'em-dash': coverage() });
+
+    expect(isCoveredAt(record, new Map(), hasEmDashDetector, 'docs/guide.md')).toBe(false);
   });
 });
 
 describe(parseRunFold, () => {
-  it('refuses a fold whose unit names no detector rules', () => {
-    const json = JSON.stringify({ sweptAt: '2026-09-02', units: { writing: { version: '2', roots: ['.'] } } });
+  it('reads a fold naming its roots, units, and versioned rules', () => {
+    const json = JSON.stringify(fold({}));
 
-    expect(() => parseRunFold(json)).toThrow(/units\.writing\.rules/);
+    expect(parseRunFold(json)).toStrictEqual(fold({}));
+  });
+
+  it('refuses a fold whose rule names a unit that its units do not declare', () => {
+    const json = JSON.stringify(fold({ units: {} }));
+
+    expect(() => parseRunFold(json)).toThrow(/rules\.em-dash\.unit/);
+  });
+
+  it('refuses a fold whose rule version is not a positive integer', () => {
+    const json = JSON.stringify(fold({ rules: { 'em-dash': { unit: 'writing', version: '0' } } }));
+
+    expect(() => parseRunFold(json)).toThrow(/positive integer/);
+  });
+
+  it('refuses a fold that names no roots', () => {
+    const rootless = Object.fromEntries(Object.entries(fold({})).filter(([key]) => key !== 'roots'));
+
+    expect(() => parseRunFold(JSON.stringify(rootless))).toThrow(/roots/);
   });
 });
 
 describe(isStaleRejection, () => {
-  it('reports a rejection recorded at an older version as stale', () => {
-    expect(isStaleRejection(rejection({ 'unit-version': '1' }), new Map([['writing', '2']]))).toBe(true);
+  it('reports a rejection recorded at an older version of its rule as stale', () => {
+    expect(isStaleRejection(rejection({ 'rule-version': '0' }), new Map([['em-dash', '1']]))).toBe(true);
   });
 
-  it('reports a rejection recorded at the current version as current', () => {
-    expect(isStaleRejection(rejection({ 'unit-version': '2' }), new Map([['writing', '2']]))).toBe(false);
+  it('reports a rejection recorded at the current version of its rule as current', () => {
+    expect(isStaleRejection(rejection(), new Map([['em-dash', '1']]))).toBe(false);
   });
 
-  it('reports a rejection whose unit the run does not name as current, the run holding no version to compare', () => {
-    expect(isStaleRejection(rejection({ 'unit-version': '1' }), new Map())).toBe(false);
+  it('reports a rejection whose rule the run does not version as current, the run holding no version to compare', () => {
+    expect(isStaleRejection(rejection({ 'rule-version': '0' }), new Map())).toBe(false);
   });
 });
 
 describe(selectPriorRejections, () => {
-  const versions = new Map([['writing', '2']]);
+  const versions = new Map([['em-dash', '1']]);
 
   it('selects a live rejection over a file the sweep read', () => {
-    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+    const record: ProseRecord = { rules: {}, rejections: [rejection()] };
 
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([
-      { rule: 'reduced-object-relative', file: 'docs/guide.md', phrase: 'the source that it names' },
+      { rule: 'em-dash', file: 'docs/guide.md', phrase: 'The cache is cold' },
     ]);
   });
 
   it('selects a rejection under a rule the helper holds no detector for', () => {
-    const record: ProseRecord = {
-      units: {},
-      rejections: [rejection({ rule: 'plain-speech', unit: 'plain-speech', 'unit-version': '3' })],
-    };
+    const record: ProseRecord = { rules: {}, rejections: [rejection({ rule: 'plain-speech', 'rule-version': '6' })] };
 
-    expect(selectPriorRejections(record, new Map([['plain-speech', '3']]), ['docs/guide.md'])).toHaveLength(1);
+    expect(selectPriorRejections(record, new Map([['plain-speech', '6']]), ['docs/guide.md'])).toHaveLength(1);
   });
 
-  it('withholds a rejection recorded at an older unit version, so its site is judged afresh', () => {
-    const record: ProseRecord = { units: {}, rejections: [rejection({ 'unit-version': '1' })] };
+  it('withholds a rejection recorded at an older version of its rule, so its site is judged afresh', () => {
+    const record: ProseRecord = { rules: {}, rejections: [rejection({ 'rule-version': '0' })] };
 
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
   });
 
-  it('withholds a rejection whose unit the run does not name, no version standing to re-open it', () => {
-    const record: ProseRecord = { units: {}, rejections: [rejection({ unit: 'unbound' })] };
+  it('withholds a rejection whose rule the run does not version, no version standing to re-open it', () => {
+    const record: ProseRecord = { rules: {}, rejections: [rejection({ rule: 'sentence-case' })] };
 
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
   });
 
   it('withholds a rejection over a file the sweep did not read', () => {
-    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+    const record: ProseRecord = { rules: {}, rejections: [rejection()] };
 
     expect(selectPriorRejections(record, versions, ['docs/other.md'])).toStrictEqual([]);
   });
 
-  it("carries the site alone, the unit, version, and ground being the record's own bookkeeping", () => {
-    const record: ProseRecord = { units: {}, rejections: [rejection()] };
+  it("carries the site alone, the version and ground being the record's own bookkeeping", () => {
+    const record: ProseRecord = { rules: {}, rejections: [rejection()] };
     const [selected] = selectPriorRejections(record, versions, ['docs/guide.md']);
 
     expect(Object.keys(selected ?? {}).toSorted()).toStrictEqual(['file', 'phrase', 'rule']);
@@ -564,46 +549,47 @@ describe(selectPriorRejections, () => {
 
 describe(stringifyRecord, () => {
   it('round-trips without drift', () => {
-    const record = composeRecord(
-      EMPTY,
-      fold({
-        units: { writing: { version: '2', rules: [], roots: ['.'] } },
-        rejections: [foldRejection()],
-      }),
-      hasEverySite,
-    );
+    const record = composeRecord(EMPTY, fold({ rejections: [foldRejection()] }), hasEverySite, hasEmDashDetector);
 
-    expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
+    expect(parseRecord(stringifyRecord(record), NO_VERSIONS)).toStrictEqual(record);
   });
 
   it('round-trips a rejection under a rule with no detector', () => {
     const record = composeRecord(
       EMPTY,
       fold({
-        units: { 'plain-speech': { version: '3', rules: [], roots: ['.'] } },
-        rejections: [foldRejection({ rule: 'plain-speech', unit: 'plain-speech' })],
+        units: { 'plain-speech': '6' },
+        rules: { 'plain-speech': { unit: 'plain-speech', version: '6' } },
+        rejections: [foldRejection({ rule: 'plain-speech' })],
       }),
       hasEverySite,
+      hasEmDashDetector,
     );
 
-    expect(record.rejections[0]).toMatchObject({ rule: 'plain-speech', 'unit-version': '3' });
-    expect(parseRecord(stringifyRecord(record))).toStrictEqual(record);
+    expect(record.rejections[0]).toMatchObject({ rule: 'plain-speech', 'rule-version': '6' });
+    expect(parseRecord(stringifyRecord(record), NO_VERSIONS)).toStrictEqual(record);
   });
 
-  it('renders the same bytes whatever order the units and rejections arrive in', () => {
+  it('renders the same bytes whatever order the rules, rejections, and their fields arrive in', () => {
     const first = rejection({ file: 'docs/a.md' });
     const second = rejection({ file: 'docs/b.md' });
-    const coverage = { version: '2', 'swept-at': '2026-09-02', rules: [], roots: ['.'] };
+    const reordered: RecordedRejection = {
+      ground: second.ground,
+      phrase: second.phrase,
+      file: second.file,
+      'rule-version': second['rule-version'],
+      rule: second.rule,
+    };
 
-    const forward = stringifyRecord({ units: { a: coverage, b: coverage }, rejections: [first, second] });
-    const reversed = stringifyRecord({ units: { b: coverage, a: coverage }, rejections: [second, first] });
+    const forward = stringifyRecord({ rules: { a: coverage(), b: coverage() }, rejections: [first, second] });
+    const reversed = stringifyRecord({ rules: { b: coverage(), a: coverage() }, rejections: [reordered, first] });
 
     expect(forward).toBe(reversed);
   });
 
   it('writes each phrase on one line, so a long phrase is not folded into a diff of its own', () => {
     const phrase = `a phrase ${'long '.repeat(40)}enough to fold`;
-    const yaml = stringifyRecord({ units: {}, rejections: [rejection({ phrase })] });
+    const yaml = stringifyRecord({ rules: {}, rejections: [rejection({ phrase })] });
 
     expect(yaml.split('\n').some((line) => line.includes(phrase))).toBe(true);
   });
@@ -627,9 +613,42 @@ function candidate(overrides: Partial<ObjectRelativeCandidate> = {}): Candidate 
   };
 }
 
-/** Builds a record covering the whole repository for unit `writing` at version 2, with `rules` detected. */
-function coveredRecord(rules: readonly string[]): ProseRecord {
-  return { units: { writing: { version: '2', 'swept-at': '2026-09-02', rules, roots: ['.'] } }, rejections: [] };
+/** Builds one rule's coverage of the whole repository at version 1 with its detector run, overriding named fields. */
+function coverage(overrides: Partial<RuleCoverage> = {}): RuleCoverage {
+  return { version: '1', 'swept-at': '2026-09-01', detected: true, roots: ['.'], ...overrides };
+}
+
+/** Builds a record holding the given coverage and no rejection. */
+function coveredRecord(rules: ProseRecord['rules']): ProseRecord {
+  return { rules, rejections: [] };
+}
+
+/** Builds a run fold over the whole repository versioning `em-dash`, overriding whichever fields an assertion turns on. */
+function fold(overrides: Partial<RunFold>): RunFold {
+  return {
+    sweptAt: '2026-09-02',
+    roots: ['.'],
+    units: { writing: '8' },
+    rules: { 'em-dash': { unit: 'writing', version: '1' } },
+    rejections: [],
+    ...overrides,
+  };
+}
+
+/** Builds a fold rejection, which carries no version; the helper derives it from the fold's entry for its rule. */
+function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
+  return {
+    rule: 'em-dash',
+    file: 'docs/guide.md',
+    phrase: 'The cache is cold',
+    ground: 'a quoted exhibit of the construction',
+    ...overrides,
+  };
+}
+
+/** Reports that the helper holds a detector for `em-dash` alone. */
+function hasEmDashDetector(rule: string): boolean {
+  return rule === 'em-dash';
 }
 
 /** Reports every rejection's site as present. */
@@ -642,31 +661,13 @@ function hasNoSite(): boolean {
   return false;
 }
 
-/** Builds a run fold, defaulting the date every assertion above reads. */
-function fold(overrides: Partial<RunFold>): RunFold {
-  return { sweptAt: '2026-09-02', units: {}, rejections: [], ...overrides };
-}
-
-/** Builds a fold rejection, which carries no version; the helper derives it from the unit covered by the fold. */
-function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
-  return {
-    rule: 'reduced-object-relative',
-    unit: 'writing',
-    file: 'docs/guide.md',
-    phrase: 'the source that it names',
-    ground: 'a quoted exhibit of the construction',
-    ...overrides,
-  };
-}
-
 /** Builds a recorded rejection, overriding whichever fields an assertion turns on. */
 function rejection(overrides: Partial<RecordedRejection> = {}): RecordedRejection {
   return {
-    rule: 'reduced-object-relative',
-    unit: 'writing',
-    'unit-version': '2',
+    rule: 'em-dash',
+    'rule-version': '1',
     file: 'docs/guide.md',
-    phrase: 'the source that it names',
+    phrase: 'The cache is cold',
     ground: 'a quoted exhibit of the construction',
     ...overrides,
   };
@@ -675,11 +676,10 @@ function rejection(overrides: Partial<RecordedRejection> = {}): RecordedRejectio
 /** Renders one rejection as record YAML, with the named fields overridden, for the parse-failure assertions. */
 function rejectionYaml(overrides: Record<string, string>): string {
   const fields = {
-    rule: 'reduced-object-relative',
-    unit: 'writing',
-    'unit-version': '2',
+    rule: 'em-dash',
+    'rule-version': '1',
     file: 'docs/guide.md',
-    phrase: 'the source that it names',
+    phrase: 'The cache is cold',
     ground: 'a quoted exhibit',
     ...overrides,
   };
@@ -687,6 +687,11 @@ function rejectionYaml(overrides: Record<string, string>): string {
     .map(([key, value], index) => `${index === 0 ? '  - ' : ' '.repeat(4)}${key}: "${value}"`)
     .join('\n');
   return `rejections:\n${entries}\n`;
+}
+
+/** Builds a rejection under `reduced-object-relative` naming the site of `candidate`, overriding named fields. */
+function relativeRejection(overrides: Partial<RecordedRejection> = {}): RecordedRejection {
+  return rejection({ rule: 'reduced-object-relative', phrase: 'the source that it names', ...overrides });
 }
 
 // endregion | Helpers

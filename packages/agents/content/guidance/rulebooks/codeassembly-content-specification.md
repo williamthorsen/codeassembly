@@ -151,11 +151,11 @@ Only the rulebook row is validated on parse; a `members:` block is validated whe
 
 ### Version bumps
 
-A rulebook's `version` tracks the operative content of its deployed body: Bump it whenever an edit changes what the rulebook asks of an agent, and leave it when the edit was cosmetic. The field exists to prevent two different bodies from reporting one version, and `revise-prose` keys a repository's sweep coverage on the value, so an un-bumped change leaves every repository recorded as swept against rule text that has since changed.
+A rulebook's `version` tracks the operative content of its deployed body: Bump it whenever an edit changes what the rulebook asks of an agent, and leave it when the edit was cosmetic. The field exists to prevent two different bodies from reporting one version. `revise-prose` does not key a repository's sweep coverage on it: Coverage follows each rule's sweep version, as "Declaring rule ids and sweep versions" below states.
 
 The deployed body is the body after includes expand. Editing a partial is therefore a content change for every rulebook that includes it, and the version changes although the rulebook's own file is untouched. A file that the body links to rather than inlines, such as a `_data/` reference, is outside the body and requires no bump. _(Enforced by `rulebook-version-pins.unit.test.ts`.)_
 
-A `revise-prose` repair does not change what a rulebook asks, because the sweep's calibration rules out any rewrite that would change what the text directs. Keep the rulebook's `version` and each rule's sweep version, and re-pin only the hashes that changed: Once the rulebook's version rises, `revise-prose` no longer counts the coverage that the same sweep recorded. _(Convention; not enforced.)_
+A `revise-prose` repair does not change what a rulebook asks, because the sweep's calibration rules out any rewrite that would change what the text directs. Keep the rulebook's `version` and each rule's sweep version, and re-pin only the hashes that changed: Once a rule's sweep version rises, `revise-prose` no longer counts that rule's coverage, including the coverage that the same sweep recorded. _(Convention; not enforced.)_
 
 ## Naming
 
@@ -185,7 +185,7 @@ A rulebook written for the `comment-preferences` or `writing-preferences` hook i
 
 The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and no id is declared twice across the library. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`.)_
 
-A sweep version is a positive integer, and a new rule starts at `1`. Raise it when some text that complied with the rule's old wording could fail the new one, including through an edit outside every rule section, such as to a rulebook's introduction, and raise it when unsure. Leave it for a relaxation, a clarification, or a rewording. The `plain-speech` unit's `unit-version` follows the same test. Because a rule that becomes stricter changes what its rulebook asks, the rulebook's `version` rises with every sweep-version rise. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`, which requires the version, and by `rulebook-version-pins.unit.test.ts`, which pins each rule's section against it.)_
+A sweep version is a positive integer, and a new rule starts at `1`. Raise it when some text that complied with the rule's old wording could fail the new one, including through an edit outside every rule section, such as to a rulebook's introduction, and raise it when unsure. Leave it for a relaxation, a clarification, or a rewording. The `plain-speech` unit's `unit-version` follows the same test. A raised sweep version re-opens that rule's coverage and rejections in every repository's record, and a rulebook `version` change re-opens none. Because a rule that becomes stricter changes what its rulebook asks, the rulebook's `version` rises with every sweep-version rise. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`, which requires the version, and by `rulebook-version-pins.unit.test.ts`, which pins each rule's section against it.)_
 
 ## Skill-local reinforcement
 

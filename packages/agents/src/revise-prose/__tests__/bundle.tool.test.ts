@@ -69,14 +69,16 @@ describe('the deployed bundle', () => {
   it('writes the record through its record command, reading the fold on standard input', async () => {
     const fold = {
       sweptAt: '2026-09-02',
-      units: { writing: { version: '2', rules: ['em-dash'], roots: ['.'] } },
+      roots: ['.'],
+      units: { writing: '2' },
+      rules: { 'em-dash': { unit: 'writing', version: '3' } },
       rejections: [],
     };
     const result = run(['record'], JSON.stringify(fold));
 
     expect(result).toMatchObject({ ok: true, path: '.agents/revise-prose.yaml' });
     const written = await readFile(path.join(scratch, '.agents/revise-prose.yaml'), 'utf8');
-    expect(written).toContain('version: "2"');
+    expect(written).toContain('version: "3"');
   });
 
   // region | Helpers

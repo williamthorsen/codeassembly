@@ -21,11 +21,22 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--apply'])).toThrow(/unknown flag/i);
   });
 
-  it('reads each named rule with the unit owning it', () => {
+  it('reads each named rule with its sweep version and the unit owning it', () => {
+    const args = parseArgs(['--unit', 'writing=2', '--rule', 'em-dash@1=writing']);
+
+    expect(args.rules).toStrictEqual([{ rule: 'em-dash', unit: 'writing', version: '1' }]);
+    expect(args.units).toStrictEqual(new Map([['writing', '2']]));
+  });
+
+  it('reads a rule that declares no sweep version', () => {
     const args = parseArgs(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
 
-    expect(args.rules).toStrictEqual([{ rule: 'em-dash', unit: 'writing' }]);
-    expect(args.units).toStrictEqual(new Map([['writing', '2']]));
+    expect(args.rules).toStrictEqual([{ rule: 'em-dash', unit: 'writing', version: undefined }]);
+  });
+
+  it('refuses a sweep version that is not a positive integer', () => {
+    expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'em-dash@0=writing'])).toThrow(/positive integer/);
+    expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'em-dash@=writing'])).toThrow(/positive integer/);
   });
 
   it('reads a repeated unit and rule', () => {
@@ -45,9 +56,9 @@ describe(parseArgs, () => {
   });
 
   it('reads a rule for which the helper holds no detector', () => {
-    const args = parseArgs(['--unit', 'writing=2', '--rule', 'sentence-case=writing']);
+    const args = parseArgs(['--unit', 'writing=2', '--rule', 'sentence-case@1=writing']);
 
-    expect(args.rules).toStrictEqual([{ rule: 'sentence-case', unit: 'writing' }]);
+    expect(args.rules).toStrictEqual([{ rule: 'sentence-case', unit: 'writing', version: '1' }]);
   });
 
   it('refuses a rule name that is not lowercase kebab-case', () => {

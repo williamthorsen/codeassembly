@@ -7,15 +7,15 @@ One run covers one repository, resolved from the working directory through `git 
 ## Commands
 
 ```bash
-revise-prose.mjs [detect] [<path>...] [--rule <name>=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
+revise-prose.mjs [detect] [<path>...] [--rule <name>[@<version>]=<unit>] [--unit <name>=<version>] [--batch-budget <bytes>]
 revise-prose.mjs record < fold.json
 ```
 
 `detect` is the default and may be omitted. A leading `detect` or `record` is read as the command, so a repository path that collides with either is written `./record`. Positional paths narrow the sweep, and with none it covers the repository.
 
-`--rule` names a rule and the unit that owns it, whether or not the helper has a detector for the rule. A rule name is lowercase kebab-case. `--unit` names a unit in force and its version. Both repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, since a rule has one unit. With no unit declared, `detect` runs the `reduced-object-relative` detector alone and does not read the record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit; therefore, an invocation that names no rule declares no unit unless it declares one on its own.
+`--rule` names a rule, its sweep version, and the unit that owns it, whether or not the helper has a detector for the rule. A rule name is lowercase kebab-case, and a sweep version is a positive integer. A rule named without `@<version>` is swept but not recorded, and it counts toward no coverage. `--unit` names a unit in force and its version; `detect` and `record` read a unit's version only to convert a record written before rules had versions. Both flags repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, since a rule has one unit. With no unit declared, `detect` runs the `reduced-object-relative` detector alone and does not read the record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit; therefore, an invocation that names no rule declares no unit unless it declares one on its own.
 
-A detector rule is one that the registry in `rules.ts` holds; a unit is a versioned document whose coverage the record tracks, and a unit may have no detector at all. The helper reads no rule document: The skill states which rules exist and what each says, and the registry defines what a rule finds. `detect` runs the detectors of the named rules that the registry holds, and its output lists the rules under `rules`, as `detected` and `undetected`. A name under `undetected` that was meant as a detector rule is misspelt.
+A detector rule is one that the registry in `rules.ts` holds. A unit is a versioned document that contains rules: a rulebook, or `plain-speech`, which contains one rule at the unit's version. A rule may have no detector at all. The helper reads no rule document: The skill states which rules exist and what each says, and the registry defines what a rule finds. `detect` runs the detectors of the named rules that the registry holds, and its output lists the rules under `rules`, as `detected` and `undetected`. A name under `undetected` that was meant as a detector rule is misspelt.
 
 `--batch-budget` is the ceiling on a batch's combined file bytes, defaulting to 98304 (96 KiB), roughly 24k tokens of file content.
 
@@ -42,38 +42,50 @@ A batch is whole files, because a subagent reads a file whole, and the batches c
 `.agents/revise-prose.yaml` records what a repository has been swept for. Only the `record` command writes it, which keeps its YAML deterministic rather than edited by hand into drift.
 
 ```yaml
-units:
-  williamthorsen-writing-preferences:
-    version: '4'
+rules:
+  em-dash:
+    version: '1'
     swept-at: 2026-09-12
-    rules:
-      - em-dash
-      - reduced-object-relative
-      - second-person
-      - where
+    detected: true
+    roots:
+      - .
+  plain-speech:
+    version: '6'
+    swept-at: 2026-09-12
+    detected: false
     roots:
       - .
 rejections:
   - rule: reduced-object-relative
-    unit: williamthorsen-writing-preferences
-    unit-version: '4'
+    rule-version: '1'
     file: packages/agents/README.md
     phrase: source it names
     ground: a quoted exhibit of the construction
 ```
 
-A unit's `rules` lists the detector rules that its sweeps ran, and is empty for a unit swept without a detector, such as `plain-speech`. `record` does not list a rule named to a run without a detector: If it did, `detect` would treat the files already covered as covered for that rule, and a detector added for the rule later would never run over them. Both commands read a unit written without `rules` as having run no detector. Its `roots` are the path roots that sweeps at this version and with these rules have covered, `.` meaning the repository, and `swept-at` is the date of the most recent of those sweeps.
+The record keys coverage and rejections on each rule's sweep version, so a raised sweep version reopens that rule alone, and a unit's version can change without reopening any rule. A rule's `detected` states whether its sweeps ran the rule's detector. Coverage recorded without the detector stops counting once the helper holds one for the rule, because that sweep never saw the rule's candidates. Its `roots` are the path roots that sweeps at this version and with this detector state have covered, `.` meaning the repository, and `swept-at` is the date of the most recent of those sweeps. A rule without a sweep version is not recorded.
 
 A rejection resolves to a candidate by its rule, its file, and its phrase. Both phrases are normalized before they are compared (inline code spans masked, NFC applied, whitespace collapsed), and they match when either contains the other. The recorded phrase is the text as it reads after the run's edits, so a repair under another rule in the same run does not invalidate it.
 
-A `rule` is any lowercase kebab-case name that a bound rulebook declares, detected or not. `plain-speech` has no detector and is recorded like any other rule, so a unit can record judgments without owning a detector.
+A `rule` is any lowercase kebab-case name that a bound rulebook declares with a sweep version, detected or not. `plain-speech` has no detector and is recorded like any other rule.
 
 When `detect` reads the record, with units named:
 
-- It skips a batch when the record covers every file in it for every named unit: at that unit's current version, under one of its roots, and with every detector rule that the run names for that unit among its recorded `rules`.
-- It drops a candidate that matches a rejection at its unit's current version.
+- It skips a batch when the record covers every file in it for every rule that the run names with a version: at the rule's current version, under one of its roots, and with `detected` set if the helper holds the rule's detector. A run that names no rule with a version skips nothing.
+- It drops a candidate that matches a rejection at its rule's current version.
 - It keeps a candidate that matches a rejection recorded at an _older_ version and marks it `stale: true`, so the sweeper reviews the earlier judgment after a rule's revision rather than losing it.
-- It reports under `rejections`, as `rule`, `file`, and `phrase`, every rejection that the record lists over a file that the sweep read, under a named unit at that unit's current version. A caller gives these to the sweeper, which leaves each site as it stands under the rule that its entry names rather than judging it again. This is the one way in which a rule with no detector saves a later run any work. `detect` withholds a rejection recorded at an older version, or under a unit that the run does not name, so the sweeper receives its site with no prior verdict.
+- It reports under `rejections`, as `rule`, `file`, and `phrase`, every rejection that the record lists over a file that the sweep read, under a rule that the run names at that rule's current version. A caller gives these to the sweeper, which leaves each site as it stands under the rule that its entry names rather than judging it again. This is the one way in which a rule with no detector saves a later run any work. `detect` withholds a rejection recorded at an older version, or under a rule that the run does not name with a version, so the sweeper receives its site with no prior verdict.
+
+### Records written before rules had versions
+
+A record whose top-level key is `units` keys coverage on each unit's version, with each unit listing its detector `rules` and each rejection naming its `unit` and `unit-version`. `detect` and `record` convert such a record whenever they read one, against the versions that the run holds, and `record` writes the result in the per-rule shape:
+
+- A unit entry at the unit's current version becomes one coverage entry for each rule of that unit that the run names with a version, at the rule's sweep version. `detected` is set if the unit's `rules` lists the rule.
+- A unit entry at another version, or under a unit that the run does not name, becomes no coverage.
+- A rejection under a current unit takes its rule's sweep version. One under a unit at another version, under a unit that the run does not name, or under a rule that now belongs to another unit takes `rule-version: '0'`, which no declared version equals, so it reads as stale.
+- A rejection under a named unit's rule that has no sweep version is dropped.
+
+A record that contains both `units` and `rules` is refused as `invalid-record`.
 
 ## The fold
 
@@ -82,17 +94,19 @@ When `detect` reads the record, with units named:
 ```json
 {
   "sweptAt": "2026-09-12",
+  "roots": ["."],
   "units": {
-    "williamthorsen-writing-preferences": {
-      "version": "4",
-      "rules": ["em-dash", "reduced-object-relative", "second-person", "where"],
-      "roots": ["."]
-    }
+    "plain-speech": "6",
+    "williamthorsen-writing-preferences": "8"
+  },
+  "rules": {
+    "em-dash": { "unit": "williamthorsen-writing-preferences", "version": "1" },
+    "plain-speech": { "unit": "plain-speech", "version": "6" },
+    "reduced-object-relative": { "unit": "williamthorsen-writing-preferences", "version": "1" }
   },
   "rejections": [
     {
       "rule": "reduced-object-relative",
-      "unit": "williamthorsen-writing-preferences",
       "file": "packages/agents/README.md",
       "phrase": "source it names",
       "ground": "a quoted exhibit of the construction"
@@ -101,10 +115,10 @@ When `detect` reads the record, with units named:
 }
 ```
 
-Every unit states `rules`, an empty list included, and `record` keeps only the detector rules among them. `record` refuses a fold that omits it as `invalid-record` and writes nothing. A fold rejection has no version: The helper takes it from the fold's entry for the rejection's unit.
+`units` names each unit that the run declared, at its version, which `record` reads to convert a record written before rules had versions. `rules` names each rule that the run named with a version, and every rule's unit must be in `units`. A fold rejection has no version: The helper takes it from the fold's entry for the rejection's rule, and it refuses a rejection under a rule that `rules` does not name. A refused fold is reported as `invalid-record`, and nothing is written.
 
-`record` merges by unit. It leaves the coverage and the rejections of a unit that the fold does not name as they are, so a narrowed run never retracts what a wider one recorded.
+`record` merges by rule. It leaves the coverage and the rejections of a rule that the fold does not name as they are, so a narrowed run never retracts what a wider one recorded.
 
-For a unit that the fold does name, `record` adds the fold's roots to the recorded ones when both the version and the rule set match, and replaces the recorded roots with them otherwise. It then drops a root that another one already contains. After a full sweep and a narrowed one, the record therefore still shows the repository as covered, while after a version bump or a change in the rule set, `record` starts the coverage over.
+For a rule that the fold does name, `record` sets `detected` from whether the helper holds the rule's detector. It adds the fold's roots to the recorded ones when both the version and `detected` match, and replaces the recorded roots with them otherwise. It then drops a root that another one already contains. After a full sweep and a narrowed one, the record therefore still shows the repository as covered, while after a raised sweep version or a detector added for the rule, `record` starts that rule's coverage over.
 
-`record` decides each of that unit's recorded rejections under the fold's roots by its site, because a sweeper reports nothing for an inherited rejection and the agent that runs the skill dispatches no batch that the record already covers. It keeps a rejection at the current version while the rejection's site still exists: It looks for the phrase in the file as the run's edits left it, either in the file's extracted prose, normalized as it is for matching a candidate, or in the file's content. It finds no site in a file that it cannot read. Because `record` reads each file as it stands when the command runs, it sees every edit of the run. It retires a rejection at an older version, because the sweep at the new version reviewed it and the fold contains each site that the sweep rejected again. It replaces a recorded rejection with a fold rejection that has the same rule, file, and normalized phrase. It carries forward a rejection outside those roots, whatever its version, because no sweep revisited it.
+`record` decides each of that rule's recorded rejections under the fold's roots by its site, because a sweeper reports nothing for an inherited rejection and the agent that runs the skill dispatches no batch that the record already covers. It keeps a rejection at the current version while the rejection's site still exists: It looks for the phrase in the file as the run's edits left it, either in the file's extracted prose, normalized as it is for matching a candidate, or in the file's content. It finds no site in a file that it cannot read. Because `record` reads each file as it stands when the command runs, it sees every edit of the run. It retires a rejection at an older version, because the sweep at the new version reviewed it and the fold contains each site that the sweep rejected again. It replaces a recorded rejection with a fold rejection that has the same rule, file, and normalized phrase. It carries forward a rejection outside those roots, whatever its version, because no sweep revisited it.

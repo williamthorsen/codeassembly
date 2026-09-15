@@ -32,29 +32,34 @@ With no path, the sweep covers the whole repository. That is this skill's defaul
 
 Both come from this document, never from a list kept elsewhere. Because a rule document declares each rule by a marker beside it rather than by its heading, a heading change cannot silently drop a rule, and a project bound to a different rulebook is swept for the rules that it declares.
 
-- **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names.
-- **Each `<!-- rulebook:<slug> -->` block** in the comment-preferences and writing-preferences fills at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit, since nothing can key a record on it: Name that slug in the closing summary, and sweep it without recording coverage for it.
-- **Each `<!-- rule: <id> <version> -->` marker** in a bound rulebook's body declares a rule, whether or not the helper has a detector for it. A marker that declares no version reads `<!-- rule: <id> -->`. Either way, name the rule to the helper by its id alone. The rule's unit is the block containing the marker.
-- **A rule heading with no marker beneath it** declares no id. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper.
+- **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names. It contains one rule, `plain-speech`, whose sweep version is the same.
+- **Each `<!-- rulebook:<slug> -->` block** in the comment-preferences and writing-preferences fills at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit: Do not name its rules to the helper, sweep it without recording anything for it, and name that slug in the closing summary.
+- **Each `<!-- rule: <id> <version> -->` marker** in a unit's body declares a rule at that sweep version, whether or not the helper has a detector for it. The rule's unit is the block containing the marker.
+- **A marker that reads `<!-- rule: <id> -->`** declares a rule without a sweep version. It is swept, but nothing records it: Name it to the helper without a version, and name it in the closing summary.
+- **A rule heading with no marker beneath it** declares no id and no sweep version. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper, and name it in the closing summary.
 
-If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone and does not name a rule.
+The record keys coverage and rejections on each rule's sweep version. A unit's version is passed only to convert a record written before rules had versions.
+
+If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone.
 
 ### 2. Run the sweep
 
 ```bash
 node {harness_home_dir}/skills/revise-prose/revise-prose.mjs detect {paths} \
   --unit plain-speech={version} \
+  --rule plain-speech@{version}=plain-speech \
   --unit {slug}={version} \
-  --rule {rule-id}={slug}
+  --rule {rule-id}@{rule-version}={slug} \
+  --rule {unversioned-rule-id}={slug}
 ```
 
-Pass one `--unit` per unit from step 1 and one `--rule` per marker. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
+Pass one `--unit` per unit from step 1, `--rule plain-speech@{version}=plain-speech` for the `plain-speech` unit, and one `--rule` per marker in a unit: with `@{rule-version}` if the marker declares a version, and without it if not. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
 
 The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array, a `rules` object listing the named rules that it `detected` and those for which it has no detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
-Read `summary` before anything else. `filesSkipped` counts the files that the sweep excluded, keyed by the reason for each: `generated` and `machine-generated` for output whose edit belongs to its source, `vendored` for a verbatim extract whose edit belongs to the project from which it was extracted, `unreadable` for a file whose prose cannot be read, and `ineligible` for one not read by any extractor. `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its unit.
+Read `summary` before anything else. `filesSkipped` counts the files that the sweep excluded, keyed by the reason for each: `generated` and `machine-generated` for output whose edit belongs to its source, `vendored` for a verbatim extract whose edit belongs to the project from which it was extracted, `unreadable` for a file whose prose cannot be read, and `ineligible` for one not read by any extractor. `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its rule.
 
-An empty `batches` array ends the run: Report the summary in one line and stop. The repository is already swept at every unit's current version.
+An empty `batches` array ends the run: Report the summary in one line and stop. The repository is already swept at every versioned rule's current version.
 
 **Under `--dry-run`, the run ends here.** Emit the summary and one candidate table per file, per [Summary format](#summary-format), and stop. Do not dispatch a subagent, do not write a record, and edit nothing. A dry run takes one helper run, whereas a report-then-apply pair would run the sweep twice.
 
@@ -62,7 +67,7 @@ An empty `batches` array ends the run: Report the summary in one line and stop. 
 
 ### 3. Pilot the first batch
 
-Run the pilot if `.agents/revise-prose.yaml` is absent, or if its `units:` block names none of this run's units. A rerun skips this step and goes to step 4.
+Run the pilot if `.agents/revise-prose.yaml` is absent, or if it names none of this run's versioned rules under `rules:` and none of its units under `units:`. A rerun skips this step and goes to step 4.
 
 Dispatch batch 0 alone, per step 4's dispatch shape, and run step 4's checks over it as a wave of one. Accumulate its `rejected` and `questionable` entries for step 5, as step 4 directs for every later wave, so that the pilot's questionables appear in the closing table. Then show the user its report and `git diff --stat`, and ask for a go-ahead before committing that batch and before dispatching anything else.
 
@@ -103,15 +108,15 @@ rules: {rule-id}, {rule-id}
 
    ```bash
    cat <<'EOF' | node {harness_home_dir}/skills/revise-prose/revise-prose.mjs record
-   {"sweptAt":"{today}","units":{"{name}":{"version":"{version}","rules":["{rule-id}"],"roots":["{root}"]}},"rejections":[]}
+   {"sweptAt":"{today}","roots":["{root}"],"units":{"{name}":"{version}"},"rules":{"{rule-id}":{"unit":"{name}","version":"{rule-version}"}},"rejections":[]}
    EOF
    ```
 
-   `sweptAt` is today's ISO calendar date. `units` names every unit from step 1 with its current version, its `rules`, and its `roots`. `rules` lists the rules that you named to the helper for that unit under step 1, or `[]` for a unit named with no rule, such as `plain-speech`; the helper refuses a fold that omits it, and records only the rules that it detects. `roots` lists the invocation's narrowing paths, or `["."]` for a whole-repository sweep.
+   `sweptAt` is today's ISO calendar date. `roots` lists the invocation's narrowing paths, or `["."]` for a whole-repository sweep. `units` names every unit from step 1 at its current version. `rules` names every rule that step 2 passed with a version, `plain-speech` included, with its unit and its sweep version; the helper records for each whether it holds the rule's detector.
 
-   `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `unit`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Take `unit` from step 1's rule-to-unit mapping rather than from the report, which does not name a unit. **A `plain-speech` rejection takes the `plain-speech` unit**, which that mapping does not cover: Step 1 names the unit directly rather than through a rule marker. **A rejection under a heading's kebab-case id takes the unit of the fill block containing that heading**, as step 1 states for a rule heading with no marker beneath it.
+   `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Leave out a rejection under a rule that `rules` does not name, which is a rule without a sweep version: Nothing records such a rule, and the helper refuses the fold.
 
-   **Fold every rejection, whatever rule it names.** Because a rejection resolves to a site by its rule, its file, and its phrase, a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, and therefore a span wider than the one reported by the detector still resolves to it. On the next sweep, step 4 writes the recorded sites to the rejections file of each batch that covers them.
+   **Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.** Because a rejection resolves to a site by its rule, its file, and its phrase, a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, and therefore a span wider than the one reported by the detector still resolves to it. On the next sweep, step 4 writes the recorded sites to the rejections file of each batch that covers them.
 
 4. **Commit the closing repairs and the record together**, per `{skill:create-commit}`.
 5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A test that asserts on a repaired string fails there; repair the test expectation and commit that separately.
@@ -135,10 +140,13 @@ revise-prose summary
 | 0     | 12    | 31      | 4        | 2            |
 | 1     | 9     | 18      | 1        | 0            |
 
-Recorded in `.agents/revise-prose.yaml`: plain-speech 1, williamthorsen-writing-preferences 2.
-Swept without a detector: capitalization-after-colon, sentence-case.
+Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, plain-speech 6, sentence-case 2.
+Not recorded: other-writing-guidance, prefer-active-voice.
+Swept without a detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.
 ```
+
+The recorded line names each rule from the fold's `rules` at its sweep version. Give the line naming what was not recorded only if step 1 found a rule without a sweep version or a block that is not a unit, naming each rule and each such block's slug.
 
 Give the excluded-files clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened is not mistaken for a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
