@@ -167,7 +167,7 @@ Copy each candidate character for character, one per line, and number none of th
 grep -Fxv -f "{candidates_file}" "{returned_file}"
 ```
 
-Each printed line is a bullet that the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case, so read the printed lines rather than the exit status. Count the returned bullets too: The comparison above passes a return containing none, because the empty set is a subset.
+Each printed line is a bullet that the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case. Read the printed lines rather than the exit status. Count the returned bullets too: The comparison above passes a return containing none, because the empty set is a subset.
 
 Redispatch on either failure -- `rejection: not-a-subset` for a bullet written by the cutter, `rejection: empty-cut` for a return containing none -- at most twice across the two. After a second failure, take the draft uncut and report the failure to the user.
 

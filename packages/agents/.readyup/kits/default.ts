@@ -87,7 +87,7 @@ export default defineRdyKit({
             }
             return { ok: false, detail: describeViolations(violations) };
           },
-          fix: `State the fact without the harness path, or record it in that harness's own guidance file; one body of text serves every harness, so wiring owned by one of them is a wrong turn for the rest`,
+          fix: `State the fact without the harness path, or record it in that harness's own guidance file; one body of text serves every harness, so wiring owned by one of them misleads the rest`,
         },
         {
           name: `${GUIDANCE_PATH} hosts no rulebook region`,

@@ -256,7 +256,7 @@ describe('lede-drafter contract', () => {
     const missing = MIGRATION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'A migration paragraph is the whole channel to a consumer whose build broke, and the cutter never sees it. ' +
+      'A migration paragraph is the only text addressed to a consumer whose build broke, and the cutter never sees it. ' +
       'The trap the replacement carries appears in no hunk, so a caller auditing against the diff cannot supply it. ' +
       `These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);

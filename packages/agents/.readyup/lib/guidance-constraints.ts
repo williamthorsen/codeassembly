@@ -2,7 +2,7 @@
  * Detection of the two constraints the repository-root guidance file carries by virtue of being harness-neutral:
  * it reaches into no harness-owned directory, and it hosts no rulebook marker.
  *
- * One body of text serves every harness, so wiring owned by one of them is a wrong turn for every other reader.
+ * One body of text serves every harness, so wiring owned by one of them misleads every other reader.
  * Home-anchored and repository-local spellings are both matched, because `~/.claude/skills/` and `.claude/` name
  * the same harness's territory. A rulebook marker is `sync`'s to write: it strips a complete open/close pair from
  * this file, so a hand-written region disappears on the next run, and an unpaired marker escapes the sweep and
