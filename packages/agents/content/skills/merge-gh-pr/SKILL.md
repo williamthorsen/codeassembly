@@ -33,7 +33,7 @@ gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDec
 
 Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Do not regex-extract.
 
-`headRepository` and `headRepositoryOwner` are needed by step 6's remote-deletion API call so that cross-repo PRs (`isCrossRepository == true`) target the correct head repo rather than the base repo.
+Step 6's remote-deletion API call needs `headRepository` and `headRepositoryOwner` so that, for cross-repo PRs (`isCrossRepository == true`), it targets the correct head repo rather than the base repo.
 
 ### 2. Run pre-merge checks
 
@@ -87,13 +87,13 @@ Map `strategy` to the corresponding `gh pr merge` flag:
 | `merge`    | `--merge`  |
 | `rebase`   | `--rebase` |
 
-For `squash`, pass `--subject "{title}"` so the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject`; GitHub composes its own subject for those strategies.
+For `squash`, pass `--subject "{title}"` so that the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject`; GitHub composes its own subject for those strategies.
 
-For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase`: Rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` can make `gh` report an error, depending on its version, so omit it defensively.
+For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase`: Rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` can make `gh` report an error, depending on its version. Omit it defensively.
 
 For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none`: `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
 
-**Read the scratch file back before running the command.** Read the path this step is about to pass to `gh` and compare its content against the `body` this delegate received. Refuse where the two differ, naming the PR and the path: "Body file for PR #{n} at {path} is not the approved merge body." A squash merge onto a protected default branch publishes a commit message that cannot be amended, so this is the last point at which a wrong body can be caught. Read the path being passed rather than the one step 4 wrote, so a path left over from another PR is caught rather than confirmed.
+**Read the scratch file back before running the command.** Read the path that this step is about to pass to `gh` and compare its content against the `body` received by this delegate. Refuse when the two differ, naming the PR and the path: "Body file for PR #{n} at {path} is not the approved merge body." A squash merge onto a protected default branch publishes a commit message that cannot be amended, so this is the last point at which a wrong body can be caught. Read the path being passed rather than the one written by step 4, so that a path left over from another PR is caught rather than confirmed.
 
 Example invocation (shown for `strategy=squash`, `deletion_strategy=both`; `--delete-branch` is included **only** when `deletion_strategy == 'both'`):
 
@@ -149,7 +149,7 @@ Use `YYYYMMDD-HHMMSSZ` for `{timestamp}` (UTC).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
-`capture-lede-decision` reads this artifact's `## Body` later to recover the lede that merged, and it is the only record of that text once the pull request is edited. When the lede is needed and the artifact does not contain it, that skill takes `--merged-lede-file`; the artifact is not edited to supply it.
+`capture-lede-decision` reads this artifact's `## Body` later to recover the lede that was merged, and it is the only record of that text once the pull request is edited. When the lede is needed and the artifact does not contain it, that skill takes `--merged-lede-file`; the artifact is not edited to supply it.
 
 Artifact content:
 
