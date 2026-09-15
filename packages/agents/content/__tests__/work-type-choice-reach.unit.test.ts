@@ -33,6 +33,7 @@ const CARRIERS: ReadonlyArray<string> = [
   'guidance/rulebooks/commit-conventions.md',
   'skills/create-ticket/SKILL.md',
   'skills/merge-pr/SKILL.md',
+  'skills/summarize-change/SKILL.md',
 ];
 
 describe('work-type-choice reach', () => {

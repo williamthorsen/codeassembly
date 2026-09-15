@@ -76,7 +76,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
      Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`. The effective type is the output's `effective_record.type`; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states the output. If the call fails, relay its error and continue with no effective type.
 
-   - **Compare the ticket's type.** If `ticket_type` is non-null and differs from the effective type, including when there is no effective type, ask the developer which to keep, following [option format](#option-format): the effective type, or the ticket's. Taking the ticket's sets `override_type` to `ticket_type` and re-runs `resolve-effective-record` with it. Ask here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask records both and asks nothing.
+   - **Compare the ticket's type.** If `ticket_type` is non-null and differs from the effective type, including when there is no effective type, ask the developer which to keep, following [option format](#option-format): the effective type, or the ticket's. Mark the two options by applying [Work type test](#work-type-test) to the diff, not by which source names the type. Taking the ticket's sets `override_type` to `ticket_type` and re-runs `resolve-effective-record` with it. Ask here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask records both and asks nothing.
    - **Check the breaking policy.** Report each `policy-violation` in the last run's `defects`, such as the one that a `refactor` override on a breaking consolidated record produces, and change nothing.
 
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
@@ -152,6 +152,10 @@ Both are optional, and each is recorded as an override beside the consolidated r
 8. **Save** per the [Saving](#saving) section.
 
 If expected information is missing, stop and ask the developer.
+
+## Work type test
+
+<!-- include: ../../_partials/work-type-choice.md / -->
 
 ## Output format
 
