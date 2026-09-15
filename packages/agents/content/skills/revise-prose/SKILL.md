@@ -146,7 +146,7 @@ revise-prose summary
 
 Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, plain-speech 6, sentence-case 2.
 Not recorded: other-writing-guidance, prefer-active-voice.
-Swept without a detector: capitalization-after-colon, plain-speech, sentence-case.
+No detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
@@ -154,7 +154,7 @@ The recorded line names each rule from the fold's `rules` at its sweep version. 
 
 Give the excluded-files clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened is not mistaken for a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
-Give the line naming the rules swept without a detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule, and no detector runs for it.
+Give the line naming the rules that have no detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule wherever a batch applies it, and no detector runs for it.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 
