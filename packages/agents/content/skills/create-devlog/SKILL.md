@@ -100,7 +100,7 @@ Run via Bash, writing each resolved value into the call as literal text:
   --override "run_id={run_id}"
 ```
 
-Drop the `--extra-list` flag entirely in `working-tree` mode, in which `{commits}` has no value; passing it empty emits `commits: []`. Keep `--override "run_id="` with its empty value when no `--run-id` was supplied, because an empty override force-omits the field, which dropping the flag would not.
+Drop the `--extra-list` flag entirely in `working-tree` mode, in which `{commits}` has no value; passing it empty emits `commits: []`.
 
 Prepend the script's output verbatim to the artifact body. Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`.
 

@@ -49,6 +49,10 @@
 # The `pr` field is not resolved by this script. It is populated only when a
 # caller passes `--override pr=<url>`; PR-aware skills supply the URL they hold.
 #
+# The `run_id` field is not resolved either. It is populated only when a caller
+# passes `--override run_id=<id>`; a caller that writes into an orchestrated run
+# supplies that run's ID.
+#
 # Exit codes:
 #   0  Success.
 #   1  Git could not read the repository or resolve the branch, missing required commands (`jq`, `git`),
@@ -197,7 +201,7 @@ main() {
   local base_sha pr_url run_id timestamp
   base_sha=$(resolve_base_sha "$default_branch")
   pr_url=""
-  run_id=$(resolve_run_id)
+  run_id=""
   timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
   # -- Apply overrides --
@@ -303,16 +307,6 @@ apply_override() {
 resolve_base_sha() {
   local ref="$1"
   git rev-parse --short "$ref" 2>/dev/null || true
-}
-
-# Resolves the active run ID by reading the breadcrumb written by the orchestrate engine at
-# `.claude/tmp/active-run-dir`. Empty when no orchestrated run is active.
-resolve_run_id() {
-  local breadcrumb=".claude/tmp/active-run-dir"
-  [[ -r "$breadcrumb" ]] || return 0
-  local run_dir
-  run_dir=$(<"$breadcrumb")
-  basename "$run_dir"
 }
 
 # Gets the current branch name. Returns non-zero outside a git repository.

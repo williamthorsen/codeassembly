@@ -178,7 +178,7 @@ commit: <short SHA of HEAD> # required: short HEAD SHA at write time
 pr: <full URL> # optional: set only by PR-aware skills; omitted elsewhere
 author: <name(s)> # optional: used by review artifacts
 commits: [<sha>, ...] # optional: used by devlogs
-run_id: <run id> # optional: present in orchestrated runs
+run_id: <run id> # optional: set only by callers that write into, or link back to, an orchestrated run
 ---
 ```
 
@@ -194,22 +194,22 @@ Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInter
 
 The table below lists only the universal fields. Artifact-specific extensions (`provenance.iteration`, `session_type`, `tickets_created`, `title`, `scope`, `type`, `responding_to`, etc.) are documented in the per-artifact sections below.
 
-| Field                      | Required | Description                                                                                                                                                                              |
-| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                                                          |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                 |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                            |
-| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                         |
-| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                            |
-| `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                       |
-| `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                                                    |
-| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                           |
-| `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                |
-| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                          |
-| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that have the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md). |
-| `author`                   | no       | Human author of the work. Used by review artifacts when the reviewing surface records the code author.                                                                                   |
-| `commits`                  | no       | List of short SHAs summarized by the artifact. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                 |
-| `run_id`                   | no       | Orchestrated run ID. Present in orchestrated runs and in artifacts that link back to one.                                                                                                |
+| Field                      | Required | Description                                                                                                                                                                                                            |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                                                                                        |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                                               |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                                                          |
+| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                                                       |
+| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                                                          |
+| `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                                                     |
+| `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                                                                                  |
+| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                                                         |
+| `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                                              |
+| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                                                        |
+| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that have the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md).                               |
+| `author`                   | no       | Human author of the work. Used by review artifacts when the reviewing surface records the code author.                                                                                                                 |
+| `commits`                  | no       | List of short SHAs summarized by the artifact. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                                               |
+| `run_id`                   | no       | Orchestrated run ID. Set only by the caller: `orchestrate` and the subagents dispatched in a run, and skills whose artifacts link back to a run. `resolve-frontmatter.sh` emits it only from `--override run_id=<id>`. |
 
 ### `commit` vs. `commits`
 

@@ -130,6 +130,8 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-architect --interactive false --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
+<!-- include: _partials/frontmatter-run-id.md / -->
+
 ## Principles
 
 - **Discover, don't invent.** Your job is to find existing patterns in the codebase, not to propose new architecture. If the codebase already has a way of doing something, the task should follow that way.
