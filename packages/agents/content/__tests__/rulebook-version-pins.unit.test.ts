@@ -53,7 +53,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'live-worktree-policy',
-    { bodyHash: '9bf4e540df49c6b7cb4f9ace460c083f796adab52a6c7abbe6dd4270117a27c0', version: '2' },
+    { bodyHash: '968e7a5bcc19d7562ceb19c3c97163803e4c484c5dfc6cdcc4a1856f326d91aa', version: '2' },
   ],
   [
     'readme-conventions',
@@ -90,7 +90,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: '67f9a28365d6b6661c8b212ce79db00e886f67e21d9014c9838e04de5a35afc5', version: '8' },
+    { bodyHash: '5999cc67d2131ce2eb10705d2c04b95b317e5883a6d1206f550c2aa5c4db4df0', version: '9' },
   ],
 ]);
 
@@ -120,7 +120,7 @@ const RULE_PINS = new Map<string, RulePin>([
   ['second-person', { sectionHash: '398f568c087a8a004d17ac1eacf21e9bff800063c67b884a55d4d053d5d29015', version: '1' }],
   ['sentence-case', { sectionHash: 'e19ffdafdd6eb84f47e229d07871a70ab55114981c8052b365f4bd33330d9b18', version: '1' }],
   ['so', { sectionHash: '2ed8a0d1f531d1d33778f9006214931528d13f0ccd79ad004a87d05e0ba97bf3', version: '1' }],
-  ['where', { sectionHash: 'b01b646590b918798802e6e35edef5cb1e842dc6764e20b541ca9cb53f715701', version: '1' }],
+  ['where', { sectionHash: '95f7aa780c5110a9392d5377ad6078978a37dbfcd6ff631e7a884550c86aa67c', version: '1' }],
 ]);
 
 const DRIFT_MESSAGE =

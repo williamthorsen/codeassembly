@@ -47,7 +47,7 @@ const RULES: ReadonlyArray<Rule> = [
       'Leave at least three sentences between one clause-joining `so` and the next',
       'Never use title case',
       'Use sentence case',
-      'Use `where` only for a place; for any other relation, use the word that most clearly expresses it',
+      'Use `where` for a place, or after an expression to state what a symbol, variable, placeholder, or value in it stands for',
     ],
   },
 ];
