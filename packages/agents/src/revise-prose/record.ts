@@ -242,34 +242,37 @@ export function containsPhrase(text: SiteText, phrase: string): boolean {
   return flattenWhitespace(text.content.normalize('NFC')).includes(flattenWhitespace(phrase.normalize('NFC')));
 }
 
-/**
- * Reports whether the record covers `file` for every rule that the run versions: at the rule's current version, under
- * one of its roots, and, for a rule whose detector the helper holds, with that detector having run. A rule recorded at
- * another version covers nothing, its sweep having been taken against a rule that has since changed; a sweep that ran
- * without a rule's detector never saw that rule's candidates. A run that versions no rule covers nothing.
- */
-export function isCoveredAt(
-  record: ProseRecord,
-  ruleVersions: ReadonlyMap<string, string>,
-  hasDetector: (rule: string) => boolean,
-  file: string,
-): boolean {
-  if (ruleVersions.size === 0) return false;
-
-  for (const [rule, version] of ruleVersions) {
-    const coverage = record.rules[rule];
-    if (coverage === undefined || coverage.version !== version) return false;
-    if (hasDetector(rule) && !coverage.detected) return false;
-    if (coverage.roots.every((root) => !isUnderRoot(file, root))) return false;
-  }
-
-  return true;
-}
-
 /** Reports whether a rejection was recorded at a version older than the one a run holds for its rule. */
 export function isStaleRejection(rejection: RecordedRejection, ruleVersions: ReadonlyMap<string, string>): boolean {
   const current = ruleVersions.get(rejection.rule);
   return current !== undefined && current !== rejection['rule-version'];
+}
+
+/**
+ * Lists the rules that the run versions and for which the record does not cover `file`, in the run's order. A rule
+ * covers the file at the rule's current version, under one of its roots, and, if the helper holds the rule's detector,
+ * with that detector having run. A rule recorded at another version covers nothing, its sweep having been taken against
+ * a rule that has since changed; a sweep that ran without a rule's detector never saw that rule's candidates.
+ */
+export function listUnsweptRules(
+  record: ProseRecord,
+  ruleVersions: ReadonlyMap<string, string>,
+  hasDetector: (rule: string) => boolean,
+  file: string,
+): string[] {
+  const unswept: string[] = [];
+
+  for (const [rule, version] of ruleVersions) {
+    const coverage = record.rules[rule];
+    const isCovered =
+      coverage !== undefined &&
+      coverage.version === version &&
+      (coverage.detected || !hasDetector(rule)) &&
+      coverage.roots.some((root) => isUnderRoot(file, root));
+    if (!isCovered) unswept.push(rule);
+  }
+
+  return unswept;
 }
 
 /**

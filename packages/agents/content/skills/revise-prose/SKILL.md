@@ -38,6 +38,8 @@ Both come from this document, never from a list kept elsewhere. Because a rule d
 - **A marker that reads `<!-- rule: <id> -->`** declares a rule without a sweep version. It is swept, but nothing records it: Name it to the helper without a version, and name it in the closing summary.
 - **A rule heading with no marker beneath it** declares no id and no sweep version. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper, and name it in the closing summary.
 
+**The unrecorded rules** are the rules that nothing records: each marker without a sweep version, each heading with no marker, and each rule in a block that is not a unit, whose id is its marker's id or, without a marker, its heading's id derived as above. Keep their ids for step 4, which dispatches them with every batch.
+
 The record keys coverage and rejections on each rule's sweep version. A unit's version is passed only to convert a record written before rules had versions.
 
 If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone.
@@ -55,9 +57,11 @@ node {harness_home_dir}/skills/revise-prose/revise-prose.mjs detect {paths} \
 
 Pass one `--unit` per unit from step 1, `--rule plain-speech@{version}=plain-speech` for the `plain-speech` unit, and one `--rule` per marker in a unit: with `@{rule-version}` if the marker declares a version, and without it if not. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
 
-The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array, a `rules` object listing the named rules that it `detected` and those for which it has no detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
+The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array in which each batch lists as `unswept` the versioned rules that its files still need, a `rules` object listing the named rules that it `detected` and those for which it has no detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
 Read `summary` before anything else. `filesSkipped` counts the files that the sweep excluded, keyed by the reason for each: `generated` and `machine-generated` for output whose edit belongs to its source, `vendored` for a verbatim extract whose edit belongs to the project from which it was extracted, `unreadable` for a file whose prose cannot be read, and `ineligible` for one not read by any extractor. `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its rule.
+
+`candidates` and `rejections` contain only the sites in the reported batches' files, under a rule that the batch lists as `unswept` or, for a candidate, under a rule named without a version.
 
 An empty `batches` array ends the run: Report the summary in one line and stop. The repository is already swept at every versioned rule's current version.
 
@@ -79,7 +83,7 @@ Send up to four `{tool:Task}` calls with `subagent_type: prose-reviser` in one m
 
 Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even if it contains no entry, so that every dispatch names the same keys. `{scratch}` is a scratch directory created once for the run with `mktemp -d "${TMPDIR:-/tmp}/revise-prose.XXXXXX"`, written out as an absolute path in each place below and in each dispatch block, since these writes and the subagent's reads all go through a file tool that does not expand shell syntax.
 
-Dispatch each batch with this block, whose `rules` value is the helper's `rules.detected`:
+A batch's `rules` value lists its `unswept` rules and step 1's unrecorded rules, sorted, each named once. A rule without a sweep version is therefore swept in every batch that the helper reports, and it never causes a batch to be dispatched. Dispatch each batch with this block:
 
 ```dispatch
 root: {root}
@@ -142,7 +146,7 @@ revise-prose summary
 
 Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, plain-speech 6, sentence-case 2.
 Not recorded: other-writing-guidance, prefer-active-voice.
-Swept without a detector: capitalization-after-colon, plain-speech, sentence-case.
+No detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
@@ -150,7 +154,7 @@ The recorded line names each rule from the fold's `rules` at its sweep version. 
 
 Give the excluded-files clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened is not mistaken for a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
-Give the line naming the rules swept without a detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule, and no detector runs for it.
+Give the line naming the rules that have no detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule wherever a batch applies it, and no detector runs for it.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 

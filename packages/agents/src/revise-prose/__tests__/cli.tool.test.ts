@@ -151,7 +151,7 @@ describe(runDetect, () => {
 
   describe('the record on read', () => {
     it("suppresses a rejection recorded at its rule's current version", async () => {
-      await writeRecord(recordFor(await rejectedPhrase()));
+      await writeRecord(uncoveredRecordFor(await rejectedPhrase()));
       const { candidates } = expectSuccess(await sweep(bothRules()));
 
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
@@ -160,7 +160,7 @@ describe(runDetect, () => {
     it('suppresses a rejection whose recorded phrase runs wider than the span reported by the detector', async () => {
       const wider = OBJECT_RELATIVE.replace(/^The helper reports /, '').replace(/\.$/, '');
       expect(wider).toContain(await rejectedPhrase());
-      await writeRecord(recordFor(wider));
+      await writeRecord(uncoveredRecordFor(wider));
 
       const { candidates } = expectSuccess(await sweep(bothRules()));
 
@@ -211,24 +211,56 @@ describe(runDetect, () => {
       const { candidates, summary } = expectSuccess(await sweep(bothRules('3')));
 
       expect(summary.batchesSkipped).toBe(summary.batchesPlanned);
+      expect(candidates).toStrictEqual([]);
+    });
+
+    it("dispatches again once one rule's sweep version rises, listing that rule alone and reporting only its candidates", async () => {
+      await writeRecord({ ...recordFor(await rejectedPhrase()), rejections: [] });
+      const { batches, candidates, summary } = expectSuccess(await sweep(raisedEmDash()));
+
+      expect(summary.batchesSkipped).toBe(0);
+      expect(batches.map((batch) => batch.unswept)).toStrictEqual([['em-dash']]);
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
     });
 
-    it("dispatches again once one rule's sweep version rises, leaving the other rule's rejection live", async () => {
+    it('withholds a live rejection under a rule for which the batch is already swept', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
-      const argv = [
-        '--unit',
-        'writing=2',
-        '--rule',
-        'em-dash@2=writing',
-        '--rule',
-        'reduced-object-relative@1=writing',
-      ];
-      const { candidates, rejections, summary } = expectSuccess(await sweep(argv));
+
+      expect(expectSuccess(await sweep(raisedEmDash())).rejections).toStrictEqual([]);
+    });
+
+    it('keeps the candidates of a rule named without a version in a dispatched batch, listing no such rule', async () => {
+      const argv = ['--unit', 'writing=2', '--rule', 'em-dash@1=writing', '--rule', 'reduced-object-relative=writing'];
+      const { batches, candidates } = expectSuccess(await sweep(argv));
+
+      expect(batches.map((batch) => batch.unswept)).toStrictEqual([['em-dash']]);
+      expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['reduced-object-relative', 'em-dash']);
+    });
+
+    it('reports every batch for a run that versions no rule, whatever the record covers', async () => {
+      await writeRecord(recordFor(await rejectedPhrase()));
+      const { batches, summary } = expectSuccess(await sweep(['--unit', 'writing=2', '--rule', 'em-dash=writing']));
 
       expect(summary.batchesSkipped).toBe(0);
-      expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
-      expect(rejections).toHaveLength(1);
+      expect(batches.map((batch) => batch.unswept)).toStrictEqual([[]]);
+    });
+
+    it('drops the candidates and rejections in the files of a batch that it does not report', async () => {
+      const record = recordFor(await rejectedPhrase());
+      for (const rule of BOTH_RULES) {
+        record.rules[rule] = { version: '1', 'swept-at': '2026-09-02', detected: true, roots: ['docs'] };
+      }
+      // Under `em-dash`, the rejection leaves the object-relative candidate in `docs` for the dropped batch to remove.
+      await writeRecord({
+        ...record,
+        rejections: record.rejections.map((rejection) => ({ ...rejection, rule: 'em-dash' })),
+      });
+      // A one-byte budget puts each directory in a batch of its own, so the covered `docs` batch is dropped.
+      const { batches, candidates, rejections } = expectSuccess(await sweep([...bothRules(), '--batch-budget', '1']));
+
+      expect(batches.map((batch) => batch.files)).toStrictEqual([['src/notes.md']]);
+      expect(candidates.map((candidate) => candidate.file)).toStrictEqual(['src/notes.md']);
+      expect(rejections).toStrictEqual([]);
     });
 
     it("skips nothing when the record's sweep did not run a detector that the run holds", async () => {
@@ -253,7 +285,7 @@ describe(runDetect, () => {
 
     it('reports a live rejection to the run, so the sweeper leaves the site alone', async () => {
       const phrase = await rejectedPhrase();
-      await writeRecord(recordFor(phrase));
+      await writeRecord(uncoveredRecordFor(phrase));
 
       expect(expectSuccess(await sweep(bothRules())).rejections).toStrictEqual([
         { rule: 'reduced-object-relative', file: 'docs/guide.md', phrase },
@@ -296,11 +328,19 @@ describe(runDetect, () => {
   });
 
   describe('a record keyed on unit versions', () => {
-    it("reads coverage and rejections at the unit's current version as current for each of its versioned rules", async () => {
+    it("reads coverage at the unit's current version as current for each of its versioned rules", async () => {
       await writeLegacyRecord(legacyRecordFor(await rejectedPhrase()));
-      const { candidates, summary } = expectSuccess(await sweep(bothRules()));
+      const { summary } = expectSuccess(await sweep(bothRules()));
 
       expect(summary.batchesSkipped).toBe(summary.batchesPlanned);
+      expect(summary.batchesPlanned).toBeGreaterThan(0);
+    });
+
+    it("reads a rejection at the unit's current version as current for its rule", async () => {
+      // Coverage of `src` alone leaves the batch holding `docs/guide.md` to apply both rules.
+      await writeLegacyRecord(legacyRecordFor(await rejectedPhrase(), ['src']));
+      const { candidates } = expectSuccess(await sweep(bothRules()));
+
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
     });
 
@@ -530,6 +570,11 @@ describe(runDetect, () => {
     return { ...(await fold()), rejections: [] };
   }
 
+  /** The invocation naming both rules under unit `writing`, with `em-dash` raised to sweep version 2. */
+  function raisedEmDash(): string[] {
+    return ['--unit', 'writing=2', '--rule', 'em-dash@2=writing', '--rule', 'reduced-object-relative@1=writing'];
+  }
+
   /** Reads back the phrases of the rejections in the written record. */
   async function readRecordedPhrases(): Promise<string[]> {
     const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'), NO_VERSIONS);
@@ -577,12 +622,12 @@ function expectSuccess(result: DetectResult): DetectSuccess {
 }
 
 /**
- * A record keyed on unit versions, covering the whole repository for unit `writing` at version 2 with both detectors
- * run, and rejecting the object-relative site at that version.
+ * A record keyed on unit versions, covering `roots` for unit `writing` at version 2 with both detectors run, and
+ * rejecting the object-relative site at that version.
  */
-function legacyRecordFor(phrase: string): LegacyRecord {
+function legacyRecordFor(phrase: string, roots: readonly string[] = ['.']): LegacyRecord {
   return {
-    units: { writing: { version: '2', 'swept-at': '2026-09-02', rules: BOTH_RULES, roots: ['.'] } },
+    units: { writing: { version: '2', 'swept-at': '2026-09-02', rules: BOTH_RULES, roots } },
     rejections: [
       {
         rule: 'reduced-object-relative',
@@ -611,6 +656,11 @@ function recordFor(phrase: string, version = '1', file = 'docs/guide.md'): Prose
       },
     ],
   };
+}
+
+/** The record from `recordFor` with no coverage, so the batch holding the rejected site applies both rules. */
+function uncoveredRecordFor(phrase: string): ProseRecord {
+  return { ...recordFor(phrase), rules: {} };
 }
 
 // endregion | Helpers
