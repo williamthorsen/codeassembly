@@ -181,7 +181,7 @@ export interface RunFold {
 }
 
 /** Why a file was held out of the sweep. */
-export type SkipReason = 'generated' | 'ineligible' | 'machine-generated' | 'unreadable';
+export type SkipReason = 'generated' | 'ineligible' | 'machine-generated' | 'unreadable' | 'vendored';
 
 /** How a file's prose is delimited, which decides how the extractor reads it. */
 export type ProseKind = 'markdown' | 'script' | 'shell' | 'yaml';
