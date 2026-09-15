@@ -21,13 +21,13 @@ import { RECORD_PATH } from './record.ts';
 import { countNewlines, isProseLiteral } from './span-text.ts';
 import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 
-/** A resolved sweep: what it read, what it held out, and every block of prose that it yielded. */
+/** A resolved sweep: what it read, what it excluded, and every block of prose that it yielded. */
 export interface ProseCollection {
   /** The resolved target set, in git's own order. Nothing outside it may be edited. */
   files: readonly string[];
   /** The files the sweep read prose from, in the target set's own order, each with the bytes a batch budget reads. */
   scannedFiles: readonly ScannedFile[];
-  /** Files held out, by the reason each was held out, so no exclusion is silent. */
+  /** Files excluded, by the reason each was excluded, so no exclusion is silent. */
   skipped: Readonly<Record<SkipReason, number>>;
   spans: readonly ProseSpan[];
 }
@@ -202,8 +202,8 @@ const DEPLOYMENT_MARKERS: readonly RegExp[] = [
 
 /**
  * Comment openers that may lead a marker, by the kind of file. They differ by kind because a Markdown bullet opens
- * with the same `*` that a block comment's continuation line does, so one alternation spanning every kind would hold
- * out a document that merely lists the markers.
+ * with the same `*` that a block comment's continuation line does, so one alternation spanning every kind would
+ * exclude a document that merely lists the markers.
  */
 const COMMENT_OPENERS: Readonly<Record<ProseKind, string>> = {
   markdown: `<!--`,
