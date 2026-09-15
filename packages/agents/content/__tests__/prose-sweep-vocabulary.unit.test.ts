@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { RULE_IDS } from '../../src/revise-prose/rules.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
+import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts';
 
 // The rulebooks' `<!-- rule: <id> -->` markers are the one list of rule names. The helper's detector registry, the
 // names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within it:
@@ -43,17 +44,8 @@ const REJECTIONS_SCALAR = '**`rejections`**';
 /** Matches every `"rule": "<name>"` field in a JSON example, whose captured group is the name. */
 const REPORTED_RULE_REGEX = /"rule":\s*"([^"]+)"/g;
 
-/** Matches a rule heading, whose captured group is the heading text. */
-const RULE_HEADING_REGEX = /^## (.+)$/;
-
-/** Matches a marker alone on its line, whose captured group is the id. A marker quoted inside a sentence declares nothing. */
-const RULE_MARKER_REGEX = /^<!--\s*rule:\s*([a-z][a-z0-9-]*)\s*-->$/;
-
 /** Matches the line naming a unit's version, whose captured group is the unit's name and, for `plain-speech`, its rule id. */
 const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*(\S+)\s+\S+\s*-->$/m;
-
-/** Stands in for a line inside a code fence, which is neither a heading nor a marker but is not blank. */
-const FENCED_LINE = '<fenced>';
 
 const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
@@ -145,21 +137,14 @@ describe('rule-id declarations', () => {
 
 /** Returns every rule id that a body declares, in order. */
 function listDeclaredIds(body: string): string[] {
-  return maskFencedLines(body).flatMap((line) => {
-    const id = RULE_MARKER_REGEX.exec(line)?.[1];
-    return id === undefined ? [] : [id];
-  });
+  return listRuleMarkers(body).map((marker) => marker.id);
 }
 
 /** Returns the text of every rule heading whose first non-blank line beneath it is not a marker. */
 function listUndeclaredHeadings(body: string): string[] {
-  const lines = maskFencedLines(body);
-  return lines.flatMap((line, index) => {
-    const heading = RULE_HEADING_REGEX.exec(line)?.[1];
-    if (heading === undefined) return [];
-    const next = lines.slice(index + 1).find((candidate) => candidate.trim() !== '');
-    return next !== undefined && RULE_MARKER_REGEX.test(next) ? [] : [heading];
-  });
+  return listRuleSections(body)
+    .filter((section) => section.marker === undefined)
+    .map((section) => section.heading);
 }
 
 /**
@@ -168,18 +153,6 @@ function listUndeclaredHeadings(body: string): string[] {
  */
 function listUnnamedRules(body: string, rules: ReadonlyArray<string>): string[] {
   return rules.filter((rule) => !body.includes(`\`${rule}\``));
-}
-
-/** Splits a body into lines, replacing each line of a code fence with a placeholder that matches no heading or marker. */
-function maskFencedLines(body: string): string[] {
-  let fenced = false;
-  return body.split('\n').map((line) => {
-    if (line.trimStart().startsWith('```')) {
-      fenced = !fenced;
-      return FENCED_LINE;
-    }
-    return fenced ? FENCED_LINE : line;
-  });
 }
 
 /** Reads one content file by its path relative to the content root. */
