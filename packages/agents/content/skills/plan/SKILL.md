@@ -27,7 +27,7 @@ When the resolved source is a local artifact, read its `provenance.skill`: `desi
 
 The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps are in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted: The plan is produced in an interactive, user-invoked session (the user supplies and vets the source ticket and approves the next step).
 
-The body following the frontmatter uses the shared implementation-plan template, the same one `design-and-plan` Phase 5 inlines, so both skills emit an identical plan:
+The body following the frontmatter uses the shared implementation-plan template, the same one inlined by `design-and-plan` Phase 5, so both skills emit an identical plan:
 
 **Spike mode.** If the task is a spike, use the spike plan template in [spike conventions](../_data/spike-conventions.md) in place of the template below.
 

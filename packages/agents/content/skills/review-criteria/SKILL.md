@@ -58,19 +58,19 @@ Reviewers may emit insights (`I{n}`), knowledge worth preserving that is not a f
 
 ## Finding concision
 
-Compose each finding at the tight altitude ([concision principle](../_data/concision.md)): State the defect, its location, and the decision the author must make, then stop. Cut code the author can already see, hedged narration, and rationale for why you looked. Every reader pays for each line, so weigh each sentence against the decision it enables, not its completeness.
+Compose each finding at the tight altitude ([concision principle](../_data/concision.md)): State the defect, its location, and the decision that the author must make, then stop. Cut code already visible to the author, hedged narration, and rationale for why you looked. Every reader spends attention on each line, so weigh each sentence against the decision that it enables, not its completeness.
 
 ## Comment findings
 
-Comment text you propose for a source file (a replacement doc comment, a suggested inline comment) is a source comment, and the full [comment discipline](#comment-discipline) audit applies to it. Prefer a short `todo:` naming what is stale over a rewritten comment, and never copy an example value out of the source.
+Comment text that you propose for a source file (a replacement doc comment, a suggested inline comment) is a source comment, and the full [comment discipline](#comment-discipline) audit applies to it. Prefer a short `todo:` naming what is stale over a rewritten comment, and never copy an example value out of the source.
 
-"Add a comment explaining X" is a finding only when X is a constraint the code cannot show. Do not request a comment the discipline would delete.
+"Add a comment explaining X" is a finding only when X is a constraint that the code cannot show. Do not request a comment that the discipline would delete.
 
 ## Do not recommend a test that does not earn its place
 
-Every test you recommend clears the bar in the `testing-conventions` skill, which states the filters and the authoring-side rule. A recommendation that fails a filter is withdrawn rather than reworded, and absence of a test is not by itself a finding.
+Every test that you recommend clears the bar in the `testing-conventions` skill, which states the filters and the authoring-side rule. A recommendation that fails a filter is withdrawn rather than reworded, and absence of a test is not by itself a finding.
 
-The commonest instance is a test asserting that deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: It encodes history, fails only on a verbatim revert, and accretes without bound. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions.
+The commonest instance is a test asserting that deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: It encodes history and fails only on a verbatim revert, and such assertions accumulate without limit. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions.
 
 ## Finding references
 

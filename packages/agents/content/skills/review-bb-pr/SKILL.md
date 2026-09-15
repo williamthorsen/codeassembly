@@ -32,7 +32,7 @@ On success, return a record with the same shape as `review-gh-pr`'s output. `rev
 | `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source. Every source is `provenance: "remote"` (this path fetches live and never reads a local snapshot), so the review never renders a divergence note for it; `last_updated` is null when the platform does not expose it (e.g. Jira) |
 | `pr_metadata`    | object                                                                          | `{ number, url, head_oid, base_ref, title }`                                                                                                                                                                                                                                  |
 
-On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
+On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-pr` reports the message and stops.
 
 ## Bitbucket access
 
@@ -52,7 +52,7 @@ Resolve `workspaceId` and `repoId` per [Coordinates](../_data/bitbucket-pr-acces
 
 Issue a single `action: "get"` call with `prId` set to the PR number, per [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request). Capture `id`, `title`, `description`, `links.html.href`, `updated_on`, `source.branch.name`, `source.commit.hash`, and `destination.branch.name`.
 
-If the call fails, surface the tool's error and stop.
+If the call fails, report the tool's error and stop.
 
 ### 3. Verify HEAD
 
@@ -62,7 +62,7 @@ Compare the local HEAD against the PR's head commit:
 git rev-parse HEAD
 ```
 
-The comparison is a prefix test, not an equality test, because `source.commit.hash` may arrive abbreviated; see [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request) for the rule. If `source.commit.hash` is not a prefix of the printed HEAD of at least 7 characters, exit non-zero with:
+The comparison is a prefix test, not an equality test, because the tool may return `source.commit.hash` abbreviated; see [Reading a pull request](../_data/bitbucket-pr-access.md#reading-a-pull-request) for the rule. If `source.commit.hash` is not a prefix of the printed HEAD of at least 7 characters, exit non-zero with:
 
 ```
 PR #{number}'s head commit is {short(source_commit_hash)} but HEAD is at {short(HEAD)}. Check out the PR branch first (e.g., "git fetch origin pull-requests/{number}/from:pr-{number} && git checkout pr-{number}") or pull the latest commits on {source_branch_name}.
@@ -99,7 +99,7 @@ git merge-base HEAD {diff_base}
 
 3. **No ticket**: Proceed with the PR description as the only spec source.
 
-The divergence from `review-gh-pr` is intentional and documented here so future readers do not assume parity. If Bitbucket linked-issue parity is added later (via the Jira integration or a future Bitbucket API field), a new step fits between override and body parse without breaking the delegate interface.
+The divergence from `review-gh-pr` is intentional and documented here so that future readers do not assume parity. If Bitbucket linked-issue parity is added later (via the Jira integration or a future Bitbucket API field), a new step fits between override and body parse without breaking the delegate interface.
 
 ### 6. Build the spec-source list
 
@@ -148,14 +148,14 @@ The list order is `[ticket?, pr_description]`, same as `review-gh-pr`.
 }
 ```
 
-`head_oid` carries the local HEAD rather than `source.commit.hash`, which step 3 may have matched abbreviated. The two name the same commit once step 3 passes, and the local one is the full 40 characters a consumer of an OID expects.
+`head_oid` contains the local HEAD rather than `source.commit.hash`, which step 3 may have matched abbreviated. The two name the same commit once step 3 passes, and the local one is the full 40 characters expected by a consumer of an OID.
 
 `review-pr` passes this to `review-branch` and the review proceeds.
 
 ## Important
 
 - **Single read for metadata.** All fields are fetched at once. Do not split into multiple calls.
-- **The REST pin is discharged.** This delegate used to pin the REST API on the ground that a generic "whatever tooling is available" instruction could not guarantee a client surfaced `source.commit.hash`, which the _Verify HEAD_ step fails closed on. Naming one tool discharges that ground, and the field is verified present in its response. Do not restore the credential cascade or the REST endpoint on the strength of the old comment.
-- **HEAD mismatch is a hard stop.** The error message must include a Bitbucket-equivalent checkout suggestion so the user has a one-line fix path even though Bitbucket lacks `gh pr checkout`'s exact equivalent.
-- **Linked-issues divergence is intentional.** The Bitbucket cascade lacks the GitHub `closingIssuesReferences` step. This is documented above so the parity gap is visible to future readers; do not silently re-add a partial implementation.
+- **The REST pin is no longer needed.** This delegate used to pin the REST API because a generic "whatever tooling is available" instruction could not guarantee that a client returned `source.commit.hash`, which the _Verify HEAD_ step fails closed on. Naming one tool removes that reason, and the field is verified present in its response. Do not restore the credential cascade or the REST endpoint because of the old comment.
+- **HEAD mismatch is a hard stop.** The error message must include a Bitbucket-equivalent checkout suggestion so that the user has a one-line fix path even though Bitbucket lacks `gh pr checkout`'s exact equivalent.
+- **Linked-issues divergence is intentional.** The Bitbucket cascade lacks the GitHub `closingIssuesReferences` step. This is documented above so that the parity gap is visible to future readers; do not silently re-add a partial implementation.
 - **No review logic here.** This delegate prepares inputs only. The review process runs inside `review-branch` after `review-pr` invokes it with the resolved inputs.
