@@ -9,7 +9,8 @@
  *
  * With no unit declared, `detect` runs the reduced-object-relative detector alone and does not read the record, which
  * keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule
- * declares no unit unless it names one on its own.
+ * declares no unit unless it names one on its own. Coverage and rejections are keyed on each rule's sweep version; a
+ * unit's version is read only to convert a record written before rules were versioned.
  *
  * JSON on stdout is the only output: the human-readable report is the agent's, composed once each candidate has been
  * adjudicated. The helper revises no prose. The agent applies repairs with its own editing tool, which keeps one write
@@ -36,6 +37,7 @@ import {
   RULE_NAME_PATTERN,
   selectPriorRejections,
   stringifyRecord,
+  SWEEP_VERSION_PATTERN,
 } from './record.ts';
 import { detectRules, isRuleId } from './rules.ts';
 import type {
@@ -44,6 +46,7 @@ import type {
   CandidateSummary,
   DetectResult,
   FileCount,
+  NamedRule,
   ParsedArgs,
   ProseRecord,
   RecordedRejection,
@@ -53,6 +56,8 @@ import type {
   SiteText,
   SkipReason,
   SubjectShape,
+  SweepVersions,
+  VersionedRule,
 } from './types.ts';
 
 /** The flags the sweep recognizes. Each of `rule` and `unit` may repeat; the scanner reports them in argv order. */
@@ -63,7 +68,7 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<'batch-budget' | 'rule' | 'unit'>> = [
 ];
 
 /** What an invocation declaring no unit reads in place of the repository's record. */
-const EMPTY_RECORD: ProseRecord = { units: {}, rejections: [] };
+const EMPTY_RECORD: ProseRecord = { rules: {}, rejections: [] };
 
 /** What an invocation naming no rule detects, which is what the pre-rules skill still calls. */
 const LEGACY_RULES: ReadonlyArray<RuleId> = ['reduced-object-relative'];
@@ -92,9 +97,10 @@ if (isEntryPoint()) {
 /**
  * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units the caller holds.
  *
- * `--rule <name>=<unit>` names a rule and the unit owning it, whether or not the helper has a detector for it;
- * `--unit <name>=<version>` names a unit in force and the version it is at. Both repeat. `--batch-budget <bytes>`
- * overrides the default ceiling.
+ * `--rule <name>@<version>=<unit>` names a rule, its sweep version, and the unit owning it, whether or not the helper
+ * has a detector for it; `--rule <name>=<unit>` names a rule that declares no sweep version, which is swept but never
+ * recorded. `--unit <name>=<version>` names a unit in force and the version it is at. Both repeat.
+ * `--batch-budget <bytes>` overrides the default ceiling.
  *
  * @internal - Exported to allow testing.
  */
@@ -102,7 +108,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const scanned = scanFlags(argv, FLAG_SPECS);
 
   const units = new Map<string, string>();
-  const rules: Array<{ rule: string; unit: string }> = [];
+  const rules: NamedRule[] = [];
   let budget = DEFAULT_BATCH_BUDGET;
 
   for (const flag of scanned.flags) {
@@ -120,14 +126,18 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       units.set(name, rest);
       continue;
     }
-    if (!RULE_NAME_PATTERN.test(name)) {
-      throw new Error(`rule "${name}" is not a lowercase kebab-case name`);
+    const [rule, version] = splitVersion(name);
+    if (!RULE_NAME_PATTERN.test(rule)) {
+      throw new Error(`rule "${rule}" is not a lowercase kebab-case name`);
     }
-    const owner = rules.find((named) => named.rule === name);
+    if (version !== undefined && !SWEEP_VERSION_PATTERN.test(version)) {
+      throw new Error(`rule "${rule}" names sweep version "${version}", which is not a positive integer`);
+    }
+    const owner = rules.find((named) => named.rule === rule);
     if (owner !== undefined) {
-      throw new Error(`rule "${name}" is named twice, under units "${owner.unit}" and "${rest}"; a rule has one unit`);
+      throw new Error(`rule "${rule}" is named twice, under units "${owner.unit}" and "${rest}"; a rule has one unit`);
     }
-    rules.push({ rule: name, unit: rest });
+    rules.push({ rule, unit: rest, version });
   }
 
   for (const named of rules) {
@@ -158,12 +168,15 @@ export async function runDetect(input: {
     return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
+  const versions = buildArgVersions(args);
+  const ruleVersions = selectRuleVersions(versions);
+
   // Read only where a unit is declared: with none, no version exists to compare coverage or a rejection against, and
   // a malformed record would otherwise fail an invocation that never consults it.
   let record: ProseRecord = EMPTY_RECORD;
   if (args.units.size > 0) {
     try {
-      record = readRecordFile(input.root);
+      record = readRecordFile(input.root, versions);
     } catch (error) {
       return { ok: false, error: 'invalid-record', message: describeError(error) };
     }
@@ -176,19 +189,17 @@ export async function runDetect(input: {
       ...(input.home !== undefined && { home: input.home }),
     });
 
-    // Check coverage against the detector rules alone, which are the only rules `runRecord` records.
-    const detectable = selectDetectorRules(args.rules);
-    const rules = args.rules.length === 0 ? LEGACY_RULES : detectable.map((named) => named.rule);
+    const rules = args.rules.length === 0 ? LEGACY_RULES : selectDetectorRules(args.rules);
     const detected = detectRules(spans, rules);
-    const candidates = args.units.size === 0 ? detected : applyRejections(detected, record, args.units);
+    const candidates = args.units.size === 0 ? detected : applyRejections(detected, record, ruleVersions);
 
     const planned = planBatches({ files: scannedFiles, candidates, budget: args.budget });
     const batches = planned.filter((batch) =>
-      batch.files.some((file) => !isCoveredAt(record, args.units, detectable, file)),
+      batch.files.some((file) => !isCoveredAt(record, ruleVersions, isRuleId, file)),
     );
     const rejections = selectPriorRejections(
       record,
-      args.units,
+      ruleVersions,
       scannedFiles.map((scanned) => scanned.file),
     );
 
@@ -217,8 +228,8 @@ export async function runDetect(input: {
 
 /**
  * Folds one run's outcome into the repository's record and writes it. This is the record's only write path, which is
- * what keeps its YAML deterministic rather than hand-edited into drift. A unit's coverage keeps only the rules for which the
- * helper has a detector, which is what lets a detector added later run over files already covered. A prior rejection's
+ * what keeps its YAML deterministic rather than hand-edited into drift. A rule's coverage records whether the helper
+ * has its detector, which is what lets a detector added later run over files already covered. A prior rejection's
  * site is looked for in its file as the file stands when the command runs.
  *
  * @internal - Exported to allow testing.
@@ -226,10 +237,12 @@ export async function runDetect(input: {
 export function runRecord(input: { foldJson: string; root: string }): RecordResult {
   let record: ProseRecord;
   try {
+    const fold = parseRunFold(input.foldJson);
     record = composeRecord(
-      readRecordFile(input.root),
-      retainDetectorRules(parseRunFold(input.foldJson)),
+      readRecordFile(input.root, buildFoldVersions(fold)),
+      fold,
       buildSitePredicate(input.root),
+      isRuleId,
     );
   } catch (error) {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
@@ -239,10 +252,24 @@ export function runRecord(input: { foldJson: string; root: string }): RecordResu
   mkdirSync(path.dirname(absolute), { recursive: true });
   writeFileSync(absolute, stringifyRecord(record), 'utf8');
 
-  return { ok: true, path: RECORD_PATH, units: Object.keys(record.units).length, rejections: record.rejections.length };
+  return { ok: true, path: RECORD_PATH, rules: Object.keys(record.rules).length, rejections: record.rejections.length };
 }
 
 // region | Helpers
+
+/** Builds the versions that an invocation holds, keeping only the named rules that declare a sweep version. */
+function buildArgVersions(args: ParsedArgs): SweepVersions {
+  const rules = new Map<string, VersionedRule>();
+  for (const { rule, unit, version } of args.rules) {
+    if (version !== undefined) rules.set(rule, { unit, version });
+  }
+  return { units: args.units, rules };
+}
+
+/** Builds the versions that a fold holds. */
+function buildFoldVersions(fold: RunFold): SweepVersions {
+  return { units: new Map(Object.entries(fold.units)), rules: new Map(Object.entries(fold.rules)) };
+}
 
 /**
  * Builds the predicate with which `record` decides whether a rejection's site still exists, reading each file at most
@@ -276,15 +303,15 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Reads the repository's record, treating an absent file as the empty record. */
-function readRecordFile(root: string): ProseRecord {
+/** Reads the repository's record, treating an absent file as the empty record and converting a legacy one. */
+function readRecordFile(root: string, versions: SweepVersions): ProseRecord {
   let content: string;
   try {
     content = readFileSync(path.join(root, RECORD_PATH), 'utf8');
   } catch {
-    return { units: {}, rejections: [] };
+    return { rules: {}, rejections: [] };
   }
-  return parseRecord(content);
+  return parseRecord(content, versions);
 }
 
 /** Reads one repository file's content and extracted prose, or returns undefined where the file cannot be read. */
@@ -312,22 +339,14 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-/** Drops from each unit of a fold the rules for which the helper has no detector. Rejections keep any rule. */
-function retainDetectorRules(fold: RunFold): RunFold {
-  const units = Object.fromEntries(
-    Object.entries(fold.units).map(([unit, coverage]) => [
-      unit,
-      { ...coverage, rules: coverage.rules.filter(isRuleId) },
-    ]),
-  );
-  return { ...fold, units };
+/** Returns the named rules for which the helper has a detector. */
+function selectDetectorRules(rules: readonly NamedRule[]): RuleId[] {
+  return rules.map((named) => named.rule).filter(isRuleId);
 }
 
-/** Returns the named rules for which the helper has a detector, each with its unit. */
-function selectDetectorRules(
-  rules: ReadonlyArray<{ rule: string; unit: string }>,
-): Array<{ rule: RuleId; unit: string }> {
-  return rules.filter((named): named is { rule: RuleId; unit: string } => isRuleId(named.rule));
+/** Returns each versioned rule's sweep version, by rule. */
+function selectRuleVersions(versions: SweepVersions): ReadonlyMap<string, string> {
+  return new Map(versions.rules.entries().map(([rule, { version }]) => [rule, version]));
 }
 
 /**
@@ -342,6 +361,12 @@ function splitPair(flag: string, value: string): [string, string] {
     throw new Error(`--${flag} takes <name>=<value>, got "${value}"`);
   }
   return [name, rest];
+}
+
+/** Splits a rule flag's name into the rule and the sweep version after its first `@`, if it names one. */
+function splitVersion(name: string): [string, string | undefined] {
+  const cut = name.indexOf('@');
+  return cut === -1 ? [name, undefined] : [name.slice(0, cut), name.slice(cut + 1)];
 }
 
 /** Drops a leading `detect` verb, so the command form and the bare path form parse alike. */

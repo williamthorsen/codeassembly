@@ -1,12 +1,12 @@
 /**
  * The per-repository sweep record, `.agents/revise-prose.yaml`.
  *
- * The record answers two questions on a later run: which paths a unit has already been swept over at its current
- * version and with which detectors, and which sites an adjudicator has already rejected. A rejected site need not be one a detector reports,
- * so the second answer reaches a rule whose sites no candidate nominates. A version bump marks a unit's rejections stale
- * rather than deleting them, so a rule's revision re-opens its rejections for review instead of discarding the
- * judgment behind them. A sweep at the new version is that review, and recording it retires the stale rejections under
- * its roots.
+ * The record answers two questions on a later run: which paths a rule has already been swept over at its current
+ * sweep version and whether its detector ran, and which sites an adjudicator has already rejected. A rejected site need
+ * not be one a detector reports, so the second answer reaches a rule whose sites no candidate nominates. A raised sweep
+ * version marks that rule's rejections stale rather than deleting them, so a rule's revision re-opens its rejections
+ * for review instead of discarding the judgment behind them. A sweep at the new version is that review, and recording
+ * it retires the stale rejections under its roots.
  *
  * A rejection resolves to a site by containment rather than by an exact string: see {@link applyRejections}. The record
  * and the detector describe one site in spans of different lengths, so a phrase is what a reader locates the site by
@@ -19,9 +19,18 @@
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { z } from 'zod';
 
+import { convertLegacyRecord } from './convert-record.ts';
 import { maskCodeSpans } from './mask-code-spans.ts';
 import { flattenWhitespace } from './span-text.ts';
-import type { Candidate, PriorRejection, ProseRecord, RecordedRejection, RunFold, SiteText } from './types.ts';
+import type {
+  Candidate,
+  PriorRejection,
+  ProseRecord,
+  RecordedRejection,
+  RunFold,
+  SiteText,
+  SweepVersions,
+} from './types.ts';
 
 /** Path of the record within a repository. */
 export const RECORD_PATH = '.agents/revise-prose.yaml';
@@ -30,69 +39,104 @@ export const RECORD_PATH = '.agents/revise-prose.yaml';
 export const RULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 /**
+ * The shape of a sweep version as a run declares it: a positive integer. A converted legacy rejection records `0`,
+ * which this shape keeps any declared version from equalling.
+ */
+export const SWEEP_VERSION_PATTERN = /^[1-9]\d*$/;
+
+/**
  * A rule name. Any rule a bound rulebook declares is recordable, detected or not, so the shape is all that is held
- * here: pinning the detector registry's names would make a unit's coverage of the record depend on holding a detector.
+ * here: pinning the detector registry's names would make a rule's coverage depend on holding a detector.
  */
 const RuleNameSchema = z.string().regex(RULE_NAME_PATTERN, 'rule must be a lowercase kebab-case name');
 
 /** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
 
-/**
- * A unit's coverage: the version swept, when it was last swept, the detector rules that its sweeps ran, and the path
- * roots covered at that version. A unit written without `rules` parses as having run no detector.
- */
-const UnitCoverageSchema = z.object({
+/** A rule's coverage: the sweep version swept, when it was last swept, whether its detector ran, and the roots covered. */
+const RuleCoverageSchema = z.object({
   version: z.string().min(1),
   'swept-at': DateSchema,
-  rules: z.array(RuleNameSchema).default([]),
+  detected: z.boolean(),
   roots: z.array(z.string().min(1)).min(1),
 });
 
 /** One rejection, resolved to a site by its rule, its file, and its phrase. */
 const RejectionSchema = z.object({
   rule: RuleNameSchema,
-  unit: z.string().min(1),
-  'unit-version': z.string().min(1),
+  'rule-version': z.string().min(1),
   file: z.string().min(1),
   phrase: z.string().min(1),
   ground: z.string().min(1),
 });
 
 /** The whole record. Both keys default to empty, so a record naming one of them parses. */
-export const ProseRecordSchema = z.object({
-  units: z.record(z.string(), UnitCoverageSchema).default({}),
+const ProseRecordSchema = z.object({
+  rules: z.record(RuleNameSchema, RuleCoverageSchema).default({}),
   rejections: z.array(RejectionSchema).default([]),
 });
 
-/** One rejection as a run reports it: no version, which the helper derives from the unit covered by the fold. */
+/** A record written before rules were versioned. A unit written without `rules` parses as having run no detector. */
+const LegacyRecordSchema = z.object({
+  units: z.record(
+    z.string(),
+    z.object({
+      version: z.string().min(1),
+      'swept-at': DateSchema,
+      rules: z.array(RuleNameSchema).default([]),
+      roots: z.array(z.string().min(1)).min(1),
+    }),
+  ),
+  rejections: z
+    .array(
+      z.object({
+        rule: RuleNameSchema,
+        unit: z.string().min(1),
+        'unit-version': z.string().min(1),
+        file: z.string().min(1),
+        phrase: z.string().min(1),
+        ground: z.string().min(1),
+      }),
+    )
+    .default([]),
+});
+
+/** One rejection as a run reports it: no version, which the helper derives from the fold's entry for its rule. */
 const FoldRejectionSchema = z.object({
   rule: RuleNameSchema,
-  unit: z.string().min(1),
   file: z.string().min(1),
   phrase: z.string().min(1),
   ground: z.string().min(1),
 });
 
 /**
- * What one run reports back for recording. A unit's `rules` is required, so a fold that omits it is refused rather than
- * recorded as a sweep that ran no detector, which would re-open the unit's coverage on every later run.
+ * What one run reports back for recording. Every versioned rule names a unit that `units` declares, which is what lets
+ * `record` convert a legacy record against the fold alone.
  */
-export const RunFoldSchema = z.object({
-  sweptAt: DateSchema,
-  units: z.record(
-    z.string(),
-    z.object({
-      version: z.string().min(1),
-      rules: z.array(RuleNameSchema),
-      roots: z.array(z.string().min(1)).min(1),
-    }),
-  ),
-  rejections: z.array(FoldRejectionSchema).default([]),
-});
+const RunFoldSchema = z
+  .object({
+    sweptAt: DateSchema,
+    roots: z.array(z.string().min(1)).min(1),
+    units: z.record(z.string().min(1), z.string().min(1)),
+    rules: z.record(
+      RuleNameSchema,
+      z.object({
+        unit: z.string().min(1),
+        version: z.string().regex(SWEEP_VERSION_PATTERN, 'a sweep version must be a positive integer'),
+      }),
+    ),
+    rejections: z.array(FoldRejectionSchema).default([]),
+  })
+  .superRefine((fold, context) => {
+    for (const [rule, { unit }] of Object.entries(fold.rules)) {
+      if (!Object.hasOwn(fold.units, unit)) {
+        context.addIssue({ code: 'custom', path: ['rules', rule, 'unit'], message: `unit "${unit}" is not in units` });
+      }
+    }
+  });
 
 /**
- * Applies the record's rejections to a candidate set: a candidate matching a rejection at its unit's current version
+ * Applies the record's rejections to a candidate set: a candidate matching a rejection at its rule's current version
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
  *
@@ -102,7 +146,7 @@ export const RunFoldSchema = z.object({
 export function applyRejections(
   candidates: readonly Candidate[],
   record: ProseRecord,
-  unitVersions: ReadonlyMap<string, string>,
+  ruleVersions: ReadonlyMap<string, string>,
 ): Candidate[] {
   const bySite = new Map<string, RecordedRejection[]>();
   for (const rejection of record.rejections) {
@@ -122,7 +166,7 @@ export function applyRejections(
       applied.push(candidate);
       continue;
     }
-    if (matched.every((rejection) => isStaleRejection(rejection, unitVersions))) {
+    if (matched.every((rejection) => isStaleRejection(rejection, ruleVersions))) {
       applied.push({ ...candidate, stale: true });
     }
   }
@@ -133,49 +177,43 @@ export function applyRejections(
 /**
  * Merges a run's fold into the prior record and returns the result.
  *
- * Leaves the coverage and the rejections of a unit that the run did not name untouched, so a narrowed run never
- * retracts what a wider one recorded. For a unit that the run did name at the version and with the detector rules
- * already recorded, adds the run's roots to the recorded ones, both sweeps having happened. After a version bump,
+ * Leaves the coverage and the rejections of a rule that the run did not version untouched, so a narrowed run never
+ * retracts what a wider one recorded. For a rule that the run did version, at the version and with the detector state
+ * already recorded, adds the run's roots to the recorded ones, both sweeps having happened. After a raised version,
  * replaces the recorded roots with the run's, the earlier sweep having been taken against a rule that has since
- * changed, and does the same after a change in the detector rules, the recorded roots having been swept with a
- * different set of candidates.
+ * changed, and does the same when the detector state differs, the recorded roots having been swept with a different
+ * set of candidates.
  *
- * A prior rejection under the roots that the run swept for its unit is kept at the unit's current version while
- * `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and the agent never
- * dispatches a batch that the record already covers. One at an older version is retired: the run reviewed it at the new version, and a
- * site that it rejected again is in the fold. `hasSite` is consulted for a current-version rejection under those roots
- * alone. A rejection outside them was never revisited, so it is carried forward, which is what keeps a run narrowed to
- * one directory from retracting the judgment recorded everywhere else.
+ * A prior rejection under the roots that the run swept, for a rule that the run versioned, is kept at the rule's
+ * current version while `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and
+ * the agent never dispatches a batch that the record already covers. One at an older version is retired: the run
+ * reviewed it at the new version, and a site that it rejected again is in the fold. `hasSite` is consulted for a
+ * current-version rejection under those roots alone. A rejection outside them was never revisited, so it is carried
+ * forward, which is what keeps a run narrowed to one directory from retracting the judgment recorded everywhere else.
  */
 export function composeRecord(
   prior: ProseRecord,
   fold: RunFold,
   hasSite: (rejection: RecordedRejection) => boolean,
+  hasDetector: (rule: string) => boolean,
 ): ProseRecord {
-  const units = { ...prior.units };
-  for (const [unit, coverage] of Object.entries(fold.units)) {
-    const priorCoverage = prior.units[unit];
-    const rules = normalizeRules(coverage.rules);
+  const rules = { ...prior.rules };
+  for (const [rule, { version }] of Object.entries(fold.rules)) {
+    const detected = hasDetector(rule);
+    const priorCoverage = prior.rules[rule];
     const keptRoots =
-      priorCoverage !== undefined &&
-      priorCoverage.version === coverage.version &&
-      composeKey(...normalizeRules(priorCoverage.rules)) === composeKey(...rules)
+      priorCoverage !== undefined && priorCoverage.version === version && priorCoverage.detected === detected
         ? priorCoverage.roots
         : [];
-    units[unit] = {
-      version: coverage.version,
-      'swept-at': fold.sweptAt,
-      rules,
-      roots: mergeRoots(keptRoots, coverage.roots),
-    };
+    rules[rule] = { version, 'swept-at': fold.sweptAt, detected, roots: mergeRoots(keptRoots, fold.roots) };
   }
 
   const recorded: RecordedRejection[] = fold.rejections.map((rejection) => {
-    const version = fold.units[rejection.unit]?.version;
+    const version = fold.rules[rejection.rule]?.version;
     if (version === undefined) {
-      throw new Error(`rejection names unit "${rejection.unit}", which the fold does not cover`);
+      throw new Error(`rejection names rule "${rejection.rule}", which the fold does not version`);
     }
-    return { ...rejection, 'unit-version': version };
+    return { ...rejection, 'rule-version': version };
   });
 
   // A key the run re-recorded supersedes whatever the record held for it, which would otherwise stand beside the new
@@ -184,13 +222,13 @@ export function composeRecord(
   const carried = prior.rejections.filter((rejection) => {
     if (rerecorded.has(rejectionKey(rejection))) return false;
 
-    const coverage = fold.units[rejection.unit];
-    if (coverage === undefined || coverage.roots.every((root) => !isUnderRoot(rejection.file, root))) return true;
+    const swept = fold.rules[rejection.rule];
+    if (swept === undefined || fold.roots.every((root) => !isUnderRoot(rejection.file, root))) return true;
 
-    return rejection['unit-version'] === coverage.version && hasSite(rejection);
+    return rejection['rule-version'] === swept.version && hasSite(rejection);
   });
 
-  return { units, rejections: sortRejections([...carried, ...recorded]) };
+  return { rules, rejections: sortRejections([...carried, ...recorded]) };
 }
 
 /**
@@ -205,48 +243,57 @@ export function containsPhrase(text: SiteText, phrase: string): boolean {
 }
 
 /**
- * Reports whether every named unit covers `file` at the version that the run holds for it, with every rule that the run
- * names for that unit among the detector rules that its sweeps ran. A unit whose recorded version differs covers nothing, its
- * sweep having been taken against a rule that has since changed; a sweep that ran without a named rule's detector
- * never saw that rule's candidates.
+ * Reports whether the record covers `file` for every rule that the run versions: at the rule's current version, under
+ * one of its roots, and, for a rule whose detector the helper holds, with that detector having run. A rule recorded at
+ * another version covers nothing, its sweep having been taken against a rule that has since changed; a sweep that ran
+ * without a rule's detector never saw that rule's candidates. A run that versions no rule covers nothing.
  */
 export function isCoveredAt(
   record: ProseRecord,
-  unitVersions: ReadonlyMap<string, string>,
-  rules: ReadonlyArray<{ rule: string; unit: string }>,
+  ruleVersions: ReadonlyMap<string, string>,
+  hasDetector: (rule: string) => boolean,
   file: string,
 ): boolean {
-  if (unitVersions.size === 0) return false;
+  if (ruleVersions.size === 0) return false;
 
-  for (const [unit, version] of unitVersions) {
-    const coverage = record.units[unit];
+  for (const [rule, version] of ruleVersions) {
+    const coverage = record.rules[rule];
     if (coverage === undefined || coverage.version !== version) return false;
+    if (hasDetector(rule) && !coverage.detected) return false;
     if (coverage.roots.every((root) => !isUnderRoot(file, root))) return false;
   }
 
-  return rules.every(({ rule, unit }) => record.units[unit]?.rules.includes(rule) === true);
+  return true;
 }
 
-/** Reports whether a rejection was recorded at a version older than the one a run holds for its unit. */
-export function isStaleRejection(rejection: RecordedRejection, unitVersions: ReadonlyMap<string, string>): boolean {
-  const current = unitVersions.get(rejection.unit);
-  return current !== undefined && current !== rejection['unit-version'];
+/** Reports whether a rejection was recorded at a version older than the one a run holds for its rule. */
+export function isStaleRejection(rejection: RecordedRejection, ruleVersions: ReadonlyMap<string, string>): boolean {
+  const current = ruleVersions.get(rejection.rule);
+  return current !== undefined && current !== rejection['rule-version'];
 }
 
 /**
- * Parses a record's YAML. An absent record is the empty one, since a repository never swept has recorded nothing;
- * malformed YAML throws, because silently treating it as empty would erase every rejection on the next write.
+ * Parses a record's YAML, converting one written before rules were versioned against the run's versions. An absent
+ * record is the empty one, since a repository never swept has recorded nothing; malformed YAML throws, because silently
+ * treating it as empty would erase every rejection on the next write. A record holding both `units` and `rules` throws
+ * too, since neither shape accounts for the other's entries.
  */
-export function parseRecord(content: string, sourceLabel: string = RECORD_PATH): ProseRecord {
+export function parseRecord(content: string, versions: SweepVersions, sourceLabel: string = RECORD_PATH): ProseRecord {
   const parsed: unknown = content.trim() === '' ? {} : parseYaml(content);
-  const result = ProseRecordSchema.safeParse(parsed);
+  const isLegacy = typeof parsed === 'object' && parsed !== null && Object.hasOwn(parsed, 'units');
 
-  if (!result.success) {
-    const detail = result.error.issues
-      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-      .join('; ');
-    throw new Error(`Invalid sweep record in ${sourceLabel}: ${detail}`);
+  if (isLegacy && Object.hasOwn(parsed, 'rules')) {
+    throw new Error(`Invalid sweep record in ${sourceLabel}: (root): holds both units and rules`);
   }
+
+  if (isLegacy) {
+    const legacy = LegacyRecordSchema.safeParse(parsed);
+    if (!legacy.success) throw new Error(`Invalid sweep record in ${sourceLabel}: ${describeIssues(legacy.error)}`);
+    return convertLegacyRecord(legacy.data, versions);
+  }
+
+  const result = ProseRecordSchema.safeParse(parsed);
+  if (!result.success) throw new Error(`Invalid sweep record in ${sourceLabel}: ${describeIssues(result.error)}`);
 
   return result.data;
 }
@@ -264,22 +311,17 @@ export function parseRunFold(json: string): RunFold {
   }
 
   const result = RunFoldSchema.safeParse(parsed);
-  if (!result.success) {
-    const detail = result.error.issues
-      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-      .join('; ');
-    throw new Error(`Invalid run fold: ${detail}`);
-  }
+  if (!result.success) throw new Error(`Invalid run fold: ${describeIssues(result.error)}`);
 
   return result.data;
 }
 
 /**
- * Selects the rejections a run inherits: those recorded against a file it read, under a unit the run names, at a
- * version of that unit that still stands. A stale one is withheld, so its site reaches the sweeper with no prior
- * verdict attached and is adjudicated afresh, which is what makes a version bump a review rather than a deletion.
+ * Selects the rejections a run inherits: those recorded against a file it read, under a rule the run versions, at that
+ * rule's current version. A stale one is withheld, so its site reaches the sweeper with no prior verdict attached and
+ * is adjudicated afresh, which is what makes a raised version a review rather than a deletion.
  *
- * A rejection whose unit the run does not name is withheld on the same ground: no version stands to hold it against,
+ * A rejection whose rule the run does not version is withheld on the same ground: no version stands to hold it against,
  * so nothing could ever re-open it.
  *
  * The projection drops the record's own bookkeeping. A settled site needs no argument, and the ground behind it would
@@ -287,7 +329,7 @@ export function parseRunFold(json: string): RunFold {
  */
 export function selectPriorRejections(
   record: ProseRecord,
-  unitVersions: ReadonlyMap<string, string>,
+  ruleVersions: ReadonlyMap<string, string>,
   files: readonly string[],
 ): PriorRejection[] {
   const read = new Set(files);
@@ -295,31 +337,39 @@ export function selectPriorRejections(
   return record.rejections
     .filter(
       (rejection) =>
-        read.has(rejection.file) && unitVersions.has(rejection.unit) && !isStaleRejection(rejection, unitVersions),
+        read.has(rejection.file) && ruleVersions.has(rejection.rule) && !isStaleRejection(rejection, ruleVersions),
     )
     .map(({ rule, file, phrase }) => ({ rule, file, phrase }));
 }
 
 /**
- * Renders a record as YAML, with units keyed in sorted order and rejections sorted by rule, file, and phrase.
- * Re-writing an unchanged record is byte-identical, which is what keeps the file out of a diff it did not earn.
+ * Renders a record as YAML, with rules keyed in sorted order and rejections sorted by rule, file, and phrase, each
+ * entry's fields in a fixed order. Re-writing an unchanged record is byte-identical, which is what keeps the file out
+ * of a diff it did not earn.
  */
 export function stringifyRecord(record: ProseRecord): string {
-  const units = Object.fromEntries(
-    Object.entries(record.units)
+  const rules = Object.fromEntries(
+    Object.entries(record.rules)
       .toSorted(([left], [right]) => left.localeCompare(right))
-      .map(([unit, coverage]) => [
-        unit,
+      .map(([rule, coverage]) => [
+        rule,
         {
           version: coverage.version,
           'swept-at': coverage['swept-at'],
-          rules: normalizeRules(coverage.rules),
+          detected: coverage.detected,
           roots: coverage.roots,
         },
       ]),
   );
+  const rejections = sortRejections(record.rejections).map((rejection) => ({
+    rule: rejection.rule,
+    'rule-version': rejection['rule-version'],
+    file: rejection.file,
+    phrase: rejection.phrase,
+    ground: rejection.ground,
+  }));
 
-  return stringifyYaml({ units, rejections: sortRejections(record.rejections) }, { lineWidth: 0 });
+  return stringifyYaml({ rules, rejections }, { lineWidth: 0 });
 }
 
 // region | Helpers
@@ -345,6 +395,11 @@ function coversPhrase(recorded: string, detected: string): boolean {
   return left.includes(right) || right.includes(left);
 }
 
+/** Renders a schema failure's issues as one line, each prefixed with the path it concerns. */
+function describeIssues(error: z.ZodError): string {
+  return error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('; ');
+}
+
 /** Reports whether a repository-relative path lies under a recorded root, `.` covering the whole repository. */
 function isUnderRoot(file: string, root: string): boolean {
   return root === '.' || file === root || file.startsWith(`${root}/`);
@@ -366,11 +421,6 @@ function mergeRoots(recorded: readonly string[], swept: readonly string[]): stri
  */
 function normalizeForMatch(phrase: string): string {
   return flattenWhitespace(maskCodeSpans(phrase.normalize('NFC')));
-}
-
-/** Dedupes and sorts a rule list, so two sweeps naming one set in different orders record and compare alike. */
-function normalizeRules(rules: readonly string[]): string[] {
-  return [...new Set(rules)].toSorted();
 }
 
 /**
