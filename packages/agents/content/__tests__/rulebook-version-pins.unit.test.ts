@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ResolvedRulebook } from '../../src/lib/rulebook-deploy.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
+import { listRuleSections } from '../test-utils/rule-markers.ts';
 
 // A rulebook's version names the guidance an agent holds, and `revise-prose` keys a repository's sweep coverage on it,
 // so a body that changes without a bump leaves every repository recorded as swept against rule text that has since
@@ -18,8 +19,22 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 /** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` reaches only by including the partial. */
 const INCLUDED_PARTIAL_MARKER = '**No hard line breaks.**';
 
+/** A phrase of `_partials/reduced-object-relative.md` that the rule's section reaches only by including the partial. */
+const INCLUDED_RULE_PHRASE = '**Repairs, in preference order.**';
+
+/** A rule's section text and the sweep version declared by its marker. */
+interface DeclaredRule {
+  readonly text: string;
+  readonly version: string | undefined;
+}
+
 interface RulebookPin {
   readonly bodyHash: string;
+  readonly version: string;
+}
+
+interface RulePin {
+  readonly sectionHash: string;
   readonly version: string;
 }
 
@@ -80,11 +95,46 @@ const PINS = new Map<string, RulebookPin>([
   ],
 ]);
 
+// A rule's marker declares a sweep version, which rises only when the rule becomes stricter. Each rule's section is
+// pinned against that version, so that a section edit fails this suite until the author decides whether the rule's
+// version rises, a decision separate from whether the rulebook's does.
+
+/** The sweep version each rule's marker declares, and the section that version is pinned against. */
+const RULE_PINS = new Map<string, RulePin>([
+  [
+    'capitalization-after-colon',
+    { sectionHash: '58ec61bdaea1ae6d2b092c93749893447830b2e09796e127cfcac17164a297d4', version: '1' },
+  ],
+  [
+    'doc-descriptions',
+    { sectionHash: 'dab4ed9fc5c11d9c4d240bd4aa9df47a199daffa298817a3ac70b109588d10b9', version: '1' },
+  ],
+  ['em-dash', { sectionHash: '2e81d75a4b2d0580112f983636b45376cf65243c4340b8d8769eefad69247ec2', version: '1' }],
+  [
+    'inline-comments',
+    { sectionHash: 'b99006eae56846bd994efc6ae21fb163ac4dcf4b3b50bb1322f734520b3a98d0', version: '1' },
+  ],
+  [
+    'reduced-object-relative',
+    { sectionHash: 'c618a58fa100ac9594a2df5fd4b53d44f31d654a097e69e570b26e1736f5090e', version: '1' },
+  ],
+  ['second-person', { sectionHash: '398f568c087a8a004d17ac1eacf21e9bff800063c67b884a55d4d053d5d29015', version: '1' }],
+  ['sentence-case', { sectionHash: 'e19ffdafdd6eb84f47e229d07871a70ab55114981c8052b365f4bd33330d9b18', version: '1' }],
+  ['so', { sectionHash: '2ed8a0d1f531d1d33778f9006214931528d13f0ccd79ad004a87d05e0ba97bf3', version: '1' }],
+  ['where', { sectionHash: 'b01b646590b918798802e6e35edef5cb1e842dc6764e20b541ca9cb53f715701', version: '1' }],
+]);
+
 const DRIFT_MESSAGE =
   "A rulebook's deployed body no longer matches the pin recorded for it. Choose one remedy: bump the rulebook's " +
   "`version` and re-pin both fields if the operative content moved, so every repository's record re-opens its " +
   'coverage for review; or re-pin the hash alone if the edit left the operative content as it was. An edit to an ' +
   'included partial counts as an edit to the body, which is why a rulebook can drift with its own file untouched.';
+
+const RULE_DRIFT_MESSAGE =
+  "A rule's section no longer matches the pin recorded for it. Choose one remedy: raise the sweep version on the " +
+  "rule's marker and re-pin both fields if some text that complied with the old wording could fail the new one, or " +
+  'if unsure; or re-pin the hash alone for a relaxation, a clarification, or a rewording. An edit to an included ' +
+  "partial counts as an edit to the section, which is why a rule can drift with its rulebook's file untouched.";
 
 const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
@@ -146,6 +196,59 @@ describe('rulebook version pins', () => {
   });
 });
 
+describe('rule version pins', () => {
+  it('pins every declared rule', async () => {
+    const unpinned = (await readRuleSections())
+      .entries()
+      .filter(([id]) => !RULE_PINS.has(id))
+      .map(([id, rule]) => `['${id}', ${renderRulePin(rule)}],`)
+      .toArray();
+
+    const message = `A declared rule has no pin. Add to \`RULE_PINS\`:\n  ${unpinned.join('\n  ')}`;
+    expect(unpinned, message).toEqual([]);
+  });
+
+  it('pins no rule that no marker declares', async () => {
+    const sections = await readRuleSections();
+    const orphaned = RULE_PINS.keys()
+      .filter((id) => !sections.has(id))
+      .toArray();
+
+    const message = `A pin names a rule that no marker declares: ${orphaned.join(', ')}`;
+    expect(orphaned, message).toEqual([]);
+  });
+
+  it('declares the pinned sweep version', async () => {
+    const sections = await readRuleSections();
+    const drifted = [...RULE_PINS].filter(([id, pin]) => sections.get(id)?.version !== pin.version).map(([id]) => id);
+
+    const message = `A rule's marker declares a sweep version other than its pinned one: ${drifted.join(', ')}`;
+    expect(drifted, message).toEqual([]);
+  });
+
+  it('is pinned against each rule section as it stands', async () => {
+    const sections = await readRuleSections();
+    const drifted = [...RULE_PINS]
+      .filter(([id, pin]) => hashText(sections.get(id)?.text ?? '') !== pin.sectionHash)
+      .map(([id]) => id);
+
+    expect(drifted, `${RULE_DRIFT_MESSAGE}\n  ${drifted.join('\n  ')}`).toEqual([]);
+  });
+
+  it('hashes the content of an included partial', async () => {
+    const message =
+      `reduced-object-relative reaches ${INCLUDED_RULE_PHRASE} only through an include, so its absence means the ` +
+      'pinned section no longer covers the partial that states the rule';
+    expect((await readRuleSections()).get('reduced-object-relative')?.text, message).toContain(INCLUDED_RULE_PHRASE);
+  });
+
+  it('reports drift from a one-character change', async () => {
+    const text = (await readRuleSections()).get('where')?.text;
+
+    expect(hashText(`${text} `)).not.toBe(RULE_PINS.get('where')?.sectionHash);
+  });
+});
+
 // region | Helpers
 
 /** Hashes a resolved rulebook's body, or the empty string if the slug resolved to nothing. */
@@ -158,9 +261,28 @@ function hashText(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
+/** Reads the section and sweep version of every rule that a library rulebook declares, indexed by the rule's id. */
+async function readRuleSections(): Promise<ReadonlyMap<string, DeclaredRule>> {
+  return new Map(
+    (await RESOLVED)
+      .values()
+      .flatMap((rulebook) => listRuleSections(rulebook.body))
+      .flatMap((section): Array<[string, DeclaredRule]> =>
+        section.marker === undefined
+          ? []
+          : [[section.marker.id, { text: section.text, version: section.marker.version }]],
+      ),
+  );
+}
+
 /** Renders a rulebook's pin as the literal that `PINS` takes, so a failure hands the author the line to paste. */
 function renderPin(rulebook: ResolvedRulebook): string {
   return `{ bodyHash: '${hashText(rulebook.body)}', version: '${rulebook.version}' }`;
+}
+
+/** Renders a rule's pin as the literal that `RULE_PINS` takes, so a failure hands the author the line to paste. */
+function renderRulePin(rule: DeclaredRule): string {
+  return `{ sectionHash: '${hashText(rule.text)}', version: '${rule.version}' }`;
 }
 
 // endregion | Helpers
