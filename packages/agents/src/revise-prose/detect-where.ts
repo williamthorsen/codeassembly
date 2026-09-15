@@ -1,9 +1,9 @@
 /**
  * `where` detection.
  *
- * The rule keeps one word to one sense: A `where` naming a place stands, and every other use is the violation. Only a
- * reading tells the senses apart, so the detector reports every sentence holding the word and leaves the sense to the
- * adjudicator.
+ * The rule permits two senses: A `where` naming a place stands, as does one that follows an expression and states what a
+ * symbol in it stands for, and every other use is the violation. Only a reading tells the senses apart, so the detector
+ * reports every sentence holding the word and leaves the sense to the adjudicator.
  */
 import { findMatchingSentences } from './span-text.ts';
 import type { ProseSpan, WhereCandidate } from './types.ts';
