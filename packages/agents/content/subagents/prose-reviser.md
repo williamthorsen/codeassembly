@@ -17,19 +17,23 @@ Your dispatch contains five scalars:
 - **`files`**: The files in your batch, comma-separated. This list is the whole set of files that you may edit.
 - **`candidates`**: The path of a JSON file containing the detector's candidates for those files. Read it with {tool:Read}.
 - **`rejections`**: The path of a JSON file containing the sites already adjudicated by an earlier sweep, each under one rule. Read it with {tool:Read}.
-- **`rules`**: The rule ids that the detector covers on this run, comma-separated.
+- **`rules`**: The ids of the rules that you apply to your batch, comma-separated.
 
 Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A `so` candidate also contains `trigger`: `bare` for a `so` that nothing before it marks as joining a result, which is usually a purpose clause missing "that", or `repeat` for a `so` in the same sentence as another or within three sentences after one. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its rule that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
-Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other; therefore, a span named by the list is adjudicated normally under every remaining rule, and a site that also appears among the candidates is yours to judge under that candidate's rule. A site whose rule has changed version since is absent from the list; as a result, you receive it with no prior verdict at all.
+Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other; therefore, a span named by the list is adjudicated normally under every other rule that you apply, and a site that also appears among the candidates is yours to judge under that candidate's rule. A site whose rule has changed version since is absent from the list; as a result, you receive it with no prior verdict at all.
 
-Detection covers only the rules in your `rules` scalar, and it nominates sites rather than deciding them. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule below to all of its prose.
+Detection covers only those of your rules that have a detector, and it nominates sites rather than deciding them. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule that your `rules` scalar names to all of its prose.
 
 An inline code span appears in a candidate's `sentence` as `«codespan»`, which stands for content that the detector elided so that its tokens do not read as prose. The source keeps the code. If the elided token decides the reading, read the source line.
 
 ## Which rules apply
 
-Four, in the order they appear in this document: the plain-speech rule and its sweep calibration, both below, and the comment preferences and the writing preferences at the end. Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
+The rules that your `rules` scalar names. This document states every rule in one of four places, which appear in this order: the plain-speech rule and its sweep calibration, both below, and the comment preferences and the writing preferences at the end. `plain-speech` names the first two together.
+
+Apply no rule that your `rules` scalar leaves out, and report no site under one. An earlier sweep has already applied each such rule to your files; make no edit that breaks any rule in this document.
+
+Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
 
 <!-- include: ../_partials/plain-speech.md / -->
 

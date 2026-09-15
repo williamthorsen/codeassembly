@@ -4,6 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { RULE_IDS } from '../../src/revise-prose/rules.ts';
+import type { ReportedBatch } from '../../src/revise-prose/types.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts';
 
@@ -54,6 +55,9 @@ const SWEEP_VERSION_REGEX = /^[1-9][0-9]*$/;
 /** Matches the line naming a unit's version, whose captured group is the unit's name and, for `plain-speech`, its rule id. */
 const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*(\S+)\s+\S+\s*-->$/m;
 
+/** The helper's per-batch field from which the skill composes each dispatch's rules, held to the type that declares it. */
+const UNSWEPT_FIELD = 'unswept' satisfies keyof ReportedBatch;
+
 const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
 describe('prose-sweep rule vocabulary', () => {
@@ -100,6 +104,15 @@ describe('prose-sweep rule vocabulary', () => {
       subagent,
       `${SUBAGENT} describes no \`${REJECTIONS_KEY}\` scalar, so the skill writes a file that nothing opens`,
     ).toContain(REJECTIONS_SCALAR);
+  });
+
+  it("dispatches each batch with the rules that the helper's batch lists as unswept", async () => {
+    const skill = await readContentFile(SKILL);
+
+    expect(
+      skill,
+      `${SKILL} never names the helper's \`${UNSWEPT_FIELD}\` field, so its dispatch does not take each batch's rules from the helper`,
+    ).toContain(`\`${UNSWEPT_FIELD}\``);
   });
 
   it('carries a marker for every detector rule', async () => {
