@@ -45,7 +45,7 @@ gh pr create \
   {label_flags}
 ```
 
-`gh pr create` prints the pull-request URL. Read it from the command's output and carry it into step 4's artifact and the completion line; never capture it into a shell variable.
+`gh pr create` prints the pull-request URL. Read it from the command's output and include it in step 4's artifact and the completion line; never capture it into a shell variable.
 
 ### 3. Handle label failures
 
@@ -66,7 +66,7 @@ Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_i
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
-`capture-lede-decision` reads this artifact later to recover the `## What` lede this pull request published, and it is the only record of that text once the description is revised. Where the lede is needed and the artifact does not carry it, that skill takes `--agent-lede-file`; the artifact is not edited to supply it.
+`capture-lede-decision` reads this artifact later to recover the `## What` lede published by this pull request, and it is the only record of that text once the description is revised. When the lede is needed and the artifact does not contain it, that skill takes `--agent-lede-file`; the artifact is not edited to supply it.
 
 Filename format:
 

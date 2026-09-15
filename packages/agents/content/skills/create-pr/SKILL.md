@@ -11,7 +11,7 @@ dependencies:
 
 Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
 
-The pull request carries the change's consolidated record and overrides as [the change record](../_data/change-record.md) states them.
+The pull request includes the change's consolidated record and overrides as [the change record](../_data/change-record.md) states them.
 
 ## Optional arguments
 
@@ -39,7 +39,7 @@ If the branch is not up to date with remote, emit `skill.completed` (payload `{"
 
 ### 3. Call `summarize-change`
 
-Invoke the `{skill:summarize-change}` skill to produce a change summary, passing `--scope` and `--type` where either was provided. The change summary's frontmatter carries the fields that [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter) lists.
+Invoke the `{skill:summarize-change}` skill to produce a change summary, passing `--scope` and `--type` when either was provided. The change summary's frontmatter contains the fields that [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter) lists.
 
 ### 4. Read frontmatter
 
@@ -62,7 +62,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-effective-record \
 
 Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Read `effective_record` from the output; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states its fields. Steps 6 and 7 use the effective record, and step 9 records the consolidated record and the overrides apart.
 
-If the call fails, emit `skill.completed` (payload `{"outcome":"stopped: effective record not resolved"}`) per [Lifecycle events](#lifecycle-events), then stop and report its error: the title and the labels both depend on the effective record.
+If the call fails, emit `skill.completed` (payload `{"outcome":"stopped: effective record not resolved"}`) per [Lifecycle events](#lifecycle-events), then stop and report its error: The title and the labels both depend on the effective record.
 
 ### 6. Render PR title
 
@@ -78,7 +78,7 @@ node {harness_home_dir}/scripts/describe-change.mjs render-titles \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))"
 ```
 
-Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`), and pass `--breaking` only where the effective record is breaking. Quote `--title` so titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: no shell variable survives to a second call, and an assignment prints nothing for the next step to read.
+Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`), and pass `--breaking` only if the effective record is breaking. Quote `--title` so that titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: No shell variable survives to a second call, and an assignment prints nothing for the next step to read.
 
 Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
@@ -127,7 +127,7 @@ node {harness_home_dir}/scripts/describe-change.mjs render-block \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
 ```
 
-Always pass `--title`, which the block requires. Omit each other flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even if the block carries only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found or the call fails, leave the block out and say so.
+Always pass `--title`, which the block requires. Omit each other flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even if the block contains only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found or the call fails, leave the block out and say so.
 
 ### 10. Call delegate
 
@@ -145,7 +145,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 ### 11. Persist the PR URL
 
-The delegate reports the created PR's URL (its `PR created: {URL}` line). Persist it into the branch manifest so PR-aware skills reuse it on later sessions (see [PR source resolution](../_data/pr-source-resolution.md#stored-pr-url)):
+The delegate reports the created PR's URL (its `PR created: {URL}` line). Persist it into the branch manifest so that PR-aware skills reuse it on later sessions (see [PR source resolution](../_data/pr-source-resolution.md#stored-pr-url)):
 
 ```bash
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{URL}"

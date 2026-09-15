@@ -1,6 +1,6 @@
 ---
 name: capture-event
-description: 'Capture an event into the shared knowledge substrate. Use when noticing something worth recording for later recall: an observation, a pattern, a refinement, a surprising API surface, a workaround, or a problem you hit and resolved. A fast pure append: no survey, recall, or dedup.'
+description: 'Capture an event into the shared knowledge substrate. Use when noticing something worth recording for later recall: an observation, a pattern, a refinement, a surprising API surface, a workaround, or a problem that you hit and resolved. A fast pure append: no survey, recall, or dedup.'
 user-invocable: true
 ---
 
@@ -16,9 +16,9 @@ This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cros
 
 Capture anything worth recalling later: a behavior, a pattern, a refinement, a surprising API surface, a workaround. Problem→solution and pattern-plus-refinement are useful shapes, but an event may simply be an observation; do not force it into a template.
 
-A **solved-problem episode**, a problem you hit and resolved, is worth tagging so you can recall past fixes as a group: Capture it with `--tags fix` (plus any topical tags), putting the problem and its resolution in the body. The `fix` tag is what lets you recall past fixes together later.
+A **solved-problem episode**, a problem that you hit and resolved, is worth tagging so that you can recall past fixes as a group: Capture it with `--tags fix` (plus any topical tags), putting the problem and its resolution in the body. The `fix` tag lets you recall past fixes together later.
 
-A **skill-caused mistake**, an error a clearer skill definition would have prevented, is worth tagging the same way: Capture it with `--tags mistake` and `--skill <skill-at-fault>`, putting what went wrong and what the skill should have said in the body. The `mistake` tag is what lets you recall skill mistakes as a group when deciding which skills to revise.
+A **skill-caused mistake**, an error that a clearer skill definition would have prevented, is worth tagging the same way: Capture it with `--tags mistake` and `--skill <skill-at-fault>`, putting what went wrong and what the skill should have said in the body. The `mistake` tag lets you recall skill mistakes as a group when deciding which skills to revise.
 
 ## Arguments
 
@@ -26,7 +26,7 @@ A **skill-caused mistake**, an error a clearer skill definition would have preve
 | ----------- | --------------------------------------------------------------------------------- | -------- |
 | `--summary` | A human-readable one-line summary; becomes the record's label on recall.          | Yes      |
 | `--store`   | Registry name of the event store, or `@default` for the `default_kb`.             | Yes      |
-| `--skill`   | The skill the event relates to.                                                   | No       |
+| `--skill`   | The skill to which the event relates.                                             | No       |
 | `--model`   | The model identifier in play.                                                     | No       |
 | `--harness` | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.              | Injected |
 | `--tags`    | Comma-separated tag list.                                                         | No       |
@@ -43,20 +43,20 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 
 ### Store selection
 
-`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture goes to the named store and never to a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`. Omitting `--store` is refused with an error that lists the registered stores rather than defaulting silently.
+`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture goes to the named store and never to a project-local KB near which it happened to be invoked. The store must be registered in `kb.yaml`. Omitting `--store` is refused with an error that lists the registered stores rather than defaulting silently.
 
-Choose the destination deliberately. When the lesson is specific to a project, pass that project's KB with `--store <name>`. Only when the lesson is environment-level, meaning an observation or refinement that applies across every project in the current environment, route it to the registry's `default_kb` by passing `--store @default`. Reaching the default is an explicit act, not what happens when the flag is forgotten.
+Choose the destination deliberately. When the lesson is specific to a project, pass that project's KB with `--store <name>`. Only when the lesson is environment-level, meaning an observation or refinement that applies across every project in the current environment, send it to the registry's `default_kb` by passing `--store @default`. Selecting the default is an explicit act, not what happens when the flag is forgotten.
 
 ### Amending an event
 
-`--amend <id>` rewrites an existing capture in place (for example, an event a `capture-feedback` pass got wrong). Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
+`--amend <id>` rewrites an existing capture in place (for example, an event that a `capture-feedback` pass got wrong). Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
 
-Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so the correction becomes a new record rather than a change to history.
+Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so that the correction becomes a new record rather than a change to history.
 
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
-- **A `kb.yaml` registry naming the store**: The helper resolves `--store` through `.agents/kb.yaml` in the project or `~/.agents/kb.yaml`. Where no registry declares the named store, every capture is refused rather than written somewhere else.
+- **A `kb.yaml` registry naming the store**: The helper resolves `--store` through `.agents/kb.yaml` in the project or `~/.agents/kb.yaml`. When no registry declares the named store, every capture is refused rather than written somewhere else.
 
 ## Process
 
@@ -89,10 +89,10 @@ The helper prints a JSON object to stdout:
 
 On `ok: true`, report the captured `id` and `path`.
 
-On `ok: false`, route by the `error` code:
+On `ok: false`, handle the `error` code as follows:
 
 - `invalid-args`: Report the helper's message and propose a corrected invocation.
-- `missing-store`: `--store` was omitted. Re-run with `--store <name>` for the KB the user named, or `--store @default` for an environment-level lesson; the message lists the registered stores.
+- `missing-store`: `--store` was omitted. Re-run with `--store <name>` for the KB named by the user, or `--store @default` for an environment-level lesson; the message lists the registered stores.
 - `store-not-registered`: The named store is not in `kb.yaml`. Confirm the store name or register it.
 - `readonly-store`: The store is marked readonly; captures are refused.
 - `no-default-store`: `--store @default` was given but no `default_kb` is configured. Name a store explicitly or configure a default with `kb set-default`.

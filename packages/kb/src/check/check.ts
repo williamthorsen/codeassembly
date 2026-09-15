@@ -39,7 +39,7 @@ export interface CheckResult {
  * Inside a git working tree the enumeration also drops the notes that the repository ignores, so such a note is
  * neither checked nor available as a wikilink target; see {@link enumerateNotes} for the rule.
  *
- * A `[[store:Target]]` link resolves against the store its prefix names rather than this one. Those stores are looked
+ * A `[[store:Target]]` link resolves against the store named by its prefix rather than this one. Those stores are looked
  * up in the merged `kb.yaml` registry, which is read from `~/.agents/kb.yaml` and from `cwd`'s project-local registry;
  * `cwd` defaults to the store root, so a caller that supplies none still resolves against the user-global registry.
  * Only the stores this store's own links name are consulted.

@@ -46,7 +46,7 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 ## Proposed-change gate
 
-A finding is a proposed change. Name the change before writing the finding: A problem you cannot pair with a change you would make is an observation, not a finding. Route it to an insight where it carries knowledge a future reader needs, and drop it otherwise. Naming the change is not settling it: Where more than one change would resolve the problem and choosing among them turns on knowledge the author holds, name the alternatives and say the choice is theirs, because the author knows something you do not, never because you could not settle on a fix. Full treatment: [finding scheme § Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate).
+A finding is a proposed change. Name the change before writing the finding: A problem is an observation, not a finding, when you cannot pair it with a change that you would make. Record it as an insight when it contains knowledge that a future reader needs, and drop it otherwise. Naming the change is not settling it: When more than one change would resolve the problem and choosing among them depends on knowledge that the author has, name the alternatives and say the choice is theirs, because the author knows something you do not, never because you could not settle on a fix. Full treatment: [finding scheme § Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate).
 
 ## Actionability gate
 
@@ -54,7 +54,7 @@ A named change still has to be worth making. Hedging language inside a finding (
 
 ## Insight gate
 
-Reviewers may emit insights (`I{n}`), knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge a future reader is materially worse off without, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
+Reviewers may emit insights (`I{n}`), knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge without which a future reader is materially worse off, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
 
 ## Finding concision
 

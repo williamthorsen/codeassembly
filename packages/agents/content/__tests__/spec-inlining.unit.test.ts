@@ -104,7 +104,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
     // one of them reintroduces the failure named beneath it.
     // Rule 1's test. Without it the rule states no condition at all.
-    'Recommend only when you can name a load-bearing decision the plan leaves unsettled',
+    'Recommend only when you can name a load-bearing decision that the plan leaves unsettled',
     // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
     'when it was ratified interactively',
     'from prior design work, verified against source, or copied from an established pattern',
@@ -115,7 +115,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     'They are evidence to weigh, and none of them matches rule 1 on its own',
     // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
-    '`➕` line naming the specific unsettled decision the pass would surface',
+    '`➕` line naming the specific unsettled decision that the pass would raise',
     // The marker rule. Without it the selected option is pinned to ■■□ whatever the analysis found, so the marker
     // varies with nothing and the reader has to investigate every menu to find the real forks.
     "The selected option's marker follows how cleanly its rule matched",
@@ -158,10 +158,10 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     "the recommended option's marker follows how cleanly the case's own test is met",
     // The rule that puts the ticket edit's destination in the rendered line. Without it the option renders as a bare
     // label again, and selecting it is consent to a write whose target the user was never shown.
-    '**Name the artifact the edit writes.**',
-    // The rule that offers the local-only form where the snapshot may be the working contract. Without it a ticket the
+    '**Name the artifact that the edit writes.**',
+    // The rule that offers the local-only form when the snapshot may be the working contract. Without it a ticket the
     // user cannot edit has no path but a remote write that fails or lands on a ticket that is not theirs.
-    '**Offer the local-only form where the snapshot may be the contract.**',
+    '**Offer the local-only form when the snapshot may be the contract.**',
     // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
     // findings turned out to be, so the marker carries no information about how clear the call was.
     "The selected option's marker follows how cleanly its rule matched",

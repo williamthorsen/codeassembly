@@ -1,6 +1,6 @@
 # Title templates
 
-Commit titles, ticket titles, PR titles, and squash-merge titles are produced from declarative templates. Each surface has its own template, configured per repository and per user, and rendered by `describe-change.mjs` from a small set of named tokens. One compiled template serves both directions: the same template that renders a title reads a rendered title back into its parts.
+Commit titles, ticket titles, PR titles, and squash-merge titles are produced from declarative templates. Each surface has its own template, configured per repository and per user, and rendered by `describe-change.mjs` from a small set of named tokens. One compiled template serves both directions: The same template that renders a title reads a rendered title back into its parts.
 
 This file states how a title is rendered and read; [`title-voice.md`](./title-voice.md) states how the `{title}` text fed to these templates is composed.
 
@@ -19,7 +19,7 @@ merge:
   title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'
 ```
 
-Quote every `title_format` value, single or double quotes alike. Unquoted, YAML reads `{title}` as a flow mapping rather than a token, and a space followed by `#` opens a comment.
+Quote every `title_format` value, single or double quotes alike. Without quotes, YAML reads `{title}` as a flow mapping rather than a token, and a space followed by `#` opens a comment.
 
 ## Invoking the bundle
 
@@ -29,11 +29,11 @@ Quote every `title_format` value, single or double quotes alike. Unquoted, YAML 
 node {harness_home_dir}/scripts/describe-change.mjs <subcommand> [flags]
 ```
 
-The bundle carries no shebang, so the `node` prefix is required. Each subcommand accepts only the flags that its section below lists and refuses any other as unknown, a flag that another subcommand takes included. A missing or unknown subcommand exits non-zero with a usage error that lists the subcommands. A run that succeeds writes one JSON object to stdout, and warnings and errors go to stderr.
+The bundle has no shebang, so the `node` prefix is required. Each subcommand accepts only the flags that its section below lists and refuses any other as unknown, including a flag that another subcommand takes. A run with a missing or unknown subcommand exits non-zero with a usage error that lists the subcommands. A run that succeeds writes one JSON object to stdout, and warnings and errors go to stderr.
 
 | Subcommand                                              | Reports                                                 | Reads                                                       |
 | ------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
-| [`render-titles`](#render-titles)                       | Each surface's title, rendered from one record          | The templates, and the taxonomy where it is readable        |
+| [`render-titles`](#render-titles)                       | Each surface's title, rendered from one record          | The templates, and the taxonomy when it is readable         |
 | [`parse-title`](#parse-title)                           | A rendered title, read back into its record             | The templates and the taxonomy                              |
 | [`consolidate-branch`](#consolidate-branch)             | A commit range's entries and their consolidated record  | The templates, the taxonomy, and the commits                |
 | [`resolve-ticket-type`](#resolve-ticket-type)           | The work type that a ticket's labels name               | The label map                                               |
@@ -45,9 +45,9 @@ The bundle carries no shebang, so the `node` prefix is required. Each subcommand
 
 - A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, and `render-block` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
-- An unreadable taxonomy draws a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `resolve-effective-record`, and `resolve-merge`.
-- A subcommand that reads the templates or the label map, run outside a repository, warns on stderr and anchors the `.agents/` and `.meta/label-map.json` lookups at the working directory, so the global templates still render.
-- A `title_format` resolving to anything but a string draws a warning on stderr, and the next source supplies the template.
+- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `resolve-effective-record`, and `resolve-merge`.
+- Outside a repository, a subcommand that reads the templates or the label map warns on stderr and anchors the `.agents/` and `.meta/label-map.json` lookups at the working directory, so the global templates still render.
+- A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
 
 ## `render-titles`
 
@@ -62,7 +62,7 @@ node {harness_home_dir}/scripts/describe-change.mjs render-titles \
   --pr-number "{pr_number}"
 ```
 
-Its flags are `--title`, `--scope`, `--type`, `--breaking`, `--ticket-ref`, and `--pr-number`, and all are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so titles with spaces or shell-special characters survive. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to no scope, so the sentinel never reaches a rendered title.
+Its flags are `--title`, `--scope`, `--type`, `--breaking`, `--ticket-ref`, and `--pr-number`, and all are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so that titles with spaces or shell-special characters are passed intact. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to no scope, so the sentinel never appears in a rendered title.
 
 Output is JSON:
 
@@ -87,7 +87,7 @@ If the bundle is not found, fall back to the bare `--title` value.
 node {harness_home_dir}/scripts/describe-change.mjs parse-title commit "agents|feat: Add foo"
 ```
 
-The output names every field, with `null` where the record carries none:
+The output names every field, with `null` for any field that the record lacks:
 
 ```json
 {
@@ -101,15 +101,15 @@ The output names every field, with `null` where the record carries none:
 }
 ```
 
-A subject not matched by the template reports `{"matched":false}` and exits 0. A hand-written subject is an ordinary result rather than an error, so a caller reads `matched` rather than the exit status.
+For a subject not matched by the template, the run reports `{"matched":false}` and exits 0. A hand-written subject is an ordinary result rather than an error, so a caller reads `matched` rather than the exit status.
 
-**A type is required.** A template naming `{type}` reads a subject carrying no declared type as unmatched, whatever else the subject carries. Under `[[{scope}|]{type}: ]{title}`, both `agents|Add foo` and `Support a|b: syntax` are unmatched, the second because `b` is no declared type.
+**A type is required.** A template naming `{type}` reads a subject that contains no declared type as unmatched, whatever else the subject contains. Under `[[{scope}|]{type}: ]{title}`, both `agents|Add foo` and `Support a|b: syntax` are unmatched, the second because `b` is no declared type.
 
-**A template naming no `{ticket_ref}` strips one first.** The bundle removes three leading forms before the match: `## `, `#123 ` (with an optional `.1` or `-1` suffix), and `ABC-123 `. These are the forms that release-kit strips, which is what lets a commit template naming no `{ticket_ref}` read a subject that carries one.
+**Under a template naming no `{ticket_ref}`, the bundle strips one first.** The bundle removes three leading forms before the match: `## `, `#123 ` (with an optional `.1` or `-1` suffix), and `ABC-123 `. These are the forms that release-kit strips, which lets a commit template naming no `{ticket_ref}` read a subject that contains one.
 
-**Where a parse could read a group as present or absent, present wins.** This is release-kit's reading, and it is what makes `agents|feat: Add foo` parse as scoped and typed rather than as a bare title. See [What the grammar does not support](#what-the-grammar-does-not-support) for the cost.
+**When a parse could read a group as present or absent, present wins.** This is release-kit's reading, and it makes `agents|feat: Add foo` parse as scoped and typed rather than as a bare title. See [What the grammar does not support](#what-the-grammar-does-not-support) for the cost.
 
-The run refuses a surface whose template is empty, since there is nothing to read the subject through, and refuses where no taxonomy is readable.
+The run refuses a surface whose template is empty, since there is nothing to read the subject through, and refuses if no taxonomy is readable.
 
 ## `consolidate-branch`
 
@@ -145,25 +145,25 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
 }
 ```
 
-**`entries` runs oldest first**, in the order the branch was built, and a commit's own trailers keep the order they were written in. One order therefore holds across the whole list, whether an entry came from a subject or from a trailer.
+**`entries` runs oldest first**, in the order the branch was built, and a commit's own trailers keep the order in which they were written. One order therefore holds across the whole list, whether an entry came from a subject or from a trailer.
 
 **Each entry's `change` is the entry rendered back through `commit.title_format`.** It is the form that a `Change:` trailer and the change summary's `changes` field take verbatim, and it reads back to the same entry. A ticket reference stripped from the subject does not reappear in it.
 
-**A merge commit contributes no entry.** Its subject matches no template and its author cannot rewrite it, so reporting it as unmatched would train a reader to skim a list that exists to be read. The commits a merge brought in stay in the range on their own.
+**A merge commit contributes no entry.** Its subject matches no template and its author cannot rewrite it, so reporting it as unmatched would train a reader to skim a list that exists to be read. The commits brought in by a merge stay in the range on their own.
 
-**A commit carrying `Change:` trailers contributes those entries and not its subject.** A condensed commit's subject renders the record to which its trailers already consolidate, so reading both would count the branch against itself. See [The `Change:` trailer](./change-record.md#the-change-trailer).
+**A commit with `Change:` trailers contributes those entries and not its subject.** Because a condensed commit's subject renders the record to which its trailers already consolidate, reading both would count the branch's entries twice. See [The `Change:` trailer](./change-record.md#the-change-trailer).
 
-**The consolidated record ranks; it does not count.** One `feat` speaks for a branch carrying three `fix` commits, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. Every field of `consolidated_record` is `null` when no entry was found, which is how a branch with no entries is told from one whose consolidated record names no scope. The consolidated record names no title: a caller takes that from the change summary.
+**The consolidated record ranks; it does not count.** One `feat` outranks three `fix` commits on the same branch, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. Every field of `consolidated_record` is `null` when no entry was found, which is how a caller distinguishes a branch with no entries from one whose consolidated record names no scope. The consolidated record names no title: A caller takes that from the change summary.
 
-**A subject no template matched is listed in `unmatched` rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set that the consolidated record is derived from.
+**A subject matched by no template is listed in `unmatched` rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set that the consolidated record is derived from.
 
-**A violation is reported and the run continues.** A `refactor!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. The commit is already written, so refusing here would block the work behind a rebase; the entry is reported as written and never normalized.
+**A violation is reported and the run continues.** A `refactor!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. Because the commit is already written, refusing here would block the work until a rebase; the entry is reported as written and never normalized.
 
 The run refuses outright if no taxonomy is readable, since the entries have nothing to rank against, and if `commit.title_format` is empty, since no template would match any subject.
 
 ## `resolve-ticket-type`
 
-`resolve-ticket-type` reports the work type that a ticket's labels name. `--ticket-label` is its one flag, repeatable and optional, and carries the linked ticket's labels. The bundle reverse-looks-up the repository's `.meta/label-map.json` to report which work type they name, so it fetches nothing itself.
+`resolve-ticket-type` reports the work type that a ticket's labels name. `--ticket-label` is its one flag, repeatable and optional, and takes the linked ticket's labels. The bundle reverse-looks-up the repository's `.meta/label-map.json` to report which work type they name, so it fetches nothing itself.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs resolve-ticket-type \
@@ -174,7 +174,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-ticket-type \
 { "ticket_type": "feat" }
 ```
 
-**`ticket_type` is `null` where the labels name no type and where they name more than one.** Two type labels on one ticket say that nobody has decided which it is. A repository whose label map is absent or unparseable names no type, so its `ticket_type` is `null` as well.
+**`ticket_type` is `null` when the labels name no type and when they name more than one.** Two type labels on one ticket say that nobody has decided which it is. Because a repository whose label map is absent or unparseable names no type, its `ticket_type` is `null` as well.
 
 ## `resolve-effective-record`
 
@@ -200,7 +200,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-effective-record \
 }
 ```
 
-**`effective_record` holds every field of a record.** `ticket_ref` and `pr_number` are always `null`, since only a merge knows them. Any other field that neither the record nor an override sets is `null`, apart from `breaking`, which is then `false`.
+**`effective_record` contains every field of a record.** `ticket_ref` and `pr_number` are always `null`, since only a merge supplies them. Any other field that neither the record nor an override sets is `null`, apart from `breaking`, which is then `false`.
 
 **`defects` lists what would block approval of the effective record**:
 
@@ -222,7 +222,7 @@ node {harness_home_dir}/scripts/describe-change.mjs render-block \
   --override-type sec --override-breaking
 ```
 
-The output is JSON whose `block` holds the fenced block, fences included:
+The output is JSON whose `block` contains the fenced block, fences included:
 
 ````json
 {
@@ -234,7 +234,7 @@ The run refuses a missing or blank `--title`. `--type feat!` is accepted and spl
 
 ## `resolve-merge`
 
-`resolve-merge` reports what a pull request merges as. `--base` names the base ref of the pull request's range, the pull request supplies the rest, and the author's choices at the approval gate arrive as overrides.
+`resolve-merge` reports what a pull request merges as. `--base` names the base ref of the pull request's range, the pull request supplies the rest, and the author's choices at the approval gate are passed as overrides.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
@@ -247,7 +247,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   --ticket-ref "#466"
 ```
 
-`--base`, `--head`, `--pr-number`, `--pr-title`, and `--pr-body-file` are required. `--head` is the pull request's head commit. The commits are read from the local repository, so the head commit must be there for them to be read, and it need not be checked out. `--pr-number` takes digits alone. `--pr-body-file` names a file holding the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the reference that applies where the pull-request title carries none. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
+`--base`, `--head`, `--pr-number`, `--pr-title`, and `--pr-body-file` are required. `--head` is the pull request's head commit. The commits are read from the local repository, so the head commit must be there for them to be read, and it need not be checked out. `--pr-number` takes digits alone. `--pr-body-file` names a file containing the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the ticket reference to be used when the pull-request title does not contain one. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
 
 ```json
 {
@@ -283,32 +283,32 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
 }
 ```
 
-**`effective_record` is the [effective record](./change-record.md#terms) that the merge settles on**, resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states. It holds every field of a record, since `merge_title` renders from it. A field that nothing sets is `null`, apart from `breaking`, which is then `false`.
+**`effective_record` is the [effective record](./change-record.md#terms) that the merge settles on**, resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states. It contains every field of a record, since `merge_title` renders from it. A field that nothing sets is `null`, apart from `breaking`, which is then `false`.
 
 **`effective_sources` names what supplied each field of `effective_record`**, apart from `pr_number`, which `--pr-number` supplies:
 
-| Value               | Supplied by                                                                                                                               |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `block`             | The block's consolidated record, where the commits agree with it or cannot be read, or the block's title, where the title does not invert |
-| `block_overrides`   | An override that the block records                                                                                                        |
-| `commits`           | The record to which the commits consolidate                                                                                               |
-| `flags`             | The invocation's overrides, and `--ticket-ref`                                                                                            |
-| `labels`            | The pull request's labels                                                                                                                 |
-| `pr_title`          | The pull-request title, inverted through `pr.title_format`                                                                                |
-| `pr_title_verbatim` | The pull-request title as given, where it does not invert and no block is readable                                                        |
+| Value               | Supplied by                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `block`             | The block's consolidated record, when the commits agree with it or cannot be read, or the block's title, when the title does not invert |
+| `block_overrides`   | An override that the block records                                                                                                      |
+| `commits`           | The record to which the commits consolidate                                                                                             |
+| `flags`             | The invocation's overrides, and `--ticket-ref`                                                                                          |
+| `labels`            | The pull request's labels                                                                                                               |
+| `pr_title`          | The pull-request title, inverted through `pr.title_format`                                                                              |
+| `pr_title_verbatim` | The pull-request title as given, when it does not invert and no block is readable                                                       |
 
-Each field names the step that set it last, as [Where the record is read](./change-record.md#where-the-record-is-read) orders the steps, so a field that an override sets names the override even where it repeats the value that it replaces. A field is `null` where nothing supplied it: a `ticket_ref` that neither the title nor `--ticket-ref` names, and, without a readable block, a field that no label resolves while the commits cannot be read.
+Each field names the step that set it last, as [Where the record is read](./change-record.md#where-the-record-is-read) orders the steps, so a field that an override sets names the override even when it repeats the value that it replaces. A field is `null` when nothing supplied it: a `ticket_ref` that neither the title nor `--ticket-ref` names, and, without a readable block, a field that no label resolves while the commits cannot be read.
 
-**`sources` reports what each source names**, whether or not the resolution used it. A source is `null` only where it was not read: `block` where the body carries no block or a malformed one, `commits` where the commits cannot be read, and `pr_title` where the title does not invert. Within a record, a field that the source does not determine is `null`, `breaking` included.
+**`sources` reports what each source names**, whether or not the resolution used it. A source is `null` only when it was not read: `block` when the body contains no block or a malformed one, `commits` when the commits cannot be read, and `pr_title` when the title does not invert. Within a record, a field that the source does not determine is `null`, `breaking` included.
 
-- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` where the block holds none and whose `breaking` is `false` where the block omits it, and its `overrides`, which lists only the keys that are set.
-- `commits` is the record to which the commits between `--base` and `--head` consolidate. Every field is `null` where the range holds no entry.
-- `labels` is the record that the labels name, and is never `null`. `type` and `scope` each resolve where exactly one label of their section names a key. `breaking` is `true` with the `breaking` label, `false` where a type label resolves without it, and `null` otherwise.
-- `pr_title` is the record that the pull-request title carries: the bare `title` and the `ticket_ref`, and the `scope`, `type`, and `breaking` of any typed prefix, each `null` where the title carries no prefix. It is read under `--override-title` too.
+- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block has no consolidated record and whose `breaking` is `false` when the block omits it, and its `overrides`, which lists only the keys that are set.
+- `commits` is the record to which the commits between `--base` and `--head` consolidate. Every field is `null` when the range contains no entry.
+- `labels` is the record that the labels name, and is never `null`. `type` and `scope` each resolve when exactly one label of their section names a key. `breaking` is `true` with the `breaking` label, `false` when a type label resolves without it, and `null` otherwise.
+- `pr_title` is the record that the pull-request title contains: the bare `title` and the `ticket_ref`, and the `scope`, `type`, and `breaking` of any typed prefix, each `null` when the title contains no prefix. It is read under `--override-title` too.
 
-**The bare title** comes from `--override-title`, then from the pull-request title inverted through `pr.title_format`, then from the block's title, then from the pull-request title as given. A scope and type read from the pull-request title, through `pr.title_format` where it names `{type}` and otherwise through `commit.title_format`, never stay in the bare title. `ticket_ref` comes from the pull-request title, then from `--ticket-ref`. `merge_title` renders `effective_record` through `merge.title_format`, the marker included, and falls back to the bare title where that template is empty.
+**The bare title** comes from `--override-title`, then from the pull-request title inverted through `pr.title_format`, then from the block's title, then from the pull-request title as given. A scope and type read from the pull-request title, through `pr.title_format` when it names `{type}` and otherwise through `commit.title_format`, never stay in the bare title. `ticket_ref` comes from the pull-request title, then from `--ticket-ref`. `merge_title` is `effective_record` rendered through `merge.title_format`, the marker included, or the bare title when that template is empty.
 
-**`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that hold only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
+**`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that contain only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
 
 **`defects` block approval.** Each names a condition of `effective_record` that the author must override before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists.
 
@@ -324,36 +324,36 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 **Each override outranks every source on its own field**, as [The effective record](./change-record.md#the-effective-record) states; `--no-override-breaking` removes the marker. `--override-title` replaces the bare title, and the pull-request title's prefix is still read and compared.
 
-**A head commit that the local repository lacks is not an error.** The run reports `commits-unavailable` and resolves from the block or the labels, so fetch the head commit before resolving. Any other git failure stops the run.
+**A head commit that the local repository lacks is not an error.** The run reports `commits-unavailable` and resolves from the block or the labels without checking them against the commits, so fetch the head commit before resolving. Any other git failure stops the run.
 
-The run refuses where no taxonomy is readable and where the body file cannot be read. An empty `commit.title_format` reports `commits-unavailable` rather than refusing. `--override-type` refuses a type spelled with `!`, and `--override-breaking` and `--no-override-breaking` refuse to appear together.
+The run refuses if no taxonomy is readable and if the body file cannot be read. With an empty `commit.title_format`, the run reports `commits-unavailable` rather than refusing. `--override-type` refuses a type spelled with `!`, and the run refuses `--override-breaking` together with `--no-override-breaking`.
 
 ## Supported tokens
 
 | Token          | Resolves to                                                                                                            |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `{scope}`      | Change scope (workspace, package, module). `*` normalizes to empty.                                                    |
-| `{type}`       | Work type (`feat`, `fix`, `docs`, …). Renders as `feat!` where the template names no `{breaking}` to carry the marker. |
+| `{type}`       | Work type (`feat`, `fix`, `docs`, …). Renders as `feat!` when the template names no `{breaking}` to render the marker. |
 | `{breaking}`   | The breaking marker `!`; empty for a change that is not breaking.                                                      |
 | `{title}`      | Bare title text. Required in every template that should produce a non-empty title.                                     |
 | `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated.                                  |
 | `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.                                          |
 
-A template that omits `{title}` produces a title without the bare title text: the renderer does not insert it implicitly. Any other `{...}` run is literal text, so a typo such as `{titel}` shows up in the rendered output rather than vanishing.
+A template that omits `{title}` produces a title without the bare title text: The renderer does not insert it implicitly. Any other `{...}` run is literal text, so a typo such as `{titel}` shows up in the rendered output rather than vanishing.
 
 ## Optional groups
 
 A `[...]` group renders verbatim when every token directly inside it resolves non-empty. When one is empty, the whole group drops, literals included.
 
-A group holding both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the group decides. Where the type should survive a scope-less change, nest the scope in a group of its own, as the piped-scope convention does.
+A group containing both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the group decides. When the type should stay in the title of a change with no scope, nest the scope in a group of its own, as the piped-scope convention does.
 
-`{breaking}` never decides a group. A non-breaking change would otherwise drop the very prefix that carries the marker.
+`{breaking}` never decides a group. A non-breaking change would otherwise drop the very prefix that contains the marker.
 
-Groups nest, and a nested group decides its own fate. Under `[[{scope}|]{type}: ]{title}`, a change naming no scope keeps its type prefix and renders `feat: Add foo`, while a change naming neither scope nor type renders the bare title.
+Groups nest, and a nested group is kept or dropped on its own. Under `[[{scope}|]{type}: ]{title}`, a change naming no scope keeps its type prefix and renders `feat: Add foo`, while a change naming neither scope nor type renders the bare title.
 
 Write `\[` and `\]` for a literal bracket, and `\\` for a literal backslash.
 
-**No whitespace pass runs.** Output is exactly what the template describes, so each group carries its own separators: write `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That exactness is what lets `parse-title` invert what the renderer produced.
+**No whitespace pass runs.** Output is exactly what the template describes, so each group contains its own separators: Write `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That exactness lets `parse-title` invert what the renderer produced.
 
 ## The catalogue
 
@@ -366,7 +366,7 @@ Four conventions, each of which round-trips.
 | Piped scope          | `[[{scope}\|]{type}: ]{title}`            |
 | Type only            | `{type}{breaking}: {title}`               |
 
-Piped scope carries the marker on the type, since it names no `{breaking}`; the other three place the marker immediately before the colon. Piped scope also nests its scope group inside its type group, so a change naming no scope keeps its type prefix.
+Piped scope places the marker on the type, since it names no `{breaking}`; the other three place the marker immediately before the colon. Piped scope also nests its scope group inside its type group, so a change naming no scope keeps its type prefix.
 
 How they render across the cases that separate them:
 
@@ -377,7 +377,7 @@ How they render across the cases that separate them:
 | scope `agents`, type `drop`, breaking | `[agents] drop!: Remove the legacy API` | `drop(agents)!: Remove the legacy API` | `agents\|drop!: Remove the legacy API` | `drop!: Remove the legacy API` |
 | title only                            | `: Add foo`                             | `: Add foo`                            | `Add foo`                              | `: Add foo`                    |
 
-Three of the four name `{type}` outside any group, so a record carrying no type renders a subject opening with a bare colon. Supply a type, or choose piped scope, whose type sits inside a group and drops with it.
+Because three of the four name `{type}` outside any group, a record with no type renders a subject opening with a bare colon. Supply a type, or choose piped scope, whose type is inside a group and drops with it.
 
 ## Constraints from release-kit
 
@@ -385,8 +385,8 @@ Because release-kit reads merge subjects to build the changelog, a template whos
 
 - Any ticket reference comes first, in one of the three stripped forms above.
 - A pipe separates the scope from the type (`agents|feat:`), or parentheses follow it (`feat(agents):`). The parser reads no bracketed scope, so `[agents] feat: Add foo` is unmatched.
-- The breaking marker sits immediately before the colon: `feat!:`, `feat(agents)!:`.
-- The type is a run of word characters, so a type carrying a hyphen or a dot goes unread. The parser lowercases the type before matching the taxonomy, so case does not decide the match, and the canonical spelling stays lowercase.
+- The breaking marker is immediately before the colon: `feat!:`, `feat(agents)!:`.
+- Because the type is a run of word characters, a type with a hyphen or a dot goes unread. The parser lowercases the type before matching the taxonomy. Case does not decide the match, and the canonical spelling stays lowercase.
 
 ## What the grammar refuses
 
@@ -397,13 +397,13 @@ The bundle checks each configured template when preferences load, and a template
 - **A group boundary that repeats.** An optional group whose opening literal repeats the text before it hides where the group begins.
 - **An indistinguishable marker.** `{breaking}` placed beside free text, or beside a literal that spells `!`, leaves the marker unrecognizable.
 
-A render-and-parse pass over well-formed values then backstops the four, so a later extension to the grammar cannot outrun the checker in silence.
+A render-and-parse pass over well-formed values then acts as a fallback for the four checks, so that it catches a defect that a later extension to the grammar introduces and the checks miss.
 
 ## What the grammar does not support
 
-**Value-dependent ambiguity passes the check.** The check runs over well-formed values, so it accepts a template whose ambiguity depends on what a value happens to contain. Under `[{ticket_ref} ]{title}`, the title `#466 Add foo` reads back as ticket reference `#466` and title `Add foo`. That matches how release-kit reads it, so the behavior is compatibility rather than a defect, but a caller holding both halves separately should not rely on a round trip to recover them.
+**Value-dependent ambiguity passes the check.** The check runs over well-formed values, so it accepts a template whose ambiguity depends on what a value happens to contain. Under `[{ticket_ref} ]{title}`, the title `#466 Add foo` reads back as ticket reference `#466` and title `Add foo`. Because that matches how release-kit reads it, the behavior is compatibility rather than a defect, but a caller that keeps both halves separately should not rely on a round trip to recover them.
 
-The same cost falls on the piped-scope convention, where a present group wins. `Rename kb|docs: the shared layer` reads back as scope `Rename kb`, type `docs`, title `the shared layer`. The type check rescues a nonsense type, so `Support a|b: syntax` is unmatched, but it cannot rescue a real one.
+The same cost applies to the piped-scope convention, in which a present group wins. `Rename kb|docs: the shared layer` reads back as scope `Rename kb`, type `docs`, title `the shared layer`. The type check prevents the misreading when the type is nonsense, so `Support a|b: syntax` is unmatched, but not when the type is real.
 
 ## Scope values
 
@@ -411,6 +411,6 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 
 - In a monorepo, the scope is typically the workspace name or abbreviation.
 - Use `root` when the change touches only files at the monorepo root.
-- Use `*` when the change spans multiple workspaces, or root and one or more workspaces. It normalizes to no scope, so the rendered title carries no scope prefix.
+- Use `*` when the change spans multiple workspaces, or root and one or more workspaces. It normalizes to no scope, so the rendered title has no scope prefix.
 
 Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill; see the `consult-commit-conventions` skill for the commit-side rules.

@@ -6,7 +6,7 @@ user-invocable: true
 
 # Edit an existing knowledge-base note
 
-Apply a single mutation to a note that already exists in a knowledge base. A bundled helper does the mechanical work: It resolves the writable KB the note belongs to, loads the note as a typed assertion record, runs alias canonicalization where relevant, applies the change, and writes atomically. You do the judgment work: pick which operation fits the change, supply the new tags or body content, and decide when supersession is the right move.
+Apply a single mutation to a note that already exists in a knowledge base. A bundled helper does the mechanical work: It resolves the writable KB to which the note belongs, loads the note as a typed assertion record, runs alias canonicalization when relevant, applies the change, and writes atomically. You do the judgment work: Pick which operation fits the change, supply the new tags or body content, and decide when supersession is the right move.
 
 The split is deliberate: The helper is narrow and mechanical; the operation choice is wide and judgment-driven. Treat the helper as a guardrail. It refuses to write into a KB marked `readonly: true`, refuses a note that does not parse as an assertion, and refuses to leave a half-finished supersede chain.
 
@@ -28,7 +28,7 @@ For new notes, use `kb-add`. For finding notes, use `kb-retrieve`. For periodic 
 
 A value-bearing flag accepts both `--retag node,react` and `--retag=node,react`. Exactly one operation flag is required per invocation; combining two is rejected with `invalid-args`. The note body for `--append` is read from stdin to EOF; empty or whitespace-only stdin is rejected.
 
-`--add-addressed-by` is the one multi-target operation: it accepts one or more `<path>` arguments and appends the same reference(s) to each note's `addressed-by` list. References are free-form (a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL); they are stored verbatim and de-duplicated after any existing entries. A reference value that is empty or contains only separators is rejected with `invalid-args`. (Because the value is comma-separated, a reference that itself contains a comma, such as a rare URL, would be split; use one invocation per such reference. A reference that begins with `--` is otherwise read as the next flag, so pass it with the inline `--add-addressed-by=<ref>` form.)
+`--add-addressed-by` is the one multi-target operation: It accepts one or more `<path>` arguments and appends the same reference(s) to each note's `addressed-by` list. References are free-form (a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL); they are stored verbatim and de-duplicated after any existing entries. A reference value that is empty or contains only separators is rejected with `invalid-args`. (Because the value is comma-separated, a reference that itself contains a comma, such as a rare URL, would be split; use one invocation per such reference. A reference that begins with `--` is otherwise read as the next flag, so pass it with the inline `--add-addressed-by=<ref>` form.)
 
 ### KB selection
 
@@ -47,11 +47,11 @@ The `--auto` flag is for you, not for the bundled helper; it controls whether yo
 
 ## Operations: When to use each
 
-- **`--bump-updated`**: A non-empirical edit to the note (rewording, restructuring, fact correction) where the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
+- **`--bump-updated`**: A non-empirical edit to the note (rewording, restructuring, fact correction) in which the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
 - **`--verify`**: You reran the note's instructions or re-confirmed its claims and they still hold. Use this for the "I just checked; still good" path. Does not bump `updated:` because nothing about the content changed.
 - **`--append`**: Add a section to an existing note. The helper writes the new content after the existing body with a separating blank line. Use for accumulating findings or extending a list.
 - **`--retag`**: Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`. Curatorial: It changes how a record is found, not what it asserts, so it leaves `updated:` unchanged.
-- **`--add-addressed-by`**: Record what addressed a problem by appending references to a record's recall-facing `addressed-by` list so the response appears when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
+- **`--add-addressed-by`**: Record what addressed a problem by appending references to a record's recall-facing `addressed-by` list so that the response appears when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents that it resolved in a single run.
 - **`--supersede-with`**: Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): The old note gets `superseded-by` and the `deprecated` tag; the new note gets `supersedes`. Use when a note is no longer canonical but should remain discoverable.
 
 ## Update semantics: Which operations bump `updated:`
@@ -59,7 +59,7 @@ The `--auto` flag is for you, not for the bundled helper; it controls whether yo
 `updated:` records the last _substantive_ change to a record (what it asserts, its body, or its lifecycle state). Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
 
 - **Bump `updated:`** (substantive change): `--append` (body change), `--add-addressed-by` (records a response relation), and `--supersede-with` (lifecycle-state change). `--bump-updated` is the explicit escape hatch for an out-of-band edit made elsewhere.
-- **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: reorganizes findability only) and `--verify` (re-confirmation: Content is unchanged).
+- **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: Reorganizes findability only) and `--verify` (re-confirmation: Content is unchanged).
 
 ## Process
 
@@ -110,19 +110,19 @@ The helper prints a JSON object to stdout. On success the payload contains `ok: 
 
 On failure, `ok: false` plus a categorical `error` code:
 
-| Code                       | What it means                                                                                                                                                         | What to do                                                                                           |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `invalid-args`             | Missing/extra flags, unknown flag, a second path for a single-target op, empty `--append` stdin, an empty `--add-addressed-by` reference list, or cross-KB supersede. | Correct the invocation. The message names the specific defect.                                       |
-| `no-kb-resolvable`         | The note's path is not inside any discoverable `.kb/`.                                                                                                                | Confirm the path; the note may be outside a KB or the wrong path was supplied.                       |
-| `note-not-found`           | The path does not exist.                                                                                                                                              | Confirm the path. For `--supersede-with`, the _new_ path gets `supersede-target-missing` instead.    |
-| `note-parse`               | The note's frontmatter is malformed or does not satisfy the assertion contract (YAML error, missing block, or a missing/ill-typed field).                             | Repair the frontmatter manually; the helper will not rewrite a note it cannot parse as an assertion. |
-| `validation`               | The edited record's rendered frontmatter did not re-parse as an assertion (a defensive guard; should not occur for a well-formed note).                               | Inspect `details.errors`; report the note, which was left unmodified.                                |
-| `readonly-kb`              | The note resolves into a KB marked `readonly: true` in `kb.yaml`.                                                                                                     | Switch to a writable KB or update the registry entry intentionally.                                  |
-| `supersede-target-missing` | The `--supersede-with` target path does not exist.                                                                                                                    | Create the new note (use `kb-add`) before issuing the supersession.                                  |
-| `partial-supersede`        | A `--supersede-with` write committed one side, the rollback also failed.                                                                                              | Inspect both paths in `details`; resolve the inconsistency manually before retrying.                 |
+| Code                       | What it means                                                                                                                                                         | What to do                                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `invalid-args`             | Missing/extra flags, unknown flag, a second path for a single-target op, empty `--append` stdin, an empty `--add-addressed-by` reference list, or cross-KB supersede. | Correct the invocation. The message names the specific defect.                                    |
+| `no-kb-resolvable`         | The note's path is not inside any discoverable `.kb/`.                                                                                                                | Confirm the path; the note may be outside a KB or the wrong path was supplied.                    |
+| `note-not-found`           | The path does not exist.                                                                                                                                              | Confirm the path. For `--supersede-with`, the _new_ path gets `supersede-target-missing` instead. |
+| `note-parse`               | The note's frontmatter is malformed or does not satisfy the assertion contract (YAML error, missing block, or a missing/ill-typed field).                             | Repair the frontmatter manually; the helper rewrites a note only if it parses as an assertion.    |
+| `validation`               | The edited record's rendered frontmatter did not re-parse as an assertion (a defensive guard; should not occur for a well-formed note).                               | Inspect `details.errors`; report the note, which was left unmodified.                             |
+| `readonly-kb`              | The note resolves into a KB marked `readonly: true` in `kb.yaml`.                                                                                                     | Switch to a writable KB or update the registry entry intentionally.                               |
+| `supersede-target-missing` | The `--supersede-with` target path does not exist.                                                                                                                    | Create the new note (use `kb-add`) before issuing the supersession.                               |
+| `partial-supersede`        | A `--supersede-with` write committed one side, the rollback also failed.                                                                                              | Inspect both paths in `details`; resolve the inconsistency manually before retrying.              |
 
 System failures (out-of-disk, permission denied) print to stderr and exit non-zero. They are out of band and never appear as a structured `error` code.
 
 ## Completion
 
-A mutated note at the reported path (two notes for `--supersede-with`, or every successfully-written target for `--add-addressed-by`) conforming to the assertion record contract, plus the canonicalization audit trail for `--retag` so the user can verify which alias tags were rewritten.
+A mutated note at the reported path (two notes for `--supersede-with`, or every successfully-written target for `--add-addressed-by`) conforming to the assertion record contract, plus the canonicalization audit trail for `--retag` so that the user can verify which alias tags were rewritten.

@@ -1,4 +1,4 @@
-**Write the tightened ticket, not a draft to be tightened later.** A ticket is the minimal contract a reader needs, not a transcript of the design session. Compose the maximally tight version that still keeps the full meaning; length comes from content, not from a completeness instinct. (Producing the tight version up front spares the reader, and spares everyone the tighten-on-request round trip.)
+**Write the tightened ticket, not a draft to be tightened later.** A ticket is the minimal contract that a reader needs, not a transcript of the design session. Compose the maximally tight version that still keeps the full meaning; length comes from content, not from a completeness instinct. (Producing the tight version up front spares the reader, and spares everyone the tighten-on-request round trip.)
 
 State conclusions, not the journey to them. Naming a chosen approach (including "X, not Y") is a durable decision and belongs in the ticket. The _story_ of how the decision was reached does not: Drop the design back-and-forth, the false starts, restated context, and motivating episodes.
 

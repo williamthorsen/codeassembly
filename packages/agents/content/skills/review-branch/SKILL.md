@@ -299,7 +299,7 @@ The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files: The chronological sequence of files is the history.
 
-Once the review is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"review"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"review-saved"}`) on the same turn, before the next-steps prompt below. Emitting completion at the save point folds an abandoned session to a finished state.
+Once the review is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"review"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"review-saved"}`) on the same turn, before the next-steps prompt below. Because completion is emitted at the save point, the lifecycle fold resolves an abandoned session to a finished state.
 
 <!-- include: ../_partials/next-steps-after-review.md / -->
 

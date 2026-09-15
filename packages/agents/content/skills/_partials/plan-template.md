@@ -1,4 +1,4 @@
-**Detail threshold:** Include enough detail that a competent engineer, reading only the plan and ticket, would make the same architectural decisions you would. Omit details they'd arrive at independently. Compose at this altitude from the outset ([concision principle](../_data/concision.md)); a plan drafted tight beats a fuller one pared down.
+**Detail threshold:** Include enough detail that a competent engineer, reading only the plan and ticket, would make the same architectural decisions you would. Omit details that they'd arrive at independently. Compose at this altitude from the outset ([concision principle](../_data/concision.md)); a plan drafted tight beats a fuller one pared down.
 
 ```markdown
 # Implementation plan: {Title}
@@ -25,7 +25,7 @@
 
 **Key decisions:**
 
-- {Design choice the coder needs to know}
+- {Design choice that the coder needs to know}
 
 **Acceptance criteria:**
 
@@ -46,11 +46,11 @@
 
 `## Dependencies` (external dependencies or blockers) is the one optional section: Insert it between `## Risks` and `## Verification` only when the plan has external blockers, and omit it otherwise.
 
-**Per-task test criterion:** When a task creates or modifies testable behavior, its acceptance criteria must include a test criterion (e.g., "New/modified behavior is covered by tests"). Omit it where the change falls entirely within the carve-outs defined in the `testing-conventions` skill, or where the only tests it would compel are ones that fail that skill's bar for earning a place.
+**Per-task test criterion:** When a task creates or modifies testable behavior, its acceptance criteria must include a test criterion (e.g., "New/modified behavior is covered by tests"). Omit it when the change falls entirely within the carve-outs defined in the `testing-conventions` skill, or when the only tests it would compel are ones that fail that skill's bar for earning a place.
 
 **Per-task documentation criterion:** When a task adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include updating documentation, help text, and usage examples, including removal of references to anything that no longer exists.
 
-**Per-task README guidance:** When a task writes or revises a README, consult {rulebook:readme-conventions} while planning the task. Its key decisions name the rulebook, the table row that fits the README, and what that row says the README leads with, keeps, and omits, so the constraints reach an implementer that cannot load the rulebook.
+**Per-task README guidance:** When a task writes or revises a README, consult {rulebook:readme-conventions} while planning the task. Its key decisions name the rulebook, the table row that fits the README, and what that row says the README leads with, keeps, and omits, so that the constraints are available to an implementer that cannot load the rulebook.
 
 #### What belongs in the plan
 

@@ -30,17 +30,17 @@ Call `action: "create"` on the tool named in [Bitbucket pull-request access](../
 
 - **Title**: Use `title` as provided.
 - **Description**: Use `body` as provided.
-- **Source branch**: Use the current branch, `git rev-parse --abbrev-ref HEAD`. The action requires it, and the delegate interface carries no head-branch input.
+- **Source branch**: Use the current branch, `git rev-parse --abbrev-ref HEAD`. The action requires it, and the delegate interface has no head-branch input.
 - **Destination branch**: Use `base_branch`.
 - **Draft/WIP**: Create as draft if the platform supports it.
 
 ### 2. Report every label as skipped
 
-Bitbucket pull requests carry no labels, and the tool exposes no label parameter on any action. Attempt no call. Report every name in `labels` under `Labels skipped:` in the completion output, and leave `Labels applied:` as `none`.
+Bitbucket pull requests have no labels, and the tool exposes no label parameter on any action. Attempt no call. Report every name in `labels` under `Labels skipped:` in the completion output, and leave `Labels applied:` as `none`.
 
-Labels matter to `merge-pr` only for a PR whose body carries no readable `change-record` block, and a Bitbucket PR contributes none there; this step is what makes that true.
+Labels matter to `merge-pr` only for a PR whose body contains no readable `change-record` block, and a Bitbucket PR contributes none there; this step makes that true.
 
-The artifact's label lines keep `create-gh-pr`'s three-field shape: `Labels attempted:` carries the requested set, `Labels applied:` is always `none`, and `Labels skipped:` repeats the requested set.
+The artifact's label lines keep `create-gh-pr`'s three-field shape: `Labels attempted:` lists the requested set, `Labels applied:` is always `none`, and `Labels skipped:` repeats the requested set.
 
 ### 3. Save PR artifact
 
@@ -50,7 +50,7 @@ Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_i
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
-`capture-lede-decision` reads this artifact later to recover the `## What` lede this pull request published, and it is the only record of that text once the description is revised. Where the lede is needed and the artifact does not carry it, that skill takes `--agent-lede-file`; the artifact is not edited to supply it.
+`capture-lede-decision` reads this artifact later to recover the `## What` lede published by this pull request, and it is the only record of that text once the description is revised. When the lede is needed and the artifact does not contain it, that skill takes `--agent-lede-file`; the artifact is not edited to supply it.
 
 Filename format:
 

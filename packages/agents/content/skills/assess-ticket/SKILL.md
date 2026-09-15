@@ -19,11 +19,11 @@ Assess a ticket against the current codebase across five dimensions: drift, rele
 
 ### 1. Resolve ticket source
 
-Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis. Store the resolved metadata (platform, repo, issue number, last-updated date, ticket content). When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
+Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis. Store the resolved metadata (platform, repo, issue number, last-updated date, ticket content). When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session needs no ticket argument.
 
 ### 2. Investigate
 
-Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, advisability is investigated after progress (synthesizing the prior dimensions' context), and complexity is investigated last so it benefits from context gathered during drift, relevance, progress, and advisability analysis. **Skip both advisability and complexity when progress is `complete`**; neither has value for finished work.
+Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, advisability is investigated after progress (synthesizing the prior dimensions' context), and complexity is investigated last so that it benefits from context gathered during drift, relevance, progress, and advisability analysis. **Skip both advisability and complexity when progress is `complete`**; neither has value for finished work.
 
 #### Drift
 
@@ -45,8 +45,8 @@ Determine whether the ticket's factual assumptions still match the codebase.
 
 Determine whether the motivation for the ticket still applies.
 
-1. Identify the problem or need the ticket was created to address.
-2. Look at broader codebase changes (not limited to paths mentioned in the ticket). Was the problem solved by a different approach? Was the feature or system the ticket targets removed or replaced?
+1. Identify the problem or need that the ticket was created to address.
+2. Look at broader codebase changes (not limited to paths mentioned in the ticket). Was the problem solved by a different approach? Was the feature or system targeted by the ticket removed or replaced?
 3. Check whether the conditions that motivated the ticket still exist.
 
 This mode requires understanding intent, not just facts. When signals are ambiguous, prefer `uncertain` over a stronger verdict.
@@ -59,7 +59,7 @@ This mode requires understanding intent, not just facts. When signals are ambigu
 
 #### Progress
 
-Determine whether the described work has been implemented. The output format adapts based on whether the ticket has acceptance criteria.
+Determine whether the described work has been implemented. The output format depends on whether the ticket has acceptance criteria.
 
 **When the ticket has acceptance criteria:**
 
@@ -85,7 +85,7 @@ Determine whether the ticket should be implemented as written. Synthesize the fo
 
 1. Apply each facet in turn. Does the underlying observation hold? Is scope right at the appropriate class? Does the proposed solution treat the cause? Does the title accurately describe the work?
 2. Synthesize a verdict from the facet results.
-3. Emit one prose evidence bullet per concern the facets raise. Do not prefix a bullet with its facet name. Omit bullets entirely when the verdict is `advisable`.
+3. Emit one prose evidence bullet per concern raised by the facets. Do not prefix a bullet with its facet name. Omit bullets entirely when the verdict is `advisable`.
 
 Bias toward `advisable`: For a recommendation dimension, false-positive concerns are noisier than false-negative passes. Default to `advisable` unless the codebase shows specific evidence of a facet concern.
 
@@ -192,7 +192,7 @@ After presenting the assessment output, evaluate whether any verdicts are non-ba
 
 ### Emoji mapping
 
-Drift, relevance, progress, and advisability use a **concern scale**, where green means no concern and red means high concern:
+Drift, relevance, progress, and advisability use a **concern scale**, on which green means no concern and red means high concern:
 
 | Verdict position | Emoji |
 | ---------------- | ----- |
@@ -200,7 +200,7 @@ Drift, relevance, progress, and advisability use a **concern scale**, where gree
 | Mixed / unclear  | 🟠    |
 | High concern     | 🔴    |
 
-Complexity uses a **size scale**, where emojis represent effort and scope, not concern:
+Complexity uses a **size scale**, on which emojis represent effort and scope, not concern:
 
 | Level | Emoji |
 | ----- | ----- |

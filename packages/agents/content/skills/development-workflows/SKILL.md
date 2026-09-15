@@ -12,7 +12,7 @@ Rules for development processes and quality gates.
 
 ### Code quality requirements
 
-- **Always run linting and type-checking before considering code complete** - Mandatory
+- **Always run linting and type-checking before considering code complete** (mandatory)
 - Auto-format code before staging or considering it complete
 - All quality checks must pass before work is finished
 

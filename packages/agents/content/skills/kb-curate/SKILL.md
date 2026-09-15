@@ -6,7 +6,7 @@ user-invocable: true
 
 # Curate a knowledge base
 
-Report vault-wide hygiene findings for a single knowledge base and, with `--apply`, perform only the two mechanically safe fixes. A bundled helper does the mechanical work: It resolves the KB, walks every note, runs the detection rules, and (under `--apply`) delegates tag canonicalization to `kb-edit` and rewrites stale path-qualified wikilinks inline. You do the judgment work: read the findings, decide which report-only items to act on, and run the named follow-up commands.
+Report vault-wide hygiene findings for a single knowledge base and, with `--apply`, perform only the two mechanically safe fixes. A bundled helper does the mechanical work: It resolves the KB, walks every note, runs the detection rules, and (under `--apply`) delegates tag canonicalization to `kb-edit` and rewrites stale path-qualified wikilinks inline. You do the judgment work: Read the findings, decide which report-only items to act on, and run the named follow-up commands.
 
 The split is deliberate: Detection is exhaustive and mechanical; remediation is conservative. The helper auto-fixes only what is mechanically safe and leaves everything else as a report-only finding that names the operator's next step.
 
@@ -37,13 +37,13 @@ The store's `.kb/config.yaml` decides which notes are curated: By default, only 
 
 ## Detection categories
 
-The helper reports findings across six categories. Each finding has a rule code and a severity. A `[[store:Target]]` link resolves against the store its prefix names in the `kb.yaml` registry, and only into a store as shareable as this one; see the kb package's README for the rule.
+The helper reports findings across six categories. Each finding has a rule code and a severity. A `[[store:Target]]` link resolves against the store named by its prefix in the `kb.yaml` registry, and only into a store as shareable as this one; see the kb package's README for the rule.
 
 | Rule code                       | Severity | Meaning                                                                                |
 | ------------------------------- | -------- | -------------------------------------------------------------------------------------- |
 | `wikilinks.unresolved`          | error    | A `[[Target]]` does not resolve to any vault note.                                     |
 | `wikilinks.basename`            | warning  | Two or more notes share a basename (reported once for the vault).                      |
-| `wikilinks.unknown-store`       | error    | A `[[store:Target]]` names a store no `kb.yaml` entry declares.                        |
+| `wikilinks.unknown-store`       | error    | A `[[store:Target]]` names a store declared by no `kb.yaml` entry.                     |
 | `wikilinks.disallowed-store`    | error    | A `[[store:Target]]` names a store less shareable than this one.                       |
 | `wikilinks.store-unavailable`   | warning  | A `[[store:Target]]` names a store that could not be read on this machine.             |
 | `wikilinks.registry-unloadable` | error    | `kb.yaml` would not load, so no `[[store:Target]]` can resolve (once per run).         |
@@ -66,7 +66,7 @@ The three `taxonomy.*` rules describe the vault rather than a note, so each is r
 
 Only two fixes are applied; everything else stays report-only.
 
-- **Tag canonicalization**: For each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
+- **Tag canonicalization**: For each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so that `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
 - **Path-only wikilink rewrites**: A cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, produces no finding, and is left untouched, so remediation never changes a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
 
 Each fix returns a per-finding result reporting `ok: true/false` and the operation invoked. A single fix failure does not abort the run.
@@ -114,4 +114,4 @@ System failures (out-of-disk, permission denied) print to stderr and exit non-ze
 
 ## Completion
 
-A hygiene report for the resolved KB, partitioned by severity, with each report-only finding naming its follow-up command. Under `--apply`, the safe fixes are written and the residual findings plus per-fix results are reported so the user can verify what changed and what remains.
+A hygiene report for the resolved KB, partitioned by severity, with each report-only finding naming its follow-up command. Under `--apply`, the safe fixes are written and the residual findings plus per-fix results are reported so that the user can verify what changed and what remains.

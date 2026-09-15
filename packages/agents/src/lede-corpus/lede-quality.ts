@@ -4,7 +4,7 @@
 /** The quality levels a rated lede may carry, ordered lowest to highest. */
 export const LEDE_QUALITY_LEVELS = ['poor', 'adequate', 'good', 'strong', 'exemplary'] as const;
 
-/** The author's rating of the lede that shipped, whether the agent wrote it or the author rewrote it before merge. */
+/** The author's rating of the lede in the merged pull request, whether the agent wrote it or the author rewrote it before merge. */
 export type LedeQuality = (typeof LEDE_QUALITY_LEVELS)[number];
 
 // A widened-element set for membership tests: the `as const` tuple's literal element type rejects a `string` argument

@@ -13,11 +13,11 @@ Resolve a ticket source argument into ticket content and metadata. Skills that a
 | Plain text                                                  | Use as-is                                                                                        |
 | _(no source provided)_                                      | Auto-resolve from environment (see [auto-resolve](#auto-resolve))                                |
 
-**Persist the resolved URL.** After resolving by any form above (an explicitly supplied URL included, not only the auto-resolve path), store the resolved `ticket_url` in the branch manifest so later sessions reuse it without re-resolving or re-pasting. On the default branch nothing is stored, and the deriver enforces that. See [Stored ticket URL](#stored-ticket-url).
+**Persist the resolved URL.** After resolving by any form above (an explicitly supplied URL included, not only the auto-resolve path), store the resolved `ticket_url` in the branch manifest so that later sessions reuse it without re-resolving or re-pasting. On the default branch nothing is stored, and the deriver enforces that. See [Stored ticket URL](#stored-ticket-url).
 
 ## Auto-resolve
 
-When no ticket source is provided, attempt to derive the ticket from the current environment. This covers the common case where the branch name encodes the ticket identity (e.g., branch `357` for GitHub issue #357, or branch `MAC-42/feat/foo` for Jira ticket MAC-42).
+When no ticket source is provided, attempt to derive the ticket from the current environment. This covers the common case in which the branch name encodes the ticket identity (e.g., branch `357` for GitHub issue #357, or branch `MAC-42/feat/foo` for Jira ticket MAC-42).
 
 ### Steps
 
@@ -39,7 +39,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
    d. If the platform still cannot be determined, ask the user.
 
-   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for a Jira-style key: It yields the URL a URL-taking Jira read tool consumes, and the URL to present and persist where the content cannot be fetched.
+   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for a Jira-style key: It yields the URL consumed by a URL-taking Jira read tool, and the URL to present and persist when the content cannot be fetched.
 
 5. **Fetch the ticket** per [platform-specific fetch](#platform-specific-fetch).
 
@@ -77,7 +77,7 @@ Skills may request a subset of these fields. The `updatedAt` field is needed by 
 
 ### Jira
 
-Jira Cloud is reached through Atlassian's `acli`, falling back to a connected Jira read tool. Detect the CLI with `command -v acli`, and treat a non-zero exit from the fetch itself as unavailable: An `acli` that is installed but unauthenticated exits non-zero with an error on stderr and nothing on stdout, and that error does not distinguish an authentication failure from a missing issue, so fall through on the exit status rather than on the message.
+Access Jira Cloud through Atlassian's `acli`, falling back to a connected Jira read tool. Detect the CLI with `command -v acli`, and treat a non-zero exit from the fetch itself as unavailable: An `acli` that is installed but unauthenticated exits non-zero with an error on stderr and nothing on stdout, and that error does not distinguish an authentication failure from a missing issue, so fall through on the exit status rather than on the message.
 
 **Preferred: `acli`.** Read the ticket body with the default view, which renders the description as text.
 
@@ -85,26 +85,26 @@ Jira Cloud is reached through Atlassian's `acli`, falling back to a connected Ji
 acli jira workitem view {key}
 ```
 
-Where the source is a Jira URL rather than a key, the key is its `PROJECT-NUMBER` segment, which is the final segment of a `/browse/` URL.
+When the source is a Jira URL rather than a key, the key is its `PROJECT-NUMBER` segment, which is the final segment of a `/browse/` URL.
 
-Where a skill needs structured metadata, such as the `updated` timestamp for a staleness check, add `--json --fields '*navigable,-description'`. The `--json` flag returns the raw REST v3 response, in which the description is Atlassian Document Format rather than Markdown, so exclude it there and take the body from the default view. First-time setup is `acli jira auth login --web`, a browser flow that mints no API token.
+When a skill needs structured metadata, such as the `updated` timestamp for a staleness check, add `--json --fields '*navigable,-description'`. The `--json` flag returns the raw REST v3 response, in which the description is Atlassian Document Format rather than Markdown, so exclude it there and take the body from the default view. First-time setup is `acli jira auth login --web`, a browser flow that mints no API token.
 
-**Fallback: a connected Jira read tool.** Tool names vary by server and by machine alias, so identify the tool by its parameters:
+**Fallback: A connected Jira read tool.** Because tool names vary by server and by machine alias, identify the tool by its parameters:
 
-- **Takes an issue URL**: Pass the ticket URL. Prefer this shape where both are connected, since it needs no site resolution.
-- **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. It is the `id` of the site whose URL matches the ticket URL's host, or of the sole site listed where no ticket URL is known. Where neither settles it, ask the user which site hosts the ticket. Resolve it once and reuse it for the rest of the session.
+- **Takes an issue URL**: Pass the ticket URL. Prefer this shape when both are connected, since it needs no site resolution.
+- **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. It is the `id` of the site whose URL matches the ticket URL's host, or of the sole site listed when no ticket URL is known. If neither settles it, ask the user which site hosts the ticket. Resolve it once and reuse it for the rest of the session.
 
-**Last resort.** Where neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
+**Last resort.** When neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
 
 The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
 
 ## Platform-specific write
 
-Write a revision back to the ticket of record, which the caller names; where a caller names none, it is the ticket the revision's source came from. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) where the manifest carries none. Under that default, a ticket that resolved from a file is written back to that file, and one that resolved from plain text has no write target.
+Write a revision back to the ticket of record, which the caller names; when the caller names no ticket, it is the ticket from which the revision's source came. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) when the manifest does not set `scm`. Under that default, a ticket that resolved from a file is written back to that file, and one that resolved from plain text has no write target.
 
-**A partial revision composes from the platform's current body.** Where a skill revises one section of a ticket, it fetches the current body per [platform-specific fetch](#platform-specific-fetch) and applies the revision to that, so every section it does not revise is carried over from the platform rather than from a local copy. A whole-ticket body the user approved replaces the body outright.
+**A partial revision is composed from the platform's current body.** When a skill revises one section of a ticket, it fetches the current body per [platform-specific fetch](#platform-specific-fetch) and applies the revision to that, so every section that it does not revise is carried over from the platform rather than from a local copy. A whole-ticket body approved by the user replaces the body outright.
 
-**Nothing is reported as updated until the write lands.** A write that fails is reported as a failure, naming the manual step that remains.
+**Nothing is reported as updated until the write succeeds.** A write that fails is reported as a failure, naming the manual step that remains.
 
 ### GitHub
 
@@ -118,9 +118,9 @@ gh issue edit {number} --body-file "$body_path"
 
 ### Jira
 
-Update through {skill?:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker its HTML surface needs.
+Update through {skill?:update-jira-ticket}, which states the tool-shape branch and bundles the pre-flight checker that its HTML surface needs.
 
-`acli`'s default view is text rather than Markdown and the write converts the whole description, so a partial revision re-renders the sections it leaves alone; report it as a re-rendering of the whole description rather than an edit confined to the revised section.
+`acli`'s default view is text rather than Markdown and the write converts the whole description, so a partial revision re-renders the sections that it leaves alone; report it as a re-rendering of the whole description rather than an edit confined to the revised section.
 
 ### Other platforms
 
@@ -128,14 +128,14 @@ No automated write is available. Report that the ticket was not updated and pres
 
 ## Stored ticket URL
 
-The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `ticket_url` so it is reused across sessions instead of being reconstructed or re-pasted each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags, never by hand-editing the JSON.
+The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `ticket_url` so that it is reused across sessions instead of being reconstructed or re-pasted each time. The manifest is the single store; a skill reads the stored URL from the manifest JSON emitted by the deriver, with no extra call, and makes every write through the deriver's mutation flags, never by hand-editing the JSON.
 
-The manifest also surfaces `ticket_base_url`, mirroring the `ticket.base_url` preference. When a base and a `ticket_id` are both known, the deriver seeds `ticket_url` by joining them, so a bare Jira-style reference resolves to a URL without a supplied one. An explicitly stored URL always overrides that constructed default.
+The manifest also includes `ticket_base_url`, mirroring the `ticket.base_url` preference. When a base and a `ticket_id` are both known, the deriver seeds `ticket_url` by joining them, so a bare Jira-style reference resolves to a URL without a supplied one. An explicitly stored URL always overrides that constructed default.
 
 - **Prefer**: Auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
 - **Persist**: After a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it by running `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
-- **Never on the default branch**: That branch is derived from no ticket, so a URL stored against it is not its association but whichever ticket the last session happened to resolve, and a later session auto-resolving from it proceeds against an arbitrary one. The deriver enforces this: It refuses the write, reports on stderr, exits 0, and emits a manifest whose `ticket_url` is null. It clears a value already stored there for the same reason. A skill that decides the skip itself can report it in its own completion output instead of leaving it to a stderr line; `create-ticket` does. `pr_url` carries the same rule; see [PR source resolution](pr-source-resolution.md#stored-pr-url).
-- **Invalidate**: When the stored URL does not yield the expected ticket (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-fetches through `acli` or a connected read tool, and re-prompts the user only where neither is available.
+- **Never on the default branch**: That branch is derived from no ticket, so a URL stored against it is not its association but whichever ticket the last session happened to resolve, and a later session auto-resolving from it proceeds against an arbitrary one. The deriver enforces this: It refuses the write, reports on stderr, exits 0, and emits a manifest whose `ticket_url` is null. It clears a value already stored there for the same reason. A skill that decides the skip itself can report it in its own completion output instead of leaving it to a stderr line; `create-ticket` does. The same rule applies to `pr_url`; see [PR source resolution](pr-source-resolution.md#stored-pr-url).
+- **Invalidate**: When the stored URL does not yield the expected ticket (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-fetches through `acli` or a connected read tool, and re-prompts the user only when neither is available.
 
 ## Resolved metadata
 

@@ -31,16 +31,16 @@ The concision and content-placement doctrines for feature tickets and plans appl
 
 ### Questions to answer
 
-- [ ] {A question the investigation must resolve.}
+- [ ] {A question that the investigation must resolve.}
 
 ### Decisions to enable
 
-- [ ] {A decision the findings must make possible.}
+- [ ] {A decision that the findings must make possible.}
 
 Deliverable: a findings & recommendation artifact.
 ```
 
-`Context` and `Scope` are opt-in: Include either only when it adds signal the reader must act on.
+`Context` and `Scope` are opt-in: Include either only when it adds signal on which the reader must act.
 
 Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is a first-class section; acceptance criteria are questions-to-answer and decisions-to-enable rather than observable-behavior checkboxes; there is no test or documentation criterion; the deliverable is a findings artifact, saved via the standard `save-artifact` conventions (no dedicated artifact type).
 
@@ -78,7 +78,7 @@ Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is
 {The findings & recommendation artifact: the answers reached, a recommendation, and residual unknowns.}
 ```
 
-Differences from the feature plan: Investigation steps framed by the question each probes replace tasks with create/modify/test file lists; `Timebox` is first-class; `Deliverable` replaces `Verification`, since a spike produces findings rather than verifiable behavior; there is no per-step test or documentation criterion.
+Differences from the feature plan: Investigation steps, each framed by the question that it probes, replace tasks with create/modify/test file lists; `Timebox` is first-class; `Deliverable` replaces `Verification`, since a spike produces findings rather than verifiable behavior; there is no per-step test or documentation criterion.
 
 ## Aligning a spike
 

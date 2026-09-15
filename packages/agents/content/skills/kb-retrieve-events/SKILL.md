@@ -6,7 +6,7 @@ user-invocable: true
 
 # Retrieve knowledge-base events
 
-Surface the knowledge-base events most relevant to a query. Events are the raw observations captured to refine the knowledge proper; this skill recalls them and ranks by how often a pattern recurs. A bundled helper does the mechanical recall: It resolves which knowledge bases to search, runs ripgrep over the event files, expands query terms through the tag aliases, and emits a structured candidate table. You then rank those candidates by genuine relevance and present a ranked list.
+Find the knowledge-base events most relevant to a query. Events are the raw observations captured to refine the knowledge proper; this skill recalls them and ranks by how often a pattern recurs. A bundled helper does the mechanical recall: It resolves which knowledge bases to search, runs ripgrep over the event files, expands query terms through the tag aliases, and emits a structured candidate table. You then rank those candidates by genuine relevance and present a ranked list.
 
 For assertion recall (the canonical knowledge-base notes), use `kb-retrieve` instead. This skill returns only events.
 
@@ -30,12 +30,12 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 
 `--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone: No `.kb/` discovery walk runs. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
 
-Within each knowledge base, recall is limited to the notes the store declares, the files matching its configured `targets`/`exclude` (the same note set `kb check` enforces). Events are stored under `content/events/`.
+Within each knowledge base, recall is limited to the notes declared by the store, the files matching its configured `targets`/`exclude` (the same note set that `kb check` enforces). Events are stored under `content/events/`.
 
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
-- **`ripgrep` (`rg`)**: the recall backend; the helper exits with a remediation hint when it is missing.
+- **`ripgrep` (`rg`)**: The recall backend; the helper exits with a remediation hint when it is missing.
 
 ## Process
 
@@ -55,14 +55,14 @@ node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky 
 
 The helper prints a JSON object to stdout:
 
-- `candidates`: an array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also has `occurrences` (a coarse recurrence count of how many query-matched events share its `repo`) and, when present, `repo` (its `owner/name` repository), `addressedBy` (references recording what was done about the problem it notes), and `impact` (the author's rating, one of `low` < `medium` < `high` < `critical`; absent when the event is unrated).
-- `scopedKbs`: the knowledge bases that were actually searched.
-- `warnings`: an array (possibly empty) of registry-health problems, present even when candidates are returned.
-- `diagnostic`: present only when scope is empty or no events matched.
+- `candidates`: An array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also has `occurrences` (a coarse recurrence count of how many query-matched events share its `repo`) and, when present, `repo` (its `owner/name` repository), `addressedBy` (references recording what was done about the problem that it notes), and `impact` (the author's rating, one of `low` < `medium` < `high` < `critical`; absent when the event is unrated).
+- `scopedKbs`: The knowledge bases that were actually searched.
+- `warnings`: An array (possibly empty) of registry-health problems, present even when candidates are returned.
+- `diagnostic`: Present only when scope is empty or no events matched.
 
 ### 2. Rank the candidates
 
-Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag overlap with the query is **evidence**, not a term in a weighted sum. Read each `snippet` to judge whether the event actually bears on the query rather than merely mentioning its terms.
+Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag overlap with the query is **evidence**, not a term in a weighted sum. Read each `snippet` to judge whether the event actually relates to the query rather than merely mentioning its terms.
 
 Once relevance is established, rank by recurrence, then recency: A candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo` and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched events sharing the group, not a precise cluster; treat it as a strong-but-soft signal.
 
@@ -72,7 +72,7 @@ Do not rank by `impact`. It is the author's subjective rating, orthogonal to a q
 
 Present the ranked events, each showing `summary`, `path`, `capturedAt`, and `snippet`, plus `impact` when the event has one. Apply this annotation:
 
-- **Addressed problems**: When a candidate has `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: It records what was done about the problem, not that the problem is verifiably resolved. The event remains a true observation worth keeping.
+- **Addressed problems**: When a candidate has `addressedBy`, show its references so that a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: It records what was done about the problem, not that the problem is verifiably resolved. The event remains a true observation worth keeping.
 
 ### 4. Report empty results plainly
 
@@ -90,7 +90,7 @@ When the helper returns a `diagnostic` and no candidates, report the empty resul
 
 `warnings` is separate from `diagnostic`: It reports **what is wrong with the registry**, and it is present even when candidates are returned. Always relay any warning to the user as a setup problem to fix, not as a failed query:
 
-- `registry invalid: …`: The `kb.yaml` registry could not be loaded; entries it would have contributed are missing from the search.
+- `registry invalid: …`: The `kb.yaml` registry could not be loaded; entries that it would have contributed are missing from the search.
 - `… path does not exist: …`: A registry entry names a knowledge base whose directory is absent on disk, so that KB was skipped; the entry or the directory needs fixing.
 
 ## Completion
