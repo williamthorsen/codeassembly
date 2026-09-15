@@ -1,6 +1,6 @@
 ---
 name: vetted
-description: Fixture skill the public collection claims.
+description: Fixture skill claimed by the public collection.
 ---
 
 # Vetted

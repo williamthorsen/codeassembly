@@ -1,6 +1,6 @@
 ---
 name: vetted
-description: Fixture skill the public collection claims, carrying an edge out of that collection.
+description: Fixture skill claimed by the public collection, carrying an edge out of that collection.
 dependencies:
   skills:
     - unvetted

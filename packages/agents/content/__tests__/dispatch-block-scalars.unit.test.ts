@@ -5,9 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// A dispatch block hands a subagent the scalars it was not able to derive, and nothing else. The retired
-// `changelog-writer` took an `outcome:` block scalar the caller composed, which made the caller the author of the
-// facts and the subagent a rewriter of them; the fresh-context drafter that replaced it is worth nothing if a
+// A dispatch block hands a subagent the scalars that it was not able to derive, and nothing else. The retired
+// `changelog-writer` took an `outcome:` block scalar composed by the caller, which made the caller the author of
+// the facts and the subagent a rewriter of them; the fresh-context drafter that replaced it is worth nothing if a
 // seeding sentence creeps back into the block. Prose there does not fail at runtime -- it produces a plausible
 // lede carrying the caller's weighting -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
@@ -15,15 +15,18 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 /** Info string marking a fence as a subagent dispatch block. */
 const FENCE_INFO = 'dispatch';
 
-/** A line a dispatch block may carry: a lowercase kebab-case key, a colon and a space, and a non-empty value. */
+/** A line that a dispatch block may carry: a lowercase kebab-case key, a colon and a space, and a non-empty value. */
 const SCALAR_LINE = /^[a-z][a-z0-9-]*: \S/;
 
-/** A value opening a YAML block scalar, which is the shape a seeding sentence takes even before its body is written. */
+/**
+ * A value opening a YAML block scalar, which is the shape that a seeding sentence takes even before its body is
+ * written.
+ */
 const BLOCK_SCALAR_VALUE = /^[a-z][a-z0-9-]*: [|>][+-]?$/;
 
 /**
- * Every key a dispatch block may carry. The shape check alone admits a one-line `outcome:` sentence, which seeds the
- * drafter exactly as the block form does, so the closed set is what makes the check a guard rather than a formality.
+ * Every key that a dispatch block may carry. The shape check alone admits a one-line `outcome:` sentence, which seeds
+ * the drafter exactly as the block form does, so the closed set makes the check a guard rather than a formality.
  */
 const DECLARED_KEYS: ReadonlySet<string> = new Set([
   'candidates',
@@ -50,8 +53,8 @@ const BLOCKS = collectDispatchBlocks();
 describe('dispatch blocks', () => {
   it('exist somewhere in the content tree', async () => {
     const message =
-      `No fence carries the \`${FENCE_INFO}\` info string, so the scalars-only assertion below passes vacuously. ` +
-      'Re-key this suite on the info string the dispatch blocks carry now, or drop it.';
+      `Because no fence carries the \`${FENCE_INFO}\` info string, the scalars-only assertion below passes ` +
+      'vacuously. Re-key this suite on the info string that the dispatch blocks carry now, or drop it.';
     expect((await BLOCKS).length, message).toBeGreaterThan(0);
   });
 
@@ -59,9 +62,9 @@ describe('dispatch blocks', () => {
     const violations = await findViolations((text) => !SCALAR_LINE.test(text) || BLOCK_SCALAR_VALUE.test(text));
 
     const message =
-      'A dispatch block carries the scalars a subagent cannot derive, and no prose: a sentence written here makes ' +
-      'the caller the author of the facts, which is the arrangement the fresh-context dispatch replaced. These ' +
-      `lines are not \`key: value\` scalars:\n  ${violations.map(describeViolation).join('\n  ')}`;
+      'A dispatch block carries the scalars that a subagent cannot derive, and no prose: A sentence written here ' +
+      'makes the caller the author of the facts, which is the arrangement replaced by the fresh-context dispatch. ' +
+      `These lines are not \`key: value\` scalars:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 
@@ -70,8 +73,8 @@ describe('dispatch blocks', () => {
 
     const message =
       `A dispatch block carries these keys and no others: ${[...DECLARED_KEYS].toSorted().join(', ')}. An ` +
-      'undeclared key is how a seeding sentence enters as a well-formed scalar. Add the key to DECLARED_KEYS where ' +
-      `the drafter reads it, and drop it from the block where it does not:\n  ${violations.map(describeViolation).join('\n  ')}`;
+      'undeclared key is how a seeding sentence enters as a well-formed scalar. Add the key to DECLARED_KEYS if ' +
+      `the drafter reads it, and drop it from the block if it does not:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 });
@@ -85,7 +88,7 @@ interface DispatchBlock {
   readonly relativePath: string;
 }
 
-/** Reads every dispatch block in the content tree, so both assertions scan it once. */
+/** Reads every dispatch block in the content tree, so that both assertions scan it once. */
 async function collectDispatchBlocks(): Promise<ReadonlyArray<DispatchBlock>> {
   const files = await listMarkdownFiles(CONTENT_ROOT);
   const blocks: Array<DispatchBlock> = [];
@@ -134,7 +137,7 @@ function findDispatchBlocks(content: string, relativePath: string): ReadonlyArra
   return blocks;
 }
 
-/** Returns every non-blank dispatch-block line the predicate rejects, located for the failure message. */
+/** Returns every non-blank dispatch-block line rejected by the predicate, located for the failure message. */
 async function findViolations(isViolation: (text: string) => boolean): Promise<ReadonlyArray<Violation>> {
   return (await BLOCKS).flatMap((block) =>
     block.lines
@@ -144,7 +147,7 @@ async function findViolations(isViolation: (text: string) => boolean): Promise<R
   );
 }
 
-/** Reads the key from a `key: value` line, returning the empty string where the line carries none. */
+/** Reads the key from a `key: value` line, returning the empty string when the line carries none. */
 function readKey(text: string): string {
   return /^([a-z][a-z0-9-]*):/.exec(text)?.[1] ?? '';
 }

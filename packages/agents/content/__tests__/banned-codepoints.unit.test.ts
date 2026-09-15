@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
-// Fixture data is authored to hold the defects other suites assert on, so a ban would report a fixture as an offender.
+// Fixture data is authored to hold the defects that other suites assert on, so a ban would report a fixture as an
+// offender.
 const EXCLUDED_PREFIX = '__tests__/fixtures/';
 
 // The build writes these rather than the corpus authoring them: esbuild bundles of the skill helpers.
@@ -35,11 +36,11 @@ interface Offender {
 // Each codepoint is written as an escape. The scan reads this file, so a literal would report the guard itself, and a
 // literal non-breaking space is invisible in source besides.
 //
-// The scan decodes each file rather than matching bytes. 0xA0 is a continuation byte of ■ (U+25A0) and ➕ (U+2795), so
-// a byte-level search reports every gradient example as a hit.
+// The scan decodes each file rather than matching bytes. Because 0xA0 is a continuation byte of ■ (U+25A0) and
+// ➕ (U+2795), a byte-level search reports every gradient example as a hit.
 const BANS: ReadonlyArray<Ban> = [
   {
-    // The ban is total rather than indent-only: the sole reason to type one into guidance is to indent a subordinate
+    // The ban is total rather than indent-only: The sole reason to type one into guidance is to indent a subordinate
     // line, and a blanket check needs no parsing to decide.
     allowlist: [],
     codepoint: '\u{A0}',
@@ -49,9 +50,9 @@ const BANS: ReadonlyArray<Ban> = [
       'reader cannot tell which option its reasoning belongs to. Nest the reasoning as a list item instead.',
   },
   {
-    // A whole file is exempt only where the corpus does not author it. `brainstorming` is a verbatim superpowers
+    // A whole file is exempt only when the corpus does not author it. `brainstorming` is a verbatim superpowers
     // extract marked do-not-edit, so its prose is out of the rule's reach entirely. `update-jira-ticket` is ordinary
-    // skill guidance that happens to document the character, so only the row documenting it is exempt and a new
+    // skill guidance that happens to document the character. Only the row documenting it is exempt, and a new
     // em-dash anywhere else in the file still fails.
     allowlist: [
       { path: 'skills/brainstorming/SKILL.md' },
@@ -60,21 +61,21 @@ const BANS: ReadonlyArray<Ban> = [
     codepoint: '\u{2014}',
     name: 'an em-dash (U+2014)',
     remedy:
-      'The corpus is the prose an agent reads and imitates, so it follows the em-dash rule it states. Repunctuate ' +
-      'the site, or write `--` where a dash is genuinely best.',
+      'Because the corpus is the prose read and imitated by an agent, it follows the em-dash rule that it states. ' +
+      'Repunctuate the site, or write `--` when a dash is genuinely best.',
   },
 ];
 
 describe('banned codepoints', () => {
-  // A ban is only as wide as the listing feeding it, and a narrowed listing fails nothing on its own: the scans keep
-  // passing on the files they no longer read. The expectation is read from the tree because comparing the listing
-  // against `SCANNED_EXTENSIONS` would narrow along with it and assert nothing.
+  // A ban is only as wide as the listing feeding it, and a narrowed listing fails nothing on its own: The scans keep
+  // passing on the files that they no longer read. The expectation is read from the tree because comparing the
+  // listing against `SCANNED_EXTENSIONS` would narrow along with it and assert nothing.
   it('scans every authored extension under content/', async () => {
     const authored = await listAuthoredExtensions();
     const scanned = new Set((await listScannedFiles()).map((file) => path.extname(file)));
     const unscanned = [...authored].filter((extension) => !scanned.has(extension)).toSorted();
 
-    const message = `These extensions are authored under content/ but reach no ban: ${unscanned.join(', ')}`;
+    const message = `These extensions are authored under content/ but no ban reads them: ${unscanned.join(', ')}`;
     expect(unscanned, message).toEqual([]);
   });
 
@@ -95,7 +96,7 @@ describe('banned codepoints', () => {
 
 // region | Helpers
 
-/** Returns every site of the ban's codepoint the ban does not exempt. */
+/** Returns every site of the ban's codepoint that the ban does not exempt. */
 async function findOffenders(ban: Ban): Promise<ReadonlyArray<Offender>> {
   const offenders: Array<Offender> = [];
   const files = await listScannedFiles();
@@ -126,7 +127,7 @@ async function findStaleExemptions(ban: Ban): Promise<ReadonlyArray<string>> {
     const body = await readFile(path.join(CONTENT_ROOT, exemption.path), 'utf8');
     const covered = body.split('\n').some((line) => line.includes(ban.codepoint) && isExempt(exemption, line));
     if (!covered) {
-      stale.push(`${exemption.path}: no longer contains ${ban.name} the entry exempts`);
+      stale.push(`${exemption.path}: no longer contains ${ban.name} exempted by the entry`);
     }
   }
   return stale;
@@ -148,14 +149,16 @@ function isExempt(exemption: Exemption | undefined, line: string): boolean {
   return marker === undefined || line.includes(marker);
 }
 
-/** Returns every extension the corpus authors under `content/`, which is every one the build does not write. */
+/**
+ * Returns every extension authored by the corpus under `content/`, which is every one that the build does not write.
+ */
 async function listAuthoredExtensions(): Promise<ReadonlySet<string>> {
   const entries = await readdir(CONTENT_ROOT, { recursive: true, withFileTypes: true });
   const extensions = entries.filter((entry) => entry.isFile()).map((entry) => path.extname(entry.name));
   return new Set(extensions.filter((extension) => extension !== '' && !GENERATED_EXTENSIONS.has(extension)));
 }
 
-/** Returns every file the bans read, as content-root-relative POSIX paths. */
+/** Returns every file read by the bans, as content-root-relative POSIX paths. */
 async function listScannedFiles(): Promise<ReadonlyArray<string>> {
   const entries = await readdir(CONTENT_ROOT, { recursive: true, withFileTypes: true });
   return entries
