@@ -1,6 +1,6 @@
 ---
 name: triaged
-description: Fixture skill the unexamined collection claims.
+description: Fixture skill claimed by the unexamined collection.
 ---
 
 # Triaged

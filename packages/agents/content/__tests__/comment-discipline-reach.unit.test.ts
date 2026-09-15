@@ -9,9 +9,9 @@ import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-sub
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Two mechanisms put the doctrine into an agent's context, and both are checked here: a skill inlines it at install
+// Two mechanisms put the doctrine into an agent's context, and both are checked here: A skill inlines it at install
 // time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent needs no body
-// edit, only an injected carrier; that injection list is a frontmatter array an edit can trim with no other test
+// edit, only an injected carrier; that injection list is a frontmatter array that an edit can trim with no other test
 // failing.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
@@ -19,7 +19,7 @@ const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
 
 const DOCTRINE_HEADING = '## Comment discipline';
 
-/** Phrases that must survive an edit to the partial, so a gutted doctrine cannot still pass the heading check. */
+/** Phrases that must survive an edit to the partial, so that a gutted doctrine cannot still pass the heading check. */
 const DOCTRINE_RULES: ReadonlyArray<string> = [
   "A comment drafted for someone else's file is a source comment",
   '**1. The stranger test',
@@ -38,7 +38,10 @@ const CARRIER_SKILLS: ReadonlyArray<string> = [
   'testing-conventions',
 ];
 
-/** Paths no content file may name: a reference to one is a consumer pointing at the doctrine instead of inlining it. */
+/**
+ * Paths that no content file may name: A reference to one is a consumer pointing at the doctrine instead of inlining
+ * it.
+ */
 const RETIRED_REFERENCES: ReadonlyArray<string> = ['_data/comment-discipline.md', 'comment-audit-checklist'];
 
 describe('comment-discipline reach', () => {
@@ -82,7 +85,9 @@ describe('comment-discipline reach', () => {
   });
 });
 
-/** Returns a skill's include-expanded `SKILL.md`, the body the install pipeline goes on to rewrite and write out. */
+/**
+ * Returns a skill's include-expanded `SKILL.md`, the body that the install pipeline goes on to rewrite and write out.
+ */
 async function expandSkill(slug: string): Promise<string> {
   return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
 }

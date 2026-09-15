@@ -1,6 +1,6 @@
 # Entry
 
-A support entry a host reaches by link.
+A support entry that a host reaches by link.
 
 ## The section
 

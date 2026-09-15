@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// The drafter answers "What is this PR about?" from summary-shaped sources, in a form the author rates. The diff
-// defeats that question and looks like diligence when a later edit restores it, because every fact it holds feels
+// The drafter answers "What is this PR about?" from summary-shaped sources, in a form that the author rates. The diff
+// defeats that question and looks like diligence when a later edit restores it, because every fact in it feels
 // load-bearing. The form is defeated by a prescribed phrase, which the model emits wherever guidance names one, by an
 // exemplar below the floor, every one of which is paragraph-form, and by a bullet unit that reads as one edit, whose
 // split bullets no later actor may merge. None of these failures shows up at runtime -- each yields a plausible lede
@@ -16,8 +16,8 @@ const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const ASSIGNMENT_QUESTION = 'What is this PR about?';
 
 /**
- * Phrases fixing a bullet's scope to the outcome rather than to the edit. Where they are gone, "one bullet" reads as
- * one edit, and neither the caller's audit nor the deletion-only cutter may merge the bullets that reading splits.
+ * Phrases fixing a bullet's scope to the outcome rather than to the edit. When they are gone, "one bullet" reads as
+ * one edit, and neither the caller's audit nor the deletion-only cutter may merge the bullets split by that reading.
  */
 const BULLET_SCOPE_PHRASES: ReadonlyArray<string> = [
   'either two outcomes',
@@ -29,7 +29,7 @@ const BULLET_SCOPE_PHRASES: ReadonlyArray<string> = [
 const EXEMPLAR_QUALITY_FLOOR = '--min-quality strong';
 
 /**
- * Phrases stating the bullet contract, which an edit restoring the paragraph form would lose. Lowercased, so a
+ * Phrases stating the bullet contract, which an edit restoring the paragraph form would lose. Lowercased, so that a
  * sentence's opening capital still matches.
  */
 const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
@@ -55,7 +55,7 @@ const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases deciding what a bullet names and how it marks it. Where they are gone, the kinds list reads as the
+ * Phrases deciding what a bullet names and how it marks it. When they are gone, the kinds list reads as the
  * whole rule, so a token that the reader never sees is backticked, and the internal call stands in for what the
  * artifact does.
  */
@@ -64,27 +64,27 @@ const NAMING_RULE_PHRASES: ReadonlyArray<string> = [
   'what the reader consumes decides the marking',
 ];
 
-/** A connective the drafter prescribes nowhere, pinned as a literal because a rewording is how it returns. */
+/** A connective prescribed nowhere by the drafter, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
 
 /** The phrase excluding how a change was produced, which a commit body carries and a bullet does not. */
 const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
-/** The statement that the writer composes against a title the reader has already read. */
+/** The statement that the writer composes against a title that the reader has already read. */
 const TITLE_PHRASE = 'The title is already on the page';
 
-/** Every code the caller redispatches under, each of which the drafter has to be able to act on. */
+/** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
 const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
 
 /**
- * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so a doctrine bullet's
- * opening capital still matches.
+ * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so that a doctrine
+ * bullet's opening capital still matches.
  */
 const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not work on it', 'works in this codebase'];
 
 /**
- * Phrases binding a redispatch to the passages it was handed. Lowercased, so a sentence's opening capital still
- * matches.
+ * Phrases binding a redispatch to the passages that it was handed. Lowercased, so that a sentence's opening capital
+ * still matches.
  */
 const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   '`rejected` fence',
@@ -93,7 +93,7 @@ const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases stating the subject test, which decides a bullet's subject without the doctrine. Lowercased, so a
+ * Phrases stating the subject test, which decides a bullet's subject without the doctrine. Lowercased, so that a
  * sentence's opening capital still matches.
  */
 const SUBJECT_TEST_PHRASES: ReadonlyArray<string> = [
@@ -101,18 +101,18 @@ const SUBJECT_TEST_PHRASES: ReadonlyArray<string> = [
   'the verb names what the system does rather than what the change did',
 ];
 
-/** Each file stating the subject test: the drafter applies it, and the caller audits the draft against it. */
+/** Each file stating the subject test: The drafter applies it, and the caller audits the draft against it. */
 const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
   path.join('skills', 'summarize-change', 'SKILL.md'),
   path.join('subagents', 'lede-drafter.md'),
 ];
 
-/** The flag the exemplar call falls back to where the dispatch carries no type. */
+/** The flag to which the exemplar call falls back when the dispatch carries no type. */
 const TIER_FALLBACK_FLAG = '--tier {tier}';
 
 /**
- * Work types whose bullet owes a fact the assignment does not supply. Each is stated nowhere else, so a rewrite that
- * drops one leaves the drafter with no guidance at all on that type and every suite green.
+ * Work types whose bullet owes a fact that the assignment does not supply. Each is stated nowhere else, so a rewrite
+ * that drops one leaves the drafter with no guidance at all on that type and every suite green.
  */
 const TYPE_RULE_KEYS: ReadonlyArray<string> = ['ai', 'deps', 'deprecate', 'drop', 'fix', 'perf', 'refactor', 'sec'];
 
@@ -132,7 +132,7 @@ describe('lede-drafter contract', () => {
 
     const message =
       'The reader decides what the entry reports, and this file is the only one that states the readers to the ' +
-      `writer. Where one is gone, the drafter writes for an audience nothing named. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      `writer. When one is gone, the drafter writes for an audience that nothing named. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -162,9 +162,9 @@ describe('lede-drafter contract', () => {
       .filter((line) => line.includes(TIER_FALLBACK_FLAG) && !line.includes('--min-quality'));
 
     const message =
-      `A dispatch carrying \`tier\` and no \`type\` is one \`summarize-change\` produces, so the fallback runs. A ` +
-      `line naming \`${TIER_FALLBACK_FLAG}\` without the floor reads as the whole argument list, which returns the ` +
-      `records the floor excludes. These lines drop it:\n  ${found.join('\n  ')}`;
+      `A dispatch carrying \`tier\` and no \`type\` is one that \`summarize-change\` produces, so the fallback runs. ` +
+      `A line naming \`${TIER_FALLBACK_FLAG}\` without the floor reads as the whole argument list, which returns the ` +
+      `records excluded by the floor. These lines drop it:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
   });
 
@@ -174,7 +174,7 @@ describe('lede-drafter contract', () => {
 
     const message =
       'The drafter is the only file that binds the writer, so a drafter that states no bullet contract drafts the ' +
-      `paragraph the exemplars were rewritten out of. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      `paragraph out of which the exemplars were rewritten. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -184,7 +184,7 @@ describe('lede-drafter contract', () => {
 
     const message =
       'A drafter reading "one bullet" as one edit splits a single outcome across bullets, and the split survives the ' +
-      'whole pipeline: the audit may strike and correct but never merge, and the cutter may only delete. These ' +
+      'whole pipeline: The audit may strike and correct but never merge, and the cutter may only delete. These ' +
       `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -194,8 +194,8 @@ describe('lede-drafter contract', () => {
     const missing = NAMING_RULE_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The kinds list mis-predicts on its own: a flag is on it, and a flag that this pipeline passes internally is ' +
-      "one that the reader never sees. Where these are gone, a bullet marks by kind and reports the change's own " +
+      'The kinds list mis-predicts on its own: A flag is on it, and a flag that this pipeline passes internally is ' +
+      "one that the reader never sees. When these are gone, a bullet marks by kind and reports the change's own " +
       `call rather than what the reader gets. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -207,8 +207,8 @@ describe('lede-drafter contract', () => {
     const message =
       'The subject test decides a bullet without the doctrine. The drafter applies it and the caller audits the ' +
       'draft against it, and neither reads the other, so revising one leaves the other testing something else. ' +
-      'Where it is gone, a bullet opens with a verb the pull request does not perform and the draft reads as ' +
-      `correct, because every claim in it is true of the artifact the change added:\n  ${missing.join('\n  ')}`;
+      'When it is gone, a bullet opens with a verb that the pull request does not perform and the draft reads as ' +
+      `correct, because every claim in it is true of the artifact added by the change:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -217,12 +217,12 @@ describe('lede-drafter contract', () => {
     const missing = REJECTION_CODES.filter((code) => !text.includes(`\`${code}\``));
 
     const message =
-      'A redispatch hands the drafter a code and the passages that failed, so a code the caller sends and this ' +
+      'A redispatch hands the drafter a code and the passages that failed, so a code that the caller sends and this ' +
       `file does not explain reaches a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
-  it('binds a redispatch to the passages it is handed', async () => {
+  it('binds a redispatch to the passages that it is handed', async () => {
     const text = (await EXPANDED).toLowerCase();
     const missing = REVISION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
 
@@ -245,7 +245,7 @@ describe('lede-drafter contract', () => {
     const missing = TYPE_RULE_KEYS.filter((key) => !text.includes(`\`${key}\``));
 
     const message =
-      'A type owing a fact beyond the assignment owes it here, and nothing else states these. Where one is gone, ' +
+      'A type owing a fact beyond the assignment owes it here, and nothing else states these. When one is gone, ' +
       'the drafter writes a bullet that reads as correct and withholds what that type is read for: a measured size, ' +
       `an exposure bound, a migration. These types are unstated:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
@@ -257,8 +257,8 @@ describe('lede-drafter contract', () => {
 
     const message =
       'A migration paragraph is the only text addressed to a consumer whose build broke, and the cutter never sees it. ' +
-      'The trap the replacement carries appears in no hunk, so a caller auditing against the diff cannot supply it. ' +
-      `These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'The trap present in the replacement appears in no hunk, so a caller auditing against the diff cannot supply ' +
+      `it. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -279,8 +279,8 @@ describe('lede-drafter contract', () => {
 
   it('prescribes no connective phrase', async () => {
     const message =
-      `A form named in guidance is a form the model emits, so "${PRESCRIBED_CONNECTIVE}" reaches the draft wherever ` +
-      'the drafter names it. A second outcome is a second bullet.';
+      `A form named in guidance is a form that the model emits, so "${PRESCRIBED_CONNECTIVE}" reaches the draft ` +
+      'wherever the drafter names it. A second outcome is a second bullet.';
     expect(await EXPANDED, message).not.toContain(PRESCRIBED_CONNECTIVE);
   });
 });
