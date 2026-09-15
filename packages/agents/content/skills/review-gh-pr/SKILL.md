@@ -32,7 +32,7 @@ On success, return a record with the following fields. `review-pr` passes this d
 | `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source (PR description always present; ticket if resolved). Every source is `provenance: "remote"` (this path fetches live and never reads a local snapshot), so the review never renders a divergence note for it |
 | `pr_metadata`    | object                                                                          | `{ number, url, head_oid, base_ref, title }`                                                                                                                                                                                                             |
 
-On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
+On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-pr` reports the message and stops.
 
 ## Process
 
@@ -54,7 +54,7 @@ Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`).
 - `headRefName`, `headRefOid`, `baseRefName`
 - `closingIssuesReferences` (array of `{ number, title, url }` or empty)
 
-If `gh pr view` exits non-zero, surface its stderr and stop.
+If `gh pr view` exits non-zero, report its stderr and stop.
 
 ### 3. Verify HEAD
 
@@ -149,6 +149,6 @@ Return:
 ## Important
 
 - **Single `gh pr view` call.** All fields are fetched at once. Do not split into multiple calls: Repeated `gh` invocations are slow and add failure modes.
-- **HEAD mismatch is a hard stop.** The error message must include the literal `gh pr checkout {number}` suggestion so the user has a one-line copy-pasteable fix.
-- **Ticket-resolution cascade order is fixed.** `ticket_override` → `closingIssuesReferences[0]` → body parse → none. Document this order in any future change so future readers do not silently rearrange it.
+- **HEAD mismatch is a hard stop.** The error message must include the literal `gh pr checkout {number}` suggestion so that the user has a one-line copy-pasteable fix.
+- **Ticket-resolution cascade order is fixed.** `ticket_override` → `closingIssuesReferences[0]` → body parse → none. Document this order in any future change so that future readers do not silently rearrange it.
 - **No review logic here.** This delegate prepares inputs only. The review process (diff analysis, finding generation, "Specification compliance" rendering) runs inside `review-branch` after `review-pr` invokes it with the resolved inputs.

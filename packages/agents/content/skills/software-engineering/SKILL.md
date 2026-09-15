@@ -13,7 +13,7 @@ Broadly applicable software engineering principles not specific to a particular 
 Follow established software engineering best practices:
 
 - Adhere to the single-responsibility principle
-- Use dependency injection where appropriate
+- Use dependency injection when appropriate
 - Prefer composition over inheritance
 - Write self-documenting code with clear naming
 - Keep functions and classes small and focused
@@ -24,9 +24,9 @@ Follow established software engineering best practices:
 
 ### Research before implementation
 
-- **Always investigate existing libraries before hand-rolling complex code** - Research and adopt reliable, lightweight solutions like `cli-table3` for table formatting and `chalk` for terminal colors
-- **Don't write complicated functions solvable by lightweight libraries** - Use established libraries like `semver` instead of custom parsing
-- **Prefer chalk for terminal colors** - Use `chalk.red()` instead of manual ANSI escape codes
+- **Always investigate existing libraries before hand-rolling complex code**: Research and adopt reliable, lightweight solutions like `cli-table3` for table formatting and `chalk` for terminal colors
+- **Don't write complicated functions solvable by lightweight libraries**: Use established libraries like `semver` instead of custom parsing
+- **Prefer chalk for terminal colors**: Use `chalk.red()` instead of manual ANSI escape codes
 
 ## Design evaluation
 
@@ -36,7 +36,7 @@ Rank design options on correctness (behavior, API quality, architectural soundne
 
 ### Prefer minimal interfaces over full database types
 
-When designing component props, create minimal interfaces that include only the data the component actually uses, rather than passing entire database entities.
+When designing component props, create minimal interfaces that include only the data actually used by the component, rather than passing entire database entities.
 
 **Do this:**
 
