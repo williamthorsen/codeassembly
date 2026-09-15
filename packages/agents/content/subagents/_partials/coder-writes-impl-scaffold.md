@@ -15,7 +15,7 @@ ticket_ref: '{ticket display ref, omit if absent}'
 branch: '{current branch name}'
 commit: '{short hash of HEAD}'
 pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
+run_id: '{run id, omit if absent}'
 ---
 
 # Change summary: Ticket #{N}

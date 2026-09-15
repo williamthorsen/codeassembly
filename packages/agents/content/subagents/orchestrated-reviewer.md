@@ -76,6 +76,8 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-reviewer --interactive false --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
+<!-- include: _partials/frontmatter-run-id.md / -->
+
 ## Finding format
 
 Each finding must include:

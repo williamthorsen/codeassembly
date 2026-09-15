@@ -145,6 +145,8 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-coder --interactive false --model "{model_id}"` via Bash. Prepend the output verbatim to the artifact body.
 
+<!-- include: _partials/frontmatter-run-id.md / -->
+
 ## Reviewer-context sidecar
 
 The orchestrator may supply a sidecar artifact path in your dispatch prompt (typically alongside the change-summary path) for you to write a short note to downstream reviewers. The orchestrator inlines the sidecar into a unified `## Reviewer context` slot in every reviewer's prompt; its purpose is to prevent reviewers from re-investigating a third-party API surface that you already examined and found surprising.
