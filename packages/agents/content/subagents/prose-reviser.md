@@ -110,7 +110,7 @@ Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questio
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks: the id in the `<!-- rule: <id> -->` marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. Use `plain-speech` if the site breaks the plain-speech rule. A rule whose heading has no marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks: the id in the rule marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. A marker reads `<!-- rule: <id> <version> -->`, or `<!-- rule: <id> -->` if it declares no version; report the id alone, never the version. Use `plain-speech` if the site breaks the plain-speech rule. A rule whose heading has no marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 
