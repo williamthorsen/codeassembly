@@ -89,6 +89,12 @@ export interface Batch {
   recurring: boolean;
 }
 
+/** A batch as `detect` reports it: one left to adjudicate, with the versioned rules that its files still need. */
+export interface ReportedBatch extends Batch {
+  /** The versioned rules for which the record does not cover at least one of this batch's files, sorted. */
+  unswept: readonly string[];
+}
+
 /** One file the sweep read prose from, with the byte length a batch budget is measured against. */
 export interface ScannedFile {
   /** Path to the source file, relative to the repository root. */
@@ -300,15 +306,20 @@ export interface DetectSuccess {
   ok: true;
   /** Repository root the sweep ran against. */
   root: string;
+  /**
+   * The candidates in the reported batches' files, each under a rule that its batch lists as unswept or under a rule
+   * that the run does not version.
+   */
   candidates: readonly Candidate[];
   /**
-   * Sites the record already holds a live rejection for, over the files the sweep read. A sweeper given these leaves
-   * each under the rule its entry names and judges it under every other; one recorded at an older version of its rule,
-   * or under a rule the run does not version, is absent, so its site is judged afresh.
+   * Sites for which the record already holds a live rejection, in the reported batches' files and under a rule that
+   * the batch lists as unswept. A sweeper given these leaves each under the rule that its entry names and judges it
+   * under every other rule that the batch applies; one recorded at an older version of its rule, or under a rule that
+   * the run does not version, is absent, and its site is judged afresh.
    */
   rejections: readonly PriorRejection[];
-  /** The batches left to adjudicate, those the record already covers having been dropped. */
-  batches: readonly Batch[];
+  /** The batches left to adjudicate, those that the record already covers for every versioned rule having been dropped. */
+  batches: readonly ReportedBatch[];
   /**
    * The rules that the run detected, and the named rules for which the helper has no detector, each sorted. A name in
    * `undetected` that a rulebook meant as a detector rule is misspelt.

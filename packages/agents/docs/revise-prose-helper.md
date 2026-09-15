@@ -71,10 +71,11 @@ A `rule` is any lowercase kebab-case name that a bound rulebook declares with a 
 
 When `detect` reads the record, with units named:
 
-- It skips a batch when the record covers every file in it for every rule that the run names with a version: at the rule's current version, under one of its roots, and with `detected` set if the helper holds the rule's detector. A run that names no rule with a version skips nothing.
+- It lists as each batch's `unswept` the rules that the run names with a version and for which the record does not cover at least one of the batch's files: at the rule's current version, under one of its roots, and with `detected` set if the helper holds the rule's detector. It skips a batch whose `unswept` is empty. A run that names no rule with a version skips nothing, and each of its batches lists no rule.
 - It drops a candidate that matches a rejection at its rule's current version.
 - It keeps a candidate that matches a rejection recorded at an _older_ version and marks it `stale: true`, so the sweeper reviews the earlier judgment after a rule's revision rather than losing it.
-- It reports under `rejections`, as `rule`, `file`, and `phrase`, every rejection that the record lists over a file that the sweep read, under a rule that the run names at that rule's current version. A caller gives these to the sweeper, which leaves each site as it stands under the rule that its entry names rather than judging it again. This is the one way in which a rule with no detector saves a later run any work. `detect` withholds a rejection recorded at an older version, or under a rule that the run does not name with a version, so the sweeper receives its site with no prior verdict.
+- It reports only the candidates in the files of a batch that it reports, under a rule that the batch lists as `unswept` or a rule that the run names without a version. A caller applies to each batch its `unswept` rules and the rules without a version, and no other; a rule without a version is applied in every reported batch but keeps no batch from being skipped.
+- It reports under `rejections`, as `rule`, `file`, and `phrase`, every rejection that the record lists over a file of a reported batch, under a rule that the batch lists as `unswept`, at that rule's current version. A caller gives these to the sweeper, which leaves each site as it stands under the rule that its entry names rather than judging it again. This is the one way in which a rule with no detector saves a later run any work. `detect` withholds a rejection recorded at an older version, or under a rule that the run does not name with a version, so the sweeper receives its site with no prior verdict.
 
 ### Records written before rules had versions
 

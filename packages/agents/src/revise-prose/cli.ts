@@ -30,7 +30,7 @@ import {
   applyRejections,
   composeRecord,
   containsPhrase,
-  isCoveredAt,
+  listUnsweptRules,
   parseRecord,
   parseRunFold,
   RECORD_PATH,
@@ -51,6 +51,7 @@ import type {
   ProseRecord,
   RecordedRejection,
   RecordResult,
+  ReportedBatch,
   RuleId,
   RunFold,
   SiteText,
@@ -150,9 +151,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs a sweep end to end: parses args, collects prose, detects every named rule's candidates, applies the record, and
- * plans the batches left to adjudicate. Invalid args, a root outside a git working tree, and a malformed record all
- * become structured `{ ok: false, ... }` results; anything else propagates to `main`'s try/catch.
+ * Runs a sweep end to end: parses args, collects prose, detects every named rule's candidates, applies the record,
+ * plans the batches left to adjudicate with the versioned rules that each one's files still need, and narrows the
+ * candidates and rejections to what those batches apply. A run that versions no rule reports every batch. Invalid
+ * args, a root outside a git working tree, and a malformed record all become structured `{ ok: false, ... }` results;
+ * anything else propagates to `main`'s try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -191,17 +194,21 @@ export async function runDetect(input: {
 
     const rules = args.rules.length === 0 ? LEGACY_RULES : selectDetectorRules(args.rules);
     const detected = detectRules(spans, rules);
-    const candidates = args.units.size === 0 ? detected : applyRejections(detected, record, ruleVersions);
+    const applied = args.units.size === 0 ? detected : applyRejections(detected, record, ruleVersions);
 
-    const planned = planBatches({ files: scannedFiles, candidates, budget: args.budget });
-    const batches = planned.filter((batch) =>
-      batch.files.some((file) => !isCoveredAt(record, ruleVersions, isRuleId, file)),
-    );
+    // Plan from every candidate: a recurring sentence links its files before coverage decides which rules they need.
+    const planned = planBatches({ files: scannedFiles, candidates: applied, budget: args.budget });
+    const batches: ReportedBatch[] = planned
+      .map((batch) => ({ ...batch, unswept: listBatchUnsweptRules(record, ruleVersions, batch.files) }))
+      .filter((batch) => ruleVersions.size === 0 || batch.unswept.length > 0);
+
+    const isInScope = buildBatchScope(batches, ruleVersions);
+    const candidates = applied.filter((candidate) => isInScope(candidate));
     const rejections = selectPriorRejections(
       record,
       ruleVersions,
       scannedFiles.map((scanned) => scanned.file),
-    );
+    ).filter((rejection) => isInScope(rejection));
 
     return {
       ok: true,
@@ -266,6 +273,26 @@ function buildArgVersions(args: ParsedArgs): SweepVersions {
   return { units: args.units, rules };
 }
 
+/**
+ * Builds the predicate that decides whether a site belongs to a reported batch: its file is in one, and that batch
+ * applies its rule, which is either unswept there or not versioned by the run.
+ */
+function buildBatchScope(
+  batches: readonly ReportedBatch[],
+  ruleVersions: ReadonlyMap<string, string>,
+): (site: { file: string; rule: string }) => boolean {
+  const unsweptByFile = new Map<string, ReadonlySet<string>>();
+  for (const batch of batches) {
+    const unswept = new Set(batch.unswept);
+    for (const file of batch.files) unsweptByFile.set(file, unswept);
+  }
+
+  return (site) => {
+    const unswept = unsweptByFile.get(site.file);
+    return unswept !== undefined && (unswept.has(site.rule) || !ruleVersions.has(site.rule));
+  };
+}
+
 /** Builds the versions that a fold holds. */
 function buildFoldVersions(fold: RunFold): SweepVersions {
   return { units: new Map(Object.entries(fold.units)), rules: new Map(Object.entries(fold.rules)) };
@@ -301,6 +328,16 @@ function isEntryPoint(): boolean {
     process.stderr.write(`revise-prose: warning: could not determine entry point: ${describeError(error)}\n`);
     return false;
   }
+}
+
+/** Lists, sorted, the versioned rules for which the record does not cover at least one of `files`. */
+function listBatchUnsweptRules(
+  record: ProseRecord,
+  ruleVersions: ReadonlyMap<string, string>,
+  files: readonly string[],
+): string[] {
+  const unswept = new Set(files.flatMap((file) => listUnsweptRules(record, ruleVersions, isRuleId, file)));
+  return [...unswept].toSorted();
 }
 
 /** Reads the repository's record, treating an absent file as the empty record and converting a legacy one. */

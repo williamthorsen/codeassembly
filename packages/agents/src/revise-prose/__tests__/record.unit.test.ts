@@ -4,8 +4,8 @@ import {
   applyRejections,
   composeRecord,
   containsPhrase,
-  isCoveredAt,
   isStaleRejection,
+  listUnsweptRules,
   parseRecord,
   parseRunFold,
   RECORD_PATH,
@@ -424,43 +424,52 @@ describe(containsPhrase, () => {
   });
 });
 
-describe(isCoveredAt, () => {
+describe(listUnsweptRules, () => {
   const versions = new Map([
     ['em-dash', '1'],
     ['sentence-case', '1'],
   ]);
 
-  it("covers a file under a recorded root at each rule's current version, with each held detector having run", () => {
+  it("lists no rule for a file under a recorded root at each rule's current version, with each held detector having run", () => {
     const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ detected: false }) });
 
-    expect(isCoveredAt(record, versions, hasEmDashDetector, 'docs/guide.md')).toBe(true);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual([]);
   });
 
-  it('covers nothing for a rule whose recorded sweep did not run the detector that the helper now holds', () => {
+  it('lists a rule whose recorded sweep did not run the detector that the helper now holds', () => {
     const record = coveredRecord({ 'em-dash': coverage({ detected: false }), 'sentence-case': coverage() });
 
-    expect(isCoveredAt(record, versions, hasEmDashDetector, 'docs/guide.md')).toBe(false);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual(['em-dash']);
   });
 
-  it('covers nothing once one rule is recorded at another version, whatever the others record', () => {
+  it('lists a rule recorded at another version alone, the other rule still covering the file', () => {
     const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ version: '2' }) });
 
-    expect(isCoveredAt(record, versions, hasEmDashDetector, 'docs/guide.md')).toBe(false);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual(['sentence-case']);
   });
 
-  it('covers nothing outside every recorded root', () => {
+  it('lists a rule that the record does not name', () => {
+    const record = coveredRecord({ 'em-dash': coverage() });
+
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual(['sentence-case']);
+  });
+
+  it('lists every rule for a file outside every recorded root', () => {
     const record = coveredRecord({
       'em-dash': coverage({ roots: ['docs'] }),
       'sentence-case': coverage({ detected: false, roots: ['docs'] }),
     });
 
-    expect(isCoveredAt(record, versions, hasEmDashDetector, 'src/notes.md')).toBe(false);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'src/notes.md')).toStrictEqual([
+      'em-dash',
+      'sentence-case',
+    ]);
   });
 
-  it('covers nothing for a run that versions no rule', () => {
+  it('lists no rule for a run that versions no rule', () => {
     const record = coveredRecord({ 'em-dash': coverage() });
 
-    expect(isCoveredAt(record, new Map(), hasEmDashDetector, 'docs/guide.md')).toBe(false);
+    expect(listUnsweptRules(record, new Map(), hasEmDashDetector, 'docs/guide.md')).toStrictEqual([]);
   });
 });
 
