@@ -372,7 +372,7 @@ export function stringifyRecord(record: ProseRecord): string {
     ground: rejection.ground,
   }));
 
-  return stringifyYaml({ rules, rejections }, { lineWidth: 0 });
+  return stringifyYaml({ rules, rejections }, { aliasDuplicateObjects: false, lineWidth: 0 });
 }
 
 // region | Helpers

@@ -602,6 +602,14 @@ describe(stringifyRecord, () => {
 
     expect(yaml.split('\n').some((line) => line.includes(phrase))).toBe(true);
   });
+
+  it('writes roots shared between rules in full, so a rewrite of the parsed record renders the same bytes', () => {
+    const roots = ['docs', 'packages'];
+    const yaml = stringifyRecord({ rules: { a: coverage({ roots }), b: coverage({ roots }) }, rejections: [] });
+
+    expect(yaml).not.toMatch(/[&*]a\d/);
+    expect(stringifyRecord(parseRecord(yaml, NO_VERSIONS))).toBe(yaml);
+  });
 });
 
 // region | Helpers
