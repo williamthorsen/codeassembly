@@ -129,7 +129,7 @@ export interface RecordedRejection {
 }
 
 /**
- * One rejection a later run inherits: a site an earlier sweep adjudicated and left, at a version of its unit that
+ * One rejection a later run inherits: a site an earlier sweep adjudicated and left, at a version of its rule that
  * still stands. The sweeper needs no argument for a settled site, so the record's own bookkeeping is left behind.
  */
 export interface PriorRejection {
