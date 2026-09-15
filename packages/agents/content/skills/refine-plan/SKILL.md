@@ -12,7 +12,7 @@ dependencies:
 
 # Refine plan
 
-Perform a single review-and-revise round on a saved implementation plan, checking for completeness (decision gaps the coder would fill) and correctness (factual accuracy against the codebase). Produces a refined plan ready for orchestrated development.
+Perform a single review-and-revise round on a saved implementation plan, checking for completeness (decision gaps that the coder would fill) and correctness (factual accuracy against the codebase). Produces a refined plan ready for orchestrated development.
 
 ## Arguments
 
@@ -166,7 +166,7 @@ The top-level fields come from the script; the `provenance:` block is computed f
 
 This site uses `--format json` because the `provenance:` block is case-branched on the input artifact's existing provenance; see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too; do not emit `null` or empty strings.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields that the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too; do not emit `null` or empty strings.
 
 The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
 
@@ -261,7 +261,7 @@ Plan refined:
 As you present the next-steps menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, either orchestration or implementation may apply depending on whether the work's consequences fit a single review pass. Use this as recommendation context. Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed. If the review identified significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, either orchestration or implementation may apply depending on whether the work's consequences fit a single review pass. Use this as recommendation context. Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
 </HARD-GATE>
 
 ## Edge cases

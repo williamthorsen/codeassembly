@@ -350,8 +350,8 @@ function stripCommand(argv: readonly string[]): readonly string[] {
 }
 
 /**
- * Counts a candidate set by file, by rule, and by shape, alongside how many files the sweep read, how many it held
- * out, and how many batches the record let it skip. A whole-repository sweep can return more candidates than one
+ * Counts a candidate set by file, by rule, and by shape, alongside how many files the sweep read, how many it
+ * excluded, and how many batches the record let it skip. A whole-repository sweep can return more candidates than one
  * adjudication pass affords, and these counts are what a caller reads to narrow the next run before paying for it.
  * The skip counts keep an exclusion visible: a file never opened by the sweep would otherwise leave the report looking
  * clean.

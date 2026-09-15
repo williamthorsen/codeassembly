@@ -32,7 +32,7 @@ The permissions use `acceptEdits` mode + consolidated allowlist + deny list:
 - **When adding a broad pattern, check for destructive subcommands** that need deny list entries. For example, `Bash(git:*)` requires `Bash(git checkout .)`, `Bash(git clean:*)`, `Bash(git reset --hard:*)`, etc. in the deny list.
 - **Do not recommend Edit or Read rules**: `acceptEdits` mode covers all file operations. Read rules in the allow list only serve as explicit documentation for paths outside the working directory.
 - **Never recommend allowing commands that are destructive by nature** (rm -rf, git push --force, git reset --hard): These belong in the deny list.
-- **Note any commands the user approved manually** that seem intentionally ungated (one-off operations).
+- **Note any commands that the user approved manually** and that seem intentionally ungated (one-off operations).
 
 ## Limitations
 

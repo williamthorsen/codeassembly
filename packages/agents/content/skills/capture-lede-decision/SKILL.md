@@ -24,7 +24,7 @@ The verdict, `accepted` or `revised`, is not asked. The helper derives it from w
 
 ## The corpus stores positive signals only
 
-A record exists because the author looked at the lede and rated it. Declining to rate writes nothing. **The absence of a record means nothing, and in particular is not an endorsement**: A merge that nobody evaluated is indistinguishable from a merge on which this skill never ran. Never infer a rating, and never record one that the author did not give: A lede that shipped unchanged under time pressure is not a rated lede, and recording a rating not made by the author is the single failure that would make the corpus useless.
+A record exists because the author looked at the lede and rated it. Declining to rate writes nothing. **The absence of a record means nothing, and in particular is not an endorsement**: A merge that nobody evaluated is indistinguishable from a merge on which this skill never ran. Never infer a rating, and never record one that the author did not give: A lede that was merged unchanged under time pressure is not a rated lede, and recording a rating not made by the author is the single failure that would make the corpus useless.
 
 For the same reason, the corpus is outcome-selected: It contains only changes that someone chose to evaluate. It is the right population for reading what good looks like and what typically fails, and the wrong one for measuring whether guidance helps. A comparison must never draw its fixtures from it.
 

@@ -180,8 +180,8 @@ export interface RunFold {
   rejections: readonly FoldRejection[];
 }
 
-/** Why a file was held out of the sweep. */
-export type SkipReason = 'generated' | 'ineligible' | 'machine-generated' | 'unreadable';
+/** Why a file was excluded from the sweep. */
+export type SkipReason = 'generated' | 'ineligible' | 'machine-generated' | 'unreadable' | 'vendored';
 
 /** How a file's prose is delimited, which decides how the extractor reads it. */
 export type ProseKind = 'markdown' | 'script' | 'shell' | 'yaml';
@@ -232,7 +232,7 @@ export interface CandidateSummary {
   total: number;
   /** Files whose prose the sweep read. */
   filesScanned: number;
-  /** Files held out of the sweep, by the reason each was held out. */
+  /** Files excluded from the sweep, by the reason each was excluded. */
   filesSkipped: Readonly<Record<SkipReason, number>>;
   /** Batches the run planned, before the record's coverage removed any. */
   batchesPlanned: number;

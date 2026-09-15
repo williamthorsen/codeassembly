@@ -30,7 +30,7 @@ Generate HR analytics reports from employee data provided as CSV paste or file p
 
 If `--report-type` is provided, use the specified types. Skip the prompt.
 
-If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report the user wants is a taste call, so the options have no strength markers:
+If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report that the user wants is a taste call, so the options have no strength markers:
 
 > ---
 >
@@ -57,7 +57,7 @@ Accept CSV, TSV, or any tabular format. If the user provides a file path, read i
 
 Examine the column headers and infer their meaning. Map each column to a recognized field based on common naming patterns (e.g., `Dept`, `Department`, `Team`, `Business Unit` all map to the department/team concept).
 
-**If any column mapping is ambiguous**, confirm with the user before proceeding. One item per ambiguous column, so the user can resolve them all in a single reply:
+**If any column mapping is ambiguous**, confirm with the user before proceeding. One item per ambiguous column, so that the user can resolve them all in a single reply:
 
 > Two of your columns have no unambiguous mapping.
 >
@@ -154,7 +154,7 @@ For each requested report type, compute the relevant metrics from the available 
 
 **Statistical approach:**
 
-1. Understand the underlying business question the report type addresses
+1. Understand the underlying business question addressed by the report type
 2. Compute counts, rates, distributions, and trends as appropriate
 3. Flag outliers and notable patterns
 4. Provide context: A 15% attrition rate means different things in different industries

@@ -22,7 +22,7 @@ This is a thin entry skill: The shared review logic (diff analysis, finding gene
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, `scm`, and `pr_url` from it. These values pass into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, `scm`, and `pr_url` from it. Pass these values into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
 
 ### 2. Resolve the PR
 
@@ -50,25 +50,25 @@ If `<pr_id>` is a full URL, the URL host overrides the cascade: A `https://githu
 
 Pass the following inputs to the selected delegate per its delegate interface:
 
-| Input                | Value                                                                                                                                                                                                 |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pr_id`              | The PR resolved in step 2. The delegate parses and normalizes it (extracts the PR number from a URL when applicable; the Bitbucket delegate also resolves the workspace and repository it addresses). |
-| `diff_base_override` | Value of `--diff-base` if provided; otherwise `null`                                                                                                                                                  |
-| `ticket_override`    | Value of `--ticket` if provided; otherwise `null`                                                                                                                                                     |
-| `project_slug`       | From session context                                                                                                                                                                                  |
-| `ticket_id`          | From session context                                                                                                                                                                                  |
-| `artifact_base_dir`  | From session context                                                                                                                                                                                  |
+| Input                | Value                                                                                                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pr_id`              | The PR resolved in step 2. The delegate parses and normalizes it (extracts the PR number from a URL when applicable; the Bitbucket delegate also resolves the workspace and repository that it addresses). |
+| `diff_base_override` | Value of `--diff-base` if provided; otherwise `null`                                                                                                                                                       |
+| `ticket_override`    | Value of `--ticket` if provided; otherwise `null`                                                                                                                                                          |
+| `project_slug`       | From session context                                                                                                                                                                                       |
+| `ticket_id`          | From session context                                                                                                                                                                                       |
+| `artifact_base_dir`  | From session context                                                                                                                                                                                       |
 
 The delegate returns a resolved-input record:
 
-| Field            | Type                                                                            | Description                                                                                                                                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `merge_base_sha` | string                                                                          | Result of `git merge-base HEAD <diff-base>` after delegate-side resolution                                                                                                                                     |
-| `diff_base`      | string                                                                          | The ref the delegate resolved against                                                                                                                                                                          |
-| `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source. `provenance`/`last_updated` are recorded so the review can state which contract it measured against; delegate-supplied sources are always `provenance: "remote"` |
-| `pr_metadata`    | object (PR number, URL, head SHA, base ref, title)                              | Used by the review heading                                                                                                                                                                                     |
+| Field            | Type                                                                            | Description                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `merge_base_sha` | string                                                                          | Result of `git merge-base HEAD <diff-base>` after delegate-side resolution                                                                                                                                          |
+| `diff_base`      | string                                                                          | The ref against which the delegate resolved                                                                                                                                                                         |
+| `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source. `provenance`/`last_updated` are recorded so that the review can state which contract it measured against; delegate-supplied sources are always `provenance: "remote"` |
+| `pr_metadata`    | object (PR number, URL, head SHA, base ref, title)                              | Used by the review heading                                                                                                                                                                                          |
 
-If the delegate exits with a HEAD-mismatch error (the PR's head commit is not the local HEAD), surface its error message and stop. Do not proceed with mismatched state.
+If the delegate exits with a HEAD-mismatch error (the PR's head commit is not the local HEAD), report its error message and stop. Do not proceed with mismatched state.
 
 ### 6. Invoke the shared review process
 
@@ -76,7 +76,7 @@ Invoke `review-branch`'s review process with the resolved inputs:
 
 - The diff base is `merge_base_sha` (already computed by the delegate).
 - The spec-source list is `spec_sources` from the delegate. The "Specification compliance" section in the review output renders one subsection per entry. For a typical PR, this list contains both the ticket (when one was resolved) and the PR description as a `pr_description` source.
-- The review heading uses `pr_metadata` to surface the PR number and URL alongside the ticket reference.
+- The review heading uses `pr_metadata` to show the PR number and URL alongside the ticket reference.
 
 Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: Session context was gathered in step 1 above; `merge_base_sha` and `spec_sources` were resolved by the delegate.
 
@@ -120,4 +120,4 @@ gh pr checkout 1024
 
 - **Always check out the PR first.** The delegate compares `git rev-parse HEAD` to the PR's head commit and fails closed if they differ. The error message includes the platform-specific checkout command (e.g., `gh pr checkout <n>`).
 - **The orchestrator owns no review logic.** All findings, scoring, and the "Specification compliance" rendering happen inside `review-branch`. This skill is platform detection + delegate dispatch + invocation of the shared review process.
-- **Two specification sources by default.** Unlike `{skill:review-branch}` (one source: the ticket), `{skill:review-pr}` adds the PR description as a second source so the review evaluates the implementation against both. Source-vs-source divergence is reported in the `## Specification consistency` section of the review output (see `review-branch/SKILL.md`).
+- **Two specification sources by default.** Unlike `{skill:review-branch}` (one source: the ticket), `{skill:review-pr}` adds the PR description as a second source so that the review evaluates the implementation against both. Source-vs-source divergence is reported in the `## Specification consistency` section of the review output (see `review-branch/SKILL.md`).

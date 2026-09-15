@@ -6,7 +6,7 @@ user-invocable: true
 
 # Update project guidance
 
-Generate or refresh the repository-root `AGENTS.md`, the repo-specific guidance file that gives AI agents the context they need to work effectively in the project. It is at the root because that is the project slot both harnesses load: Rovo Dev reads it unaided, and Claude Code loads it through one include.
+Generate or refresh the repository-root `AGENTS.md`, the repo-specific guidance file that gives AI agents the context that they need to work effectively in the project. It is at the root because that is the project slot loaded by both harnesses: Rovo Dev reads it unaided, and Claude Code loads it through one include.
 
 **Announce at start:** "Using update-project-guidance to author or refresh AGENTS.md."
 
@@ -14,7 +14,7 @@ Generate or refresh the repository-root `AGENTS.md`, the repo-specific guidance 
 
 Explore the codebase, classify each finding by scope and tier, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project, and nothing more.
 
-**Two paths.** Where no guidance content exists yet, the **authoring path** drafts a file from the skeleton. Where it does, the **refresh path** reconciles against what is already there: It audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
+**Two paths.** When no guidance content exists yet, the **authoring path** drafts a file from the skeleton. When it does, the **refresh path** reconciles against what is already there: It audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
 
 **Core principle:** Every line must merit its inclusion. Omit anything an agent would figure out on its own or that is already covered by general guidance.
 
@@ -34,27 +34,27 @@ Gather project information from these sources (skip any that don't exist).
 
 **Legacy guidance files (migrate or flag):**
 
-- `.agents/PROJECT.md`: the previous location for this file; content should migrate to the repo-root `AGENTS.md`
-- `.agents/AGENTS.md` (in the repo, not the global guidance above): an earlier convention still; content should migrate the same way
+- `.agents/PROJECT.md`: The previous location for this file; content should migrate to the repo-root `AGENTS.md`
+- `.agents/AGENTS.md` (in the repo, not the global guidance above): An earlier convention still; content should migrate the same way
 
 **Project metadata:**
 
 - `package.json` (root): name, workspaces, scripts, engines, type
 - `package.json` (each workspace package): name, description, key dependencies
-- `pnpm-workspace.yaml` / `lerna.json` / similar: monorepo structure
+- `pnpm-workspace.yaml` / `lerna.json` / similar: Monorepo structure
 
 **Configuration:**
 
-- `tsconfig.json`: compiler strictness, module system, paths, target
+- `tsconfig.json`: Compiler strictness, module system, paths, target
 - Build configs: Vite, esbuild, webpack, Rollup, etc.
 - Test configs: Vitest, Jest, Playwright, etc.
-- `.editorconfig`, `.prettierrc*`, `eslint.config*`: formatting and quality rules
+- `.editorconfig`, `.prettierrc*`, `eslint.config*`: Formatting and quality rules
 - CI configs: `.github/workflows/`, `.gitlab-ci.yml`, etc.
 
 **Documentation:**
 
-- `README.md`: project description, setup instructions
-- `docs/`: architecture docs, conventions, guides
+- `README.md`: Project description, setup instructions
+- `docs/`: Architecture docs, conventions, guides
 
 **Discovery should be pragmatic, not exhaustive.** Read root metadata, workspace config, and package-level `package.json` files for names and descriptions. Don't deep-dive into every package's internals. For monorepos, a concise description of each package (name, purpose, key technology) is enough; package-specific details belong at the package level.
 
@@ -64,11 +64,11 @@ Collect findings as a flat list before moving to classification.
 
 The **baseline** is the substantive guidance content that already exists. Choose it by substance, not by existence: Take the repo-root `AGENTS.md` when it states substantive claims, and otherwise fall back to a legacy `.agents/PROJECT.md`, then `.agents/AGENTS.md`, taking the first that does. A stub at the root (a title and a pointer) does not take precedence over a mature legacy file, because a pointer is not a claim.
 
-Where both legacy files have content, `.agents/PROJECT.md` is the baseline as the later convention, and the other is added to the gap-scan sources so its content appears in the change list rather than being archived unread.
+When both legacy files have content, `.agents/PROJECT.md` is the baseline as the later convention, and the other is added to the gap-scan sources so that its content appears in the change list rather than being archived unread.
 
 Resolve the baseline in memory. A legacy file is not moved here; its content becomes the baseline and moves to the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
 
-The path follows from what was found. With a baseline, take the **refresh path**. With none (no guidance file, or nothing but stubs), take the **authoring path**, where there is nothing to preserve and a bounded gap scan would produce almost nothing.
+The path follows from what was found. With a baseline, take the **refresh path**. With none (no guidance file, or nothing but stubs), take the **authoring path**, because there is nothing to preserve and a bounded gap scan would produce almost nothing.
 
 State which path was selected, and why, before proceeding.
 
@@ -87,7 +87,7 @@ For each finding, assign one of these classes:
 **Rules:**
 
 - Two axes decide the destination. **Scope** (general vs project-specific) separates `{harness_home_dir}/{harness_guidance_file}` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` states from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
-- What belongs in a README, and where the rest goes, is stated by {rulebook:readme-conventions}. Consult it before routing a finding to the reference tier: A README's shape follows from what it describes, so the same finding lands differently in a library's README and a monorepo root's.
+- What belongs in a README, and where the rest goes, is stated by {rulebook:readme-conventions}. Consult it before assigning a finding to the reference tier: A README's shape follows from what it describes, so the same finding is placed differently in a library's README and in a monorepo root's.
 - A finding belongs in the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch goes stale silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, ask the user: one question at a time, prefer multiple choice.
@@ -100,8 +100,8 @@ For each finding, assign one of these classes:
 
 Two constraints apply to the repo-root `AGENTS.md`, whichever path produced it:
 
-- **No path into a harness-owned directory**, home-anchored or repository-local. One body of text serves every harness (Rovo Dev reads the file directly, Claude Code through an include), so wiring belonging to one of them is a wrong turn for every other reader. State the fact without the harness path, or record it in that harness's own guidance file.
-- **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file, so a region introduced by hand disappears on the next run with no warning. The sweep matches complete open/close pairs, which leaves an unpaired marker to linger instead, so the rule covers the marker rather than the region.
+- **No path into a harness-owned directory**, home-anchored or repository-local. One body of text serves every harness (Rovo Dev reads the file directly, Claude Code through an include), so wiring belonging to one of them misleads every other reader. State the fact without the harness path, or record it in that harness's own guidance file.
+- **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file: A region introduced by hand disappears on the next run with no warning. Because the sweep matches complete open/close pairs and leaves an unpaired marker in place, the rule covers the marker rather than the region.
 
 #### 3a. Ensure prerequisites
 
@@ -156,38 +156,38 @@ On the refresh path only. The baseline is the working document: Audit what it cl
 
 ##### Check the constraints
 
-Scan the baseline for a harness-scoped path and for any `<!-- rulebook:` marker. Every hit is a repair, whatever the audit says about it. A harness-scoped path is true for the harness it names and reads as ambient, so neither audit verdict flags it, and anything the change list does not name passes through untouched.
+Scan the baseline for a harness-scoped path and for any `<!-- rulebook:` marker. Every hit is a repair, whatever the audit says about it. A harness-scoped path is true for the harness that it names and reads as ambient, so neither audit verdict flags it, and anything the change list does not name passes through untouched.
 
 ##### Audit the claims
 
-Two tiers, because a mature file holds more claims than one exhaustive pass can cover. A 35-line file decomposes into dozens of independently checkable assertions, and one at the line budget into several hundred.
+Two tiers, because a mature file contains more claims than one exhaustive pass can cover. A 35-line file decomposes into dozens of independently checkable assertions, and one at the line budget into several hundred.
 
-- **Tier 1: every checkable token, exhaustively.** Paths, filenames, command strings, counts, package and symbol names. This is where drift appears: a directory listing that has gained an entry, a count off by two, a tool named one hop from what runs.
-- **Tier 2: narrative claims, in the sections the gap-scan window touched.** Unquantified prose is audited where the repo has moved under it, not everywhere.
+- **Tier 1: Every checkable token, exhaustively.** Paths, filenames, command strings, counts, package and symbol names. Drift appears in these tokens: a directory listing that has gained an entry, a count off by two, a tool named one hop from what runs.
+- **Tier 2: Narrative claims, in the sections touched by the gap-scan window.** Unquantified prose is audited where the repo has moved under it, not everywhere.
 
 Check the claim, not the section. A stale listing looks entirely plausible and is wrong only once the directory is listed, so recognizing a section's shape is the signal to slow down rather than to move on.
 
 Record every audited claim as a ledger row (claim, verdict, evidence):
 
-- `holds`: confirmed. **Requires an evidence token**: the command run, or the `path:line` read.
-- `drifted`: no longer true, stating what is true now.
-- `unchecked`: not verified, stating why.
+- `holds`: Confirmed. **Requires an evidence token**: the command run, or the `path:line` read.
+- `drifted`: No longer true, stating what is true now.
+- `unchecked`: Not verified, stating why.
 
 A `holds` row without an evidence token is not a permitted state. The audit is otherwise unfalsifiable: A claim that holds produces no edit, so a run that checked nothing emits the same change list as one that checked everything.
 
-Close the ledger by naming what was not audited, so a bounded run reads as bounded.
+Close the ledger by naming what was not audited, so that a bounded run reads as bounded.
 
-Re-run the Phase 2 classification only on the sections the window touched, plus one pass against `{harness_home_dir}/{harness_guidance_file}` for content the global file now states. What was ambient last month is still ambient unless something moved.
+Re-run the Phase 2 classification only on the sections touched by the window, plus one pass against `{harness_home_dir}/{harness_guidance_file}` for content that the global file now states. What was ambient last month is still ambient unless something moved.
 
 ##### Scan for gaps
 
-Bounded, because an unbounded "what else should this file say?" is a redraft in disguise.
+Bounded, because an unbounded "what else should this file say?" is effectively a redraft.
 
 **The window extends back to whichever is earlier**: the last commit touching `AGENTS.md`, or twenty commits. Twenty is a floor, never a ceiling: A drive-by edit that touched the file two commits ago leaves the window at twenty, not at two. Add `git status --porcelain`, since the common case is an author invoking this mid-session with uncommitted work.
 
 Every `git log` here names its own `--format`. A global or repository `format.pretty` rewrites the output, and a naive parse then reads mangled text with no sign that anything went wrong.
 
-Where git cannot answer (no repository, or the file untracked), state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
+When git cannot answer (no repository, or the file untracked), state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
 
 Then one unbounded check against the skeleton: Is an ambient category missing altogether, such as a required bootstrap, a dependency ordering, or a tool that behaves surprisingly? It is the only check for a fact that was always worth stating and never captured.
 
@@ -204,7 +204,7 @@ Four kinds of edit, and nothing else:
 
 Anything not named passes through byte-identical.
 
-**A repair quotes verbatim.** It is an old-text/new-text pair whose old text is copied from the baseline. Render `AGENTS.md` content in no other form: no rewritten section, no "here is how that section should read". An edit that cannot quote what it replaces is not a repair, and a rewritten section presented as one large repair is what this rule exists to catch.
+**A repair quotes verbatim.** It is an old-text/new-text pair whose old text is copied from the baseline. Render `AGENTS.md` content in no other form: no rewritten section, no "here is how that section should read". An edit that cannot quote what it replaces is not a repair, and this rule exists to catch a rewritten section presented as one large repair.
 
 Placement:
 
@@ -243,8 +243,8 @@ Do NOT write any files until the user has reviewed and approved both the ledger 
 
 After the user approves:
 
-1. Write `AGENTS.md` at the repository root. Rovo Dev loads it from there with no further wiring. On the refresh path the content is the baseline with the approved edits applied: Apply them rather than re-rendering the file, so everything the change list does not name survives unaltered. A baseline that came from a legacy path is written here too.
-2. Ensure `.claude/CLAUDE.md` points to it through a raw include. Claude Code resolves a relative include against the directory holding the file that contains it, not against the repository root, so an include written in `.claude/CLAUDE.md` must point up out of `.claude/` to the root: `@../AGENTS.md`. Derive the include from where the importing file is rather than copying a literal, and confirm the path it resolves to is the guidance file you just wrote.
+1. Write `AGENTS.md` at the repository root. Rovo Dev loads it from there with no further wiring. On the refresh path the content is the baseline with the approved edits applied: Apply them rather than re-rendering the file, so that everything the change list does not name survives unaltered. A baseline that came from a legacy path is written here too.
+2. Ensure `.claude/CLAUDE.md` points to it through a raw include. Claude Code resolves a relative include against the directory of the file that contains it, not against the repository root, so an include written in `.claude/CLAUDE.md` must point up out of `.claude/` to the root: `@../AGENTS.md`. Derive the include from where the importing file is rather than copying a literal, and confirm that the path to which it resolves is the guidance file that you just wrote.
    - If `.claude/CLAUDE.md` does not exist, create it with that include as its content.
    - If it exists and contains a prose instruction referencing the guidance file (e.g., `Read @../AGENTS.md, which provides...`), replace it with the raw include.
    - If it exists with an include that resolves anywhere else (a stale `@.agents/PROJECT.md`, or any path that does not point up out of `.claude/`), repoint it.
@@ -256,7 +256,7 @@ After the user approves:
 If legacy guidance files were found in Phase 1 (`.agents/PROJECT.md` or `.agents/AGENTS.md`):
 
 1. Confirm with the user that the project-specific content has been migrated to the repo-root `AGENTS.md`.
-2. Preserve any include the legacy file resolved for itself. A `.agents/PROJECT.md` that included a sibling by a bare relative path resolves to a different file from the repository root, so every such include needs its own path re-derived against the new location.
+2. Preserve any include that the legacy file resolved for itself. When `.agents/PROJECT.md` included a sibling by a bare relative path, that include resolves to a different file from the repository root, so every such include needs its own path re-derived against the new location.
 3. Recommend removing or archiving the legacy files. Do not delete without explicit approval.
 
 #### 3f. Handle general-guidance recommendations
@@ -264,16 +264,16 @@ If legacy guidance files were found in Phase 1 (`.agents/PROJECT.md` or `.agents
 If any findings were classified as **general** (cross-repo) in Phase 2:
 
 1. Present them as a bulleted list after the main file is written.
-2. Name where each one belongs, deciding by whether the harness's guidance file is generated. A file carrying a `codeassembly` marker is rendered on every install, so an edit to it is discarded or freezes the file against later updates; the content belongs in a rulebook with `delivery: ambient` in a source the user's `codeassembly.yaml` declares, which reaches the file through `sync --global`. A file carrying no marker is the user's own. See [deployed-file provenance](../_data/deployed-file-provenance.md) for the detection rule and the routes it implies.
-3. Where the file is the user's own, offer to integrate the recommendations: on approval, read it, place each one in the section that fits, and propose a name before adding a new section. Never append blindly, and never write into a generated file.
+2. Name where each one belongs, deciding by whether the harness's guidance file is generated. A file containing a `codeassembly` marker is rendered on every install, so an edit to it is discarded or freezes the file against later updates; the content belongs in a rulebook with `delivery: ambient` in a source declared by the user's `codeassembly.yaml`, and `sync --global` renders that rulebook into the file. A file containing no marker is the user's own. See [deployed-file provenance](../_data/deployed-file-provenance.md) for the detection rule and the routes that it implies.
+3. When the file is the user's own, offer to integrate the recommendations: On approval, read it, place each one in the section that fits, and propose a name before adding a new section. Never append blindly, and never write into a generated file.
 
 #### 3g. Run the guidance checklist
 
 Close by running the published `guidance` checklist against the result: `rdy run --packages`, from the repository root.
 
-Skip the step where `rdy` is unavailable, or where no configured package publishes the checklist. It ships as a development dependency of the package that publishes it, not something a consuming repository inherits. Report the step as skipped; never report a pass it did not produce.
+Skip the step when `rdy` is unavailable, or when no configured package publishes the checklist. It is a development dependency of the package that publishes it, not something a consuming repository inherits. Report the step as skipped; never report a pass that it did not produce.
 
-The freshness check reads committed history, so the write just made does not move it. On the stale file that motivated a refresh it still reports stale, and its remediation text advises running this very skill. That is expected, and it clears when the change is committed: Do not act on that advice, and do not commit in order to clear it.
+The freshness check reads committed history, so the write just made does not change its result. On the stale file that motivated a refresh it still reports stale, and its remediation text advises running this very skill. That is expected, and it clears when the change is committed: Do not act on that advice, and do not commit in order to clear it.
 
 ## Quality checklist
 
@@ -281,13 +281,13 @@ Before presenting the draft or the change list, verify:
 
 - [ ] No path points into a harness-owned directory, home-anchored or repository-local
 - [ ] No `<!-- rulebook:` marker appears anywhere in the file
-- [ ] The file is at most 200 lines, matching the ambient budget the published guidance checklist reports against; anything that pushed it over went to the package level behind a pointer
+- [ ] The file is at most 200 lines, matching the ambient budget against which the published guidance checklist reports; anything that pushed it over was moved to the package level behind a pointer
 - [ ] No line duplicates content from `{harness_home_dir}/{harness_guidance_file}`
 - [ ] No section merely restates what's obvious from the code
-- [ ] Commands listed are ones an agent would actually need (not exhaustive npm script listings)
+- [ ] Commands listed are ones that an agent would actually need (not exhaustive npm script listings)
 - [ ] Each command group states where to run it (repo root, package directory, etc.); don't assume the agent knows
 - [ ] Architecture section focuses on decisions that affect how to make changes, not documentation for its own sake
-- [ ] Gotchas are genuinely non-obvious, not things an agent would discover from a type error or linter warning
+- [ ] Gotchas are genuinely non-obvious, not things that an agent would discover from a type error or linter warning
 
 ## Key principles
 

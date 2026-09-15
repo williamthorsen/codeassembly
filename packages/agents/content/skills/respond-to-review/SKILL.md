@@ -27,8 +27,8 @@ This skill runs between receiving a code review and implementing fixes. The agen
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below.
-6. **Audit the diff** per [Diff audit](#diff-audit). Every fix you implemented is verified here, before any of it is written down.
-7. **Commit the fixes** per `{skill:create-commit}`, so the response narrates work already recorded. A response that implements no fix commits nothing; skip this step there rather than composing an empty commit. Rejecting every finding is one such response, as are a review carrying no findings, a legacy observation merely acknowledged, and an ACCEPT whose change ships in a follow-up.
+6. **Audit the diff** per [Diff audit](#diff-audit). Every fix that you implemented is verified here, before any of it is written down.
+7. **Commit the fixes** per `{skill:create-commit}`, so that the response narrates work already recorded. A response that implements no fix commits nothing; skip this step there rather than composing an empty commit. Rejecting every finding is one such response, as are a review with no findings, a legacy observation merely acknowledged, and an ACCEPT whose change is merged in a follow-up.
 8. **Write response** per the output format
 9. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
 10. **Save** per the [Saving](#saving) section
@@ -41,10 +41,10 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 
 Resolve `{pr_url}` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
 
-- If the review's frontmatter has a `pr:` field, take `{pr_url}` from it so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{pr_url}"`.
+- If the review's frontmatter has a `pr:` field, take `{pr_url}` from it so that the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{pr_url}"`.
 - Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, `{pr_url}` has no value.
 
-Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag where `{pr_url}` has no value:
+Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag if `{pr_url}` has no value:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
@@ -87,7 +87,7 @@ For each finding, apply technical rigor:
 2. **Check correctness.** Is the reviewer's claim technically accurate for this specific codebase and context?
 3. **Treat hedging language as a signal.** When a recommendation relies on "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
 4. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
-5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits, not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem the original placement created.
+5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits, not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem that the original placement created.
 6. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
 7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. There is no `ACCEPT (follow-up)`: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
    </HARD-GATE>
@@ -122,7 +122,7 @@ The agent invoked the default posture without reading the destination's doctrine
 
 **Good: Doctrine-grounded ACCEPT:**
 
-> R1: ACCEPT. `config/limits.ts` is the documented home for numeric operational ceilings; its existing members (`MAX_REQUEST_BYTES`, `MAX_CONNECTION_POOL_SIZE`) confirm the category, and `MAX_RETRY_COUNT` shares that exact shape. The constant is currently referenced from three modules that each re-import it from `network/http-client.ts`, a location problem the original placement created. The destination's stated doctrine accommodates the rule, and the move resolves the duplication; both conditions for the carve-out are met.
+> R1: ACCEPT. `config/limits.ts` is the documented home for numeric operational ceilings; its existing members (`MAX_REQUEST_BYTES`, `MAX_CONNECTION_POOL_SIZE`) confirm the category, and `MAX_RETRY_COUNT` shares that exact shape. The constant is currently referenced from three modules that each re-import it from `network/http-client.ts`, a location problem that the original placement created. The destination's stated doctrine accommodates the rule, and the move resolves the duplication; both conditions for the carve-out are met.
 
 ### Bad → Good: Deferral-framed recommendation, change does not belong
 
@@ -136,7 +136,7 @@ The agent took the disposition from the reviewer's handling suggestion and never
 
 **Good: Substance check, then REJECT:**
 
-> S1: REJECT. The file header reads `// Pure memoization keyed on argument identity. For time-bounded caching, use timed-cache.ts.`, and `timed-cache.ts` is the documented home for the exact behavior the reviewer is suggesting we add. Adding TTL to `memoize` would muddle the two abstractions and break the invariant the file states explicitly. The change does not belong. The reviewer's "consider a follow-up" framing was a priority signal, not a license to defer the substance question.
+> S1: REJECT. The file header reads `// Pure memoization keyed on argument identity. For time-bounded caching, use timed-cache.ts.`, and `timed-cache.ts` is the documented home for the exact behavior that the reviewer is suggesting we add. Adding TTL to `memoize` would muddle the two abstractions and break the invariant that the file states explicitly. The change does not belong. The reviewer's "consider a follow-up" framing was a priority signal, not a license to defer the substance question.
 
 ### Bad → Good: Deferral-framed recommendation, change belongs (timing decided separately)
 
@@ -146,11 +146,11 @@ The agent took the disposition from the reviewer's handling suggestion and never
 
 > T1: ACCEPT (follow-up). The reviewer is right; we'll create a ticket. Out of scope for this PR.
 
-The disposition conflates two decisions: whether the change belongs (substance), and whether it ships in this PR (timing). `ACCEPT (follow-up)` is not a valid disposition.
+The disposition conflates two decisions: whether the change belongs (substance), and whether it is merged in this PR (timing). `ACCEPT (follow-up)` is not a valid disposition.
 
 **Good: Substance check (ACCEPT), then separate timing decision:**
 
-> T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard ships in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not held as a maybe.
+> T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard is added in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not kept as a maybe.
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
@@ -170,7 +170,7 @@ Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, wh
 expect(query).not.toHaveProperty('directReportsOnly', true);
 ```
 
-**After** (states the invariant the code enforces):
+**After** (states the invariant that the code enforces):
 
 ```ts
 // A non-manager viewer emits no directReportsOnly narrowing; the GraphQL surface is the binding contract.
@@ -199,7 +199,7 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 ## Output format
 
-When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads `# Change summary: {description}`.
+When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so that the heading reads `# Change summary: {description}`.
 
 The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
 

@@ -12,7 +12,7 @@ Rules for writing robust, maintainable tests in TypeScript projects.
 
 ### Never use conditional expect statements
 
-**❌ Incorrect - Conditional expects**
+**❌ Incorrect: Conditional expects**
 
 ```typescript
 it('should handle optional values', () => {
@@ -25,7 +25,7 @@ it('should handle optional values', () => {
 });
 ```
 
-**✅ Correct - Use runtime assertions**
+**✅ Correct: Use runtime assertions**
 
 ```typescript
 import { assert } from '~src/utils/types/type-guards';

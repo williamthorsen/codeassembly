@@ -17,6 +17,6 @@ Subpath exports matter because the same identifier exists in different subpaths 
 
 - `FLAG` is exported from `@hyperjump/json-schema/draft-2020-12` (the dialect-specific entry point).
 - `BASIC` and `DETAILED` are exported only from `@hyperjump/json-schema/experimental`. Code that imports them from `@hyperjump/json-schema` directly will fail at module load.
-- Type exports follow a similar split: `SchemaObject` is the public draft-agnostic schema type; `JsonSchemaDraft202012Object` is the draft-2020-12-specific structural type. The two are not interchangeable; pick the one that matches the dialect the schema is registered under.
+- Type exports follow a similar split: `SchemaObject` is the public draft-agnostic schema type; `JsonSchemaDraft202012Object` is the draft-2020-12-specific structural type. The two are not interchangeable; pick the one that matches the dialect under which the schema is registered.
 
 `registerSchema(schema, uri)` is **not idempotent** across module re-evaluations. Vitest watch mode re-imports modules between test runs, so a top-level `registerSchema` call will throw `Schema already registered: <uri>` on the second evaluation. Reviewers seeing test-flakiness reports involving this package should verify whether `registerSchema` is wrapped in a guard (`try { registerSchema(...) } catch { /* already registered */ }`) or moved into a `beforeAll` with explicit deregistration.

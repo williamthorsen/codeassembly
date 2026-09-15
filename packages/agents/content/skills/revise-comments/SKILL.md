@@ -8,7 +8,7 @@ user-invocable: true
 
 Apply the comment-discipline audit to a target file set, editing comments in place. The default workflow is `{skill:revise-comments}` after a feature is implemented; explicit paths support cleaning up legacy code.
 
-Where the `revise-prose` sweep is wanted on the same files, run this skill first: It decides whether a comment exists at all, and it may delete the very comment that the prose sweep would otherwise polish.
+If the `revise-prose` sweep is wanted on the same files, run this skill first: It decides whether a comment exists at all, and it may delete the very comment that the prose sweep would otherwise polish.
 
 ## Invocation
 
@@ -28,7 +28,7 @@ Where the `revise-prose` sweep is wanted on the same files, run this skill first
 
 2. **Apply the audit per file.** Read each target file. Put every comment through the three tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
 
-3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing it replaced. Such a file is outside the resolved target set, so the hard gate in [Target file set](#target-file-set) applies and the hit is reported to the user alongside the summary rather than repaired. `--dry-run` applies no edits, so the step is skipped there.
+3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing that it replaced. Such a file is outside the resolved target set, so the hard gate in [Target file set](#target-file-set) applies and the hit is reported to the user alongside the summary rather than repaired. Because `--dry-run` applies no edits, the step is skipped under that flag.
 
 4. **Emit the summary.** After processing all targets, emit one table per file with non-trivial decisions.
 
@@ -51,7 +51,7 @@ The default is to act. Pause and ask the user when one of these holds:
 
 - A test comment could plausibly be non-obvious setup, but the test name already conveys the setup intent.
 - An `eslint-disable` rationale is at the boundary between tight and over-scoped.
-- A file header describes potentially load-bearing architecture (composition order, threading model, invariants across functions), so it may state a constraint the code cannot show.
+- A file header describes potentially load-bearing architecture (composition order, threading model, invariants across functions), so it may state a constraint that the code cannot show.
 
 ## Summary format
 
@@ -69,7 +69,7 @@ src/lib/payload.ts
 | 6    | kept      | n/a          | why-inline                       |
 ```
 
-Line numbers anchor to the pre-edit file, so each row is checked against `git diff` output before the table is emitted: The `Action` column reports what the diff shows, not what was intended. For a comment failing more than one test, report the first it fails.
+Line numbers refer to the pre-edit file, so each row is checked against `git diff` output before the table is emitted: The `Action` column reports what the diff shows, not what was intended. For a comment failing more than one test, report the first that it fails.
 
 ## Worked example
 
