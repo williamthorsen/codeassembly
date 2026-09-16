@@ -7,7 +7,7 @@ import type { ResolvedHarnessTargets } from '../lib/target-harnesses.ts';
 import type { AgentsManifest, HarnessId, HarnessManifest, InstallOptions } from '../lib/types.ts';
 import { removeHarnessHookEntries } from './configure-hooks.ts';
 
-/** The harness map a retraction pass leaves behind, and what it did to reach it. */
+/** The harness map that a retraction pass leaves behind, and what it did to reach it. */
 export interface HarnessRetractionResult {
   readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
   readonly lines: ReadonlyArray<ReportLine>;
@@ -16,16 +16,17 @@ export interface HarnessRetractionResult {
 }
 
 /**
- * Removes what a previous `install` deployed to each harness the manifest tracks but this run no longer targets, and
- * unwires that harness's session-lifecycle hook entries. Returns the harness map the caller writes to the manifest.
+ * Removes what a previous `install` deployed to each harness that the manifest tracks but this run no longer targets,
+ * and unwires that harness's session-lifecycle hook entries. Returns the harness map that the caller writes to the
+ * manifest.
  *
  * Retraction follows the declaration alone. Under `flag`, `--harness claude` names the run's target rather than
- * declaring rovo unwanted; under `detection`, a harness detection misses has no home directory holding stale files.
- * Either origin returns the manifest's harness map untouched.
+ * declaring rovo unwanted; under `detection`, a harness missed by detection has no home directory holding stale files.
+ * Under either origin, the pass returns the manifest's harness map untouched.
  *
- * Each dropped harness runs through the same orphan prune the per-harness install pass runs, with an empty desired
- * set, so a user-modified file survives without `--force` and `--dry-run` previews the removals. A harness the prune
- * keeps entries for stays in the map tracking those alone; one with nothing kept loses its key.
+ * Each dropped harness runs through the same orphan prune that the per-harness install pass runs, with an empty
+ * desired set, so a user-modified file survives without `--force` and `--dry-run` previews the removals. A harness for
+ * which the prune keeps entries stays in the map tracking those alone; one with nothing kept loses its key.
  */
 export async function retractDroppedHarnesses(options: {
   readonly manifest: AgentsManifest;
@@ -71,8 +72,8 @@ export async function retractDroppedHarnesses(options: {
 // region | Helpers
 
 /**
- * Removes the harness's session-lifecycle hook entries, so its config stops invoking a relay script this pass has just
- * deleted. An unparseable config costs the unwiring a warning rather than the file removals it accompanies.
+ * Removes the harness's session-lifecycle hook entries, so its config stops invoking a relay script that this pass has
+ * just deleted. An unparseable config costs the unwiring a warning rather than the file removals that it accompanies.
  */
 async function unwireHooks(
   harnessId: HarnessId,

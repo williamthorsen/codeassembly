@@ -45,18 +45,18 @@ const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
 /** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
 
-/** Delivery cell for an artifact with no delivery mode — collections, skills, and subagents. Only rulebooks carry delivery modes (`ambient`/`hook`/`skill`). */
+/** Delivery cell for an artifact with no delivery mode: collections, skills, and subagents. Only rulebooks declare delivery modes (`ambient`/`hook`/`skill`). */
 const NO_DELIVERY_MODE = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
 
-/** Width assumed for piped output, where no terminal width is available; keeps such output deterministic. */
+/** Width assumed for piped output, for which no terminal width is available; keeps such output deterministic. */
 const DEFAULT_WIDTH = 100;
 /** Spaces between adjacent columns. */
 const COLUMN_GAP = 2;
-/** Display cells occupied by a type emoji — all chosen emoji are East-Asian wide (two cells). */
+/** Display cells occupied by a type emoji. All chosen emoji are East-Asian wide (two cells). */
 const EMOJI_DISPLAY_WIDTH = 2;
-/** Floor for the description column so a narrow terminal still wraps rather than collapses it. */
+/** Floor for the description column so that a narrow terminal still wraps rather than collapses it. */
 const MIN_DESCRIPTION_WIDTH = 20;
 
 /**
@@ -73,7 +73,7 @@ export async function libraryListCommand(contentDir: string = resolveContentDir(
   }
 
   // `columns` is absent (undefined at runtime, despite its `number` type) when stdout is piped; fall back to a
-  // fixed width there so redirected and captured output stays deterministic.
+  // fixed width there so that redirected and captured output stays deterministic.
   const width = process.stdout.isTTY ? process.stdout.columns : DEFAULT_WIDTH;
   console.info(renderLibraryTable(rows, width));
 }
@@ -87,8 +87,8 @@ Subcommands:
 }
 
 /**
- * Renders rows as an aligned table — type (emoji + label), slug, delivery, then a hanging-indent-wrapped
- * description — sorted by type then slug. `width` bounds the description column; the others size to their
+ * Renders rows as an aligned table, sorted by type then slug: type (emoji + label), slug, delivery, then a
+ * hanging-indent-wrapped description. `width` bounds the description column; the others size to their
  * content. Pure and deterministic for a given (rows, width).
  */
 export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: number): string {
@@ -245,9 +245,9 @@ function padType(emoji: string, label: string, colWidth: number): string {
 }
 
 /**
- * Reads a skill's `supported-harnesses:` frontmatter for the delivery column, formatting it as the comma-joined harness
- * list a skill targets, or `—` when the field is absent or empty (meaning all harnesses). Display-only and tolerant: a
- * non-string entry is dropped rather than rejected.
+ * Reads a skill's `supported-harnesses:` frontmatter for the delivery column, formatting it as the comma-joined
+ * harness list that a skill targets, or `—` when the field is absent or empty (meaning all harnesses). Display-only
+ * and tolerant: A non-string entry is dropped rather than rejected.
  */
 function readHarnessAffinity(content: string): string {
   const { lines } = parseFrontmatter(content);
