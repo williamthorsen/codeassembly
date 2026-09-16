@@ -80,13 +80,13 @@ describe(parse, () => {
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
-    it('reads the marker off the type where the template names no {breaking}', () => {
+    it('reads the marker off the type when the template names no {breaking}', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'agents|feat!: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ breaking: true, scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
-    it('reads the marker off {breaking} where the template names it', () => {
+    it('reads the marker off {breaking} when the template names it', () => {
       const nodes = compileTemplate(TEMPLATE_CATALOGUE.conventionalCommits);
 
       expect(parse(nodes, 'feat(agents)!: Add foo', TAXONOMY)).toStrictEqual({
@@ -139,19 +139,19 @@ describe(parse, () => {
   });
 
   describe('the ticket-reference preprocessor', () => {
-    it('strips a ticket prefix the template does not name', () => {
+    it('strips a ticket prefix that the template does not name', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), '#466 agents|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
-    it('strips a sub-ticket prefix the template does not name', () => {
+    it('strips a sub-ticket prefix that the template does not name', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), '#466.1 agents|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
-    it('strips a Jira prefix the template does not name', () => {
+    it('strips a Jira prefix that the template does not name', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'MAC-147 agents|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
@@ -164,7 +164,7 @@ describe(parse, () => {
     });
   });
 
-  describe('the ambiguity the grammar accepts', () => {
+  describe('the ambiguity that the grammar accepts', () => {
     it('reads a pipe-carrying title as a scope and a type, since a present group wins', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'Rename kb|docs: the shared layer', TAXONOMY);
 
@@ -175,7 +175,7 @@ describe(parse, () => {
 
 // region | Helpers
 
-/** Drops the fields a template names no token for, which a round trip cannot recover. */
+/** Drops the fields that a template names no token for, which a round trip cannot recover. */
 function dropScopelessFields(template: string, record: ChangeRecord): ChangeRecord {
   const normalized = normalizeChangeRecord(record);
   const carried: ChangeRecord = {};

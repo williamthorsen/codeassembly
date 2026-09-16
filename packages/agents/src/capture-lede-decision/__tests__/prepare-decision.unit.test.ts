@@ -59,7 +59,7 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^doctrine-hash: sha256:abc$/m);
   });
 
-  it('summarizes the decision so recall names the verdict, the change, and the rating', () => {
+  it('summarizes the decision so that recall names the verdict, the change, and the rating', () => {
     const content = expectContent(prepareDecision(decisionFor({ differ: true, quality: 'good' })));
 
     expect(content).toMatch(/^summary: 'Lede revised for agents #1124, rated good'$/m);
@@ -154,7 +154,7 @@ const IDENTITY = {
   mergeCommit: '35aa58d7',
 } as const;
 
-/** Builds a decision input over a minimal episode, applying the overrides a test cares about. */
+/** Builds a decision input over a minimal episode, applying the overrides that a test cares about. */
 function decisionFor(overrides: {
   quality?: LedeQuality;
   differ?: boolean;

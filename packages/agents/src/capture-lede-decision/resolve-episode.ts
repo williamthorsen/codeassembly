@@ -14,34 +14,34 @@ import { isEnoent } from '../lib/type-guards.ts';
 import { loadWorkTypes, resolveWorkType } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
-/** Artifact filename suffix holding the lede the agent published, and the heading that lede sits under. */
+/** Artifact filename suffix holding the lede published by the agent, and the heading under which that lede sits. */
 const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 
 /**
- * Subagent bodies that govern a draft, in the fixed order the combined digest depends on. The drafter writes the lede
- * and the cutter decides which of its bullets survive, so a change to either changes the doctrine a lede was written
- * under.
+ * Subagent bodies that govern a draft, in the fixed order on which the combined digest depends. The drafter writes the
+ * lede and the cutter decides which of its bullets survive, so a change to either changes the doctrine under which a
+ * lede was written.
  */
 const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
 
-/** Artifact filename suffix holding the lede that merged, and the heading it sits under. */
+/** Artifact filename suffix holding the lede that merged, and the heading under which it sits. */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
 
 /** Result of digesting the doctrine: the combined fingerprint, or the first body that could not be read. */
 type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadablePath: string };
 
 /**
- * Assembles a lede decision episode from a ticket's artifact directory: the lede the agent published, the lede that
+ * Assembles a lede decision episode from a ticket's artifact directory: the lede published by the agent, the lede that
  * merged, the change's identity, and a fingerprint of the doctrine that governed the agent's text.
  *
- * Each lede accepts an override file, so a pull request merged outside the merge flow — which writes no `_merge.md` —
- * can still be recorded from text the caller fetched. Absent an override, each is read from the newest artifact of its
- * kind, searched recursively because an orchestrated run nests its artifacts in a run subdirectory. Artifact filenames
- * open with a `YYYYMMDDD-HHMMSSZ` stamp, so the lexicographically greatest basename is the newest.
+ * Each lede accepts an override file, so a pull request merged outside the merge flow (which writes no `_merge.md`)
+ * can still be recorded from text fetched by the caller. Absent an override, each is read from the newest artifact of
+ * its kind, searched recursively because an orchestrated run nests its artifacts in a run subdirectory. Artifact
+ * filenames open with a `YYYYMMDDD-HHMMSSZ` stamp. The lexicographically greatest basename is the newest.
  *
- * The doctrine is fingerprinted by content rather than recorded as a version, which is what lets records group by
- * doctrine generation with nothing written at install time: the mapping back to a commit stays recoverable afterwards
- * by re-hashing the file's own history.
+ * The doctrine is fingerprinted by content rather than recorded as a version, which lets records group by doctrine
+ * generation with nothing written at install time: The mapping back to a commit stays recoverable afterwards by
+ * re-hashing the file's own history.
  */
 export async function resolveEpisode(input: {
   artifactDir: string;
@@ -60,7 +60,7 @@ export async function resolveEpisode(input: {
   mergedLedeFile?: string;
   /** Provenance stamp supplying the agents-package version; defaults to the user-global stamp. */
   provenancePath?: string;
-  /** Home directory the user-global stamp path resolves against; defaults to the real home. */
+  /** Home directory against which the user-global stamp path resolves; defaults to the real home. */
   home?: string;
 }): Promise<ResolveEpisodeOutcome> {
   if (!(await isDirectory(input.artifactDir))) {
@@ -121,8 +121,8 @@ export async function resolveEpisode(input: {
 // region | Helpers
 
 /**
- * Locates the newest artifact whose basename ends with `{suffix}.md`, searching recursively so a run subdirectory's
- * artifact competes with the ticket root's. Yields `null` when none exists.
+ * Locates the newest artifact whose basename ends with `{suffix}.md`, searching recursively so that a run
+ * subdirectory's artifact competes with the ticket root's. Yields `null` when none exists.
  */
 async function findNewestArtifact(input: { artifactDir: string; suffix: string }): Promise<string | null> {
   let entries: string[];
@@ -178,7 +178,7 @@ async function isDirectory(dirPath: string): Promise<boolean> {
   }
 }
 
-/** Collapses runs of whitespace so two ledes differing only by reflow compare equal. */
+/** Collapses runs of whitespace so that two ledes differing only by reflow compare equal. */
 function normalizeLede(value: string): string {
   return value.replaceAll(/\s+/gu, ' ').trim();
 }
@@ -203,9 +203,9 @@ async function readAgentsVersion(input: {
  * record's `scope`, `type`, and `breaking`, with `override_scope`, `override_type`, and `override_breaking` applied
  * through `applyOverrides`. A type spelled with `!` carries its own marker to the resolver.
  *
- * The read is field-blind rather than routed through the knowledge base's record parser: a change summary is an
- * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields an
- * artifact never carries.
+ * The read is field-blind rather than routed through the knowledge base's record parser: A change summary is an
+ * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields that
+ * an artifact never carries.
  */
 async function readChangeSummaryFields(artifactDir: string): Promise<{ record: ChangeRecord; ticket: string | null }> {
   const absent = { record: {}, ticket: null };
@@ -238,7 +238,7 @@ async function readChangeSummaryFields(artifactDir: string): Promise<{ record: C
 }
 
 /**
- * Reads an identifier field that YAML may have typed as a number: a wholly numeric ticket id is written unquoted, so a
+ * Reads an identifier field that YAML may have typed as a number: A wholly numeric ticket id is written unquoted, so a
  * string-only read would silently drop it, while a prefixed key such as `MAC-42` arrives as a string.
  */
 function readIdentifier(fields: Record<string, unknown>, key: string): string | null {
@@ -284,19 +284,19 @@ async function readLede(input: {
 }
 
 /**
- * Resolves the change's identity from one source: the caller's `--type`, `--scope`, and `--breaking` where any of them
+ * Resolves the change's identity from one source: the caller's `--type`, `--scope`, and `--breaking` when any of them
  * is passed, and otherwise the newest change-summary artifact's frontmatter, which is the only artifact in the chain
  * that carries typed fields. One identity never combines fields from both, so a caller passing a type for a change that
  * names no scope records no scope. The ticket falls back to the change summary on its own, being no part of the
  * consolidated record. A scope of `*` from either source names no scope.
  *
- * The work type is resolved through the installed taxonomy rather than taken as spelled, so the identity carries the
- * canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
+ * Because the work type is resolved through the installed taxonomy rather than taken as spelled, the identity carries
+ * the canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
  * breaking, as `--breaking` does.
  *
- * A taxonomy that does not load is reported apart from a type it does not declare. The two conditions look alike at the
- * failed lookup and differ in the caller's recourse: one is repaired by passing a flag, the other only by repairing the
- * install.
+ * A taxonomy that does not load is reported apart from a type that it does not declare. The two conditions look alike
+ * at the failed lookup and differ in the caller's recourse: One is repaired by passing a flag, the other only by
+ * repairing the install.
  */
 async function resolveIdentity(input: {
   artifactDir: string;

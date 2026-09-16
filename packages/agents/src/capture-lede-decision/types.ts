@@ -1,5 +1,5 @@
-// Shapes for the capture-lede-decision helper: the rating an author records, the resolved decision episode, and the
-// JSON payloads emitted to stdout.
+// Shapes for the capture-lede-decision helper: the rating recorded by an author, the resolved decision episode, and
+// the JSON payloads emitted to stdout.
 //
 // The stdout payload is a discriminated union on `ok`, mirroring `capture-event`. Recoverable failures (an unresolvable
 // artifact, an unreachable store on the recording path, schema validation, invalid args) return
@@ -7,31 +7,31 @@
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
 
-/** The verdicts a record can carry, derived from whether the two ledes differ rather than supplied by a caller. */
+/** The verdicts that a record can carry, derived from whether the two ledes differ rather than supplied by a caller. */
 export const LEDE_VERDICTS = ['accepted', 'revised'] as const;
 
-/** What became of the agent's lede: it shipped as written, or it was rewritten before merge. */
+/** What became of the agent's lede: It merged as written, or it was rewritten before merge. */
 export type LedeVerdict = (typeof LEDE_VERDICTS)[number];
 
-/** The change a decision describes, resolved wholly from caller flags or wholly from change-summary frontmatter. */
+/** The change described by a decision, resolved wholly from caller flags or wholly from change-summary frontmatter. */
 export interface EpisodeIdentity {
   type: string;
   tier: string;
   /** Whether the work type carried the breaking marker; the doctrine requires a `Migration:` paragraph of these alone. */
   breaking: boolean;
-  /** Scope the change belongs to; absent for a change that names none. */
+  /** Scope to which the change belongs; absent for a change that names none. */
   scope?: string;
   pr: string;
   mergeCommit: string;
-  /** Ticket the change served; absent for a branch that carried none. */
+  /** Ticket served by the change; absent for a branch that carried none. */
   ticket?: string;
 }
 
 /** A resolved decision episode: both ledes, whether they differ, the change's identity, and the doctrine in force. */
 export interface LedeEpisode {
-  /** The `## What` the agent published to the pull request. */
+  /** The `## What` that the agent published to the pull request. */
   agentLede: string;
-  /** The lede that reached the merge commit. */
+  /** The lede in the merge commit. */
   mergedLede: string;
   /** Whether the ledes differ once whitespace is normalized, so a reflow alone does not read as a revision. */
   differ: boolean;
@@ -48,19 +48,19 @@ export type ResolveEpisodeOutcome =
 
 /**
  * Categorical reasons an episode cannot be resolved, each naming a distinct missing input. `unresolved-identity` covers
- * every field of {@link EpisodeIdentity} under one code, with the message naming the field that failed: the caller's
- * recourse is the same in each case — supply the flag — so splitting it per field would buy the caller nothing.
+ * every field of {@link EpisodeIdentity} under one code, with the message naming the field that failed: The caller's
+ * recourse is the same in each case (supply the flag), so splitting it per field would buy the caller nothing.
  *
  * An unreadable taxonomy is `no-taxonomy` rather than `unresolved-identity`, because no `--type` value resolves against
- * a taxonomy that did not load: the caller's recourse is to repair the install, as it is for `no-doctrine`.
+ * a taxonomy that did not load: The caller's recourse is to repair the install, as it is for `no-doctrine`.
  */
 export type EpisodeErrorCode =
   'no-artifact-dir' | 'no-agent-lede' | 'no-merged-lede' | 'no-doctrine' | 'no-taxonomy' | 'unresolved-identity';
 
 /**
- * The store a decision would record into, as seen from inspect mode: reachable, or the categorical reason a record
- * could not be written to it. Reported rather than raised, so a caller learns the decision cannot be kept before it
- * asks the author to make one.
+ * The store into which a decision would record, as seen from inspect mode: reachable, or the categorical reason a
+ * record could not be written to it. Reported rather than raised, so that a caller learns the decision cannot be kept
+ * before it asks the author to make one.
  */
 export type InspectedStore =
   { name: string; reachable: true } | { name: string; reachable: false; error: DecisionErrorCode; message: string };
@@ -79,13 +79,13 @@ export interface CommitSuccess {
   mode: 'commit';
   /** The author's rating of the lede in the merged pull request. */
   quality: LedeQuality;
-  /** Derived from whether the ledes differ, so it always agrees with the sections the record carries. */
+  /** Derived from whether the ledes differ, so it always agrees with the sections that the record carries. */
   verdict: LedeVerdict;
   /** The generated ULID, which is also the record's filename stem. */
   id: string;
   capturedAt: string;
   path: string;
-  /** Registry name of the store the record was written to. */
+  /** Registry name of the store to which the record was written. */
   store: string;
 }
 
@@ -98,7 +98,7 @@ export interface DecisionFailure {
   errors?: string[];
 }
 
-/** Every categorical error code the helper can return without an unexpected throw. */
+/** Every categorical error code that the helper can return without an unexpected throw. */
 export type DecisionErrorCode =
   | EpisodeErrorCode
   | 'invalid-args'

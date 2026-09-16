@@ -16,7 +16,7 @@ const TAXONOMY: Taxonomy = {
 };
 
 describe(consolidate, () => {
-  it('lets one feat speak over three fixes, since listing order ranks and frequency does not', () => {
+  it('lets one feat outrank three fixes, since listing order ranks and frequency does not', () => {
     const entries = [
       { title: 'Correct the guard', type: 'fix' },
       { title: 'Add foo', type: 'feat' },
@@ -45,7 +45,7 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'refactor' });
   });
 
-  it('carries the scope every entry agrees on', () => {
+  it('carries the scope on which every entry agrees', () => {
     const entries = [
       { scope: 'agents', type: 'fix' },
       { scope: 'agents', type: 'feat' },
@@ -63,13 +63,13 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
   });
 
-  it('names no scope where one entry carries none', () => {
+  it('names no scope when one entry carries none', () => {
     const entries = [{ scope: 'agents', type: 'feat' }, { type: 'fix' }];
 
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
-  it('skips an entry naming a type the taxonomy does not declare', () => {
+  it('skips an entry naming a type that the taxonomy does not declare', () => {
     const entries = [{ type: 'invented' }, { type: 'fix' }];
 
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'fix' });
@@ -79,7 +79,7 @@ describe(consolidate, () => {
     expect(consolidate([], TAXONOMY)).toStrictEqual({});
   });
 
-  it('yields an empty record where no entry names a declared type', () => {
+  it('yields an empty record when no entry names a declared type', () => {
     expect(consolidate([{ title: 'Add foo' }], TAXONOMY)).toStrictEqual({});
   });
 });

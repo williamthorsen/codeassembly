@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, '..', '..', '..');
 
-/** The rules the boundary block declares, each keyed to the reach it forecloses. */
+/** The rules declared by the boundary block, each keyed to the reach that it forecloses. */
 const BOUNDARY_RULES = [
   'import-x/no-nodejs-modules',
   'import-x/no-restricted-paths',
@@ -15,7 +15,7 @@ const BOUNDARY_RULES = [
 
 /**
  * A source breaking all four at once. It is linted under a path already on disk because the TypeScript project
- * service resolves the file before ESLint reaches it, and refuses a path it cannot find.
+ * service resolves the file before ESLint reaches it, and refuses a path that it cannot find.
  */
 const VIOLATING_SOURCE = [
   "import { readFile } from 'node:fs/promises';",
@@ -31,7 +31,7 @@ const VIOLATING_SOURCE = [
 ].join('\n');
 
 describe('the change-grammar lint boundary', () => {
-  it('reports every reach the engine forecloses', { timeout: 60_000 }, async () => {
+  it('reports every reach that the engine forecloses', { timeout: 60_000 }, async () => {
     const reported = await lintUnder(path.join(PACKAGE_ROOT, 'src', 'change-grammar', 'tokens.ts'));
 
     expect(reported).toStrictEqual(BOUNDARY_RULES);

@@ -23,7 +23,7 @@ import { prepareDecision } from './prepare-decision.ts';
 import { resolveEpisode } from './resolve-episode.ts';
 import type { DecisionErrorCode, DecisionResult } from './types.ts';
 
-/** The flags this helper accepts; the comment comes from stdin, so it has no flag of its own. */
+/** The flags accepted by this helper; the comment comes from stdin, so it has no flag of its own. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'agent-lede-file', takesValue: true },
   { name: 'artifact-dir', takesValue: true },
@@ -44,9 +44,9 @@ const FLAGS: readonly FlagSpec[] = [
 ];
 
 /**
- * The event store this helper records into when `--store` names none. The corpus is cross-repo: one store holds every
- * lede decision, whichever repository the pull request merged in, so the destination is a property of this helper
- * rather than of the change under review.
+ * The event store into which this helper records when `--store` names none. The corpus is cross-repo: One store holds
+ * every lede decision, whichever repository the pull request merged in, so the destination is a property of this
+ * helper rather than of the change under review.
  */
 const LEDE_DECISION_STORE = 'codeassembly';
 
@@ -63,7 +63,7 @@ export interface ParsedArgs {
   dataDir: string | null;
   /** Directory holding the deployed subagent bodies; `null` falls back to the one beside the installed helper. */
   subagentsDir: string | null;
-  /** The store to record into; falls back to the one this helper serves when `--store` names none. */
+  /** The store to record into; falls back to the one that this helper serves when `--store` names none. */
   store: string;
   type: string | null;
   scope: string | null;
@@ -101,15 +101,15 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end. In inspect mode it resolves the decision episode and the store a decision would record
- * into, reporting both and writing nothing, so a caller can present the ledes — or stop short of asking — before the
- * author is put to a decision. In commit mode it resolves the same episode, reads the comment from stdin, and writes
- * one event record.
+ * Runs the helper end to end. In inspect mode it resolves the decision episode and the store into which a decision
+ * would record, reporting both and writing nothing, so that a caller can present the ledes -- or stop short of
+ * asking -- before the author is put to a decision. In commit mode it resolves the same episode, reads the comment
+ * from stdin, and writes one event record.
  *
  * Every episode-resolution failure, and every store failure on the recording path, becomes a structured
- * `{ ok: false, ... }` result, so a caller invoking this after an irreversible merge can report one line and continue.
- * An unreachable store leaves inspect at `ok: true`: the episode resolved, and only recording is blocked. System
- * failures (out-of-disk, permission denied) propagate to the caller's try/catch.
+ * `{ ok: false, ... }` result, so that a caller invoking this after an irreversible merge can report one line and
+ * continue. An unreachable store leaves inspect at `ok: true`: The episode resolved, and only recording is blocked.
+ * System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -221,11 +221,11 @@ export async function runDecision(input: {
 /**
  * Parses the helper's argv. `--inspect` and `--quality` select the mode and are mutually exclusive; exactly one must
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
- * change it describes is not worth recording. Every other flag is optional: the change's identity (`--type`, `--scope`,
- * and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall back to their
- * artifacts, and `--store` names a corpus
- * registered under some other name. The `@default` sentinel is refused: it names a machine's default store rather than
- * a corpus, which is the route by which decisions have been filed outside the one that holds them.
+ * change that it describes is not worth recording. Every other flag is optional: the change's identity (`--type`,
+ * `--scope`, and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall
+ * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` sentinel is
+ * refused: It names a machine's default store rather than a corpus, which is the route by which decisions have been
+ * filed outside the one that holds them.
  *
  * @internal - Exported to allow testing.
  */
@@ -242,7 +242,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   }
   if (raw.store === DEFAULT_KB_SENTINEL) {
     throw new Error(
-      `--store ${DEFAULT_KB_SENTINEL} is not accepted: a lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
+      `--store ${DEFAULT_KB_SENTINEL} is not accepted: A lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
         'not to whichever store kb.yaml names as its default. Omit --store, or name the corpus.',
     );
   }
@@ -313,7 +313,7 @@ function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolv
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`, matching the degrade-with-warning pattern the sibling helpers use.
+ * `false`, matching the degrade-with-warning pattern used by the sibling helpers.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -337,8 +337,8 @@ function resolveDefaultDataDir(): string {
 
 /**
  * Locates the deployed subagents directory beside the installed helper. The harness names it, `agents` on Claude and
- * `subagents` on Rovo, so the name is probed rather than derived from the skills dir. Where neither exists the Claude
- * name stands in, so the resolver's failure names a path rather than an empty string.
+ * `subagents` on Rovo, so the name is probed rather than derived from the skills dir. When neither exists, the Claude
+ * name stands in. The resolver's failure then names a path rather than an empty string.
  */
 function resolveDefaultSubagentsDir(): string {
   const harnessHome = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
