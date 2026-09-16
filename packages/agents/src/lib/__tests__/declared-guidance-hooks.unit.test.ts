@@ -39,7 +39,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.has('impl')).toBe(true);
   });
 
-  it('finds a hook a body declares through an included partial', async () => {
+  it('finds a hook declared by a body through an included partial', async () => {
     await writePartial(contentDir, 'shared.md', 'Shared guidance.\n\n<!-- guidance-hook: impl -->\n');
     const skill = await writeSkill(contentDir, 'implement-plan', '<!-- include: ../../_partials/shared.md / -->\n');
 
@@ -48,7 +48,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.has('impl')).toBe(true);
   });
 
-  // Every Markdown file the skill walk reaches is filled, so a nested body declares as much as the entry does.
+  // Every Markdown file reached by the skill walk is filled, so a nested body declares as much as the entry does.
   it('lists a skill that declares a hook in a nested body rather than its entry', async () => {
     const skill = await writeSkill(contentDir, 'orchestrate', 'Run the pipeline.\n');
     await writeSkillFile(contentDir, 'orchestrate', 'modules/review-cycle.md', '<!-- guidance-hook: impl -->\n');
@@ -58,7 +58,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.has('impl')).toBe(true);
   });
 
-  it('ignores a declaration in a file the skill walk passes over', async () => {
+  it('ignores a declaration in a file that the skill walk passes over', async () => {
     const skill = await writeSkill(contentDir, 'orchestrate', 'Run the pipeline.\n');
     await writeSkillFile(contentDir, 'orchestrate', '_partials/fragment.md', '<!-- guidance-hook: impl -->\n');
     await writeSkillFile(contentDir, 'orchestrate', '__tests__/case.md', '<!-- guidance-hook: other -->\n');
@@ -68,7 +68,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.size).toBe(0);
   });
 
-  it('skips a skill that targets no harness the run deploys to', async () => {
+  it('skips a skill that targets no harness to which the run deploys', async () => {
     const skill = await writeSkill(contentDir, 'rovo-only', '<!-- guidance-hook: impl -->\n', ['rovo']);
 
     const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
@@ -76,7 +76,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.has('impl')).toBe(false);
   });
 
-  it('omits a hook no deployed body declares', async () => {
+  it('omits a hook declared by no deployed body', async () => {
     const skill = await writeSkill(contentDir, 'implement-plan', 'Write the code.\n');
 
     const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);

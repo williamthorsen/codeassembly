@@ -8,8 +8,8 @@ import { z } from 'zod';
 import { isMissingFile } from './type-guards.ts';
 
 /**
- * The only part of a dependency's `package.json` that CodeAssembly reads: the content directory it declares. Both
- * levels are `.loose()` so every other field passes through and a later cut can add per-package config without a
+ * The only part of a dependency's `package.json` that CodeAssembly reads: the content directory that it declares. Both
+ * levels are `.loose()` so that every other field passes through and a later cut can add per-package config without a
  * breaking change.
  */
 const PackageManifestSchema = z
@@ -29,16 +29,16 @@ const ProjectManifestSchema = z
   })
   .loose();
 
-/** A declared package resolved to the content directory it ships, named by the package it came from. */
+/** A declared package resolved to the content directory that it ships, named by the package from which it came. */
 export interface PackageSource {
   readonly name: string;
   readonly dir: string;
 }
 
 /**
- * Reads the content directory a package manifest declares under `codeassembly.content`, or `undefined` when the key is
- * absent. A malformed `codeassembly` key still throws, naming the package: absence is a package that ships no content,
- * which some callers answer for themselves, but a key that is present and wrong is a defect either way.
+ * Reads the content directory declared by a package manifest under `codeassembly.content`, or `undefined` when the
+ * key is absent. A malformed `codeassembly` key still throws, naming the package: Absence is a package that ships no
+ * content, which some callers answer for themselves, but a key that is present and wrong is a defect either way.
  */
 export function findContentPath(name: string, manifest: unknown): string | undefined {
   const result = PackageManifestSchema.safeParse(manifest);
@@ -53,12 +53,12 @@ export function findContentPath(name: string, manifest: unknown): string | undef
 
 /**
  * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content and are absent from
- * `addressed`, sorted by name, so a caller can name the declaration that would adopt each. `addressed` carries every
- * name the project has spoken about, adopted and declined alike, so a package a project turned down stays quiet.
- * Purely advisory: it contributes no source and cannot fail a run, so an
- * unreadable or absent `package.json` yields nothing — which is also what lets the home domain share this path with no
- * carve-out. Because a package must declare its content directory to ship any, detection reads that declaration and
- * cannot report a false positive.
+ * `addressed`, sorted by name, so that a caller can name the declaration that would adopt each. `addressed` lists
+ * every name that the project has spoken about, adopted and declined alike, so a package that a project turned down
+ * is not reported. Purely advisory: It contributes no source and cannot fail a run. An unreadable or absent
+ * `package.json` yields nothing, which also lets the home domain share this path with no carve-out. Because a package
+ * must declare its content directory to ship any, detection reads that declaration and cannot report a false
+ * positive.
  */
 export async function findUndeclaredGuidancePackages(
   addressed: ReadonlyArray<string>,
@@ -78,13 +78,13 @@ export async function findUndeclaredGuidancePackages(
 }
 
 /**
- * Resolves each declared package name to the content directory it ships, in declaration order, for use as a content
- * source. Resolution walks the `node_modules` chain Node itself would search from `baseDir`, so it holds under pnpm's
- * symlinked layout and under `workspace:*` links — which is what lets a producing repo consume its own guidance
- * through the same declaration a third party writes. Throws when a declared name is a filesystem path rather than a
- * package name, when a declared package is not installed, or when it declares no content directory; whether that
- * directory exists is left to the caller's source validation, so a package source and a hand-declared one are checked
- * through one path.
+ * Resolves each declared package name to the content directory that it ships, in declaration order, for use as a
+ * content source. Resolution walks the `node_modules` chain that Node itself would search from `baseDir`, so it holds
+ * under pnpm's symlinked layout and under `workspace:*` links, which lets a producing repo consume its own guidance
+ * through the same declaration that a third party writes. Throws when a declared name is a filesystem path rather
+ * than a package name, when a declared package is not installed, or when it declares no content directory; whether
+ * that directory exists is left to the caller's source validation, which covers a package source and a hand-declared
+ * one alike.
  */
 export async function resolvePackageSources(
   names: ReadonlyArray<string>,
@@ -107,9 +107,9 @@ export async function resolvePackageSources(
 // region | Helpers
 
 /**
- * Throws when `name` is a filesystem path rather than a package name. Node's resolver answers a relative specifier
- * with the anchor directory itself, so `./guidance` would otherwise resolve to `<baseDir>/guidance` and `../sibling`
- * would escape `baseDir` entirely — a second, undocumented path-source route beside `sources`.
+ * Throws when `name` is a filesystem path rather than a package name. Node's resolver returns the anchor directory
+ * itself for a relative specifier, so `./guidance` would otherwise resolve to `<baseDir>/guidance` and `../sibling`
+ * would escape `baseDir` entirely: a second, undocumented path-source route beside `sources`.
  */
 function assertPackageName(name: string): void {
   if (name.startsWith('.') || path.isAbsolute(name)) {
@@ -120,8 +120,8 @@ function assertPackageName(name: string): void {
 }
 
 /**
- * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory
- * Node's resolver would search. Probing the filesystem rather than resolving a package subpath is deliberate: a
+ * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory that
+ * Node's resolver would search. Probing the filesystem rather than resolving a package subpath is deliberate: A
  * modern `exports` map does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only
  * package has no importable entry to resolve instead.
  */
@@ -156,7 +156,7 @@ function parseJsonOrUndefined(raw: string): unknown {
   }
 }
 
-/** Parses a package's `package.json` text, naming the package so a syntax error is attributable. */
+/** Parses a package's `package.json` text, naming the package so that a syntax error is attributable. */
 function parsePackageManifest(name: string, raw: string): unknown {
   try {
     return JSON.parse(raw);
@@ -166,10 +166,10 @@ function parsePackageManifest(name: string, raw: string): unknown {
 }
 
 /**
- * Reads the content directory a package declares under `codeassembly.content`. The key is required and has no default:
- * a default location would claim a directory name in every producer's package root, so a producer states where its
- * content lives and can nest it under a directory it already owns. Throws when the key is malformed or absent, naming
- * the package either way.
+ * Reads the content directory that a package declares under `codeassembly.content`. The key is required and has no
+ * default: A default location would claim a directory name in every producer's package root, so a producer states
+ * where its content lives and can nest it under a directory that it already owns. Throws when the key is malformed or
+ * absent, naming the package either way.
  */
 function readContentPath(name: string, manifest: unknown): string {
   const content = findContentPath(name, manifest);
@@ -183,8 +183,8 @@ function readContentPath(name: string, manifest: unknown): string {
 
 /**
  * Reads the direct dependency names declared by the project at `baseDir`, or nothing when it has no readable manifest.
- * Direct dependencies only: guidance is something a project opts into by depending on the package that ships it, and
- * pnpm's strict layout would not surface a transitive package at the probed paths anyway.
+ * Direct dependencies only: Guidance is something a project opts into by depending on the package that ships it, and
+ * pnpm's strict layout would not expose a transitive package at the probed paths anyway.
  */
 async function readDirectDependencies(baseDir: string): Promise<ReadonlyArray<string>> {
   const raw = await readFileIfPresent(path.join(baseDir, 'package.json'));
@@ -200,8 +200,8 @@ async function readDirectDependencies(baseDir: string): Promise<ReadonlyArray<st
 }
 
 /**
- * Reads `filePath`, resolving to `undefined` when it is absent. Any other failure — e.g. `EACCES` on an unreadable
- * `node_modules` directory — rethrows, so a permission problem surfaces instead of reading as a bare absence and
+ * Reads `filePath`, resolving to `undefined` when it is absent. Rethrows any other failure (e.g. `EACCES` on an
+ * unreadable `node_modules` directory), so a permission problem surfaces instead of reading as a bare absence and
  * sending resolution on to the next candidate.
  */
 async function readFileIfPresent(filePath: string): Promise<string | undefined> {
@@ -216,9 +216,9 @@ async function readFileIfPresent(filePath: string): Promise<string | undefined> 
 }
 
 /**
- * Reports whether `name` resolves to an installed package that declares a content directory. Advisory: a package that
- * is absent, or whose `package.json` will not parse, answers `false` rather than throwing, because the scan consuming
- * this must never be the thing that fails a run.
+ * Reports whether `name` resolves to an installed package that declares a content directory. Advisory: It returns
+ * `false` for a package that is absent or whose `package.json` will not parse, rather than throwing, because the scan
+ * that consumes this must never fail a run.
  */
 async function shipsGuidance(name: string, baseDir: string): Promise<boolean> {
   try {

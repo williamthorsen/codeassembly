@@ -5,8 +5,8 @@ import path from 'node:path';
 import { isEnoent } from './type-guards.ts';
 
 /**
- * The directory names holding test code. Fixture data nests inside `__tests__` rather than sitting in a directory of
- * its own, so that name covers both; `test-utils` holds the helpers those suites import, which are test code too.
+ * The directory names holding test code. Fixture data nests inside `__tests__` rather than having a directory of
+ * its own, so that name covers both; `test-utils` holds the helpers that those suites import, which are test code too.
  */
 export const TEST_DIRECTORY_NAMES: ReadonlySet<string> = new Set(['__tests__', 'test-utils']);
 
@@ -20,7 +20,7 @@ export function isTestDirectory(name: string): boolean {
 
 /**
  * True when `relativePath` passes through a test directory at any depth. A walk over a content tree drops what this
- * matches: fixture data is authored for one suite to read, and every other check that walks the tree would otherwise
+ * matches: Fixture data is authored for one suite to read, and every other check that walks the tree would otherwise
  * scan it as real content and report a defect against a file deliberately shaped to hold one.
  */
 export function isUnderTestDirectory(relativePath: string): boolean {
@@ -29,8 +29,8 @@ export function isUnderTestDirectory(relativePath: string): boolean {
 
 /**
  * Lists every authored Markdown file under `root` at any depth, as absolute paths, skipping the test tree. Partials
- * and dotfiles are included: a check that reads a body as the pipeline expands it sees a partial's content too, so a
- * walk that dropped them would miss what an inlining body ships. Empty when `root` is absent.
+ * and dotfiles are included: A check that reads a body as the pipeline expands it sees a partial's content too, so a
+ * walk that dropped them would miss what an inlining body delivers. Empty when `root` is absent.
  */
 export async function listMarkdownFilesRecursively(root: string): Promise<ReadonlyArray<string>> {
   const entries = await readDirEntriesRecursively(root);

@@ -9,9 +9,9 @@ import type { HomeWriteCommand } from './types.ts';
 /** The inputs deciding whether this installation may write the home domain. */
 export interface DesignatedWriterOptions {
   readonly command: HomeWriteCommand;
-  /** Root of the package the running binary belongs to, compared against the designated path. */
+  /** Root of the package to which the running binary belongs, compared against the designated path. */
   readonly packageRoot: string;
-  /** Home directory whose `.agents/` tier carries the setting; defaults to the user's own. */
+  /** Home directory whose `.agents/` tier declares the setting; defaults to the user's own. */
   readonly homeDir?: string | undefined;
   /** Whether `--override-writer` was passed, which proceeds from a non-designated installation and says so. */
   readonly shouldOverrideWriter?: boolean | undefined;
@@ -24,13 +24,14 @@ interface DesignatedWriter {
 }
 
 /**
- * Refuses a home-domain write from an installation the `home-writer` setting does not designate, before the command
- * writes anything or previews what it would write. The setting names one installation per machine; every repository
- * and worktree carries a binary that could otherwise overwrite the shared home state with its own library's contents.
+ * Refuses a home-domain write from an installation that the `home-writer` setting does not designate, before the
+ * command writes anything or previews what it would write. The setting names one installation per machine; every
+ * repository and worktree has a binary that could otherwise overwrite the shared home state with its own library's
+ * contents.
  *
  * Passes when no home tier sets `home-writer`, so a machine that never configures one behaves as it always has, and
- * when the running package root lies at or under the designated path, so the setting may name either the worktree
- * root or the package directory within it. A malformed setting fails the run rather than lapsing into dormancy.
+ * when the running package root lies at or under the designated path, which lets the setting name either the worktree
+ * root or the package directory within it. A malformed setting fails the run rather than being silently ignored.
  */
 export async function assertDesignatedWriter(options: DesignatedWriterOptions): Promise<void> {
   const homeDir = options.homeDir ?? homedir();
@@ -83,7 +84,7 @@ async function matchesDesignatedWriter(packageRoot: string, designatedPath: stri
 
 /**
  * Reads the effective `home-writer` setting from the home domain's declaration chain, the local tier overriding the
- * base one, or `undefined` when no tier sets it. Throws on a value that names no path a comparison could use.
+ * base one, or `undefined` when no tier sets it. Throws on a value that names no path that a comparison could use.
  */
 async function readDesignatedWriter(homeDir: string): Promise<DesignatedWriter | undefined> {
   const chain = await resolveScopeChain('codeassembly.yaml', { cwd: homeDir });
@@ -111,7 +112,7 @@ async function readDesignatedWriter(homeDir: string): Promise<DesignatedWriter |
 
 /**
  * Resolves `targetPath` through symlinks, falling back to a plain absolute resolution for a path that does not exist.
- * A designated worktree that has been deleted still names a location a comparison can answer against.
+ * A designated worktree that has been deleted still names a location against which a comparison can answer.
  */
 async function resolveRealPath(targetPath: string): Promise<string> {
   try {

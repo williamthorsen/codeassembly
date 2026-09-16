@@ -13,11 +13,11 @@ interface LinkViolation {
 
 /**
  * Shared guidance is inlined into each harness's flat guidance file, where `rewriteMarkdownPaths` resolves a link
- * against the destination rather than the source tree, so a source-tree-relative target lands nowhere. The policy:
+ * against the destination rather than the source tree, so a source-tree-relative target points at nothing. The policy:
  * no outbound Markdown links. Skills are referenced by name; path-level conventions travel through the skill chain
  * (which the install-time rewriter handles correctly).
  *
- * The body scanned is the include-expanded one, so a partial the shared file inlines is held to the policy too.
+ * Because the body scanned is the include-expanded one, a partial inlined by the shared file is held to the policy too.
  */
 describe('shared guidance link policy', () => {
   it('contains no bare-relative Markdown link targets', async () => {

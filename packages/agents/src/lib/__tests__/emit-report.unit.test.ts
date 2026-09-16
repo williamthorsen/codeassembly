@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { emitReport } from '../emit-report.ts';
 
 describe(emitReport, () => {
-  // The console boundary is what this module is, so spying on it here is the assertion rather than a workaround.
-  it('routes each line to the stream its level names, in the order given', () => {
+  // This module is the console boundary, so spying on it here is the assertion rather than a workaround.
+  it('routes each line to the stream named by its level, in the order given', () => {
     using silent = silenceConsole(['info', 'warn']);
 
     emitReport([

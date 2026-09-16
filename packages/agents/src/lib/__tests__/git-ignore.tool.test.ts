@@ -22,7 +22,7 @@ describe(checkGitIgnored, () => {
     await rm(scratch, { recursive: true, force: true });
   });
 
-  /** Turns the scratch dir into a repository carrying the given ignore rules. */
+  /** Turns the scratch dir into a repository with the given ignore rules. */
   async function initRepo(ignoreRules: string): Promise<void> {
     await execFileAsync('git', ['-C', scratch, 'init', '--quiet']);
     await writeFile(path.join(scratch, '.gitignore'), ignoreRules, 'utf8');
@@ -36,7 +36,7 @@ describe(checkGitIgnored, () => {
     expect(await checkGitIgnored(scratch, target)).toBe(true);
   });
 
-  it('reports a path no rule covers as not ignored', async () => {
+  it('reports a path covered by no rule as not ignored', async () => {
     await initRepo('node_modules/\n');
     const target = path.join(scratch, 'CLAUDE.local.md');
     await writeFile(target, '# Notes\n', 'utf8');
@@ -44,7 +44,7 @@ describe(checkGitIgnored, () => {
     expect(await checkGitIgnored(scratch, target)).toBe(false);
   });
 
-  it('answers for a path that does not exist yet, so a caller can check before writing', async () => {
+  it('answers for a path that does not exist yet, so that a caller can check before writing', async () => {
     await initRepo('*.local.*\n');
 
     expect(await checkGitIgnored(scratch, path.join(scratch, 'CLAUDE.local.md'))).toBe(true);

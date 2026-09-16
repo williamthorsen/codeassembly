@@ -3,10 +3,10 @@ import type { HarnessId } from './types.ts';
 
 /**
  * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder naming no canonical tool. Caught by the install
- * pipeline and surfaced as a fatal install error.
+ * pipeline and reported as a fatal install error.
  *
- * The message names no harness, because every harness maps the same closed set of canonical names: a name unmapped for
- * one is unmapped for all. Keeping it out is also what lets `validate` fold the defect to a single line rather than
+ * The message names no harness, because every harness maps the same closed set of canonical names: A name unmapped
+ * for one is unmapped for all. Keeping it out also lets `validate` fold the defect to a single line rather than
  * repeating it per harness. The harness stays on the instance for a caller that needs to know which render raised it.
  */
 export class ToolNameRewriteError extends Error {
@@ -32,15 +32,15 @@ export class ToolNameRewriteError extends Error {
 const PLACEHOLDER_RE = /\{tool:([A-Za-z][A-Za-z0-9_]*)}/g;
 
 /**
- * Replaces every `{tool:NAME}` placeholder in `content` with what `harnessId` calls `NAME`. A name the harness maps
- * nothing to throws `ToolNameRewriteError` with the canonical name, `contextLabel`, and the 1-based line number of the
- * offending match. There is no identity pass-through; every match must resolve through the harness table or the call
+ * Replaces every `{tool:NAME}` placeholder in `content` with what `harnessId` calls `NAME`. A name to which the
+ * harness maps nothing throws `ToolNameRewriteError` with the canonical name, `contextLabel`, and the 1-based line
+ * number of the offending match. There is no identity pass-through; every match must resolve through the harness table or the call
  * fails.
  */
 export function rewriteToolNames(content: string, harnessId: HarnessId, contextLabel: string): string {
   const toolNames: Readonly<Record<string, string>> = HARNESSES[harnessId].toolNames;
   return content.replace(PLACEHOLDER_RE, (_match: string, toolName: string, offset: number): string => {
-    // Guarded by `hasOwn`: a placeholder naming an `Object.prototype` member (`{tool:constructor}`) would otherwise
+    // Guarded by `hasOwn`: A placeholder naming an `Object.prototype` member (`{tool:constructor}`) would otherwise
     // resolve to the inherited value instead of failing.
     const replacement = Object.hasOwn(toolNames, toolName) ? toolNames[toolName] : undefined;
     if (replacement === undefined) {

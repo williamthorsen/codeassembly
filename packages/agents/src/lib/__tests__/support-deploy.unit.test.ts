@@ -66,7 +66,7 @@ describe('source support delivery', () => {
       expect(rendered?.kind === 'markdown' && rendered.content).toContain('~/.claude/scripts/x.sh');
     });
 
-    it('carries a non-Markdown support file as a verbatim asset', async () => {
+    it('returns a non-Markdown support file as a verbatim asset', async () => {
       await writeSupportFile('_data/work-types.json', '{"types":[]}\n');
 
       const entries = await renderSourceSupport(sourceDir, context());
@@ -83,7 +83,7 @@ describe('source support delivery', () => {
       expect(entries.map((entry) => entry.relPath)).toEqual(['_data/x.md']);
     });
 
-    it('renders nothing for a source that ships no skills directory', async () => {
+    it('renders nothing for a source that contains no skills directory', async () => {
       await mkdir(sourceDir, { recursive: true });
 
       expect(await renderSourceSupport(sourceDir, context())).toEqual([]);
@@ -100,7 +100,7 @@ describe('source support delivery', () => {
       expect(await readFile(path.join(destDir, '_data', 'house-style.md'), 'utf8')).toContain('# House style');
     });
 
-    it('prunes a support file the source no longer carries', async () => {
+    it('prunes a support file that the source no longer contains', async () => {
       await writeSupportFile('_data/keep.md', '# Keep\n');
       await writeSupportFile('_data/drop.md', '# Drop\n');
       const destDir = path.join(destParent, 'org');
@@ -126,7 +126,7 @@ describe('source support delivery', () => {
   });
 
   describe(retractUndeclaredSourceSupport, () => {
-    it('removes a namespace no declared source claims and keeps the ones that remain', async () => {
+    it('removes a namespace claimed by no declared source and keeps the ones that remain', async () => {
       await mkdir(path.join(destParent, 'kept', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'kept', '_data', 'a.md'), '# A\n', 'utf8');
       await mkdir(path.join(destParent, 'dropped', '_data'), { recursive: true });
@@ -149,7 +149,7 @@ describe('source support delivery', () => {
       expect(existsSync(path.join(destParent, '@williamthorsen', 'other'))).toBe(false);
     });
 
-    it('removes a scope directory left holding no declared package', async () => {
+    it('removes a scope directory left containing no declared package', async () => {
       await mkdir(path.join(destParent, '@williamthorsen', 'nmr'), { recursive: true });
       await mkdir(path.join(destParent, 'org', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'org', '_data', 'a.md'), '# A\n', 'utf8');
@@ -202,7 +202,7 @@ describe('source support delivery', () => {
       ).toEqual([]);
     });
 
-    it('keeps the root for a surviving source delivery has yet to create', async () => {
+    it('keeps the root for a surviving source that delivery has yet to create', async () => {
       await mkdir(path.join(destParent, 'old'), { recursive: true });
 
       expect(await listUndeclaredSourceSupport(destParent, { surviving: ['new'], emptied: [] })).toEqual([
@@ -210,7 +210,7 @@ describe('source support delivery', () => {
       ]);
     });
 
-    it('keeps a scope directory for a surviving package delivery has yet to create', async () => {
+    it('keeps a scope directory for a surviving package that delivery has yet to create', async () => {
       await mkdir(path.join(destParent, '@acme', 'stale'), { recursive: true });
 
       expect(await listUndeclaredSourceSupport(destParent, { surviving: ['@acme/fresh'], emptied: [] })).toEqual([
@@ -218,7 +218,7 @@ describe('source support delivery', () => {
       ]);
     });
 
-    it('leaves a namespace delivery empties to delivery, claiming neither the removal nor the directory', async () => {
+    it('leaves an emptied namespace to delivery, claiming neither the removal nor the directory', async () => {
       await mkdir(path.join(destParent, 'emptied'), { recursive: true });
       await mkdir(path.join(destParent, 'kept'), { recursive: true });
 

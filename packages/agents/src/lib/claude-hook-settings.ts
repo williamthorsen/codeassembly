@@ -25,7 +25,7 @@ interface SettingsFile {
   readonly format: JsonFormat;
 }
 
-/** The formatting a settings file created from scratch is given. */
+/** The formatting given to a settings file created from scratch. */
 const DEFAULT_FORMAT: JsonFormat = { indent: 2, trailingNewline: true };
 
 /** Reports each supplied entry's status in the settings file. A file that does not exist reports every entry absent. */
@@ -55,7 +55,9 @@ export async function ensureClaudeHookEntries(
   return result;
 }
 
-/** Deletes every sentinel-carrying entry from the settings file. A file that does not exist is left uncreated. */
+/**
+ * Deletes from the settings file every entry that contains the sentinel. A file that does not exist is left uncreated.
+ */
 export async function removeClaudeHookEntries(filePath: string, sentinel: string): Promise<RemoveResult> {
   const { value, format } = await readSettingsFile(filePath);
   const { settings, result } = removeHookEntries(value, sentinel);
@@ -68,8 +70,9 @@ export async function removeClaudeHookEntries(filePath: string, sentinel: string
 // region | Helpers
 
 /**
- * Reads the indent unit from the first indented line. A single-line document holding members demonstrates compact style
- * and keeps it; a document with no members demonstrates nothing, so it takes the default that a missing file takes.
+ * Reads the indent unit from the first indented line. A single-line document containing members demonstrates compact
+ * style and keeps it; a document with no members demonstrates nothing, so it takes the default that a missing file
+ * takes.
  */
 function detectIndent(body: string): string | number {
   const unit = /\n([ \t]+)\S/.exec(body)?.[1];
@@ -85,7 +88,7 @@ function detectJsonFormat(text: string): JsonFormat {
   return { indent: detectIndent(trailingNewline ? text.slice(0, -1) : text), trailingNewline };
 }
 
-/** Parses the file text, naming the file in the failure so the caller can report which one needs fixing. */
+/** Parses the file text, naming the file in the failure so that the caller can report which one needs fixing. */
 function parseSettings(text: string, filePath: string): unknown {
   try {
     return JSON.parse(text);
@@ -120,9 +123,9 @@ function renderSettings(settings: Record<string, unknown>, format: JsonFormat): 
 }
 
 /**
- * Writes the settings in the file's own formatting, in place: a settings file that is a symlink stays a symlink, with
- * its target updated, which is the shape a dotfiles-managed setup takes. The write is not atomic, so an interrupted
- * write leaves a document Claude Code rejects as a whole.
+ * Writes the settings in the file's own formatting, in place: A settings file that is a symlink stays a symlink, with
+ * its target updated, which is the shape that a dotfiles-managed setup takes. The write is not atomic, so an
+ * interrupted write leaves a document that Claude Code rejects as a whole.
  */
 async function writeSettingsFile(
   filePath: string,

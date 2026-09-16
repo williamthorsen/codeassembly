@@ -4,28 +4,34 @@
  * only captures well-formed tokens; a slug naming no library artifact is caught downstream by the resolver's existing
  * missing-artifact check, so the grammar deliberately does not police existence.
  *
- * `{rulebook?:<slug>}` matches although no body may carry one, so `rewriteInvocationTokens` rejects it by name. A
- * pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
+ * Because `{rulebook?:<slug>}` matches although no body may contain one, `rewriteInvocationTokens` rejects it by name.
+ * A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
  *
  * One shared constant serves both the render surface (`rewriteInvocationTokens`) and the edge surface
- * (`extractInvocationEdges`) so the two can never diverge on what a token is. Sharing it is safe: `String.replace`
+ * (`extractInvocationEdges`) so that the two can never diverge on what a token is. Sharing it is safe: `String.replace`
  * resets `lastIndex` and `String.matchAll` clones the regex, so neither call leaks match state to the other.
  */
 const INVOCATION_TOKEN_RE = /\{(rulebook|skill|subagent)(\?)?:([a-z][a-z0-9-]*)\}/g;
 
-/** The kinds the pattern above can capture, typed as plain strings so the guard below can test an uncertain one. */
+/**
+ * The kinds that the pattern above can capture, typed as plain strings so that the guard below can test an uncertain
+ * one.
+ */
 const TOKEN_KINDS: ReadonlySet<string> = new Set(['rulebook', 'skill', 'subagent']);
 
-/** How a rulebook is addressed by an invocation token: the skill name it deploys under, and whether it deploys as one. */
+/**
+ * How a rulebook is addressed by an invocation token: the skill name under which it deploys, and whether it deploys as
+ * one.
+ */
 export interface RulebookInvocationTarget {
   readonly skillName: string;
   readonly skill: boolean;
 }
 
 /**
- * The rulebooks a body may address by token, keyed by slug. Supplied by every host that resolves a declaration and so
- * knows the deployed set -- a rulebook, skill, or subagent body under `sync` or `validate`. A support entry under
- * `skills/` renders without one, because `install` ships it having resolved no declaration, which is what makes a
+ * The rulebooks that a body may address by token, keyed by slug. Supplied by every host that resolves a declaration
+ * and so knows the deployed set -- a rulebook, skill, or subagent body under `sync` or `validate`. A support entry
+ * under `skills/` renders without one, because `install` ships it having resolved no declaration, which makes a
  * `{rulebook:<slug>}` token there fail rather than pass through.
  */
 export type RulebookInvocationCatalog = ReadonlyMap<string, RulebookInvocationTarget>;
@@ -43,8 +49,8 @@ export interface InvocationSigils {
 }
 
 /**
- * One invocation token in a body: what it invokes, the slug it names, whether it is optional, and the index where the
- * token begins.
+ * One invocation token in a body: what it invokes, the slug that it names, whether it is optional, and the index where
+ * the token begins.
  */
 export interface InvocationToken {
   readonly kind: 'rulebook' | 'skill' | 'subagent';
@@ -61,8 +67,8 @@ export interface InvocationEdges {
 }
 
 /**
- * The targets an optional token names, grouped by kind. Rulebooks have no group: `{rulebook?:<slug>}` renders nowhere,
- * so `rewriteInvocationTokens` rejects it before it can name a target.
+ * The targets that an optional token names, grouped by kind. Rulebooks have no group: `{rulebook?:<slug>}` renders
+ * nowhere, so `rewriteInvocationTokens` rejects it before it can name a target.
  */
 export interface OptionalInvocationTargets {
   readonly skills: ReadonlyArray<string>;
@@ -71,9 +77,9 @@ export interface OptionalInvocationTargets {
 
 /**
  * Collects the required invocation tokens in `content`, grouping slugs by kind. Non-token text and optional tokens are
- * ignored, so a caller unioning the result into a dependency closure gets only what the body must have. Slugs are
- * returned in source order without dedup; the dependency resolver's `visit` carries dedup and cycle-safety, so the
- * caller need not.
+ * ignored; a caller unioning the result into a dependency closure gets only what the body must have. Slugs are
+ * returned in source order without dedup; the caller need not dedupe them, because the dependency resolver's `visit`
+ * already dedupes and detects cycles.
  */
 export function extractInvocationEdges(content: string): InvocationEdges {
   const rulebooks: Array<string> = [];
@@ -117,9 +123,9 @@ export function extractOptionalInvocationTargets(content: string): OptionalInvoc
 }
 
 /**
- * Lists every invocation token in `content` in source order, each with the index where it begins. `extractInvocationEdges`
- * answers what a body invokes; this answers where, which is what a caller attributing a token to the passage holding it
- * needs. Slugs repeat, for the reason that function gives.
+ * Lists every invocation token in `content` in source order, each with the index where it begins.
+ * `extractInvocationEdges` answers what a body invokes; this answers where, which a caller needs in order to attribute
+ * a token to the passage containing it. Slugs repeat, for the reason that function gives.
  */
 export function locateInvocationTokens(content: string): ReadonlyArray<InvocationToken> {
   const tokens: Array<InvocationToken> = [];
@@ -127,7 +133,7 @@ export function locateInvocationTokens(content: string): ReadonlyArray<Invocatio
     const [, kind, marker, slug] = match;
     // The kind and slug groups always participate when the overall match succeeds; the marker group participates only
     // for an optional token. The guards keep the type honest (under noUncheckedIndexedAccess the destructured elements
-    // are string | undefined) and narrow the kind to the union the token declares, both without a type assertion.
+    // are string | undefined) and narrow the kind to the union that the token declares, both without a type assertion.
     if (slug === undefined || !isTokenKind(kind)) {
       continue;
     }
@@ -137,9 +143,10 @@ export function locateInvocationTokens(content: string): ReadonlyArray<Invocatio
 }
 
 /**
- * Resolves a `{rulebook:<slug>}` token to the skill name it renders, or to the reason it cannot render. One resolution
- * serves both surfaces that need it — the rewriter, which throws on the first rejection, and the rulebook validator,
- * which collects every rejection into one error — so neither can report a rejection the other would not.
+ * Resolves a `{rulebook:<slug>}` token to the skill name that it renders, or to the reason it cannot render. One
+ * resolution serves both surfaces that need it -- the rewriter, which throws on the first rejection, and the rulebook
+ * validator, which collects every rejection into one error -- so neither can report a rejection that the other would
+ * not.
  */
 export function resolveRulebookToken(
   slug: string,
@@ -149,7 +156,7 @@ export function resolveRulebookToken(
     return {
       kind: 'rejected',
       reason:
-        'is honored only where a declaration supplies the deployed rulebook set; a support entry under skills/ ' +
+        'is honored only when a declaration supplies the deployed rulebook set; a support entry under skills/ ' +
         'renders without one',
     };
   }
@@ -169,14 +176,14 @@ export function resolveRulebookToken(
 }
 
 /**
- * Replaces every invocation token in `content` with its harness sigil followed by the slug it invokes. An optional
- * token renders exactly as its required form does: the marker governs whether the target deploys, not how the
+ * Replaces every invocation token in `content` with its harness sigil followed by the slug that it invokes. An optional
+ * token renders exactly as its required form does: The marker governs whether the target deploys, not how the
  * invocation reads. A `{rulebook:<slug>}` token renders the skill sigil and the target's deployed skill name, resolved
- * through `rulebooks` — so a rulebook is addressed by the name it actually deploys under, not by its slug.
+ * through `rulebooks` -- so a rulebook is addressed by the name under which it actually deploys, not by its slug.
  *
  * Throws when a rulebook token cannot render: the optional form, no catalog (the host resolved no declaration), an
- * unknown slug, or an ambient-only target. `sourceLabel` names the host in that error, so an author sees which file to
- * fix. Skill and subagent tokens have no such failure path — their sigils are fixed properties of the typed harness
+ * unknown slug, or an ambient-only target. `sourceLabel` names the host in that error, showing an author which file to
+ * fix. Skill and subagent tokens have no such failure path -- their sigils are fixed properties of the typed harness
  * config. Non-token text passes through unchanged.
  */
 export function rewriteInvocationTokens(
@@ -191,14 +198,14 @@ export function rewriteInvocationTokens(
       if (kind === 'rulebook') {
         if (marker !== undefined) {
           throw new Error(
-            `Unusable invocation token {rulebook?:${slug}} in ${sourceLabel}: a rulebook token renders the skill ` +
-              'name its target deploys under, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+            `Unusable invocation token {rulebook?:${slug}} in ${sourceLabel}: A rulebook token renders the skill ` +
+              'name under which its target deploys, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
               '{subagent?:<slug>} have an optional form.',
           );
         }
         const resolution = resolveRulebookToken(slug, rulebooks);
         if (resolution.kind === 'rejected') {
-          throw new Error(`Unusable invocation token {rulebook:${slug}} in ${sourceLabel}: it ${resolution.reason}.`);
+          throw new Error(`Unusable invocation token {rulebook:${slug}} in ${sourceLabel}: It ${resolution.reason}.`);
         }
         return `${sigils.skillSigil}${resolution.skillName}`;
       }
@@ -210,7 +217,7 @@ export function rewriteInvocationTokens(
 
 // region | Helpers
 
-/** Narrows a captured token kind to the union `InvocationToken` declares. */
+/** Narrows a captured token kind to the union that `InvocationToken` declares. */
 function isTokenKind(value: string | undefined): value is InvocationToken['kind'] {
   return value !== undefined && TOKEN_KINDS.has(value);
 }

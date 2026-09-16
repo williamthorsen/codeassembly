@@ -5,9 +5,9 @@ import type { ReportLine } from './report-line.ts';
 import { describeSourceNameProblem, findSourceProblem } from './source-validation.ts';
 
 /**
- * A resolved content source, and which declaration form introduced it. The form is carried because it decides what a
- * reader can do about the source: a `sources:` entry names a path they wrote, while a `packages:` entry names a
- * directory the dependency's own manifest declares.
+ * A resolved content source, and which declaration form introduced it. The form is recorded because it decides what a
+ * reader can do about the source: A `sources:` entry names a path that they wrote, while a `packages:` entry names a
+ * directory declared by the dependency's own manifest.
  */
 export interface DeclaredSource {
   readonly name: string;
@@ -15,13 +15,16 @@ export interface DeclaredSource {
   readonly declaredAs: 'package' | 'path';
 }
 
-/** The content sources a declaration resolves to, the subset whose directory does not exist, and the roots to read. */
+/**
+ * The content sources to which a declaration resolves, the subset whose directory does not exist, and the roots to
+ * read.
+ */
 export interface DeclaredSources {
   readonly sources: ReadonlyArray<DeclaredSource>;
   readonly missingSources: ReadonlyArray<DeclaredSource>;
   /**
-   * The roots a command reads undeclared content from, highest precedence first: every source whose directory exists,
-   * then the built-in library. A root with no `name` is the library.
+   * The roots from which a command reads undeclared content, highest precedence first: every source whose directory
+   * exists, then the built-in library. A root with no `name` is the library.
    */
   readonly roots: ReadonlyArray<ContentRootRef>;
 }
@@ -34,16 +37,17 @@ export function describeContentRoot(root: ContentRootRef): string {
 /**
  * The advisory naming a declared source whose directory does not exist. Reported rather than thrown because the
  * absence may be a not-yet state, and named because the alternative is a run that silently resolves from the library
- * where the source was meant to override it.
+ * when the source was meant to override it.
  *
- * The remedy is keyed to the declaration form: a `sources:` entry names a path the reader wrote, while a package's
- * content directory is named by the package's own manifest. The package branch names two actions because a
- * `workspace:*` link resolves into a tree the reader maintains, while an installed dependency's is not theirs to edit.
+ * The remedy is keyed to the declaration form: A `sources:` entry names a path that the reader wrote, while a
+ * package's content directory is named by the package's own manifest. The package branch names two actions because a
+ * `workspace:*` link resolves into a tree maintained by the reader, while an installed dependency's is not theirs to
+ * edit.
  */
 export function describeMissingSource(source: DeclaredSource): ReportLine {
   const remedy =
     source.declaredAs === 'package'
-      ? "The package's own `codeassembly.content` names that path, so create the directory if you maintain the " +
+      ? "The package's own `codeassembly.content` names that path, so create the directory if this project maintains the " +
         'package, otherwise report the omission upstream or drop the package from `packages`.'
       : "Create the directory, or correct the source's `path` in the declaration that names it.";
   return {
@@ -54,7 +58,7 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
 
 /**
  * Resolves a declaration's hand-declared and package sources into one precedence-ordered list, validating every root
- * the run will read before any file is written. An absent declaration resolves to no sources, which is what leaves a
+ * that the run will read before any file is written. An absent declaration resolves to no sources, which leaves a
  * command with no declaration reading the library alone.
  *
  * The checks run in a fixed order, and the order is load-bearing: an unreadable source directory must report as
@@ -72,7 +76,7 @@ export async function resolveDeclaredSources(options: {
     return { sources: [], missingSources: [], roots: [{ dir: contentDir }] };
   }
 
-  // A declared package contributes both a source and a set of seeds: Its content dir joins the search order below the
+  // A declared package contributes both a source and a set of seeds: The array below puts its content dir under the
   // hand-declared sources, so a hand-pointed local directory outranks a dependency.
   const packageSources = await resolvePackageSources(declaration.packages, baseDir);
   const sources: ReadonlyArray<DeclaredSource> = [
@@ -83,12 +87,12 @@ export async function resolveDeclaredSources(options: {
   const missingSources = await checkDeclaredSources(sources);
   assertUsableSourceNames(sources);
   assertDistinctSourceNames(sources);
-  // Every root the run reads declares the content format it was authored against, the library included. Checked after
-  // the source checks above, so an unreadable directory reports as unreadable rather than as a failed manifest read;
-  // a source whose directory is missing carries no manifest and stays the warning it is.
+  // Every root that the run reads declares the content format against which it was authored, the library included.
+  // Checked after the source checks above, so an unreadable directory reports as unreadable rather than as a failed
+  // manifest read; a source whose directory is missing contains no manifest and stays the warning that it is.
   await assertSupportedContentFormats([...sources, { dir: contentDir }]);
 
-  // A missing source contributes no root: there is nothing to read from it, and the warning above already names it.
+  // A missing source contributes no root: There is nothing to read from it, and the warning above already names it.
   const missingDirs = new Set(missingSources.map((source) => source.dir));
   const roots: ReadonlyArray<ContentRootRef> = [
     ...sources.filter((source) => !missingDirs.has(source.dir)),
@@ -102,10 +106,10 @@ export async function resolveDeclaredSources(options: {
 
 /**
  * Throws when two declared sources share a name, which the hand-declared tier and the package tier can each satisfy
- * independently: names are unique within a tier, and nothing reconciles one tier's against the other's.
+ * independently: Names are unique within a tier, and nothing reconciles one tier's against the other's.
  *
  * A shared name would let both claim one support namespace, so the source that wins artifact resolution and the one
- * whose support files survive delivery are different sources, and links rendered for the first reach the second's
+ * whose support files survive delivery are different sources, and links rendered for the first point at the second's
  * files. Failing here, before any write, forces the conflict to be resolved by renaming rather than by delivery order.
  */
 function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
@@ -122,16 +126,16 @@ function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: s
 
   if (collisions.length > 0) {
     throw new Error(
-      `Declared source name(s) claimed more than once: ${collisions.join('; ')}. A source name is the directory its ` +
-        'support files deploy under, so two sources cannot share one. Rename one of them.',
+      `Declared source name(s) claimed more than once: ${collisions.join('; ')}. A source name is the directory ` +
+        'under which its support files deploy, so two sources cannot share one. Rename one of them.',
     );
   }
 }
 
 /**
- * Throws when a declared source's name cannot serve as the directory segments its support entries deploy under, so a
- * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
- * name is reported together, so a declaration with two of them takes one fix rather than two runs.
+ * Throws when a declared source's name cannot serve as the directory segments under which its support entries deploy,
+ * so a name that would escape its namespace fails the run (dry-run included) before any file is written. Every
+ * offending name is reported together, and a declaration with two of them takes one fix rather than two runs.
  */
 function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
   const unusable = sources
@@ -153,9 +157,9 @@ function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: str
  * touched. The error names each offending source and what is wrong with it.
  *
  * Absence is returned rather than thrown, because it is the one problem that can be a not-yet state: a source declared
- * under version control before anything populates it. Such a source resolves as contributing nothing, so the run
- * proceeds and the report warns, which keeps the diagnostic a mistyped `path:` needs without making the declaration
- * itself illegal.
+ * under version control before anything populates it. Such a source resolves as contributing nothing; the run
+ * proceeds and the report warns, which keeps the diagnostic that a mistyped `path:` needs without making the
+ * declaration itself illegal.
  */
 async function checkDeclaredSources(sources: ReadonlyArray<DeclaredSource>): Promise<ReadonlyArray<DeclaredSource>> {
   const missing: Array<DeclaredSource> = [];

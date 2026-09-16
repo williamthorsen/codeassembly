@@ -6,7 +6,7 @@ import { injectDeclaredRulebooks } from '../subagent-rulebook-injection.ts';
 
 const SOURCE_LABEL = 'subagents/demo-agent.md';
 
-// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+// `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
   ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
@@ -51,7 +51,7 @@ describe(injectDeclaredRulebooks, () => {
     );
   });
 
-  it('deduplicates a deploy name the skills list already carries', () => {
+  it('deduplicates a deploy name that the skills list already contains', () => {
     const source = '---\nname: demo-agent\nskills:\n  - shell-rules\nrulebooks:\n  - shell-conventions\n---\n\nBody.\n';
 
     expect(injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toBe(
@@ -60,11 +60,11 @@ describe(injectDeclaredRulebooks, () => {
   });
 
   it('returns content declaring no rulebooks byte-identically, leaving its frontmatter unserialized', () => {
-    // The long description and the flow sequence are what a re-serialization would rewrite.
+    // A re-serialization would rewrite the long description and the flow sequence.
     const source = dedent`
       ---
       name: demo-agent
-      description: A subagent whose description runs past any wrap column a stringifier might otherwise fold it at, twice over.
+      description: A subagent whose description runs past any wrap column at which a stringifier might otherwise fold it, twice over.
       tools: [Read, Write, Edit]
       skills:
         - commit
@@ -81,7 +81,7 @@ describe(injectDeclaredRulebooks, () => {
     const source = dedent`
       ---
       name: demo-agent
-      description: A subagent whose description runs past any wrap column a stringifier might otherwise fold it at, twice over.
+      description: A subagent whose description runs past any wrap column at which a stringifier might otherwise fold it, twice over.
       tools: [Read, Write, Edit]
       rulebooks:
         - nmr-scripts
@@ -99,7 +99,7 @@ describe(injectDeclaredRulebooks, () => {
     expect(output).not.toContain('rulebooks:');
   });
 
-  it('keeps a structured skills entry and the extra keys it carries', () => {
+  it('keeps a structured skills entry and the extra keys that it declares', () => {
     const source = dedent`
       ---
       name: demo-agent

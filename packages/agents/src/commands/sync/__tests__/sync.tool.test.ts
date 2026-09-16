@@ -1625,7 +1625,7 @@ describe(syncCommand, () => {
       await declareSkills('people-report');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /skills\/people-report\/SKILL\.md carries 1 unresolvable anchor link target/,
+        /skills\/people-report\/SKILL\.md contains 1 unresolvable anchor link target/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
     });
@@ -1967,7 +1967,7 @@ describe(syncCommand, () => {
       await declareRulebooks('alpha');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /guidance\/rulebooks\/alpha\.md carries 1 unresolvable anchor link target/,
+        /guidance\/rulebooks\/alpha\.md contains 1 unresolvable anchor link target/,
       );
       expect(existsSync(skillPath('consult-alpha'))).toBe(false);
       expect(existsSync(localHostPath())).toBe(false);
@@ -2099,7 +2099,7 @@ describe(syncCommand, () => {
       await declareSubagents('canary');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir)).rejects.toThrow(
-        /subagents\/canary\.md carries 1 unresolvable anchor link target/,
+        /subagents\/canary\.md contains 1 unresolvable anchor link target/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });

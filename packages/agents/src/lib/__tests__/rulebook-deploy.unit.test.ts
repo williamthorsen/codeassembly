@@ -21,7 +21,7 @@ describe(resolveRulebook, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('names the origin and the path when the resolved source carries no rulebook file', async () => {
+  it('names the origin and the path when the resolved source contains no rulebook file', async () => {
     await expect(resolveRulebook('ghost', buildAlwaysResolvingResolver(ABSENT_DIR))).rejects.toThrow(
       /Declared rulebook "ghost" was not found in the library/,
     );
@@ -70,7 +70,7 @@ describe(resolveRulebook, () => {
 
 /**
  * Builds a resolver that reports every slug as resolving under `dir` without probing for the file. This is the
- * only way to reach the read failure: the real resolver resolves by existence, so it never hands back a directory
+ * only way to reach the read failure: The real resolver resolves by existence, so it never returns a directory
  * whose frontmatter file is missing.
  */
 function buildAlwaysResolvingResolver(dir: string): SourceResolver {

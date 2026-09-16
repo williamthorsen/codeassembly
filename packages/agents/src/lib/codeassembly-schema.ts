@@ -12,15 +12,15 @@ export const EntrySchema = z
 
 /**
  * A `harnesses` entry: an ordinary declaration entry whose name must be a known harness. Validating here rather than
- * where the block is resolved is what puts the file and the offending entry's path into the error, since only the
- * parser knows both.
+ * where the block is resolved puts the file and the offending entry's path into the error, since only the parser
+ * knows both.
  */
 const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose());
 
 /**
  * A declared content source: a named directory structured like the library's `content/`. Both `name` and `path` are
- * required; unknown keys pass through (`.loose()`) so a later cut can add per-source config without a breaking change,
- * mirroring `EntrySchema`.
+ * required; unknown keys pass through (`.loose()`) so that a later cut can add per-source config without a breaking
+ * change, mirroring `EntrySchema`.
  */
 export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
 
@@ -33,16 +33,16 @@ export const SourceSchema = z.object({ name: z.string().min(1), path: z.string()
  * null block is omitted. `packages` and `harnesses` reuse that same block shape, so `use`, `drop`, and `root` apply
  * to a package name and a harness id exactly as they do to an artifact slug.
  *
- * `home-writer` sits beside `root` because it is a scalar setting about the run rather than a block naming artifacts.
- * It answers only in the home domain, where the guard on `install` and `sync --global` reads it, and a project-domain
- * file carrying it is rejected by name.
+ * `home-writer` appears beside `root` because it is a scalar setting about the run rather than a block naming
+ * artifacts. It takes effect only in the home domain, where the guard on `install` and `sync --global` reads it, and a
+ * project-domain file declaring it is rejected by name.
  *
- * `harnesses` sits above `sources` because it governs where a run deploys rather than which artifacts it deploys, and
- * it is the one key that resolves across the home and project domains rather than within one of them.
+ * `harnesses` appears above `sources` because it governs where a run deploys rather than which artifacts it
+ * deploys, and it is the one key that resolves across the home and project domains rather than within one of them.
  *
- * `guidance-hooks` sits last because it configures the artifacts the keys above adopt rather than naming any. It is
- * the one map-valued key: each hook name owns a `{ use, drop }` block of its own, so a tier binds to one hook without
- * disturbing another.
+ * `guidance-hooks` appears last because it configures the artifacts that the keys above adopt rather than naming any.
+ * It is the one map-valued key: Each hook name owns a `{ use, drop }` block of its own, so a tier binds to one hook
+ * without disturbing another.
  */
 const CodeAssemblySchema = z
   .object({
@@ -62,16 +62,22 @@ const CodeAssemblySchema = z
 /** A parsed, validated `codeassembly.yaml` declaration from one file in the scope chain. */
 export type CodeAssemblyDeclaration = z.infer<typeof CodeAssemblySchema>;
 
-/** Which tier pair a declaration file belongs to. Only the home pair may carry a home-domain key. */
+/** Which tier pair a declaration file belongs to. Only the home pair may declare a home-domain key. */
 export type DeclarationDomain = 'home' | 'project';
 
-/** One type's block: the artifacts this file adds (`use`) and those it subtracts from inherited tiers (`drop`). */
+/**
+ * One type's block: the artifacts that this file adds (`use`) and those that it subtracts from inherited tiers
+ * (`drop`).
+ */
 export type TypeDeclaration = z.infer<ReturnType<typeof typeDeclarationSchema>>;
 
-/** The `guidance-hooks` block: each hook name this file binds, mapped to that hook's own `{ use, drop }` lists. */
+/** The `guidance-hooks` block: each hook name that this file binds, mapped to that hook's own `{ use, drop }` lists. */
 export type GuidanceHookBindings = z.infer<ReturnType<typeof guidanceHookBindingsSchema>>;
 
-/** The `harnesses` block: the harnesses this file targets (`use`) and those it subtracts from inherited tiers (`drop`). */
+/**
+ * The `harnesses` block: the harnesses that this file targets (`use`) and those that it subtracts from inherited
+ * tiers (`drop`).
+ */
 export type HarnessDeclaration = z.infer<ReturnType<typeof harnessDeclarationSchema>>;
 
 /** A normalized declaration entry: always `{ name }`, with any unknown authoring keys preserved. */
@@ -125,8 +131,9 @@ export function parseCodeAssemblyFile(
 // region | Helpers
 
 /**
- * Builds the `guidance-hooks` schema: hook name to that hook's `{ use, drop }` block. Keys are held to the grammar the
- * directive enforces, so a name no body could declare is rejected where it is written rather than going quietly unfilled.
+ * Builds the `guidance-hooks` schema: hook name to that hook's `{ use, drop }` block. Keys are held to the grammar
+ * enforced by the directive, so a name that no body could declare is rejected where it is written rather than going
+ * quietly unfilled.
  */
 function guidanceHookBindingsSchema() {
   return z.record(

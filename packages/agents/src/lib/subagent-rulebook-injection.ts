@@ -5,25 +5,27 @@ import { parseFrontmatter } from './frontmatter-merger.ts';
 import { resolveRulebookToken, type RulebookInvocationCatalog } from './invocation-tokens.ts';
 
 /**
- * Stringify options that leave a subagent's frontmatter as authored apart from the keys the injection touches:
+ * Stringify options that leave a subagent's frontmatter as authored apart from the keys touched by the injection:
  * `lineWidth: 0` stops a long `description` from folding, and `flowCollectionPadding: false` keeps a flow `tools:`
- * list unpadded. Under the defaults, re-serialization would rewrite lines the injection never touched.
+ * list unpadded. Under the defaults, re-serialization would rewrite lines that the injection never touched.
  */
 const ROUND_TRIP_OPTIONS = { flowCollectionPadding: false, lineWidth: 0 } as const;
 
 /**
- * Compiles a subagent's `rulebooks:` declaration into the `skills:` list the harness reads: each declared rulebook's
- * deploy name joins that list, and the source key is dropped, since a spent instruction left in generated output reads
- * as a live one. The merged list is deduplicated and alphabetized, matching the frontmatter list convention.
+ * Compiles a subagent's `rulebooks:` declaration into the `skills:` list that the harness reads: The injection adds
+ * each declared rulebook's deploy name to that list and drops the source key, since a spent instruction left in
+ * generated output reads as a live one. The merged list is deduplicated and alphabetized, matching the frontmatter
+ * list convention.
  *
- * Authored entries keep their own nodes, so a structured `{ name, ... }` entry reaches the deployed file with the
- * extra keys `EntrySchema` tolerates, and a flow sequence stays flow. Only the entries the injection adds are new.
+ * Authored entries keep their own nodes, so a structured `{ name, ... }` entry is written to the deployed file with
+ * the extra keys tolerated by `EntrySchema`, and a flow sequence stays flow. Only the entries that the injection adds
+ * are new.
  *
- * Content declaring no `rulebooks:` is returned unchanged rather than re-serialized, so a subagent that does not opt
- * in cannot have its frontmatter normalized as a side effect.
+ * Content declaring no `rulebooks:` is returned unchanged rather than re-serialized. A subagent that does not opt in
+ * cannot have its frontmatter normalized as a side effect.
  *
  * Throws when a declared rulebook is unknown to `rulebooks` or deploys no skill to inject, reporting every offending
- * entry at once so an author sees the whole list. `sourceLabel` names the subagent in that error.
+ * entry at once so that an author sees the whole list. `sourceLabel` names the subagent in that error.
  */
 export function injectDeclaredRulebooks(
   content: string,
@@ -69,7 +71,7 @@ export function injectDeclaredRulebooks(
 
 /**
  * Merges deploy names into a subagent's authored `skills:` items, keeping each authored item's own node and appending
- * only the names it does not already carry. Deduplicated by entry name and alphabetized by it.
+ * only the names that it does not already contain. Deduplicated by entry name and alphabetized by it.
  */
 function mergeSkillEntries(authored: ReadonlyArray<unknown>, deployNames: ReadonlyArray<string>): Array<unknown> {
   const merged = [...authored];
@@ -84,7 +86,10 @@ function mergeSkillEntries(authored: ReadonlyArray<unknown>, deployNames: Readon
   return merged.toSorted((left, right) => (readEntryName(left) ?? '').localeCompare(readEntryName(right) ?? ''));
 }
 
-/** Reads the slug a `skills:` entry names, whether it is a bare scalar or the `{ name }` mapping `EntrySchema` allows. */
+/**
+ * Reads the slug that a `skills:` entry names, whether it is a bare scalar or the `{ name }` mapping allowed by
+ * `EntrySchema`.
+ */
 function readEntryName(item: unknown): string | undefined {
   if (typeof item === 'string') {
     return item;

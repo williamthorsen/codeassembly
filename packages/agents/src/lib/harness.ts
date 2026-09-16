@@ -32,7 +32,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
   },
   rovo: {
     id: 'rovo',
-    // Atlassian's path, which renames on its own schedule; the id above is CodeAssembly's own vocabulary.
+    // Atlassian's path, which Atlassian renames on its own schedule; the id above is CodeAssembly's own vocabulary.
     homeDir: '.rovo',
     skillsDirName: 'skills',
     subagentsDirName: 'subagents',
@@ -61,7 +61,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
 /** Every known harness identifier. */
 export const ALL_HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovo'];
 
-/** Membership set for `isHarnessId`, widened to `string` so an arbitrary value tests without a type assertion. */
+/** Membership set for `isHarnessId`, widened to `string` so that an arbitrary value tests without a type assertion. */
 const HARNESS_ID_SET: ReadonlySet<string> = new Set(ALL_HARNESS_IDS);
 
 /** Narrows an arbitrary string to a known harness identifier. */
@@ -71,8 +71,8 @@ export function isHarnessId(value: string): value is HarnessId {
 
 /**
  * Detects which harnesses are installed for this user, by the presence of their home directories. The argument is a
- * home directory and nothing else: a harness home is created by that harness's own installer, so passing any other
- * base asks a question this cannot answer.
+ * home directory and nothing else: A harness home is created by that harness's own installer, so passing any other
+ * base asks a question that this cannot answer.
  */
 export function detectHarnesses(homeDir: string = homedir()): ReadonlyArray<HarnessId> {
   return ALL_HARNESS_IDS.filter((id) => {
@@ -83,9 +83,9 @@ export function detectHarnesses(homeDir: string = homedir()): ReadonlyArray<Harn
 
 /**
  * Resolves the guidance file that hosts a harness's ambient region under `baseDir`, which is the domain's base: the
- * home directory for the home domain, the project root for the project domain. The home domain's host sits under the
- * harness home; the project domain's sits at the project root, because that is where each harness loads its
- * machine-local project guidance from. `baseDir` is required — unlike the harness-home paths, a project-local host
+ * home directory for the home domain, the project root for the project domain. The home domain's host is under the
+ * harness home; the project domain's is at the project root, because that is where each harness loads its
+ * machine-local project guidance from. `baseDir` is required: Unlike the harness-home paths, a project-local host
  * has no meaningful default.
  */
 export function resolveAmbientHostPath(harnessId: HarnessId, hostKind: AmbientHostKind, baseDir: string): string {
@@ -125,9 +125,10 @@ export function resolveHarnessPaths(
 }
 
 /**
- * The harness-relative prefix a deployed skill's `~/`-prefixed link targets are built under (e.g. `.claude/skills`).
+ * The harness-relative prefix under which a deployed skill's `~/`-prefixed link targets are built (e.g.
+ * `.claude/skills`).
  *
- * Shared by every pass that renders a skill — install, sync, and validate. The value is a formula rather than a field,
+ * Shared by every pass that renders a skill: install, sync, and validate. The value is a formula rather than a field,
  * so a private copy of it would not fail to compile when the formula changed; it would just start emitting link targets
  * that resolve nowhere, on whichever pass was not updated.
  */
@@ -139,7 +140,7 @@ export function resolveSkillsPathPrefix(config: HarnessConfig): string {
  * Resolves which harnesses to target from the `--harness` value alone, falling back to what is installed under
  * `homeDir` when the value is the `'all'` sentinel.
  *
- * This serves `uninstall`, `status`, and `configure-hooks`, which must reach what is installed rather than what is
+ * This serves `uninstall`, `status`, and `configure-hooks`, which must target what is installed rather than what is
  * declared. `install` and `sync` resolve their targets through `resolveTargetHarnesses`, which consults the
  * `harnesses` declaration first.
  */

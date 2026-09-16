@@ -2,8 +2,8 @@
 export type HarnessId = 'claude' | 'rovo';
 
 /**
- * The canonical tool names a `{tool:NAME}` placeholder may address, spelled as Claude names them. Closed rather than
- * open: every harness maps every name, so adding one here fails the build until each mapping is filled in.
+ * The canonical tool names that a `{tool:NAME}` placeholder may address, spelled as Claude names them. Closed rather
+ * than open: Every harness maps every name, so adding one here fails the build until each mapping is filled in.
  */
 export type CanonicalToolName = 'AskUserQuestion' | 'Bash' | 'Edit' | 'Glob' | 'Grep' | 'Read' | 'Task' | 'Write';
 
@@ -11,7 +11,7 @@ export type CanonicalToolName = 'AskUserQuestion' | 'Bash' | 'Edit' | 'Glob' | '
 export interface AgentsManifest {
   readonly schemaVersion: number;
   /**
-   * The retired `~/.agents/` tier, present only in a manifest a previous version wrote. `install` and `uninstall`
+   * The retired `~/.agents/` tier, present only in a manifest written by a previous version. `install` and `uninstall`
    * read it to retire what was deployed there and write the manifest without it; nothing produces it.
    */
   readonly shared?: SharedManifest | undefined;
@@ -45,13 +45,16 @@ export interface HarnessConfig {
   /** Filename of the mechanically-loaded guidance file under the harness home that hosts the ambient region. */
   readonly guidanceFileName: string;
   /**
-   * Filename of the machine-local project guidance file the harness loads at launch from the project root (e.g.
+   * Filename of the machine-local project guidance file that the harness loads at launch from the project root (e.g.
    * `CLAUDE.local.md`). Hosts the project domain's ambient region.
    */
   readonly localGuidanceFileName: string;
-  /** Prefix a `{skill:<slug>}` invocation token renders to (e.g. `/` for Claude, `!` for Rovo). */
+  /** Prefix to which a `{skill:<slug>}` invocation token renders (e.g. `/` for Claude, `!` for Rovo). */
   readonly skillSigil: string;
-  /** Prefix a `{subagent:<slug>}` invocation token renders to; empty on both current harnesses (a bare slug dispatches). */
+  /**
+   * Prefix to which a `{subagent:<slug>}` invocation token renders; empty on both current harnesses (a bare slug
+   * dispatches).
+   */
   readonly subagentSigil: string;
 }
 
@@ -64,9 +67,9 @@ export interface HarnessManifest {
 }
 
 /**
- * A home-domain-writing command the designated-writer guard and provenance stamp govern, spelled as the user invokes
- * it. These are the two commands that deploy catalog content into the home domain (`~/.agents/`, `~/.claude/`,
- * `~/.rovo/`); `uninstall` and `configure-hooks` also write home files but deploy none, so they sit outside the
+ * A home-domain-writing command governed by the designated-writer guard and provenance stamp, spelled as the user
+ * invokes it. These are the two commands that deploy catalog content into the home domain (`~/.agents/`, `~/.claude/`,
+ * `~/.rovo/`); `uninstall` and `configure-hooks` also write home files but deploy none, so they are outside the
  * guard's scope, and bare `sync` writes project trees and refuses to run from the home directory.
  */
 export type HomeWriteCommand = 'install' | 'sync --global';
@@ -81,7 +84,7 @@ export interface InstallOptions {
   readonly hooks?: boolean;
   /** Whether `configure-hooks` prints the hook entries instead of writing them (`--print`). */
   readonly print?: boolean;
-  /** Whether a home-domain write proceeds from an installation the `home-writer` setting does not designate. */
+  /** Whether a home-domain write proceeds from an installation that the `home-writer` setting does not designate. */
   readonly shouldOverrideWriter?: boolean;
 }
 
@@ -96,8 +99,8 @@ export interface ManifestEntry {
 }
 
 /**
- * Manifest data for the retired cross-harness tier a previous version installed to `~/.agents/`. Retained as the shape
- * the retirement pass reads; no pass writes it.
+ * Manifest data for the retired cross-harness tier that a previous version installed to `~/.agents/`. Retained as the
+ * shape read by the retirement pass; no pass writes it.
  */
 export interface SharedManifest {
   readonly version: string;

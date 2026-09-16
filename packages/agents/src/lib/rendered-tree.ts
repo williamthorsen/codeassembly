@@ -9,10 +9,10 @@ import { isEnoent } from './type-guards.ts';
  * Materializes a rendered entry tree into `destDir`: Markdown entries are written from their transformed text, assets
  * are copied verbatim from source.
  *
- * The write is byte-stable, so re-deploying unchanged content makes no filesystem change: unchanged files are left
- * untouched, and destination files the source no longer carries — along with any directory left empty by their
- * removal — are pruned. Callers wanting a marker or any other per-file transform apply it to the entries first, so
- * this stays the one place a rendered tree meets the filesystem.
+ * The write is byte-stable, so re-deploying unchanged content makes no filesystem change: Unchanged files are left
+ * untouched, and destination files that the source no longer contains (along with any directory left empty by their
+ * removal) are pruned. Callers wanting a marker or any other per-file transform apply it to the entries first. This
+ * stays the one place a rendered tree meets the filesystem.
  */
 export async function writeRenderedTree(destDir: string, entries: ReadonlyArray<RenderedSkillEntry>): Promise<void> {
   await mkdir(destDir, { recursive: true });
@@ -41,7 +41,7 @@ async function copyFileIfChanged(srcPath: string, destPath: string): Promise<voi
 
 /**
  * Removes every destination file absent from `expectedFiles`, then any directory left empty by those removals, so
- * dropped files — and the directories that held them — do not linger across re-deploys.
+ * dropped files (and the directories that contained them) do not linger across re-deploys.
  */
 async function pruneOrphans(destDir: string, relDir: string, expectedFiles: ReadonlySet<string>): Promise<void> {
   const entries = await readdir(path.join(destDir, relDir), { withFileTypes: true });

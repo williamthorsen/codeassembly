@@ -1,6 +1,6 @@
 /** A declared-artifact's ownership-marker accessors: read the stamped slug, or stamp the marker into content. */
 export interface ArtifactMarker {
-  /** Returns the slug stamped in the content's ownership marker, or `undefined` when it carries none. */
+  /** Returns the slug stamped in the content's ownership marker, or `undefined` when it contains none. */
   extractSlug(content: string): string | undefined;
   /**
    * Stamps the ownership marker into `content`, placed on its own line immediately after the frontmatter block.
@@ -29,7 +29,7 @@ export function makeArtifactMarker(type: 'skill' | 'subagent'): ArtifactMarker {
     injectMarker(content: string, slug: string): string {
       const frontmatter = FRONTMATTER_PATTERN.exec(content)?.[1];
       if (frontmatter === undefined) {
-        throw new Error(`Cannot inject the ${type} ownership marker: the content has no frontmatter block.`);
+        throw new Error(`Cannot inject the ${type} ownership marker: The content has no frontmatter block.`);
       }
 
       const afterFrontmatter = content.slice(frontmatter.length).replace(leadingMarkerLinePattern, '');

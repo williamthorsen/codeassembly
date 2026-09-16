@@ -8,33 +8,36 @@ import { z } from 'zod';
 
 import { isMissingFile } from './type-guards.ts';
 
-/** The file a content root declares its format in, at the root's top level. */
+/** The file in which a content root declares its format, at the root's top level. */
 export const CONTENT_MANIFEST_FILENAME = 'codeassembly-content.yaml';
 
 /**
- * The format that first honors the optional invocation-token form. A root carrying one under a lower format deploys
- * wrongly on a tool that implements only that lower contract: the token matches nothing, so its literal text ships
- * into the body.
+ * The format that first honors the optional invocation-token form. A root containing one under a lower format deploys
+ * wrongly on a tool that implements only that lower contract: The token matches nothing, so its literal text is
+ * deployed into the body.
  */
 export const OPTIONAL_TOKEN_CONTENT_FORMAT = 2;
 
 /**
- * The content formats this tool can deploy. A root declaring anything else is refused, because the contract it was
- * authored against is one this tool does not implement.
+ * The content formats that this tool can deploy. A root declaring anything else is refused, because it was authored
+ * against a contract that this tool does not implement.
  */
 export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1, 2];
 
-/** The format a root with no manifest is treated as declaring: the contract that predates the manifest itself. */
+/** The format that a root with no manifest is treated as declaring: the contract that predates the manifest itself. */
 const DEFAULT_CONTENT_FORMAT = 1;
 
-/** The rejection every unusable `format` carries, whichever branch failed: a missing key, a non-integer, or one below 1. */
+/**
+ * The rejection reported for every unusable `format`, whichever branch failed: a missing key, a non-integer, or one
+ * below 1.
+ */
 const FORMAT_ERROR = 'format must be a positive integer';
 
 /**
- * The manifest keys this tool reads. `.loose()` so an unknown key passes through: a later tool can add one without an
- * older tool rejecting a file it would otherwise honor, which is what the `format` gate below exists to decide instead.
- * `format` is required, because a manifest that exists states the contract it was authored against; the absence of the
- * whole file, not of the key, is what means format 1.
+ * The manifest keys that this tool reads. `.loose()` so that an unknown key passes through: A later tool can add one
+ * without an older tool rejecting a file that it would otherwise honor, which the `format` gate below exists to
+ * decide instead. `format` is required, because a manifest that exists states the contract against which it was
+ * authored; the absence of the whole file, not of the key, means format 1.
  */
 const ContentRootManifestSchema = z
   .object({
@@ -53,17 +56,17 @@ export interface ContentRootManifest {
   readonly format: number;
 }
 
-/** A content root the format gate checks: its directory, and the source name to attribute a failure to. */
+/** A content root checked by the format gate: its directory, and the source name to attribute a failure to. */
 export interface ContentRootRef {
   readonly dir: string;
   readonly name?: string | undefined;
 }
 
 /**
- * Throws when any of `roots` declares a content format this tool does not support, or carries a manifest it cannot
- * read, so a mismatch fails a run before any file is written rather than surfacing as an unfilled hook or a dead
- * token. Every offending root is reported together, so a declaration with two of them takes one fix rather than two
- * runs; the two conditions raise separately, because a manifest that will not parse has no declared version to
+ * Throws when any of `roots` declares a content format that this tool does not support, or contains a manifest that it
+ * cannot read, so a mismatch fails a run before any file is written rather than surfacing as an unfilled hook or a
+ * dead token. Every offending root is reported together, and a declaration with two of them takes one fix rather than
+ * two runs; the two conditions raise separately, because a manifest that will not parse has no declared version to
  * compare and a reader fixing one is not helped by the other.
  */
 export async function assertSupportedContentFormats(roots: ReadonlyArray<ContentRootRef>): Promise<void> {
@@ -91,8 +94,8 @@ export async function assertSupportedContentFormats(roots: ReadonlyArray<Content
 
 /**
  * Renders the supported formats for a message, so every caller names them the same way. The noun agrees with the count
- * and the last element joins with "and", because this sentence is the whole remedy a producer gets when a root is
- * refused.
+ * and the last element joins with "and", because this sentence is the whole remedy that a producer gets when a root
+ * is refused.
  */
 export function describeSupportedFormats(): string {
   const formats = SUPPORTED_CONTENT_FORMATS.map(String);
@@ -101,8 +104,8 @@ export function describeSupportedFormats(): string {
 
 /**
  * Reports what disqualifies the content root at `dir` -- an unreadable manifest, or a format outside the supported
- * set -- or `undefined` when it is deployable. Returned rather than thrown so a caller that reports findings instead
- * of failing (`validate`) shares one classification with the callers that fail.
+ * set -- or `undefined` when it is deployable. Returned rather than thrown so that a caller that reports findings
+ * instead of failing (`validate`) shares one classification with the callers that fail.
  */
 export async function findContentFormatProblem(dir: string): Promise<ContentFormatProblem | undefined> {
   let manifest: ContentRootManifest;
@@ -120,8 +123,8 @@ export async function findContentFormatProblem(dir: string): Promise<ContentForm
 
 /**
  * Reads the manifest of the content root at `dir`, resolving an absent one to the default format, and throwing when
- * one is present but cannot be read. Absence is the not-yet state every producer starts in, whereas a manifest that
- * exists and will not parse is a defect wherever it is found.
+ * one is present but cannot be read. Absence is the not-yet state in which every producer starts, whereas a manifest
+ * that exists and will not parse is a defect wherever it is found.
  */
 export async function readContentRootManifest(dir: string): Promise<ContentRootManifest> {
   const manifestPath = path.join(dir, CONTENT_MANIFEST_FILENAME);
@@ -149,13 +152,13 @@ export async function readContentRootManifest(dir: string): Promise<ContentRootM
 
 // region | Helpers
 
-/** Renders one root's problem as `"name" (dir): detail`, dropping the name a library root has none of. */
+/** Renders one root's problem as `"name" (dir): detail`, dropping the name that a library root has none of. */
 function describeProblem(root: ContentRootRef, problem: ContentFormatProblem): string {
   const where = root.name === undefined ? root.dir : `"${root.name}" (${root.dir})`;
   return `${where}: ${problem.detail}`;
 }
 
-/** Joins one kind's problems into the clause its error message reports them in. */
+/** Joins one kind's problems into the clause in which its error message reports them. */
 function describeProblems(entries: ReadonlyArray<{ root: ContentRootRef; problem: ContentFormatProblem }>): string {
   return entries.map((entry) => describeProblem(entry.root, entry.problem)).join('; ');
 }

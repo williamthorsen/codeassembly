@@ -45,7 +45,7 @@ describe(resolveTargetHarnesses, () => {
     });
   });
 
-  it('ignores harness directories the repository happens to contain', async () => {
+  it('ignores harness directories that the repository happens to contain', async () => {
     await mkdir(path.join(cwd, '.claude'), { recursive: true });
     await mkdir(path.join(cwd, ROVO_HOME), { recursive: true });
     await installHarness('rovo');
@@ -111,7 +111,7 @@ describe(resolveTargetHarnesses, () => {
     });
   });
 
-  it('falls back when the chain has declarations but none carries a harnesses block', async () => {
+  it('falls back when the chain has declarations but none declares a harnesses block', async () => {
     await installHarness('rovo');
     await writeHome('collections:\n  use:\n    - recommended\n');
     await writeProject('rulebooks:\n  use:\n    - alpha\n');
@@ -159,7 +159,7 @@ describe(resolveTargetHarnesses, () => {
     });
   });
 
-  it('fails on an unknown harness id, naming the file that carries it', async () => {
+  it('fails on an unknown harness id, naming the file that declares it', async () => {
     await writeProject('harnesses:\n  use:\n    - claud\n');
 
     await expect(resolveTargetHarnesses({ harness: 'all', cwd, homeDir })).rejects.toThrow(/codeassembly\.yaml/);
@@ -167,7 +167,7 @@ describe(resolveTargetHarnesses, () => {
 
   // region | Helpers
 
-  /** Creates a harness's home directory, which is what marks it installed for this user. */
+  /** Creates a harness's home directory, which marks it installed for this user. */
   async function installHarness(harnessId: 'claude' | 'rovo'): Promise<void> {
     await mkdir(path.join(homeDir, HARNESSES[harnessId].homeDir), { recursive: true });
   }

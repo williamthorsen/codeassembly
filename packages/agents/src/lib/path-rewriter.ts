@@ -6,15 +6,15 @@ import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import type { HarnessId } from './types.ts';
 
 /**
- * The Markdown link grammar this module rewrites: `[text](target)`, capturing text then target. Exported because the
- * grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must match
- * on both to see the same set. Safe to share despite the `g` flag: `replace` and `matchAll` each leave `lastIndex`
- * untouched between calls.
+ * The Markdown link grammar that this module rewrites: `[text](target)`, capturing text then target. Exported because
+ * the grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must
+ * match on both to see the same set. Safe to share despite the `g` flag: `replace` and `matchAll` each leave
+ * `lastIndex` untouched between calls.
  */
 export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 
 /**
- * The per-harness values the install-time template variables expand to, resolved once per harness by the caller.
+ * The per-harness values to which the install-time template variables expand, resolved once per harness by the caller.
  */
 export interface TemplateVariables {
   /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
@@ -26,27 +26,28 @@ export interface TemplateVariables {
 }
 
 /**
- * Maps a resolved link target to the absolute path it deploys at. The argument is normalized and fragment-free, so an
- * implementation decides only which tree the target lands in, never how the target itself was resolved.
+ * Maps a resolved link target to the absolute path at which it deploys. The argument is normalized and fragment-free,
+ * so an implementation decides only which tree the target is deployed into, never how the target itself was resolved.
  *
- * Deployment location is not a property of the rewriting file: the same relative target can name a tree `install`
- * populates in the harness home and one `sync` populates in a project, so the caller that knows which supplies this.
+ * Deployment location is not a property of the rewriting file: The same relative target can name a tree that `install`
+ * populates in the harness home and one that `sync` populates in a project. The caller that knows which of the two
+ * supplies this.
  */
 export type ResolveLinkAnchor = (normalizedTarget: string) => string;
 
 /**
- * Anchors every target under one harness-relative prefix in the harness home, the single behavior every caller had
- * before targets could land anywhere else.
+ * Anchors every target under one harness-relative prefix in the harness home, the single behavior that every caller
+ * had before targets could be deployed anywhere else.
  */
 export function homeAnchor(pathPrefix: string): ResolveLinkAnchor {
   return (normalizedTarget) => `~/${pathPrefix}/${normalizedTarget}`;
 }
 
 /**
- * Reports whether a Markdown link target is one this module resolves as a source-tree-relative path. False for the
+ * Reports whether a Markdown link target is one that this module resolves as a source-tree-relative path. False for the
  * forms that already name their destination or name nothing to resolve: `http(s)` URLs, absolute paths, `~`-prefixed
  * paths, anchor-only links, and targets opening with a `{template_variable}`, which expands to its own absolute path
- * after this pass. Exported so a caller that validates link targets tests exactly the set that gets rewritten.
+ * after this pass. Exported so that a caller validating link targets tests exactly the set that gets rewritten.
  */
 export function isRewritableLinkTarget(target: string): boolean {
   return !(
@@ -60,8 +61,8 @@ export function isRewritableLinkTarget(target: string): boolean {
 
 /**
  * Lists the link targets in `content` that `rewriteMarkdownPaths` would rewrite, in source order and with duplicates
- * kept, so a caller that validates link targets tests exactly the set that gets rewritten. A caller needing a wider
- * set — anchor-only targets, say — matches on `MARKDOWN_LINK_REGEX` and filters for itself.
+ * kept, so that a caller validating link targets tests exactly the set that gets rewritten. A caller needing a
+ * wider set (anchor-only targets, say) matches on `MARKDOWN_LINK_REGEX` and filters for itself.
  */
 export function listRewritableLinkTargets(content: string): ReadonlyArray<string> {
   const targets: Array<string> = [];
@@ -75,7 +76,7 @@ export function listRewritableLinkTargets(content: string): ReadonlyArray<string
 }
 
 /**
- * Rewrites relative Markdown link targets in `content` to the absolute paths their targets deploy at. Each target
+ * Rewrites relative Markdown link targets in `content` to the absolute paths at which their targets deploy. Each target
  * resolves against the directory of `fileRelPath`, and `anchor` maps the resolved result to its deployed location;
  * pass `homeAnchor` for a tree that lives entirely under one harness-relative prefix.
  */
@@ -110,14 +111,14 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
 /**
  * Expands install-time template variables in `content`: `{harness_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`),
  * `{harness_guidance_file}` to the harness's guidance filename (e.g. `CLAUDE.md`), and `{harness_id}` to the harness
- * identifier (e.g. `claude`), the value capture-event records as the agent harness.
+ * identifier (e.g. `claude`), the value that capture-event records as the agent harness.
  *
  * The guidance token expands to the bare filename rather than a path, so a body composes it as
- * `{harness_home_dir}/{harness_guidance_file}` where it needs the whole location and uses it alone where it does not.
+ * `{harness_home_dir}/{harness_guidance_file}` when it needs the whole location and uses it alone when it does not.
  */
 export function rewriteTemplateVariables(content: string, variables: TemplateVariables): string {
-  // Replacer functions, not strings: a string replacement expands `$$`, `$&`, `` $` ``, and `$'`, so a
-  // substitution value carrying one of them would be rewritten into the match it was meant to replace.
+  // Replacer functions, not strings: A string replacement expands `$$`, `$&`, `` $` ``, and `$'`, so a
+  // substitution value carrying one of them would be rewritten into the match that it was meant to replace.
   return content
     .replaceAll('{harness_guidance_file}', () => variables.guidanceFileName)
     .replaceAll('{harness_home_dir}', () => `~/${variables.homeDir}`)

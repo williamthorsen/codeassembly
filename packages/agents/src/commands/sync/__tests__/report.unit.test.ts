@@ -236,7 +236,7 @@ describe('missing sources', () => {
     const warning = renderSyncReport(outcome).find((line) => line.text.includes('@acme/guidance'));
 
     expect(warning?.text).toContain('names that path');
-    expect(warning?.text).toContain('if you maintain the package');
+    expect(warning?.text).toContain('if this project maintains the package');
     expect(warning?.text).toContain('report the omission upstream');
   });
 });

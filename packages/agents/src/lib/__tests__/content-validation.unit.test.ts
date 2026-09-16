@@ -11,8 +11,8 @@ describe(validateContentRoot, () => {
   let root: string;
 
   beforeEach(async () => {
-    // Built under the OS temp dir rather than the repo tree: this repo carries a `.agents/codeassembly.yaml` at its
-    // root, so an in-tree fixture would sit below a declaration and could not show that none is consulted.
+    // Built under the OS temp dir rather than the repo tree: This repo has a `.agents/codeassembly.yaml` at its
+    // root, so an in-tree fixture would be below a declaration and could not show that none is consulted.
     root = path.join(tmpdir(), `agents-test-validate-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(root, { recursive: true });
   });
@@ -21,7 +21,7 @@ describe(validateContentRoot, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it('passes a content root carrying every artifact type, with no declaration anywhere above it', async () => {
+  it('passes a content root containing every artifact type, with no declaration anywhere above it', async () => {
     await writeSkill(root, 'alpha');
     await writeSubagent(root, 'helper');
     await writeRulebook(root, 'house-style');
@@ -46,7 +46,7 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
-  it('stays silent about a defect in a library artifact a dependency edge reached', async () => {
+  it('stays silent about a defect in a library artifact reached by a dependency edge', async () => {
     const library = path.join(root, 'library');
     await writeSubagent(library, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
     const producer = path.join(root, 'producer');
@@ -55,7 +55,7 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(producer, ALL_HARNESS_IDS, library)).toEqual([]);
   });
 
-  it('reports the same defect when the artifact carrying it belongs to the root', async () => {
+  it('reports the same defect when the artifact containing it belongs to the root', async () => {
     const library = path.join(root, 'library');
     const producer = path.join(root, 'producer');
     await writeSubagent(producer, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
@@ -66,7 +66,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]).toMatchObject({ file: 'subagents/lib-helper.md', kind: 'render' });
   });
 
-  it('reports an unmapped tool placeholder in a skill support file, which carries no SKILL.md', async () => {
+  it('reports an unmapped tool placeholder in a skill support file, which has no SKILL.md', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n\nRun {tool:NoSuchTool} to proceed.\n');
 
@@ -77,7 +77,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('NoSuchTool');
   });
 
-  it('passes a support entry the installer copies verbatim rather than rendering', async () => {
+  it('passes a support entry that the installer copies verbatim rather than rendering', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'skills/notes.json', '{ "note": "installed as a plain copy" }\n');
     await writeFileAt(root, 'skills/_data/logo.svg', '<svg />\n');
@@ -137,7 +137,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.kind).toBe('frontmatter');
   });
 
-  it('reports an overlay that still carries the retired _tools mapping', async () => {
+  it('reports an overlay that still declares the retired _tools mapping', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'subagents/_data/claude.yaml', '_tools:\n  Read: Read\n\n_defaults:\n  model: sonnet\n');
 
@@ -149,7 +149,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('_tools');
   });
 
-  it('reports the retired _tools mapping once per harness whose overlay carries it', async () => {
+  it('reports the retired _tools mapping once per harness whose overlay declares it', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'subagents/_data/claude.yaml', '_tools:\n  Read: Read\n');
     await writeFileAt(root, 'subagents/_data/rovo.yaml', '_defaults: {}\n');
@@ -170,7 +170,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.file).toBe('subagents/_data/claude.yaml');
   });
 
-  it('passes an overlay carrying frontmatter defaults alone', async () => {
+  it('passes an overlay declaring frontmatter defaults alone', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'subagents/_data/claude.yaml', '_defaults:\n  model: sonnet\n');
 
@@ -191,7 +191,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('NoSuchTool');
   });
 
-  it('passes a root subagent whose own overlay is clean, whatever the library overlay carries', async () => {
+  it('passes a root subagent whose own overlay is clean, whatever the library overlay declares', async () => {
     const library = path.join(root, 'library');
     await writeFileAt(library, 'subagents/_data/claude.yaml', '_defaults:\n  description: Use {tool:NoSuchTool}\n');
     const producer = path.join(root, 'producer');
@@ -266,7 +266,7 @@ describe(validateContentRoot, () => {
     expect(defects.find((defect) => defect.file === 'subagents/stray.md')).toMatchObject({ kind: 'render' });
   });
 
-  it('reports a rulebook link target that no harness home would carry', async () => {
+  it('reports a rulebook link target that no harness home would contain', async () => {
     await writeRulebook(root, 'house-style', { body: 'Read [the notes](../../notes.md).' });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
@@ -281,7 +281,7 @@ describe(validateContentRoot, () => {
     expect(defects).toEqual([{ file: '.', kind: 'root', detail: 'Content root is unusable: does not exist.' }]);
   });
 
-  // The root also carries a defect the later stages would report, so a second entry would mean they ran anyway.
+  // The root also contains a defect that the later stages would report, so a second entry would mean they ran anyway.
   it('reports an unsupported content format on its own, naming the declared and supported formats', async () => {
     await writeFileAt(root, 'codeassembly-content.yaml', 'format: 3\n');
     await writeCollection(root, 'starter', { skills: ['no-such-skill'] });
@@ -327,7 +327,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('Declare format 2');
   });
 
-  it('reports an optional token a root carries only through an unreferenced partial', async () => {
+  it('reports an optional token that a root contains only in an unreferenced partial', async () => {
     await writeFileAt(root, 'codeassembly-content.yaml', 'format: 1\n');
     await writeFileAt(root, 'skills/_partials/delegate.md', 'Delegate to {subagent?:planner}.\n');
 
@@ -405,7 +405,7 @@ async function writeRulebook(
   );
 }
 
-/** Writes a skill directory, optionally scoped to some harnesses or carrying a `dependencies:` block or custom body. */
+/** Writes a skill directory, optionally scoped to some harnesses or with a `dependencies:` block or custom body. */
 async function writeSkill(
   root: string,
   slug: string,
@@ -437,7 +437,7 @@ async function writeSkill(
   );
 }
 
-/** Writes a subagent `.md` file, optionally carrying a custom body or a `rulebooks:` injection list. */
+/** Writes a subagent `.md` file, optionally containing a custom body or a `rulebooks:` injection list. */
 async function writeSubagent(
   root: string,
   slug: string,

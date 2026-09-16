@@ -23,14 +23,18 @@ const ENTRY: ClaudeHookEntry = { event: 'PreToolUse', group: OWNED };
 describe(checkHookEntries, () => {
   it.each([
     { when: 'an owned entry equals the supplied entry', hooks: { PreToolUse: [OWNED] }, status: 'present' },
-    { when: 'the event holds an owned entry with other content', hooks: { PreToolUse: [DRIFTED] }, status: 'drifted' },
-    { when: 'the event holds only foreign entries', hooks: { PreToolUse: [FOREIGN] }, status: 'absent' },
+    {
+      when: 'the event contains an owned entry with other content',
+      hooks: { PreToolUse: [DRIFTED] },
+      status: 'drifted',
+    },
+    { when: 'the event contains only foreign entries', hooks: { PreToolUse: [FOREIGN] }, status: 'absent' },
     { when: 'the event is absent', hooks: { PostToolUse: [OWNED] }, status: 'absent' },
   ])('reports $status when $when', ({ hooks, status }) => {
     expect(checkHookEntries({ hooks }, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status }]);
   });
 
-  it('reports absent when the settings hold no hooks', () => {
+  it('reports absent when the settings contain no hooks', () => {
     expect(checkHookEntries({ model: 'opus' }, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status: 'absent' }]);
   });
 
@@ -48,7 +52,7 @@ describe(checkHookEntries, () => {
     expect(checkHookEntries(settings, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status: 'present' }]);
   });
 
-  it('reports present for a supplied entry that ensure would keep beside an owned entry it would drop', () => {
+  it('reports present for a supplied entry that ensure would keep beside an owned entry that it would drop', () => {
     const stale = buildGroup(`${SENTINEL} relay --old`, 'Write');
     const settings = { hooks: { PreToolUse: [OWNED, stale] } };
 
@@ -67,7 +71,7 @@ describe(checkHookEntries, () => {
 });
 
 describe(ensureHookEntries, () => {
-  it('creates the hooks structure when the settings hold none', () => {
+  it('creates the hooks structure when the settings contain none', () => {
     const { settings, result } = ensureHookEntries({ model: 'opus' }, [ENTRY], SENTINEL);
 
     expect(settings).toEqual({ model: 'opus', hooks: { PreToolUse: [OWNED] } });
@@ -109,7 +113,7 @@ describe(ensureHookEntries, () => {
     expect(updated).toEqual({ hooks: { PreToolUse: [OWNED, FOREIGN] } });
   });
 
-  it('appends after foreign entries when the event holds no owned entry', () => {
+  it('appends after foreign entries when the event contains no owned entry', () => {
     const settings = { hooks: { PreToolUse: [FOREIGN] } };
 
     const { settings: updated } = ensureHookEntries(settings, [ENTRY], SENTINEL);
@@ -150,7 +154,7 @@ describe(ensureHookEntries, () => {
     expect(ensureHookEntries({ hooks: { PreToolUse: [FOREIGN] } }, [], SENTINEL).result).toEqual({ changed: false });
   });
 
-  it('throws when a supplied entry does not carry the sentinel', () => {
+  it('throws when a supplied entry does not include the sentinel', () => {
     const unmarked: ClaudeHookEntry = { event: 'PreToolUse', group: FOREIGN };
 
     expect(() => ensureHookEntries({}, [unmarked], SENTINEL)).toThrow(/sentinel/);

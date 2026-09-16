@@ -12,9 +12,10 @@ import type { ResolveLinkAnchor, TemplateVariables } from './path-rewriter.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
 
 /**
- * A declared subagent resolved through the source resolver: its stable slug, the source `.md` file to render from, the
- * content root its includes resolve against — the library for a library subagent, the declaring source for a source
- * subagent — and the source it resolved from (the declaring source's name, or `undefined` for the built-in library).
+ * A declared subagent resolved through the source resolver: its stable slug, the source `.md` file to render from,
+ * the content root against which its includes resolve (the library for a library subagent, the declaring source for
+ * a source subagent), and the source from which it resolved (the declaring source's name, or `undefined` for the
+ * built-in library).
  */
 export interface ResolvedSubagent {
   readonly slug: string;
@@ -23,19 +24,22 @@ export interface ResolvedSubagent {
   readonly source: string | undefined;
 }
 
-/** The per-harness inputs a declared-subagent deploy depends on, resolved once per harness by `sync`. */
+/** The per-harness inputs on which a declared-subagent deploy depends, resolved once per harness by `sync`. */
 export interface SubagentDeployContext extends TemplateVariables {
   /** Raw harness overlay YAML feeding the frontmatter merge. */
   readonly overlayYaml: string;
-  /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
+  /** Maps a resolved Markdown link target, relative to the content root, to the path at which it deploys. */
   readonly anchor: ResolveLinkAnchor;
   /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
-  /** The deployed rulebooks a `{rulebook:<slug>}` token may address, keyed by slug. */
+  /** The deployed rulebooks that a `{rulebook:<slug>}` token may address, keyed by slug. */
   readonly rulebooks: RulebookInvocationCatalog;
-  /** Guidance bound to each hook the subagent's body may declare; absent under `install`, which resolves no binding. */
+  /**
+   * Guidance bound to each hook that the subagent's body may declare; absent under `install`, which resolves no
+   * binding.
+   */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }
 
@@ -44,7 +48,7 @@ const subagentMarker = makeArtifactMarker('subagent');
 /**
  * Materializes a resolved subagent to `destPath`, applying the harness transform (frontmatter merge, tool-name rewrite,
  * path/template rewrite) and stamping the `codeassembly-subagent:<slug>` ownership marker. No provenance marker is
- * injected — declared subagents carry only the ownership marker, which is what `sync` retracts against. The write is
+ * injected: Declared subagents have only the ownership marker, which `sync` retracts against. The write is
  * byte-stable, so re-deploying unchanged content makes no filesystem change.
  */
 export async function deploySubagent(
@@ -61,7 +65,8 @@ export async function deploySubagent(
  * Renders a resolved subagent for one harness: include expansion, then the harness transform. Throws on a broken
  * include, an unmapped `{tool:NAME}` placeholder, a `{rulebook:<slug>}` token naming an unknown or ambient-only
  * rulebook, or a guidance hook whose fill cannot be honored.
- * The pre-write render gate and `deploySubagent` share this one path, so the gate raises exactly what the write would.
+ * Because the pre-write render gate and `deploySubagent` share this one path, the gate raises exactly what the write
+ * would.
  */
 export async function renderSubagent(resolved: ResolvedSubagent, context: SubagentDeployContext): Promise<string> {
   const expanded = await expandIncludes(resolved.srcPath, resolved.contentRoot);
@@ -83,9 +88,9 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
 
 /**
  * Resolves a declared subagent slug through the source resolver (declared sources first, then the library), confirming
- * its `<slug>.md` exists and carrying the resolved content root — the source or library directory it resolved from — so
- * the deploy pass expands its includes against its own tree. A slug found in no source or the library throws an error
- * naming every location searched.
+ * its `<slug>.md` exists and returning the resolved content root (the source or library directory from which it
+ * resolved) so that the deploy pass expands its includes against its own tree. Throws an error naming every location
+ * searched when the slug is found in neither a source nor the library.
  */
 export async function resolveDeclaredSubagent(slug: string, resolver: SourceResolver): Promise<ResolvedSubagent> {
   const resolved = await resolver.resolve('subagent', slug);

@@ -16,7 +16,7 @@ import {
 } from '../skill-transform.ts';
 import { ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
-// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+// `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
   ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
@@ -79,7 +79,7 @@ describe(renderSkillDirectory, () => {
     expect(rovo).toContain('Then invoke !capture-event.');
   });
 
-  it('renders a rulebook token as the deploy name its target takes, including from an included partial', async () => {
+  it("renders a rulebook token as its target's deploy name, including from an included partial", async () => {
     await writeSkill({
       'SKILL.md': '# Demo\n\nSee {rulebook:shell-conventions}.\n\n<!-- include: _partials/frag.md / -->\n',
       '_partials/frag.md': 'Also see {rulebook:nmr-scripts}.\n',
@@ -152,11 +152,11 @@ describe(renderSkillDirectory, () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
-      /skills\/demo\/SKILL\.md carries 1 unresolvable anchor link target/,
+      /skills\/demo\/SKILL\.md contains 1 unresolvable anchor link target/,
     );
   });
 
-  it('resolves an anchor against a heading the include expansion brought in', async () => {
+  it('resolves an anchor against a heading brought in by the include expansion', async () => {
     await writeSkill({
       'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n\n<!-- include: _partials/events.md / -->\n',
       '_partials/events.md': '## Lifecycle events\n',
@@ -165,9 +165,9 @@ describe(renderSkillDirectory, () => {
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).resolves.toBeDefined();
   });
 
-  it('rejects an anchor to the rendered slug of a heading carrying a tool placeholder', async () => {
+  it('rejects an anchor to the rendered slug of a heading containing a tool placeholder', async () => {
     // The heading slugs differently on each harness, so no single fragment addresses it. Checking ahead of the
-    // rewrite is what makes that unauthorable rather than live on one harness and dead on the other.
+    // rewrite makes that unauthorable rather than live on one harness and dead on the other.
     await writeSkill({ 'SKILL.md': '# Demo\n\n## {tool:Read} return parsing\n\n[x](#read-return-parsing)\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
@@ -183,7 +183,7 @@ describe(renderSkillDirectory, () => {
     );
   });
 
-  it('strips a declared guidance hook from every .md the skill deploys', async () => {
+  it('strips a declared guidance hook from every .md deployed by the skill', async () => {
     await writeSkill({
       'SKILL.md': '# Demo\n\n<!-- guidance-hook: implementation-preferences -->\n\nProse.\n',
       'reference/guide.md': '<!-- guidance-hook: glossary -->\nGuide.\n',
@@ -195,7 +195,7 @@ describe(renderSkillDirectory, () => {
     expect(markdownContent(entries, 'reference/guide.md')).toBe('Guide.\n');
   });
 
-  it('strips a guidance hook an included partial declares', async () => {
+  it('strips a guidance hook declared by an included partial', async () => {
     await writeSkill({
       'SKILL.md': '# Demo\n\n<!-- include: _partials/hook.md / -->\n\nProse.\n',
       '_partials/hook.md': '<!-- guidance-hook: implementation-preferences -->\n',
@@ -210,7 +210,7 @@ describe(renderSkillDirectory, () => {
     expect(content).toBe('# Demo\n\n\nProse.\n');
   });
 
-  it('rejects a hook the host and an included partial both declare', async () => {
+  it('rejects a hook declared by both the host and an included partial', async () => {
     // Expansion runs first, so the partial's declaration is the host's own: two slots of one name, no fill order.
     await writeSkill({
       'SKILL.md': '# Demo\n\n<!-- guidance-hook: preferences -->\n\n<!-- include: _partials/hook.md / -->\n',
@@ -257,7 +257,7 @@ describe(renderSkillDirectory, () => {
     expect(content).toContain('[naming](~/.claude/skills/_data/naming.md)');
   });
 
-  it('fills a hook an included partial declares', async () => {
+  it('fills a hook declared by an included partial', async () => {
     await writeSkill({
       'SKILL.md': '# Demo\n\n<!-- include: _partials/hook.md / -->\n',
       '_partials/hook.md': '<!-- guidance-hook: impl -->\n',
@@ -272,7 +272,7 @@ describe(renderSkillDirectory, () => {
     expect(content).toContain('Bound guidance.');
   });
 
-  it('strips a hook no binding names, even when other hooks are bound', async () => {
+  it('strips a hook named by no binding, even when other hooks are bound', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- guidance-hook: glossary -->\n' });
 
     const fills = new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]);
@@ -332,7 +332,7 @@ describe(renderSupportEntry, () => {
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
   });
 
-  it("strips a support entry's hook even when the caller carries a binding for it", async () => {
+  it("strips a support entry's hook even when the caller supplies a binding for it", async () => {
     const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: impl -->\n\nRows.\n', 'utf8');
 
@@ -346,9 +346,9 @@ describe(renderSupportEntry, () => {
     expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
   });
 
-  it('rejects a rulebook token even when the caller carries a catalog', async () => {
-    // `install` ships a support entry having resolved no declaration, so honoring the token here would pass a gate the
-    // ship then fails.
+  it('rejects a rulebook token even when the caller supplies a catalog', async () => {
+    // `install` deploys a support entry having resolved no declaration, so honoring the token here would pass a gate
+    // that the deploy then fails.
     const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\nSee {rulebook:nmr-scripts}.\n', 'utf8');
 

@@ -1,5 +1,5 @@
 /**
- * Returns true when `error` carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`).
+ * Returns true when `error` has the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`).
  * @internal
  */
 export function isErrorCode(error: unknown, code: string): boolean {
@@ -32,7 +32,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return isObject(value) && !Array.isArray(value);
 }
 
-/** Type guard for a non-null object; the looser building block the exported guards are defined in terms of. */
+/** Type guard for a non-null object; the looser building block that the exported guards are defined in terms of. */
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return typeof value === 'object' && value !== null;
 }

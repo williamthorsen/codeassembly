@@ -48,7 +48,7 @@ describe('home provenance', () => {
       expect(Date.parse(stamp?.lastWrite?.writtenAt ?? '')).not.toBeNaN();
     });
 
-    it('records the source commit when the package sits in a git tree', async () => {
+    it('records the source commit when the package is in a git tree', async () => {
       await recordHomeProvenance('install', homeDir);
 
       expect((await readHomeProvenance(homeDir))?.lastWrite?.sourceCommit).toMatch(/^[0-9a-f]{40}$/);
@@ -61,7 +61,7 @@ describe('home provenance', () => {
       expect((await readHomeProvenance(homeDir))?.lastWrite?.command).toBe('sync --global');
     });
 
-    it('mirrors the write fields at the top level, so a binary predating `lastWrite` still reads the stamp', async () => {
+    it('mirrors the write fields at the top level, keeping the stamp readable by a binary predating `lastWrite`', async () => {
       await recordHomeProvenance('install', homeDir);
 
       const raw: unknown = JSON.parse(await readFile(getHomeProvenancePath(homeDir), 'utf8'));
@@ -97,7 +97,7 @@ describe('home provenance', () => {
       expect(Date.parse(stamp?.lastAttempt?.attemptedAt ?? '')).not.toBeNaN();
     });
 
-    it('keeps the write the stamp already reports, so the deployed guidance stays datable', async () => {
+    it('keeps the write that the stamp already reports, so the deployed guidance stays datable', async () => {
       await recordHomeProvenance('install', homeDir);
       const written = (await readHomeProvenance(homeDir))?.lastWrite;
 
@@ -163,7 +163,7 @@ describe('home provenance', () => {
       await expect(readHomeProvenance(homeDir)).resolves.toBeUndefined();
     });
 
-    it('reports nothing for a stamp naming a command no home write can issue', async () => {
+    it('reports nothing for a stamp naming a command that no home write can issue', async () => {
       await writeStamp(
         JSON.stringify({
           schemaVersion: 1,
@@ -180,7 +180,7 @@ describe('home provenance', () => {
 
   // region | Helpers
 
-  /** Writes `content` to the stamp path verbatim, so a test can plant a shape `recordHomeProvenance` never produces. */
+  /** Writes `content` to the stamp path verbatim, so that a test can plant a shape `recordHomeProvenance` never produces. */
   async function writeStamp(content: string): Promise<void> {
     const provenancePath = getHomeProvenancePath(homeDir);
     await mkdir(path.dirname(provenancePath), { recursive: true });

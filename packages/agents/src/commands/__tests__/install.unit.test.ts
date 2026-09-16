@@ -397,7 +397,7 @@ describe(installCommand, () => {
       await writeFlatSkill('# Flat note\n\nSee [the events](#lifecycle-events).\n');
 
       await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(
-        /skills\/flat-note\.md carries 1 unresolvable anchor link target/,
+        /skills\/flat-note\.md contains 1 unresolvable anchor link target/,
       );
     });
   });

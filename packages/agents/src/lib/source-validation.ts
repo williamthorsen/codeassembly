@@ -12,13 +12,13 @@ export interface SourceProblem {
 }
 
 /**
- * Reports what disqualifies a source `name` from serving as the directory segments its support entries deploy under,
- * or `undefined` when it can. A scoped package name is valid and nests as its own segments, so `/` separates segments
- * rather than being rejected outright; what is rejected is anything that would escape the namespace or name no
- * directory at all.
+ * Reports what disqualifies a source `name` from serving as the directory segments under which its support entries
+ * deploy, or `undefined` when it can. A scoped package name is valid and nests as its own segments, so `/` separates
+ * segments rather than being rejected outright; what is rejected is anything that would escape the namespace or name
+ * no directory at all.
  *
- * Checked for every source rather than only those shipping support entries: the segment is part of a source's
- * contract, and a check deferred until a producer first adds support files would surface at that producer's consumers
+ * Checked for every source rather than only those shipping support entries: The segment is part of a source's
+ * contract, and a check deferred until a producer first adds support files would fail at that producer's consumers
  * rather than at the producer.
  */
 export function describeSourceNameProblem(name: string): string | undefined {
@@ -26,17 +26,17 @@ export function describeSourceNameProblem(name: string): string | undefined {
     return 'it is empty';
   }
   if (name.includes('\\') || name.includes('\0')) {
-    return 'it carries a path separator or control character';
+    return 'it contains a path separator or control character';
   }
   if (name.startsWith('/')) {
     return 'it is an absolute path';
   }
   const segments = name.split('/');
   if (segments.includes('')) {
-    return 'it carries an empty path segment';
+    return 'it contains an empty path segment';
   }
   if (segments.some((segment) => segment === '.' || segment === '..')) {
-    return 'it carries a relative path segment';
+    return 'it contains a relative path segment';
   }
   return undefined;
 }
@@ -46,7 +46,7 @@ export function describeSourceNameProblem(name: string): string | undefined {
  * `undefined` when valid. Validity requires both that `dir` is a directory and that the process can read and traverse
  * it, because `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the
  * parent chain, not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) folds
- * into the "unreadable" case so it surfaces through a message naming `dir`.
+ * into the "unreadable" case so that it is reported through a message naming `dir`.
  *
  * The condition is reported as a `kind` beside the phrase describing it, so a caller that treats the conditions
  * differently branches on the classification rather than on prose written for a reader.
@@ -56,9 +56,9 @@ export async function findSourceProblem(dir: string): Promise<SourceProblem | un
     if (!(await stat(dir)).isDirectory()) {
       return { kind: 'not-a-directory', detail: 'not a directory' };
     }
-    // Probe the read+traverse access the resolver's frontmatter lookups rely on, so a directory that stats as a
-    // directory but is itself unreadable (e.g. mode 000) fails here with the attributed error rather than as a raw
-    // EACCES mid-resolution — or not at all when no declared artifact happens to reach into it.
+    // Probe the read+traverse access on which the resolver's frontmatter lookups rely, so that a directory that
+    // stats as a directory but is itself unreadable (e.g. mode 000) fails here with the attributed error rather than
+    // as a raw EACCES mid-resolution, or not at all when no declared artifact happens to reach into it.
     await access(dir, constants.R_OK | constants.X_OK);
     return undefined;
   } catch (error: unknown) {
@@ -69,6 +69,6 @@ export async function findSourceProblem(dir: string): Promise<SourceProblem | un
     if (isErrorCode(error, 'ENOTDIR')) {
       return { kind: 'not-a-directory', detail: 'not a directory' };
     }
-    return { kind: 'unreadable', detail: `unreadable — ${describeError(error)}` };
+    return { kind: 'unreadable', detail: `unreadable -- ${describeError(error)}` };
   }
 }

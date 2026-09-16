@@ -5,7 +5,7 @@ export interface SkillNameCollision {
 }
 
 /**
- * The rulebook fields a collision check reads. Declared structurally rather than as `ResolvedRulebook` so the rules
+ * The rulebook fields that a collision check reads. Declared structurally rather than as `ResolvedRulebook` so that the rules
  * stay independent of the deploy path; a resolved rulebook satisfies it as-is.
  */
 export interface SkillDeliveringRulebook {
@@ -27,7 +27,7 @@ export function findCrossNamespaceCollisions(
 }
 
 /**
- * Lists each skill name two or more skill-delivery rulebooks resolve to, with the slugs that reached it. All but one
+ * Lists each skill name to which two or more skill-delivery rulebooks resolve, with the slugs that reached it. All but one
  * need a distinct `skill-name` override; without one they would share a directory and the last write would win.
  */
 export function findSkillNameCollisions(

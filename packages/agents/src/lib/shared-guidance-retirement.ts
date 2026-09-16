@@ -12,16 +12,16 @@ interface RetirementOptions {
 /**
  * Retires the withdrawn shared-guidance tier: removes what a previous version deployed to `~/.agents/` and reports
  * whether the manifest's `shared` record should be dropped. Nothing is deployed there any more, so a lingering copy
- * presents a file no harness loads as current guidance.
+ * presents a file loaded by no harness as current guidance.
  *
- * Retirement is driven by the manifest alone, which is what makes it safe: a `~/.agents/AGENTS.md` this CLI never
- * deployed carries no entry and is left untouched. Of the entries it does carry, an unmodified copy and a `--link`
+ * Retirement is driven by the manifest alone, which makes it safe: A `~/.agents/AGENTS.md` never deployed by this CLI
+ * has no entry and is left untouched. Of the entries that it does have, an unmodified copy and a `--link`
  * symlink are removed, and a user-modified copy is kept and reported, all through the same orphan-prune pass that
- * governs every other withdrawn entry. A kept copy is left untracked, which is the intended end state: it holds the
- * user's own content.
+ * governs every other withdrawn entry. A kept copy is left untracked, which is the intended end state: It contains
+ * the user's own content.
  *
  * `install` and `uninstall` both run it, so a machine is cleared by whichever the user reaches for. A home with no
- * `shared` record has nothing to retire, so it is a no-op on every run after the first.
+ * `shared` record has nothing to retire. The pass is a no-op on every run after the first.
  */
 export async function retireSharedGuidance(
   manifest: AgentsManifest,

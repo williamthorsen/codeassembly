@@ -34,7 +34,7 @@ describe(readContentRootManifest, () => {
     expect(await readContentRootManifest(root)).toEqual({ format: 1 });
   });
 
-  it('reads a format this tool does not support, leaving the support decision to the caller', async () => {
+  it('reads a format that this tool does not support, leaving the support decision to the caller', async () => {
     const root = await makeRoot(baseDir, 'ahead', 'format: 99\n');
 
     expect(await readContentRootManifest(root)).toEqual({ format: 99 });
@@ -67,8 +67,8 @@ describe(readContentRootManifest, () => {
 });
 
 describe(describeSupportedFormats, () => {
-  // The sentence this renders is the whole remedy a refused producer gets, so the noun agrees with the count and the
-  // last element joins with "and" rather than a comma.
+  // The sentence that this renders is the whole remedy given to a refused producer, so the noun agrees with the count
+  // and the last element joins with "and" rather than a comma.
   it('names the supported formats as a reader says them', () => {
     expect(describeSupportedFormats()).toBe('content formats 1 and 2');
   });
@@ -158,7 +158,7 @@ describe(assertSupportedContentFormats, () => {
   });
 
   // A manifest that will not parse has no declared version to compare, so it raises on its own rather than being
-  // folded into the version mismatch a reader would then be told to fix by upgrading.
+  // folded into the version mismatch that a reader would then be told to fix by upgrading.
   it('raises a malformed manifest separately from an unsupported format', async () => {
     const malformed = await makeRoot(baseDir, 'malformed', 'format: [1\n');
     const unsupported = await makeRoot(baseDir, 'unsupported', 'format: 3\n');
@@ -174,7 +174,7 @@ describe(assertSupportedContentFormats, () => {
 
 // region | Helpers
 
-/** Creates a uniquely named temp directory to hold the fixture content roots. */
+/** Creates a uniquely named temp directory to store the fixture content roots. */
 async function makeBaseDir(): Promise<string> {
   const dir = path.join(tmpdir(), `agents-test-content-format-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   await mkdir(dir, { recursive: true });

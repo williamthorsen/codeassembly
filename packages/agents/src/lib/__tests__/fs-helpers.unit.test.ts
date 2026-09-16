@@ -76,7 +76,7 @@ describe(listMarkdownFilesRecursively, () => {
     expect(found).toEqual(['skills/.hidden.md', 'skills/_partials/shared.md', 'skills/alpha/SKILL.md', 'top.md']);
   });
 
-  it('skips the test tree, whose fixtures are shaped to hold defects a content walk would report', async () => {
+  it('skips the test tree, whose fixtures are shaped to contain defects that a content walk would report', async () => {
     await writeAt(dir, 'kept.md', '');
     await writeAt(dir, '__tests__/fixtures/broken.md', '');
     await writeAt(dir, 'skills/alpha/test-utils/helper.md', '');
@@ -163,7 +163,7 @@ describe(writeIfChanged, () => {
 
 // region | Helpers
 
-/** Writes `content` to `relativePath` under `dir`, creating the directories the path passes through. */
+/** Writes `content` to `relativePath` under `dir`, creating the directories through which the path passes. */
 async function writeAt(dir: string, relativePath: string, content: string): Promise<void> {
   const filePath = path.join(dir, relativePath);
   await mkdir(path.dirname(filePath), { recursive: true });

@@ -487,7 +487,7 @@ describe('guidance installation', () => {
 
       await expect(
         installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
-      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md carries 1 unresolvable anchor link target/);
+      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md contains 1 unresolvable anchor link target/);
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
 
@@ -500,7 +500,7 @@ describe('guidance installation', () => {
 
       await expect(
         installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
-      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md carries 1 unresolvable anchor link target/);
+      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md contains 1 unresolvable anchor link target/);
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
   });

@@ -19,9 +19,9 @@ describe('rewriteToolNames', () => {
   });
 
   it('replaces multiple placeholders on a single line', () => {
-    const content = 'Not a `{tool:Read}`, not a `{tool:Grep}`, not a `{tool:Bash}` — a `{tool:Write}`.';
+    const content = 'Not a `{tool:Read}`, not a `{tool:Grep}`, not a `{tool:Bash}` -- a `{tool:Write}`.';
     expect(rewriteToolNames(content, 'rovo', 'test.md')).toBe(
-      'Not a `open_files`, not a `grep`, not a `bash` — a `create_file`.',
+      'Not a `open_files`, not a `grep`, not a `bash` -- a `create_file`.',
     );
   });
 
@@ -33,12 +33,12 @@ describe('rewriteToolNames', () => {
     );
   });
 
-  it('throws ToolNameRewriteError for a name the harness maps nothing to', () => {
+  it('throws ToolNameRewriteError for a name to which the harness maps nothing', () => {
     const content = 'Use {tool:NonExistent} for nothing.';
     expect(() => rewriteToolNames(content, 'rovo', 'test.md')).toThrow(ToolNameRewriteError);
   });
 
-  it('carries toolName, harnessId, contextLabel, and line on the error', () => {
+  it('sets toolName, harnessId, contextLabel, and line on the error', () => {
     const content = ['Line one is fine.', 'Line two has {tool:NonExistent} on it.'].join('\n');
     try {
       rewriteToolNames(content, 'rovo', 'fixtures/sample.md');

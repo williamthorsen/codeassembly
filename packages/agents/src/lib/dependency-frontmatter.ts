@@ -6,13 +6,13 @@ import { EntrySchema } from './codeassembly-schema.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { isRecord } from './type-guards.ts';
 
-/** The artifacts one artifact depends on, grouped by type. An absent type carries no edge. */
+/** The artifacts on which one artifact depends, grouped by type. An absent type contributes no edge. */
 export type ArtifactDependencies = Partial<Record<ArtifactType, ReadonlyArray<string>>>;
 
 /** A collection's constituents: the computed whole library, or an explicit per-type edge set. */
 export type MembersResult = { kind: 'library' } | { kind: 'explicit'; edges: ArtifactDependencies };
 
-/** The computed token a collection's `members:` may carry to mean every deployable artifact in the library. */
+/** The computed token that a collection's `members:` may name to mean every deployable artifact in the library. */
 const LIBRARY_TOKEN = '@library';
 
 /** Maps a plural declaration key (`skills`) back to its artifact type (`skill`), the inverse of `ARTIFACT_TYPES`. */
@@ -22,8 +22,8 @@ for (const meta of Object.values(ARTIFACT_TYPES)) {
 }
 
 /**
- * Reads a non-collection artifact's `dependencies:` frontmatter block — the prerequisite edges resolution follows
- * transitively. The block groups slugs by their plural type key (`rulebooks`, `skills`, `subagents`, `collections`);
+ * Reads a non-collection artifact's `dependencies:` frontmatter block -- the prerequisite edges that resolution
+ * follows transitively. The block groups slugs by their plural type key (`rulebooks`, `skills`, `subagents`, `collections`);
  * each entry is a bare slug or a `{ name }` object (extra keys tolerated). Absent frontmatter, an absent block, or a
  * null value all resolve to no dependencies. A `members:` key is collections-only and throws here; an unknown type
  * key or a non-list value also throws. Every error names `sourceLabel` when provided.
@@ -54,7 +54,7 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
 }
 
 /**
- * Reads a subagent's top-level `rulebooks:` frontmatter — the rulebooks whose deployed skills the render pass merges
+ * Reads a subagent's top-level `rulebooks:` frontmatter -- the rulebooks whose deployed skills the render pass merges
  * into `skills:`, and which resolution pulls into the closure. Shape and leniency match `readInjectedSkills`; the two
  * lists differ only in which namespace their slugs resolve against.
  */
@@ -63,7 +63,7 @@ export function readInjectedRulebooks(content: string, sourceLabel?: string): Re
 }
 
 /**
- * Reads a subagent's top-level `skills:` frontmatter — the runtime injection list the harness loads into the
+ * Reads a subagent's top-level `skills:` frontmatter -- the runtime injection list that the harness loads into the
  * subagent's context. Each entry is a bare slug or a `{ name }` object (extra keys tolerated). Absent frontmatter,
  * an absent `skills:` key, or a null value all resolve to no injected skills. A non-list value throws, naming
  * `sourceLabel` when provided.
@@ -73,9 +73,9 @@ export function readInjectedSkills(content: string, sourceLabel?: string): Reado
 }
 
 /**
- * Reads a collection's `members:` frontmatter — its constituents, which resolution follows transitively. The value
+ * Reads a collection's `members:` frontmatter -- its constituents, which resolution follows transitively. The value
  * is either the computed token `'@library'` (every deployable artifact, expanded by the resolver) or an explicit
- * per-type mapping in the same shape `dependencies:` uses. Absent or null members is an empty collection, not an
+ * per-type mapping in the same shape that `dependencies:` uses. Absent or null members is an empty collection, not an
  * error. A `dependencies:` key is rejected here (membership moved to `members:`); an unrecognized token or a value
  * that is neither a token nor a mapping also throws. Every error names `sourceLabel` when provided.
  */
@@ -119,7 +119,7 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
 /**
  * Parses a per-type block (`rulebooks`/`skills`/`subagents`/`collections` → slug lists) into edges. Each entry is a
  * bare slug or a `{ name }` object (extra keys tolerated); a null sub-key contributes no edges of that type.
- * `errorPrefix` opens each message so the caller names its own key (`dependencies:` or `members:`). Throws on an
+ * `errorPrefix` opens each message so that the caller names its own key (`dependencies:` or `members:`). Throws on an
  * unknown type key or a non-list value.
  */
 function parseTypeBlock(block: Record<string, unknown>, errorPrefix: string): ArtifactDependencies {

@@ -14,7 +14,7 @@ interface PruneOptions {
   readonly dryRun: boolean;
 }
 
-/** One orphan a prune pass considered, and the verdict it drew. */
+/** One orphan considered by a prune pass, and the verdict that it drew. */
 export interface PrunedOrphan {
   readonly entry: ManifestEntry;
   readonly verdict: OwnedEntryVerdict;
@@ -29,8 +29,8 @@ export interface PruneResult {
 /**
  * Decides an owned manifest entry's fate during removal. A symlink (no user-modifiable content) or an
  * unmodified-or-forced file is removed; a user-modified file without `force` is retained; an entry already
- * gone from disk is absent. Checking `linked` before drift detection is what lets a dangling symlink — which
- * `detectDrift` reports as `missing` — be removed rather than treated as already gone.
+ * gone from disk is absent. Checking `linked` before drift detection lets a dangling symlink -- which
+ * `detectDrift` reports as `missing` -- be removed rather than treated as already gone.
  */
 export async function classifyOwnedEntry(
   entry: ManifestEntry,
@@ -51,7 +51,7 @@ export async function classifyOwnedEntry(
   return 'remove';
 }
 
-/** What a prune pass did with each orphan: the modified ones it kept, and the stale ones it removed. */
+/** What a prune pass did with each orphan: the modified ones that it kept, and the stale ones that it removed. */
 export function describePruneResult(result: PruneResult, options: { dryRun: boolean }): ReadonlyArray<ReportLine> {
   return result.orphans.flatMap((orphan): ReadonlyArray<ReportLine> => {
     switch (orphan.verdict) {
@@ -73,10 +73,10 @@ export function describePruneResult(result: PruneResult, options: { dryRun: bool
 }
 
 /**
- * Removes installed files recorded in `previousEntries` whose source no longer exists — those whose
- * `relativePath` is absent from `currentEntries` — resolving paths against the install root `home`. Each
+ * Removes installed files recorded in `previousEntries` whose source no longer exists -- those whose
+ * `relativePath` is absent from `currentEntries` -- resolving paths against the install root `home`. Each
  * orphan's fate follows `classifyOwnedEntry`; a retained (user-modified, unforced) orphan stays tracked in
- * the manifest. In `dryRun`, each orphan draws its verdict but no file is removed.
+ * the manifest. In `dryRun`, the pass still classifies each orphan but removes no file.
  */
 export async function pruneOrphanedEntries(
   previousEntries: ReadonlyArray<ManifestEntry>,

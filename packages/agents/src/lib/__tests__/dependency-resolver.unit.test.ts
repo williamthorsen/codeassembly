@@ -53,7 +53,7 @@ describe(resolveClosure, () => {
     expect(closure).toEqual({ rulebooks: ['typescript-conventions'], skills: ['people-report'], subagents: [] });
   });
 
-  it('deduplicates a diamond dependency so each member appears once', async () => {
+  it('deduplicates a diamond dependency so that each member appears once', async () => {
     await writeArtifact(contentDir, 'skill', 'shared');
     await writeArtifact(contentDir, 'collection', 'left', { skill: ['shared'] });
     await writeArtifact(contentDir, 'collection', 'right', { skill: ['shared'] });
@@ -226,7 +226,7 @@ describe(resolveClosure, () => {
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
 
-    it('pulls a token that arrives via a partial a rulebook inlines into the closure', async () => {
+    it('pulls a token that arrives via a rulebook-inlined partial into the closure', async () => {
       await writeArtifact(contentDir, 'skill', 'capture-event');
       await writeRulebookPartial(contentDir, 'frag.md', 'Then invoke {skill:capture-event}.');
       await writeArtifactWithBody(
@@ -241,7 +241,7 @@ describe(resolveClosure, () => {
       expect(closure).toEqual({ rulebooks: ['nmr-scripts'], skills: ['capture-event'], subagents: [] });
     });
 
-    it('pulls a rulebook a subagent injects into the closure', async () => {
+    it("pulls a subagent's injected rulebook into the closure", async () => {
       await writeArtifact(contentDir, 'rulebook', 'review-criteria');
       await writeArtifact(contentDir, 'skill', 'anti-patterns');
       await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns'], undefined, ['review-criteria']);
@@ -310,7 +310,7 @@ describe(resolveClosure, () => {
       expect(closure.rulebooks.toSorted()).toEqual(['nmr-cheatsheet', 'nmr-scripts']);
     });
 
-    it('drops a rulebook body self-token so a self-reference renders without becoming an edge', async () => {
+    it('drops a rulebook body self-token so that a self-reference renders without becoming an edge', async () => {
       await writeArtifactWithBody(contentDir, 'rulebook', 'nmr-scripts', 'Re-read {rulebook:nmr-scripts} for detail.');
 
       const closure = await resolveClosure({ rulebook: ['nmr-scripts'] }, libraryResolver(contentDir));
@@ -345,7 +345,7 @@ describe(resolveClosure, () => {
       expect(closure).toEqual({ rulebooks: ['commit'], skills: ['commit'], subagents: [] });
     });
 
-    it('drops a skill body self-token so a self-reference renders without becoming an edge', async () => {
+    it('drops a skill body self-token so that a self-reference renders without becoming an edge', async () => {
       await writeArtifactWithBody(
         contentDir,
         'skill',
@@ -358,7 +358,7 @@ describe(resolveClosure, () => {
       expect(closure.skills).toEqual(['capture-feedback']);
     });
 
-    it('drops a subagent body self-token so a self-reference renders without becoming an edge', async () => {
+    it('drops a subagent body self-token so that a self-reference renders without becoming an edge', async () => {
       await writeArtifactWithBody(contentDir, 'subagent', 'planner', 'Re-dispatch {subagent:planner} to continue.');
 
       const closure = await resolveClosure({ subagent: ['planner'] }, libraryResolver(contentDir));
@@ -413,7 +413,7 @@ describe(resolveClosure, () => {
       expect(closure).toEqual({ rulebooks: [], skills: ['create-ticket'], subagents: [] });
     });
 
-    it('keeps an optional token from closing a cycle its required form would close', async () => {
+    it('keeps an optional token from closing a cycle that its required form would close', async () => {
       await writeArtifactWithBody(contentDir, 'skill', 'alpha', 'See {skill?:beta}.');
       await writeArtifactWithBody(contentDir, 'skill', 'beta', 'See {skill:alpha}.');
 
@@ -433,7 +433,7 @@ describe(resolveClosure, () => {
       );
     });
 
-    it('resolves an optional token carried by a rulebook body', async () => {
+    it('resolves an optional token in a rulebook body', async () => {
       await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Invoke {skill?:ghost}.');
 
       await expect(resolveClosure({ rulebook: ['some-rulebook'] }, libraryResolver(contentDir))).rejects.toThrow(
@@ -538,7 +538,7 @@ describe(resolveClosure, () => {
       expect(closure.skills).not.toContain('source-skill');
     });
 
-    it('still resolves a library collection through a resolver that also carries declared sources', async () => {
+    it('still resolves a library collection through a resolver that also includes declared sources', async () => {
       await writeArtifact(contentDir, 'skill', 'library-skill');
       await writeArtifact(contentDir, 'collection', 'library-collection', { skill: ['library-skill'] });
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
@@ -548,7 +548,7 @@ describe(resolveClosure, () => {
       expect(closure.skills).toEqual(['library-skill']);
     });
 
-    it('still deploys a library skill through a resolver that also carries declared sources', async () => {
+    it('still deploys a library skill through a resolver that also includes declared sources', async () => {
       await writeArtifact(contentDir, 'skill', 'library-skill');
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
 
@@ -609,14 +609,16 @@ async function writeArtifactWithBody(
   await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n${body}\n`, 'utf8');
 }
 
-/** Writes a partial beside the rulebooks — the include target a rulebook body expands, resolved against its own dir. */
+/**
+ * Writes a partial beside the rulebooks: the include target expanded by a rulebook body, resolved against its own dir.
+ */
 async function writeRulebookPartial(contentDir: string, name: string, body: string): Promise<void> {
   const filePath = path.join(contentDir, 'guidance', 'rulebooks', '_partials', name);
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${body}\n`, 'utf8');
 }
 
-/** Writes a partial inside a skill's `_partials/` directory — the include target a skill body expands. */
+/** Writes a partial inside a skill's `_partials/` directory: the include target expanded by a skill body. */
 async function writeSkillPartial(contentDir: string, skillSlug: string, name: string, body: string): Promise<void> {
   const filePath = path.join(contentDir, 'skills', skillSlug, '_partials', name);
   await mkdir(path.dirname(filePath), { recursive: true });
@@ -624,7 +626,7 @@ async function writeSkillPartial(contentDir: string, skillSlug: string, name: st
 }
 
 /**
- * Writes a subagent frontmatter file carrying a top-level `skills:` injection list, plus optional `dependencies:`
+ * Writes a subagent frontmatter file declaring a top-level `skills:` injection list, plus optional `dependencies:`
  * edges. Distinct from `writeArtifact`, which never emits the top-level `skills:` field.
  */
 async function writeSubagent(

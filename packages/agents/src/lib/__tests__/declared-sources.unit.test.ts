@@ -215,7 +215,7 @@ async function installPackage(root: string, name: string): Promise<string> {
   return contentDir;
 }
 
-/** The library content directory every case resolves against. */
+/** The library content directory against which every case resolves. */
 function libraryDir(root: string): string {
   return path.join(root, 'library');
 }

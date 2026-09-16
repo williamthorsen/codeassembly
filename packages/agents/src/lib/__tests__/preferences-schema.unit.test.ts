@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
-// `BASIC` is only exported from `/experimental` in version 1.17.6 — used only on the diagnostic
+// `BASIC` is only exported from `/experimental` in version 1.17.6. It is used only on the diagnostic
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
@@ -36,7 +36,7 @@ if (typeof schemaId !== 'string') {
 // Register once at module load. `registerSchema` only stores the schema in-memory keyed by `$id`;
 // structural compilation (and any well-formedness errors) happens at the first `validate()` call.
 // In Vitest watch mode, HMR can re-evaluate this module and re-invoke `registerSchema` with the
-// same `$id` — `@hyperjump/json-schema` throws on duplicate registration. Swallow that one case
+// same `$id`: `@hyperjump/json-schema` throws on duplicate registration. Swallow that one case
 // while letting any other error propagate.
 registerSchemaIdempotent(schema, schemaId);
 
@@ -62,8 +62,8 @@ describe('preferences.json schema', () => {
 
     const output = await validate(schemaId, jsonValue, FLAG);
 
-    // FLAG output is the stable assertion target — it returns only `{ valid }`. On failure,
-    // re-validate with `BASIC` (from `/experimental`) so the failure message includes per-keyword
+    // FLAG output is the stable assertion target; it returns only `{ valid }`. On failure,
+    // re-validate with `BASIC` (from `/experimental`) so that the failure message includes per-keyword
     // error locations instead of an opaque `{ valid: false }`. The diagnostic is computed only
     // when the assertion fails, so the second `validate()` call is paid for only on the failure path.
     let diagnosticMessage = '';
@@ -88,7 +88,7 @@ describe('preferences.json schema', () => {
 
   it('accepts the `scm` key and the deprecated `platform` alias', async () => {
     // The canonical `scm` key and the legacy `platform` alias both validate; the alias is retained
-    // so an existing `platform`-keyed preferences file stays schema-valid during the migration window.
+    // so that an existing `platform`-keyed preferences file stays schema-valid during the migration window.
     const scmOutput = await validate(schemaId, { scm: 'bitbucket' }, FLAG);
     expect(scmOutput).toMatchObject({ valid: true });
     const legacyOutput = await validate(schemaId, { platform: 'bitbucket' }, FLAG);
@@ -96,8 +96,8 @@ describe('preferences.json schema', () => {
   });
 
   it('accepts the documented reserved keys under `merge`', async () => {
-    // Guards `merge.strategy` and `merge.delete_branch` — recorded in the schema as reserved
-    // (not yet honored by the `merge-pr` skill family) so projects can opt to set them in
+    // Guards `merge.strategy` and `merge.delete_branch`, recorded in the schema as reserved
+    // (not yet honored by the `merge-pr` skill family) so that projects can opt to set them in
     // anticipation of future support without tripping `additionalProperties`-style constraints.
     const output = await validate(
       schemaId,
@@ -188,8 +188,8 @@ describe('preferences.json schema', () => {
   });
 
   it('accepts an undeclared sibling key under `integrations.jira`', async () => {
-    // The `jira` object omits `additionalProperties: false` on purpose: a live preferences file carries an
-    // inert `workspace` key, and declaring the two keys the skill reads does not make its siblings errors.
+    // The `jira` object omits `additionalProperties: false` on purpose: A live preferences file contains an
+    // inert `workspace` key, and declaring the two keys that the skill reads does not make its siblings errors.
     const output = await validate(schemaId, { integrations: { jira: { enabled: true, workspace: 'hello' } } }, FLAG);
     expect(output).toMatchObject({ valid: true });
   });

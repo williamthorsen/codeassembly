@@ -19,7 +19,7 @@ const BODY =
 const EMPTY_REGION = '<!-- codeassembly-ambient:start -->\n<!-- codeassembly-ambient:end -->';
 const FILLED_REGION = `<!-- codeassembly-ambient:start -->\n${BODY}\n<!-- codeassembly-ambient:end -->`;
 
-/** A rendered guidance file whose template carries an empty region between foreign sections. */
+/** A rendered guidance file whose template contains an empty region between foreign sections. */
 const GUIDANCE = `# Guidance\n\nIntro prose.\n\n${EMPTY_REGION}\n\n## Tail section\n`;
 
 describe(appendAmbientRegion, () => {
@@ -42,7 +42,7 @@ describe(appendAmbientRegion, () => {
     expect(appendAmbientRegion('# Notes\n\n\n', BODY)).toBe(`# Notes\n\n${FILLED_REGION}\n`);
   });
 
-  it('produces content a later injection can target, so appending happens only once', () => {
+  it('produces content that a later injection can target, so appending happens only once', () => {
     const appended = appendAmbientRegion('# Notes\n', BODY);
 
     expect(hasAmbientRegion(appended)).toBe(true);
@@ -51,7 +51,7 @@ describe(appendAmbientRegion, () => {
 });
 
 describe(classifyAmbientRegion, () => {
-  it('reports content carrying no marker as absent', () => {
+  it('reports content with no marker as absent', () => {
     expect(classifyAmbientRegion('# Notes\n')).toBe('absent');
     expect(classifyAmbientRegion('')).toBe('absent');
   });
@@ -94,19 +94,19 @@ describe('single-region invariant', () => {
     expect(hasAmbientRegion(stray)).toBe(false);
   });
 
-  it('refuses to inject into a host carrying two regions, which would leave the second stale', () => {
+  it('refuses to inject into a host containing two regions, which would leave the second stale', () => {
     const doubled = `${FILLED_REGION}\n\n# Notes\n\n${FILLED_REGION}\n`;
 
     expect(() => injectAmbientRegion(doubled, BODY)).toThrow();
   });
 
-  it('leaves a host it refuses to inject into unchanged under strip as well', () => {
+  it('leaves a host that it refuses to inject into unchanged under strip as well', () => {
     const doubled = `${FILLED_REGION}\n\n# Notes\n\n${FILLED_REGION}\n`;
 
     expect(stripAmbientRegionContent(doubled)).toBe(doubled);
   });
 
-  it('extracts nothing from a host it refuses to inject into, so a re-render cannot absorb foreign text', () => {
+  it('extracts nothing from a host that it refuses to inject into, so a re-render cannot absorb foreign text', () => {
     const stray = `# Notes\n\n${AMBIENT_OPEN_MARKER}\nMy sandbox URL.\n\n${FILLED_REGION}\n`;
     const doubled = `${FILLED_REGION}\n\n# Notes\n\n${FILLED_REGION}\n`;
 
@@ -194,7 +194,7 @@ describe(removeAmbientRegion, () => {
     );
   });
 
-  it('yields the empty string for content holding nothing but the region', () => {
+  it('yields the empty string for content containing nothing but the region', () => {
     expect(removeAmbientRegion(`${FILLED_REGION}\n`)).toBe('');
   });
 
@@ -215,7 +215,7 @@ describe(removeAmbientRegion, () => {
     expect(removeAmbientRegion(unclosed)).toBe(unclosed);
   });
 
-  it('returns content carrying two regions unchanged', () => {
+  it('returns content containing two regions unchanged', () => {
     const doubled = `${EMPTY_REGION}\n\n${EMPTY_REGION}\n`;
     expect(removeAmbientRegion(doubled)).toBe(doubled);
   });

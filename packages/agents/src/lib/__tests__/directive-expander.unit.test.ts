@@ -112,7 +112,7 @@ describe(expandIncludes, () => {
 
     it('treats inline-prose mention of <!-- /include --> as plain content, not as a close directive', async () => {
       // The CLOSE_REGEX is line-anchored. A line with non-whitespace text preceding
-      // `<!-- /include -->` must not trigger orphan-close handling — authors writing
+      // `<!-- /include -->` must not trigger orphan-close handling: Authors writing
       // documentation about the directive grammar inside partials must be able to
       // include close-tag examples in prose.
       const host = await writeSource(
@@ -258,7 +258,7 @@ describe(expandIncludes, () => {
     });
 
     it('returns to top-level output between two sequential non-nested open/close blocks', async () => {
-      // Two open/close pairs at top level. Between them, the stack must be empty so
+      // Two open/close pairs at top level. Between them, the stack must be empty so that
       // intervening prose flows to the output buffer rather than being captured by a
       // stale frame.
       const host = await writeSource(

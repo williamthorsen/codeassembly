@@ -33,7 +33,7 @@ describe(injectProvenanceMarker, () => {
       expect(result.endsWith('\n\nBody line 1.\n\nBody line 2.')).toBe(true);
     });
 
-    it('is idempotent: applying twice returns the same content', () => {
+    it('is idempotent: Applying twice returns the same content', () => {
       const input = ['---', 'name: example', '---', '', 'Body', ''].join('\n');
       const once = injectProvenanceMarker(input, sourceUrl);
       const twice = injectProvenanceMarker(once, sourceUrl);
@@ -71,7 +71,7 @@ describe(injectProvenanceMarker, () => {
       );
     });
 
-    it('is idempotent: applying twice returns the same content', () => {
+    it('is idempotent: Applying twice returns the same content', () => {
       const input = '# AGENTS\n\nBody.\n';
       const once = injectProvenanceMarker(input, sourceUrl);
       const twice = injectProvenanceMarker(once, sourceUrl);

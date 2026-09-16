@@ -4,7 +4,10 @@ import path from 'node:path';
 import { artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
 import { isMissingFile } from './type-guards.ts';
 
-/** Where a `(type, slug)` artifact resolved from: the directory holding it and the source name (undefined = library). */
+/**
+ * Where a `(type, slug)` artifact resolved from: the directory containing it and the source name
+ * (undefined = library).
+ */
 export interface ResolvedArtifactSource {
   readonly dir: string;
   readonly source: string | undefined;
@@ -12,9 +15,9 @@ export interface ResolvedArtifactSource {
 
 /**
  * Resolves a `(type, slug)` artifact over an ordered search of declared sources (highest precedence first) then the
- * built-in library, by existence of its frontmatter file. `libraryDir` and `sources` are plain accessors callers reach
- * for directly — `libraryDir` for the library-only surfaces (e.g. `@library` collection expansion), `sources` for the
- * not-found error that enumerates every location searched.
+ * built-in library, by existence of its frontmatter file. `libraryDir` and `sources` are plain accessors that callers
+ * reach for directly: `libraryDir` for the library-only surfaces (e.g. `@library` collection expansion), `sources` for
+ * the not-found error that enumerates every location searched.
  */
 export interface SourceResolver {
   readonly libraryDir: string;
@@ -24,8 +27,8 @@ export interface SourceResolver {
 
 /**
  * Builds a resolver that searches `sources` (in the given precedence order) then `libraryDir`, returning the first
- * whose `<dir>/artifactFrontmatterPath(type, slug)` exists. A source carries its `name`; the library carries
- * `source: undefined`.
+ * whose `<dir>/artifactFrontmatterPath(type, slug)` exists. A source resolves with its `name`; the library resolves
+ * with `source: undefined`.
  */
 export function createSourceResolver(
   sources: ReadonlyArray<{ name: string; dir: string }>,
@@ -49,15 +52,15 @@ export function createSourceResolver(
   };
 }
 
-/** A resolver over the built-in library alone — the behavior-identical legacy path for non-source callers. */
+/** A resolver over the built-in library alone: the behavior-identical legacy path for non-source callers. */
 export function libraryResolver(libraryDir: string): SourceResolver {
   return createSourceResolver([], libraryDir);
 }
 
 /**
- * Renders the comma-joined list of every location `resolver` searches for a `(type, slug)` artifact — each declared
- * source in precedence order, then the library — for a not-found error message. Shared so the format cannot drift
- * between callers.
+ * Renders the comma-joined list of every location that `resolver` searches for a `(type, slug)` artifact (each
+ * declared source in precedence order, then the library) for a not-found error message. Shared so that the format
+ * cannot drift between callers.
  */
 export function describeSearchedLocations(resolver: SourceResolver, type: ArtifactType, slug: string): string {
   return [...resolver.sources.map((source) => source.dir), resolver.libraryDir]
@@ -66,9 +69,9 @@ export function describeSearchedLocations(resolver: SourceResolver, type: Artifa
 }
 
 /**
- * Reports whether the built-in library carries a `(type, slug)` artifact. Used to detect a shadow: a source-resolved
+ * Reports whether the built-in library contains a `(type, slug)` artifact. Used to detect a shadow: A source-resolved
  * artifact whose slug also exists in the library is masking the library one. Probes `resolver.libraryDir` directly,
- * so it answers regardless of which candidate won the resolution.
+ * so its result does not depend on which candidate won the resolution.
  */
 export async function hasLibraryArtifact(resolver: SourceResolver, type: ArtifactType, slug: string): Promise<boolean> {
   return fileExists(path.join(resolver.libraryDir, artifactFrontmatterPath(type, slug)));
@@ -78,7 +81,7 @@ export async function hasLibraryArtifact(resolver: SourceResolver, type: Artifac
 
 /**
  * Resolves whether a path points at a present file or directory. A missing-file error (`ENOENT`/`ENOTDIR`, a bare
- * absence) resolves to `false`; any other failure — e.g. `EACCES` on an unreadable source directory — rethrows, so a
+ * absence) resolves to `false`; any other failure (e.g. `EACCES` on an unreadable source directory) rethrows, so a
  * higher-precedence source with a permission problem fails loud instead of being silently shadowed by a lower one.
  */
 async function fileExists(filePath: string): Promise<boolean> {
