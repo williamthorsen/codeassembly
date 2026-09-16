@@ -17,13 +17,13 @@ export interface CandidateBase {
   /** 1-indexed line on which the sentence begins. */
   line: number;
   /**
-   * The span a repair rewrites. Distinctive within its file, which is what lets a recorded rejection resolve to one
-   * site without a line number that the next edit invalidates.
+   * The span that a repair rewrites. Distinctive within its file, which is what lets a recorded rejection resolve to
+   * one site without a line number that the next edit invalidates.
    */
   phrase: string;
-  /** The whole sentence containing the phrase, so adjudication needs no file read. */
+  /** The whole sentence containing the phrase, so that adjudication needs no file read. */
   sentence: string;
-  /** Present where a rejection recorded at an older version of its rule matched, which re-opens it for review. */
+  /** Present when a rejection recorded at an older version of its rule matched, which re-opens it for review. */
   stale?: boolean;
 }
 
@@ -78,13 +78,13 @@ export type RuleId = 'em-dash' | 'reduced-object-relative' | 'second-person' | '
 export interface Batch {
   /** 0-indexed position in the run, the recurring batches leading. */
   index: number;
-  /** The files this batch covers. */
+  /** The files that this batch covers. */
   files: readonly string[];
   /** Combined byte length of those files. */
   bytes: number;
   /**
    * Whether this batch holds components of files linked by a shared sentence. The budget binds it like any other,
-   * except where one component exceeds the budget on its own.
+   * except when one component exceeds the budget on its own.
    */
   recurring: boolean;
 }
@@ -95,7 +95,7 @@ export interface ReportedBatch extends Batch {
   unswept: readonly string[];
 }
 
-/** One file the sweep read prose from, with the byte length a batch budget is measured against. */
+/** One file from which the sweep read prose, with the byte length against which a batch budget is measured. */
 export interface ScannedFile {
   /** Path to the source file, relative to the repository root. */
   file: string;
@@ -114,15 +114,15 @@ export interface RuleCoverage {
   'swept-at': string;
   /** Whether the rule's detector nominated candidates for these roots. */
   detected: boolean;
-  /** The path roots that sweeps at this version have covered, `.` where one covered the repository. */
+  /** The path roots that sweeps at this version have covered, `.` when one covered the repository. */
   roots: readonly string[];
 }
 
 /** One adjudicated rejection, resolved to a site by its rule, its file, and its phrase. */
 export interface RecordedRejection {
   /**
-   * The rule the site was adjudicated under. Any versioned rule a bound rulebook declares, whether or not the helper
-   * holds a detector for it, so a sweeper's judgment is recorded without a detector.
+   * The rule under which the site was adjudicated. Any versioned rule declared by a bound rulebook, whether or not the
+   * helper holds a detector for it, so that a sweeper's judgment is recorded without a detector.
    */
   rule: string;
   /** The rule's sweep version when the rejection was recorded, which a raised version marks stale. */
@@ -135,8 +135,9 @@ export interface RecordedRejection {
 }
 
 /**
- * One rejection a later run inherits: a site an earlier sweep adjudicated and left, at a version of its rule that
- * still stands. The sweeper needs no argument for a settled site, so the record's own bookkeeping is left behind.
+ * One rejection inherited by a later run: a site that an earlier sweep adjudicated and left, at a version of its
+ * rule that still stands. The sweeper needs no argument for a settled site, so the record's own bookkeeping is left
+ * behind.
  */
 export interface PriorRejection {
   rule: string;
@@ -192,8 +193,8 @@ export interface VersionedRule {
 }
 
 /**
- * The versions a run holds: each named unit's, which converting a legacy record reads, and each versioned rule's, which
- * keys coverage and rejections.
+ * The versions that a run holds: each named unit's, which converting a legacy record reads, and each versioned rule's,
+ * which keys coverage and rejections.
  */
 export interface SweepVersions {
   units: ReadonlyMap<string, string>;
@@ -204,7 +205,7 @@ export interface SweepVersions {
  * One rejection as a run reports it. It carries no version, which the helper derives from the fold's entry for its rule.
  */
 export interface FoldRejection {
-  /** The rule the site was adjudicated under, detected or not, which must be one the fold versions. */
+  /** The rule under which the site was adjudicated, detected or not, which must be one that the fold versions. */
   rule: string;
   file: string;
   /** The phrase as it reads after the run's edits. */
@@ -213,15 +214,15 @@ export interface FoldRejection {
   ground: string;
 }
 
-/** What one run reports back for recording: the rules it covered and the rejections it adjudicated. */
+/** What one run reports back for recording: the rules that it covered and the rejections that it adjudicated. */
 export interface RunFold {
   /** The ISO calendar date to record the sweep under. */
   sweptAt: string;
-  /** The path roots the run covered. */
+  /** The path roots that the run covered. */
   roots: readonly string[];
-  /** Each unit the run named, at its version. */
+  /** Each unit named by the run, at its version. */
   units: Record<string, string>;
-  /** Each versioned rule the run named, with its unit and sweep version. */
+  /** Each versioned rule named by the run, with its unit and sweep version. */
   rules: Record<string, VersionedRule>;
   rejections: readonly FoldRejection[];
 }
@@ -256,11 +257,11 @@ export interface ParsedArgs {
   /** Paths narrowing the sweep; empty sweeps the whole repository. */
   paths: readonly string[];
   /**
-   * The rules named, each with the unit owning it and its sweep version where it has one, whether or not the helper has
+   * The rules named, each with the unit owning it and its sweep version when it has one, whether or not the helper has
    * a detector for it. Empty detects the legacy rule alone.
    */
   rules: readonly NamedRule[];
-  /** The units in force, by name, each at the version the caller holds. Empty reads and writes no record. */
+  /** The units in force, by name, each at the version that the caller holds. Empty reads and writes no record. */
   units: ReadonlyMap<string, string>;
   /** Ceiling on a batch's combined file bytes. */
   budget: number;
@@ -273,7 +274,7 @@ export interface NamedRule {
   version: string | undefined;
 }
 
-/** How many candidates a file contributes, so a large sweep can be narrowed before adjudication is paid for. */
+/** How many candidates a file contributes, so that a large sweep can be narrowed before adjudication is paid for. */
 export interface FileCount {
   file: string;
   count: number;
@@ -287,24 +288,26 @@ export interface CandidateSummary {
   filesScanned: number;
   /** Files excluded from the sweep, by the reason each was excluded. */
   filesSkipped: Readonly<Record<SkipReason, number>>;
-  /** Batches the run planned, before the record's coverage removed any. */
+  /** Batches that the run planned, before the record's coverage removed any. */
   batchesPlanned: number;
-  /** Batches the record's coverage let the run skip. */
+  /** Batches that the record's coverage let the run skip. */
   batchesSkipped: number;
   /** Candidates carrying a rejection recorded at an older version of their rule, which re-opens them for review. */
   stale: number;
   /** Per-file counts, descending by count and then by path. */
   byFile: readonly FileCount[];
-  /** Per-rule counts, keyed by every rule so a rule the invocation did not name reads as zero. */
+  /** Per-rule counts, keyed by every rule so that a rule not named by the invocation reads as zero. */
   byRule: Readonly<Record<RuleId, number>>;
-  /** Per-shape counts over the object-relative candidates, keyed by every shape so an absent shape reads as zero. */
+  /**
+   * Per-shape counts over the object-relative candidates, keyed by every shape so that an absent shape reads as zero.
+   */
   byShape: Readonly<Record<SubjectShape, number>>;
 }
 
 /** The helper's stdout payload on success. */
 export interface DetectSuccess {
   ok: true;
-  /** Repository root the sweep ran against. */
+  /** Repository root against which the sweep ran. */
   root: string;
   /**
    * The candidates in the reported batches' files, each under a rule that its batch lists as unswept or under a rule
@@ -328,7 +331,7 @@ export interface DetectSuccess {
   summary: CandidateSummary;
 }
 
-/** Categorical error codes the helper returns without an unexpected throw. */
+/** Categorical error codes that the helper returns without an unexpected throw. */
 export type DetectErrorCode = 'invalid-args' | 'invalid-record' | 'not-a-repository';
 
 /** The helper's stdout payload on a recoverable failure. */

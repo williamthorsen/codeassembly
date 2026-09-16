@@ -6,19 +6,19 @@
  * punctuation licensing the join. Three of the four shapes announce that new phrase with a closed-class word; the
  * bare-noun shape announces nothing, and is anchored on a plural subject instead.
  *
- * Detection is deliberately over-inclusive: precision is the agent's, which adjudicates each candidate with the
+ * Detection is deliberately over-inclusive: Precision is the agent's, which adjudicates each candidate with the
  * sentence in view. Five things are nonetheless decided here, because each is decidable without a reading. The
  * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type, as is the
  * predicate of a degree question, which no copula after it turns into a head noun. A word
- * carrying verbal morphology is read as a head noun only where a determiner makes it one, which is what keeps a main
+ * carrying verbal morphology is read as a head noun only when a determiner makes it one, which is what keeps a main
  * clause and most participial phrases out. A bare-noun subject is held to plural agreement. And a clause with no gap
- * left for the head noun to fill is rejected: a passive has promoted its own object, so it reports only where a
+ * left for the head noun to fill is rejected: A passive has promoted its own object, so it reports only when a
  * stranded preposition, an infinitival complement, or a ditransitive leaves a second one open, and an intransitive
- * verb reports only where it strands a preposition. A copula takes no object at all, and closes a clause only at the
+ * verb reports only when it strands a preposition. A copula takes no object at all, and closes a clause only at the
  * end of one, where the head fills its complement slot.
  *
- * An inline code span arrives as one placeholder token, which heads no phrase, opens no subject, and closes no
- * clause. It holds its slot all the same, so a site that a code span interrupts stays reachable.
+ * An inline code span reads as one placeholder token, which heads no phrase, opens no subject, and closes no
+ * clause. Because it holds its slot all the same, a site that a code span interrupts stays reachable.
  */
 import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
 import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
@@ -79,7 +79,7 @@ const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
 
 /**
  * Verbs whose bare form carries no verbal morphology, so nothing but a lexicon recognizes one. Every entry is a
- * word that no reading takes as a noun: a homograph such as `name` or `report` would read a head noun as a verb.
+ * word that no reading takes as a noun: A homograph such as `name` or `report` would read a head noun as a verb.
  */
 const BARE_VERBS: ReadonlySet<string> = new Set([
   'accept',
@@ -177,8 +177,9 @@ const BE_FORMS: ReadonlySet<string> = new Set(['am', 'are', 'be', 'been', 'being
 /**
  * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
  * relative's, which is what keeps a main clause out. The set is read from both directions: {@link isFiniteVerb}
- * rejects a member outright, and the two clause-closing tests admit one back where a stranded preposition gives it a
- * prepositional-phrase gap, so `the set the entries belong to` reports where `the entries belong to the set` does not.
+ * rejects a member outright, and the two clause-closing tests admit one back when a stranded preposition gives it a
+ * prepositional-phrase gap, so `the set the entries belong to` reports, whereas `the entries belong to the set`
+ * does not.
  */
 const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
   'appear',
@@ -203,8 +204,8 @@ const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
 
 /**
  * Past-tense forms that no suffix marks as a verb, so nothing but a lexicon recognizes one. Admission follows the
- * rule {@link BARE_VERBS} states: every entry is a word that no reading takes as a noun, which keeps `cost`, `cut`,
- * `hit`, `put`, `run`, `saw`, `set`, `split`, and `spread` out. A past participle needs no entry, since
+ * rule that {@link BARE_VERBS} states: Every entry is a word that no reading takes as a noun, which keeps `cost`,
+ * `cut`, `hit`, `put`, `run`, `saw`, `set`, `split`, and `spread` out. A past participle needs no entry, since
  * {@link resolveAuxiliaryChain} admits whatever an auxiliary carries.
  */
 const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
@@ -262,8 +263,8 @@ const CARRIED_VERB_WINDOW = 3;
 
 /**
  * Comparative adjectives. One before a pro-form makes that pro-form its phrase's head rather than a subject.
- * Admission follows the rule {@link BARE_VERBS} states: every entry is a word that no reading takes as a noun, which
- * keeps `header`, `parser`, and their like out.
+ * Admission follows the rule that {@link BARE_VERBS} states: Every entry is a word that no reading takes as a noun,
+ * which keeps `header`, `parser`, and their like out.
  */
 const COMPARATIVE_ADJECTIVES: ReadonlySet<string> = new Set([
   'better',
@@ -303,11 +304,11 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Adverbial pairs a quantifier opens. Each is a phrase rather than a noun phrase, so it opens no subject. The set
+ * Adverbial pairs opened by a quantifier. Each is a phrase rather than a noun phrase, so it opens no subject. The set
  * holds whole pairs because the second word alone decides nothing: `longer` and `later` are adjectives in `two longer
  * digests` and `many later drafts`, and every `-ly` adverb has an adjectival twin in `early`, `likely`, and `timely`.
- * Admission follows the rule {@link BARE_VERBS} states, applied to the pair: an entry is a pair that no reading takes
- * as a noun phrase, which keeps `most likely` out, its `likely` heading one freely.
+ * Admission follows the rule that {@link BARE_VERBS} states, applied to the pair: An entry is a pair that no reading
+ * takes as a noun phrase, which keeps `most likely` out, its `likely` heading one freely.
  */
 const DEGREE_ADVERBIALS: ReadonlySet<string> = new Set([
   'more reliably',
@@ -319,14 +320,14 @@ const DEGREE_ADVERBIALS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Determiners that also stand alone as a subject. `that` is absent: between a head and a subject it is the overt
- * relativizer the rule asks for, so a clause it opens is already clean.
+ * Determiners that also stand alone as a subject. `that` is absent: Between a head and a subject it is the overt
+ * relativizer that the rule asks for, so a clause that it opens is already clean.
  */
 const DEMONSTRATIVES: ReadonlySet<string> = new Set(['these', 'this', 'those']);
 
 /**
  * Participles whose verb takes two objects. A passive promotes one and leaves the other open, so a head noun can fill
- * the gap that remains: `the paths it is given` is the construction where `the paths it is used` is not.
+ * the gap that remains: `the paths it is given` is the construction, whereas `the paths it is used` is not.
  */
 const DITRANSITIVE_PARTICIPLES: ReadonlySet<string> = new Set([
   'assigned',
@@ -410,7 +411,7 @@ const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
 
 /**
  * Auxiliaries that also serve as a clause's transitive main verb, which is what `the version the consumer has` turns
- * on. A `be` form is absent: a copula takes no object, so a clause that it closes has no gap to find.
+ * on. A `be` form is absent: A copula takes no object, so a clause that it closes has no gap to find.
  */
 const MAIN_VERB_AUXILIARIES: ReadonlySet<string> = new Set(['did', 'do', 'does', 'had', 'has', 'have']);
 
@@ -436,9 +437,9 @@ const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
 /**
  * Modifiers that no reading takes as the head of a phrase they open. Each stands directly before the noun that it
  * modifies, so {@link findHeadIndex} would otherwise read the modifier as the head and the noun as a bare subject,
- * turning `the same rules apply` into a relative clause. Admission follows the rule {@link BARE_VERBS} states,
- * narrowed to this position: a word that heads a phrase elsewhere, `former` and `latter` among them, is admitted
- * only where no reading takes it as a noun with a noun following it.
+ * turning `the same rules apply` into a relative clause. Admission follows the rule that {@link BARE_VERBS} states,
+ * narrowed to this position: A word that heads a phrase elsewhere, `former` and `latter` among them, is admitted
+ * only when no reading takes it as a noun with a noun following it.
  */
 const NON_HEAD_MODIFIERS: ReadonlySet<string> = new Set(['other', 'own', 'same', 'single']);
 
@@ -510,7 +511,7 @@ const PREPOSITIONS: ReadonlySet<string> = new Set([
 
 /**
  * The anaphoric one-series, which heads a relative clause without being a lexical noun. A relativizer restores to it,
- * which is what separates it from a fused head: `one that the spy carries` reads where `everything that I know` is
+ * which is what separates it from a fused head: `one that the spy carries` reads, whereas `everything that I know` is
  * already the fused form. Both members bypass the head tests, `one` because a numeral reading rejects it and `ones`
  * because its `-s` would otherwise demand a specifier.
  */
@@ -574,8 +575,9 @@ const SUBJECT_PRONOUNS: ReadonlySet<string> = new Set(['he', 'i', 'it', 'one', '
 /**
  * The window in which each anchor's finite verb must fall, counted in tokens from the subject's first word. A
  * determiner, a numeral, and a quantifier each specify a noun, so the verb may not sit directly on one; a pronoun
- * subject is one word, and so is a bare one, since nothing marks where a longer one would begin. A demonstrative
- * reads either way, so it spans both: one token where it stands alone, up to four where it specifies a noun.
+ * subject is one word, and so is a bare one, since nothing marks where a longer one would begin. Because a
+ * demonstrative reads either way, its window spans both: one token when it stands alone, up to four when it
+ * specifies a noun.
  */
 const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }>> = {
   bare: { min: 1, max: 1 },
@@ -588,9 +590,9 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
 };
 
 /**
- * The ceiling a crossed preposition raises the subject window to, counted in tokens from the subject's first word. A
- * prepositional phrase inside a subject costs several tokens, and {@link strandsClauseFinalPreposition} rather than
- * the window is what carries precision once one is crossed.
+ * The ceiling to which a crossed preposition raises the subject window, counted in tokens from the subject's first
+ * word. A prepositional phrase inside a subject costs several tokens, and {@link strandsClauseFinalPreposition}
+ * rather than the window is what carries precision once one is crossed.
  */
 const EXTENDED_SUBJECT_WINDOW = 12;
 
@@ -600,7 +602,7 @@ type SubjectKind =
 
 /**
  * The shape under which each anchor reports, in the rulebook's own vocabulary. A demonstrative has none of its own:
- * it reports as a pronoun standing alone and as a definite noun phrase otherwise, which {@link resolveShape} reads
+ * It reports as a pronoun standing alone and as a definite noun phrase otherwise, which {@link resolveShape} reads
  * off where the verb closed.
  */
 const SHAPES_BY_KIND: Readonly<Record<Exclude<SubjectKind, 'demonstrative'>, SubjectShape>> = {
@@ -631,8 +633,8 @@ const SUBORDINATORS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Wh-words that put the phrase they open into a clause of their own. Each already binds whatever gap follows it, so
- * a head inside that phrase has no relativizer to restore.
+ * Wh-words that put the phrase that they open into a clause of their own. Each already binds whatever gap follows
+ * it, so a head inside that phrase has no relativizer to restore.
  */
 const WH_MARKERS: ReadonlySet<string> = new Set(['how', 'however', 'whose']);
 
@@ -653,15 +655,15 @@ const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
 
 /** The auxiliary chain opening at one auxiliary: what it carries, how that reads, and where the chain ends. */
 interface AuxiliaryChain {
-  /** Index of the lexical verb carried by the chain, or undefined where it carries none. */
+  /** Index of the lexical verb carried by the chain, or undefined if it carries none. */
   carriedIndex: number | undefined;
   /** Whether the chain's last auxiliary is a `be` form carrying something other than an `-ing` form. */
   isPassive: boolean;
-  /** Index of the chain's last auxiliary, which is the clause's main verb where the chain carries none. */
+  /** Index of the chain's last auxiliary, which is the clause's main verb when the chain carries none. */
   lastAuxiliaryIndex: number;
 }
 
-/** One word of a span, with the offsets a report and a line lookup are computed from. */
+/** One word of a span, with the offsets from which a report and a line lookup are computed. */
 interface Token {
   /** The word as written, stripped of the punctuation around it. */
   raw: string;
@@ -675,7 +677,7 @@ interface Token {
   afterBreak: boolean;
 }
 
-/** Punctuation that ends a clause where it adjoins a word; standing alone, any punctuation ends one. */
+/** Punctuation that ends a clause when it adjoins a word; standing alone, any punctuation ends one. */
 const CLAUSE_BREAK_PATTERN = /[,;:.!?()[\]{}"\u{2013}\u{2014}]/u;
 
 /** Reports whether a verb agrees with a plural subject, which is what a bare-noun subject always is. */
@@ -718,12 +720,12 @@ function buildCandidate(input: {
 
 /**
  * Scans one span for every site that the construction may occupy. A later anchor whose head falls inside an accepted
- * phrase is that same site read from one word further in: where it closes on the same verb it replaces the reading
- * before it, the nearer head being the tighter one, and where it closes elsewhere it is dropped. A distant head can
+ * phrase is that same site read from one word further in: When it closes on the same verb, it replaces the reading
+ * before it, the nearer head being the tighter one, and when it closes elsewhere, it is dropped. A distant head can
  * reach a verb across a crossed preposition, so first found is not the reading to keep.
  *
- * The nearer head is the sounder one only where every competing anchor opens a real subject, which is what
- * {@link opensDegreeAdverbial} secures: an anchor whose subject is adverbial takes the site's own subject as its
+ * The nearer head is the sounder one only when every competing anchor opens a real subject, which is what
+ * {@link opensDegreeAdverbial} secures: An anchor whose subject is adverbial takes the site's own subject as its
  * head, and would win on nearness alone.
  */
 function detectInSpan(span: ProseSpan): ObjectRelativeCandidate[] {
@@ -755,9 +757,10 @@ function detectInSpan(span: ProseSpan): ObjectRelativeCandidate[] {
 }
 
 /**
- * Classifies what a token opens an embedded subject with, or reports undefined where it opens none. Five kinds are
+ * Classifies what a token opens an embedded subject with, or reports undefined if it opens none. Five kinds are
  * read off closed classes; the bare kind has no marker, so a plural noun stands in for one. A demonstrative is
- * tested ahead of the determiner it also belongs to, since it alone of the determiners stands as a subject by itself.
+ * tested ahead of the determiner to which it also belongs, since it alone of the determiners stands as a subject by
+ * itself.
  */
 function classifySubject(tokens: readonly Token[], index: number): SubjectKind | undefined {
   const token = tokens[index];
@@ -775,7 +778,7 @@ function classifySubject(tokens: readonly Token[], index: number): SubjectKind |
 }
 
 /**
- * Reports whether the token at `index` closes a noun phrase a comparative adjective opens, which makes it that
+ * Reports whether the token at `index` closes a noun phrase opened by a comparative adjective, which makes it that
  * phrase's head rather than a subject: `an older one` in `a key an older one ignores`. Reading it as a subject gives
  * the site a second anchor whose head is the adjective, and {@link PRO_FORM_HEADS} reads the same word as a head in
  * that position, so the two treatments agree.
@@ -799,8 +802,8 @@ function opensDegreeAdverbial(tokens: readonly Token[], index: number): boolean 
 }
 
 /**
- * Returns the index of the head noun a subject at `subjectIndex` attaches to, or undefined where nothing there can be
- * one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
+ * Returns the index of the head noun to which a subject at `subjectIndex` attaches, or undefined if nothing there can
+ * be one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
  * modifier that no reading takes as a noun cannot, and neither can a wh-word, which heads no noun phrase. A pro-form
  * head is admitted ahead of those tests, since the numeral reading of `one` and the verbal reading of `ones` would
  * each reject it.
@@ -827,14 +830,14 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
 }
 
 /**
- * Reports whether a wh-word opens the phrase the token at `headIndex` heads. A fronted wh-phrase binds the gap after
- * it, so no relativizer is restorable and the rule governs nothing there: `how big the problem is`, `whose call it
- * is`, and `how many files the parser reads` are questions rather than heads with gaps.
+ * Reports whether a wh-word opens the phrase that the token at `headIndex` heads. A fronted wh-phrase binds the gap
+ * after it, so no relativizer is restorable and the rule governs nothing there: `how big the problem is`, `whose
+ * call it is`, and `how many files the parser reads` are questions rather than heads with gaps.
  *
  * The walk crosses a quantifier or a numeral, which stays inside the wh-phrase, and stops at a determiner, which
  * opens a phrase of its own. That is what leaves a genuine site nested in a wh-clause alone, as in `how the source it
  * names got stale`. A wh-word two or more tokens out with a determiner between, as in `what kind of content it is`,
- * is out of reach: reaching it needs a clause-level test, which would reject the nested sites too.
+ * is out of reach: Reaching it needs a clause-level test, which would reject the nested sites too.
  */
 function isWhMarkedHead(tokens: readonly Token[], headIndex: number): boolean {
   for (let index = headIndex - 1; index >= 0; index -= 1) {
@@ -858,7 +861,7 @@ function isFusedProForm(tokens: readonly Token[], headIndex: number): boolean {
 
 /**
  * Reports whether a word carrying verbal morphology is nonetheless heading a noun phrase, which a specifier before it
- * is what settles. Without one, an `-s` form is the clause's own verb and an `-ing` form is a participle, so reading
+ * settles. Without one, an `-s` form is the clause's own verb and an `-ing` form is a participle, so reading
  * either as a head noun produces a whole clause dressed as a relative.
  */
 function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean {
@@ -885,20 +888,20 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
 }
 
 /**
- * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined where none falls
+ * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined if none falls
  * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
  * plural agreement, which is the only reading its own form supports. A chain carrying no lexical verb closes the
- * subject on its last auxiliary where that is a {@link MAIN_VERB_AUXILIARIES} member, since a main-verb reading is
+ * subject on its last auxiliary when that is a {@link MAIN_VERB_AUXILIARIES} member, since a main-verb reading is
  * what remains: `the file the producer does not have` closes on `have`. A chain ending in a `be` form closes on that
- * form instead, where {@link closesOnCopula} holds, so `the version the consumer has been` closes on `been`.
+ * form instead, when {@link closesOnCopula} holds, so `the version the consumer has been` closes on `been`.
  *
  * An auxiliary chain that the clause fails is the end of the subject rather than a token to scan past. Continuing
  * would let the morphological test reach the same participle a second time and report what the chain just rejected.
  *
  * A preposition other than `of` opens a phrase inside the subject rather than ending it, and raises the ceiling to
- * {@link EXTENDED_SUBJECT_WINDOW} so a subject holding one is still reachable. Precision then passes from the window
- * to {@link strandsClauseFinalPreposition}: past a crossed preposition only a verb stranding a clause-final
+ * {@link EXTENDED_SUBJECT_WINDOW} so that a subject holding one is still reachable. Precision then passes from the
+ * window to {@link strandsClauseFinalPreposition}: Past a crossed preposition only a verb stranding a clause-final
  * preposition closes the clause, which is what tells the `lives` of `the sources this prose about the idioms lives
  * in` from the `idioms` before it. A direct-object gap behind such a subject is out of reach, the price of a window
  * this wide.
@@ -908,7 +911,8 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * source it names` does.
  *
  * A demonstrative standing alone closes on the token beside it, but not on one reading as a plural noun:
- * {@link isFiniteVerb} cannot tell that from a verb, and the noun a demonstrative specifies is the likelier reading.
+ * {@link isFiniteVerb} cannot tell that from a verb, and the noun that a demonstrative specifies is the likelier
+ * reading.
  */
 function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: SubjectKind): number | undefined {
   const window = SUBJECT_WINDOWS[kind];
@@ -944,10 +948,10 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
 }
 
 /**
- * Resolves the shape an anchor reports under. Every kind but the demonstrative has one of its own; a demonstrative
- * reports as a pronoun where it stands alone as the subject and as a definite noun phrase where it specifies a noun.
- * What separates the two is whether the scan crossed a noun rather than how far the verb sits, since
- * {@link skipsAsModifier} moves the verb one token further for every adverb it reads through.
+ * Resolves the shape under which an anchor reports. Every kind but the demonstrative has one of its own; a
+ * demonstrative reports as a pronoun when it stands alone as the subject and as a definite noun phrase when it
+ * specifies a noun. What separates the two is whether the scan crossed a noun rather than how far the verb sits,
+ * since {@link skipsAsModifier} moves the verb one token further for every adverb that it reads through.
  */
 function resolveShape(input: {
   tokens: readonly Token[];
@@ -962,7 +966,7 @@ function resolveShape(input: {
 
 /**
  * Reports whether the subject opening at `subjectIndex` is that token alone, every token between it and the verb
- * being a modifier the scan read through.
+ * being a modifier that the scan read through.
  */
 function standsAlone(tokens: readonly Token[], subjectIndex: number, verbIndex: number): boolean {
   for (let index = subjectIndex + 1; index < verbIndex; index += 1) {
@@ -981,8 +985,8 @@ function skipsAsModifier(word: string): boolean {
 
 /**
  * Resolves what an auxiliary at `index` does to the search. A chain carrying a lexical verb closes on that verb or
- * ends the search, since the chain it failed is the end of the subject; a chain carrying none closes on its last
- * auxiliary where that reads as the clause's own verb, either as a copula at the end of its clause or as a main-verb
+ * ends the search, since the chain that it failed is the end of the subject; a chain carrying none closes on its last
+ * auxiliary when that reads as the clause's own verb, either as a copula at the end of its clause or as a main-verb
  * auxiliary such as `has`.
  */
 function resolveAuxiliaryStep(input: {
@@ -1038,10 +1042,10 @@ function resolveScannedStep(input: {
 /**
  * Resolves the auxiliary chain opening at `auxiliaryIndex`: the lexical verb that it carries within
  * {@link CARRIED_VERB_WINDOW}, how that verb reads, and which auxiliary ends the chain. A modal is always followed by
- * a verb, which is what lets `the file the parser may read` be found where the morphological test sees nothing on
- * `read`; a further auxiliary, a negator, and an adverb between the two are skipped.
+ * a verb, which is what lets `the file the parser may read` be found even though the morphological test sees nothing
+ * on `read`; a further auxiliary, a negator, and an adverb between the two are skipped.
  *
- * The voice is read off the chain's last auxiliary rather than its first, so `has been approved` is passive where
+ * The voice is read off the chain's last auxiliary rather than its first, so `has been approved` is passive, whereas
  * `has approved` is active. A `be` form carrying an `-ing` form is progressive, which leaves the object gap open.
  */
 function resolveAuxiliaryChain(tokens: readonly Token[], auxiliaryIndex: number): AuxiliaryChain {
@@ -1075,9 +1079,9 @@ function isMannerAdverb(word: string): boolean {
 }
 
 /**
- * Returns the index of the verb carried by a chain where that verb closes a relative clause, or undefined where the
- * clause has no gap for the head noun to fill. A passive has promoted its own object, so it closes one only where
- * something else leaves a gap open; an intransitive verb closes one only where it strands a preposition.
+ * Returns the index of the verb carried by a chain when that verb closes a relative clause, or undefined if the
+ * clause has no gap for the head noun to fill. A passive has promoted its own object, so it closes one only when
+ * something else leaves a gap open; an intransitive verb closes one only when it strands a preposition.
  */
 function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): number | undefined {
   const { carriedIndex, isPassive } = chain;
@@ -1089,7 +1093,7 @@ function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): nu
 /**
  * Reports whether a token carried by an auxiliary can close a relative clause. The carried path admits whatever is
  * not a function word, since a past participle carries no marker held by any lexicon here; an intransitive verb is
- * the one exception, and closes a clause only where it strands a preposition.
+ * the one exception, and closes a clause only when it strands a preposition.
  */
 function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
   return !INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') || hasStrandedPreposition(tokens, index);
@@ -1097,7 +1101,7 @@ function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
 
 /**
  * Reports whether the token at `index`, reached by the scan rather than through an auxiliary, closes a relative
- * clause. {@link isFiniteVerb} decides that on the word alone; a word that it rejects is admitted back where a
+ * clause. {@link isFiniteVerb} decides that on the word alone; a word that it rejects is admitted back when a
  * stranded preposition gives the clause a gap, and an agentive participle is rejected whatever it says.
  */
 function closesScannedClause(tokens: readonly Token[], index: number, kind: SubjectKind): boolean {
@@ -1108,7 +1112,7 @@ function closesScannedClause(tokens: readonly Token[], index: number, kind: Subj
 /**
  * Reports whether the token at `index` is a participle carrying an agentive `by`, which modifies the noun before it
  * rather than closing a clause. That noun is what the scan took for a bare subject, so the reading is the rulebook's
- * own passive-participle repair misread: admitting it reports a repaired site back as a defect. The test is held to
+ * own passive-participle repair misread: Admitting it reports a repaired site back as a defect. The test is held to
  * the bare shape, since a longer subject means the `by` is doing other work, as in `the clauses the author struck by
  * name`. An irregular participle needs a lexicon and has none here, no site in the corpus having called for one.
  */
@@ -1121,7 +1125,7 @@ function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean 
 
 /**
  * Reports whether a copula at `index` closes a relative clause, which is what a predicate-nominal gap turns on. A
- * copula takes no object, so only its position says whether the head fills its complement slot: one at the end of
+ * copula takes no object, so only its position says whether the head fills its complement slot: One at the end of
  * its clause has an unfilled one, as in `the throwing mock it is`, and a trailing negator does not fill it either.
  */
 function closesOnCopula(tokens: readonly Token[], index: number): boolean {
@@ -1132,15 +1136,15 @@ function closesOnCopula(tokens: readonly Token[], index: number): boolean {
 
 /**
  * Reports whether the token at `index` strands a preposition that ends its clause. This is what a subject holding a
- * prepositional phrase is held to: a window wide enough to reach past one is wide enough to reach the noun that ends
- * the sentence, and {@link isFiniteVerb} reads that noun as a verb. The stranded preposition is the one signature the
- * raised window is raised for, so a clause-final token without one closes nothing.
+ * prepositional phrase is held to: A window wide enough to reach past one is wide enough to reach the noun that ends
+ * the sentence, and {@link isFiniteVerb} reads that noun as a verb. The stranded preposition is the one signature for
+ * which the raised window is raised, so a clause-final token without one closes nothing.
  */
 function strandsClauseFinalPreposition(tokens: readonly Token[], index: number): boolean {
   return hasStrandedPreposition(tokens, index) && isClauseFinal(tokens, index + 1);
 }
 
-/** Reports whether the token at `index` ends its clause: nothing follows it, or what follows opens a new one. */
+/** Reports whether the token at `index` ends its clause: Nothing follows it, or what follows opens a new one. */
 function isClauseFinal(tokens: readonly Token[], index: number): boolean {
   const next = tokens[index + 1];
   return next === undefined || next.afterBreak;
@@ -1150,7 +1154,7 @@ function isClauseFinal(tokens: readonly Token[], index: number): boolean {
  * Reports whether the token at `index` is a verb that a stranded preposition rescues. {@link isFiniteVerb} recognizes
  * a verb by morphology or by lexicon, and neither reaches a bare form such as `rest`; the stranded preposition is the
  * gap itself, so what precedes it needs only to be a word that can carry one. {@link hasStrandedPreposition} is what
- * keeps this from reaching a noun: a preposition with an object of its own strands nothing.
+ * keeps this from reaching a noun: A preposition with an object of its own strands nothing.
  */
 function isStrandedVerb(tokens: readonly Token[], index: number): boolean {
   const word = tokens[index]?.word ?? '';
@@ -1175,7 +1179,7 @@ function hostsGap(tokens: readonly Token[], index: number): boolean {
 }
 
 /**
- * Reports whether the token at `index` strands a preposition: one sits directly after it, and nothing in the clause
+ * Reports whether the token at `index` strands a preposition: One sits directly after it, and nothing in the clause
  * fills that preposition's own object slot. What follows the preposition is what settles it, which is how `the store
  * the events belong to` is told from `the events belong to the store`.
  */
@@ -1190,7 +1194,7 @@ function hasStrandedPreposition(tokens: readonly Token[], index: number): boolea
 }
 
 /**
- * Reports whether a word can be read as the finite verb of a relative clause. The test is loose by design: precision
+ * Reports whether a word can be read as the finite verb of a relative clause. The test is loose by design: Precision
  * belongs to the agent, and a test tight enough to reject every noun rejects the bare-noun and quantified shapes along
  * with them. An auxiliary or modal is excluded, since a relative clause's verb is a lexical one.
  */
@@ -1221,9 +1225,9 @@ function isFunctionWord(word: string): boolean {
 
 /**
  * Reports whether `specifier` specifies `head` rather than being a noun itself. A determiner, a quantifier, and a
- * numeral all specify, which is the same set {@link SUBJECT_WINDOWS} keys its two-token minimum on: whatever opens an
- * embedded subject's noun phrase opens the head's own. Number agreement decides the rest, and is what tells `two
- * warnings` from the `2 carrying` that a preceding exit code and a participle put side by side.
+ * numeral all specify, which is the same set on which {@link SUBJECT_WINDOWS} keys its two-token minimum: Whatever
+ * opens an embedded subject's noun phrase opens the head's own. Number agreement decides the rest, and is what tells
+ * `two warnings` from the `2 carrying` that a preceding exit code and a participle put side by side.
  */
 function isSpecifier(specifier: string, head: string): boolean {
   const requiresPluralHead =

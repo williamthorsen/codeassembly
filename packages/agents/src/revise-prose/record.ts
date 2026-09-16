@@ -3,15 +3,15 @@
  *
  * The record answers two questions on a later run: which paths a rule has already been swept over at its current
  * sweep version and whether its detector ran, and which sites an adjudicator has already rejected. A rejected site need
- * not be one a detector reports, so the second answer reaches a rule whose sites no candidate nominates. A raised sweep
- * version marks that rule's rejections stale rather than deleting them, so a rule's revision re-opens its rejections
- * for review instead of discarding the judgment behind them. A sweep at the new version is that review, and recording
- * it retires the stale rejections under its roots.
+ * not be one that a detector reports, so the second answer applies to a rule whose sites no candidate nominates.
+ * Because a raised sweep version marks that rule's rejections stale rather than deleting them, a rule's revision
+ * re-opens its rejections for review instead of discarding the judgment behind them. A sweep at the new version is that
+ * review, and recording it retires the stale rejections under its roots.
  *
- * A rejection resolves to a site by containment rather than by an exact string: see {@link applyRejections}. The record
+ * A rejection resolves to a site by containment rather than by an exact string: See {@link applyRejections}. The record
  * and the detector describe one site in spans of different lengths, so a phrase is what a reader locates the site by
- * rather than a string the detector must reproduce. Retiring one entry for another is the stricter test, since two
- * spans that merely overlap are not the same judgment: {@link rejectionKey} compares the whole phrase, normalized.
+ * rather than a string that the detector must reproduce. Retiring one entry for another is the stricter test, since
+ * two spans that merely overlap are not the same judgment: {@link rejectionKey} compares the whole phrase, normalized.
  *
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record. The helper's `record` command is the one
  * write path, which is what keeps the YAML deterministic rather than hand-edited into drift.
@@ -45,12 +45,12 @@ export const RULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 export const SWEEP_VERSION_PATTERN = /^[1-9]\d*$/;
 
 /**
- * A rule name. Any rule a bound rulebook declares is recordable, detected or not, so the shape is all that is held
- * here: pinning the detector registry's names would make a rule's coverage depend on holding a detector.
+ * A rule name. Any rule declared by a bound rulebook is recordable, detected or not, so the shape is all that is held
+ * here: Pinning the detector registry's names would make a rule's coverage depend on holding a detector.
  */
 const RuleNameSchema = z.string().regex(RULE_NAME_PATTERN, 'rule must be a lowercase kebab-case name');
 
-/** An ISO date, which is the precision a sweep is dated to; a sweep is not an event with a time of day. */
+/** An ISO date, which is the precision that a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
 
 /** A rule's coverage: the sweep version swept, when it was last swept, whether its detector ran, and the roots covered. */
@@ -136,7 +136,7 @@ const RunFoldSchema = z
   });
 
 /**
- * Applies the record's rejections to a candidate set: a candidate matching a rejection at its rule's current version
+ * Applies the record's rejections to a candidate set: A candidate matching a rejection at its rule's current version
  * is dropped, and one matching a rejection recorded at an older version is kept and marked stale, which re-opens the
  * judgment for review rather than discarding it.
  *
@@ -186,7 +186,7 @@ export function applyRejections(
  *
  * A prior rejection under the roots that the run swept, for a rule that the run versioned, is kept at the rule's
  * current version while `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and
- * the agent never dispatches a batch that the record already covers. One at an older version is retired: the run
+ * the agent never dispatches a batch that the record already covers. One at an older version is retired: The run
  * reviewed it at the new version, and a site that it rejected again is in the fold. `hasSite` is consulted for a
  * current-version rejection under those roots alone. A rejection outside them was never revisited, so it is carried
  * forward, which is what keeps a run narrowed to one directory from retracting the judgment recorded everywhere else.
@@ -216,8 +216,8 @@ export function composeRecord(
     return { ...rejection, 'rule-version': version };
   });
 
-  // A key the run re-recorded supersedes whatever the record held for it, which would otherwise stand beside the new
-  // entry as a second one for the same site.
+  // A key re-recorded by the run supersedes whatever the record held for it, which would otherwise stand beside the
+  // new entry as a second one for the same site.
   const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
   const carried = prior.rejections.filter((rejection) => {
     if (rerecorded.has(rejectionKey(rejection))) return false;
@@ -242,7 +242,7 @@ export function containsPhrase(text: SiteText, phrase: string): boolean {
   return flattenWhitespace(text.content.normalize('NFC')).includes(flattenWhitespace(phrase.normalize('NFC')));
 }
 
-/** Reports whether a rejection was recorded at a version older than the one a run holds for its rule. */
+/** Reports whether a rejection was recorded at a version older than the one that a run holds for its rule. */
 export function isStaleRejection(rejection: RecordedRejection, ruleVersions: ReadonlyMap<string, string>): boolean {
   const current = ruleVersions.get(rejection.rule);
   return current !== undefined && current !== rejection['rule-version'];
@@ -302,8 +302,8 @@ export function parseRecord(content: string, versions: SweepVersions, sourceLabe
 }
 
 /**
- * Parses a run's fold from the JSON the `record` command reads on standard input. A malformed fold throws rather than
- * writing a partial record, the record being the only durable trace of what a sweep adjudicated.
+ * Parses a run's fold from the JSON read by the `record` command on standard input. A malformed fold throws rather
+ * than writing a partial record, the record being the only durable trace of what a sweep adjudicated.
  */
 export function parseRunFold(json: string): RunFold {
   let parsed: unknown;
@@ -320,12 +320,12 @@ export function parseRunFold(json: string): RunFold {
 }
 
 /**
- * Selects the rejections a run inherits: those recorded against a file it read, under a rule the run versions, at that
- * rule's current version. A stale one is withheld, so its site reaches the sweeper with no prior verdict attached and
- * is adjudicated afresh, which is what makes a raised version a review rather than a deletion.
+ * Selects the rejections inherited by a run: those recorded against a file that it read, under a rule that the run
+ * versions, at that rule's current version. A stale one is withheld, so the sweeper receives its site with no prior
+ * verdict attached and adjudicates it afresh, which is what makes a raised version a review rather than a deletion.
  *
- * A rejection whose rule the run does not version is withheld on the same ground: no version stands to hold it against,
- * so nothing could ever re-open it.
+ * A rejection whose rule the run does not version is withheld on the same ground: Because no version stands to hold it
+ * against, nothing could ever re-open it.
  *
  * The projection drops the record's own bookkeeping. A settled site needs no argument, and the ground behind it would
  * seed the judgment of a sweeper who meets the site again once the rejection goes stale.
@@ -347,8 +347,8 @@ export function selectPriorRejections(
 
 /**
  * Renders a record as YAML, with rules keyed in sorted order and rejections sorted by rule, file, and phrase, each
- * entry's fields in a fixed order. Re-writing an unchanged record is byte-identical, which is what keeps the file out
- * of a diff it did not earn.
+ * entry's fields in a fixed order. Re-writing an unchanged record is byte-identical, which keeps the file out of
+ * the diff.
  */
 export function stringifyRecord(record: ProseRecord): string {
   const rules = Object.fromEntries(
@@ -387,10 +387,10 @@ function composeKey(...parts: readonly string[]): string {
  * other.
  *
  * The two come from different producers. The record holds the span reported by an adjudicator, readable enough to
- * locate the site by eye; the candidate holds the span emitted by its detector, which is shorter and carries a
+ * locate the site by eye; the candidate holds the span emitted by its detector, which is shorter and contains a
  * placeholder where an inline code span stood. Normalizing both through the detector's own pipeline puts them in one
  * form, and containment then resolves the length difference that remains. It runs both ways because an em-dash
- * candidate's phrase is its whole sentence, which a recorded phrase sits inside rather than around.
+ * candidate's phrase is its whole sentence, and a recorded phrase is inside that sentence rather than around it.
  */
 function coversPhrase(recorded: string, detected: string): boolean {
   const left = normalizeForMatch(recorded);
@@ -398,7 +398,7 @@ function coversPhrase(recorded: string, detected: string): boolean {
   return left.includes(right) || right.includes(left);
 }
 
-/** Renders a schema failure's issues as one line, each prefixed with the path it concerns. */
+/** Renders a schema failure's issues as one line, each prefixed with the path that it concerns. */
 function describeIssues(error: z.ZodError): string {
   return error.issues.map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('; ');
 }
@@ -428,7 +428,7 @@ function normalizeForMatch(phrase: string): string {
 
 /**
  * One rejection's identity within the record: its rule, its file, and its normalized phrase. Normalizing here is what
- * lets a re-record retire the entry it supersedes across a repair that only reflowed the line.
+ * lets a re-record retire the entry that it supersedes across a repair that only reflowed the line.
  */
 function rejectionKey(rejection: RecordedRejection): string {
   return composeKey(rejection.rule, rejection.file, normalizeForMatch(rejection.phrase));

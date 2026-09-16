@@ -37,7 +37,7 @@ export function findCodeSpans(text: string): ReadonlyArray<{ start: number; end:
   while (opening !== null) {
     const closing = findClosingRun(text, runs, opening[0].length);
     if (closing === null) {
-      // The run closes nothing, so it is literal text. Resuming just past it keeps every later pair in view, where
+      // The run closes nothing, so it is literal text. Resuming just past it keeps every later pair in view, whereas
       // abandoning the scan would leave the rest of the span unread.
       runs.lastIndex = opening.index + opening[0].length;
       opening = runs.exec(text);
@@ -53,7 +53,7 @@ export function findCodeSpans(text: string): ReadonlyArray<{ start: number; end:
 /**
  * Returns each sentence of a span that holds a match of `pattern` outside an inline code span, in reading order, with
  * the source line on which the sentence begins. A sentence holding two matches is returned once, since a rule whose
- * phrase is the sentence would otherwise report two candidates adjudicating the same text. `pattern` must carry the
+ * phrase is the sentence would otherwise report two candidates adjudicating the same text. `pattern` must have the
  * global flag.
  */
 export function findMatchingSentences(span: ProseSpan, pattern: RegExp): Array<{ line: number; sentence: string }> {
@@ -86,8 +86,8 @@ export function findSentence(text: string, start: number, end: number): string {
 
 /**
  * Returns the offsets bounding the sentence containing the range `start` to `end`. A range spanning a boundary yields
- * the whole run it covers, since a candidate reported across one is reported with everything a reader needs to judge
- * it. The bounds are what a caller reads to locate the sentence; {@link findSentence} returns its text.
+ * the whole run that it covers, since a candidate reported across one is reported with everything a reader needs to
+ * judge it. The bounds are what a caller reads to locate the sentence; {@link findSentence} returns its text.
  */
 export function findSentenceBounds(text: string, start: number, end: number): { start: number; end: number } {
   const boundary = new RegExp(SENTENCE_BOUNDARY);
@@ -102,19 +102,19 @@ export function findSentenceBounds(text: string, start: number, end: number): { 
   }
 
   const sentenceEnd = match === null ? text.length : Math.max(match.index + 1, end);
-  // The start lands just past the preceding sentence's terminator, so the whitespace separating the two belongs to
+  // The start is just past the preceding sentence's terminator, so the whitespace separating the two belongs to
   // neither. Trimming it here is what makes the start the offset of the sentence's own first character, which is the
-  // offset a caller counts newlines to.
+  // offset that a caller counts newlines to.
   return { start: skipWhitespace(text, sentenceStart, sentenceEnd), end: sentenceEnd };
 }
 
-/** Collapses every whitespace run to one space and trims the ends, which is the form a reported span takes. */
+/** Collapses every whitespace run to one space and trims the ends, which is the form that a reported span takes. */
 export function flattenWhitespace(text: string): string {
   return text.replaceAll(/\s+/g, ' ').trim();
 }
 
 /**
- * Reports whether a string literal carries enough words to read as prose rather than as data. This is the one test
+ * Reports whether a string literal contains enough words to read as prose rather than as data. This is the one test
  * applied to a literal by every extractor, so a help string and a YAML scalar are judged alike.
  */
 export function isProseLiteral(text: string): boolean {
@@ -144,7 +144,7 @@ export function listSentenceBounds(text: string): Array<{ start: number; end: nu
 
 // region | Helpers
 
-/** Fewest words a string literal must carry to read as prose rather than as data. */
+/** Fewest words that a string literal must contain to read as prose rather than as data. */
 const MIN_LITERAL_WORDS = 3;
 
 /** Matches a sentence terminator: a period, question mark, or exclamation mark before whitespace or the end. */
@@ -155,7 +155,7 @@ function countWords(text: string): number {
   return text.split(/\s+/).filter((word) => /[a-z]{2}/i.test(word)).length;
 }
 
-/** Advances `runs` to the next backtick run of exactly `length`, or returns null where the text holds none. */
+/** Advances `runs` to the next backtick run of exactly `length`, or returns null if the text holds none. */
 function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {
   let candidate = runs.exec(text);
   while (candidate !== null && candidate[0].length !== length) {
