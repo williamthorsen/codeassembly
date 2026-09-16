@@ -20,7 +20,7 @@ const CORPUS: readonly DecisionSpec[] = [
   { id: 'E', type: 'feat', capturedAt: '2026-05-01T00:00:00Z' },
 ];
 
-// The same five changes, each rated, so a floor has a full range to cut against.
+// The same five changes, each rated, so that a floor has a full range to cut against.
 const RATED_CORPUS: readonly DecisionSpec[] = [
   { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'exemplary' },
   { id: 'B', type: 'fix', capturedAt: '2026-02-01T00:00:00Z', quality: 'strong' },
@@ -81,7 +81,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
   });
 
-  it('buckets a record of a retired type by the tier the record carries', async () => {
+  it('buckets a record of a retired type by the tier that the record carries', async () => {
     const decisions: DecisionSpec[] = [
       { id: 'A', type: 'retired', capturedAt: '2026-01-01T00:00:00Z', tier: 'public' },
       { id: 'B', type: 'docs', capturedAt: '2026-09-01T00:00:00Z' },
@@ -121,7 +121,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toHaveLength(2);
   });
 
-  it('widens past a type the floor left short', async () => {
+  it('widens past a type that the floor left short', async () => {
     const decisions = [
       { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'poor' },
       { id: 'B', type: 'fix', capturedAt: '2026-02-01T00:00:00Z', quality: 'exemplary' },
@@ -132,7 +132,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('B')]);
   });
 
-  it('reports a rating the scale does not declare and keeps the record selectable without a floor', async () => {
+  it('reports a rating that the scale does not declare and keeps the record selectable without a floor', async () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'excellent' }];
     const selection = await select({ decisions, type: 'feat', count: 5 });
 
@@ -170,7 +170,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual(['The lede that merged.']);
   });
 
-  it('matches a record filed under an alias to the canonical type it was requested by', async () => {
+  it('matches a record filed under an alias to the canonical type by which it was requested', async () => {
     const decisions = [{ id: 'A', type: 'feature', capturedAt: '2026-01-01T00:00:00Z' }];
 
     const selection = await select({ decisions, type: 'feat', count: 1 });
@@ -218,7 +218,7 @@ describe(selectExemplars, () => {
 
     const selection = await select({ decisions: [], files, type: 'feat', count: 1 });
 
-    expect(selection.warnings).toStrictEqual(['Z.md: does not name the change it describes (type, pr)']);
+    expect(selection.warnings).toStrictEqual(['Z.md: does not name the change that it describes (type, pr)']);
   });
 
   it('reports the agent lede, the merged lede, and the comment when the request asks for the pair', async () => {
@@ -319,7 +319,7 @@ describe(selectExemplars, () => {
     expect(selection.warnings[0]).toContain('Z.md: carries neither a merged nor an agent lede');
   });
 
-  it('reports a decision that does not name the change it describes', async () => {
+  it('reports a decision that does not name the change that it describes', async () => {
     const files = {
       'Z.md':
         '---\nrecordType: event\nid: Z\ncaptured-at: 2026-09-01T00:00:00Z\ncwd: /repo\nsummary: S\ntags: [lede-decision]\ntier: public\n---\n\n## Agent lede\n\nText.\n',
@@ -327,7 +327,7 @@ describe(selectExemplars, () => {
 
     const selection = await select({ decisions: CORPUS, files, type: 'feat', count: 2 });
 
-    expect(selection.warnings[0]).toContain('Z.md: does not name the change it describes');
+    expect(selection.warnings[0]).toContain('Z.md: does not name the change that it describes');
   });
 });
 
@@ -343,7 +343,7 @@ describe('selectExemplars, on a tier request', () => {
   it('widens straight past the tier when it cannot fill the count', async () => {
     const selection = await selectByTier({ decisions: CORPUS, tier: 'internal', count: 3 });
 
-    // One record is internal, so the other two are made up from other tiers with no middle step.
+    // Because one record is internal, the other two are made up from other tiers with no middle step.
     expect(selection.widening).toBe('any');
     expect(selection.exemplars.map((exemplar) => exemplar.type)).toContain('refactor');
     expect(selection.exemplars).toHaveLength(3);
