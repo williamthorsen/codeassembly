@@ -114,9 +114,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -235,9 +241,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -356,9 +368,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -477,9 +495,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -598,9 +622,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -719,9 +749,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -840,9 +876,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -961,9 +1003,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -1082,9 +1130,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -1203,9 +1257,15 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-lede-decision
+      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/describe-change
+      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/revise-prose
+      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
       - packages/agents/src/test-utils
       - packages/agents/tsconfig.json
@@ -1275,6 +1335,11 @@ rejections:
     file: packages/agents/src/commands/library-list.ts
     phrase: const NO_DELIVERY_MODE = '—';
     ground: 'not prose: the character is the literal value printed in the delivery column, and a test names it as the em-dash delivery'
+  - rule: em-dash
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold — so the first request is slow.
+    ground: detector fixture or the expectation literal paired with one
   - rule: plain-speech
     rule-version: '6'
     file: packages/agents/.readyup/lib/guidance-constraints.ts
@@ -1347,6 +1412,16 @@ rejections:
     ground: the repair would name the Risks and Questions sections as the destination, which the original leaves open; it may instead mean the return block
   - rule: plain-speech
     rule-version: '6'
+    file: packages/agents/src/change-grammar/__tests__/parse.unit.test.ts
+    phrase: return carried;
+    ground: 'not prose: a local variable identifier in the `dropScopelessFields` helper'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/src/change-grammar/verify.ts
+    phrase: The structural rules run first and hold whatever the values are.
+    ground: the invariant sense of `hold`, which the rule keeps
+  - rule: plain-speech
+    rule-version: '6'
     file: packages/agents/src/commands/sync/__tests__/report.unit.test.ts
     phrase: a binding reaches no body at all
     ground: 'settled domain term: the advisory kind is `bound-unreached`, and the test name echoes that vocabulary'
@@ -1365,6 +1440,11 @@ rejections:
     file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
     phrase: retract source support ${path.join(sourcesRoot, 'org')} (source ships none)
     ground: an expected-output literal composed in sync's own source; `ships` here is the distribution sense rather than the release sense the word list names
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/src/describe-change/__tests__/consolidate-branch.unit.test.ts
+    phrase: lets one feat speak for a branch
+    ground: 'settled corpus vocabulary: `change-grammar/consolidate.ts` defines the consolidated record as the type that speaks for the branch'
   - rule: plain-speech
     rule-version: '6'
     file: packages/agents/src/lib/__tests__/shared-guidance-policy.unit.test.ts
@@ -3337,6 +3417,66 @@ rejections:
     ground: 'outside the rule: `the way ...` is an adjunct relative whose gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/__tests__/prepare-decision.unit.test.ts
+    phrase: whenever the two texts differ
+    ground: 'not the construction: `whenever` heads an adverbial clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/__tests__/resolve-episode.unit.test.ts
+    phrase: which the change summary writes unquoted
+    ground: 'not the construction: the clause already has an overt relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: In commit mode it resolves
+    ground: 'not the construction: a prepositional phrase followed by the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: In inspect mode it resolves
+    ground: 'not the construction: a prepositional phrase followed by the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: On a `realpathSync` failure the function emits
+    ground: 'not the construction: a prepositional phrase followed by the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: Resolves which mode the invocation selects
+    ground: 'not the construction: an embedded interrogative, which takes no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: When neither exists, the Claude name stands in
+    ground: 'not the construction: an adverbial clause followed by the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: whichever repository the pull request merged in
+    ground: 'fused head: `whichever` plus noun is its own relative and admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/types.ts
+    phrase: the JSON payloads emitted to stdout
+    ground: 'not the construction: `emitted` is a passive participle, so the phrase is already a reduced passive relative'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/apply-overrides.ts
+    phrase: add the marker supplies
+    ground: "not the construction: `supplies` is the sentence's own main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/parse.ts
+    phrase: ticket-reference forms stripped
+    ground: 'not the construction: `stripped` is a passive participle modifying `forms`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/verify.ts
+    phrase: which occurrence a value belongs to
+    ground: 'not the construction: an embedded question complementing `decide`'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/src/cli.ts
     phrase: Print the hook entries
     ground: "not the construction: `Print` is the help line's leading verb, not a head noun"
@@ -3540,6 +3680,66 @@ rejections:
     file: packages/agents/src/commands/validate.ts
     phrase: When neither yields one, the error names both routes
     ground: "not the construction: the detector's head and subject were parts of a gerund phrase; the sentence was separately recast under plain speech"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/__tests__/change-record-block.unit.test.ts
+    phrase: back the block rendered
+    ground: "not the construction: `rendered for $name` is a passive participle, the rule's own first-choice repair form"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/__tests__/consolidate-branch.unit.test.ts
+    phrase: alongside another commit
+    ground: 'not the construction: `alongside` is a preposition and `trailers` its object noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/__tests__/consolidate-branch.unit.test.ts
+    phrase: which subject it came from
+    ground: 'not the construction: an embedded question complementing `names`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/__tests__/read-label-map.unit.test.ts
+    phrase: name two $section keys
+    ground: "not the construction: `name` is the clause's own verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/__tests__/repository-templates.unit.test.ts
+    phrase: the engine's semantics decide what they render
+    ground: 'not the construction: `semantics` is the subject of its own verb `decide`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/cli.ts
+    phrase: On a `realpathSync` failure the function emits a warning
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/load-preferences.ts
+    phrase: which subdirectory the caller invoked it from
+    ground: 'outside the rule: an embedded interrogative headed by `which`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/resolve-merge.ts
+    phrase: the trailing lines that only close a ticket dropped
+    ground: 'not the construction: the relative already has `that`, and `dropped` is the participle of the absolute phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/resolve-merge.ts
+    phrase: whether or not the resolution used it
+    ground: 'not the construction: `whether or not` heads a complement clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/types.ts
+    phrase: in the order the rendered output names them
+    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/describe-change/types.ts
+    phrase: The surface names widened to strings
+    ground: 'not the construction: `widened` is a participle modifying the noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/lede-corpus/__tests__/lede-sections.unit.test.ts
+    phrase: whichever verdict its author recorded
+    ground: 'outside the rule: a free relative headed by `whichever`, which admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/__tests__/ambient-region.unit.test.ts
@@ -3835,6 +4035,796 @@ rejections:
     file: packages/agents/src/lib/support-deploy.ts
     phrase: holds something a source claims
     ground: 'outside the rule: an indefinite-pronoun head'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: a figure the document displays on purpose
+    ground: 'not prose: a fixture phrase written into the record and asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: Reads back the phrases of the rejections in the written record.
+    ground: 'not the construction: a verb particle plus its object, with no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: The helper reports the source it names.
+    ground: 'a marked exhibit: the fixture sentence whose object relative every detection assertion in the file turns on'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: the source it names
+    ground: 'not prose: a fixture phrase that must match the wrapped comment written into the scratch file'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: which the record round-trip assertions read
+    ground: 'not the construction: the relativizer `which` is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: A comment naming @generated in prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: A line comment naming @generated in prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: a schema the sweep may not edit
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Authored doc prose the sweep reads.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Authored prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Blocked prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Bounded prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Configured prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Copied prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Deployed prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Described prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Documented prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: from a schema the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Generated prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: is one marker the sweep knows.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Listed prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Mentioned prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Quoting doc prose the sweep reads.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Recorded prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Rendered prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Sealed prose the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Vendored doc prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Vendored prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.tool.test.ts
+    phrase: Vendored shell prose the sweep may not edit.
+    ground: 'not prose: fixture file content asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: '# A comment about the file the sweep reads.'
+    ground: 'not prose: fixture YAML passed to the extractor'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: '# Reports the branch a worktree checks out.'
+    ground: 'not prose: fixture shell source passed to the extractor'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: '# The root `tsconfig.json` names it.'
+    ground: "not the construction and not prose: a fixture shell comment whose `it` is the verb's object"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: A block scalar line the reader reads.
+    ground: 'not prose: fixture YAML passed to the extractor'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: A comment about the file the sweep reads.
+    ground: 'not prose: an assertion literal that must match the fixture'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: A second one the reader reads.
+    ground: 'not prose: fixture YAML and the assertion literal that must match it'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: 'description: Reports the branch a worktree checks out.'
+    ground: 'not prose: fixture frontmatter passed to the extractor'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: Print the ID of the ticket a branch name encodes.
+    ground: 'not prose: fixture source passed to the extractor and asserted byte-for-byte'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: Reports the branch a worktree checks out.
+    ground: 'not prose: fixture content and the assertion literal that must match it'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: Resolves the source it names.
+    ground: 'not prose: an assertion literal that must match the fixture comment'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: 'text: Reports the branch a worktree checks out.'
+    ground: 'not prose: fixture YAML passed to the extractor'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: The share each caller holds.
+    ground: 'not prose: an assertion literal that must match the fixture comment'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/collect-prose.unit.test.ts
+    phrase: the source  it names
+    ground: 'not prose: an assertion literal built from the fixture table cells'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: baseline the values sit
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: body the user most recently approved
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: body this also read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: body this read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: check it does
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: checks these gates enforce
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: clause its error message reports
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: clauses the author struck
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: consent these checks rest
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: dependency only a bin imports
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: effects the runner defers
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: entries the sweep no longer holds
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: fields records have
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file it may not have read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file it may read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file the parser may explicitly read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file the parser may read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file the parser read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file the parser should be
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file the parser will not read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: file the producer does not have
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: harness it lands
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: idiom developers recognize
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: idiom two of them recognize
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: item the caller did not supply
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: key an older one ignores
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: key the library rejects
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: kit the «codespan» package publishes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: level it is probed
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: levels systems depend
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: line the caller writes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: message an unknown thrown value carries
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: message it raises
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: message the console is writing
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: message the console never wrote
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: message the library raises
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: mock it also is
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: mock it is
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: namespaces no source claims
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: number the branch encodes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: one it declares
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: one it names
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: one the runner renders
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: one the spy carries
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ones the runner renders
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: paths it is given
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: point nothing imports
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ref a branch name encodes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ref it finds
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: reports many early readers
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: reports many later drafts
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: reports no early readers
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: reports two likely readers
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: reports two longer digests
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: set the entries belong
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: setting the config overrides
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: signal it was meant
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: source it also names
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: source it names
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: source it quietly names
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: source it was copied
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: source one names
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: source the user's «codespan» declares
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: sources this package's own prose about the idioms lives
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: sources this prose about the idioms has drawn
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: state it found
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: state it may depend
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ticket a branch name encodes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ticket the branch name encodes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ticket the branch name held
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: ticket the name encodes
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: value it reports
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: version the consumer has
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: version the consumer has approved
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: version the consumer has been
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: version the consumer has had
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: version the consumer has read
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: version this package declares
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: warning the parser emitted
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: warnings the parser emitted
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: wrapping two of them apply
+    ground: detector fixture or the expectation literal paired with one
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/record.unit.test.ts
+    phrase: Resolves the source it names.
+    ground: 'not prose: a fixture body that the phrase-matching assertion reads'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/record.unit.test.ts
+    phrase: the source it names
+    ground: 'not prose: the phrase argument that the assertion requires the fixture not to contain'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/record.unit.test.ts
+    phrase: whatever a stale one recorded beside it holds
+    ground: 'not the construction: `recorded beside it` is a passive participle, and `whatever ... holds` is a fused head'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/record.unit.test.ts
+    phrase: whatever rule it names
+    ground: 'not prose: a fixture phrase, and `whatever rule` is a fused head that admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/batch.ts
+    phrase: order the sweep resolved them
+    ground: 'adjunct relative: the gap fills no argument position, the preposition preceding the head'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: a fronted prepositional phrase followed by the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/cli.ts
+    phrase: not the helper has
+    ground: 'not the construction: a subordinate interrogative'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/cli.ts
+    phrase: order the rulebook ranks
+    ground: adjunct relative, as in `the way it works`
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/cli.ts
+    phrase: record all become structured
+    ground: "not the construction: `all` is a floating quantifier and `become` the sentence's own main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/collect-prose.ts
+    phrase: as the generator markers are
+    ground: 'not the construction: a comparative clause with an elided predicate'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/convert-record.ts
+    phrase: whenever it reads one
+    ground: 'not the construction: `whenever` heads an adverbial clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: auxiliary its lexical verb may sit
+    ground: 'not the construction: an embedded interrogative'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: bypass the head tests
+    ground: "not the construction: the candidate's verb is the sentence's own main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: rulebook's two out-of-scope heads
+    ground: 'not the construction: a possessive noun phrase followed by an appositive'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: verb it replaces
+    ground: "not the construction: the conditional's main clause"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/extract-yaml.ts
+    phrase: a folded scalar's parsed value
+    ground: 'not the construction: a possessive noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/extract-yaml.ts
+    phrase: whether or not it yields prose
+    ground: 'not the construction: the complement of `whether or not`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/record.ts
+    phrase: a stale one recorded beside it
+    ground: 'not the construction: a passive participle modifying `one`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/record.ts
+    phrase: one matching a rejection recorded at an older version
+    ground: 'not the construction: `matching` heads a participial phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/rules.ts
+    phrase: by file in the order the sweep resolved them
+    ground: 'outside the rule: an adjunct relative on `the order`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/span-text.ts
+    phrase: makes the start the offset of the sentence's own first character
+    ground: 'not the construction: a small clause after `makes`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/types.ts
+    phrase: each with its inline code spans masked
+    ground: 'not the construction: an absolute phrase with a past participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/types.ts
+    phrase: in the order the rulebook ranks it
+    ground: an adjunct relative; the gap fills the adjunct rather than an argument position
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/types.ts
+    phrase: in the order the sweep resolved them
+    ground: an adjunct relative; the gap fills the adjunct rather than an argument position
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/types.ts
+    phrase: the path roots covered at that version
+    ground: 'not the construction: `covered` is a past participle modifying the noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/types.ts
+    phrase: whether or not the helper holds a detector for it
+    ground: 'not the construction: `whether or not` heads a concessive clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/__tests__/select-exemplars.unit.test.ts
+    phrase: whether or not the pair is asked for
+    ground: 'not the construction: `whether or not` heads a concessive clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/cli.ts
+    phrase: no lede decisions rated ${minQuality} or better were found in ${corpus}
+    ground: 'not the construction: `rated` is a participle modifying the subject of a passive main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/cli.ts
+    phrase: no lede decisions were found in ${corpus}
+    ground: 'not the construction: a plain passive main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/cli.ts
+    phrase: On a `realpathSync` failure the function emits a warning
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/cli.ts
+    phrase: whichever repository the pull request merged in
+    ground: 'outside the rule: a fused head, which is its own relative word and admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/cli.ts
+    phrase: whichever store a machine defaults to
+    ground: 'outside the rule: a fused head, which is its own relative word and admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/select-exemplars.ts
+    phrase: a full one ends the scan
+    ground: "not the construction: `ends` is the clause's own main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/select-exemplars.ts
+    phrase: exactly as a scarce one does
+    ground: 'not the construction: a comparative clause with no head noun and no gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/select-exemplars.ts
+    phrase: which bucket a candidate belongs to
+    ground: 'not the construction: an interrogative complement clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/shared/parse-remote-url.ts
@@ -4195,6 +5185,31 @@ rejections:
     file: packages/agents/src/lib/__tests__/tool-name-rewriter.unit.test.ts
     phrase: You have `Write` but not `Edit`.
     ground: the expected output of the same fixture
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: All you need is the branch name.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: An ask is theirs however confident you are.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-second-person.unit.test.ts
+    phrase: Pass your config to the flag.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-second-person.unit.test.ts
+    phrase: You read each file whole.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-second-person.unit.test.ts
+    phrase: You set your own budget.
+    ground: detector fixture or the expectation literal paired with one
   - rule: so
     rule-version: '1'
     file: packages/agents/__tests__/scratch-directory-conventions.unit.test.ts
@@ -4549,6 +5564,31 @@ rejections:
     ground: states a direct result, with no clause-joining `so` before it in the file
   - rule: so
     rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/__tests__/cli.tool.test.ts
+    phrase: which carries no `.agents/kb.yaml`, so a store resolves to `not-registered` deterministically
+    ground: a lone `so` stating a direct result of the missing file; the only earlier `so` is the bare candidate on the line above, repaired to `so that`
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: must appear, so the mode and the rating are decided together rather than validated separately
+    ground: states a direct result; the `so` said to repeat is in a different function's doc comment
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/cli.ts
+    phrase: so the destination is a property of this helper rather than of the change under review
+    ground: states a direct result; the `so` said to repeat is in a separate doc comment on another declaration
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/resolve-episode.ts
+    phrase: the digests are hashed together, so a change to either moves the result
+    ground: a lone `so` stating a direct result; the only earlier `so` within three sentences was repaired to `so that`
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/__tests__/render.unit.test.ts
+    phrase: drops the wildcard scope, so its group drops with it
+    ground: states a direct result; the `so` that it repeats is in a separate test title
+  - rule: so
+    rule-version: '1'
     file: packages/agents/src/commands/__tests__/init.unit.test.ts
     phrase: An empty list is honored as "target nothing", so scaffolding one under a comment promising the fallback would disable every deployment for a reader who uncommented it verbatim.
     ground: a lone `so` stating a direct result once the earlier repeat in the same file was repaired
@@ -4647,6 +5687,31 @@ rejections:
     file: packages/agents/src/commands/test-utils/build-content-tree.ts
     phrase: contains a relative `../_data/` link, so the install exercises path
     ground: states a direct result; the preceding `so` was repaired to `so that`
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/describe-change/cli.ts
+    phrase: Both sides are resolved through `realpathSync`, so a symlinked invocation path still matches.
+    ground: "outside the rule: a lone `so` stating a direct result; the earlier `so` is an error string inside another function's body"
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/describe-change/cli.ts
+    phrase: commit.title_format is empty, so a branch
+    ground: "outside the rule: a lone `so` stating a direct result; the earlier `so` is in the function's doc comment"
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/describe-change/cli.ts
+    phrase: commit.title_format is empty, so no commit and no title prefix can be read through it
+    ground: "outside the rule: a lone `so` stating a direct result; the `so` said to repeat is in another function's doc comment"
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/describe-change/read-commits.ts
+    phrase: so reporting it as unmatched would train a reader to skim the list that exists to be read
+    ground: 'no longer a repeat: the neighbouring uses were repaired, leaving three sentences of clearance'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/lede-corpus/lede-quality.ts
+    phrase: a level's rank is its position in the tuple rather than any property of the level itself
+    ground: 'no longer a repeat: an earlier repair left five sentences of clearance'
   - rule: so
     rule-version: '1'
     file: packages/agents/src/lib/__tests__/preferences-schema.unit.test.ts
@@ -4824,6 +5889,141 @@ rejections:
     file: packages/agents/src/lib/work-types.ts
     phrase: so `feat!` names the `feat` entry
     ground: a lone `so` that states a direct result
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: reports a live rejection to the run, so the sweeper leaves the site alone
+    ground: a lone `so` stating a direct result; the earlier use is in a separate test label
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
+    phrase: The cache is cold
+    ground: 'a marked exhibit: the em-dash fixture sentence, asserted on by the detection tests'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-em-dash.unit.test.ts
+    phrase: The cache is cold--so the transport reconnects.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-em-dash.unit.test.ts
+    phrase: The cache is cold${EM_DASH}so the transport reconnects.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: 'passes over a lone so after a result marker: "%s"'
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: So many requests are slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: So the gate is the union of their file lists.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold -- so the first request is slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold — so the first request is slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold, so many requests are slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold, so the first request is slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold, so the loader runs.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold, so the loader warms it, so the request is fast.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold, so the request is slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The cache is cold; so the first request is slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The disk fills, so the job fails.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The loader warms it so the request is fast.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The loader warms the cache so the first request is fast.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The owning source decides it and so is supplied per skill.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The record is stale, and so the sweep runs again.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
+    phrase: The run is so slow.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/record.unit.test.ts
+    phrase: so the transport reconnects
+    ground: 'not prose: a fixture phrase asserted against the fixture sentence above it'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/record.unit.test.ts
+    phrase: writes roots shared between rules in full, so a rewrite of the parsed record renders the same bytes
+    ground: a lone `so` stating a direct result; the earlier use is a separate test label
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/collect-prose.ts
+    phrase: would hand a subagent a lockfile to read for nothing
+    ground: a correct result use; the `so` it repeats is in a separate inline comment forty lines earlier
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: so nothing but a lexicon recognizes one
+    ground: the nearest earlier `so` is in another doc comment, separated by code
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/extract-yaml.ts
+    phrase: so the span opens on the line after it
+    ground: a one-sentence inline comment; the nearest earlier `so` is in another comment
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/select-lede-exemplars/cli.ts
+    phrase: is not declared in work-types.json, so its tier cannot be resolved
+    ground: 'outside the rule: a lone `so` stating a direct result; the earlier `so` is in a doc comment'
   - rule: where
     rule-version: '1'
     file: packages/agents/.readyup/kits/default.ts
@@ -5381,6 +6581,41 @@ rejections:
     ground: 'outside the rule: the word names a place in the snippet'
   - rule: where
     rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/__tests__/prepare-decision.unit.test.ts
+    phrase: carries the rating in frontmatter, where the exemplar selector reads a record
+    ground: 'the word names a place: frontmatter is the location in the record at which the selector reads'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/capture-lede-decision/__tests__/resolve-episode.unit.test.ts
+    phrase: where `null` leaves a flag out that `inputFor` would otherwise supply
+    ground: 'outside the rule: it states what the value `null` stands for among the identity flags just named, the definitional sense that the rule permits'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/__tests__/verify.unit.test.ts
+    phrase: places {breaking} where
+    ground: the word names a position in the template; the string also quotes a message composed by `verify.ts`, so changing it would break the assertion
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/__tests__/verify.unit.test.ts
+    phrase: refuses {breaking} beside free text, where the marker is not distinguishable
+    ground: 'the word names a place: the position beside free text'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/apply-overrides.ts
+    phrase: Reads a scope override, where `*` names no scope.
+    ground: 'outside the rule: the clause states what the value `*` stands for'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/verify.ts
+    phrase: hiding where the group begins
+    ground: 'outside the rule: `where` names the point in the string at which the group starts'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/change-grammar/verify.ts
+    phrase: placed where the marker cannot be told from its neighbours
+    ground: 'outside the rule: `where` names the position in the template at which the token sits'
+  - rule: where
+    rule-version: '1'
     file: packages/agents/src/commands/__tests__/install-retraction.unit.test.ts
     phrase: which is where `install` reads the `harnesses:` block from
     ground: 'outside the rule: the word names a place, the declaration file that `install` reads from'
@@ -5474,6 +6709,16 @@ rejections:
     file: packages/agents/src/commands/sync/sync.ts
     phrase: cannot disagree about where a link target lands
     ground: 'outside the rule: `where` names a place, the deployed path of the link target'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/describe-change/__tests__/cli.tool.test.ts
+    phrase: where <subcommand> is one of ${SUBCOMMAND_NAMES.join(', ')}
+    ground: "outside the rule: it defines the placeholder `<subcommand>` in the usage expression before it, and the string is asserted verbatim against the helper's own error message"
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/describe-change/cli.ts
+    phrase: 'usage: ${PROGRAM} <subcommand> [flags], where <subcommand> is one of'
+    ground: 'outside the rule: the `where` follows an expression and defines the placeholder `<subcommand>` in it'
   - rule: where
     rule-version: '1'
     file: packages/agents/src/lib/__tests__/codeassembly-schema.unit.test.ts
@@ -5629,6 +6874,76 @@ rejections:
     file: packages/agents/src/lib/running-package.ts
     phrase: which is where the walk has run out of ancestors
     ground: '`where` names a place: the filesystem root, the antecedent of `which`'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: 'passes over a modifier standing where a head noun would: %s'
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: Reports what disqualifies a bin target, or undefined where the source it names is fit to run.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
+    phrase: Reports what disqualifies a bin target, or undefined where the source that it names is fit to run.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-where.unit.test.ts
+    phrase: First sentence.\nSecond, where.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-where.unit.test.ts
+    phrase: Skip the batch where the record covers it.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-where.unit.test.ts
+    phrase: The file where it lives is where it stays.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/__tests__/detect-where.unit.test.ts
+    phrase: Where a unit names no rule, nothing is detected.
+    ground: detector fixture or the expectation literal paired with one
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: and where the chain ends
+    ground: 'outside the rule: the word names the position at which the chain ends'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: reads off where the verb closed
+    ground: 'outside the rule: the word names the position at which the verb closed'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: Reports whether a head sits where a verb belongs rather than where a noun does.
+    ground: 'outside the rule: both uses name a position'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: since it stands where a word of the subject stood
+    ground: 'outside the rule: the word names the slot that a word of the subject held'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: since nothing marks where a longer one would begin
+    ground: 'outside the rule: the word names the point at which a longer subject would begin'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/detect-object-relative.ts
+    phrase: where the head fills its complement slot
+    ground: 'outside the rule: the word names the clause-final position'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/revise-prose/record.ts
+    phrase: contains a placeholder where an inline code span stood
+    ground: 'outside the rule: the word names the position at which the code span stood'
   - rule: where
     rule-version: '1'
     file: packages/agents/src/shared/resolve-project-root.ts
