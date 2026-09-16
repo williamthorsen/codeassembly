@@ -216,7 +216,7 @@ function findCollisionDefects(artifacts: ResolvedArtifacts): ReadonlyArray<Conte
   const rulebookSkillDirs = artifacts.rulebooks.filter((book) => book.skill).map((book) => book.skillName);
   const declaredSkillSlugs = new Set(artifacts.skills.map((skill) => skill.slug));
   for (const name of findCrossNamespaceCollisions(rulebookSkillDirs, declaredSkillSlugs)) {
-    // The report is attributed to whichever side the root owns, since that is the side that its author can rename.
+    // The check reports against whichever side the root owns, since that is the side that its author can rename.
     const ownedRulebook = ownedRulebooks.find((book) => book.skill && book.skillName === name);
     const file = ownedSkillSlugs.has(name)
       ? artifactFrontmatterPath('skill', name)

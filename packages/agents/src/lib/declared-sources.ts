@@ -76,7 +76,7 @@ export async function resolveDeclaredSources(options: {
     return { sources: [], missingSources: [], roots: [{ dir: contentDir }] };
   }
 
-  // A declared package contributes both a source and a set of seeds: Its content dir is searched below the
+  // A declared package contributes both a source and a set of seeds: The array below puts its content dir under the
   // hand-declared sources, so a hand-pointed local directory outranks a dependency.
   const packageSources = await resolvePackageSources(declaration.packages, baseDir);
   const sources: ReadonlyArray<DeclaredSource> = [

@@ -33,14 +33,14 @@ export const SourceSchema = z.object({ name: z.string().min(1), path: z.string()
  * null block is omitted. `packages` and `harnesses` reuse that same block shape, so `use`, `drop`, and `root` apply
  * to a package name and a harness id exactly as they do to an artifact slug.
  *
- * `home-writer` is declared beside `root` because it is a scalar setting about the run rather than a block naming
+ * `home-writer` appears beside `root` because it is a scalar setting about the run rather than a block naming
  * artifacts. It takes effect only in the home domain, where the guard on `install` and `sync --global` reads it, and a
  * project-domain file declaring it is rejected by name.
  *
- * `harnesses` is declared above `sources` because it governs where a run deploys rather than which artifacts it
+ * `harnesses` appears above `sources` because it governs where a run deploys rather than which artifacts it
  * deploys, and it is the one key that resolves across the home and project domains rather than within one of them.
  *
- * `guidance-hooks` is declared last because it configures the artifacts the keys above adopt rather than naming any.
+ * `guidance-hooks` appears last because it configures the artifacts that the keys above adopt rather than naming any.
  * It is the one map-valued key: Each hook name owns a `{ use, drop }` block of its own, so a tier binds to one hook
  * without disturbing another.
  */
