@@ -4,8 +4,8 @@
  * The sweep reads what git tracks plus what git would track, which respects `.gitignore` and so keeps `node_modules/`
  * and `dist/` out for free. Extraction is per file type: Markdown body text, comments and multi-word string literals
  * in TypeScript and JavaScript, `#` comments in shell, and comments, block scalars, and multi-word values in YAML.
- * Everything mechanical about scope is decided here, so the detector sees prose alone and the agent never adjudicates
- * a candidate from a file that it may not edit.
+ * Everything mechanical about scope is decided here, so that the detector sees prose alone and the agent never
+ * adjudicates a candidate from a file that it may not edit.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -25,9 +25,12 @@ import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 export interface ProseCollection {
   /** The resolved target set, in git's own order. Nothing outside it may be edited. */
   files: readonly string[];
-  /** The files the sweep read prose from, in the target set's own order, each with the bytes a batch budget reads. */
+  /**
+   * The files from which the sweep read prose, in the target set's own order, each with the bytes that a batch budget
+   * reads.
+   */
   scannedFiles: readonly ScannedFile[];
-  /** Files excluded, by the reason each was excluded, so no exclusion is silent. */
+  /** Files excluded, by the reason each was excluded, so that no exclusion is silent. */
   skipped: Readonly<Record<SkipReason, number>>;
   spans: readonly ProseSpan[];
 }
@@ -37,8 +40,8 @@ export class NotARepositoryError extends Error {}
 
 /**
  * Resolves the target set under `root` and extracts every block of prose from it. `paths` narrows the sweep to the
- * files those paths name or contain; an empty list sweeps the whole repository. Throws {@link NotARepositoryError}
- * where `root` is not inside a git working tree.
+ * files that those paths name or contain; an empty list sweeps the whole repository. Throws
+ * {@link NotARepositoryError} when `root` is not inside a git working tree.
  */
 export async function collectProse(input: {
   root: string;
@@ -61,7 +64,8 @@ export async function collectProse(input: {
 
   for (const file of files) {
     // The extension decides whether a file is worth reading at all, so an image or an archive is never pulled into
-    // a string. Only an extensionless file falls through to the read, where a shebang is the one remaining signal.
+    // a string. Only an extensionless file falls through to the read, at which point a shebang is the one remaining
+    // signal.
     const extensionKind = classifyByExtension(file);
     if (extensionKind === undefined && path.extname(file) !== '') {
       skipped.ineligible += 1;
@@ -115,7 +119,7 @@ export async function collectProse(input: {
 
 /**
  * Extracts every block of prose from one file's content, classifying the file as {@link collectProse} does: by its
- * extension, or by its shebang where it has none. A file that no extractor reads, and YAML that the parser cannot read,
+ * extension, or by its shebang when it has none. A file that no extractor reads, and YAML that the parser cannot read,
  * yield no spans.
  */
 export function extractFileProse(input: { file: string; content: string }): ProseSpan[] {
@@ -131,9 +135,9 @@ export function extractFileProse(input: { file: string; content: string }): Pros
 }
 
 /**
- * Extracts every block of prose from one file's content, each carrying the line on which it begins. Inline code spans
- * are masked on the way out, so no detector reads a span's content as words whatever kind the file is. Throws
- * {@link UnparsableYamlError} where the content is YAML that the parser cannot read.
+ * Extracts every block of prose from one file's content, each naming the line on which it begins. Inline code spans
+ * are masked on the way out, so that no detector reads a span's content as words whatever kind the file is. Throws
+ * {@link UnparsableYamlError} when the content is YAML that the parser cannot read.
  */
 export function extractProse(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
   return extractByKind(input).map((span) => ({ ...span, text: maskCodeSpans(span.text) }));
@@ -141,7 +145,7 @@ export function extractProse(input: { file: string; content: string; kind: Prose
 
 /**
  * Lists the prose-bearing files under `root` that the sweep may edit: what git tracks plus what it would track, minus
- * the paths {@link isExcludedPath} rules out. `paths` narrows the listing; an empty list covers the repository.
+ * the paths that {@link isExcludedPath} rules out. `paths` narrows the listing; an empty list covers the repository.
  */
 export function resolveTargetFiles(input: {
   root: string;
@@ -192,7 +196,7 @@ const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 /**
  * Markers stamped into deployed output, each anchored to the start of a line. Every deployment writes its marker on a
  * line of its own: the provenance headline as a `#` or `<!--` comment, and an ownership or guidance-hook marker as an
- * HTML comment. A mention inside a sentence or a code span is prose about the marker, and the file carrying it is
+ * HTML comment. A mention inside a sentence or a code span is prose about the marker, and the file containing it is
  * authored source that the sweep must read.
  */
 const DEPLOYMENT_MARKERS: readonly RegExp[] = [
@@ -230,23 +234,23 @@ const VENDOR_MARKERS: Readonly<Record<ProseKind, RegExp>> = {
 
 /**
  * Line width above which a script is machine-generated rather than authored. A bundler emits a whole module on one
- * line, where a formatted source file stays two orders of magnitude below this. Markdown is exempt: a paragraph on
+ * line, while a formatted source file stays two orders of magnitude below this. Markdown is exempt: A paragraph on
  * one line is the house convention, not a signal.
  */
 const MACHINE_LINE_WIDTH = 1_000;
 
-/** Characters the script scanner passes over between tokens. */
+/** Characters that the script scanner passes over between tokens. */
 const SCRIPT_SPACING: ReadonlySet<string> = new Set([' ', '\t', '\r']);
 
-/** Quote characters opening a string literal, whose multi-word contents are what reaches a reader. */
+/** Quote characters opening a string literal, whose multi-word contents reach a reader. */
 const STRING_DELIMITERS: ReadonlySet<string> = new Set(['"', "'", '`']);
 
 /** Characters that may precede a `/` that opens a regular expression, which distinguishes one from a division. */
 const REGEX_PRECEDERS = new Set(['(', ',', '=', ':', '[', '!', '&', '|', '?', '{', ';', '+', '-', '*', '%', '<', '>']);
 
 /**
- * Builds one span from a block comment's body, stripping each line's leading `*` and the blank lines a `/**` opener
- * and a closing line contribute. The span's own line advances past each blank line dropped, so it still names the
+ * Builds one span from a block comment's body, stripping each line's leading `*` and the blank lines contributed by
+ * a `/**` opener and a closing line. The span's own line advances past each blank line dropped, so it still names the
  * source line on which its first word sits. Returns undefined for a comment holding no prose at all.
  */
 function buildBlockCommentSpan(file: string, line: number, body: string): ProseSpan | undefined {
@@ -265,12 +269,12 @@ function buildCommentAnchor(openerPattern: string): string {
 }
 
 /**
- * Builds the generator markers for one file kind, each held to a comment line whose content the marker opens, so a
- * sentence naming a marker leaves the file discussing it in the sweep. `@generated` may follow annotations the
- * generator wrote first, which is how a compiled kit pairs it with a formatter directive, and the phrase pair may
- * follow the `Code` of the convention's fuller wording. The pair matches without regard to case, which reaches the
- * shouted form; both phrases are required, because a file bounding a generated region announces it as `Generated by`
- * alone and the prose around that region is authored.
+ * Builds the generator markers for one file kind, each held to a comment line whose content the marker opens, so that
+ * a file mentioning a marker in a sentence stays in the sweep. `@generated` may follow annotations that the generator
+ * wrote first, which is how a compiled kit pairs it with a formatter directive, and the phrase pair may follow the
+ * `Code` of the convention's fuller wording. The pair matches without regard to case, which also matches the shouted
+ * form; both phrases are required, because a file bounding a generated region announces it as `Generated by` alone and
+ * the prose around that region is authored.
  */
 function buildGeneratorMarkers(openerPattern: string): readonly RegExp[] {
   const anchor = buildCommentAnchor(openerPattern);
@@ -293,7 +297,7 @@ function classifyByExtension(file: string): ProseKind | undefined {
   return PROSE_KINDS_BY_EXTENSION[path.extname(file).toLowerCase()];
 }
 
-/** Classifies an extensionless file by its shebang, which is what the scripts kept by a repository carry instead. */
+/** Classifies an extensionless file by its shebang, which is what the scripts kept by a repository have instead. */
 function classifyByShebang(content: string): ProseKind | undefined {
   return /^#![^\n]*\b(?:ba|z|k)?sh\b/.test(content) ? 'shell' : undefined;
 }
@@ -313,7 +317,7 @@ function extractByKind(input: { file: string; content: string; kind: ProseKind }
 }
 
 /**
- * Extracts a Markdown file's frontmatter through the YAML extractor, each span carrying the source line on which it
+ * Extracts a Markdown file's frontmatter through the YAML extractor, each span naming the source line on which it
  * sits. A block that the parser cannot read yields nothing rather than failing the file, whose body is prose whatever
  * its frontmatter holds.
  */
@@ -333,7 +337,7 @@ function extractFrontmatterProse(file: string, lines: readonly string[], bodySta
 
 /**
  * Extracts Markdown prose: the frontmatter's own prose, then body paragraphs, list items, headings, and table cells.
- * Fenced code, HTML comments, and link definitions are dropped, and a link is reduced to its own text so no URL
+ * Fenced code, HTML comments, and link definitions are dropped, and a link is reduced to its own text so that no URL
  * reaches the detector.
  */
 function extractMarkdownProse(file: string, content: string): ProseSpan[] {
@@ -399,7 +403,7 @@ function extractMarkdownProse(file: string, content: string): ProseSpan[] {
 /**
  * Extracts comments and multi-word string literals from TypeScript or JavaScript. The literals are what reach a
  * reader as help text, error messages, and test titles; a data literal comes along with them, which is over-inclusion
- * the agent filters. Consecutive `//` lines join into one block so a wrapped sentence survives the scan.
+ * that the agent filters. Consecutive `//` lines join into one block so that a wrapped sentence survives the scan.
  */
 function extractScriptProse(file: string, content: string): ProseSpan[] {
   const spans: ProseSpan[] = [];
@@ -503,13 +507,13 @@ function extractShellProse(file: string, content: string): ProseSpan[] {
   return spans;
 }
 
-/** Returns the index of the newline ending the line `index` sits on, or the content length where none does. */
+/** Returns the index of the newline ending the line on which `index` sits, or the content length if none does. */
 function findLineEnd(content: string, index: number): number {
   const end = content.indexOf('\n', index);
   return end === -1 ? content.length : end;
 }
 
-/** Returns the index of the quote closing the literal opened at `start`, or the content length where none does. */
+/** Returns the index of the quote closing the literal opened at `start`, or the content length if none does. */
 function findStringEnd(content: string, start: number, quote: string): number {
   for (let index = start + 1; index < content.length; index += 1) {
     const char = content[index];
@@ -523,14 +527,14 @@ function findStringEnd(content: string, start: number, quote: string): number {
   return content.length;
 }
 
-/** Reports whether a script carries a line produced by no formatter, which marks it as bundled output. */
+/** Reports whether a script has a line produced by no formatter, which marks it as bundled output. */
 function hasMachineWidthLines(content: string): boolean {
   return content.split('\n').some((line) => line.length > MACHINE_LINE_WIDTH);
 }
 
 /**
  * Reports whether a line opens a new Markdown block: a heading or a list item. A `>` opens none, since every line of
- * a wrapped blockquote carries one and treating each as a block start splits a construction across two spans.
+ * a wrapped blockquote has one and treating each as a block start splits a construction across two spans.
  */
 function isBlockStart(line: string): boolean {
   return /^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s)/.test(line);
@@ -600,8 +604,8 @@ function listGitFiles(root: string, args: readonly string[], paths: readonly str
 }
 
 /**
- * Strips the syntax that a Markdown line carries around its prose: the block marker opening it, and each link's URL. The
- * result holds the line's own newline count, which is zero, so a span's line mapping survives the rewrite.
+ * Strips the syntax around a Markdown line's prose: the block marker opening it, and each link's URL. The result has
+ * the line's own newline count, which is zero, so a span's line mapping survives the rewrite.
  */
 function normalizeMarkdownLine(line: string): string {
   return line
@@ -613,7 +617,7 @@ function normalizeMarkdownLine(line: string): string {
     .replace(/\bhttps?:\/\/\S+/g, '');
 }
 
-/** Reads a file as UTF-8, returning undefined where it cannot be read or holds a NUL byte, which marks it binary. */
+/** Reads a file as UTF-8, returning undefined if it cannot be read or contains a NUL byte, which marks it binary. */
 function readFileSafely(absolutePath: string): string | undefined {
   try {
     const content = readFileSync(absolutePath, 'utf8');
@@ -633,7 +637,7 @@ function skipFencedBlock(lines: readonly string[], start: number, fence: string)
   return lines.length;
 }
 
-/** Returns the index of the first line past a YAML frontmatter block, or 0 where the file opens with none. */
+/** Returns the index of the first line past a YAML frontmatter block, or 0 if the file opens with none. */
 function skipFrontmatter(lines: readonly string[]): number {
   if (lines[0]?.trim() !== '---') return 0;
   for (let index = 1; index < lines.length; index += 1) {
@@ -667,7 +671,7 @@ function skipRegexLiteral(content: string, start: number): number {
   return content.length;
 }
 
-/** Splits a Markdown table row into its cells, so one cell's prose never runs into the next. */
+/** Splits a Markdown table row into its cells, so that one cell's prose never runs into the next. */
 function splitTableCells(line: string): string[] {
   return line.replace(/^\|/, '').replace(/\|$/, '').split('|');
 }

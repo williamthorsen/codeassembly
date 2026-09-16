@@ -1,15 +1,15 @@
 /**
- * Batch planning: partitioning the scanned file set into units one agent context can hold.
+ * Batch planning: partitioning the scanned file set into units that fit in one agent context.
  *
  * A batch is whole files rather than prose spans, because a subagent reads a file whole. It covers the scanned set
- * rather than the candidate-bearing subset, because a unit may carry no detector at all and its violations sit in
- * files no detector nominates.
+ * rather than the candidate-bearing subset, because a unit may have no detector at all and its violations are in
+ * files nominated by no detector.
  */
 import type { Batch, Candidate, ScannedFile } from './types.ts';
 
 /**
  * Default ceiling on a batch's combined file bytes. Roughly 24k tokens of file content, which leaves a subagent room
- * for the rule set it holds and the report it composes.
+ * for its rule set and the report that it composes.
  */
 export const DEFAULT_BATCH_BUDGET = 96 * 1_024;
 
@@ -17,14 +17,14 @@ export const DEFAULT_BATCH_BUDGET = 96 * 1_024;
  * Partitions `files` into batches under `budget`, deterministically and in the order the sweep resolved them.
  *
  * Puts the recurring batches first. Groups files linked by a shared sentence into a component that no batch boundary
- * crosses, so one subagent adjudicates every copy of a sentence and no two subagents edit the same file. Packs
+ * crosses, so that one subagent adjudicates every copy of a sentence and no two subagents edit the same file. Packs
  * components under the budget like any other batch, and makes a single component that outgrows it into one oversized
  * batch, splitting it being what the grouping exists to prevent.
  *
  * Packs the remaining files by whole directory. A batch boundary falls on a directory boundary except when one
  * directory alone exceeds the budget.
  *
- * Throws where `budget` is not a positive integer, a batch of no bytes being unsatisfiable rather than empty.
+ * Throws when `budget` is not a positive integer, a batch of no bytes being unsatisfiable rather than empty.
  */
 export function planBatches(input: {
   files: readonly ScannedFile[];
@@ -45,8 +45,8 @@ export function planBatches(input: {
     batches.push(composeBatch(batches.length, run, true));
   }
 
-  // A directory carries no indivisibility of its own, so one that outgrows the budget is split before packing; only a
-  // component resists that, which is why the two go through different preparation.
+  // A directory need not stay whole, so one that outgrows the budget is split before packing; only a component must
+  // stay whole, which is why the two go through different preparation.
   const ordinary = input.files.filter((file) => !recurring.has(file.file));
   const directories = packGroups(splitOversized(groupByDirectory(ordinary), budget), budget);
   for (const run of directories) {
@@ -58,7 +58,7 @@ export function planBatches(input: {
 
 // region | Helpers
 
-/** Builds one batch from the files it covers, summing their bytes. */
+/** Builds one batch from the files that it covers, summing their bytes. */
 function composeBatch(index: number, files: readonly ScannedFile[], recurring: boolean): Batch {
   return {
     index,
@@ -77,9 +77,9 @@ function directoryOf(file: string): string {
 /**
  * Groups the files linked by a shared recurring sentence into components, in the order the sweep resolved them.
  *
- * A sentence is the link because it is what an adjudicator rewrites, and two copies reached independently is how one
- * sentence acquires two repairs. The link is transitive: where one file shares a sentence with a second and another
- * with a third, all three form one component, since separating them would hand one file to two writers.
+ * A sentence is the link because it is what an adjudicator rewrites, and one sentence acquires two repairs when two
+ * subagents adjudicate its copies independently. The link is transitive: When one file shares a sentence with a second
+ * and another with a third, all three form one component, since separating them would hand one file to two writers.
  */
 function findRecurringComponents(
   candidates: readonly Candidate[],
@@ -125,7 +125,10 @@ function findRecurringComponents(
   return components.values().toArray();
 }
 
-/** Splits the file list into consecutive runs sharing a directory, preserving the order the sweep resolved them in. */
+/**
+ * Splits the file list into consecutive runs sharing a directory, preserving the order in which the sweep resolved
+ * them.
+ */
 function groupByDirectory(files: readonly ScannedFile[]): ScannedFile[][] {
   const groups: ScannedFile[][] = [];
   let directory: string | undefined;
@@ -144,7 +147,7 @@ function groupByDirectory(files: readonly ScannedFile[]): ScannedFile[][] {
 
 /**
  * Packs groups into batches under `budget`, never splitting a group that fits. A group exceeding the budget on its own
- * becomes a batch of its own rather than an error: the group is the unit, and nothing smaller is one.
+ * becomes a batch of its own rather than an error: The group is the unit, and nothing smaller is one.
  */
 function packGroups(groups: readonly ScannedFile[][], budget: number): ScannedFile[][] {
   const runs: ScannedFile[][] = [];
