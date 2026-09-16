@@ -43,7 +43,7 @@ describe(initCommand, () => {
     expect(content).toContain('AGENTS.local.md');
   });
 
-  it('surfaces the harnesses key so the targeting fallback can be pinned', async () => {
+  it('includes the harnesses key so that the targeting fallback can be pinned', async () => {
     await initCommand(makeOptions(), projectRoot);
 
     expect(await readFile(declarationPath(), 'utf8')).toContain('# harnesses:');
@@ -121,7 +121,7 @@ describe(initGlobalCommand, () => {
     expect(content).not.toContain('williamthorsen');
   });
 
-  it('surfaces the harnesses key, whose most natural host is this tier', async () => {
+  it('includes the harnesses key, which belongs most naturally in this tier', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
     expect(await readFile(declarationPath(), 'utf8')).toContain('# harnesses:');
@@ -138,7 +138,7 @@ describe(initGlobalCommand, () => {
   it('states that either project-tier file may withdraw a declared harness', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
-    // Unwrapped so the assertion reads the claim rather than the column the comment happens to wrap at.
+    // Unwrap so that the assertion reads the claim rather than the column at which the comment happens to wrap.
     const prose = (await readFile(declarationPath(), 'utf8')).replaceAll(/\n#\s*/gu, ' ');
     expect(prose).toContain('either project-tier file may withdraw from it with drop');
   });

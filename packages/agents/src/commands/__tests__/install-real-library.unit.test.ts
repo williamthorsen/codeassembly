@@ -14,14 +14,15 @@ import { installCommand } from '../install.ts';
 // Installs the real content library, not a fixture, to catch failures that only show up with real
 // content, such as an unreplaced `{...}` token or a link that wasn't rewritten.
 //
-// Installing the whole catalog runs long under parallel-worker load, which the tier's own budget is
-// too tight to absorb. The ceiling here matches what the tiers above `unit` carry.
+// Installing the whole catalog runs longer under parallel-worker load than the tier's own budget
+// allows. The ceiling here matches the budget of the tiers above `unit`.
 describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
   let tempDir: string;
 
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-install-int-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    // Seed from the harness table rather than from literals, so a harness added there is detected here without an edit.
+    // Seed from the harness table rather than from literals, so that a harness added there is detected here without
+    // an edit.
     for (const harnessId of ALL_HARNESS_IDS) {
       const { homeDir, skillsDirName, subagentsDirName } = HARNESSES[harnessId];
       await mkdir(path.join(tempDir, homeDir, skillsDirName), { recursive: true });
@@ -64,10 +65,10 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
     expect(linkViolations, formatViolations(linkViolations)).toEqual([]);
   });
 
-  // `installHarnessGuidance` resolves its source as `guidance/_harnesses/{harnessId}/` and warns rather than throwing
-  // when that directory is absent, so a content directory left behind by a harness rename is otherwise silent — and the
-  // orphan prune that follows deletes whatever the previous install put there.
-  it('installs each harness the guidance file its own content directory supplies', async () => {
+  // Because `installHarnessGuidance` resolves its source as `guidance/_harnesses/{harnessId}/` and warns rather than
+  // throwing when that directory is absent, a content directory left behind by a harness rename is otherwise silent;
+  // the orphan prune that follows deletes whatever the previous install put there.
+  it('installs each harness the guidance file supplied by its own content directory', async () => {
     await installCommand(makeOptions(), tempDir);
 
     for (const harnessId of ALL_HARNESS_IDS) {
@@ -105,7 +106,7 @@ const INSTALLED_TIERS: ReadonlyArray<string> = [
 
 /**
  * Returns the visible entries under `content/skills/` that install delivers as support directories: those without a
- * readable `SKILL.md` (e.g. `_data`). Skill directories — those holding a `SKILL.md` — are excluded, since `sync`
+ * readable `SKILL.md` (e.g. `_data`). Skill directories (those containing a `SKILL.md`) are excluded, since `sync`
  * delivers them per-project. Mirrors install's own skill-vs-support gate.
  */
 async function listInstalledSupportEntries(skillsSrcDir: string): Promise<Array<string>> {

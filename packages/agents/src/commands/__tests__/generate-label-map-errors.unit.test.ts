@@ -35,7 +35,7 @@ describe('generateLabelMap error paths', () => {
   it('propagates non-ENOENT errors from readdir in scope derivation', async () => {
     const eaccesError = Object.assign(new Error('permission denied'), { code: 'EACCES' });
 
-    // Create packages/ so readdir is called on it.
+    // Create packages/ so that readdir is called on it.
     await mkdir(path.join(tempDir, 'packages'), { recursive: true });
 
     mockedReaddir.mockRejectedValueOnce(eaccesError);
