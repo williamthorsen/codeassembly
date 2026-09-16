@@ -327,8 +327,10 @@ export function parseRunFold(json: string): RunFold {
  * A rejection whose rule the run does not version is withheld on the same ground: Because no version stands to hold it
  * against, nothing could ever re-open it.
  *
- * The projection drops the record's own bookkeeping. A settled site needs no argument, and the ground behind it would
- * seed the judgment of a sweeper who meets the site again once the rejection goes stale.
+ * The projection hands over the rule, the file, and the phrase alone, dropping the rule version and the `ground`. A
+ * standing rejection tells the sweeper to leave the site alone, and that instruction needs no reason. The `ground`
+ * would reach a sweeper only on the run that re-opens the site, and that is the one run that has to adjudicate it
+ * without a prior reason in hand.
  */
 export function selectPriorRejections(
   record: ProseRecord,
