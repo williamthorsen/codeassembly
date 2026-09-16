@@ -82,7 +82,7 @@ describe(installCommand, () => {
 
     // Support directory _data is installed.
     expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
-    // No skill directory is planted — harness skills and catalog skills deploy via sync, not install.
+    // No skill directory is planted: Harness skills and catalog skills deploy via sync, not install.
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(false);
 
@@ -115,7 +115,7 @@ describe(installCommand, () => {
     expect(await readdir(path.join(claudeHome, 'skills'))).toHaveLength(0);
   });
 
-  it('is idempotent: re-installing is byte-identical', async () => {
+  it('is idempotent: Re-installing is byte-identical', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
@@ -240,7 +240,7 @@ describe(installCommand, () => {
     const skills = await readdir(path.join(claudeHome, 'skills'));
     // The _data support tree installs.
     expect(skills).toContain('_data');
-    // No skill directory is planted — not harness skills, not general-catalog skills.
+    // No skill directory is planted: not harness skills, not general-catalog skills.
     expect(skills).not.toContain('claude-only');
     expect(skills).not.toContain('alpha');
     expect(skills).not.toContain('beta');
@@ -283,7 +283,7 @@ describe(installCommand, () => {
     const promptsYmlHash = await computeContentHash(promptsYmlPath);
 
     // Seed the manifest to record these as previously installed entries. Directory entries use the sentinel
-    // hash; file entries require the actual content hash so the drift check treats them as unmodified.
+    // hash; file entries require the actual content hash so that the drift check treats them as unmodified.
     await writeManifest(getManifestPath(tempDir), {
       schemaVersion: 2,
       harnesses: {
@@ -354,7 +354,7 @@ describe(installCommand, () => {
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
-      // The broken config is left alone, and the rest of the install still lands and is tracked.
+      // The broken config is left alone, and the rest of the install still completes and is tracked.
       expect(await readFile(settingsPath, 'utf8')).toBe('{ not json');
       const manifest = await readManifest(getManifestPath(tempDir));
       expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
@@ -415,7 +415,7 @@ describe(installCommand, () => {
 
     it('places a bundled .mjs helper alongside the shell scripts', async () => {
       const claudeHome = await setupClaudeHome();
-      // A bundled `.mjs` reaches a harness home by the same path as the shell helpers beside it.
+      // `install` copies a bundled `.mjs` into a harness home by the same path as the shell helpers beside it.
       await buildContentTree(contentDir, { scripts: { 'relay-demo.mjs': 'process.stdout.write("{}")\n' } });
 
       await installCommand(makeOptions(), tempDir, contentDir);

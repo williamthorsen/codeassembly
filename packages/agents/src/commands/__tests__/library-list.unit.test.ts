@@ -169,7 +169,7 @@ async function captureList(contentDir: string): Promise<{ output: string; warnin
   };
 }
 
-/** Builds a `LibraryRow` with sensible defaults, overriding only the fields a test cares about. */
+/** Builds a `LibraryRow` with sensible defaults, overriding only the fields that a test cares about. */
 function makeRow(overrides: Partial<LibraryRow>): LibraryRow {
   return { type: 'skill', emoji: '🪄', slug: 'slug', delivery: 'skill', description: 'A description.', ...overrides };
 }
