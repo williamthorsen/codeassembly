@@ -136,7 +136,7 @@ function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): Repor
     case 'append':
       return { level: 'info', text: `  append the ambient region to ${hostPath}` };
     case 'create':
-      return { level: 'info', text: `  create ${hostPath}, carrying the ambient region` };
+      return { level: 'info', text: `  create ${hostPath}, containing the ambient region` };
     case 'inject':
       return { level: 'info', text: `  inject the ambient region in ${hostPath}` };
   }
@@ -180,7 +180,7 @@ function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> 
 
 /** The sentence naming a host whose ambient region no transform may touch, shared by every path that reports one. */
 function describeDamagedRegion(hostPath: string): string {
-  return `${hostPath} carries a damaged ambient region.`;
+  return `${hostPath} has a damaged ambient region.`;
 }
 
 /** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
@@ -378,8 +378,8 @@ function describeRetirement(retirement: Retirement, performed: boolean): ReportL
     return {
       level: 'info',
       text: performed
-        ? `Deleted ${retirement.hostPath}, which held only retired rulebook blocks`
-        : `[dry-run] sync would delete ${retirement.hostPath}, which holds only retired rulebook blocks`,
+        ? `Deleted ${retirement.hostPath}, which contained only retired rulebook blocks`
+        : `[dry-run] sync would delete ${retirement.hostPath}, which contains only retired rulebook blocks`,
     };
   }
   return {
@@ -414,9 +414,9 @@ function describeStaleAmbientHost(status: 'malformed' | 'missing' | 'no-region',
     case 'missing':
       return `${guidanceFile} does not exist. Run \`codeassembly install\`, then re-run \`sync --global\`.`;
     case 'no-region':
-      return `${guidanceFile} carries no ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
+      return `${guidanceFile} has no ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
     case 'malformed':
-      return `${guidanceFile} carries a damaged ambient region: an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
+      return `${guidanceFile} has a damaged ambient region: an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
   }
 }
 

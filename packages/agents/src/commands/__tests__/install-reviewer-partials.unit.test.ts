@@ -10,7 +10,7 @@ import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { homeAnchor } from '../../lib/path-rewriter.ts';
 import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
 
-/** The rulebook `orchestrated-coder` injects; no source under test addresses another. */
+/** The rulebook injected by `orchestrated-coder`; no source under test addresses another. */
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['commit-conventions', { skillName: 'consult-commit-conventions', skill: true }],
 ]);
@@ -19,7 +19,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
  * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
  * shared partials fully inlined: no leftover include directives, and the key prose blocks present. They reproduce
  * `sync`'s subagent-deploy transform (expand includes, then `renderSubagentForHarness`), so they assert the exact
- * body `sync` writes — install no longer deploys subagents.
+ * body written by `sync`; install no longer deploys subagents.
  */
 describe('reviewer and coder partials render correctly', () => {
   const contentDir = resolveContentDir();

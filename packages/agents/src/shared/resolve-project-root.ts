@@ -11,7 +11,7 @@ interface ResolveProjectRootOptions {
   readonly startDir?: string;
 }
 
-/** The git working-tree root, or the diagnostic git produced when it could not supply one. */
+/** The git working-tree root, or the diagnostic produced by git when it could not supply one. */
 type GitToplevelResult = { readonly root: string } | { readonly failure: string };
 
 /**
@@ -23,13 +23,13 @@ type GitToplevelResult = { readonly root: string } | { readonly failure: string 
  *   2. The git repo root (`git rev-parse --show-toplevel`, which is worktree-aware).
  *   3. The ambient working directory, as a last resort, accompanied by a one-line stderr diagnostic quoting git.
  *
- * The diagnostic names git as the failing party and carries git's own message, because the failure has causes beyond
- * an absent repository: A repository git cannot read produces the same empty answer, and asserting the wrong one
+ * The diagnostic names git as the failing party and includes git's own message, because the failure has causes beyond
+ * an absent repository: A repository that git cannot read produces the same empty answer, and asserting the wrong one
  * sends the reader after a repository that is already there.
  *
- * The diagnostic is written to stderr only: callers such as `derive-session-context` emit machine-readable output on
- * stdout, so a stray stdout write would corrupt it. The branches are ordered so a future captured-invocation-directory
- * tier can be inserted ahead of the git-root check without disturbing the others.
+ * The diagnostic is written to stderr only: Callers such as `derive-session-context` emit machine-readable output on
+ * stdout, so a stray stdout write would corrupt it. The branches are ordered so that a future
+ * captured-invocation-directory tier can be inserted ahead of the git-root check without disturbing the others.
  */
 export function resolveProjectRoot(options: ResolveProjectRootOptions = {}): string {
   const { cwd } = options;
@@ -59,7 +59,7 @@ function describeGitFailure(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** Runs `git rev-parse --show-toplevel` from `startDir`, reporting git's own diagnostic when it cannot answer. */
+/** Runs `git rev-parse --show-toplevel` from `startDir`, reporting git's own diagnostic when it cannot supply one. */
 function tryGitToplevel(startDir: string): GitToplevelResult {
   try {
     const stdout = execFileSync('git', ['-C', startDir, 'rev-parse', '--show-toplevel'], {

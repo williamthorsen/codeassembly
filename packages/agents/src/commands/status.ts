@@ -27,7 +27,7 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
   for (const harnessId of harnesses) {
     const harnessManifest = manifest.harnesses[harnessId];
     if (!harnessManifest) {
-      console.info(`\n${harnessId}: not installed`);
+      console.info(`\n${harnessId}: Not installed`);
       // Hook entries can exist without an install (configure-hooks alone); stay quiet only when there are none.
       await reportHookEntryStatus(harnessId, true, baseDir);
       continue;
@@ -124,7 +124,7 @@ async function reportHookEntryStatus(
     statuses = await checkHarnessHookEntries(harnessId, baseDir);
   } catch (error) {
     // An unparseable config is itself a status worth reporting; it must not abort the rest of the report.
-    console.warn(`  ⚠️ Hooks: could not read the config: ${describeError(error)}`);
+    console.warn(`  ⚠️ Hooks: Could not read the config: ${describeError(error)}`);
     return;
   }
   const presentCount = statuses.filter((entry) => entry.status === 'present').length;
@@ -133,7 +133,7 @@ async function reportHookEntryStatus(
 
   if (absentCount === statuses.length) {
     if (!quietWhenUnconfigured) {
-      console.info('  Hooks: not configured');
+      console.info('  Hooks: Not configured');
     }
     return;
   }

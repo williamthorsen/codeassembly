@@ -81,7 +81,7 @@ describe('dropped-harness retraction', () => {
       ambientHost: { kind: 'damaged', path: '/project/AGENTS.local.md' },
     } as const;
     const warning =
-      '⚠️ Skipping ambient retraction: /project/AGENTS.local.md carries a damaged ambient region. ' +
+      '⚠️ Skipping ambient retraction: /project/AGENTS.local.md has a damaged ambient region. ' +
       'Repair the codeassembly-ambient markers and re-run, or the withdrawn guidance keeps loading.';
 
     expect(textOf(renderSyncReport(reconciled({ droppedHarnesses: [damaged] })))).toContain(warning);
@@ -172,7 +172,7 @@ describe('retirements', () => {
     const stripped = reconciled({ retirements: [{ kind: 'ambient-host', hostPath: LOCAL_HOST, emptied: false }] });
 
     expect(textOf(renderSyncReport(emptied))).toContain(
-      `Deleted ${LOCAL_HOST}, which held only retired rulebook blocks`,
+      `Deleted ${LOCAL_HOST}, which contained only retired rulebook blocks`,
     );
     expect(textOf(renderSyncReport(stripped))).toContain(`Retired the rulebook blocks in ${LOCAL_HOST}`);
   });

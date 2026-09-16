@@ -266,7 +266,7 @@ async function installSupportDirectories(
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(`  ⚠️ Warning: no skills directory found at ${skillsSrcDir}, skipping skill support installation`);
+    console.warn(`  ⚠️ Warning: No skills directory found at ${skillsSrcDir}, skipping skill support installation`);
     return [];
   }
 
@@ -408,7 +408,7 @@ async function installScripts(
   const { claims, foundDirectory, warnings } = await collectScriptClaims(roots);
   emitReport(warnings);
   if (!foundDirectory) {
-    console.warn('  ⚠️ Warning: no scripts directory found in any content root, skipping script installation');
+    console.warn('  ⚠️ Warning: No scripts directory found in any content root, skipping script installation');
     return [];
   }
 
@@ -472,7 +472,7 @@ async function installHarnessGuidance(
   const owner = shippingRoots.at(0);
   if (owner === undefined) {
     console.warn(
-      `  ⚠️ Warning: no ${harnessId} guidance directory found in any content root, skipping harness guidance installation`,
+      `  ⚠️ Warning: No ${harnessId} guidance directory found in any content root, skipping harness guidance installation`,
     );
     return [];
   }

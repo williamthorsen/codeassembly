@@ -13,8 +13,8 @@ import { isSyncValidationError } from '../sync-validation-error.ts';
 describe('syncCommand pre-write validation', () => {
   let projectRoot: string;
   let contentDir: string;
-  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is
-  // given a temp home rather than the developer's own.
+  // Because targeting reads the home tier's declaration and detects installed harnesses under it, every run below
+  // is given a temp home rather than the developer's own.
   let homeDir: string;
 
   beforeEach(async () => {

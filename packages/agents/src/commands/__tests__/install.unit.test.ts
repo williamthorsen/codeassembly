@@ -190,7 +190,7 @@ describe(installCommand, () => {
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
-    expect(warnLines.some((line) => line.includes('no skills directory found'))).toBe(true);
+    expect(warnLines.some((line) => line.includes('No skills directory found'))).toBe(true);
   });
 
   it('copies support directories but symlinks scripts in link mode', async () => {

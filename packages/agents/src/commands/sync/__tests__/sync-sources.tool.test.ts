@@ -14,8 +14,8 @@ import { syncCommand } from '../sync.ts';
 describe('sync with a declared source (real library fallback)', () => {
   let projectRoot: string;
   let sourceDir: string;
-  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is
-  // given a temp home rather than the developer's own.
+  // Because targeting reads the home tier's declaration and detects installed harnesses under it, every run below
+  // is given a temp home rather than the developer's own.
   let homeDir: string;
 
   beforeEach(async () => {

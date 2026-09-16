@@ -1,8 +1,8 @@
 /** Git-remote URL parsing, shared across skill modules. */
 
 /**
- * Parses a git remote URL (SSH or HTTPS) into its `owner/repo` — the last two path segments — or
- * null when it cannot be parsed. The `.git` suffix is stripped, and a path carrying extra leading
+ * Parses a git remote URL (SSH or HTTPS) into its `owner/repo` (the last two path segments), or
+ * null when it cannot be parsed. The `.git` suffix is stripped, and a path with extra leading
  * segments (e.g. a GitLab subgroup) is reduced to its final two.
  */
 export function parseRemoteToOwnerRepo(url: string): string | null {
@@ -18,7 +18,7 @@ export function parseRemoteToOwnerRepo(url: string): string | null {
   return null;
 }
 
-/** Reduces a remote path (which may carry extra leading subgroups) to its last two `owner/repo` segments. */
+/** Reduces a remote path (which may have extra leading subgroups) to its last two `owner/repo` segments. */
 function takeOwnerRepo(remotePath: string): string | null {
   const segments = remotePath.split('/').filter((segment) => segment.length > 0);
   if (segments.length < 2) {

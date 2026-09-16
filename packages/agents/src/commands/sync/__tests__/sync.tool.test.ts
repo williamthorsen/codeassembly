@@ -33,8 +33,8 @@ const canEnforceDirPermissions = process.getuid !== undefined && process.getuid(
 describe(syncCommand, () => {
   let projectRoot: string;
   let contentDir: string;
-  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is given
-  // a temp home. Without it a run would consult the developer's own, and its result would vary by developer.
+  // Because targeting reads the home tier's declaration and detects installed harnesses under it, every run below is
+  // given a temp home. Without it a run would consult the developer's own, and its result would vary by developer.
   let homeDir: string;
 
   beforeEach(async () => {
@@ -836,7 +836,7 @@ describe(syncCommand, () => {
       { dryRun: true, level: 'info' },
     );
 
-    expect(output).toContain(`create ${localHostPath()}, carrying the ambient region`);
+    expect(output).toContain(`create ${localHostPath()}, containing the ambient region`);
   });
 
   it('in dry-run mode, reports appending to a local host that already exists', async () => {

@@ -58,7 +58,7 @@ export async function configureHooksCommand(
   }
 }
 
-/** Reports each relayed hook's entry status in the harness's config file. A missing file reports every hook absent. */
+/** Reports each relayed hook's entry status in the harness's config file. Reports every hook absent when the file is missing. */
 export async function checkHarnessHookEntries(
   harnessId: HarnessId,
   baseDir?: string,
