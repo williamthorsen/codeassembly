@@ -28,8 +28,8 @@ import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from '.
  * parse time is skipped and reported in `warnings` rather than dropped silently. A note that parses but carries no
  * frontmatter still becomes a hit (a degraded one), so a broken note is not hidden from the projecting command.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it exists so tests can isolate registry
- * resolution from the developer's environment. `recall` overrides how candidate notes are recalled, defaulting to
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it exists so that tests can isolate
+ * registry resolution from the developer's environment. `recall` overrides how candidate notes are recalled, defaulting to
  * ripgrep; it exists so a test of scoping, filtering, or projection never spawns a process.
  */
 export async function searchNotes(input: {

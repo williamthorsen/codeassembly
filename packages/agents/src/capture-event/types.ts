@@ -49,7 +49,7 @@ export interface CaptureSuccess {
   capturedAt: string;
   /** Absolute path of the written record. */
   path: string;
-  /** Registry name of the store the record was written to. */
+  /** Registry name of the store to which the record was written. */
   store: string;
 }
 
