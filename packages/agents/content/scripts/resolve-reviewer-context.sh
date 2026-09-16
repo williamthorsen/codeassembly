@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Assemble the reviewer-context block inlined under `## Reviewer context` in
+# Assembles the reviewer-context block inlined under `## Reviewer context` in
 # every reviewer prompt. Combines two independent sources:
 #
 #   1. A coder-emitted sidecar artifact (`*_coder_reviewer-context.md`),
@@ -44,7 +44,7 @@
 # package is in scope.
 #
 # Exit codes:
-#   0  Normal: content emitted (or empty stdout when nothing matched).
+#   0  Normal: Content emitted (or empty stdout when nothing matched).
 #   1  Usage error (missing/unknown flag) or unreadable required input.
 
 set -euo pipefail
@@ -57,8 +57,8 @@ sidecar=""
 changed_files=""
 lookup=""
 
-# Parse CLI flags into the script-scope globals above. Resets every variable
-# so repeated invocations under test start from a clean slate.
+# Parses CLI flags into the script-scope globals above. Resets every variable
+# so that repeated invocations under test start from a clean slate.
 parse_args() {
   sidecar=""
   changed_files=""
@@ -89,7 +89,7 @@ parse_args() {
   done
 }
 
-# Show command-line syntax. Exits with the supplied code (default 1) so
+# Shows command-line syntax. Exits with the supplied code (default 1) so that
 # callers can pass `0` for explicit `--help`, or call bare for usage errors.
 show_usage() {
   local stream=2
@@ -122,7 +122,7 @@ USAGE
   exit "${1:-1}"
 }
 
-# Test whether a file path has a JS/TS extension worth scanning for imports.
+# Tests whether a file path has a JS/TS extension worth scanning for imports.
 # Acceptable: .ts .tsx .js .jsx .mts .cts .mjs .cjs.
 is_scannable_extension() {
   local path="$1"
@@ -136,7 +136,7 @@ is_scannable_extension() {
   esac
 }
 
-# Emit lookup-table keys (package names) one per line, in declaration order.
+# Emits lookup-table keys (package names) one per line, in declaration order.
 # Reads from the global `lookup` path. Exits 1 if the file cannot be opened.
 collect_lookup_keys() {
   awk '
@@ -147,10 +147,10 @@ collect_lookup_keys() {
   ' "$lookup"
 }
 
-# Emit the body of the section whose heading matches `$1`. The body is every
+# Emits the body of the section whose heading matches `$1`. The body is every
 # line after `## <key>` up to (but not including) the next `## ` line or EOF.
-# Leading and trailing blank lines are stripped so output composes cleanly
-# with the `## <key>` heading the caller emits.
+# Leading and trailing blank lines are stripped so that output composes cleanly
+# with the `## <key>` heading emitted by the caller.
 extract_section_body() {
   local key="$1"
   awk -v target="$key" '
@@ -161,7 +161,7 @@ extract_section_body() {
     }
     in_section { print }
   ' "$lookup" | awk '
-    # Buffer lines so we can strip leading and trailing blanks.
+    # Buffer lines so that we can strip leading and trailing blanks.
     { lines[NR] = $0 }
     END {
       start = 1
@@ -173,12 +173,12 @@ extract_section_body() {
   '
 }
 
-# Test whether any scannable file in `--changed-files` imports or requires
+# Tests whether any scannable file in `--changed-files` imports or requires
 # the package identified by `$1`. Returns 0 on match, 1 otherwise.
 #
 # Matches both bare-package and subpath imports: `from 'pkg'`, `from
 # 'pkg/sub'`, `require('pkg')`, `require('pkg/sub')` (single or double
-# quoted). Uses fixed-string matching (`grep -F`) so package names
+# quoted). Uses fixed-string matching (`grep -F`) so that package names
 # containing regex metacharacters like `@` and `/` need no escaping.
 file_matches_key() {
   local key="$1"
@@ -202,7 +202,7 @@ file_matches_key() {
     if [[ ! -f "$file" ]]; then
       # File is absent (deleted, moved, or never existed) or unreadable
       # (permission denied). Silently skip. The downstream `grep` also
-      # suppresses stderr to cover the rare case where `[[ -f ]]` succeeds
+      # suppresses stderr to cover the rare case in which `[[ -f ]]` succeeds
       # but the file becomes unreadable between the check and the grep.
       continue
     fi
@@ -214,13 +214,13 @@ file_matches_key() {
   return 1
 }
 
-# Emit the assembled reviewer-context block. Sidecar content first (when
+# Emits the assembled reviewer-context block. Sidecar content first (when
 # non-empty), then matched lookup sections in lookup-table declaration
 # order. Adjacent blocks are separated by exactly one blank line. Each
 # emitted block (sidecar or lookup section) ends with a single trailing
 # newline; no trailing blank lines on the overall output.
 emit_block() {
-  # Pre-compute matched keys so we know whether anything follows the sidecar.
+  # Pre-compute matched keys so that we know whether anything follows the sidecar.
   local matched_keys=()
   local key
   while IFS= read -r key || [[ -n "$key" ]]; do
@@ -234,7 +234,7 @@ emit_block() {
 
   if [[ -n "$sidecar" && -s "$sidecar" ]]; then
     # `cat` preserves the file's bytes; the file may or may not end with a
-    # newline. Normalize via awk so the sidecar block always ends with
+    # newline. Normalize via awk so that the sidecar block always ends with
     # exactly one newline.
     awk '{ print }' "$sidecar"
     need_separator=1
@@ -281,7 +281,7 @@ main() {
   # malformed. The script can't infer any package keys from it, so the
   # entire lookup mechanism would silently no-op. Fail loudly instead.
   # `grep -c` exits 1 on zero matches; suppress that under `set -e` with
-  # `|| true` so we can branch on the count itself.
+  # `|| true` so that we can branch on the count itself.
   local heading_count
   heading_count="$(grep -c '^## ' "$lookup" || true)"
   if [[ "$heading_count" -eq 0 ]]; then

@@ -4,21 +4,21 @@ import { listGovernedSubagents } from './list-governed-subagents.ts';
 const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'savings-analyzer']);
 
 /**
- * Subagents whose genre is served by dropping true facts, which the shared concision rule forbids: it tells a writer
- * to keep every decision, constraint, and actionable fact and to compose tight rather than trim. A lede is selected
- * from a change whose facts are nearly all accurate and nearly all beneath the reader's notice, so the rule reaches
- * these two as a license to keep them. Each states its own rule instead: the drafter in "What to leave out", and the
- * cutter in the assignment that admits a candidate only where the reader acts on it.
+ * Subagents whose genre is served by dropping true facts, which the shared concision rule forbids: It tells a writer
+ * to keep every decision, constraint, and actionable fact and to compose tight rather than trim. Because a lede is
+ * selected from a change whose facts are nearly all accurate and nearly all beneath the reader's notice, the rule
+ * reaches these two as a license to keep them. Each states its own rule instead: the drafter in "What to leave out",
+ * and the cutter in the assignment that admits a candidate only when the reader acts on it.
  */
 const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['lede-cutter', 'lede-drafter']);
 
 /**
- * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section
- * `guidance/shared/AGENTS.md` keeps inline reaches no subagent and so appears here under no key.
+ * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section kept
+ * inline by `guidance/shared/AGENTS.md` reaches no subagent and so appears here under no key.
  *
- * A role's population is read from the `subagents/` directory wherever the section governs every subagent, so one
- * added later is covered the day it appears. Where the section is role-scoped the population is written out: the
- * failure guarded against is a subagent dropping off, and a list discovered from the bodies would move with the bug.
+ * A role's population is read from the `subagents/` directory wherever the section governs every subagent. One added
+ * later is covered the day it appears. When the section is role-scoped, the population is written out: The failure
+ * guarded against is a subagent dropping off, and a list discovered from the bodies would move with the bug.
  */
 export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<string>>> = {
   'code-descriptions': listCodeFacingSubagents(),
@@ -48,7 +48,7 @@ function listApproachChoosingSubagents(): ReadonlyArray<string> {
 /**
  * Returns the subagents that write code or judge it against a standard. The population coincides with
  * `COMMENT_AUTHORING_SUBAGENTS`, which selects on whether a subagent authors or judges comments; the two lists are
- * independent, and either may take a member the other does not.
+ * independent, and either may take a member that the other does not.
  */
 function listCodeFacingSubagents(): ReadonlyArray<string> {
   return [
