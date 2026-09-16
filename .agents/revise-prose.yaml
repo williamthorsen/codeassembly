@@ -1082,9 +1082,39 @@ rejections:
     ground: 'a quoted record: a dated log entry'
   - rule: plain-speech
     rule-version: '6'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: A drafter holding its reasons for a bullet defends the bullet.
     ground: the repair would pick the memory reading, and the next sentence suggests the original means attachment as well
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/lede-cutter.md
+    phrase: when every candidate earns its place, keep them all
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: earns its place after a compiler-target bump
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/planner.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
   - rule: plain-speech
     rule-version: '6'
     file: packages/agents/content/subagents/planner.md
@@ -1103,7 +1133,7 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/__tests__/bash-invocation-conventions.unit.test.ts
-    phrase: the call runs contained
+    phrase: The call runs contained
     ground: 'not the construction: "runs" is the clause''s own verb and "contained" a participial complement'
   - rule: reduced-object-relative
     rule-version: '1'
@@ -2623,6 +2653,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/subagents/_partials/review-insight-gate.md
+    phrase: '"a thing I noticed" is not one'
+    ground: 'a marked exhibit: a quoted phrase that the sentence says does not qualify'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/_partials/review-insight-gate.md
     phrase: the moment it implies a change to make now
     ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
   - rule: reduced-object-relative
@@ -3173,7 +3208,7 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
-    phrase: the deployed tree unions library content with each declared source
+    phrase: The deployed tree unions library content
     ground: the `so` it repeated was repaired earlier in the block; this lone `so` states a direct result
   - rule: so
     rule-version: '1'
@@ -3220,11 +3255,6 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
-    phrase: does not version `plain-speech`, so the fold's rules leave it out
-    ground: a lone `so` stating a direct result in its own assertion message
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: field, so its dispatch does not take each batch's rules from the helper
     ground: a lone `so` stating a direct result in its own assertion message
   - rule: so
@@ -3235,17 +3265,22 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
-    phrase: never names `${missing
-    ground: a lone `so` stating a direct result in its own assertion message
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: no longer folds every rejection, so a judgment is discarded again
     ground: a lone `so` stating a direct result in its own assertion message
   - rule: so
     rule-version: '1'
     file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: scalar, so the skill writes a file that nothing opens
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: so the fold's rules leave it out and the record command refuses a plain-speech rejection
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: so the sweeper meets a candidate under a rule not described by its own body
     ground: a lone `so` stating a direct result in its own assertion message
   - rule: so
     rule-version: '1'

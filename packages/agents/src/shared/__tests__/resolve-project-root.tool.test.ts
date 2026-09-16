@@ -55,8 +55,8 @@ describe(resolveProjectRoot, () => {
   it('names the unreadable repository rather than an absent one', () => {
     execFileSync('git', ['-C', scratch, 'init', '--quiet']);
     const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    // `GIT_DIR` points nowhere while `scratch` is a healthy repository, which is the shape a sandboxed
-    // nested `git` produces: the repository is present and git refuses to read it.
+    // `GIT_DIR` points nowhere while `scratch` is a healthy repository, which is the shape produced by
+    // a sandboxed nested `git`: The repository is present and git refuses to read it.
     vi.stubEnv('GIT_DIR', '/nonexistent/x');
 
     expect(resolveProjectRoot({ startDir: scratch })).toBe(scratch);

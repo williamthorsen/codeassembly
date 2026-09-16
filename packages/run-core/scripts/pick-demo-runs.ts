@@ -135,7 +135,7 @@ function renderJson(rows: ReadonlyArray<RankedRun>): string {
   return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
-// -- Parse arguments --
+// -- Argument parsing --
 
 function parseArgs(args: ReadonlyArray<string>): Options {
   let top = DEFAULT_TOP;
