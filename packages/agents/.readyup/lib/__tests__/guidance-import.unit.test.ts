@@ -34,7 +34,7 @@ describe(resolveGuidanceImports, () => {
     });
   });
 
-  it('does not reach it through a prose mention carrying no import', () => {
+  it('does not reach it through a prose mention containing no import', () => {
     const outcome = resolveGuidanceImports('Read ../AGENTS.md before starting.\n', IMPORTING_DIR, GUIDANCE_PATH);
 
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
@@ -106,7 +106,7 @@ describe(resolveGuidanceImports, () => {
     expect(outcome).toEqual({ doesReachGuidance: true, resolvedPaths: [GUIDANCE_PATH] });
   });
 
-  it('reads no import from a code span holding a spaced path', () => {
+  it('reads no import from a code span containing a spaced path', () => {
     const document = 'Write ` @../AGENTS.md ` to import it.\n';
 
     const outcome = resolveGuidanceImports(document, IMPORTING_DIR, GUIDANCE_PATH);
