@@ -8,7 +8,7 @@ import { resolveEventsDir, resolveKbDir } from '@williamthorsen/kb/layout';
 import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
-/** The lede-decision records the fixture corpus holds, oldest first. */
+/** The lede-decision records that the fixture corpus contains, oldest first. */
 const FIXTURE_DECISIONS = [
   { id: 'A', type: 'ci', capturedAt: '2026-01-01T00:00:00Z' },
   { id: 'B', type: 'feat', capturedAt: '2026-02-01T00:00:00Z' },
@@ -20,8 +20,8 @@ const FIXTURE_DECISIONS = [
  * selects two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
  * without putting ripgrep on the build's critical path.
  *
- * The invocation passes no `--data-dir`, so the run resolves the work-type taxonomy the way an installed helper does —
- * through the `_data` directory of the `skills` sibling — and a bundle that resolved it wrongly fails here.
+ * Because the invocation passes no `--data-dir`, the run resolves the work-type taxonomy the way an installed helper
+ * does (through the `_data` directory of the `skills` sibling), and a bundle that resolved it wrongly fails here.
  */
 export function makeSelectLedeExemplarsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'select-lede-exemplars-store-'));
@@ -49,7 +49,7 @@ export function makeSelectLedeExemplarsSmokeTest(): SmokeTestInvocation {
 
 // region | Helpers
 
-/** Assert the smoke selected both `feat` exemplars from the fixture corpus without widening. */
+/** Asserts the smoke selected both `feat` exemplars from the fixture corpus without widening. */
 function assertSelectLedeExemplarsSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from select-lede-exemplars');
@@ -72,7 +72,7 @@ function assertSelectLedeExemplarsSmokeResult(result: unknown): void {
   }
 }
 
-/** Renders a decision record in the shape `capture-lede-decision` writes. */
+/** Renders a decision record in the shape that `capture-lede-decision` writes. */
 function renderDecision(decision: { id: string; type: string; capturedAt: string }): string {
   return [
     '---',

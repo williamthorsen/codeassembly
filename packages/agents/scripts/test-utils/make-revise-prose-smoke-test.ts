@@ -8,9 +8,9 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a throwaway git repository holding one Markdown file with one known site, and returns a
+ * Stands up a throwaway git repository containing one Markdown file with one known site, and returns a
  * `SmokeTestInvocation` that sweeps it. Exercises the git listing, the prose extraction, and the detection pipeline
- * end to end. `HOME` is overridden to the fixture dir so the dev's own preferences do not reach the run.
+ * end to end. `HOME` is overridden to the fixture dir so that the run reads none of the dev's own preferences.
  */
 export function makeReviseProseSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'revise-prose-smoke-'));
@@ -28,7 +28,7 @@ export function makeReviseProseSmokeTest(): SmokeTestInvocation {
 // region | Helpers
 
 /**
- * Asserts that the sweep read the seed file rather than reporting an empty repository. The seed carries one site of
+ * Asserts that the sweep read the seed file rather than reporting an empty repository. The seed contains one site of
  * the construction, so a working pipeline always reports it; its absence means the listing or the extraction found
  * nothing, which must fail here rather than pass as a clean report.
  */

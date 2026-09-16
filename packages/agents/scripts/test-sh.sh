@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# test-sh.sh — Run shellspec against the package's shell tests.
+# test-sh.sh: Run shellspec against the package's shell tests.
 #
 # Forwards positional arguments to shellspec, falling back to the package's default test directory
 # when no paths or options are supplied.
-# Drops a single leading `--` so callers can use the standard `pnpm <script> -- <args>` convention
+# Drops a single leading `--` so that callers can use the standard `pnpm <script> -- <args>` convention
 # to forward shellspec flags such as `--example`.
 #
 # Usage:
@@ -21,7 +21,7 @@ main() {
     show_usage 0
   fi
 
-  # Consume the pnpm `--` separator if present so subsequent args reach
+  # Consume the pnpm `--` separator if present so that subsequent args reach
   # shellspec as real options rather than positional paths.
   if [[ "${1:-}" == "--" ]]; then
     shift

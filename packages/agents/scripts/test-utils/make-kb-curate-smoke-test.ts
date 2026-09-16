@@ -11,14 +11,14 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 /**
  * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle read-only
  * over it. Exercises the resolve → enumerate → detect pipeline end to end. `HOME` is overridden to the fixture dir
- * so the dev's real registry does not pollute KB resolution.
+ * so that the dev's real registry does not pollute KB resolution.
  */
 export function makeKbCurateSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-curate-smoke-'));
   mkdirSync(resolveKbDir(fixtureDir), { recursive: true });
-  // The seed note lives under `content/` so the store's default `targets: ['content/**/*.md']` enumerates it; a note
-  // at the store root would not match and the smoke test would silently report zero notes. The note links to a
-  // missing target so a successful enumeration always yields a `wikilinks.unresolved` finding — the proof, below,
+  // The seed note lives under `content/` so that the store's default `targets: ['content/**/*.md']` enumerates it; a
+  // note at the store root would not match and the smoke test would silently report zero notes. The note links to a
+  // missing target so that a successful enumeration always yields a `wikilinks.unresolved` finding: the proof, below,
   // that the bundle enumerated the note rather than reporting an empty vault.
   mkdirSync(path.join(fixtureDir, CONTENT_DIR), { recursive: true });
   writeFileSync(
@@ -38,8 +38,8 @@ export function makeKbCurateSmokeTest(): SmokeTestInvocation {
 
 /**
  * Asserts that the kb-curate smoke produced an ok read-only report that actually enumerated the seed note. The seed
- * note carries an unresolved wikilink, so a non-empty enumeration always surfaces a `wikilinks.unresolved` finding; its
- * absence means the bundle enumerated nothing — a broken `content/` scoping must fail here rather than pass with an
+ * note contains an unresolved wikilink, so a non-empty enumeration always reports a `wikilinks.unresolved` finding;
+ * its absence means the bundle enumerated nothing. A broken `content/` scoping must fail here rather than pass with an
  * empty report.
  */
 function assertKbCurateSmokeResult(result: unknown): void {

@@ -1,5 +1,5 @@
 /**
- * Post-compile build step: copies content/ to dist/content/ and adds a shebang to the CLI entry point.
+ * Post-compile build step: Copies content/ to dist/content/ and adds a shebang to the CLI entry point.
  */
 import { chmod, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -15,9 +15,9 @@ const contentDest = path.join(packageRoot, 'dist', 'content');
 const cliEntry = path.join(packageRoot, 'dist', 'esm', 'cli.js');
 
 /**
- * Reports whether `source` belongs in the built content tree. The build output is what the package publishes, so a
- * test directory anywhere under `content/` would otherwise ship to every consumer. `cp` skips a rejected directory's
- * whole subtree, so rejecting the directory is enough.
+ * Reports whether `source` belongs in the built content tree. The package publishes the build output, so a test
+ * directory anywhere under `content/` would otherwise ship to every consumer. Because `cp` skips a rejected
+ * directory's whole subtree, rejecting the directory is enough.
  */
 function shouldCopy(source: string): boolean {
   const name = path.basename(source);
