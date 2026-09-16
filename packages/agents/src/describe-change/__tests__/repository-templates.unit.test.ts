@@ -15,12 +15,12 @@ import { SURFACES } from '../types.ts';
 
 // This repository configures its own title templates, and the engine's semantics decide what they render. A group
 // holding both `{scope}` and `{type}` drops the type along with an absent scope, and the `*` scope is absent by the
-// time the group decides, so a multi-workspace commit would land with no work type for the changelog to read.
+// time the group decides, so a multi-workspace commit would name no work type for the changelog to read.
 
 /** The repository root, five levels above this suite. */
 const REPO_ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
 
-/** The taxonomy the installed helper reads. */
+/** The taxonomy read by the installed helper. */
 const DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
 
 describe('this repository’s title templates', () => {
@@ -67,7 +67,10 @@ describe('this repository’s title templates', () => {
 
 // region | Helpers
 
-/** Reads this repository's own templates, with the global tier pointed at an empty directory so it contributes none. */
+/**
+ * Reads this repository's own templates, with the global tier pointed at an empty directory so that it contributes
+ * none.
+ */
 async function loadRepositoryTemplates(): Promise<Record<(typeof SURFACES)[number], string>> {
   const home = await mkdtemp(join(tmpdir(), 'repository-templates-home-'));
   const { templates } = await loadPreferences({ home, projectRoot: REPO_ROOT });

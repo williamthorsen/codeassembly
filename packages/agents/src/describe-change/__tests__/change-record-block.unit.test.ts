@@ -76,7 +76,7 @@ describe(readChangeRecordBlock, () => {
     expect(readChangeRecordBlock(body)).toStrictEqual({ block, kind: 'read' });
   });
 
-  it('ignores a key the grammar does not declare, and reads a null field as absent', () => {
+  it('ignores a key that the grammar does not declare, and reads a null field as absent', () => {
     const body = [
       '```change-record',
       'grammar: 2',
@@ -253,7 +253,7 @@ describe(stripChangeRecordBlocks, () => {
 
 // region | Helpers
 
-/** Reads a rendered block back through a YAML parse, which is the inverse the renderer is written against. */
+/** Reads a rendered block back through a YAML parse, which is the inverse against which the renderer is written. */
 function readBlock(rendered: string): Record<string, unknown> {
   const lines = rendered.split('\n');
   const parsed: unknown = parseYaml(lines.slice(1, -1).join('\n'));

@@ -11,7 +11,7 @@ import { MissingCommitError, readCommits } from '../read-commits.ts';
 const execFileAsync = promisify(execFile);
 
 describe(readCommits, () => {
-  it('reads a subject holding the delimiters the commit template itself uses', async () => {
+  it('reads a subject holding the delimiters used by the commit template itself', async () => {
     const cwd = await buildRepo(['agents|feat: Add a parser: the reader, the writer, and the verifier']);
 
     const commits = await readCommits({ baseRef: 'base', cwd });
@@ -65,7 +65,7 @@ describe(readCommits, () => {
     expect(await readCommits({ baseRef: 'base', cwd })).toStrictEqual([]);
   });
 
-  it('reports commits oldest first, matching the order trailers are read in', async () => {
+  it('reports commits oldest first, matching the order in which trailers are read', async () => {
     const cwd = await buildRepo([
       'agents|feat: Add the parser',
       [
@@ -160,7 +160,10 @@ async function buildRepo(messages: readonly string[]): Promise<string> {
   return cwd;
 }
 
-/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing a fixture cannot supply. */
+/**
+ * Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing that a fixture cannot
+ * supply.
+ */
 async function commitAll(cwd: string, message: string): Promise<void> {
   await execFileAsync('git', ['-C', cwd, 'add', '--all']);
   await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);

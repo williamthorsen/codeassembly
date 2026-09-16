@@ -9,43 +9,43 @@ import { resolveTicketType } from '../resolve-ticket-type.ts';
 const TYPES = { deprecate: 'deprecation', drop: 'removal', feat: 'feature', fix: 'fix' };
 
 describe(resolveTicketType, () => {
-  it('resolves the one type its label names', async () => {
+  it('resolves the one type that its label names', async () => {
     const labelMapPath = await writeLabelMap({ types: TYPES });
 
     expect(await resolveTicketType({ labelMapPath, labels: ['feature', 'scope:agents'] })).toBe('feat');
   });
 
-  it('yields nothing where the labels name no type', async () => {
+  it('yields nothing when the labels name no type', async () => {
     const labelMapPath = await writeLabelMap({ types: TYPES });
 
     expect(await resolveTicketType({ labelMapPath, labels: ['scope:agents', 'priority:high'] })).toBeUndefined();
   });
 
-  it('yields nothing where the labels name two types', async () => {
+  it('yields nothing when the labels name two types', async () => {
     const labelMapPath = await writeLabelMap({ types: TYPES });
 
     expect(await resolveTicketType({ labelMapPath, labels: ['feature', 'fix'] })).toBeUndefined();
   });
 
-  it('yields nothing where one label names two types', async () => {
+  it('yields nothing when one label names two types', async () => {
     const labelMapPath = await writeLabelMap({ types: { drop: 'removal', feat: 'removal' } });
 
     expect(await resolveTicketType({ labelMapPath, labels: ['removal'] })).toBeUndefined();
   });
 
-  it('yields nothing where no ticket carries a label at all', async () => {
+  it('yields nothing when no ticket carries a label at all', async () => {
     const labelMapPath = await writeLabelMap({ types: TYPES });
 
     expect(await resolveTicketType({ labelMapPath, labels: [] })).toBeUndefined();
   });
 
-  it('yields nothing where the repository configures no label map', async () => {
+  it('yields nothing when the repository configures no label map', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'resolve-ticket-type-'));
 
     expect(await resolveTicketType({ labelMapPath: join(dir, 'absent.json'), labels: ['feature'] })).toBeUndefined();
   });
 
-  it('yields nothing where the label map is not valid JSON', async () => {
+  it('yields nothing when the label map is not valid JSON', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'resolve-ticket-type-'));
     const labelMapPath = join(dir, 'label-map.json');
     await writeFile(labelMapPath, '{ not json', 'utf8');
@@ -53,7 +53,7 @@ describe(resolveTicketType, () => {
     expect(await resolveTicketType({ labelMapPath, labels: ['feature'] })).toBeUndefined();
   });
 
-  it('yields nothing where the label map declares no types section', async () => {
+  it('yields nothing when the label map declares no types section', async () => {
     const labelMapPath = await writeLabelMap({ scopes: { agents: 'scope:agents' } });
 
     expect(await resolveTicketType({ labelMapPath, labels: ['feature'] })).toBeUndefined();
