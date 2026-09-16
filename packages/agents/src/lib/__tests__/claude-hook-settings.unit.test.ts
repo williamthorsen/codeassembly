@@ -12,10 +12,10 @@ const SENTINEL = 'codeassembly:hook';
 const GROUP = { matcher: 'Bash', hooks: [{ type: 'command', command: `${SENTINEL} relay` }] };
 const ENTRY: ClaudeHookEntry = { event: 'PreToolUse', group: GROUP };
 
-/** Invalid JSON — a trailing comma — as a hand-edited settings file might well hold. */
+/** Invalid JSON (a trailing comma), as a hand-edited settings file might well contain. */
 const UNPARSEABLE = '{\n  "model": "opus",\n}\n';
 
-/** Per-test scratch directory, refreshed by `beforeEach` so each test writes into its own. */
+/** Per-test scratch directory, refreshed by `beforeEach` so that each test writes into its own. */
 const scratch = { dir: '' };
 
 beforeEach(async () => {
@@ -152,7 +152,7 @@ describe(ensureClaudeHookEntries, () => {
     expect(await readFile(target, 'utf8')).toContain(SENTINEL);
   });
 
-  it('creates no file when a supplied entry does not carry the sentinel', async () => {
+  it('creates no file when a supplied entry does not include the sentinel', async () => {
     const file = path.join(scratch.dir, 'settings.json');
     const unmarked: ClaudeHookEntry = { event: 'PreToolUse', group: { hooks: [{ command: 'echo hi' }] } };
 
@@ -180,7 +180,7 @@ describe(removeClaudeHookEntries, () => {
     expect(existsSync(file)).toBe(false);
   });
 
-  it('does not rewrite a file holding no owned entry', async () => {
+  it('does not rewrite a file containing no owned entry', async () => {
     const file = await writeSettings('{\n  "model": "opus"\n}\n');
     const firstMtime = statSync(file).mtimeMs;
 

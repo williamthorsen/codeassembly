@@ -29,7 +29,7 @@ describe(createSourceResolver, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  /** Writes an empty frontmatter file for a `(type, slug)` artifact under `dir`, so `resolve` finds it. */
+  /** Writes an empty frontmatter file for a `(type, slug)` artifact under `dir`, so that `resolve` finds it. */
   async function writeArtifact(dir: string, type: ArtifactType, slug: string): Promise<void> {
     const filePath = path.join(dir, artifactFrontmatterPath(type, slug));
     await mkdir(path.dirname(filePath), { recursive: true });
@@ -138,7 +138,7 @@ describe(describeSearchedLocations, () => {
 });
 
 describe(libraryResolver, () => {
-  it('carries no declared sources', () => {
+  it('has no declared sources', () => {
     const resolver = libraryResolver('/library');
 
     expect(resolver.sources).toEqual([]);
@@ -160,7 +160,7 @@ describe(hasLibraryArtifact, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it('reports true when the library holds the slug', async () => {
+  it('reports true when the library contains the slug', async () => {
     const filePath = path.join(libraryDir, artifactFrontmatterPath('rulebook', 'alpha'));
     await mkdir(path.dirname(filePath), { recursive: true });
     await writeFile(filePath, '---\nslug: alpha\n---\n', 'utf8');

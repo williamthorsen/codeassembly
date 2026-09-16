@@ -37,7 +37,7 @@ describe(makeArtifactMarker, () => {
       );
     });
 
-    it('is idempotent: re-injecting the same slug leaves the content unchanged', () => {
+    it('is idempotent: Re-injecting the same slug leaves the content unchanged', () => {
       const once = marker.injectMarker(FILE, 'people-report');
 
       expect(marker.injectMarker(once, 'people-report')).toBe(once);

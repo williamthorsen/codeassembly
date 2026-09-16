@@ -75,7 +75,7 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
     });
 
-    it('scans a body opening on a thematic break, whose delimiters carry no YAML key', () => {
+    it('scans a body opening on a thematic break, whose delimiters enclose no YAML key', () => {
       const body = '---\n\n## Lifecycle events\n\n---\n\n[x](#lifecycle-events)\n';
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
@@ -95,13 +95,13 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
 
-    it('fails on a fence nothing closes rather than passing over the unchecked remainder', () => {
+    it('fails on a fence that nothing closes rather than passing over the unchecked remainder', () => {
       const body = '# T\n\n```ts\nconst x = 1;\n\n## Real heading\n\n[x](#nowhere)\n';
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/opens a code fence with ``` that nothing closes/);
     });
 
     it('fails when a longer opening run meets a shorter closing one', () => {
-      // The four-tick form is how a fenced example carries a fence of its own, so the mismatch belongs to that case.
+      // The four-tick form is how a fenced example contains a fence of its own, so the mismatch belongs to that case.
       const body = '# T\n\n````markdown\nsample\n```\n\n## Real heading\n\n[x](#real-heading)\n';
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/opens a code fence with ```` that nothing closes/);
     });
@@ -130,13 +130,13 @@ describe(assertAnchorsResolve, () => {
     });
   });
 
-  describe('targets it leaves alone', () => {
+  describe('targets that it leaves alone', () => {
     it.each([
-      { name: 'a relative path carrying a fragment', target: '../other.md#nowhere' },
-      { name: 'an absolute path carrying a fragment', target: '/etc/other.md#nowhere' },
-      { name: 'a tilde path carrying a fragment', target: '~/.claude/skills/other.md#nowhere' },
-      { name: 'a URL carrying a fragment', target: 'https://example.com/doc#nowhere' },
-      { name: 'a template-variable target carrying a fragment', target: '{harness_home_dir}/other.md#nowhere' },
+      { name: 'a relative path with a fragment', target: '../other.md#nowhere' },
+      { name: 'an absolute path with a fragment', target: '/etc/other.md#nowhere' },
+      { name: 'a tilde path with a fragment', target: '~/.claude/skills/other.md#nowhere' },
+      { name: 'a URL with a fragment', target: 'https://example.com/doc#nowhere' },
+      { name: 'a template-variable target with a fragment', target: '{harness_home_dir}/other.md#nowhere' },
     ])('ignores $name', ({ target }) => {
       expect(() => assertAnchorsResolve(`[x](${target})\n`, LABEL)).not.toThrow();
     });
@@ -153,7 +153,7 @@ describe(collectHeadingPositions, () => {
     ]);
   });
 
-  it('gives an index a caller can compare against a passage, so a section can be told from its successor', () => {
+  it('gives an index that a caller can compare against a passage, so a section can be told from its successor', () => {
     const body = '## First\n\ntoken here\n\n## Second\n';
     const [first, second] = collectHeadingPositions(body);
 
@@ -163,13 +163,13 @@ describe(collectHeadingPositions, () => {
 });
 
 describe(collectHeadingSlugs, () => {
-  it('counts each slug, so an ambiguous fragment is distinguishable from a resolving one', () => {
+  it('counts each slug, which makes an ambiguous fragment distinguishable from a resolving one', () => {
     const slugs = collectHeadingSlugs('# Once\n\n## Twice\n\n### Twice\n');
     expect(slugs.get('once')).toBe(1);
     expect(slugs.get('twice')).toBe(2);
   });
 
-  it('derives an anchor the way GitHub does, preserving the gap punctuation leaves behind', () => {
+  it('derives an anchor the way GitHub does, preserving the gap left behind by punctuation', () => {
     // Stripping `(`, `/`, `)`, and `+` leaves two adjacent spaces, which is what yields the double hyphen.
     const slugs = collectHeadingSlugs('### Finding scheme (F/W/T/R/S) + legacy suffix\n');
     expect(slugs.has('finding-scheme-fwtrs--legacy-suffix')).toBe(true);
