@@ -156,7 +156,7 @@ export function resolveRulebookToken(
     return {
       kind: 'rejected',
       reason:
-        'is honored only where a declaration supplies the deployed rulebook set; a support entry under skills/ ' +
+        'is honored only when a declaration supplies the deployed rulebook set; a support entry under skills/ ' +
         'renders without one',
     };
   }
@@ -198,14 +198,14 @@ export function rewriteInvocationTokens(
       if (kind === 'rulebook') {
         if (marker !== undefined) {
           throw new Error(
-            `Unusable invocation token {rulebook?:${slug}} in ${sourceLabel}: a rulebook token renders the skill ` +
-              'name its target deploys under, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+            `Unusable invocation token {rulebook?:${slug}} in ${sourceLabel}: A rulebook token renders the skill ` +
+              'name under which its target deploys, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
               '{subagent?:<slug>} have an optional form.',
           );
         }
         const resolution = resolveRulebookToken(slug, rulebooks);
         if (resolution.kind === 'rejected') {
-          throw new Error(`Unusable invocation token {rulebook:${slug}} in ${sourceLabel}: it ${resolution.reason}.`);
+          throw new Error(`Unusable invocation token {rulebook:${slug}} in ${sourceLabel}: It ${resolution.reason}.`);
         }
         return `${sigils.skillSigil}${resolution.skillName}`;
       }

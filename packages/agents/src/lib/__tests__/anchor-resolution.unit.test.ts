@@ -31,7 +31,7 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
 
-    it('resolves a target carrying a Markdown link title on its fragment alone', () => {
+    it('resolves a target with a Markdown link title on its fragment alone', () => {
       const body = '## Lifecycle events\n\nSee [the events](#lifecycle-events "the events").\n';
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
@@ -40,12 +40,12 @@ describe(assertAnchorsResolve, () => {
   describe('reporting', () => {
     it('names the artifact and counts the offending targets', () => {
       const body = '[a](#nope)\n\n[b](#also-nope)\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(`${LABEL} carries 2 unresolvable anchor link target(s)`);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(`${LABEL} contains 2 unresolvable anchor link target(s)`);
     });
 
     it('reports a target repeated across the body once', () => {
       const body = '[a](#nope)\n\n[b](#nope)\n\n[c](#nope)\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/carries 1 unresolvable/);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/contains 1 unresolvable/);
     });
 
     it('offers the partial as a conditional lead rather than asserting one was inlined', () => {

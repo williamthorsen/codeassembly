@@ -20,9 +20,9 @@ import { resolveSourcePath } from './source-path.ts';
  * one probes `node_modules`, which is filesystem work that this parser deliberately leaves to its caller.
  * `declinedPackages` are the names that a tier dropped and no higher tier re-adopted, which distinguishes "declined"
  * from "never mentioned". `guidanceHooks` maps each bound hook name to the rulebooks bound to it, in declaration
- * order; a hook every binding dropped is absent rather than empty, so its presence means something is bound.
- * `declaredIn` maps each slug, per type, to the chain files that declare it, in chain order, which lets a caller
- * reporting an unresolvable slug name the file to edit.
+ * order; a hook dropped by every binding is absent rather than empty, so its presence means something is bound.
+ * `declaredIn` maps each slug, per type, to the chain files that declare it, in chain order, which enables the caller
+ * reporting an unresolvable slug to identify the file that needs editing.
  */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;

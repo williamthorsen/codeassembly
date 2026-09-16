@@ -207,8 +207,8 @@ describe(rewriteInvocationTokens, () => {
 
   it('reads as one sentence when a rulebook token appears in a support entry', () => {
     expect(() => rewriteInvocationTokens('See {rulebook:nmr-scripts}.', CLAUDE_SIGILS, SUPPORT_HOST)).toThrow(
-      'Unusable invocation token {rulebook:nmr-scripts} in skills/_data/artifact-conventions.md: it is honored only ' +
-        'where a declaration supplies the deployed rulebook set; a support entry under skills/ renders without one.',
+      'Unusable invocation token {rulebook:nmr-scripts} in skills/_data/artifact-conventions.md: It is honored only ' +
+        'when a declaration supplies the deployed rulebook set; a support entry under skills/ renders without one.',
     );
   });
 
@@ -226,8 +226,8 @@ describe(rewriteInvocationTokens, () => {
 
   it('rejects an optional rulebook token, naming the forms that have one', () => {
     expect(() => rewriteInvocationTokens('See {rulebook?:nmr-scripts}.', CLAUDE_SIGILS, HOST, RULEBOOKS)).toThrow(
-      'Unusable invocation token {rulebook?:nmr-scripts} in skills/wrap-up/SKILL.md: a rulebook token renders the ' +
-        'skill name its target deploys under, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+      'Unusable invocation token {rulebook?:nmr-scripts} in skills/wrap-up/SKILL.md: A rulebook token renders the ' +
+        'skill name under which its target deploys, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
         '{subagent?:<slug>} have an optional form.',
     );
   });

@@ -298,7 +298,7 @@ describe(renderSubagentForHarness, () => {
         subagentSigil: '',
         rulebooks: NO_RULEBOOKS,
       }),
-    ).toThrow(/subagents\/demo-agent\.md carries 1 unresolvable anchor link target/);
+    ).toThrow(/subagents\/demo-agent\.md contains 1 unresolvable anchor link target/);
   });
 
   it('throws ToolNameRewriteError for a tool that the harness does not name', () => {

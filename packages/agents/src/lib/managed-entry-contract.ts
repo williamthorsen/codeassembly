@@ -1,6 +1,6 @@
 /**
  * The ensure/check/remove contract shared by every managed-entry utility, one per harness config format. Each utility
- * supplies its own entry type and its own implementation; these shapes are what keeps the harness wiring uniform
+ * supplies its own entry type and its own implementation; these shapes keep the harness wiring uniform
  * across them.
  */
 

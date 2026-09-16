@@ -152,7 +152,7 @@ describe(renderSkillDirectory, () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
-      /skills\/demo\/SKILL\.md carries 1 unresolvable anchor link target/,
+      /skills\/demo\/SKILL\.md contains 1 unresolvable anchor link target/,
     );
   });
 

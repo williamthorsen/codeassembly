@@ -76,7 +76,7 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
 
   if (rejections.length > 0) {
     throw new Error(
-      `${sourceLabel} carries ${rejections.length} unresolvable anchor link target(s). An anchor-only target must ` +
+      `${sourceLabel} contains ${rejections.length} unresolvable anchor link target(s). An anchor-only target must ` +
         `name exactly one heading in the same body:\n${rejections.join('\n')}\n` +
         'If a target was authored in an inlined _partials/ file, fix it there rather than in the file named above.',
     );

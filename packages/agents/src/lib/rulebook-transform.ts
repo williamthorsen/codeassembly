@@ -131,7 +131,7 @@ function describeRejection(target: string): string | undefined {
   }
   if (resolved.startsWith(`${RULEBOOK_SOURCE_DIR}/`)) {
     const targetSlug = path.posix.basename(resolved, '.md');
-    return `names rulebook "${targetSlug}", which is invoked rather than linked: write {rulebook:${targetSlug}} instead`;
+    return `names rulebook "${targetSlug}", which is invoked rather than linked: Write {rulebook:${targetSlug}} instead`;
   }
   const root = resolved.split('/', 1)[0];
   if (root === undefined || !LINKABLE_ROOTS.includes(root)) {

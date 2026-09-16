@@ -47,7 +47,7 @@ export function describeContentRoot(root: ContentRootRef): string {
 export function describeMissingSource(source: DeclaredSource): ReportLine {
   const remedy =
     source.declaredAs === 'package'
-      ? "The package's own `codeassembly.content` names that path, so create the directory if you maintain the " +
+      ? "The package's own `codeassembly.content` names that path, so create the directory if this project maintains the " +
         'package, otherwise report the omission upstream or drop the package from `packages`.'
       : "Create the directory, or correct the source's `path` in the declaration that names it.";
   return {

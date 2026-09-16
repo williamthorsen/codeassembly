@@ -18,7 +18,7 @@ describe(resolveDeclaration, () => {
     await rm(cwd, { recursive: true, force: true });
   });
 
-  /** The absolute `.agents/` directory a relative source path resolves against. */
+  /** The absolute `.agents/` directory against which a relative source path resolves. */
   const agentsDir = (): string => path.join(cwd, '.agents');
 
   /** Writes the project-scope `codeassembly.yaml`. */
@@ -271,7 +271,7 @@ describe(resolveDeclaration, () => {
     });
   });
 
-  it('does not read a legacy rulebooks.yaml: it returns undefined when only that file is present', async () => {
+  it('does not read a legacy rulebooks.yaml: It returns undefined when only that file is present', async () => {
     await writeLegacy('rulebooks:\n  - alpha\n');
     expect(await resolveDeclaration({ cwd })).toBeUndefined();
   });
@@ -349,7 +349,7 @@ describe(resolveDeclaration, () => {
       expect(declaration?.sources).toEqual([{ name: 'home', dir: path.join(homedir(), 'guidance') }]);
     });
 
-    it('orders sources highest-precedence-first: later-declared shadows earlier within one file', async () => {
+    it('orders sources highest-precedence-first: Later-declared shadows earlier within one file', async () => {
       await writeProject('sources:\n  - name: a\n    path: /a\n  - name: b\n    path: /b\n');
       const declaration = await resolveDeclaration({ cwd });
       expect(declaration?.sources).toEqual([
@@ -431,7 +431,7 @@ describe(resolveDeclaration, () => {
       expect(declaration?.guidanceHooks).toEqual(new Map());
     });
 
-    it('leaves a hook a higher tier does not mention untouched', async () => {
+    it('leaves a hook that a higher tier does not mention untouched', async () => {
       await writeProject('guidance-hooks:\n  impl:\n    use:\n      - layout\n');
       await writeLocal('guidance-hooks:\n  glossary:\n    use:\n      - acme-terms\n');
       const declaration = await resolveDeclaration({ cwd });
@@ -455,7 +455,7 @@ describe(resolveDeclaration, () => {
 // region | Helpers
 
 /**
- * Drops the per-slug declaring files from a resolved declaration, so an assertion about the resolved slug sets is not
+ * Drops the per-slug declaring files from a resolved declaration, so that an assertion about the resolved slug sets is not
  * restated as absolute temp-directory paths. Provenance has its own coverage.
  */
 function withoutDeclaredIn(declaration: ResolvedDeclaration | undefined): Omit<ResolvedDeclaration, 'declaredIn'> {

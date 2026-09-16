@@ -27,7 +27,7 @@ describe(buildClaudeHookEntries, () => {
     expect(entries.map((entry) => entry.event)).toEqual([...listRelayHooks('claude')]);
   });
 
-  it('bakes the hook identity, a tilde relay path, and the sentinel into each command', () => {
+  it('embeds the hook identity, a tilde relay path, and the sentinel in each command', () => {
     for (const entry of buildClaudeHookEntries()) {
       const command = readClaudeCommand(entry.group);
       expect(command).toContain('node ~/.claude/scripts/relay-hook-event.mjs');
@@ -51,7 +51,7 @@ describe(buildRovoHookEntries, () => {
     expect(entries.map((entry) => entry.name)).toEqual([...listRelayHooks('rovo')]);
   });
 
-  it('bakes the hook identity, the absolute relay path, and the sentinel into each command', () => {
+  it('embeds the hook identity, the absolute relay path, and the sentinel in each command', () => {
     for (const entry of buildRovoHookEntries(ROVO_SCRIPTS_DIR)) {
       expect(entry.commands).toHaveLength(1);
       const command = entry.commands[0] ?? '';

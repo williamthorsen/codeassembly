@@ -19,9 +19,9 @@ describe('rewriteToolNames', () => {
   });
 
   it('replaces multiple placeholders on a single line', () => {
-    const content = 'Not a `{tool:Read}`, not a `{tool:Grep}`, not a `{tool:Bash}` — a `{tool:Write}`.';
+    const content = 'Not a `{tool:Read}`, not a `{tool:Grep}`, not a `{tool:Bash}` -- a `{tool:Write}`.';
     expect(rewriteToolNames(content, 'rovo', 'test.md')).toBe(
-      'Not a `open_files`, not a `grep`, not a `bash` — a `create_file`.',
+      'Not a `open_files`, not a `grep`, not a `bash` -- a `create_file`.',
     );
   });
 

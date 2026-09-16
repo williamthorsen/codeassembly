@@ -173,7 +173,7 @@ describe(renderRulebookBody, () => {
       { name: 'an ambient-only sibling, which is undeliverable either way', target: './nmr-cheatsheet.md' },
     ])('rejects $name, naming the token that replaces the link', ({ target }) => {
       expect(() => renderRulebookBody(`See [x](${target}).`, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
-        /invoked rather than linked: write \{rulebook:nmr-[a-z]+\} instead/,
+        /invoked rather than linked: Write \{rulebook:nmr-[a-z]+\} instead/,
       );
     });
 
@@ -201,7 +201,7 @@ describe(renderRulebookBody, () => {
 
     it('rejects an anchor naming no heading in the same body, naming the rulebook source file', () => {
       expect(() => renderRulebookBody('See [x](#nowhere).', 'shell-conventions', CLAUDE_CONTEXT)).toThrow(
-        /guidance\/rulebooks\/shell-conventions\.md carries 1 unresolvable anchor link target/,
+        /guidance\/rulebooks\/shell-conventions\.md contains 1 unresolvable anchor link target/,
       );
     });
 

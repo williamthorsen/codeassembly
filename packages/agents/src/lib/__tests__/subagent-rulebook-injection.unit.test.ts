@@ -64,7 +64,7 @@ describe(injectDeclaredRulebooks, () => {
     const source = dedent`
       ---
       name: demo-agent
-      description: A subagent whose description runs past any wrap column a stringifier might otherwise fold it at, twice over.
+      description: A subagent whose description runs past any wrap column at which a stringifier might otherwise fold it, twice over.
       tools: [Read, Write, Edit]
       skills:
         - commit
@@ -81,7 +81,7 @@ describe(injectDeclaredRulebooks, () => {
     const source = dedent`
       ---
       name: demo-agent
-      description: A subagent whose description runs past any wrap column a stringifier might otherwise fold it at, twice over.
+      description: A subagent whose description runs past any wrap column at which a stringifier might otherwise fold it, twice over.
       tools: [Read, Write, Edit]
       rulebooks:
         - nmr-scripts
