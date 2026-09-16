@@ -2,7 +2,7 @@
 
 # codeassembly
 
-A CLI that installs reusable AI agent guidance into coding-harness directories, and the library of rulebooks, skills, and subagents it deploys.
+A CLI that installs reusable AI agent guidance into coding-harness directories, and the library of rulebooks, skills, and subagents that it deploys.
 
 <!-- section:release-notes --><!-- /section:release-notes -->
 
@@ -25,7 +25,7 @@ pnpm add --save-dev codeassembly
 
 Supported harnesses are Claude Code and Rovo Dev; `--harness` narrows a run to one.
 
-Optional: where a project's tickets live in Jira, the deployed guidance resolves them through Atlassian's [`acli`](https://developer.atlassian.com/cloud/acli/) when it is on `PATH`, so `acli jira auth login --web` is worth running once. Without it, resolution falls back to a connected Jira read tool and then to asking for the ticket content.
+Optional: For a project whose tickets live in Jira, the deployed guidance resolves them through Atlassian's [`acli`](https://developer.atlassian.com/cloud/acli/) when it is on `PATH`, so `acli jira auth login --web` is worth running once. Without it, resolution falls back to a connected Jira read tool and then to asking for the ticket content.
 
 ## Commands
 
@@ -46,7 +46,7 @@ Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--fo
 
 ## Session-lifecycle hooks
 
-Skills report the work they do, but they cannot report a session opening, exiting, or handing a turn back to the developer: At those moments no skill is running. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
+Skills report the work that they do, but they cannot report a session opening, exiting, or handing a turn back to the developer: At those moments no skill is running. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
 
 | Event             | Claude Code        | Rovo Dev           |
 | ----------------- | ------------------ | ------------------ |
@@ -62,13 +62,13 @@ Skills report the work they do, but they cannot report a session opening, exitin
 - `configure-hooks --print` prints the entries without writing anything: the manual-adoption path for a config managed elsewhere. The snippets below are exactly what it emits.
 - `uninstall` removes the entries; `status` reports each one as present, drifted, or absent.
 
-Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: The CLI creates, replaces, and removes only entries whose command carries it, so hand-written hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
+Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: The CLI creates, replaces, and removes only entries whose command contains it, so hand-written hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
 
 The relay reports a boundary and nothing more. It never sends the prompt text, and it always exits 0: A relay that failed loudly would be worse than the missing event, since both harnesses read some non-zero hook exits as a signal to block the agent.
 
 ### Claude Code
 
-In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays, so the relay never has to infer where it was called from:
+In `~/.claude/settings.json`, under `hooks`. Each entry names the hook that it relays, so the relay never has to infer where it was called from:
 
 ```json
 {
@@ -117,7 +117,7 @@ In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays
 }
 ```
 
-Omit `matcher` on all four. `SessionStart` and `SessionEnd` accept one to select a start source or an end reason, and leaving it out is what relays every one of them; `UserPromptSubmit` and `Stop` ignore it.
+Omit `matcher` on all four. `SessionStart` and `SessionEnd` accept one to select a start source or an end reason, and leaving it out relays every one of them; `UserPromptSubmit` and `Stop` ignore it.
 
 Keep the whole invocation in `command` rather than splitting the flags into an `args` array: `~` expands only in the single-string form.
 
@@ -151,7 +151,7 @@ Two things to know about Rovo:
 
 ## Project declaration
 
-A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `recommended` and `triage` collections. See [Scopes](#scopes).
+A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts that the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains: the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `recommended` and `triage` collections. See [Scopes](#scopes).
 
 Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) live in the `codeassembly-content-specification` rulebook (`content/guidance/rulebooks/codeassembly-content-specification.md`). This section documents the declaration mechanism itself.
 
@@ -171,13 +171,13 @@ subagents:
     - canary
 ```
 
-A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is injected into the ambient region of each targeted harness's guidance file, and a `skill` rulebook is delivered as a `consult-<slug>` skill in each targeted harness. A third mode, `hook`, produces no delivery of its own: it records that the rulebook is reached by a guidance-hook binding, which a `codeassembly.yaml` writes rather than the rulebook (see [Guidance hooks](#guidance-hooks)). A rulebook may declare any combination of the three, and a list naming none of them is rejected.
+A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is injected into the ambient region of each targeted harness's guidance file, and a `skill` rulebook is delivered as a `consult-<slug>` skill in each targeted harness. A third mode, `hook`, produces no delivery of its own: It records that the rulebook is reached by a guidance-hook binding, which a `codeassembly.yaml` writes rather than the rulebook (see [Guidance hooks](#guidance-hooks)). A rulebook may declare any combination of the three, and a list naming none of them is rejected.
 
-A declared skill is deployed into each targeted harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
+A declared skill is deployed into each targeted harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so that `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
 
-A skill may restrict itself to specific harnesses with a `supported-harnesses:` frontmatter field (a single harness id or a list, e.g. `supported-harnesses: [rovo]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill with no `supported-harnesses:` field deploys to every harness. This is how a skill that one harness provides natively — but the library supplies for the others — is targeted at just the harnesses that need it, without duplicating it per harness.
+A skill may restrict itself to specific harnesses with a `supported-harnesses:` frontmatter field (a single harness id or a list, e.g. `supported-harnesses: [rovo]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill with no `supported-harnesses:` field deploys to every harness. This is how a skill that one harness provides natively, but the library supplies for the others, is targeted at just the harnesses that need it, without duplicating it per harness.
 
-A declared subagent is deployed into each targeted harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
+A declared subagent is deployed into each targeted harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so that `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
 
 `rulebooks`, `skills`, `subagents`, and `collections` are all deployed.
 
@@ -200,18 +200,18 @@ harnesses:
 A run resolves its targets in this order, stopping at the first that answers:
 
 1. The `--harness <id>` flag. (`--harness all` is the not-specified default and falls through.)
-2. The `harnesses` declaration, if any file in the chain carries one. A declaration that resolves to an empty set is honored: the run targets nothing and says so.
+2. The `harnesses` declaration, if any file in the chain declares one. A declaration that resolves to an empty set is honored: The run targets nothing and says so.
 3. The harnesses installed for this user, detected by the presence of their home directories (`~/.claude`, `~/.rovo`). A harness home is created by that harness's own installer, so its presence is evidence the harness is installed; a repository's own `.claude/` directory is not, which is why the repository is never probed.
 
-**`harnesses` resolves on a chain of its own.** Which harnesses a developer runs is a fact about the developer, so the key resolves across the user-global and project tiers together — the one key that crosses the domains defined under [Scopes](#scopes). Artifact keys deliberately do not: a user-global `collections: use: [all]` would otherwise deploy the whole catalog into every repository's harness directories.
+**`harnesses` resolves on a chain of its own.** Which harnesses a developer runs is a fact about the developer. The key resolves across the user-global and project tiers together, the one key that crosses the domains defined under [Scopes](#scopes). Artifact keys deliberately do not: A user-global `collections: use: [all]` would otherwise deploy the whole catalog into every repository's harness directories.
 
-**`root: true` clears only its own domain's contributions.** For every artifact key this is indistinguishable from clearing the whole chain, since their chain lies within one domain. It matters for `harnesses` alone, where it keeps a committed project file from discarding what the developer declared in the user-global tier. A `drop` still crosses the boundary, from either project-tier file: the committed `.agents/codeassembly.yaml` withdraws a harness for everyone working on the project, and the gitignored `.agents/codeassembly.local.yaml` withdraws one for a single checkout.
+**`root: true` clears only its own domain's contributions.** For every artifact key this is indistinguishable from clearing the whole chain, since their chain lies within one domain. It matters for `harnesses` alone, because it keeps a committed project file from discarding what the developer declared in the user-global tier. A `drop` still crosses the boundary, from either project-tier file: the committed `.agents/codeassembly.yaml` withdraws a harness for everyone working on the project, and the gitignored `.agents/codeassembly.local.yaml` withdraws one for a single checkout.
 
 The three tiers therefore state three different things: the user-global tier states which harnesses are installed, the project tier states which the project requires, and `codeassembly.local.yaml` overrides either for one developer.
 
 **Targeting selects the harness set; artifact narrowing filters within it.** A run targeting `[claude, rovo]` with a skill declaring `supported-harnesses: [rovo]` deploys that skill to Rovo alone. The two keys are distinct: `harnesses` lives in `codeassembly.yaml` and governs a whole run, while `supported-harnesses` lives in an artifact's frontmatter and governs that artifact.
 
-`sync`, `sync --global`, and `install` all honor the declaration; `install` resolves it against the home tier alone, since it deploys into the harness homes. A declaration naming a harness whose home does not yet exist provisions that home, which detection could never reach. `uninstall`, `status`, and `configure-hooks` read `--harness` and the installed set, never the declaration: they must reach what is installed rather than what is declared.
+`sync`, `sync --global`, and `install` all honor the declaration; `install` resolves it against the home tier alone, since it deploys into the harness homes. A declaration naming a harness whose home does not yet exist provisions that home, which detection could never reach. `uninstall`, `status`, and `configure-hooks` read `--harness` and the installed set, never the declaration: They must reach what is installed rather than what is declared.
 
 **Dropping a harness from the declaration retracts it.** The next `install` removes that harness's tracked files, unwires its session-lifecycle hook entries, and drops it from the manifest; an empty declared set retracts every harness. A user-modified file is kept without `--force` and keeps its harness tracked for that file alone, and `--dry-run` previews the removals. The next `sync` clears what it deployed there in turn: skills across both namespaces, subagents, the per-source support root, the ambient region, and the `prompts.yml` region. Every removal there is gated on a sync provenance marker or a well-formed sync-owned region, so a hand-authored file survives. A damaged region is reported and left standing, since repairing the markers is the developer's call. The harness-home guidance file keeps its ambient markers, whose placement is `install`'s; the project-local host loses the region outright and is deleted once nothing else remains in it. Retraction follows the declaration alone in both commands: `--harness claude` names a run's target rather than declaring the other harnesses unwanted, and a harness that detection misses has no home directory holding stale files.
 
@@ -223,11 +223,11 @@ Targeting claude, rovo (detected in ~).
 
 #### Guidance hooks
 
-A **guidance hook** is a named slot a skill or subagent declares in its body with `<!-- guidance-hook: <name> -->`, filled at sync time with the bodies of the rulebooks a declaration binds to it. It is the third route guidance takes into an agent's context, beside `delivery: ambient`, which charges every session, and `delivery: skill`, which depends on the agent choosing to consult it. A hook is scoped to the act — the guidance is present when the skill runs, and nowhere else.
+A **guidance hook** is a named slot that a skill or subagent declares in its body with `<!-- guidance-hook: <name> -->`, filled at sync time with the bodies of the rulebooks bound to it by a declaration. It is the third route that guidance takes into an agent's context, beside `delivery: ambient`, which charges every session, and `delivery: skill`, which depends on the agent choosing to consult it. A hook is scoped to the act: The guidance is present when the skill runs, and nowhere else.
 
-A rulebook records the route with `delivery: hook`, alone or alongside the other two. That mode instructs nothing, unlike its siblings: the binding lives in a `codeassembly.yaml`, so a rulebook cannot splice itself into a host body and a hook fills from the deploy closure whether or not the rulebook names the route. What declaring it buys is the three checks below.
+A rulebook records the route with `delivery: hook`, alone or alongside the other two. That mode instructs nothing, unlike its siblings: The binding lives in a `codeassembly.yaml`, so a rulebook cannot splice itself into a host body and a hook fills from the deploy closure whether or not the rulebook names the route. Declaring it buys the three checks below.
 
-`guidance-hooks` is the one map-valued key. Each hook name owns a `use`/`drop` block of its own, resolved on the scope chain exactly as an artifact type is, so a tier binds to one hook without disturbing another:
+`guidance-hooks` is the one map-valued key. Each hook name owns a `use`/`drop` block of its own, resolved on the scope chain exactly as an artifact type is. A tier binds to one hook without disturbing another:
 
 ```yaml
 guidance-hooks:
@@ -237,11 +237,11 @@ guidance-hooks:
       - williamthorsen-typescript-preferences
 ```
 
-A binding is also a dependency edge: a bound rulebook joins the deploy closure and still deploys by its own `delivery:`, so binding it and declaring it are one act. Bound bodies fill in declaration order, with their headings demoted one level so a rulebook's title nests under the host's structure, and the result is wrapped in `<!-- codeassembly-guidance-hook:<name>:start -->` / `:end` markers enclosing one `<!-- rulebook:<slug> -->` block per rulebook, each naming the rulebook's version on a `<!-- rulebook-version: <version> -->` line where it declares one. A deployed file therefore says what filled it, and at which version, without being re-rendered.
+A binding is also a dependency edge: A bound rulebook joins the deploy closure and still deploys by its own `delivery:`, so binding it and declaring it are one act. Bound bodies fill in declaration order, with their headings demoted one level so that a rulebook's title nests under the host's structure, and the result is wrapped in `<!-- codeassembly-guidance-hook:<name>:start -->` / `:end` markers enclosing one `<!-- rulebook:<slug> -->` block per rulebook, each naming the rulebook's version on a `<!-- rulebook-version: <version> -->` line when it declares one. A deployed file therefore says what filled it, and at which version, without being re-rendered.
 
-A hook nothing binds contributes nothing to deployed output, marker included. `install` reads no `guidance-hooks:` block, so every hook it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
+A hook that nothing binds contributes nothing to deployed output, marker included. `install` reads no `guidance-hooks:` block, so every hook that it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
 
-Name a hook for the concern rather than the consumer — `implementation-preferences`, not `implement-plan-preferences` — since concern-scoping is what lets one binding fill every consumer, and carry no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar the directive enforces. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
+Name a hook for the concern rather than the consumer (`implementation-preferences`, not `implement-plan-preferences`), since concern-scoping lets one binding fill every consumer, and give it no user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar enforced by the directive. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
 
 The library declares four hook names:
 
@@ -252,23 +252,23 @@ The library declares four hook names:
 | `ticketing-preferences`      | how work is split across tickets             | the ticket-composing skills and `planner`                                             |
 | `writing-preferences`        | how agent-authored prose reads               | every subagent but the deployment canary, and `revise-prose`                          |
 
-A binding fills a hook with the whole of the bound rulebook's body, and there is no way to bind part of one. A rulebook bound to a hook that only subagents declare is spliced entire into every declaring subagent, and none of the reports below can see that it carries guidance those subagents have no use for. Keep such a rulebook coherent for its narrowest consumer: once it mixes session-only guidance with the subagent-relevant kind, split it rather than binding the whole.
+A binding fills a hook with the whole of the bound rulebook's body, and there is no way to bind part of one. A rulebook bound to a hook that only subagents declare is spliced entire into every declaring subagent, and none of the reports below can see that it contains guidance that those subagents have no use for. Keep such a rulebook coherent for its narrowest consumer: Once it mixes session-only guidance with the subagent-relevant kind, split it rather than binding the whole.
 
-Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
+Two failures are worth naming. A binding to a rulebook that does not exist fails the run, naming the rulebook and the hook that bound it. A binding to a rulebook whose own body declares a hook fails too: Bound guidance is spliced as rendered, so nothing downstream could fill a hook inside it.
 
-Three further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it, so a disagreement between the two is not always the adopter's to resolve:
+Three further mismatches are reported without failing the run, on a live sync and a dry run alike. A rulebook's `delivery` is written by its author and a binding by whoever adopts it. A disagreement between the two is not always the adopter's to resolve:
 
-| Reported          | Condition                                                                             | Level   |
-| ----------------- | ------------------------------------------------------------------------------------- | ------- |
-| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                              | warning |
-| Bound, unreached  | a binding names a hook no deployed skill or subagent declares, so it delivers nothing | advice  |
-| Declared, unbound | a rulebook names `hook` and no binding uses it                                        | advice  |
+| Reported          | Condition                                                                                  | Level   |
+| ----------------- | ------------------------------------------------------------------------------------------ | ------- |
+| Bound, undeclared | a binding names a rulebook whose `delivery` omits `hook`                                   | warning |
+| Bound, unreached  | a binding names a hook that no deployed skill or subagent declares, so it delivers nothing | advice  |
+| Declared, unbound | a rulebook names `hook` and no binding uses it                                             | advice  |
 
 The last two are not defects. A collection can carry a hook-declaring rulebook into a project that never binds it, and a home-tier binding can outrun a project that declares few skills and no subagents, so each line names an affordance going unused rather than something broken. A binding that reaches nothing is also how a mistyped hook name surfaces, since nothing else would say so.
 
-A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them, and two things make the pairing legitimate. A hook only subagents declare duplicates nothing: a subagent's context never carries the ambient region, so the two routes are how one rulebook reaches a session and a subagent both. Where a skill declares the hook, ambient delivery lands in the guidance file loaded by that session, so the fill hands it a second copy; the author who wrote both routes into `delivery` has weighed that, and the skill may be parsing what the fill delivers rather than only carrying it, as `revise-prose` does. `content/__tests__/guidance-hook-reach.unit.test.ts` holds the library's record of which skills may.
+A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them, and two things make the pairing legitimate. A hook that only subagents declare duplicates nothing: A subagent's context never contains the ambient region. The two routes are how one rulebook reaches a session and a subagent both. When a skill declares the hook, ambient delivery places the rulebook in the guidance file loaded by that session, so the fill hands it a second copy; the author who wrote both routes into `delivery` has weighed that, and the skill may be parsing what the fill delivers rather than only containing it, as `revise-prose` does. `content/__tests__/guidance-hook-reach.unit.test.ts` holds the library's record of which skills may.
 
-A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance every consumer of the library should get is a partial; guidance one user or one project wants is a hook. See `content/_partials/README.md`.
+A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance that every consumer of the library should get is a partial; guidance that one user or one project wants is a hook. See `content/_partials/README.md`.
 
 ### Collections
 
@@ -280,7 +280,7 @@ collections:
     - recommended
 ```
 
-A collection lists its constituents under a `members:` key — either an explicit per-type block (the same shape `dependencies:` uses) or the computed token `'@library'`:
+A collection lists its constituents under a `members:` key, either an explicit per-type block (the same shape that `dependencies:` uses) or the computed token `'@library'`:
 
 ```yaml
 members:
@@ -294,13 +294,13 @@ members:
 
 Dropping or omitting a collection, or setting `root: true`, excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead.
 
-Five collections ship, each carrying a claim a reader can act on:
+Five collections ship, each making a claim that a reader can act on:
 
 | Collection       | Claim                                                                                                                       |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `atlassian`      | Examined and found fitted to Bitbucket and Jira. Nothing outside it reaches its members, so only declaring it deploys them. |
 | `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.                     |
-| `williamthorsen` | Examined and found deliberately personal — one author's preferences, environment, and domain.                               |
+| `williamthorsen` | Examined and found deliberately personal: one author's preferences, environment, and domain.                                |
 | `triage`         | Not yet examined, and where new content starts. It shrinks by promotion.                                                    |
 | `all`            | The whole catalog, computed. It makes no claim about its members, and is the escape hatch rather than the expected choice.  |
 
@@ -310,13 +310,13 @@ An artifact in none of them is standalone: deliberate, declared directly where w
 
 #### The `@library` token
 
-A collection whose `members:` is the string `'@library'` resolves to every deployable artifact — all rulebooks, skills, and subagents — in the content root the collection resolves from: the built-in library for a library collection, or the owning source for a collection declared in a source. It is computed at resolution time so a newly added artifact joins automatically with no edit. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: The resolver never emits them, and "every collection" would be self-referential.
+A collection whose `members:` is the string `'@library'` resolves to every deployable artifact (all rulebooks, skills, and subagents) in the content root from which the collection resolves: the built-in library for a library collection, or the owning source for a collection declared in a source. It is computed at resolution time so that a newly added artifact joins automatically with no edit. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: The resolver never emits them, and "every collection" would be self-referential.
 
-The shipped `all` collection carries `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
+The shipped `all` collection declares `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
 
 ### Dependencies
 
-A rulebook, skill, or subagent may declare dependencies on other artifacts in its frontmatter, grouped by artifact type. Resolution follows these edges transitively — deduped, with cycle detection — so declaring one artifact pulls in its whole closure:
+A rulebook, skill, or subagent may declare dependencies on other artifacts in its frontmatter, grouped by artifact type. Resolution follows these edges transitively (deduped, with cycle detection), so declaring one artifact pulls in its whole closure:
 
 ```yaml
 dependencies:
@@ -328,7 +328,7 @@ dependencies:
     - canary
 ```
 
-The resolver follows `members:` and `dependencies:` identically; the split is semantic — a collection _contains_ members, while an artifact _depends on_ prerequisites.
+The resolver follows `members:` and `dependencies:` identically; the split is semantic: A collection _contains_ members, while an artifact _depends on_ prerequisites.
 
 ### Sources
 
@@ -345,17 +345,17 @@ rulebooks:
     - team-standards
 ```
 
-Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format it was authored against; see [Content-format version](#content-format-version). Declaration entries stay bare slugs — resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, with no per-entry `from:` syntax.
+Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format against which it was authored; see [Content-format version](#content-format-version). Declaration entries stay bare slugs: Resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, with no per-entry `from:` syntax.
 
-**Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, so a source can override a same-slug library artifact. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
+**Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, which lets a source override a same-slug library artifact. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
 
-**Undeclared content.** `scripts/` and the harness guidance templates under `guidance/_harnesses/` are named by no declaration entry, so they resolve by directory rather than by slug and `install` deploys them. Scripts merge by file name across every root, so a source shipping one script leaves the library's others in place. A harness's template directory is owned whole by the highest-precedence root shipping it, which is what keeps the `guidance/shared/AGENTS.md` a template inlines resolving inside one root; a template file the owning source omits is retracted from the harness home. A file name or template directory more than one root ships installs from the highest-precedence one and warns, whether the loser is another source or the library. A source-owned deployed file's provenance marker names its path within the source, the source's name, and the source directory, in place of the codeassembly URL a library file carries.
+**Undeclared content.** `scripts/` and the harness guidance templates under `guidance/_harnesses/` are named by no declaration entry, so they resolve by directory rather than by slug and `install` deploys them. Scripts merge by file name across every root: A source shipping one script leaves the library's others in place. A harness's template directory is owned whole by the highest-precedence root shipping it, which keeps the `guidance/shared/AGENTS.md` that a template inlines resolving inside one root; a template file omitted by the owning source is retracted from the harness home. A file name or template directory shipped by more than one root installs from the highest-precedence one and warns, whether the loser is another source or the library. A source-owned deployed file's provenance marker names its path within the source, the source's name, and the source directory, in place of the codeassembly URL that a library file names.
 
-Every artifact type resolves through sources: An artifact's body and its closure edges (`dependencies:`, or `members:` for a collection) resolve from the source that owns it, with ownership and retraction semantics identical to a library artifact's. A source-resolved skill or subagent expands its `<!-- include: … -->` directives against its own source root — it can reuse partials within its own source tree, but a target that resolves outside that root fails. A source-resolved **collection** expands its members through the resolver like any other type, and its `'@library'` token is source-scoped: It enumerates that source's own catalog rather than the built-in library. A declared source whose path is not a directory, or is unreadable, fails the run — dry-run included — before any file is written; one whose directory does not exist yet is reported as a warning and contributes nothing, so a source can be declared before it is populated. A slug found in no source or the library fails with an error naming every location searched.
+Every artifact type resolves through sources: An artifact's body and its closure edges (`dependencies:`, or `members:` for a collection) resolve from the source that owns it, with ownership and retraction semantics identical to a library artifact's. A source-resolved skill or subagent expands its `<!-- include: … -->` directives against its own source root: It can reuse partials within its own source tree, but a target that resolves outside that root fails. A source-resolved **collection** expands its members through the resolver like any other type, and its `'@library'` token is source-scoped: It enumerates that source's own catalog rather than the built-in library. A declared source whose path is not a directory, or is unreadable, fails the run (dry-run included) before any file is written; one whose directory does not exist yet is reported as a warning and contributes nothing, so a source can be declared before it is populated. A slug found in no source or the library fails with an error naming every location searched.
 
 ### Packages
 
-A dependency can ship the guidance for using it, and a project adopts it by naming the package — no filesystem path, no generated file to keep in sync:
+A dependency can ship the guidance for using it, and a project adopts it by naming the package (no filesystem path, no generated file to keep in sync):
 
 ```yaml
 packages:
@@ -363,9 +363,9 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-That one line does two things: the package's content directory joins the source search order, and every rulebook, skill, and subagent the package ships is deployed. Nothing else is needed, because a package's whole catalog is its declaration — which is also why granularity is all-or-nothing. Adopting a package takes every artifact in its catalog; an individual one cannot be dropped, matching the existing limitation on collection members.
+That one line does two things: the package's content directory joins the source search order, and every rulebook, skill, and subagent shipped by the package is deployed. Nothing else is needed, because a package's whole catalog is its declaration, which is also why granularity is all-or-nothing. Adopting a package takes every artifact in its catalog; an individual one cannot be dropped, matching the existing limitation on collection members.
 
-`packages:` is an ordinary declaration block, so `use`, `drop`, and `root: true` behave exactly as they do for an artifact type. A project-local tier can therefore decline a package the committed tier adopted:
+`packages:` is an ordinary declaration block, so `use`, `drop`, and `root: true` behave exactly as they do for an artifact type. A project-local tier can therefore decline a package adopted by the committed tier:
 
 ```yaml
 # .agents/codeassembly.local.yaml
@@ -374,13 +374,13 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-**Precedence.** Every `sources` entry, from any tier, outranks every package, and every package outranks the built-in library: A directory named by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. A package that masks a library slug is reported by the same shadow warning a declared source triggers; two packages that ship the same slug resolve by precedence with no warning, and `sync --dry-run` names the source each artifact resolved from.
+**Precedence.** Every `sources` entry, from any tier, outranks every package, and every package outranks the built-in library: A directory named by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. A package that masks a library slug is reported by the same shadow warning that a declared source triggers; two packages that ship the same slug resolve by precedence with no warning, and `sync --dry-run` names the source from which each artifact resolved.
 
-**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain Node itself searches, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or declares no content directory, fails the run — dry-run included — before any file is written, naming what was searched. One that declares a content directory it does not ship warns rather than failing, like any other missing source. The consumer's declaration holds no path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one they do not.
+**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain searched by Node itself, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration that a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or declares no content directory, fails the run (dry-run included) before any file is written, naming what was searched. One that declares a content directory that it does not ship warns rather than failing, like any other missing source. The consumer's declaration holds no path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one that they do not.
 
-**Discovery.** `sync` reports any direct dependency that ships content the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: an undeclared dependency contributes nothing, so installing one changes nothing about what an agent reads, and `drop` silences the advice for a package the project has turned down.
+**Discovery.** `sync` reports any direct dependency that ships content that the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: An undeclared dependency contributes nothing. Installing one changes nothing about what an agent reads, and `drop` silences the advice for a package that the project has turned down.
 
-Upgrading an already-declared package is the other case. Its catalog is read from the filesystem, so a version that adds an artifact deploys it with no declaration change — the freshness property that makes the rendered guidance a function of what is installed. `sync --dry-run` prints the resolution report naming every artifact and the source it came from, which is where that change is visible.
+Upgrading an already-declared package is the other case. Its catalog is read from the filesystem, so a version that adds an artifact deploys it with no declaration change, the freshness property that makes the rendered guidance a function of what is installed. `sync --dry-run` prints the resolution report naming every artifact and the source from which it came, which is where that change is visible.
 
 #### Shipping guidance from a package
 
@@ -402,11 +402,11 @@ content/agents/
   subagents/
 ```
 
-The key is required and has no default location. That is deliberate: a default would claim a directory name in every producer's package root, so instead a producer says where its content lives and can nest it under a directory it already owns — including build output, if a build step puts it there.
+The key is required and has no default location. That is deliberate: A default would claim a directory name in every producer's package root, so instead a producer says where its content lives and can nest it under a directory that it already owns, including build output, if a build step puts it there.
 
-A package's catalog is its rulebooks, skills, and subagents; a `collections/` entry is resolvable but not adopted on its own, so a collection reaches a consumer only when that consumer declares it by name. Its members are already in the catalog anyway, so the way to pull in an artifact from outside the package — a library rulebook, say — is a `dependencies:` edge on an artifact the catalog does contain.
+A package's catalog is its rulebooks, skills, and subagents; a `collections/` entry is resolvable but not adopted on its own. A collection reaches a consumer only when that consumer declares it by name. Its members are already in the catalog anyway. The way to pull in an artifact from outside the package (a library rulebook, say) is a `dependencies:` edge on an artifact that the catalog does contain.
 
-**Shipping support files.** Anything under `skills/` that carries no `SKILL.md` is a support entry: shared reference content a skill or rulebook reads at runtime by path, `skills/_data/` being the usual case. A package ships them by placing them where the library does, and they deploy alongside the skills whenever the package is adopted — no declaration of their own, since nothing names them but the links that reach them.
+**Shipping support files.** Anything under `skills/` that contains no `SKILL.md` is a support entry: shared reference content that a skill or rulebook reads at runtime by path, `skills/_data/` being the usual case. A package ships them by placing them where the library does, and they deploy alongside the skills whenever the package is adopted: no declaration of their own, since nothing names them but the links that reach them.
 
 ```
 content/agents/
@@ -417,42 +417,42 @@ content/agents/
       SKILL.md          # links to ../_data/house-style.md
 ```
 
-Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the built-in library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links exactly as the library does — relative to the file's own place in the content tree — and delivery rewrites them to wherever they land; a source name that could not name a directory fails the run rather than being silently reshaped.
+Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the built-in library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links exactly as the library does, relative to the file's own place in the content tree, and delivery rewrites them to wherever they are deployed; a source name that could not name a directory fails the run rather than being silently reshaped.
 
 `_partials/` is the exception, being an include target inlined into the files that include it rather than a file that deploys.
 
 **Include the content directory in `files`.** This is the one thing most likely to go wrong, because a `workspace:*` self-link resolves the live source tree and so never exercises packing. A producer that omits the entry sees its own guidance work perfectly and every consumer's install fail. `pnpm pack` and inspecting the tarball is the check that catches it.
 
-Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens. A package's content directory is a content root, so it carries a `codeassembly-content.yaml` like any other; see [Content-format version](#content-format-version).
+Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens. A package's content directory is a content root, so it contains a `codeassembly-content.yaml` like any other; see [Content-format version](#content-format-version).
 
-**Gate the content in the producer's own build.** `codeassembly validate` runs the checks a consumer's `sync` runs before writing — dependency closure, artifact resolution, delivery collisions, and a per-harness render — over the whole content root, writing nothing:
+**Gate the content in the producer's own build.** `codeassembly validate` runs the checks that a consumer's `sync` runs before writing (dependency closure, artifact resolution, delivery collisions, and a per-harness render) over the whole content root, writing nothing:
 
 ```
 codeassembly validate
 ```
 
-It reads no `codeassembly.yaml`, so a package that produces guidance without consuming any still has a gate: wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness the root could deploy to, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file. One check has no `sync` counterpart, and catches what nothing else would: a skill declaring the retired `harnesses:` key, which narrows nothing and survives into the deployed file rather than failing anywhere.
+Because it reads no `codeassembly.yaml`, a package that produces guidance without consuming any still has a gate: Wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness to which the root could deploy, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file. One check has no `sync` counterpart, and catches what nothing else would: a skill declaring the retired `harnesses:` key, which narrows nothing and survives into the deployed file rather than failing anywhere.
 
-Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that carry no `SKILL.md`. Link-target existence and cross-file anchors are not checked — a target resolves against the deployed tree, which unions this content with the library's and with every other declared source's.
+Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that contain no `SKILL.md`. Link-target existence and cross-file anchors are not checked: A target resolves against the deployed tree, which unions this content with the library's and with every other declared source's.
 
-One shape cannot consume its own guidance: a single-package repo whose package is the repo root has no `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
+One shape cannot consume its own guidance: A single-package repo whose package is the repo root has no `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
 
 ### Content-format version
 
-A content root and the tool that deploys it are released separately, so a checkout can be newer than the `codeassembly` reading it. A root states the format contract it was authored against in a `codeassembly-content.yaml` at its top level — a `sources:` path and a `packages:` content directory alike:
+A content root and the tool that deploys it are released separately, so a checkout can be newer than the `codeassembly` reading it. In a `codeassembly-content.yaml` at its top level, a root states the format contract against which it was authored, a `sources:` path and a `packages:` content directory alike:
 
 ```yaml
 # content/codeassembly-content.yaml
 format: 1
 ```
 
-The tool holds the set of formats it supports and refuses a root declaring any other, before any file is written and `--dry-run` included, naming the root, the format it declares, and the formats supported. `sync`, `sync --global`, and `install` fail; `validate` reports it as a defect and exits 1. The remedy is to upgrade `codeassembly` to a version that supports the declared format.
+The tool holds the set of formats that it supports and refuses a root declaring any other, before any file is written and `--dry-run` included, naming the root, the format that it declares, and the formats supported. `sync`, `sync --global`, and `install` fail; `validate` reports it as a defect and exits 1. The remedy is to upgrade `codeassembly` to a version that supports the declared format.
 
-**A root with no manifest is format 1**, which is what keeps a producer that predates the manifest working unchanged. A manifest that exists states its format: an absent or malformed `format` fails rather than passing as format 1, so every manifest that exists is self-describing.
+**A root with no manifest is format 1**, which keeps a producer that predates the manifest working unchanged. A manifest that exists states its format: An absent or malformed `format` fails rather than passing as format 1, so every manifest that exists is self-describing.
 
-Unknown keys pass through, so a later tool can read a key an older one ignores without the older one rejecting a root it would otherwise honor. `helpers:` is reserved for the helper-bundling command and is unread at format 1.
+Unknown keys pass through. A later tool can read a key that an older one ignores without the older one rejecting a root that it would otherwise honor. `helpers:` is reserved for the helper-bundling command and is unread at format 1.
 
-**What a bump obliges.** The format version names the contract the tool implements — frontmatter keys, invocation tokens, directives, and content-root layout — so it rises when content authored against the new contract would deploy wrongly under the old one rather than failing outright. Adding a key nothing older depends on does not need one; changing what an existing key means does.
+**What a bump obliges.** The format version names the contract that the tool implements (frontmatter keys, invocation tokens, directives, and content-root layout), so it rises when content authored against the new contract would deploy wrongly under the old one rather than failing outright. Adding a key nothing older depends on does not need one; changing what an existing key means does.
 
 | Format | Contract                                                                                                                        |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -463,23 +463,23 @@ Unknown keys pass through, so a later tool can read a key an older one ignores w
 
 The declaration resolves in two independent **domains**, each with its own base and local tiers and its own deployment target. The tiers within a domain run lowest to highest precedence.
 
-**Repo domain** — `codeassembly sync`, deploying into the repo:
+**Repo domain**: `codeassembly sync`, deploying into the repo:
 
-1. **Project** — `.agents/codeassembly.yaml`, committed and shared with the team.
-2. **Project-local** — `.agents/codeassembly.local.yaml`, gitignored, for personal overrides.
+1. **Project**: `.agents/codeassembly.yaml`, committed and shared with the team.
+2. **Project-local**: `.agents/codeassembly.local.yaml`, gitignored, for personal overrides.
 
-**Home domain** — `codeassembly sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovo`) and `~/.agents/`:
+**Home domain**: `codeassembly sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovo`) and `~/.agents/`:
 
-1. **User-global** — `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
-2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
+1. **User-global**: `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
+2. **User-global-local**: `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
 
-A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains — a project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing the caller to `sync --global`). `harnesses` is the one deliberate exception: which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain, so guidance the developer bound globally goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file the harness loads at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovo/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content; `install` and `uninstall` retire a legacy `~/.agents/AGENTS.md` the same way, removing a copy the CLI deployed and keeping one that holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovo/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
+A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one contributed by a broader tier in that domain, and `root: true` discards everything from broader tiers in that domain. Artifact keys never cross the domains: A project tier cannot `drop` a user-global rulebook, skill, subagent, or collection, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing the caller to `sync --global`). `harnesses` is the one deliberate exception: Which harnesses a developer runs is a fact about the developer rather than about either domain's catalog, so it resolves across both tiers (see [Harness targeting](#harness-targeting)). Guidance-hook bindings do not cross either: `sync` resolves the project chain and `sync --global` the home chain, and neither sees the other. A project that deploys a hook-bearing skill therefore shadows the user's bound home copy with one bound only by the project's own chain. Guidance bound globally by the developer goes missing in that repository until the project binds it too. In both domains, ambient rulebooks are injected into the ambient region of a per-harness guidance file loaded by the harness at launch. In the repo domain the host is each targeted harness's machine-local project guidance file at the project root (`CLAUDE.local.md`, `AGENTS.local.md`), which `sync` creates when the project declares an ambient rulebook and appends its region to when the file already exists; because that host is gitignored, a multi-worktree checkout needs a sync per worktree (see [Keeping deployed guidance current](#keeping-deployed-guidance-current)). In the home domain the host is each targeted harness's guidance file (`~/.claude/CLAUDE.md`, `~/.rovo/AGENTS.md`), whose region's location comes from `install`'s rendered template while its content belongs to `sync --global`: `install` preserves the region across re-renders and ignores it for drift detection, while hand edits elsewhere in those files still count as drift. Run `install` once before the first `sync --global` so that the region exists to fill; a guidance file without the region is skipped with a warning. `sync --global` also retires a legacy `~/.agents/GLOBAL.md`, removing its sync-owned blocks and deleting the file unless it holds hand-written content; `install` and `uninstall` retire a legacy `~/.agents/AGENTS.md` the same way, removing a copy deployed by the CLI and keeping one that holds hand-written content. For per-machine ambient guidance that should stay out of source control, declare a machine-local source (see [Sources](#sources)) holding a personal rulebook with `delivery: ambient`. In both domains, the deployed Rovo Dev skills are indexed into `.rovo/prompts.yml` so that they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
 
-When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: The new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
+When upgrading from a build in which `install` deployed the catalog, run `install` once before `sync --global`: The new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
 
 #### Designated home-domain writer
 
-Every repository and worktree carries a `codeassembly` binary of its own, and each ships the library its own checkout holds. `install` and `sync --global` write the shared home domain, so whichever binary ran last decides what the home state contains. An older one silently overwrites a newer one's artifacts, and its orphan retraction deletes what its smaller catalog does not name.
+Every repository and worktree has a `codeassembly` binary of its own, and each ships the library that its own checkout holds. `install` and `sync --global` write the shared home domain, so whichever binary ran last decides what the home state contains. An older one silently overwrites a newer one's artifacts, and its orphan retraction deletes what its smaller catalog does not name.
 
 `home-writer` names the one installation allowed to write:
 
@@ -488,19 +488,19 @@ Every repository and worktree carries a `codeassembly` binary of its own, and ea
 home-writer: ~/repos/projects/codeassembly.live
 ```
 
-The setting reads from the home domain's chain alone, the local tier overriding the base one, and it takes an absolute path (a leading `~` expands to the home directory). A project declaration that sets it is rejected by name, since a machine's designated writer is not a fact a repository can state. It may name either a worktree root or the package directory within it: the guard passes when the running package's root is that path or lies under it, comparing both through symlinks.
+The setting reads from the home domain's chain alone, the local tier overriding the base one, and it takes an absolute path (a leading `~` expands to the home directory). A project declaration that sets it is rejected by name, since a machine's designated writer is not a fact that a repository can state. It may name either a worktree root or the package directory within it: The guard passes when the running package's root is that path or lies under it, comparing both through symlinks.
 
-With the setting present, `install` and `sync --global` invoked from any other installation refuse before writing anything, naming the designated path, the invoking one, and the file that configured it. `--dry-run` refuses identically, so a preview never reports a write the real run would reject. `--override-writer` proceeds from a non-designated installation and says so in the output.
+With the setting present, `install` and `sync --global` invoked from any other installation refuse before writing anything, naming the designated path, the invoking one, and the file that configured it. `--dry-run` refuses identically, so a preview never reports a write that the real run would reject. `--override-writer` proceeds from a non-designated installation and says so in the output.
 
-With the setting absent the commands behave as they always have, so a fresh machine bootstraps with `npx codeassembly install` and an external consumer needs no configuration. Removing the key is how to stop designating a writer; an empty or relative value fails the run rather than quietly disabling the guard.
+With the setting absent the commands behave as they always have: A fresh machine bootstraps with `npx codeassembly install`, and an external consumer needs no configuration. Removing the key is how to stop designating a writer; an empty or relative value fails the run rather than quietly disabling the guard.
 
 #### Home-domain provenance
 
-Every non-dry-run `install` and `sync --global` records what it wrote to `~/.codeassembly/home-provenance.json` under `lastWrite`: the version of the package whose binary ran, its source path, the commit that source sat on where one is resolvable, the command, and a timestamp. A dry run leaves the file untouched, so the stamp reports what wrote rather than what was previewed.
+Every non-dry-run `install` and `sync --global` records what it wrote to `~/.codeassembly/home-provenance.json` under `lastWrite`: the version of the package whose binary ran, its source path, the commit that source sat on when one is resolvable, the command, and a timestamp. A dry run leaves the file untouched, so the stamp reports what wrote rather than what was previewed.
 
-The same commands record the attempt under `lastAttempt`, on a failure as well as on a success: its command, a timestamp, the outcome, and, where the run failed, the rendered failure and how many defects it carried. A failed attempt writes nothing else, so `lastWrite` keeps naming the deployment still in effect. The attempt is what separates a current deployment from one an abandoned run left behind: a write timestamp alone reads the same on a machine that has not needed a sync and on one whose sync has been failing for a fortnight. The attempt is recorded only past the designated-writer guard, so an installation refused by the guard leaves the home domain's record untouched.
+The same commands record the attempt under `lastAttempt`, on a failure as well as on a success: its command, a timestamp, the outcome, and, when the run failed, the rendered failure and how many defects it reported. A failed attempt writes nothing else. `lastWrite` keeps naming the deployment still in effect. The attempt separates a current deployment from one left behind by an abandoned run: A write timestamp alone reads the same on a machine that has not needed a sync and on one whose sync has been failing for a fortnight. The attempt is recorded only past the designated-writer guard, so an installation refused by the guard leaves the home domain's record untouched.
 
-The write fields are also mirrored at the top level of the file, which is where a `codeassembly` predating `lastWrite` reads them. Every repository and worktree carries a binary of its own, so a machine part-way through an upgrade is the ordinary case rather than an edge one.
+The write fields are also mirrored at the top level of the file, which is where a `codeassembly` predating `lastWrite` reads them. Because every repository and worktree has a binary of its own, a machine part-way through an upgrade is the ordinary case rather than an edge one.
 
 `codeassembly status` renders the stamp as its first line:
 
@@ -508,18 +508,18 @@ The write fields are also mirrored at the top level of the file, which is where 
 Home domain last written by 0.8.0 at /Users/me/repos/codeassembly.live/packages/agents @ a1b2c3d via `sync --global` on 2026-08-09T20:05:09.412Z
 ```
 
-Where the last attempt failed, `status` leads with that and dates the guidance still in effect:
+When the last attempt failed, `status` leads with that and dates the guidance still in effect:
 
 ```
 ⚠️ The last home-domain write attempt failed: `sync --global` on 2026-08-23T14:02:11.907Z, with 3 defect(s), writing nothing.
 Home domain last written by 0.8.0 at /Users/me/repos/codeassembly.live/packages/agents @ a1b2c3d via `install` on 2026-08-09T20:05:09.412Z (14 day(s) old)
 ```
 
-A home domain last written by a build predating the stamp has no line to show, and `status` prints none. One carrying a failed attempt and no write at all reports the attempt and says so.
+A home domain last written by a build predating the stamp has no line to show, and `status` prints none. One recording a failed attempt and no write at all reports the attempt and says so.
 
 ## Keeping deployed guidance current
 
-`sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content it renders last changed, and that moment falls in a different place depending on where the content comes from:
+`sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content that it renders last changed, and that moment falls in a different place depending on where the content comes from:
 
 | Role                                     | Content is ready when      | Trigger            | On failure   |
 | ---------------------------------------- | -------------------------- | ------------------ | ------------ |
@@ -536,11 +536,11 @@ A home domain last written by a build predating the stamp has no line to show, a
 }
 ```
 
-A failed `sync` reports every defect found by its pre-write gates, grouped by file the way `validate` reports a content root, and says that nothing was written and that the previously deployed guidance remains in effect. One run therefore names every rejected artifact rather than sending the author back for another run per file, and neither posture leaves a reader to guess whether part of the deployment landed.
+A failed `sync` reports every defect found by its pre-write gates, grouped by file the way `validate` reports a content root, and says that nothing was written and that the previously deployed guidance remains in effect. One run therefore names every rejected artifact rather than sending the author back for another run per file, and neither posture leaves a reader to guess whether part of the deployment was written.
 
-`--warn-only` reports a failure and exits 0, and it belongs on this trigger specifically. `sync` fails closed on an unusable declared source, an unresolvable slug, a foreign-owned target, or a damaged ambient region; without the flag, any of those aborts `pnpm install` for everything downstream, which costs far more than the stale guidance it guards against. `pnpm install --ignore-scripts` skips the hook, so a tree installed that way carries whatever the last sync left.
+`--warn-only` reports a failure and exits 0, and it belongs on this trigger specifically. `sync` fails closed on an unusable declared source, an unresolvable slug, a foreign-owned target, or a damaged ambient region; without the flag, any of those aborts `pnpm install` for everything downstream, which costs far more than the stale guidance that it guards against. `pnpm install --ignore-scripts` skips the hook, so a tree installed that way keeps whatever the last sync left.
 
-**Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: the build has already succeeded by then, so the tree is usable and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync reached before the build stops at the `codeassembly` wrapper's build-output gate instead of deploying skill directories without the helper bundles the build produces. That same gate is why this trigger cannot move to `postinstall`: pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
+**Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: The build has already succeeded by then. The tree is usable, and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync reached before the build stops at the `codeassembly` wrapper's build-output gate instead of deploying skill directories without the helper bundles that the build produces. That same gate is why this trigger cannot move to `postinstall`: Pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
 
 A repo whose bootstrap always follows its install needs only the post-build trigger, which covers its package-borne artifacts too. Re-running `sync` on unchanged content rewrites nothing, so a repo with reason to wire both pays only the second run's startup. Either trigger is a no-op in a project that declares no artifacts.
 
@@ -548,9 +548,9 @@ A repo whose bootstrap always follows its install needs only the post-build trig
 
 Agent behavior is configured through `.agents/preferences.yaml` files. The resolution cascade is:
 
-1. **Project** — `.agents/preferences.yaml` in the repository root (committed, shared with team)
-2. **Global** — `~/.agents/preferences.yaml` in the user's home directory (personal defaults)
-3. **Default** — built-in fallback (documented per key below)
+1. **Project**: `.agents/preferences.yaml` in the repository root (committed, shared with team)
+2. **Global**: `~/.agents/preferences.yaml` in the user's home directory (personal defaults)
+3. **Default**: built-in fallback (documented per key below)
 
 Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
 
@@ -580,7 +580,7 @@ Project-level values take precedence over global. An explicitly empty value at t
 | `repository.default_remote.default_branch` | string | `main`   | Default branch of the remote. Combined with the remote name to produce refs like `origin/main`. |
 | `repository.slug`                          | string | —        | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
 
-#### `commit`, `ticket`, `pr`, `merge` — title format conventions
+#### `commit`, `ticket`, `pr`, `merge`: title format conventions
 
 These four sections share the same structure. Each holds a declarative template that `describe-change.mjs` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
 
@@ -591,28 +591,28 @@ These four sections share the same structure. Each holds a declarative template 
 | `pr.title_format`     | string | `''`    | Template for pull-request titles.           |
 | `merge.title_format`  | string | `''`    | Template for the squash-merge commit title. |
 
-A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out — the corresponding rendered title will be the empty string. The `describe-change.mjs` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_title`.
+A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out: The corresponding rendered title will be the empty string. The `describe-change.mjs` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_title`.
 
 ##### Supported tokens
 
 | Token          | Resolves to                                                                                                                  |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `{scope}`      | Change scope (workspace, package, module). `*` normalizes to empty.                                                          |
-| `{type}`       | Work type (`feat`, `fix`, `docs`, …). Carries the breaking marker itself (`feat!`) where the template names no `{breaking}`. |
+| `{type}`       | Work type (`feat`, `fix`, `docs`, …). Includes the breaking marker itself (`feat!`) when the template names no `{breaking}`. |
 | `{breaking}`   | The breaking marker `!`, empty for a change that is not breaking.                                                            |
 | `{title}`      | Bare title text. Required in every template that should produce a non-empty title.                                           |
 | `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated.                                        |
 | `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.                                                |
 
-A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so typos surface in the output.
+A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so that typos surface in the output.
 
-Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `{`, `#`, `:`, and `|` from YAML's own parsing rules: unquoted, `{title}` opens a flow mapping rather than naming a token, and a space followed by `#` opens a comment. A value that resolves to anything but a string is reported and skipped, so a misquoted template falls through to the next source rather than rendering as written.
+Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `{`, `#`, `:`, and `|` from YAML's own parsing rules: Unquoted, `{title}` opens a flow mapping rather than naming a token, and a space followed by `#` opens a comment. A value that resolves to anything but a string is reported and skipped, so a misquoted template falls through to the next source rather than rendering as written.
 
 ##### Optional groups
 
-A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group — literals included — drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would carry the marker. Groups nest, and a nested group is kept or dropped on its own: Under `[[{scope}|]{type}: ]{title}`, a change naming no scope still renders `feat: Add foo`. A flat group holding both tokens takes the type down with an absent scope instead, and a `*` scope is absent by the time the group decides, so a template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
+A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group (literals included) drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would include the marker. Groups nest, and a nested group is kept or dropped on its own: Under `[[{scope}|]{type}: ]{title}`, a change naming no scope still renders `feat: Add foo`. A flat group holding both tokens takes the type down with an absent scope instead, and a `*` scope is absent by the time the group decides. A template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
 
-No whitespace pass runs after substitution, so each group contains its own separators — `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That is what lets `describe-change.mjs` read a rendered title back into the record that produced it, and read a whole commit range back through `commit.title_format`. See [title-templates.md](content/skills/_data/title-templates.md) for how to invoke `describe-change.mjs` and what each of its subcommands reports, and [change-record.md](content/skills/_data/change-record.md) for how a consolidated record is written down and read back.
+No whitespace pass runs after substitution, so each group contains its own separators: `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That lets `describe-change.mjs` read a rendered title back into the record that produced it, and read a whole commit range back through `commit.title_format`. See [title-templates.md](content/skills/_data/title-templates.md) for how to invoke `describe-change.mjs` and what each of its subcommands reports, and [change-record.md](content/skills/_data/change-record.md) for how a consolidated record is written down and read back.
 
 A template that cannot round-trip is refused when preferences load, naming the surface, the template, and the defect: two adjacent tokens with no literal between them, a token named twice, an optional group whose opening literal repeats the text before it, or a `{breaking}` placed where the `!` cannot be told from its neighbour.
 
@@ -661,7 +661,7 @@ commit:
   title_format: '[[{scope}|]{type}: ]{title}'
 ```
 
-Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` with no scope, and `Add script installer` with no type. Nesting the scope in a group of its own is what keeps the type when the scope drops; a flat `[{scope}|{type}: ]` takes the type down with it.
+Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` with no scope, and `Add script installer` with no type. Nesting the scope in a group of its own keeps the type when the scope drops; a flat `[{scope}|{type}: ]` takes the type down with it.
 
 Conventional commits with scope in parentheses:
 
@@ -672,7 +672,7 @@ commit:
 
 Produces: `feat(agents): Add script installer`, and `feat: Add script installer` with no scope.
 
-Squash-merge convention (the typical shape this repo uses):
+Squash-merge convention (the typical shape that this repo uses):
 
 ```yaml
 commit:
@@ -695,8 +695,8 @@ Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' 
 ##### Scope values
 
 - In a monorepo, the scope is the workspace name or abbreviation.
-- `root` — commit touches only files in the monorepo root.
-- `*` — commit spans multiple workspaces, or root and one or more workspaces.
+- `root`: commit touches only files in the monorepo root.
+- `*`: commit spans multiple workspaces, or root and one or more workspaces.
 - A root change tightly associated with one workspace (e.g., lockfile updated by a dependency added to that workspace) uses the workspace scope, not `root`.
 
 ##### Breaking changes
@@ -709,7 +709,7 @@ Append `!` after the type: `agents|feat!: Remove deprecated API`
 | ------------------------------- | ------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `integrations.jira.enabled`     | boolean | `false`                                                  | Enable Jira integration for ticket creation and referencing.                                                                                                                    |
 | `integrations.jira.issue_types` | object  | none                                                     | Maps work-type keys and aliases to Jira issue-type names, plus a `default` entry covering every unmapped work type. A work type matching neither falls back to the `Task` type. |
-| `integrations.jira.project_key` | string  | `project.ticket_ref_prefix` minus its trailing separator | Key of the Jira project to create work items in. Set it where the derivation is wrong or where `ticket_ref_prefix` is absent.                                                   |
+| `integrations.jira.project_key` | string  | `project.ticket_ref_prefix` minus its trailing separator | Key of the Jira project to create work items in. Set it when the derivation is wrong or when `ticket_ref_prefix` is absent.                                                     |
 
 #### `orchestration`
 

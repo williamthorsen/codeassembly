@@ -5,10 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 // A `mktemp` call that names neither a template nor a tmpdir option (`-p`, `--tmpdir`) reads the Darwin per-user temp
 // directory rather than `$TMPDIR`, and the agent sandbox denies that path. `-t` names a prefix, not a template, so it
-// counts as neither. The command then exits non-zero with empty stdout, and `cd ""` returns 0, so a script carrying the
-// empty value writes into the invoking directory instead.
+// counts as neither. Because the command then exits non-zero with empty stdout and `cd ""` returns 0, a script that
+// uses the empty value writes into the invoking directory instead.
 //
-// macOS substitutes only a trailing X run, so a template that continues past its run names one fixed path: The first
+// macOS substitutes only a trailing X run. A template that continues past its run names one fixed path: The first
 // invocation leaves the file behind, and the second fails on it.
 //
 // The scan covers the whole package because both halves of it use the command: The guidance under `content/`
@@ -20,9 +20,9 @@ const PACKAGE_ROOT = new URL('../', import.meta.url).pathname;
  * accepts only the options that leave the location unchosen (`-d`, `-q`, `-u`, and `-t` with its prefix), so a `-p` or
  * `--tmpdir` stops the match.
  *
- * The terminator set omits the backtick, which is what keeps prose out: A mention inside inline code is followed by
- * one, so `bare \`mktemp -d\` fails under the sandbox` reads as the warning it is rather than as a call. The lookbehind
- * keeps paths out the same way, so `chmod +x bin/mktemp` names no call.
+ * The terminator set omits the backtick, which keeps prose out: Because a mention inside inline code is followed by
+ * one, `bare \`mktemp -d\` fails under the sandbox` reads as the warning that it is rather than as a call. The
+ * lookbehind keeps paths out the same way: `chmod +x bin/mktemp` names no call.
  */
 const UNTEMPLATED_MKTEMP_SOURCE = String.raw`(?<![\w./-])mktemp(?:[ \t]+(?:-[dqu]+|--(?:directory|dry-run|quiet)|-[dqu]*t[ \t]*[^\s|)<>&;\x60]+))*[ \t]*(?:$|[|)<>&;#]|\d+[<>])`;
 
@@ -45,9 +45,9 @@ describe('scratch-directory conventions', () => {
     const violations = await listPackageViolations(UNTEMPLATED_MKTEMP_SOURCE);
 
     const message =
-      'A `mktemp` call needs a template rooted at $TMPDIR or a tmpdir option; without either it picks a path the ' +
-      'agent sandbox denies. Write `mktemp -d "${TMPDIR:-/tmp}/<prefix>.XXXXXX"` or pass `-p "$TMPDIR"`, or open ' +
-      'the block with `# Bad:` where the failure is the point:\n  ' +
+      'A `mktemp` call needs a template rooted at $TMPDIR or a tmpdir option; without either it picks a path that ' +
+      'the agent sandbox denies. Write `mktemp -d "${TMPDIR:-/tmp}/<prefix>.XXXXXX"` or pass `-p "$TMPDIR"`, or ' +
+      'open the block with `# Bad:` when the failure is the point:\n  ' +
       violations.join('\n  ');
     expect(violations, message).toEqual([]);
   });
@@ -57,12 +57,12 @@ describe('scratch-directory conventions', () => {
 
     const message =
       'macOS `mktemp` substitutes only a trailing X run, so a template that continues past it names one fixed path. ' +
-      'End the template with its X run, or open the block with `# Bad:` where the failure is the point:\n  ' +
+      'End the template with its X run, or open the block with `# Bad:` when the failure is the point:\n  ' +
       violations.join('\n  ');
     expect(violations, message).toEqual([]);
   });
 
-  // Every assertion above is negative, so a scan that stopped reading files would leave the suite green.
+  // Because every assertion above is negative, a scan that stopped reading files would leave the suite green.
   it('reads both halves of the package', async () => {
     const files = await listScannedFiles(PACKAGE_ROOT);
 
@@ -133,7 +133,7 @@ describe('scratch-directory conventions', () => {
 
 /**
  * Lists the matches of a pattern source in a span of text, each trimmed to the text that matched. The regex is compiled
- * per call because a shared global regex carries `lastIndex` between uses, which would let one assertion decide another.
+ * per call because a shared global regex keeps `lastIndex` between uses, which would let one assertion decide another.
  */
 function listMatches(source: string, text: string): ReadonlyArray<string> {
   return text
@@ -163,8 +163,8 @@ async function listPackageViolations(source: string): Promise<ReadonlyArray<stri
 /**
  * Returns a file's text with each labelled negative example removed. The label exempts the lines from itself to the
  * next blank one, so a fence pairing a `# Bad` block with a `# Good` one keeps the second under the scan. Only a
- * fenced block is eligible: At the top level of a Markdown file the same text is an `h1`, and a shell file has no
- * fence to scope the label to, so it takes no exemption at all.
+ * fenced block is eligible: At the top level of a Markdown file the same text is an `h1`, and a shell file takes no
+ * exemption at all, because it has no fence to scope the label to.
  */
 function listScannableText(content: string, file: string): string {
   if (!file.endsWith('.md')) return content;
