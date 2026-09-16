@@ -23,13 +23,15 @@ import type { HarnessId, InstallOptions } from './lib/types.ts';
 /** Every accepted `--harness` value: the known harness ids plus the `all` sentinel. */
 const HARNESS_ARG_VALUES: ReadonlyArray<string> = [...ALL_HARNESS_IDS, 'all'];
 
-/** Membership set for `isValidHarness`, widened to `string` so an arbitrary value tests without a type assertion. */
+/**
+ * Membership set for `isValidHarness`, widened to `string` so that an arbitrary value tests without a type assertion.
+ */
 const VALID_HARNESS_IDS: ReadonlySet<string> = new Set(HARNESS_ARG_VALUES);
 
 /** The accepted `--harness` values, rendered for the help and error text that must list them. */
 const HARNESS_ARG_LIST = HARNESS_ARG_VALUES.join(', ');
 
-/** What a failed sync leaves behind, stated on both failure paths so neither reads as a partial write. */
+/** What a failed sync leaves behind, stated on both failure paths so that neither reads as a partial write. */
 const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidance remains in effect.';
 
 /**
@@ -63,7 +65,7 @@ async function main(): Promise<void> {
       case 'status':
         await statusCommand({ harness: options.harness });
         break;
-      // Exits here rather than through the `catch` below: a defect report is a multi-line list of findings, which that
+      // Exit here rather than through the `catch` below: A defect report is a multi-line list of findings, which that
       // handler would prefix with `Error:` as though it were one failure.
       case 'validate':
         if (!(await validateCommand({ content, harness: options.harness }))) {
@@ -270,13 +272,13 @@ Options:
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
-  --override-writer  Write the home domain from an installation \`home-writer\` does not designate (install and sync --global only)
+  --override-writer  Write the home domain from an installation not designated by \`home-writer\` (install and sync --global only)
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
 }
 
 /**
- * Reports a failed sync and what the failure leaves in effect. A defect list is rendered as its own block: it is a
+ * Reports a failed sync and what the failure leaves in effect. A defect list is rendered as its own block: It is a
  * list of findings rather than one failure, and the `Error:` prefix would present it as the latter.
  */
 function reportSyncFailure(error: unknown): void {
@@ -311,9 +313,10 @@ async function runLibrary(subcommand: string): Promise<void> {
 
 /**
  * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
- * the posture a package-manager lifecycle hook needs, where aborting the install costs far more than stale guidance.
- * The default exits 1, so an explicitly invoked sync still fails closed on every guard the command raises. Both paths
- * report here rather than through the top-level handler, which prefixes `Error:` and would wear it over a finding list.
+ * the posture that a package-manager lifecycle hook needs, because aborting the install costs far more than stale
+ * guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
+ * command. Both paths report here rather than through the top-level handler, which prefixes `Error:` and would apply
+ * it to a finding list.
  */
 async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {
   try {

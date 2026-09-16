@@ -21,7 +21,7 @@ streamline-guidance.mjs record < fold.json
 
 Each path names a Markdown file or a directory, and a leading `~/` names the home directory. A directory expands to the Markdown files that git tracks or would track beneath it.
 
-A deployed copy resolves to its source. A file is a deployed copy when it contains a `GENERATED FILE` headline or a `<!-- codeassembly-skill|subagent|rulebook:<slug> -->` ownership marker, or when it lies in a harness's `skills/` or `scripts/` tree. Where it has a `Source:` URL, its source is the path after `/blob/<ref>/`; otherwise its source is the slug's source file under a content root, which is a directory containing `codeassembly-content.yaml`. An ambient or guidance-hook region does not make a file a copy.
+A deployed copy resolves to its source. A file is a deployed copy when it contains a `GENERATED FILE` headline or a `<!-- codeassembly-skill|subagent|rulebook:<slug> -->` ownership marker, or when it lies in a harness's `skills/` or `scripts/` tree. When it has a `Source:` URL, its source is the path after `/blob/<ref>/`; otherwise its source is the slug's source file under a content root, which is a directory containing `codeassembly-content.yaml`. An ambient or guidance-hook region does not make a file a copy.
 
 A path that cannot be a target is reported under `rejected` with one of these reasons: `not-found`, `not-markdown`, `sealed-artifact` (inside the artifact base directory set in preferences), `outside-repository`, `source-not-in-repository`, `ambiguous-source` (a slug with a source under more than one content root), or `unresolved-include` (an include directive in the file, or in a file that it includes, names no file, as an example directive in documentation does). The path is the one named, or the repository-relative path of a file found beneath a named directory.
 
@@ -48,7 +48,7 @@ A target's transitive files are its includes, recursively, and the Markdown file
 }
 ```
 
-`dirty` is true where git reports uncommitted changes to the file, an untracked file included. `generatedRegions` lists 1-based, inclusive line ranges, each running from a `<!-- codeassembly-ambient:start -->` or `<!-- codeassembly-guidance-hook:<name>:start -->` marker through its end marker, or to the end of the file where no end marker follows. A target named as a deployed copy also contains `redirectedFrom`, the path as named. `declined` lists the recorded entries whose file is in the run and still contains the phrase.
+`dirty` is true when git reports uncommitted changes to the file, an untracked file included. `generatedRegions` lists 1-based, inclusive line ranges, each running from a `<!-- codeassembly-ambient:start -->` or `<!-- codeassembly-guidance-hook:<name>:start -->` marker through its end marker, or to the end of the file when no end marker follows. A target named as a deployed copy also contains `redirectedFrom`, the path as named. `declined` lists the recorded entries whose file is in the run and still contains the phrase.
 
 ## `check`
 
@@ -70,7 +70,7 @@ Phrases and literals are compared after NFC normalization, with whitespace colla
 }
 ```
 
-Each entry is stored with `declined-at` set to the fold's date. An entry for the same file and the same phrase, compared as above, replaces the entry that it repeats. On every write, an entry whose file no longer exists or no longer contains its phrase is dropped, so the record lists only cuts that a later run could still propose. Entries are sorted by file and then phrase, so rewriting unchanged content produces identical bytes.
+Each entry is stored with `declined-at` set to the fold's date. An entry for the same file and the same phrase, compared as above, replaces the entry that it repeats. On every write, an entry whose file no longer exists or no longer contains its phrase is dropped, so the record lists only cuts that a later run could still propose. Because entries are sorted by file and then phrase, rewriting unchanged content produces identical bytes.
 
 ```yaml
 declined:

@@ -1,18 +1,18 @@
 /**
  * Import resolution for the guidance-wiring readyup check.
  *
- * Claude Code resolves a raw `@` import against the directory holding the importing file, not against the
+ * Claude Code resolves a raw `@` import against the directory containing the importing file, not against the
  * repository root, so the literal text of an import says nothing about where it points. A check that matches
- * the literal instead of resolving it passes on the very wiring it exists to reject.
+ * the literal instead of resolving it passes on the very wiring that it exists to reject.
  *
  * Claude Code also reads no import out of a fenced code block or a code span, which is how a document shows an
- * import without carrying one. Both are blanked before matching, so an example never counts as live wiring.
+ * import without declaring one. Because both are blanked before matching, an example never counts as live wiring.
  */
 
 import { homedir } from 'node:os';
 import { isAbsolute, resolve } from 'node:path';
 
-/** Bounded to one line, so a stray backtick masks no more than the line it sits on. */
+/** Bounded to one line, so a stray backtick masks no more than the line on which it appears. */
 const CODE_SPAN_PATTERN = /(`+)[^\n]*?\1/g;
 const FENCE_CLOSER_PATTERN = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
 const FENCE_OPENER_PATTERN = /^ {0,3}(`{3,}|~{3,})/;
@@ -25,7 +25,7 @@ export interface GuidanceImportOutcome {
 }
 
 /**
- * Resolves every raw `@` import in a document against the directory holding it, and reports whether one of them
+ * Resolves every raw `@` import in a document against the directory containing it, and reports whether one of them
  * reaches the guidance file. Both `importingDirPath` and `guidancePath` must be absolute.
  */
 export function resolveGuidanceImports(
@@ -75,7 +75,7 @@ function maskFencedBlocks(documentText: string): string {
   return lines.join('\n');
 }
 
-/** Resolves one import specifier, honouring the absolute and `~`-prefixed forms Claude Code also accepts. */
+/** Resolves one import specifier, honouring the absolute and `~`-prefixed forms also accepted by Claude Code. */
 function resolveImportPath(importPath: string, importingDirPath: string): string {
   if (importPath === '~' || importPath.startsWith('~/')) {
     return resolve(homedir(), importPath.slice(2));

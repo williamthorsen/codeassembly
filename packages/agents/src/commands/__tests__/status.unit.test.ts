@@ -65,7 +65,7 @@ describe('statusCommand', () => {
     expect(info).toContain('day(s) old');
   });
 
-  it('reports a machine carrying a failed attempt and no recorded write', async () => {
+  it('reports a machine with a failed attempt and no recorded write', async () => {
     await recordFailedHomeAttempt('install', { summary: 'rejected' }, tempDir);
 
     using silent = silenceConsole(['info', 'warn']);
@@ -128,7 +128,7 @@ describe('statusCommand', () => {
     const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
-    expect(warnLines.some((line) => line.includes('could not read the config'))).toBe(true);
+    expect(warnLines.some((line) => line.includes('Could not read the config'))).toBe(true);
     expect(output).toContain('Summary:');
   });
 
@@ -143,7 +143,7 @@ describe('statusCommand', () => {
     await statusCommand({ harness: 'claude' }, tempDir);
 
     const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('Hooks: not configured');
+    expect(output).toContain('Hooks: Not configured');
   });
 
   it('should report not installed for a harness with no manifest', async () => {
@@ -154,7 +154,7 @@ describe('statusCommand', () => {
     await statusCommand({ harness: 'claude' }, tempDir);
 
     const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('not installed');
+    expect(output).toContain('Not installed');
   });
 
   it('reports missing when an installed file is deleted', async () => {

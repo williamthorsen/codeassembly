@@ -46,12 +46,12 @@ import { retractDroppedHarnesses } from './harness-retraction.ts';
 
 /**
  * The extensions that ship from `content/scripts/` to a harness home: `.sh` shell helpers and `.mjs` TypeScript
- * bundles, either kind invoked by a skill, a subagent, or the harness itself. Anything else there — the README —
+ * bundles, either kind invoked by a skill, a subagent, or the harness itself. Anything else there (the README)
  * documents the directory rather than shipping from it.
  */
 const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
 
-/** One content root shipping a harness's guidance template, and the file names it installs from there. */
+/** One content root shipping a harness's guidance template, and the file names that it installs from there. */
 interface TemplateRoot {
   readonly root: ContentRootRef;
   readonly fileNames: ReadonlyArray<string>;
@@ -65,7 +65,7 @@ export async function installCommand(
   baseDir?: string,
   contentDirOverride?: string,
 ): Promise<void> {
-  // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would. The attempt is
+  // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would. The attempt is
   // recorded only past this point, so an installation refused by the guard leaves the home domain's record untouched.
   await assertDesignatedWriter({
     command: 'install',
@@ -84,7 +84,7 @@ export async function installCommand(
   }
 }
 
-/** Deploys the home domain, past the designated-writer guard `installCommand` applies. */
+/** Deploys the home domain, past the designated-writer guard that `installCommand` applies. */
 async function deployHomeDomain(
   options: InstallOptions,
   baseDir: string | undefined,
@@ -93,8 +93,8 @@ async function deployHomeDomain(
   const homeDir = baseDir ?? homedir();
   const contentDir = contentDirOverride ?? resolveContentDir();
   // Resolve the home declaration's sources, which refuses an unusable source or a content root whose declared format
-  // this tool cannot honor before anything is written, dry-run included. `roots` is the search order every pass below
-  // that reads undeclared content follows: each declared source in precedence order, then the built-in library.
+  // this tool cannot honor before anything is written, dry-run included. `roots` is the search order followed by every
+  // pass below that reads undeclared content: each declared source in precedence order, then the built-in library.
   const { missingSources, roots } = await resolveDeclaredSources({
     baseDir: homeDir,
     contentDir,
@@ -110,11 +110,11 @@ async function deployHomeDomain(
   const harnesses = targets.harnessIds;
   console.info(describeHarnessTargeting(targets));
 
-  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the no-target return: a home that targets no
-  // harness still carries whatever a previous install left in `~/.agents/`.
+  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the no-target return: A home that targets no
+  // harness still contains whatever a previous install left in `~/.agents/`.
   const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
-  // Above the no-target return for the same reason: a declaration resolving to an empty set targets nothing and still
+  // Above the no-target return for the same reason: A declaration resolving to an empty set targets nothing and still
   // has to clear what a previous run deployed.
   const retraction = await retractDroppedHarnesses({ manifest, targets, baseDir, install: options });
   emitReport(retraction.lines);
@@ -138,7 +138,7 @@ async function deployHomeDomain(
     console.info(`\nInstalling for harness: ${harnessId}`);
     const paths = resolveHarnessPaths(harnessId, baseDir);
 
-    // Safety check: ensure target directories are not symlinks
+    // Safety check: Ensure target directories are not symlinks
     checkSymlinkSafety(paths.skillsDir);
     checkSymlinkSafety(paths.subagentsDir);
     checkSymlinkSafety(paths.scriptsDir);
@@ -182,9 +182,9 @@ async function deployHomeDomain(
     );
     entries.push(...scriptEntries);
 
-    // Wire the session-lifecycle hook entries once the relay script is in place, so the configured commands point at
-    // a script that exists. `--skip-hooks` leaves the harness config untouched. A failure — an unparseable config —
-    // costs the hooks a warning, never the rest of the install: the manifest must still record what was copied.
+    // Wire the session-lifecycle hook entries once the relay script is in place, so that the configured commands point
+    // at a script that exists. `--skip-hooks` leaves the harness config untouched. Warn and continue when the config
+    // cannot be parsed: The manifest must still record what was copied.
     if (options.hooks !== false) {
       if (options.dryRun) {
         console.info('    [hooks] Would wire session-lifecycle hook entries');
@@ -201,8 +201,8 @@ async function deployHomeDomain(
     const guidanceEntries = await installHarnessGuidance(roots, paths, harnessId, existingByPath, options);
     entries.push(...guidanceEntries);
 
-    // Reconcile against the previous manifest: remove files whose source was deleted. Runs before the dry-run
-    // gate so `--dry-run` previews removals. User-modified orphans are kept (unless `--force`) and stay tracked.
+    // Reconcile against the previous manifest: Remove files whose source was deleted. Runs before the dry-run
+    // gate so that `--dry-run` previews removals. User-modified orphans are kept (unless `--force`) and stay tracked.
     const pruned = await pruneOrphanedEntries(existingEntries, entries, paths.harnessHome, options);
     entries.push(...pruned.retained);
     emitReport(describePruneResult(pruned, options));
@@ -236,8 +236,8 @@ async function deployHomeDomain(
 }
 
 /**
- * Installs skill support directories (e.g. `_data`) into the target skills directory. Skills themselves — any
- * `content/skills/<slug>/` holding a `SKILL.md` — deploy per-declaration via `sync`, not here, so this pass installs
+ * Installs skill support directories (e.g. `_data`) into the target skills directory. Skills themselves (any
+ * `content/skills/<slug>/` holding a `SKILL.md`) deploy per-declaration via `sync`, not here, so this pass installs
  * only the non-skill support entries; `_partials` (an install-time include target) and dotfiles are excluded.
  *
  * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
@@ -257,21 +257,22 @@ async function installSupportDirectories(
   const skillsSrcDir = path.join(contentDir, 'skills');
   const entries: Array<ManifestEntry> = [];
 
-  // `listSupportEntries` reports an absent directory as empty, so the absence is probed separately: content shipping no
-  // `skills/` has lost the support files every skill reads at runtime, and a silent success would hide that.
+  // Because `listSupportEntries` reports an absent directory as empty, the absence is probed separately: Content
+  // shipping no `skills/` has lost the support files that every skill reads at runtime, and a silent success would
+  // hide that.
   try {
     await stat(skillsSrcDir);
   } catch (error: unknown) {
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(`  ⚠️ Warning: no skills directory found at ${skillsSrcDir}, skipping skill support installation`);
+    console.warn(`  ⚠️ Warning: No skills directory found at ${skillsSrcDir}, skipping skill support installation`);
     return [];
   }
 
   // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). What
-  // counts as one is `listSupportEntries`, shared with `validate` so the pass that checks these and the pass that
-  // deploys them cannot come to disagree about which entries they are.
+  // counts as one is `listSupportEntries`, shared with `validate` so that the pass that checks these and the pass
+  // that deploys them cannot come to disagree about which entries they are.
   const supportEntries = await listSupportEntries(skillsSrcDir);
   for (const entry of supportEntries) {
     const result = await installSkillEntry(
@@ -298,8 +299,8 @@ async function installSupportDirectories(
 
 /**
  * Installs a single skill entry (directory or file) from source to destination.
- * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time
- * — the same pattern subagents use for frontmatter merging.
+ * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time;
+ * subagents follow the same pattern for frontmatter merging.
  */
 async function installSkillEntry(
   srcPath: string,
@@ -316,9 +317,9 @@ async function installSkillEntry(
   subagentSigil: string,
   label = '',
 ): Promise<ManifestEntry | undefined> {
-  // Eagerly render the entry before the dry-run gate, so missing include targets, cycles, out-of-tree references,
+  // Eagerly render the entry before the dry-run gate, so that missing include targets, cycles, out-of-tree references,
   // dead anchors, and unmapped tool placeholders surface even when no files are written. `renderSupportEntry` is the
-  // same render `validate` runs, which is what keeps the two passes agreeing on what a support entry is.
+  // same render that `validate` runs, which is what keeps the two passes agreeing on what a support entry is.
   const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
     anchor: homeAnchor(skillsPrefix),
     guidanceFileName: variables.guidanceFileName,
@@ -328,7 +329,7 @@ async function installSkillEntry(
     subagentSigil,
   });
 
-  // A support directory holding only dotfiles or `_partials/` renders to zero entries — nothing to install. Skip it
+  // A support directory holding only dotfiles or `_partials/` renders to zero entries: nothing to install. Skip it
   // entirely: no destination, no markers, no manifest entry. The orphan-prune pass clears any previously installed copy.
   if (rendered.kind === 'directory' && rendered.entries.length === 0) {
     console.info(`    [skip] ${relativePath}${label ? ` ${label}` : ''} (no installable entries)`);
@@ -351,16 +352,16 @@ async function installSkillEntry(
   }
 
   if (rendered.kind === 'directory') {
-    // Clean-write directories CodeAssembly previously installed: remove the prior copy so files deleted from the
-    // source skill don't survive in the destination. Gated on prior ownership (a manifest entry exists) so a
-    // first-time install never wipes a coincidentally same-named directory the user already had.
+    // Clean-write directories that CodeAssembly previously installed: Remove the prior copy so that files deleted
+    // from the source skill don't survive in the destination. Gated on prior ownership (a manifest entry exists) to
+    // keep a first-time install from wiping a coincidentally same-named directory that the user already had.
     if (existingEntry) {
       await removeItem(destPath);
     }
     await writeRenderedSkillDir(destPath, rendered.entries);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
   } else if (rendered.kind === 'markdown') {
-    // Single-file `.md` skill entries: write the previously expanded content directly.
+    // Single-file `.md` skill entries: Write the previously expanded content directly.
     // Skipping the verbatim copy avoids the expand-copy-expand-overwrite redundancy
     // and ensures the validated content is the content written to disk (no second read).
     await mkdir(path.dirname(destPath), { recursive: true });
@@ -379,7 +380,7 @@ async function installSkillEntry(
 }
 
 /**
- * Writes a rendered skill directory to `destDir`: markdown entries are written from their transformed content, asset
+ * Writes a rendered skill directory to `destDir`: Markdown entries are written from their transformed content, asset
  * entries are copied verbatim from source. Each entry's parent directory is created as needed.
  */
 async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<RenderedSkillEntry>): Promise<void> {
@@ -407,7 +408,7 @@ async function installScripts(
   const { claims, foundDirectory, warnings } = await collectScriptClaims(roots);
   emitReport(warnings);
   if (!foundDirectory) {
-    console.warn('  ⚠️ Warning: no scripts directory found in any content root, skipping script installation');
+    console.warn('  ⚠️ Warning: No scripts directory found in any content root, skipping script installation');
     return [];
   }
 
@@ -471,7 +472,7 @@ async function installHarnessGuidance(
   const owner = shippingRoots.at(0);
   if (owner === undefined) {
     console.warn(
-      `  ⚠️ Warning: no ${harnessId} guidance directory found in any content root, skipping harness guidance installation`,
+      `  ⚠️ Warning: No ${harnessId} guidance directory found in any content root, skipping harness guidance installation`,
     );
     return [];
   }
@@ -495,10 +496,10 @@ async function installHarnessGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
-    // Resolve include directives at source-tree level, strip the guidance-hook declarations the expansion carried in,
-    // then check the result for anchors that name nothing. All three run before the dry-run gate so missing targets,
-    // cycles, out-of-tree references, malformed hooks, and dead in-body locators surface even when no files are
-    // written.
+    // Resolve include directives at source-tree level, strip the guidance-hook declarations that the expansion
+    // carried in, then check the result for anchors that name nothing. All three run before the dry-run gate so that
+    // missing targets, cycles, out-of-tree references, malformed hooks, and dead in-body locators surface even when
+    // no files are written.
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
       const sourceLabel = `guidance/_harnesses/${harnessId}/${entry}`;
@@ -544,8 +545,8 @@ async function installHarnessGuidance(
       await injectMarkerInFile(destPath, buildSourceReference(owner.root, `guidance/_harnesses/${harnessId}/${entry}`));
 
       // Splice the preserved region content into the fresh render. The region's location comes from the template;
-      // its content belongs to sync and must survive an install. A template that no longer carries the region wins:
-      // the content is dropped and the next `sync` re-delivers or warns.
+      // its content belongs to sync and must survive an install. A template that no longer contains the region takes
+      // precedence: The content is dropped and the next `sync` re-delivers or warns.
       if (preservedAmbient !== undefined && preservedAmbient !== '') {
         const rendered = await readFile(destPath, 'utf8');
         if (hasAmbientRegion(rendered)) {
@@ -566,11 +567,11 @@ async function installHarnessGuidance(
 
 /**
  * Collects the installable scripts across `roots`, keyed by file name, taking each name from the highest-precedence
- * root that ships it. A name a lower-precedence root also ships is dropped and reported: scripts deploy into one flat
- * directory, and their file names are undeclared, so a collision states none of the override intent a declared
- * artifact's slug does.
+ * root that ships it. A name also shipped by a lower-precedence root is dropped and reported: Scripts deploy into one
+ * flat directory, and their file names are undeclared, so a collision states none of the override intent that a
+ * declared artifact's slug does.
  *
- * `foundDirectory` distinguishes a run where no root ships a `scripts/` directory at all from one where the
+ * `foundDirectory` distinguishes a run in which no root ships a `scripts/` directory at all from one in which the
  * directories exist and hold nothing installable, because only the first is worth a warning.
  */
 async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promise<{
@@ -633,16 +634,16 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
 
 /**
  * Reports the roots shipping a guidance template for `harnessId`, highest precedence first, each paired with the file
- * names it installs. A root ships a template when its `guidance/_harnesses/<harnessId>/` directory holds at least one
- * such file; a directory that is absent, or holds only dotfiles and subdirectories, ships nothing, so it cannot shadow
- * the root that would otherwise supply the harness.
+ * names that it installs. A root ships a template when its `guidance/_harnesses/<harnessId>/` directory holds at least
+ * one such file; a directory that is absent, or holds only dotfiles and subdirectories, ships nothing, so it cannot
+ * shadow the root that would otherwise supply the harness.
  *
- * The file names travel with the root so selection and installation apply one definition of an installable entry.
- * `copyItem` copies a directory recursively and `computeContentHash` reads a file, so an entry the two passes
- * classified differently would be written to the harness home and then fail the hash that records it.
+ * The file names are returned with the root so that selection and installation apply one definition of an installable
+ * entry. Because `copyItem` copies a directory recursively and `computeContentHash` reads a file, an entry that the
+ * two passes classified differently would be written to the harness home and then fail the hash that records it.
  *
  * Ownership is whole-directory rather than per file, which is what keeps the template's `guidance/shared/AGENTS.md`
- * include resolving inside the one root the template came from.
+ * include resolving inside the one root from which the template came.
  */
 async function findTemplateRoots(
   roots: ReadonlyArray<ContentRootRef>,
@@ -679,7 +680,7 @@ async function findTemplateRoots(
 
 /**
  * Reads the ambient-region content of the file at `filePath`, returning `undefined` when the file is absent or
- * carries no complete region.
+ * contains no complete region.
  */
 async function readAmbientRegionContent(filePath: string): Promise<string | undefined> {
   try {

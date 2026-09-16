@@ -84,7 +84,7 @@ describe('install harness targeting', () => {
     return { harness: 'all', link: false, force: false, dryRun: false, hooks: false, ...overrides };
   }
 
-  /** Creates both harness homes, so detection finds each and a declaration has something to narrow. */
+  /** Creates both harness homes, so that detection finds each and a declaration has something to narrow. */
   async function setupHarnessHomes(): Promise<void> {
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
     await mkdir(path.join(tempDir, ROVO_HOME, 'skills'), { recursive: true });

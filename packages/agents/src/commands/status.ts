@@ -27,7 +27,7 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
   for (const harnessId of harnesses) {
     const harnessManifest = manifest.harnesses[harnessId];
     if (!harnessManifest) {
-      console.info(`\n${harnessId}: not installed`);
+      console.info(`\n${harnessId}: Not installed`);
       // Hook entries can exist without an install (configure-hooks alone); stay quiet only when there are none.
       await reportHookEntryStatus(harnessId, true, baseDir);
       continue;
@@ -65,7 +65,7 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
   }
 }
 
-/** Counts whole days from an ISO timestamp to now, or `undefined` where the timestamp cannot be read. */
+/** Counts whole days from an ISO timestamp to now, or `undefined` when the timestamp cannot be read. */
 function countDaysSince(timestamp: string): number | undefined {
   const written = Date.parse(timestamp);
   if (Number.isNaN(written)) {
@@ -75,9 +75,9 @@ function countDaysSince(timestamp: string): number | undefined {
 }
 
 /**
- * Reports which installation last wrote the home domain, and leads with the last attempt where it failed. A write
+ * Reports which installation last wrote the home domain, and leads with the last attempt when it failed. A write
  * timestamp alone cannot separate a current deployment from one left behind by an abandoned run, so the failed attempt
- * is what says the deployed guidance is stale rather than merely old. Stays silent where no stamp exists, since a
+ * is what says the deployed guidance is stale rather than merely old. Stays silent when no stamp exists, since a
  * home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
  */
 async function reportHomeProvenance(baseDir?: string): Promise<void> {
@@ -110,8 +110,9 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
 }
 
 /**
- * Reports the session-lifecycle hook entries' state in the harness's config file. When `quietWhenUnconfigured` is set
- * (the harness has no installation), an all-absent result prints nothing rather than noise about a feature not in use.
+ * Reports the session-lifecycle hook entries' state in the harness's config file. When `quietWhenUnconfigured` is
+ * set (the harness has no installation), prints nothing for an all-absent result rather than noise about a feature
+ * not in use.
  */
 async function reportHookEntryStatus(
   harnessId: HarnessId,
@@ -123,7 +124,7 @@ async function reportHookEntryStatus(
     statuses = await checkHarnessHookEntries(harnessId, baseDir);
   } catch (error) {
     // An unparseable config is itself a status worth reporting; it must not abort the rest of the report.
-    console.warn(`  ⚠️ Hooks: could not read the config: ${describeError(error)}`);
+    console.warn(`  ⚠️ Hooks: Could not read the config: ${describeError(error)}`);
     return;
   }
   const presentCount = statuses.filter((entry) => entry.status === 'present').length;
@@ -132,7 +133,7 @@ async function reportHookEntryStatus(
 
   if (absentCount === statuses.length) {
     if (!quietWhenUnconfigured) {
-      console.info('  Hooks: not configured');
+      console.info('  Hooks: Not configured');
     }
     return;
   }

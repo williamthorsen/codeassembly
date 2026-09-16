@@ -15,7 +15,7 @@ revise-prose.mjs record < fold.json
 
 `--rule` names a rule, its sweep version, and the unit that owns it, whether or not the helper has a detector for the rule. A rule name is lowercase kebab-case, and a sweep version is a positive integer. A rule named without `@<version>` is swept but not recorded, and it counts toward no coverage. `--unit` names a unit in force and its version; `detect` and `record` read a unit's version only to convert a record written before rules had versions. Both flags repeat, every rule's unit must be declared by a `--unit`, and a rule may be named once, since a rule has one unit. With no unit declared, `detect` runs the `reduced-object-relative` detector alone and does not read the record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit; therefore, an invocation that names no rule declares no unit unless it declares one on its own.
 
-A detector rule is one that the registry in `rules.ts` holds. A unit is a versioned document that contains rules: a rulebook, or `plain-speech`, which contains one rule at the unit's version. A rule may have no detector at all. The helper reads no rule document: The skill states which rules exist and what each says, and the registry defines what a rule finds. `detect` runs the detectors of the named rules that the registry holds, and its output lists the rules under `rules`, as `detected` and `undetected`. A name under `undetected` that was meant as a detector rule is misspelt.
+A detector rule is one that the registry in `rules.ts` lists. A unit is a versioned document that contains rules: a rulebook, or `plain-speech`, which contains one rule at the unit's version. A rule may have no detector at all. The helper reads no rule document: The skill states which rules exist and what each says, and the registry defines what a rule finds. `detect` runs the detectors of the named rules that the registry holds, and its output lists the rules under `rules`, as `detected` and `undetected`. A name under `undetected` that was meant as a detector rule is misspelt.
 
 `--batch-budget` is the ceiling on a batch's combined file bytes, defaulting to 98304 (96 KiB), roughly 24k tokens of file content.
 
@@ -63,7 +63,7 @@ rejections:
     ground: a quoted exhibit of the construction
 ```
 
-The record keys coverage and rejections on each rule's sweep version, so a raised sweep version reopens that rule alone, and a unit's version can change without reopening any rule. A rule's `detected` states whether its sweeps ran the rule's detector. Coverage recorded without the detector stops counting once the helper holds one for the rule, because that sweep never saw the rule's candidates. Its `roots` are the path roots that sweeps at this version and with this detector state have covered, `.` meaning the repository, and `swept-at` is the date of the most recent of those sweeps. A rule without a sweep version is not recorded.
+The record keys coverage and rejections on each rule's sweep version, so a raised sweep version reopens that rule alone, and a unit's version can change without reopening any rule. A rule's `detected` states whether its sweeps ran the rule's detector. Coverage recorded without the detector stops counting once the helper has one for the rule, because that sweep never saw the rule's candidates. Its `roots` are the path roots that sweeps at this version and with this detector state have covered, `.` meaning the repository, and `swept-at` is the date of the most recent of those sweeps. A rule without a sweep version is not recorded.
 
 A rejection resolves to a candidate by its rule, its file, and its phrase. Both phrases are normalized before they are compared (inline code spans masked, NFC applied, whitespace collapsed), and they match when either contains the other. The recorded phrase is the text as it reads after the run's edits, so a repair under another rule in the same run does not invalidate it.
 
@@ -71,7 +71,7 @@ A `rule` is any lowercase kebab-case name that a bound rulebook declares with a 
 
 When `detect` reads the record, with units named:
 
-- It lists as each batch's `unswept` the rules that the run names with a version and for which the record does not cover at least one of the batch's files: at the rule's current version, under one of its roots, and with `detected` set if the helper holds the rule's detector. It skips a batch whose `unswept` is empty. A run that names no rule with a version skips nothing, and each of its batches lists no rule.
+- It lists as each batch's `unswept` the rules that the run names with a version and for which the record does not cover at least one of the batch's files: at the rule's current version, under one of its roots, and with `detected` set if the helper has the rule's detector. It skips a batch whose `unswept` is empty. A run that names no rule with a version skips nothing, and each of its batches lists no rule.
 - It drops a candidate that matches a rejection at its rule's current version.
 - It keeps a candidate that matches a rejection recorded at an _older_ version and marks it `stale: true`, so the sweeper reviews the earlier judgment after a rule's revision rather than losing it.
 - It reports only the candidates in the files of a batch that it reports, under a rule that the batch lists as `unswept` or a rule that the run names without a version. A caller applies to each batch its `unswept` rules and the rules without a version, and no other; a rule without a version is applied in every reported batch but keeps no batch from being skipped.
@@ -79,7 +79,7 @@ When `detect` reads the record, with units named:
 
 ### Records written before rules had versions
 
-A record whose top-level key is `units` keys coverage on each unit's version, with each unit listing its detector `rules` and each rejection naming its `unit` and `unit-version`. `detect` and `record` convert such a record whenever they read one, against the versions that the run holds, and `record` writes the result in the per-rule shape:
+A record whose top-level key is `units` keys coverage on each unit's version, with each unit listing its detector `rules` and each rejection naming its `unit` and `unit-version`. `detect` and `record` convert such a record whenever they read one, against the versions that the run declares, and `record` writes the result in the per-rule shape:
 
 - A unit entry at the unit's current version becomes one coverage entry for each rule of that unit that the run names with a version, at the rule's sweep version. `detected` is set if the unit's `rules` lists the rule.
 - A unit entry at another version, or under a unit that the run does not name, becomes no coverage.

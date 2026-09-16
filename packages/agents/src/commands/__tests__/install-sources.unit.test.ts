@@ -42,7 +42,7 @@ describe('install with declared sources', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it('deploys a script only the source ships', async () => {
+  it('deploys a script shipped only by the source', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       scripts: { 'org-only.sh': '#!/usr/bin/env bash\necho org\n' },
     });
@@ -54,7 +54,7 @@ describe('install with declared sources', () => {
     expect(await readScript(tempDir, 'org-only.sh')).toContain('echo org');
   });
 
-  it('leaves the library scripts a source does not claim in place', async () => {
+  it('leaves in place the library scripts that a source does not claim', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       scripts: { 'org-only.sh': '#!/usr/bin/env bash\necho org\n' },
     });
@@ -180,7 +180,7 @@ describe('install with declared sources', () => {
     );
   });
 
-  it('fails when a source ships a template but not the shared guidance it includes', async () => {
+  it('fails when a source ships a template but not the shared guidance that it includes', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
     });
@@ -207,9 +207,9 @@ describe('install with declared sources', () => {
     );
   });
 
-  // A template carries the ambient region `sync --global` writes into. Install deploys one that omits it, leaving the
-  // region's absence for sync to classify and report.
-  it('deploys a source template carrying no ambient region', async () => {
+  // A template contains the ambient region into which `sync --global` writes. Install deploys one that omits it,
+  // leaving the region's absence for sync to classify and report.
+  it('deploys a source template containing no ambient region', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       claudeGuidance: { 'CLAUDE.md': 'Org claude preamble, no ambient region.\n' },
     });
@@ -259,7 +259,7 @@ describe('install with declared sources', () => {
     expect(await readGuidance(tempDir)).toContain('Fixture claude preamble.');
   });
 
-  it('retracts a template file the owning source does not ship', async () => {
+  it('retracts a template file not shipped by the owning source', async () => {
     using _silent = silenceConsole(['info', 'warn']);
     await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(true);
@@ -290,12 +290,12 @@ async function declareSources(homeDir: string, sources: ReadonlyArray<{ name: st
   await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), `sources:\n${body}\n`, 'utf8');
 }
 
-/** The install options every case runs with, targeting the claude harness on a real (non-dry) run. */
+/** The install options with which every case runs, targeting the claude harness on a real (non-dry) run. */
 function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
 }
 
-/** Creates a source content root under `homeDir` holding the given scripts, claude template, and shared guidance. */
+/** Creates a source content root under `homeDir` containing the given scripts, claude template, and shared guidance. */
 async function makeSource(
   homeDir: string,
   name: string,
@@ -313,17 +313,17 @@ async function makeSource(
   return dir;
 }
 
-/** Reads the claude guidance file the install deployed into the harness home. */
+/** Reads the claude guidance file that the install deployed into the harness home. */
 async function readGuidance(homeDir: string): Promise<string> {
   return readFile(path.join(homeDir, '.claude', 'CLAUDE.md'), 'utf8');
 }
 
-/** Reads a script the install deployed into the claude harness home. */
+/** Reads a script that the install deployed into the claude harness home. */
 async function readScript(homeDir: string, name: string): Promise<string> {
   return readFile(path.join(homeDir, '.claude', 'scripts', name), 'utf8');
 }
 
-/** Joins every line a silenced run wrote to `console.warn`, so one regex can match across them. */
+/** Joins every line that a silenced run wrote to `console.warn`, so that one regex can match across them. */
 function warnedLines(calls: ReadonlyArray<ReadonlyArray<unknown>>): string {
   return calls.map((call) => String(call[0])).join('\n');
 }

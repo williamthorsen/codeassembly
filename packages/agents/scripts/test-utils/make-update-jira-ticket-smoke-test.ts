@@ -2,7 +2,7 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Returns a `SmokeTestInvocation` that pipes an HTML fragment wrapping inline code in bold — a composition violation —
+ * Returns a `SmokeTestInvocation` that pipes an HTML fragment wrapping inline code in bold (a composition violation)
  * and asserts the checker reports a `composition-code-inline-mark` finding.
  */
 export function makeUpdateJiraTicketSmokeTest(): SmokeTestInvocation {
@@ -14,7 +14,7 @@ export function makeUpdateJiraTicketSmokeTest(): SmokeTestInvocation {
 
 // region | Helpers
 
-/** Assert the parsed smoke-test result reports a composition-code-inline-mark finding. */
+/** Asserts the parsed smoke-test result reports a composition-code-inline-mark finding. */
 function assertCompositionViolationFinding(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result');

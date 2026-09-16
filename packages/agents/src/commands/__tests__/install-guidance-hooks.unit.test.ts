@@ -8,9 +8,9 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 
-// A declared guidance hook is inert until a binding fills it, and `install` resolves no declaration, so every hook it
-// meets is unbound. These pin that the directive reaches no installed file along either of install's render routes:
-// the support-entry render, and the direct expansion route harness guidance takes.
+// A declared guidance hook is inert until a binding fills it, and `install` resolves no declaration, so every hook that
+// it meets is unbound. These pin that the directive appears in no installed file along either of install's render
+// routes: the support-entry render, and the direct expansion route that harness guidance takes.
 describe('install guidance-hook strip', () => {
   let tempDir: string;
   let contentDir: string;
@@ -30,7 +30,7 @@ describe('install guidance-hook strip', () => {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  it('installs a hook-bearing support entry and harness guidance carrying no directive', async () => {
+  it('installs a hook-bearing support entry and harness guidance containing no directive', async () => {
     await buildContentTree(contentDir, {
       dataFiles: { 'sample.md': '# Sample\n\n<!-- guidance-hook: implementation-preferences -->\n\nRows.\n' },
       harnessGuidance: {

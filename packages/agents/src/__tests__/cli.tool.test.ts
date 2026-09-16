@@ -186,7 +186,7 @@ describe('CLI sync failure reporting', () => {
     sourceDir = path.join(tmpdir(), `agents-test-sync-report-src-${stamp}`);
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await mkdir(path.join(sourceDir, 'guidance', 'rulebooks'), { recursive: true });
-    // Unquoted, `version` reaches the schema as a number and the rulebook is rejected: two of them, so one run has
+    // Unquoted, the schema receives `version` as a number and rejects the rulebook: two of them, so one run has
     // more than one defect to report.
     for (const slug of ['alpha', 'beta']) {
       await writeFile(

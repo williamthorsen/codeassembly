@@ -7,7 +7,7 @@ describe(countGuidanceLines, () => {
     expect(countGuidanceLines('first\nsecond\n')).toBe(2);
   });
 
-  it('counts a final line that carries no terminator', () => {
+  it('counts a final line with no terminator', () => {
     expect(countGuidanceLines('first\nsecond')).toBe(2);
   });
 

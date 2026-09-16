@@ -11,8 +11,8 @@ describe(validateCommand, () => {
   let projectDir: string;
 
   beforeEach(async () => {
-    // Under the OS temp dir, never the repo tree: this repo carries `.agents/codeassembly.yaml` at its root, so an
-    // in-tree fixture would sit below a declaration and could not show that the command consults none.
+    // Under the OS temp dir, never the repo tree: This repo contains `.agents/codeassembly.yaml` at its root, so an
+    // in-tree fixture would be below a declaration and could not show that the command consults none.
     projectDir = path.join(tmpdir(), `agents-test-validate-cmd-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(projectDir, { recursive: true });
     disposeOnTestFinished(silenceConsole(['error', 'info']));
@@ -51,7 +51,7 @@ describe(validateCommand, () => {
     expect(report).toContain('reason=duplicate-hook');
   });
 
-  it("falls back to the content root the working directory's package.json declares", async () => {
+  it("falls back to the content root declared by the working directory's package.json", async () => {
     await writeSkill(path.join(projectDir, 'guidance'), 'alpha');
     await writeManifest(projectDir, { codeassembly: { content: 'guidance' } });
 
@@ -92,7 +92,7 @@ function loggedText(): string {
     .join('\n');
 }
 
-/** The joined text of every `console.error` call, which is where the defect report lands. */
+/** The joined text of every `console.error` call, which is where the command writes the defect report. */
 function reportedText(): string {
   return vi
     .mocked(console.error)
@@ -100,12 +100,12 @@ function reportedText(): string {
     .join('\n');
 }
 
-/** Writes a `package.json` holding the given manifest object. */
+/** Writes a `package.json` containing the given manifest object. */
 async function writeManifest(dir: string, manifest: Record<string, unknown>): Promise<void> {
   await writeFile(path.join(dir, 'package.json'), `${JSON.stringify(manifest, undefined, 2)}\n`, 'utf8');
 }
 
-/** Writes a minimal skill into a content root, with an optional body carrying whatever the test is exercising. */
+/** Writes a minimal skill into a content root, with an optional body containing whatever the test is exercising. */
 async function writeSkill(root: string, slug: string, body = 'Body.'): Promise<void> {
   const skillDir = path.join(root, 'skills', slug);
   await mkdir(skillDir, { recursive: true });

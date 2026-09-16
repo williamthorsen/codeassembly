@@ -31,8 +31,8 @@ import type {
 import type { SyncDomain } from './sync-domain.ts';
 
 /**
- * Collects the skill and subagent destinations a sync would write, each paired with the predicate that recognizes its
- * own ownership marker, so the pre-write guard can reject any that already exist foreign-owned.
+ * Collects the skill and subagent destinations that a sync would write, each paired with the predicate that
+ * recognizes its own ownership marker, so that the pre-write guard can reject any that already exist foreign-owned.
  */
 export function collectOwnedTargets(
   harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>,
@@ -72,7 +72,7 @@ export function collectOwnedTargets(
   return targets;
 }
 
-/** Builds the collector every pre-write gate reports into. */
+/** Builds the collector into which every pre-write gate reports. */
 export function createDefectCollector(): DefectCollector {
   const collected: Array<ContentDefect> = [];
   return {
@@ -85,16 +85,16 @@ export function createDefectCollector(): DefectCollector {
   };
 }
 
-/** Collects the defects reported by a sync's pre-write gates, so the run fails once on the whole list. */
+/** Collects the defects reported by a sync's pre-write gates, so that the run fails once on the whole list. */
 export interface DefectCollector {
   readonly found: ReadonlyArray<ContentDefect>;
   add(found: ReadonlyArray<ContentDefect>): void;
 }
 
 /**
- * Drops every seed already reported as unresolvable, so the closure walk does not report the same slug a second time
- * as a missing edge. A slug reachable only through a dropped seed is unreported here, and the dropped seed's own
- * defect is what sends the reader to it.
+ * Drops every seed already reported as unresolvable, so that the closure walk does not report the same slug a second
+ * time as a missing edge. A slug reachable only through a dropped seed is unreported here, and the dropped seed's own
+ * defect sends the reader to it.
  */
 export function dropUnresolvableSeeds(seeds: DirectArtifacts, unresolvable: UnresolvableSlugs): DirectArtifacts {
   const kept: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };
@@ -130,8 +130,8 @@ export function findBoundRulebookHookDefects(
           kind: 'frontmatter',
           detail:
             `Rulebook "${slug}", bound to guidance hook "${hook}", declares a guidance hook of its own (${names}). ` +
-            'Bound guidance is spliced as rendered, so nothing can fill a hook inside it: remove the directive, or ' +
-            'bind a rulebook that carries none.',
+            'Bound guidance is spliced as rendered, so nothing can fill a hook inside it: Remove the directive, or ' +
+            'bind a rulebook that declares none.',
         });
       }
     }
@@ -158,16 +158,17 @@ export function findCrossNamespaceCollisionDefects(
 }
 
 /**
- * Reports every host `sync` would write that already carries a damaged region — an unmatched marker, or more than one.
- * Only the sync-owned project-local host can be appended to, so only it needs the guard; the harness-home path skips
- * such a file with a warning instead. Runs before any write so a dry-run surfaces the conflict with nothing changed.
+ * Reports every host that `sync` would write and that already contains a damaged region: an unmatched marker, or more
+ * than one. Only the sync-owned project-local host can be appended to, so only it needs the guard; the harness-home
+ * path skips such a file with a warning instead. Runs before any write so that a dry-run reports the conflict with
+ * nothing changed.
  */
 export function findDamagedAmbientHostDefects(
   probed: ReadonlyArray<ProbedAmbientHost>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
 ): ReadonlyArray<ContentDefect> {
-  // Asks whether anything would be delivered, which is a property of the declaration alone. Rendering could answer it
+  // Ask whether anything would be delivered, which is a property of the declaration alone. Rendering could answer it
   // too, but rendering can now fail on a bad link, and this guard is about region damage rather than link validity.
   if (domain.ambient !== 'project-local' || resolved.every((rulebook) => !rulebook.ambient)) {
     return [];
@@ -179,7 +180,7 @@ export function findDamagedAmbientHostDefects(
         file: hostPath,
         kind: 'target',
         detail:
-          'Refusing to deliver ambient guidance into a file carrying a damaged ambient region (an unmatched marker, ' +
+          'Refusing to deliver ambient guidance into a file with a damaged ambient region (an unmatched marker, ' +
           'or more than one region). Repair the codeassembly-ambient markers, then re-run.',
       });
     }
@@ -188,7 +189,7 @@ export function findDamagedAmbientHostDefects(
 }
 
 /**
- * Renders every declared skill against every targeted harness, discarding the output, so a broken include or an
+ * Renders every declared skill against every targeted harness, discarding the output, so that a broken include or an
  * unmapped tool placeholder is reported before any file is written. The deploy pass re-renders at write time; this
  * pass exists only to fail the run closed, including under `--dry-run`.
  */
@@ -220,7 +221,7 @@ export async function findDeclaredSkillRenderDefects(
 }
 
 /**
- * Renders every declared subagent against every targeted harness, discarding the output, so an unmapped tool
+ * Renders every declared subagent against every targeted harness, discarding the output, so that an unmapped tool
  * placeholder or a rulebook token is reported before any file is written. `reconcileDeclaredSubagents` re-renders at write
  * time; this pass exists only to fail the run closed, including under `--dry-run`.
  */
@@ -251,8 +252,8 @@ export async function findDeclaredSubagentRenderDefects(
 }
 
 /**
- * Reports every planned target that already exists without this sync's ownership marker — an install-managed or
- * hand-authored file. Failing here, before any write or delete, is what keeps a same-named foreign file from being
+ * Reports every planned target that already exists without this sync's ownership marker: an install-managed or
+ * hand-authored file. Failing here, before any write or delete, keeps a same-named foreign file from being
  * overwritten; the marker-gated retraction scans separately keep it from being deleted. Absent targets are safe.
  */
 export async function findForeignOwnedTargetDefects(
@@ -283,9 +284,9 @@ export async function findForeignOwnedTargetDefects(
 }
 
 /**
- * Renders every resolved rulebook against every targeted harness, discarding the output, so a link target the
- * delivery pipeline cannot honor is reported before any file is written. Both delivery passes re-render at write time;
- * this pass exists only to fail the run closed, including under `--dry-run`.
+ * Renders every resolved rulebook against every targeted harness, discarding the output, so that a link target that
+ * the delivery pipeline cannot honor is reported before any file is written. Both delivery passes re-render at write
+ * time; this pass exists only to fail the run closed, including under `--dry-run`.
  */
 export function findRulebookRenderDefects(
   harnessIds: ReadonlyArray<HarnessId>,
@@ -315,7 +316,7 @@ export function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRu
     file: artifactFrontmatterPath('rulebook', collision.slugs[0] ?? collision.skillName),
     kind: 'collision',
     detail:
-      `Skill name collision: rulebooks ${collision.slugs.join(', ')} all resolve to skill "${collision.skillName}". ` +
+      `Skill name collision: Rulebooks ${collision.slugs.join(', ')} all resolve to skill "${collision.skillName}". ` +
       'Give all but one a distinct `skill-name`.',
   }));
 }
@@ -323,7 +324,7 @@ export function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRu
 /**
  * Reports each guidance-hook binding naming a rulebook that resolves from no declared source or the library, naming
  * both the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an anonymous
- * missing reference: the hook name is the half that says where to go and fix it.
+ * missing reference: The hook name is the half that says where to go and fix it.
  */
 export async function findUnresolvableBindingDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
@@ -350,7 +351,7 @@ export async function findUnresolvableBindingDefects(
 }
 
 /**
- * Reports each artifact a declaration's own `use:` list names that resolves from no declared source or the
+ * Reports each artifact that a declaration's own `use:` list names and that resolves from no declared source or the
  * library, naming the chain files that declare it alongside the slug. The closure catches the same slug, but only
  * as an anonymous missing reference: The declaring file is the half that says where to go and fix it, and a path
  * derived from the domain cannot supply it, since either tier of the chain could have named the slug.
@@ -394,8 +395,8 @@ export interface OwnedTarget {
 }
 
 /**
- * Resolves each slug, reporting the ones that fail rather than abandoning the rest. What resolved is what the passes
- * below run over, so an artifact reported here is absent from them rather than carried forward half-resolved.
+ * Resolves each slug, reporting the ones that fail rather than abandoning the rest. The passes below run over what
+ * resolved, so an artifact reported here is absent from them rather than carried forward half-resolved.
  */
 export async function resolveEachArtifact<T>(
   type: ArtifactType,
@@ -414,12 +415,15 @@ export async function resolveEachArtifact<T>(
   return { resolved, defects };
 }
 
-/** Declared slugs per type that resolve from nowhere, so the closure walk can skip a seed already reported. */
+/** Declared slugs per type that resolve from nowhere, so that the closure walk can skip a seed already reported. */
 export type UnresolvableSlugs = Record<ArtifactType, ReadonlySet<string>>;
 
 // region | Helpers
 
-/** Builds one artifact's render defect, holding the harness so the fold can tell a body-local failure from a scoped one. */
+/**
+ * Builds one artifact's render defect, holding the harness so that the fold can tell a body-local failure from a
+ * scoped one.
+ */
 function describeRenderDefect(type: ArtifactType, slug: string, harnessId: HarnessId, error: unknown): HarnessDefect {
   return {
     harnessId,

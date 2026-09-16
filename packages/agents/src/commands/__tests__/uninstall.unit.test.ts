@@ -166,7 +166,7 @@ describe('uninstallCommand', () => {
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
-    // Uninstall without force — modified file is skipped, others are removed
+    // Uninstall without force: Modified file is skipped, others are removed
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     // Harness manifest should contain only the skipped entry

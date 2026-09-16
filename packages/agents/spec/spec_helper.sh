@@ -10,7 +10,7 @@ shellspec_spec_helper_configure() {
 # Creates a temporary directory and assigns its path to `tmpdir`.
 #
 # The template is rooted at `$TMPDIR` because bare `mktemp -d` reads the Darwin per-user temp directory instead, which
-# the agent sandbox denies. The X run stays at the end, the only position macOS substitutes.
+# the agent sandbox denies. The X run stays at the end, the only position that macOS substitutes.
 make_tmpdir() {
   tmpdir_base="${TMPDIR:-/tmp}"
   tmpdir=$(mktemp -d "${tmpdir_base%/}/agents-spec.XXXXXX") && [ -d "$tmpdir" ]

@@ -11,15 +11,15 @@ import { formatUtcDate, readGuidanceStaleness } from '../lib/guidance-staleness.
 const GUIDANCE_PATH = 'AGENTS.md';
 const CLAUDE_MEMORY_PATH = '.claude/CLAUDE.md';
 const STALE_COMMIT_THRESHOLD = 20;
-/** Lines the guidance file may carry before it costs more launch context than it earns. */
+/** Lines that the guidance file may contain before it uses more launch context than it is worth. */
 const AMBIENT_LINE_BUDGET = 200;
 
 const REFRESH_FIX = `Run \`/update-project-guidance\` to refresh ${GUIDANCE_PATH}`;
 
 /**
- * Guidance checks the `codeassembly` package publishes to every repository that consumes it.
+ * Guidance checks published by the `codeassembly` package to every repository that consumes it.
  *
- * They cover the convention the package's own tooling authors: project guidance at the repository-root
+ * They cover the convention that the package's own tooling authors: project guidance at the repository-root
  * `AGENTS.md`, which Rovo Dev loads unaided and Claude Code reaches through one import.
  */
 export default defineRdyKit({
@@ -34,7 +34,7 @@ export default defineRdyKit({
             const content = readFile(GUIDANCE_PATH);
             return content !== undefined && content.trim().length > 0;
           },
-          fix: `Run \`/update-project-guidance\` to author ${GUIDANCE_PATH} with the context agents need`,
+          fix: `Run \`/update-project-guidance\` to author ${GUIDANCE_PATH} with the context that agents need`,
         },
         {
           name: `${CLAUDE_MEMORY_PATH} imports ${GUIDANCE_PATH}`,
@@ -135,7 +135,7 @@ function describeCommitCount(count: number): string {
   return count === 1 ? '1 commit' : `${count} commits`;
 }
 
-/** Names where a document's imports land, so a failure shows the resolved target rather than the literal. */
+/** Names where a document's imports point, so that a failure shows the resolved target rather than the literal. */
 function describeImportTargets(resolvedPaths: ReadonlyArray<string>): string {
   if (resolvedPaths.length === 0) {
     return 'no `@` import found';

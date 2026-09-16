@@ -2,8 +2,8 @@
 
 # Terminal color definitions for shell scripts.
 #
-# Source this file to use color variables in your scripts.
-# Uses conditional assignment so callers can override colors before sourcing.
+# Source this file to use color variables in a script.
+# Uses conditional assignment so that callers can override colors before sourcing.
 #
 # Usage:
 #   source "$repo_dir/functions/colors.sh"

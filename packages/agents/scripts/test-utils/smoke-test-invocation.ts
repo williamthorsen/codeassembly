@@ -7,7 +7,7 @@ export interface SmokeTestInvocation {
   /**
    * Working directory passed to `spawn`. Defaults to inheriting the parent's cwd. Bundles whose
    * output depends on the surrounding filesystem (preferences files, branch manifest) should
-   * point this at a self-contained fixture directory so the smoke test is hermetic.
+   * point this at a self-contained fixture directory so that the smoke test is hermetic.
    */
   cwd?: string;
   /**

@@ -9,10 +9,10 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up an event store carrying a seed event plus an isolated home registering it as `default_kb`, then returns a
+ * Stands up an event store containing a seed event plus an isolated home registering it as `default_kb`, then returns a
  * `SmokeTestInvocation` that marks the event `addressed-by` a reference with `--store @default`. Exercises the full
  * `@default` resolution → read → parse → mutate → atomic write pipeline, the only path that wires the bundled resolver,
- * the per-type record layer, and the note-io writer together. The assertion confirms the reference landed and that no
+ * the per-type record layer, and the note-io writer together. The assertion confirms that the reference was written and that no
  * `title`/`created`/`updated` was injected onto the event.
  */
 export function makeKbUpdateEventsSmokeTest(): SmokeTestInvocation {
@@ -57,7 +57,7 @@ export function makeKbUpdateEventsSmokeTest(): SmokeTestInvocation {
 // region | Helpers
 
 /**
- * Assert the kb-update-events smoke produced an ok batch whose one event updated, with the reference written to its
+ * Asserts the kb-update-events smoke produced an ok batch whose one event updated, with the reference written to its
  * `addressed-by` list and no assertion fields injected.
  */
 function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): void {
@@ -79,7 +79,7 @@ function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): vo
   }
   const written = readFileSync(eventPath, 'utf8');
   if (!/^addressed-by:/m.test(written)) {
-    throw new Error(`expected the written event to carry addressed-by, got:\n${written}`);
+    throw new Error(`expected the written event to contain addressed-by, got:\n${written}`);
   }
   if (!written.includes('#849')) {
     throw new Error(`expected the written event to reference #849, got:\n${written}`);

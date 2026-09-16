@@ -13,8 +13,8 @@ import { listOwnedDeclaredSkills, listOwnedSkills, listOwnedSubagents } from './
 
 /**
  * Everything one dropped harness still holds from a previous sync, as the absolute paths removed by a real run and
- * the host rewrites performed alongside them. Deriving the whole set before any write is what lets `--dry-run` report
- * the sweep in the terms that the run carries out.
+ * the host rewrites performed alongside them. Deriving the whole set before any write lets `--dry-run` report the
+ * sweep in the terms that the run carries out.
  */
 export interface DroppedHarnessRetraction {
   readonly harnessId: HarnessId;
@@ -28,28 +28,28 @@ export interface DroppedHarnessRetraction {
 }
 
 /**
- * What retraction does to one dropped harness's ambient host. `damaged` is the ambient host's own case: a region no
- * transform may touch, which the sweep leaves standing and the report names, since the alternative is a clean-looking
- * run over guidance the declaration has withdrawn.
+ * What retraction does to one dropped harness's ambient host. `damaged` is the ambient host's own case: a region that
+ * no transform may touch, which the sweep leaves standing and the report names, since the alternative is a
+ * clean-looking run over guidance withdrawn by the declaration.
  */
 export type AmbientRetraction = HostRetraction | { readonly kind: 'damaged'; readonly path: string };
 
-/** What retraction does to one host file that carries a sync-owned region: rewrite it, or delete it outright. */
+/** What retraction does to one host file that contains a sync-owned region: rewrite it, or delete it outright. */
 export type HostRetraction =
   | { readonly kind: 'delete'; readonly path: string }
   | { readonly kind: 'rewrite'; readonly path: string; readonly content: string };
 
 /**
  * Lists what each harness dropped from the `harnesses` declaration still holds under `baseDir`, one entry per harness
- * holding anything. Every path it names is gated on a sync provenance marker or a well-formed sync-owned region, so
- * an install-managed or hand-authored file is never claimed.
+ * holding anything. Every path that it names is gated on a sync provenance marker or a well-formed sync-owned region,
+ * so an install-managed or hand-authored file is never claimed.
  *
  * Retraction follows the declaration alone, matching `install`'s pass. Under `flag`, `--harness claude` names the
  * run's target rather than declaring rovo unwanted; under `detection`, a harness that detection misses has no
  * directory holding stale files. Either origin yields an empty result.
  *
- * The candidate set is every known harness minus the targeted ones, unfiltered by directory existence: each scan
- * answers an absent directory with nothing, and a harness holding nothing is left out of the result, so the report
+ * The candidate set is every known harness minus the targeted ones, unfiltered by directory existence: Each scan
+ * returns nothing for an absent directory, and a harness holding nothing is left out of the result, so the report
  * never announces one that had no residue.
  */
 export async function planDroppedHarnessRetractions(options: {
@@ -121,7 +121,7 @@ async function applyHostRetraction(retraction: AmbientRetraction | undefined): P
     : writeIfChanged(retraction.path, retraction.content));
 }
 
-/** Whether a harness holds anything a sweep would remove, which is what keeps an untouched harness out of the report. */
+/** Whether a harness holds anything a sweep would remove, which keeps an untouched harness out of the report. */
 function hasResidue(retraction: DroppedHarnessRetraction): boolean {
   return (
     retraction.skillDirs.length > 0 ||
@@ -136,8 +136,8 @@ function hasResidue(retraction: DroppedHarnessRetraction): boolean {
  * Decides what retraction does to one dropped harness's ambient host. The two hosts differ in who owns the region's
  * placement: `install` renders the harness-home region, so sync empties the content that it owns and keeps the markers,
  * while the project-local host is sync's own and goes entirely, taking the file with it once nothing else remains.
- * A damaged region is reported rather than touched, since the span the pattern matches there reaches text the region
- * does not own; a host carrying no region at all is nothing to report.
+ * A damaged region is reported rather than touched, since the span matched there by the pattern includes text that
+ * the region does not own; a host with no region at all is nothing to report.
  */
 async function planAmbientRetraction(
   harnessId: HarnessId,
@@ -160,8 +160,8 @@ async function planAmbientRetraction(
 
 /**
  * Decides what retraction does to one dropped harness's `prompts.yml`. The codeassembly region is removed rather than
- * re-indexed: retraction withdraws sync's ownership of the file, where re-indexing would keep a region alive to list
- * whatever hand-authored skills remain in the dir. A file carrying no region was never sync's and is left alone.
+ * re-indexed: Retraction withdraws sync's ownership of the file, whereas re-indexing would keep a region alive to
+ * list whatever hand-authored skills remain in the dir. A file with no region was never sync's and is left alone.
  */
 async function planPromptsRetraction(promptsPath: string): Promise<HostRetraction | undefined> {
   const content = await readFileOrEmpty(promptsPath);

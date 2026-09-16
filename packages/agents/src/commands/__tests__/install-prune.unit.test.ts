@@ -130,7 +130,7 @@ describe('install stale-file pruning', () => {
 
   /**
    * Builds a minimal content tree under a fresh temp directory and returns its path. Only the surfaces named in
-   * `options` get extra files; the baseline (claude guidance, subagent overlay) is always present so the install
+   * `options` get extra files; the baseline (claude guidance, subagent overlay) is always present so that the install
    * pipeline runs end to end. `supportDirs` are written under `skills/<name>/` without a `SKILL.md`, so install treats
    * them as support directories (the skill catalog deploys per-declaration via `sync`, not install).
    */

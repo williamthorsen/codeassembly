@@ -12,8 +12,8 @@ import { syncGlobalCommand } from '../sync.ts';
 // Runs `init --global` then `sync --global` against the real content library to catch failures that
 // only show up with real content.
 //
-// Deploying the whole catalog runs long under parallel-worker load, which the tier's own budget is
-// too tight to absorb. The ceiling here matches what the tiers above `unit` carry.
+// Deploying the whole catalog runs long under parallel-worker load, longer than the tier's own budget
+// allows. The ceiling here matches the budget of the tiers above `unit`.
 describe('sync --global (real library, all collection)', { timeout: 30_000 }, () => {
   let homeDir: string;
 
@@ -41,7 +41,7 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
 
     const skillsDir = path.join(homeDir, '.claude', 'skills');
     const deployedSkills = await readdir(skillsDir);
-    // A representative sample of the real skill catalog landed, sync-owned.
+    // The run deployed a representative sample of the real skill catalog, sync-owned.
     expect(deployedSkills).toContain('create-commit');
     expect(deployedSkills).toContain('create-pr');
     const createCommit = await readFile(path.join(skillsDir, 'create-commit', 'SKILL.md'), 'utf8');
@@ -57,13 +57,13 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     const designAndPlan = await readFile(path.join(skillsDir, 'design-and-plan', 'SKILL.md'), 'utf8');
     expect(designAndPlan).not.toContain('{tool:');
 
-    // Subagents and rulebooks reach the home domain through a collection's members too.
+    // Sync deploys subagents and rulebooks to the home domain through a collection's members too.
     const agentsDir = path.join(homeDir, '.claude', 'agents');
     const deployedSubagents = await readdir(agentsDir);
     expect(deployedSubagents.length).toBeGreaterThan(0);
 
-    // Each resolved from the library, so each merged against the library's own overlay: the source-scoped merge
-    // reaches the home domain, and applies the same `_defaults` there that it applies in a project.
+    // Because each is resolved from the library, each is merged against the library's own overlay: The source-scoped
+    // merge covers the home domain, and applies the same `_defaults` there that it applies in a project.
     for (const fileName of deployedSubagents) {
       const deployed = await readFile(path.join(agentsDir, fileName), 'utf8');
       expect(deployed, `${fileName} deployed without the overlay defaults`).toContain(

@@ -9,13 +9,13 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 /**
  * Stands up a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
  * `SmokeTestInvocation` that emits one event against them. Exercises the full context-autofill → envelope → append
- * pipeline: the git-derived `repo` and `branch`, the relayed `--session`, and the single-line append are only wired
+ * pipeline: The git-derived `repo` and `branch`, the relayed `--session`, and the single-line append are only wired
  * together in the built bundle.
  *
- * The branch is pinned via `--initial-branch` so the expected path is deterministic; the ambient git config could
+ * The branch is pinned via `--initial-branch` so that the expected path is deterministic; the ambient git config could
  * otherwise name the initial branch anything. `--home` points the events root at the fixture rather than overriding
- * `HOME`, which would break PATH-resolution tools that depend on the real one (the hazard the deriver's smoke test
- * documents).
+ * `HOME`, which would break PATH-resolution tools that depend on the real one (the hazard documented by the deriver's
+ * smoke test).
  */
 export function makeEmitEventSmokeTest(): SmokeTestInvocation {
   const home = mkdtempSync(path.join(tmpdir(), 'emit-event-home-'));
@@ -55,8 +55,8 @@ export function makeEmitEventSmokeTest(): SmokeTestInvocation {
 // region | Helpers
 
 /**
- * Assert the emit-event smoke appended an envelope at the path the derived context implies, and that the line on disk
- * parses with the autofilled `repo`/`branch`/`session`/`cwd`, the injected harness, and the supplied payload.
+ * Asserts the emit-event smoke appended an envelope at the path implied by the derived context, and that the line on
+ * disk parses with the autofilled `repo`/`branch`/`session`/`cwd`, the injected harness, and the supplied payload.
  */
 function assertEmitEventSmokeResult(result: unknown, expectedPath: string, repo: string): void {
   if (!isRecord(result)) {

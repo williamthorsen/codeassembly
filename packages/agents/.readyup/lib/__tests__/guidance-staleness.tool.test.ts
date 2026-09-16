@@ -8,7 +8,7 @@ import { createGuidanceRepoFixture } from '../test-utils/create-guidance-repo-fi
 const GUIDANCE_PATH = 'AGENTS.md';
 
 describe(readGuidanceStaleness, () => {
-  it('counts the commits that landed after the guidance file was last modified', async () => {
+  it('counts the commits made after the guidance file was last modified', async () => {
     const { commitFiles, root } = await createGuidanceRepoFixture();
     await commitFiles(GUIDANCE_PATH);
     await commitFiles('source.ts');

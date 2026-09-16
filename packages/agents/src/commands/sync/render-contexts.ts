@@ -12,9 +12,9 @@ import type { SubagentDeployContext } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
 
 /**
- * Indexes the deployed rulebooks by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys
- * under. Harness-invariant, unlike the render contexts that carry it: What a rulebook deploys as does not vary by
- * harness.
+ * Indexes the deployed rulebooks by slug, so that a `{rulebook:<slug>}` token renders the skill name under which its
+ * target deploys. Harness-invariant, unlike the render contexts that contain it: What a rulebook deploys as does not
+ * vary by harness.
  */
 export function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedRulebook>): RulebookInvocationCatalog {
   return new Map(resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]));
@@ -22,8 +22,8 @@ export function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedR
 
 /**
  * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` names the skill
- * directories the rulebook-delivery pass writes, which reach every targeted harness; `resolvedSkills` is filtered per
- * harness instead, because a declared skill may target only some.
+ * directories that the rulebook-delivery pass writes, which are delivered to every targeted harness;
+ * `resolvedSkills` is filtered per harness instead, because a declared skill may target only some.
  */
 export function createAnchorContextResolver(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
@@ -47,9 +47,9 @@ export function createAnchorContextResolver(
 }
 
 /**
- * Builds a memoized reader of the subagent frontmatter overlay, keyed on the harness and the content root a subagent
- * resolved from. Memoized because every subagent from one source reads the same overlay, and the pre-write render
- * gate reads each of them a second time.
+ * Builds a memoized reader of the subagent frontmatter overlay, keyed on the harness and the content root from which
+ * a subagent resolved. Memoized because every subagent from one source reads the same overlay, and the pre-write
+ * render gate reads each of them a second time.
  */
 export function createOverlayLoader(): ResolveOverlay {
   const cache = new Map<string, Promise<string>>();
@@ -78,7 +78,10 @@ export function createRulebookContextResolver(
     );
 }
 
-/** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
+/**
+ * One targeted harness's id and project-local skills dir paired with the per-harness inputs that the skill transform
+ * needs.
+ */
 export interface HarnessSkillTarget {
   readonly harnessId: HarnessId;
   readonly skillsDir: string;
@@ -86,7 +89,10 @@ export interface HarnessSkillTarget {
   readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
 }
 
-/** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
+/**
+ * One targeted harness's project-local subagents dir paired with the per-harness inputs that the deploy transform
+ * needs.
+ */
 export interface HarnessSubagentTarget {
   readonly harnessId: HarnessId;
   readonly subagentsDir: string;
@@ -102,15 +108,15 @@ export interface HarnessSubagentTarget {
 export type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
 
 /**
- * Reads the frontmatter overlay one harness applies to subagents resolved from `contentRoot`. Source-scoped rather
- * than per-harness: a subagent merges against the overlay of the root it came from, so a source shipping none merges
- * against nothing.
+ * Reads the frontmatter overlay that one harness applies to subagents resolved from `contentRoot`. Source-scoped
+ * rather than per-harness: A subagent merges against the overlay of the root from which it came, so a source shipping
+ * none merges against nothing.
  */
 export type ResolveOverlay = (harnessId: HarnessId, contentRoot: string) => Promise<string>;
 
 /**
- * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so the pre-write gate,
- * ambient delivery, and skill delivery all render a rulebook body against the same anchor.
+ * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so that the pre-write
+ * gate, ambient delivery, and skill delivery all render a rulebook body against the same anchor.
  */
 export type ResolveRulebookContext = (
   harnessId: HarnessId,
@@ -118,8 +124,8 @@ export type ResolveRulebookContext = (
 ) => RulebookRenderContext;
 
 /**
- * Resolves one harness's project-local skills dir together with the per-harness inputs the skill transform needs: the
- * link anchor, the home-dir segment, and the harness ID. Passing `projectRoot` as the base keeps delivery
+ * Resolves one harness's project-local skills dir together with the per-harness inputs that the skill transform
+ * needs: the link anchor, the home-dir segment, and the harness ID. Passing `projectRoot` as the base keeps delivery
  * project-scoped.
  */
 export function resolveSkillTarget(
@@ -145,8 +151,8 @@ export function resolveSkillTarget(
 }
 
 /**
- * Resolves one harness's project-local subagents dir together with the per-harness inputs the deploy transform needs:
- * the link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
+ * Resolves one harness's project-local subagents dir together with the per-harness inputs that the deploy transform
+ * needs: the link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
  * project-scoped, matching the skill passes.
  */
 export function resolveSubagentTarget(
@@ -174,9 +180,9 @@ export function resolveSubagentTarget(
 // region | Helpers
 
 /**
- * The per-harness inputs a rulebook render depends on: the harness config's own segments and sigils, the anchor its
- * link targets resolve through, and the deployed rulebooks indexed by slug, so a `{rulebook:<slug>}` token renders the
- * skill name its target deploys under.
+ * The per-harness inputs on which a rulebook render depends: the harness config's own segments and sigils, the anchor
+ * through which its link targets resolve, and the deployed rulebooks indexed by slug, so that a `{rulebook:<slug>}`
+ * token renders the skill name under which its target deploys.
  */
 function buildRulebookRenderContext(
   harnessId: HarnessId,

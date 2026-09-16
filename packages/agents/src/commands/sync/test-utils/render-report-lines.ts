@@ -3,8 +3,8 @@ import { renderDryRunReport, renderSyncReport } from '../report.ts';
 import type { SyncOutcome } from '../sync-plan.ts';
 
 /**
- * The lines one sync outcome reports. `dryRun` picks the renderer the CLI would pick, and `level` narrows to a single
- * stream for a suite asserting what reaches only stdout or only stderr.
+ * The lines that one sync outcome reports. `dryRun` picks the renderer that the CLI would pick, and `level` narrows to
+ * a single stream for a suite asserting what reaches only stdout or only stderr.
  */
 export function renderReportLines(
   outcome: SyncOutcome,

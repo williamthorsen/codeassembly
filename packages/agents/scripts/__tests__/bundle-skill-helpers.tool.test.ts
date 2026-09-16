@@ -16,14 +16,14 @@ describe(readRecordedBundles, () => {
     expect(readRecordedBundles(packageDir).read(BUNDLE)?.toString('utf8')).toBe('committed');
   });
 
-  it('reads what git records rather than what the working tree holds', () => {
+  it('reads what git records rather than what the working tree contains', () => {
     const packageDir = makeCommittedPackage({ [BUNDLE]: 'committed' });
     writeFileSync(join(packageDir, BUNDLE), 'rebuilt', 'utf8');
 
     expect(readRecordedBundles(packageDir).read(BUNDLE)?.toString('utf8')).toBe('committed');
   });
 
-  it('returns undefined for a bundle git records nothing for', () => {
+  it('returns undefined for a bundle for which git records nothing', () => {
     const packageDir = makeCommittedPackage({ [BUNDLE]: 'committed' });
 
     expect(readRecordedBundles(packageDir).read('content/skills/absent/absent.mjs')).toBeUndefined();
@@ -54,8 +54,8 @@ describe(readRecordedBundles, () => {
 // region | Helpers
 
 /**
- * Creates a throwaway repository whose package sits at `packages/agents`, commits `files` under it, and returns the
- * package directory. The nesting is what exercises the repository-relative prefix a blob path needs.
+ * Creates a throwaway repository whose package is at `packages/agents`, commits `files` under it, and returns the
+ * package directory. The nesting exercises the repository-relative prefix needed by a blob path.
  */
 function makeCommittedPackage(files: Record<string, string>): string {
   const repoRoot = mkdtempSync(join(tmpdir(), 'recorded-bundles-'));

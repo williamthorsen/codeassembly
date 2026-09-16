@@ -6,7 +6,7 @@ import { pathExists } from '@williamthorsen/kb/filesystem';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 
-/** Canonical mapping from commit type keys to the label names a tracker carries. */
+/** Canonical mapping from commit type keys to the label names that a tracker uses. */
 const TYPE_MAP: Readonly<Record<string, string>> = {
   ai: 'ai',
   ci: 'ci',
@@ -76,7 +76,7 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
 /**
  * Reads the installed `@williamthorsen/release-kit` version by walking up from this
  * module's location, looking for `node_modules/@williamthorsen/release-kit/package.json`
- * at each level — the same algorithm Node's own module resolver uses.
+ * at each level: the same algorithm that Node's own module resolver uses.
  *
  * A direct `require.resolve` is unsuitable because release-kit's `exports` map does not
  * expose `./package.json` and only declares the `import` condition for its main entry.
@@ -129,7 +129,7 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
       if (!isEnoent(error)) {
         throw error;
       }
-      // File does not exist — proceed.
+      // File does not exist; proceed.
     }
   }
 

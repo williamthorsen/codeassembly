@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# extract-plugin-skills.sh — Extract skills from Claude Code plugins for Rovo Dev.
+# extract-plugin-skills.sh: Extracts skills from Claude Code plugins for Rovo Dev.
 #
 # Copies SKILL.md files (and companion files) from the plugin cache to agents/rovo/skills/.
 # Finds the latest installed version of the plugin automatically.

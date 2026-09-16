@@ -6,7 +6,7 @@ import type { ResolveRulebookContext } from './render-contexts.ts';
 
 /**
  * Renders one harness's guidance-hook fills: each bound rulebook's body through the rulebook renderer, keyed by the
- * hook it fills and ordered as the declaration bound it. Rendering here rather than at the splice is what makes the
+ * hook that it fills and ordered as the declaration bound it. Rendering here rather than at the splice makes the
  * spliced body position-independent, since link targets and invocation tokens are resolved before it moves.
  */
 export function buildGuidanceHookFills(
@@ -21,7 +21,7 @@ export function buildGuidanceHookFills(
     fills.set(
       hook,
       slugs.flatMap((slug) => {
-        // A bound rulebook rejected by the resolution or render gate is left out rather than raised again here: its own
+        // A bound rulebook rejected by the resolution or render gate is left out rather than raised again here: Its own
         // defect names it, and the run fails on the collected list before anything is written.
         const rulebook = bySlug.get(slug);
         if (rulebook === undefined) {
@@ -40,11 +40,11 @@ export function buildGuidanceHookFills(
 }
 
 /**
- * Collects every disagreement between the rulebooks a declaration binds and the delivery those rulebooks declare.
- * No disagreement throws: Each reaches the reader as a report line, because a binding and a `delivery` are written by
- * different people and a run whose output is correct must not fail over their disagreement.
+ * Collects every disagreement between the rulebooks bound by a declaration and the delivery that those rulebooks
+ * declare. No disagreement throws: Each is reported to the reader as a line, because a binding and a `delivery` are
+ * written by different people and a run whose output is correct must not fail over their disagreement.
  *
- * Order is fixed so both reports render alike: The bound findings follow the bindings in declaration order, each
+ * Order is fixed so that both reports render alike: The bound findings follow the bindings in declaration order, each
  * hook's own finding ahead of its rulebooks', and the unbound ones follow `resolved`, whose order the closure walk
  * fixes.
  */
@@ -72,7 +72,7 @@ export function findGuidanceHookAdvisories(
   }
 
   for (const rulebook of resolved) {
-    // Measured against every hook's bindings at once: A rulebook bound anywhere has taken the route it declares.
+    // Measured against every hook's bindings at once: A rulebook bound anywhere has taken the route that it declares.
     if (rulebook.hook && !boundSlugs.has(rulebook.slug)) {
       advisories.push({ kind: 'declared-unbound', slug: rulebook.slug });
     }
@@ -83,12 +83,12 @@ export function findGuidanceHookAdvisories(
 
 /**
  * A disagreement between what a declaration's guidance-hook bindings do and what they find: a rulebook whose
- * `delivery` answers the binding differently, or a hook no body declares. Every kind is advisory: A rulebook's
+ * `delivery` does not match the binding, or a hook that no body declares. Every kind is advisory: A rulebook's
  * delivery is written by its author and a binding by its consumer, so a mismatch is not always the consumer's to fix
  * and never fails their run.
  *
- * `bound-unreached` is keyed on the hook rather than a rulebook, because one mistyped hook name strands every
- * rulebook bound under it at once.
+ * `bound-unreached` is keyed on the hook rather than a rulebook, because one mistyped hook name leaves every
+ * rulebook bound under it undelivered at once.
  */
 export type GuidanceHookAdvisory =
   | { readonly kind: 'bound-undeclared'; readonly slug: string; readonly hook: string }
@@ -98,8 +98,8 @@ export type GuidanceHookAdvisory =
 // region | Helpers
 
 /**
- * Returns the resolved rulebook a binding names. A binding seeds the closure, so its absence here is a defect in this
- * command rather than in what the user declared, and it is reported as one.
+ * Returns the resolved rulebook that a binding names. A binding seeds the closure, so its absence here is a defect in
+ * this command rather than in what the user declared, and it is reported as one.
  */
 function readBoundRulebook(
   bySlug: ReadonlyMap<string, ResolvedRulebook>,

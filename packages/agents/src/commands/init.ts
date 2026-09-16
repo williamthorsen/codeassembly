@@ -8,25 +8,25 @@ import type { InstallOptions } from '../lib/types.ts';
 
 const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
 #
-# harnesses.use pins the harnesses this project targets, by id (claude, rovo). Omit this key and sync targets
-# whichever harnesses are installed for this user; an empty list targets none. Use drop to withdraw a harness a
-# broader tier declared.
+# harnesses.use pins the harnesses that this project targets, by id (claude, rovo). Omit this key and sync targets
+# whichever harnesses are installed for this user; an empty list targets none. Use drop to withdraw a harness
+# declared by a broader tier.
 # harnesses:
 #   use: [claude]
 
-# rulebooks.use lists the rulebook slugs this project adopts. Per its delivery mode, each is injected into the
+# rulebooks.use lists the rulebook slugs that this project adopts. Per its delivery mode, each is injected into the
 # ambient region of every targeted harness's machine-local project guidance file (CLAUDE.local.md, AGENTS.local.md)
 # and/or delivered as a consult-<slug> skill.
 rulebooks:
   use: []
   # drop: []  # remove a rulebook inherited from a broader-scope declaration
 
-# skills.use lists the skill slugs this project adopts. Each declared skill is deployed into the
+# skills.use lists the skill slugs that this project adopts. Each declared skill is deployed into the
 # project's harness skills dirs.
 # skills:
 #   use: []
 
-# subagents.use lists the subagent slugs this project adopts. Each declared subagent is deployed
+# subagents.use lists the subagent slugs that this project adopts. Each declared subagent is deployed
 # into the project's harness subagents dirs.
 # subagents:
 #   use: []
@@ -35,7 +35,7 @@ rulebooks:
 # before the built-in library. A relative path resolves against this .agents/ directory (~ and absolute paths are
 # also allowed); a later-declared source shadows an earlier one, and any source shadows the library. Commit only
 # repo-relative paths here; keep machine-specific paths in codeassembly.local.yaml. Sources resolve every artifact
-# type — rulebooks, skills, subagents, and collections.
+# type: rulebooks, skills, subagents, and collections.
 # sources:
 #   - name: org-guidance
 #     path: ../shared-guidance
@@ -50,15 +50,15 @@ rulebooks:
 const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
 # \`codeassembly sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
 #
-# harnesses.use pins the harnesses every sync for this user targets, by id (claude, rovo). Omit this key and sync
+# harnesses.use pins the harnesses targeted by every sync for this user, by id (claude, rovo). Omit this key and sync
 # targets whichever are installed here; an empty list targets none. A project may add to this set, and either
 # project-tier file may withdraw from it with drop.
 # harnesses:
 #   use: [claude]
 #
-# Each collection carries a claim about its members: \`recommended\` is vetted and generally applicable, and
-# \`triage\` holds what nobody has examined yet. Add any other collection the library or a source ships, or declare
-# \`all\` in their place to take the whole catalog, including the artifacts every collection deliberately omits.
+# Each collection makes a claim about its members: \`recommended\` is vetted and generally applicable, and \`triage\`
+# holds what nobody has examined yet. Add any other collection shipped by the library or a source, or declare \`all\`
+# in their place to take the whole catalog, including the artifacts that every collection deliberately omits.
 collections:
   use:
     - recommended

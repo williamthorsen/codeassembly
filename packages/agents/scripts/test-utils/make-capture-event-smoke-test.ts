@@ -43,8 +43,8 @@ export function makeCaptureEventSmokeTest(): SmokeTestInvocation {
 // region | Helpers
 
 /**
- * Assert the capture-event smoke produced an ok result with a ULID id, ISO-8601 capturedAt, a written path carrying
- * the stored `recordType: event` discriminant, and no bare `type` field.
+ * Asserts the capture-event smoke produced an ok result with a ULID id, ISO-8601 capturedAt, a written path whose
+ * record contains the stored `recordType: event` discriminant, and no bare `type` field.
  */
 function assertCaptureEventSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
@@ -64,7 +64,7 @@ function assertCaptureEventSmokeResult(result: unknown): void {
   }
   const written = readFileSync(result.path, 'utf8');
   if (!/^recordType: event$/m.test(written)) {
-    throw new Error(`expected the written event to carry recordType: event, got:\n${written}`);
+    throw new Error(`expected the written event to contain recordType: event, got:\n${written}`);
   }
   if (/^type:/m.test(written)) {
     throw new Error(`expected the written event to omit a bare type field, got:\n${written}`);

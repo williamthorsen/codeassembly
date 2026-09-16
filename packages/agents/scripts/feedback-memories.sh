@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# feedback-memories.sh — Run the feedback-memories toolbox from the repo source.
+# feedback-memories.sh: Runs the feedback-memories toolbox from the repo source.
 #
-# A thin launcher: it resolves the monorepo root from this script's (possibly
+# A thin launcher: It resolves the monorepo root from this script's (possibly
 # symlinked) location and runs the toolbox CLI via tsx, forwarding every
 # argument. Running the TypeScript source directly means the command tracks the
 # checkout with no rebuild. All verbs, flags, and the --help text belong to the
@@ -40,12 +40,12 @@ main() {
 
 # region | Helper functions
 
-# Resolve the directory of this script, following symlinks.
+# Resolves the directory of this script, following symlinks.
 resolve_script_dir() {
   local source="$0"
   [[ "$source" != */* ]] && source="$(command -v "$0")"
 
-  # Follow symlinks (portable — works on macOS and Linux)
+  # Follow symlinks (portable, works on macOS and Linux)
   while [[ -L "$source" ]]; do
     local link_target
     link_target="$(readlink "$source")"

@@ -34,7 +34,7 @@ describe('install (home provenance)', () => {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  it('stamps the run it completed', async () => {
+  it('stamps the run that it completed', async () => {
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(await readHomeProvenance(tempDir)).toMatchObject({ command: 'install' });

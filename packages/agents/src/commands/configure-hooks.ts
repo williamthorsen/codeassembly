@@ -1,5 +1,5 @@
 /**
- * Configures the session-lifecycle hook entries in each harness's config file — the wiring that turns the installed
+ * Configures the session-lifecycle hook entries in each harness's config file: the wiring that turns the installed
  * relay script into a running event source. `install` invokes the same per-harness functions by default and
  * `uninstall` reverses them; running the command alone (re)applies just the hook wiring. `--print` emits the entries
  * as copyable snippets instead of writing, for configs managed elsewhere.
@@ -40,8 +40,8 @@ export async function configureHooksCommand(
   options: Pick<InstallOptions, 'harness' | 'print'>,
   baseDir?: string,
 ): Promise<void> {
-  // Printing writes nothing, so it does not gate on which harness homes exist — the manual-adoption reader may not
-  // have the harness materialized on this machine at all.
+  // Because printing writes nothing, it does not gate on which harness homes exist: The manual-adoption reader may
+  // not have the harness materialized on this machine at all.
   const harnesses =
     options.print === true && options.harness === 'all' ? ALL_HARNESS_IDS : resolveHarnessIds(options.harness, baseDir);
   if (harnesses.length === 0) {
@@ -58,7 +58,7 @@ export async function configureHooksCommand(
   }
 }
 
-/** Reports each relayed hook's entry status in the harness's config file. A missing file reports every hook absent. */
+/** Reports each relayed hook's entry status in the harness's config file. Reports every hook absent when the file is missing. */
 export async function checkHarnessHookEntries(
   harnessId: HarnessId,
   baseDir?: string,
@@ -73,8 +73,8 @@ export async function checkHarnessHookEntries(
 }
 
 /**
- * Writes the harness's hook entries into its config file, creating it when absent, and reports what happened. On Rovo
- * a change earns the restart reminder: the config is read at startup, so a running session ignores new hooks.
+ * Writes the harness's hook entries into its config file, creating it when absent, and reports what happened. On Rovo,
+ * prints the restart reminder after a change: The config is read at startup, so a running session ignores new hooks.
  */
 export async function ensureHarnessHookEntries(harnessId: HarnessId, baseDir?: string): Promise<void> {
   const paths = resolveHarnessPaths(harnessId, baseDir);
@@ -89,7 +89,7 @@ export async function ensureHarnessHookEntries(harnessId: HarnessId, baseDir?: s
       : `  Session-lifecycle hooks already wired in ${paths.configFile}`,
   );
   if (result.changed && harnessId === 'rovo') {
-    console.info('  ⚠️ Rovo Dev reads its config at startup: restart any running session to pick up the hooks.');
+    console.info('  ⚠️ Rovo Dev reads its config at startup: Restart any running session to pick up the hooks.');
   }
 }
 
@@ -104,12 +104,12 @@ export async function removeHarnessHookEntries(harnessId: HarnessId, baseDir?: s
   if (result.changed) {
     console.info(`  ✅ Removed ${result.removedCount} session-lifecycle hook entries from ${paths.configFile}`);
     if (harnessId === 'rovo') {
-      console.info('  ⚠️ Rovo Dev reads its config at startup: restart any running session to drop the hooks.');
+      console.info('  ⚠️ Rovo Dev reads its config at startup: Restart any running session to drop the hooks.');
     }
   }
 }
 
-/** The Claude hook entries as the JSON fragment to merge into `settings.json` — also the manual-adoption snippet. */
+/** The Claude hook entries as the JSON fragment to merge into `settings.json`, also the manual-adoption snippet. */
 export function renderClaudeHookSnippet(): string {
   const hooks: Record<string, unknown> = {};
   for (const entry of buildClaudeHookEntries()) {
@@ -118,26 +118,26 @@ export function renderClaudeHookSnippet(): string {
   return JSON.stringify({ hooks }, undefined, 2);
 }
 
-/** The Rovo hook entries as the YAML fragment to merge into `config.yml` — also the manual-adoption snippet. */
+/** The Rovo hook entries as the YAML fragment to merge into `config.yml`, also the manual-adoption snippet. */
 export function renderRovoHookSnippet(scriptsDir: string): string {
   const events = buildRovoHookEntries(scriptsDir).map((entry) => ({
     name: entry.name,
     commands: entry.commands.map((command) => ({ command })),
   }));
-  // Wrapping is disabled so each command stays one line, matching what the config writer emits.
+  // Wrapping is disabled so that each command stays one line, matching what the config writer emits.
   return stringify({ eventHooks: { events } }, { lineWidth: 0 });
 }
 
 // region | Helpers
 
-/** Prints the harness's hook entries as a copyable snippet, headed by the config file they belong in. */
+/** Prints the harness's hook entries as a copyable snippet, headed by the config file in which they belong. */
 function printHarnessHookEntries(harnessId: HarnessId, baseDir?: string): void {
   const paths = resolveHarnessPaths(harnessId, baseDir);
   if (harnessId === 'claude') {
-    console.info(`# ${paths.configFile} — merge under "hooks"`);
+    console.info(`# ${paths.configFile}: Merge under "hooks"`);
     console.info(renderClaudeHookSnippet());
   } else {
-    console.info(`# ${paths.configFile} — merge under eventHooks.events`);
+    console.info(`# ${paths.configFile}: Merge under eventHooks.events`);
     console.info(renderRovoHookSnippet(paths.scriptsDir));
   }
 }

@@ -34,7 +34,7 @@ describe('install support-directory _partials exclusion', () => {
   it('skips _partials nested at any depth inside an installed support directory', async () => {
     await buildContentTree(contentDir);
 
-    // Create a support directory (no SKILL.md) with _partials nested inside — install must exclude them.
+    // Create a support directory (no SKILL.md) with _partials nested inside; install must exclude them.
     const supportSrc = path.join(contentDir, 'skills', 'nested-support');
     await mkdir(path.join(supportSrc, 'modules', '_partials'), { recursive: true });
     await writeFile(path.join(supportSrc, 'modules', 'sub.md'), '# Sub\n', 'utf8');

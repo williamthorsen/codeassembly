@@ -14,8 +14,8 @@ import { syncCommand } from '../sync.ts';
 describe('sync with a declared source (real library fallback)', () => {
   let projectRoot: string;
   let sourceDir: string;
-  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is
-  // given a temp home rather than the developer's own.
+  // Because targeting reads the home tier's declaration and detects installed harnesses under it, every run below
+  // is given a temp home rather than the developer's own.
   let homeDir: string;
 
   beforeEach(async () => {
@@ -72,7 +72,7 @@ describe('sync with a declared source (real library fallback)', () => {
     expect(existsSync(skillPath('consult-shell-conventions'))).toBe(true);
   });
 
-  it('deploys a source skill and source subagent — expanding a source-local include — then retracts them', async () => {
+  it('deploys a source skill and source subagent (expanding a source-local include), then retracts them', async () => {
     await mkdir(path.join(sourceDir, 'skills', 'org-skill', '_partials'), { recursive: true });
     await writeFile(
       path.join(sourceDir, 'skills', 'org-skill', '_partials', 'frag.md'),
@@ -124,7 +124,7 @@ describe('sync with a declared source (real library fallback)', () => {
 
     await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
 
-    // A source collection is traversal-only: its members deploy — the source skill and the real library rulebook —
+    // A source collection is traversal-only: Its members deploy (the source skill and the real library rulebook)
     // while the collection itself is never emitted.
     expect(await readFile(skillPath('org-skill'), 'utf8')).toContain('Org-provided skill.');
     expect(await readFile(skillPath('consult-shell-conventions'), 'utf8')).toContain('# Shell script conventions');

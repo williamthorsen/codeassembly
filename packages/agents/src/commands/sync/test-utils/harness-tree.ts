@@ -4,7 +4,7 @@ import path from 'node:path';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
 import type { HarnessId } from '../../../lib/types.ts';
 
-/** Resolves one harness's deployed dirs under `baseDir`, creating them so a test can write into them directly. */
+/** Resolves one harness's deployed dirs under `baseDir`, creating them so that a test can write into them directly. */
 export async function scaffoldHarnessTree(
   harnessId: HarnessId,
   baseDir: string,
@@ -15,22 +15,22 @@ export async function scaffoldHarnessTree(
   return { harnessHome, skillsDir, subagentsDir };
 }
 
-/** Writes a skill dir whose `SKILL.md` carries the declared-skill ownership marker. */
+/** Writes a skill dir whose `SKILL.md` contains the declared-skill ownership marker. */
 export async function writeDeclaredSkill(skillsDir: string, slug: string): Promise<string> {
   return writeSkillFile(skillsDir, slug, `<!-- codeassembly-skill:${slug} -->`);
 }
 
-/** Writes a skill dir whose `SKILL.md` carries no ownership marker, standing in for hand-authored content. */
+/** Writes a skill dir whose `SKILL.md` contains no ownership marker, standing in for hand-authored content. */
 export async function writeForeignSkill(skillsDir: string, dir: string): Promise<string> {
   return writeSkillFile(skillsDir, dir, '');
 }
 
-/** Writes a subagent file carrying no ownership marker, standing in for hand-authored content. */
+/** Writes a subagent file containing no ownership marker, standing in for hand-authored content. */
 export async function writeForeignSubagent(subagentsDir: string, slug: string): Promise<string> {
   return writeSubagentFile(subagentsDir, slug, '');
 }
 
-/** Writes a skill dir whose `SKILL.md` carries a rulebook-delivered skill's ownership marker. */
+/** Writes a skill dir whose `SKILL.md` contains a rulebook-delivered skill's ownership marker. */
 export async function writeRulebookSkill(skillsDir: string, dir: string, slug: string): Promise<string> {
   return writeSkillFile(skillsDir, dir, `<!-- codeassembly-rulebook:${slug} -->`);
 }
@@ -44,14 +44,14 @@ export async function writeSourceSupport(skillsDir: string, source: string, file
   return filePath;
 }
 
-/** Writes a subagent file carrying the subagent ownership marker. */
+/** Writes a subagent file containing the subagent ownership marker. */
 export async function writeSubagent(subagentsDir: string, slug: string): Promise<string> {
   return writeSubagentFile(subagentsDir, slug, `<!-- codeassembly-subagent:${slug} -->`);
 }
 
 // region | Helpers
 
-/** Writes `<skillsDir>/<dir>/SKILL.md` carrying `marker` beneath a frontmatter block. */
+/** Writes `<skillsDir>/<dir>/SKILL.md` containing `marker` beneath a frontmatter block. */
 async function writeSkillFile(skillsDir: string, dir: string, marker: string): Promise<string> {
   const skillDir = path.join(skillsDir, dir);
   await mkdir(skillDir, { recursive: true });
@@ -59,7 +59,7 @@ async function writeSkillFile(skillsDir: string, dir: string, marker: string): P
   return skillDir;
 }
 
-/** Writes `<subagentsDir>/<slug>.md` carrying `marker` beneath a frontmatter block. */
+/** Writes `<subagentsDir>/<slug>.md` containing `marker` beneath a frontmatter block. */
 async function writeSubagentFile(subagentsDir: string, slug: string, marker: string): Promise<string> {
   await mkdir(subagentsDir, { recursive: true });
   const filePath = path.join(subagentsDir, `${slug}.md`);

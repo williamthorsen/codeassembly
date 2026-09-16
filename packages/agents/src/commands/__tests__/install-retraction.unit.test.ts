@@ -118,7 +118,7 @@ describe('install retraction of a de-declared harness', () => {
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting no harnesses (declared).');
   });
 
-  it('retracts nothing from the harnesses --harness excludes', async () => {
+  it('retracts nothing from the harnesses excluded by --harness', async () => {
     using silent = silenceConsole(['info', 'warn']);
     await installBoth();
 
@@ -174,7 +174,7 @@ describe('install retraction of a de-declared harness', () => {
     await writeFile(path.join(tempDir, '.agents', 'codeassembly.yaml'), body, 'utf8');
   }
 
-  /** Installs into both harness homes by detection, which is the state every retraction case starts from. */
+  /** Installs into both harness homes by detection, which is the state from which every retraction case starts. */
   async function installBoth(overrides: Partial<InstallOptions> = {}): Promise<void> {
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
     await mkdir(path.join(tempDir, ROVO_HOME, 'skills'), { recursive: true });

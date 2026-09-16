@@ -9,7 +9,7 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
  * Builds a fixture directory containing a minimal preferences file and returns a `SmokeTestInvocation`
  * that drives the deriver against it with a known branch name. The deriver's output depends on the
  * surrounding cwd and the current git branch, so the smoke test cannot use the ambient environment.
- * `mkdtempSync` runs when the smoke-test runner loads and the directory is process-lifetime — short-lived
+ * `mkdtempSync` runs when the smoke-test runner loads and the directory is process-lifetime: Short-lived
  * OS temp directories are reclaimed without explicit cleanup.
  */
 export function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
@@ -52,8 +52,8 @@ function assertDeriveSessionContextOutput(result: unknown): void {
       `expected artifact_base_dir to include "ai-artifacts", got ${JSON.stringify(result.artifact_base_dir)}`,
     );
   }
-  // `default_branch` comes from `composeManifest`'s remote-name resolution; the smoke fixture has
-  // no `repository.default_remote` configured, so the default `origin/main` should surface.
+  // `default_branch` comes from `composeManifest`'s remote-name resolution; because the smoke fixture
+  // has no `repository.default_remote` configured, the default `origin/main` should appear.
   if (result.default_branch !== 'origin/main') {
     throw new Error(`expected default_branch "origin/main", got ${JSON.stringify(result.default_branch)}`);
   }

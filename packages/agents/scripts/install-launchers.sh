@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# install-launchers.sh — Symlink agent launcher scripts into a directory on PATH.
+# install-launchers.sh: Symlinks agent launcher scripts into a directory on PATH.
 #
 # Creates a symlink for feedback-memories.sh in the target directory. Uses
 # symlinks so that pulling repo updates automatically updates the installed
@@ -17,7 +17,7 @@ readonly SCRIPTS=(feedback-memories.sh)
 
 # Main flow
 main() {
-  # Show help (manual check — getopts cannot parse long options)
+  # Show help (manual check: getopts cannot parse long options)
   if [[ "${1:-}" == "--help" ]]; then
     show_usage 0
   fi
@@ -81,7 +81,7 @@ main() {
         echo "  ok  $script (already up to date)"
         continue
       fi
-      # Symlink exists but points elsewhere — update it
+      # Symlink exists but points elsewhere; update it
       ln -sf "$source" "$target"
       echo "  ok  $script (updated symlink)"
       ((updated++)) || true
@@ -113,12 +113,12 @@ main() {
 
 # region | Helper functions
 
-# Resolve the directory of this script, following symlinks.
+# Resolves the directory of this script, following symlinks.
 resolve_script_dir() {
   local source="$0"
   [[ "$source" != */* ]] && source="$(command -v "$0")"
 
-  # Follow symlinks (portable — works on macOS and Linux)
+  # Follow symlinks (portable, works on macOS and Linux)
   while [[ -L "$source" ]]; do
     local link_target
     link_target="$(readlink "$source")"
@@ -132,7 +132,7 @@ resolve_script_dir() {
   (cd "$(dirname "$source")" && pwd)
 }
 
-# Display command-line syntax.
+# Displays command-line syntax.
 show_usage() {
   cat >&2 <<USAGE
 Symlink agent launcher scripts into a directory on PATH.

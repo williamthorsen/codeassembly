@@ -21,7 +21,7 @@ describe(findDriftedBundles, () => {
     expect(drifted).toEqual([{ outFile: 'content/skills/one/one.mjs', reason: 'differs' }]);
   });
 
-  it('reports a bundle git records nothing for', () => {
+  it('reports a bundle for which git records nothing', () => {
     const drifted = findDriftedBundles(
       makeBuiltBundles({ 'content/skills/new/new.mjs': 'alpha' }),
       makeRecordedBundles({}),

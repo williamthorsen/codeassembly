@@ -28,7 +28,7 @@ describe(sanitizeBranch, () => {
   });
 
   it('strips all trailing hyphens produced by consecutive slash replacement', () => {
-    // Regression: a single-strip (`s.replace(/-$/, '')`) would yield `feat-`. The bash
+    // Regression: A single-strip (`s.replace(/-$/, '')`) would yield `feat-`. The bash
     // sanitizer (`sanitize_branch` in `resolve-frontmatter.sh`) loops to match this.
     expect(sanitizeBranch('feat//')).toBe('feat');
   });

@@ -2,24 +2,24 @@
  * Staleness measurement for the guidance-freshness readyup check.
  *
  * Every `git log` here names its own `--format` or `--pretty`. A global or repository `format.pretty` would
- * otherwise rewrite the output these functions parse, and the check would silently measure nothing.
+ * otherwise rewrite the output that these functions parse, and the check would silently measure nothing.
  */
 
 import { runGit } from 'readyup/check-utils';
 
 const COMMIT_MARKER = 'COMMIT';
-/** Files whose commits carry no signal about whether project guidance has drifted. */
+/** Files whose commits say nothing about whether project guidance has drifted. */
 const INCIDENTAL_FILE_PATTERN = /(^|\/)(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock)$/;
 
-/** How far a guidance file has fallen behind the commits that landed after it. */
+/** How far a guidance file has fallen behind the commits that followed it. */
 export interface GuidanceStaleness {
   readonly lastModifiedEpochSec: number;
   readonly meaningfulCommitCount: number;
 }
 
 /**
- * Measures how many meaningful commits landed after `guidancePath` was last modified. Returns undefined when
- * the repository cannot answer: `repoPath` is not a git repository, or the file has no history in it.
+ * Measures how many meaningful commits were made after `guidancePath` was last modified. Returns undefined in
+ * two cases: `repoPath` is not a git repository, or the file has no history in it.
  */
 export async function readGuidanceStaleness(
   repoPath: string,

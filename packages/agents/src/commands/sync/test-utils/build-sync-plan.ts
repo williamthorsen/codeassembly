@@ -1,6 +1,6 @@
 import type { SyncPlan } from '../sync-plan.ts';
 
-/** A sync plan holding nothing, so a test states only the fields its assertion turns on. */
+/** A sync plan containing nothing, so a test states only the fields on which its assertion turns. */
 export function buildSyncPlan(overrides: Partial<SyncPlan> = {}): SyncPlan {
   return {
     targets: { harnessIds: ['claude'], origin: 'declaration' },

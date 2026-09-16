@@ -11,7 +11,7 @@ import type { Retirement } from './legacy-retirement.ts';
 import type { HarnessSkillTarget, HarnessSubagentTarget } from './render-contexts.ts';
 import type { SourceSupportPlan } from './source-support.ts';
 
-/** A scope carrying no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
+/** A scope with no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
 export interface MissingDeclaration {
   readonly kind: 'no-declaration';
   readonly declarationPath: string;
@@ -19,9 +19,9 @@ export interface MissingDeclaration {
 }
 
 /**
- * One deployed artifact's resolution outcome: its type and slug, the source it resolved from (`undefined` = library),
- * and whether it masks a same-slug library artifact. Drives both the dry-run resolution report and the real-run shadow
- * warning.
+ * One deployed artifact's resolution outcome: its type and slug, the source from which it resolved (`undefined` =
+ * library), and whether it masks a same-slug library artifact. Drives both the dry-run resolution report and the
+ * real-run shadow warning.
  */
 export interface ResolutionEntry {
   readonly type: ArtifactType;
@@ -34,18 +34,23 @@ export interface ResolutionEntry {
 export type SyncOutcome = MissingDeclaration | { readonly kind: 'reconciled'; readonly plan: SyncPlan };
 
 /**
- * Everything a sync resolved, and every write, retraction, and warning it produced. Both reports render from this one
- * plan, so a condition either can describe reaches the other in the same terms. The closing summary's counts are
- * derived from these same fields rather than carried alongside them, which is what keeps a count and the enumeration
+ * Everything a sync resolved, and every write, retraction, and warning that it produced. Both reports render from this
+ * one plan, so a condition that either can describe reaches the other in the same terms. The closing summary's counts
+ * are derived from these same fields rather than stored alongside them, which keeps a count and the enumeration that
  * it summarizes from disagreeing.
  */
 export interface SyncPlan {
   readonly targets: ResolvedHarnessTargets;
-  /** What each harness dropped by the declaration still holds from a previous sync, one entry per harness with any. */
+  /**
+   * What each harness dropped by the declaration still contains from a previous sync, one entry per harness with any.
+   */
   readonly droppedHarnesses: ReadonlyArray<DroppedHarnessRetraction>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly ambientHosts: ReadonlyArray<PlannedAmbientHost>;
-  /** Hosts the run writes that git does not ignore, so machine-local guidance does not become a commit candidate. */
+  /**
+   * Hosts written by the run that git does not ignore, reported so that machine-local guidance does not become a
+   * commit candidate.
+   */
   readonly unignoredHosts: ReadonlyArray<string>;
   readonly retirements: ReadonlyArray<Retirement>;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
@@ -56,14 +61,17 @@ export interface SyncPlan {
   readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
   readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
   readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
-  /** One entry per source that would deliver support content, naming its namespace dir and how many files land there. */
+  /**
+   * One entry per source that would deliver support content, naming its namespace dir and how many files are written
+   * there.
+   */
   readonly sourceSupportPlans: ReadonlyArray<SourceSupportPlan>;
   /** Namespace paths under each target's support root that no declared source claims. */
   readonly sourceSupportRetractions: ReadonlyArray<string>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
   /** Declared sources whose directory does not exist, and so contribute nothing to resolution. */
   readonly missingSources: ReadonlyArray<DeclaredSource>;
-  /** Dependencies shipping guidance the project has not declared. */
+  /** Dependencies shipping guidance that the project has not declared. */
   readonly undeclaredPackages: ReadonlyArray<string>;
   /** Disagreements between the declaration's guidance-hook bindings and what those bindings reach. */
   readonly guidanceHookAdvisories: ReadonlyArray<GuidanceHookAdvisory>;

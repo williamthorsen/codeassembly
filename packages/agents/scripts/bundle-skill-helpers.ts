@@ -4,15 +4,15 @@
  * A helper installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
  * esbuild bundles it with `@williamthorsen/kb` and its `yaml` / `zod` dependencies inlined, producing a file that runs
  * under `node` with no monorepo packages present on disk.
- * The bundle is written under `content/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
+ * Because the bundle is written under `content/`, a subsequent `copy-content.ts` copies it into `dist/content/`
  * and the dev and built layouts both ship the helper.
  *
  * A helper's destination follows its consumer: A skill's helper bundles into that skill's own directory under
- * `content/skills/`, while a helper with no skill to belong to — one the harness invokes, or one a subagent reaches
- * through the `{harness_home_dir}/scripts/` prefix — bundles into `content/scripts/`, alongside the shell helpers
- * that install to every harness home.
+ * `content/skills/`, while a helper with no skill to belong to (one that the harness invokes, or one that a subagent
+ * reaches through the `{harness_home_dir}/scripts/` prefix) bundles into `content/scripts/`, alongside the shell
+ * helpers that install to every harness home.
  *
- * The bundle list is a plain array of `BundleTarget` entries; a new helper registers itself by appending one.
+ * The bundle list is a plain array of `BundleTarget` entries. To register a new helper, append one.
  *
  * The bundles are tracked files, so `--check` guards them: It builds every target into a temporary directory and
  * compares the result against what git records at `HEAD`. The working tree is not a usable comparison target, since
@@ -48,9 +48,9 @@ export interface BundleTarget {
 /** Why a bundle counts as drifted. */
 export type DriftReason = 'differs' | 'orphaned' | 'unrecorded';
 
-/** The bundles git records at `HEAD`, which a fresh build is checked against. */
+/** The bundles that git records at `HEAD`, which a fresh build is checked against. */
 export interface RecordedBundles {
-  /** Returns the bytes git records for a bundle, or `undefined` where it records none. */
+  /** Returns the bytes that git records for a bundle, or `undefined` when it records none. */
   read: (outFile: string) => Buffer | undefined;
   /** Every `.mjs` under `content/` that `HEAD` records, relative to the package root. */
   tracked: readonly string[];
@@ -128,7 +128,7 @@ export const targets: BundleTarget[] = [
   },
 ];
 
-// A CommonJS dependency (`yaml`) reaches Node built-ins via bare `require('process')` calls.
+// A CommonJS dependency (`yaml`) imports Node built-ins via bare `require('process')` calls.
 // esbuild's ESM output otherwise has no `require`, so this banner restores a real one via `createRequire`.
 const requireShim =
   "import { createRequire as __cjsCreateRequire } from 'node:module';\nconst require = __cjsCreateRequire(import.meta.url);";
@@ -148,7 +148,7 @@ export async function bundleSkillHelpers(outRoot: string = packageRoot): Promise
       // Keeps a deployed helper's stack traces legible.
       keepNames: true,
       // Resolve `@williamthorsen/kb` (and any future workspace dep) from its `source` `.ts` export
-      // condition so the bundle does not require those packages to be pre-built.
+      // condition so that the bundle does not require those packages to be pre-built.
       conditions: ['source'],
     });
     console.info(`Bundled ${target.entry} -> ${path.join(outRoot, target.outFile)}`);
@@ -192,10 +192,10 @@ export function findDriftedBundles(built: ReadonlyMap<string, Buffer>, recorded:
   return drifted;
 }
 
-/** Reads the bundles git records at `HEAD` for the package rooted at `packageDir`. */
+/** Reads the bundles that git records at `HEAD` for the package rooted at `packageDir`. */
 export function readRecordedBundles(packageDir: string = packageRoot): RecordedBundles {
-  // git addresses a blob by its repository-relative path. `--show-prefix` supplies the package's own leading segments,
-  // where deriving them from `--show-toplevel` would break on any checkout reached through a symlink.
+  // git addresses a blob by its repository-relative path. `--show-prefix` supplies the package's own leading segments.
+  // Deriving them from `--show-toplevel` would break on any checkout reached through a symlink.
   const prefix = runGit(packageDir, ['rev-parse', '--show-prefix']).toString('utf8').trim();
 
   return {

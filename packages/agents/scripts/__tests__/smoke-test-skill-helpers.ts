@@ -1,16 +1,16 @@
 /**
  * Post-build smoke test: Build every skill helper bundle and run each `.mjs` under `node`, asserting it exits 0 and
- * prints valid JSON to stdout. A bundle listed in `smokeTests` runs with its paired invocation — specific args, piped
+ * prints valid JSON to stdout. A bundle listed in `smokeTests` runs with its paired invocation: specific args, piped
  * stdin, and a structural assertion; a bundle without one is exercised with no args and empty stdin (the deterministic,
  * side-effect-free baseline).
  *
- * Unit tests run the TypeScript source through vitest and never exercise the bundled artifact. The bundle carries a
- * `createRequire` banner, the `format: 'esm'` option, and the `conditions: ['source']` resolution setting; a
+ * Unit tests run the TypeScript source through vitest and never exercise the bundled artifact. The bundle is built with
+ * a `createRequire` banner, the `format: 'esm'` option, and the `conditions: ['source']` resolution setting; a
  * regression to any of them would crash the installed helper at load time, undetected by the unit suite.
  * This test runs the built bundle exactly as an installed skill would.
  *
  * The bundles are built into a temporary copy of the content tree, so a test run leaves the tracked bundles under
- * `content/` as they were committed and the drift check keeps a comparison to make. The copy carries the tree's other
+ * `content/` as they were committed and the drift check keeps a comparison to make. The copy contains the tree's other
  * files because a helper resolves its data relative to its own location, the way an installed skill directory does.
  */
 import { spawn } from 'node:child_process';
@@ -39,8 +39,8 @@ import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ti
 import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts';
 
 // Each bundle that needs a non-default smoke run, keyed by its `entry`; a bundle absent here runs with no args and
-// empty stdin. The builders run here, not on import of the utilities module, so building a bundle never triggers
-// fixture setup.
+// empty stdin. Because the builders run here, and not on import of the utilities module, building a bundle never
+// triggers fixture setup.
 const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
   'src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
@@ -84,7 +84,7 @@ for (const target of targets) {
   } catch (error) {
     failed = true;
     const message = describeError(error);
-    console.error(`Smoke test failed: ${target.outFile} — ${message}`);
+    console.error(`Smoke test failed for ${target.outFile}: ${message}`);
   }
 }
 
@@ -94,13 +94,13 @@ if (failed) {
   process.exitCode = 1;
 }
 
-/** Run the built bundle for `target` under node with `invocation`, returning its stdout. Throws on non-zero exit. */
+/** Runs the built bundle for `target` under node with `invocation`, returning its stdout. Throws on non-zero exit. */
 async function runBundle(target: BundleTarget, invocation: SmokeTestInvocation): Promise<string> {
   const bundlePath = path.join(bundleRoot, target.outFile);
   const args = invocation.args ?? [];
 
   return new Promise<string>((resolve, reject) => {
-    // Pass `cwd` and `env` only when supplied so existing entries continue to inherit the parent's environment.
+    // Pass `cwd` and `env` only when supplied so that existing entries continue to inherit the parent's environment.
     const spawnOptions: { cwd?: string; env?: NodeJS.ProcessEnv } = {
       ...(invocation.cwd !== undefined && { cwd: invocation.cwd }),
       ...(invocation.env !== undefined && { env: invocation.env }),
