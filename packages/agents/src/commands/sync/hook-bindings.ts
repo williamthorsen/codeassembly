@@ -21,7 +21,7 @@ export function buildGuidanceHookFills(
     fills.set(
       hook,
       slugs.flatMap((slug) => {
-        // A bound rulebook rejected by the resolution or render gate is left out rather than raised again here: its own
+        // A bound rulebook rejected by the resolution or render gate is left out rather than raised again here: Its own
         // defect names it, and the run fails on the collected list before anything is written.
         const rulebook = bySlug.get(slug);
         if (rulebook === undefined) {

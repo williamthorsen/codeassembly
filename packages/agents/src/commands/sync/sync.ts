@@ -95,7 +95,7 @@ export async function syncGlobalCommand(
   homeDir: string = homedir(),
   contentDirOverride?: string,
 ): Promise<SyncOutcome> {
-  // Runs first, and before the dry-run gate: A preview must refuse whenever the real run would.
+  // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would.
   await assertDesignatedWriter({
     command: 'sync --global',
     homeDir,
@@ -219,7 +219,7 @@ async function reconcileDomain(
           subagent: declaration.subagents,
           collection: declaration.collections,
         },
-        // A binding is a dependency edge: a bound rulebook deploys per its own `delivery:` without being declared twice.
+        // A binding is a dependency edge: A bound rulebook deploys per its own `delivery:` without being declared twice.
         { rulebook: [...new Set(declaration.guidanceHooks.values().toArray().flat())] },
         ...packageCatalogs,
       ]),

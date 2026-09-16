@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# test-sh.sh: Run shellspec against the package's shell tests.
+# test-sh.sh: Runs shellspec against the package's shell tests.
 #
 # Forwards positional arguments to shellspec, falling back to the package's default test directory
 # when no paths or options are supplied.
