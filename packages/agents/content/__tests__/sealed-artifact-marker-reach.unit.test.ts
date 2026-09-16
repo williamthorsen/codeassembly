@@ -5,21 +5,22 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// Every saved artifact carries the seal marker, which puts the prohibition in the file an agent has open rather than
-// only in the standing guidance it may not have loaded. `resolve-frontmatter.sh` emits it for the callers that prepend
-// its YAML output; the carriers below write their own frontmatter or their own template, so each inlines the partial.
+// Every saved artifact carries the seal marker, which puts the prohibition in the file that an agent has open rather
+// than only in the standing guidance that it may not have loaded. `resolve-frontmatter.sh` emits it for the callers
+// that prepend its YAML output; the carriers below write their own frontmatter or their own template, so each inlines
+// the partial.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The marker's source of truth; every other statement of it must match this one byte for byte. */
 const PARTIAL = '_partials/seal-marker.md';
 
-/** The shell constant the script emits, which must not drift from the partial. */
+/** The shell constant emitted by the script, which must not drift from the partial. */
 const SCRIPT = 'scripts/resolve-frontmatter.sh';
 
-/** Identifies a marker line wherever it appears, so a drifted copy is found rather than missed. */
+/** Identifies a marker line wherever it appears, so that a drifted copy is found rather than missed. */
 const MARKER_KEY = 'Sealed record';
 
-// Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
+// Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
 // A carrier is a site that composes an artifact's opening itself. The first three compose frontmatter without
@@ -44,7 +45,7 @@ describe('sealed-artifact marker reach', () => {
       expect(lines.length, `${relativePath} states no seal marker`).toBeGreaterThanOrEqual(1);
 
       // A carrier may state the marker more than once: `refine-plan` inlines it from the partial and shows it again
-      // inside two example outputs, which sit in list items where an include directive cannot be placed.
+      // inside two example outputs, which are in list items where an include directive cannot be placed.
       const drifted = lines.filter((line) => line.trim() !== marker);
       const message = `every seal marker must match ${PARTIAL} exactly:\n  ${drifted.join('\n  ')}`;
       expect(drifted, message).toEqual([]);
@@ -61,7 +62,10 @@ describe('sealed-artifact marker reach', () => {
 
 // region | Helpers
 
-/** Reads the marker line the partial states, which is the single source both the carriers and the script answer to. */
+/**
+ * Reads the marker line that the partial states, which is the single source to which both the carriers and the script
+ * answer.
+ */
 async function readMarker(): Promise<string> {
   const partial = await readFile(path.join(CONTENT_ROOT, PARTIAL), 'utf8');
   return partial.trim();

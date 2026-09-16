@@ -6,9 +6,9 @@ import type { ResolvedRulebook } from '../../src/lib/rulebook-deploy.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleSections } from '../test-utils/rule-markers.ts';
 
-// A rulebook's version names the guidance an agent holds, so a body that changes without a bump reports one version for
-// two different bodies. The include expansion is what makes the gap invisible: editing a partial changes the deployed
-// body of every rulebook that includes it while touching no rulebook file.
+// A rulebook's version names the guidance that an agent holds, so a body that changes without a bump reports one
+// version for two different bodies. The include expansion is what makes the gap invisible: Editing a partial changes
+// the deployed body of every rulebook that includes it while touching no rulebook file.
 //
 // The pins below are what force the look. A body edit fails this suite until the author decides which of the two
 // remedies applies, and the failure message states both.
@@ -37,7 +37,7 @@ interface RulePin {
   readonly version: string;
 }
 
-/** The version each rulebook declares, and the deployed body that version is pinned against. */
+/** The version that each rulebook declares, and the deployed body against which that version is pinned. */
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
@@ -98,7 +98,7 @@ const PINS = new Map<string, RulebookPin>([
 // pinned against that version, so that a section edit fails this suite until the author decides whether the rule's
 // version rises, a decision separate from whether the rulebook's does.
 
-/** The sweep version each rule's marker declares, and the section that version is pinned against. */
+/** The sweep version that each rule's marker declares, and the section against which that version is pinned. */
 const RULE_PINS = new Map<string, RulePin>([
   [
     'capitalization-after-colon',
@@ -185,7 +185,7 @@ describe('rulebook version pins', () => {
   it('hashes the content of an included partial', async () => {
     const message =
       `commit-conventions reaches ${INCLUDED_PARTIAL_MARKER} only through an include, so its absence means the ` +
-      'pinned body no longer covers the partials a rulebook inlines';
+      'pinned body no longer covers the partials that a rulebook inlines';
     expect((await RESOLVED).get('commit-conventions')?.body, message).toContain(INCLUDED_PARTIAL_MARKER);
   });
 
@@ -257,7 +257,7 @@ function hashBody(rulebook: ResolvedRulebook | undefined): string {
   return hashText(rulebook === undefined ? '' : rulebook.body);
 }
 
-/** Hashes text, whole rather than by its operative content: any edit at all reports drift. */
+/** Hashes text, whole rather than by its operative content: Any edit at all reports drift. */
 function hashText(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }
@@ -276,12 +276,12 @@ async function readRuleSections(): Promise<ReadonlyMap<string, DeclaredRule>> {
   );
 }
 
-/** Renders a rulebook's pin as the literal that `PINS` takes, so a failure hands the author the line to paste. */
+/** Renders a rulebook's pin as the literal that `PINS` takes, so that a failure hands the author the line to paste. */
 function renderPin(rulebook: ResolvedRulebook): string {
   return `{ bodyHash: '${hashText(rulebook.body)}', version: '${rulebook.version}' }`;
 }
 
-/** Renders a rule's pin as the literal that `RULE_PINS` takes, so a failure hands the author the line to paste. */
+/** Renders a rule's pin as the literal that `RULE_PINS` takes, so that a failure hands the author the line to paste. */
 function renderRulePin(rule: DeclaredRule): string {
   return `{ sectionHash: '${hashText(rule.text)}', version: '${rule.version}' }`;
 }

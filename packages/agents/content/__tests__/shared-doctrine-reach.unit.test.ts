@@ -9,21 +9,24 @@ import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts'
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers.ts';
 
-// `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. A subagent
-// runs on its own system prompt and loads no guidance file, so a section its role's work needs reaches it only by
-// being inlined. Both hosts now source the text from one partial, and these assertions are what keep a copy from
-// creeping back into either.
+// `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. Because a
+// subagent runs on its own system prompt and loads no guidance file, a section that its role's work needs reaches it
+// only by being inlined. Both hosts now source the text from one partial, and these assertions are what keep a copy
+// from creeping back into either.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 // One section per entry in SECTIONS runs the restatement check, and each pass reads every authored Markdown file in
 // the tree. Reading them once here holds the whole suite to a single pass.
 const CONTENT_FILES = readContentFiles();
 
-/** Each extracted section: the string counted for single-statement checks, and phrases a gutted partial would lose. */
+/**
+ * Each extracted section: the string counted for single-statement checks, and phrases that a gutted partial would
+ * lose.
+ */
 const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArray<string> }>> = {
   'code-descriptions': {
     headline: '## Code descriptions',
-    // Pins the rule's universality, so a restored carve-out fails. `comment-discipline.md` opens with the same
+    // Pins the rule's universality, so that a restored carve-out fails. `comment-discipline.md` opens with the same
     // words, so the phrase stops at the verb that parts the two.
     phrases: ['Every function, method, class, and component gets', 'In languages with doc-tag conventions'],
   },
@@ -33,7 +36,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   },
   concision: {
     headline: '## Concision',
-    // `skills/_data/concision.md` states the full principle this section summarizes, and the two share sentences.
+    // `skills/_data/concision.md` states the full principle that this section summarizes, and the two share sentences.
     // These are the summary's own, so the single-statement check below reads as a duplicate rather than the pairing.
     phrases: [
       "then wastes the reader's attention and hides the signal",
@@ -119,7 +122,7 @@ describe('shared-doctrine reach', () => {
       expect(countOccurrences(expanded, headline)).toBe(1);
     });
 
-    it('reaches no subagent the section does not govern', async () => {
+    it('reaches no subagent that the section does not govern', async () => {
       const others = listGovernedSubagents().filter((slug) => !carriers.includes(slug));
       const violations: Array<string> = [];
 
@@ -129,7 +132,7 @@ describe('shared-doctrine reach', () => {
         }
       }
 
-      const message = `${name} governs no part of these subagents' work, and each line of it is weight they pay at every invocation:\n  ${violations.join('\n  ')}`;
+      const message = `${name} governs no part of these subagents' work, and each line of it is weight that they pay at every invocation:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
     });
 

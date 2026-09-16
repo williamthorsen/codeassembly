@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-// A skill can direct another skill into a named behavior, and the two halves of that contract sit in different files
+// A skill can direct another skill into a named behavior, and the two halves of that contract are in different files
 // with no include tying them together. Deleting the definition leaves the directive naming something nothing defines,
-// and the callee falls back to its default (the wider edit the directive exists to prevent), with every other test
-// still passing. The directive's own reach is checked in `spec-inlining.unit.test.ts`; this file checks that what
+// and the callee falls back to its default (the wider edit that the directive exists to prevent), with every other
+// test still passing. The directive's own reach is checked in `spec-inlining.unit.test.ts`; this file checks that what
 // it names is actually defined.
 const SKILLS_ROOT = new URL('../skills/', import.meta.url).pathname;
 
@@ -51,7 +51,7 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
       path: 'align-ticket-with-implementation/SKILL.md',
       phrase: "apply the criteria revision to the remote's current body",
     },
-    mode: 'the remote write the ticket edit performs',
+    mode: 'the remote write that the ticket edit performs',
   },
   {
     caller: {
@@ -67,7 +67,7 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
 ];
 
 describe('skill mode contracts', () => {
-  it.each(MODE_CONTRACTS)('$mode is defined by the skill its directive names', async ({ caller, callee, mode }) => {
+  it.each(MODE_CONTRACTS)('$mode is defined by the skill named by its directive', async ({ caller, callee, mode }) => {
     const callerBody = await readFile(path.join(SKILLS_ROOT, caller.path), 'utf8');
     const calleeBody = await readFile(path.join(SKILLS_ROOT, callee.path), 'utf8');
 
