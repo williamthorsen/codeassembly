@@ -49,7 +49,7 @@ const OVERRIDE_FLAGS: readonly FlagSpec[] = [
   { name: 'override-type', takesValue: true },
 ];
 
-/** The name this helper reports itself under on stderr. */
+/** The name under which this helper reports itself on stderr. */
 const PROGRAM = 'describe-change';
 
 /** The flags that set a record's title, scope, type, and breaking marker. */
@@ -61,7 +61,7 @@ const RECORD_FLAGS: readonly FlagSpec[] = [
 ];
 
 /**
- * Each subcommand's flags, and the reader of its scanned arguments, in the order the usage error lists them.
+ * Each subcommand's flags, and the reader of its scanned arguments, in the order that the usage error lists them.
  *
  * @internal - Exported to allow testing.
  */
@@ -135,9 +135,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, then runs the subcommand they name, loading only what that subcommand reads.
- * A subcommand that loads the title templates refuses any template the engine cannot round-trip, so a defective template
- * refuses none of `render-block`, `resolve-effective-record`, and `resolve-ticket-type`, which load none.
+ * Runs the helper end to end: parses args, then runs the subcommand that they name, loading only what that subcommand
+ * reads. A subcommand that loads the title templates refuses any template that the engine cannot round-trip, so a
+ * defective template refuses none of `render-block`, `resolve-effective-record`, and `resolve-ticket-type`, which load
+ * none.
  *
  * A subcommand that reads the repository warns outside one and anchors its lookups at `cwd` rather than failing, since a
  * title still renders from the global templates. An unreadable taxonomy warns under `render-titles`, which renders
@@ -165,7 +166,7 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
   }
 }
 
-/** What a run reads: its argv, the directory it was invoked from, the taxonomy's directory, and the home directory. */
+/** What a run reads: its argv, the directory from which it was invoked, the taxonomy's directory, and the home directory. */
 export interface DescribeInput {
   argv: readonly string[];
   cwd: string;
@@ -188,7 +189,7 @@ export interface DescribeResult {
 
 // region | Helpers
 
-/** The project root, the templates it resolves to, the taxonomy where one is readable, and what loading reported. */
+/** The project root, the templates to which it resolves, the taxonomy if one is readable, and what loading reported. */
 interface LoadedTemplates {
   projectRoot: string;
   taxonomy: Taxonomy | null;
@@ -202,7 +203,7 @@ interface SubcommandSpec {
   read: (scan: ScanResult) => ParsedArgs;
 }
 
-/** Builds the usage error for a missing or unknown subcommand, listing every subcommand the helper takes. */
+/** Builds the usage error for a missing or unknown subcommand, listing every subcommand that the helper takes. */
 function buildUsageMessage(subcommand: string | undefined): string {
   const usage = `usage: ${PROGRAM} <subcommand> [flags], where <subcommand> is one of ${Object.keys(SUBCOMMANDS).join(', ')}`;
   return subcommand === undefined ? `a subcommand is required; ${usage}` : `unknown subcommand ${subcommand}; ${usage}`;
@@ -261,8 +262,8 @@ function isSubcommand(value: string): value is Subcommand {
 }
 
 /**
- * Resolves the project root and the templates its preferences files configure, then refuses any configured template
- * the engine cannot round-trip, where a taxonomy is readable to verify against.
+ * Resolves the project root and the templates configured by its preferences files, then refuses any configured
+ * template that the engine cannot round-trip, when a taxonomy is readable to verify against.
  */
 async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
   const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
@@ -371,7 +372,7 @@ function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
   return { record: readRecordFlags(flags), subcommand: 'render-titles' };
 }
 
-/** Collects every value of a repeatable flag, in the order the invocation passes them. */
+/** Collects every value of a repeatable flag, in the order that the invocation passes them. */
 function readRepeatedValues(flags: readonly MatchedFlag[], name: string): string[] {
   return flags.flatMap((flag) => (flag.name === name && flag.value !== null ? [flag.value] : []));
 }
@@ -436,13 +437,13 @@ function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   return { merge, subcommand: 'resolve-merge' };
 }
 
-/** Reads the `resolve-ticket-type` invocation: every label the ticket carries. */
+/** Reads the `resolve-ticket-type` invocation: every label that the ticket carries. */
 function readResolveTicketTypeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   return { subcommand: 'resolve-ticket-type', ticketLabels: readRepeatedValues(flags, 'ticket-label') };
 }
 
-/** Reads a subject back through one surface's template, reporting each field the record carries. */
+/** Reads a subject back through one surface's template, reporting each field that the record carries. */
 function readSubject(surface: Surface, template: string, subject: string, taxonomy: Taxonomy): ParseTitleOutcome {
   if (template === '') {
     throw new Error(`${surface}.title_format is empty, so a ${surface} subject cannot be read back`);
@@ -469,7 +470,7 @@ function refusePositionals(positionals: readonly string[]): void {
   }
 }
 
-/** Refuses every configured template the engine cannot round-trip, naming the surface, the template, and the defect. */
+/** Refuses every configured template that the engine cannot round-trip, naming the surface, the template, and the defect. */
 function refuseUnverifiableTemplates(templates: Record<Surface, string>, taxonomy: Taxonomy): void {
   const defects: string[] = [];
   for (const surface of SURFACES) {
@@ -495,8 +496,8 @@ function resolveDefaultDataDir(): string {
 }
 
 /**
- * Reads a range's commits and consolidates them, in the shape the JSON output names. Each entry is rendered back through
- * the template that read it, so its `change` is canonical whatever the subject it came from.
+ * Reads a range's commits and consolidates them, in the shape named by the JSON output. Each entry is rendered back
+ * through the template that read it, so its `change` is canonical whatever subject it came from.
  */
 async function runConsolidateBranch(baseRef: string, input: DescribeInput): Promise<DescribeResult> {
   const { projectRoot, taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
@@ -543,7 +544,7 @@ async function runParseTitle(surface: Surface, subject: string, input: DescribeI
   return { output: readSubject(surface, templates[surface], subject, taxonomy), warnings };
 }
 
-/** Renders every surface's title from the record, warning rather than refusing where no taxonomy verifies the templates. */
+/** Renders every surface's title from the record, warning rather than refusing when no taxonomy verifies the templates. */
 async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {
