@@ -33,7 +33,7 @@ describe(resolveTicketType, () => {
     expect(await resolveTicketType({ labelMapPath, labels: ['removal'] })).toBeUndefined();
   });
 
-  it('yields nothing when no ticket carries a label at all', async () => {
+  it('yields nothing when the ticket has no label at all', async () => {
     const labelMapPath = await writeLabelMap({ types: TYPES });
 
     expect(await resolveTicketType({ labelMapPath, labels: [] })).toBeUndefined();

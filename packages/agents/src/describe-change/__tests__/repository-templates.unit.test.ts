@@ -14,7 +14,7 @@ import { loadPreferences } from '../load-preferences.ts';
 import { SURFACES } from '../types.ts';
 
 // This repository configures its own title templates, and the engine's semantics decide what they render. A group
-// holding both `{scope}` and `{type}` drops the type along with an absent scope, and the `*` scope is absent by the
+// containing both `{scope}` and `{type}` drops the type along with an absent scope, and the `*` scope is absent by the
 // time the group decides, so a multi-workspace commit would name no work type for the changelog to read.
 
 /** The repository root, five levels above this suite. */
@@ -45,7 +45,7 @@ describe('this repository’s title templates', () => {
     ]);
   });
 
-  it('carries the scope through when the change names one', async () => {
+  it('renders the scope when the change names one', async () => {
     const templates = await loadRepositoryTemplates();
 
     expect(render(compileTemplate(templates.commit), { scope: 'agents', title: 'Add foo', type: 'feat' })).toBe(

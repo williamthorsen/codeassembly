@@ -44,7 +44,7 @@ const FLAGS: readonly FlagSpec[] = [
 ];
 
 /**
- * The event store into which this helper records when `--store` names none. The corpus is cross-repo: One store holds
+ * The event store into which this helper records when `--store` names none. The corpus is cross-repo: One store keeps
  * every lede decision, whichever repository the pull request merged in, so the destination is a property of this
  * helper rather than of the change under review.
  */
@@ -225,7 +225,7 @@ export async function runDecision(input: {
  * `--scope`, and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall
  * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` sentinel is
  * refused: It names a machine's default store rather than a corpus, which is the route by which decisions have been
- * filed outside the one that holds them.
+ * filed outside the one that keeps them.
  *
  * @internal - Exported to allow testing.
  */

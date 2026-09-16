@@ -2,10 +2,10 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-/** The lede that the fixture's pull-request artifact carries. */
+/** The lede that the fixture's pull-request artifact contains. */
 export const FIXTURE_AGENT_LEDE = 'Rulebooks can now address a file by linking to it.';
 
-/** The lede that the fixture's merge artifact carries, a revision of {@link FIXTURE_AGENT_LEDE}. */
+/** The lede that the fixture's merge artifact contains, a revision of {@link FIXTURE_AGENT_LEDE}. */
 export const FIXTURE_MERGED_LEDE =
   'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
@@ -27,7 +27,7 @@ export interface LedeFixture {
 }
 
 /**
- * Builds a temporary ticket directory carrying a pull-request, merge, and change-summary artifact, plus a `_data`
+ * Builds a temporary ticket directory containing a pull-request, merge, and change-summary artifact, plus a `_data`
  * directory holding a minimal work-type taxonomy and a subagents directory holding the bodies covered by the doctrine
  * digest.
  *

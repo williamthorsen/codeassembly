@@ -14,7 +14,7 @@ import { isEnoent } from '../lib/type-guards.ts';
 import { loadWorkTypes, resolveWorkType } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
-/** Artifact filename suffix holding the lede published by the agent, and the heading under which that lede sits. */
+/** Artifact filename suffix holding the lede published by the agent, and the heading under which that lede appears. */
 const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 
 /**
@@ -24,7 +24,7 @@ const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
  */
 const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
 
-/** Artifact filename suffix holding the lede that merged, and the heading under which it sits. */
+/** Artifact filename suffix holding the lede that merged, and the heading under which it appears. */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
 
 /** Result of digesting the doctrine: the combined fingerprint, or the first body that could not be read. */
@@ -201,11 +201,11 @@ async function readAgentsVersion(input: {
 /**
  * Reads the effective record and the `ticket_id` from the newest change-summary artifact's frontmatter: the consolidated
  * record's `scope`, `type`, and `breaking`, with `override_scope`, `override_type`, and `override_breaking` applied
- * through `applyOverrides`. A type spelled with `!` carries its own marker to the resolver.
+ * through `applyOverrides`. The resolver reads the marker from a type spelled with `!`.
  *
  * The read is field-blind rather than routed through the knowledge base's record parser: A change summary is an
  * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields that
- * an artifact never carries.
+ * an artifact never declares.
  */
 async function readChangeSummaryFields(artifactDir: string): Promise<{ record: ChangeRecord; ticket: string | null }> {
   const absent = { record: {}, ticket: null };
@@ -286,11 +286,11 @@ async function readLede(input: {
 /**
  * Resolves the change's identity from one source: the caller's `--type`, `--scope`, and `--breaking` when any of them
  * is passed, and otherwise the newest change-summary artifact's frontmatter, which is the only artifact in the chain
- * that carries typed fields. One identity never combines fields from both, so a caller passing a type for a change that
+ * that has typed fields. One identity never combines fields from both, so a caller passing a type for a change that
  * names no scope records no scope. The ticket falls back to the change summary on its own, being no part of the
  * consolidated record. A scope of `*` from either source names no scope.
  *
- * Because the work type is resolved through the installed taxonomy rather than taken as spelled, the identity carries
+ * Because the work type is resolved through the installed taxonomy rather than taken as spelled, the identity records
  * the canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
  * breaking, as `--breaking` does.
  *

@@ -27,17 +27,17 @@ describe(applyOverrides, () => {
   });
 
   describe('when the overrides can only add the marker', () => {
-    it('adds the marker to a record that carries none', () => {
+    it('adds the marker to a record that has none', () => {
       expect(applyOverrides({ type: 'feat' }, { breaking: true })).toStrictEqual({ breaking: true, type: 'feat' });
     });
 
-    it('keeps a marker that the record carries', () => {
+    it('keeps a marker that the record has', () => {
       expect(applyOverrides({ breaking: true, type: 'feat' }, { scope: 'kb' }).breaking).toBe(true);
     });
   });
 
   describe('when the overrides set the marker in either direction', () => {
-    it('removes a marker that the record carries', () => {
+    it('removes a marker that the record has', () => {
       expect(applyOverrides({ breaking: true, type: 'feat' }, { breaking: false })).toStrictEqual({ type: 'feat' });
     });
 

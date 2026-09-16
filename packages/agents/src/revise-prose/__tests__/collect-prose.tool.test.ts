@@ -82,13 +82,13 @@ describe(collectProse, () => {
     expect(joinText(collection)).not.toContain('Deployed prose');
   });
 
-  it('yields nothing from a marker-bearing file', async () => {
+  it('yields nothing from a file containing a marker', async () => {
     const collection = await sweep();
 
     expect(joinText(collection)).not.toContain('Copied prose');
   });
 
-  it('yields nothing from a file a generator annotated, wherever the annotation sits', async () => {
+  it('yields nothing from a file a generator annotated, wherever the annotation appears', async () => {
     const text = joinText(await sweep());
 
     expect(text).not.toContain('Generated prose');
@@ -135,7 +135,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('leaves a YAML file carrying only data out of the scanned set, so it reaches no batch', async () => {
+  it('leaves a YAML file containing only data out of the scanned set, so no batch includes it', async () => {
     const collection = await sweep();
 
     expect(collection.files).toContain('data.yaml');
@@ -163,7 +163,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('counts an extensionless file carrying no shebang as ineligible', async () => {
+  it('counts an extensionless file with no shebang as ineligible', async () => {
     const collection = await sweep(['NOTICE']);
 
     expect(collection.skipped.ineligible).toBe(1);
@@ -233,7 +233,7 @@ describe(collectProse, () => {
 
   // region | Helpers
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so no real preferences reach the run. */
+  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so the run reads no real preferences. */
   async function sweep(paths: readonly string[] = []): Promise<ProseCollection> {
     return collectProse({ root: scratch, paths, home: scratch });
   }
@@ -243,7 +243,7 @@ describe(collectProse, () => {
 
 // region | Helpers
 
-/** Joins every span's text, for the assertions that ask what the whole sweep did and did not carry. */
+/** Joins every span's text, for the assertions that ask what the whole sweep did and did not collect. */
 function joinText(collection: ProseCollection): string {
   return collection.spans.map((span) => span.text).join('\n');
 }

@@ -69,7 +69,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { type: 'feature' })).identity.type).toBe('feat');
   });
 
-  it('resolves a work type carrying the breaking marker and reports the marker', async () => {
+  it('resolves a work type spelled with the breaking marker and reports the marker', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveFor(fixture, { type: 'feat!' })).identity).toMatchObject({
@@ -255,7 +255,7 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome).error).toBe('no-agent-lede');
   });
 
-  it('reports a merge artifact carrying no body section', async () => {
+  it('reports a merge artifact containing no body section', async () => {
     const fixture = await createLedeFixture({ mergedLede: '' });
 
     const outcome = await resolveEpisode(inputFor(fixture));
@@ -293,7 +293,7 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome).error).toBe('unresolved-identity');
   });
 
-  it('reports an undeclared work type carrying the marker, which declares nothing on its own', async () => {
+  it('reports an undeclared work type spelled with the marker, which declares nothing on its own', async () => {
     const fixture = await createLedeFixture();
 
     const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented!' }));
@@ -366,7 +366,7 @@ async function resolveWithoutIdentity(fixture: LedeFixture): Promise<LedeEpisode
   return expectEpisode(await resolveEpisode(withoutIdentity));
 }
 
-/** Writes a change summary newer than the fixture's own, carrying `fields` as its frontmatter. */
+/** Writes a change summary newer than the fixture's own, with `fields` as its frontmatter. */
 async function writeChangeSummary(fixture: LedeFixture, fields: string): Promise<void> {
   await writeArtifact(
     fixture.artifactDir,

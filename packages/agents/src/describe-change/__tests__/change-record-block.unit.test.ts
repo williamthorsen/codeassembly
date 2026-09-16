@@ -55,7 +55,7 @@ describe(readChangeRecordBlock, () => {
     expect(readChangeRecordBlock(body)).toStrictEqual({ block: expected, kind: 'read' });
   });
 
-  it('reports a body carrying no block as absent', () => {
+  it('reports a body containing no block as absent', () => {
     expect(readChangeRecordBlock('## What\n\n- Adds the parser\n')).toStrictEqual({ kind: 'absent' });
   });
 
@@ -229,7 +229,7 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered).consolidated_record).toStrictEqual({ type: 'feat' });
   });
 
-  it('quotes a title carrying the colon that would otherwise open a mapping', () => {
+  it('quotes a title containing the colon that would otherwise open a mapping', () => {
     const title = 'Add a parser: the reader, the writer, and the verifier';
     const rendered = renderChangeRecordBlock({ title });
 

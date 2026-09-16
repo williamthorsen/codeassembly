@@ -306,9 +306,9 @@ function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'proven
 }
 
 /**
- * Stands up a temp event store plus an isolated home registering it, so registry resolution never reads the real one.
+ * Creates a temp event store plus an isolated home registering it, so registry resolution never reads the real one.
  * `name` registers the store under something other than the one that the helper serves, which is how a test tells a
- * default that resolves to the helper's own constant from one that resolves to whatever the registry happens to hold.
+ * default that resolves to the helper's own constant from one that resolves to whatever the registry happens to name.
  */
 async function makeStore(name: string = STORE_NAME): Promise<{ storePath: string; home: string }> {
   const storePath = await mkdtemp(join(tmpdir(), 'lede-decision-store-'));
@@ -325,14 +325,14 @@ async function makeStore(name: string = STORE_NAME): Promise<{ storePath: string
   return { storePath, home };
 }
 
-/** The three flags that every invocation must carry, used to build otherwise-minimal argv in parser tests. */
+/** The three flags that every invocation must include, used to build otherwise-minimal argv in parser tests. */
 function requiredFlags(): string[] {
   return ['--artifact-dir', '/tickets/1107', '--pr', '1124', '--merge-commit', '35aa58d7'];
 }
 
 /**
  * Builds runner input over a fixture, defaulting the environment so that no test reads the developer's own. `home`
- * falls back to the fixture root, which carries no `.agents/kb.yaml`, so a store resolves to `not-registered`
+ * falls back to the fixture root, which contains no `.agents/kb.yaml`, so a store resolves to `not-registered`
  * deterministically.
  */
 function runInput(input: {

@@ -7,7 +7,7 @@ import type { ChangeRecord } from './types.ts';
  *
  * A group drops, literals included, when a token directly inside it resolves empty. Each nested group drops or renders
  * on its own, so `[[{scope}|]{type}: ]` keeps the type prefix for a change that names no scope. `{breaking}` never
- * decides a group, since a non-breaking change would otherwise drop the prefix that carries it.
+ * decides a group, since a non-breaking change would otherwise drop the prefix that contains it.
  *
  * When the template names no `{breaking}`, `{type}` appends the marker itself and renders `feat!`, which is how a
  * convention that places the marker on the type stays renderable.
@@ -72,7 +72,7 @@ function resolveToken(record: ChangeRecord, name: TokenName, marksBreaking: bool
   }
 }
 
-/** Resolves `{type}`, appending the marker when the template names no `{breaking}` to carry it. */
+/** Resolves `{type}`, appending the marker when the template names no `{breaking}` to render it. */
 function resolveTypeToken(record: ChangeRecord, marksBreaking: boolean): string {
   if (record.type === undefined) {
     return '';

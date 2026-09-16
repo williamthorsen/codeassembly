@@ -27,7 +27,7 @@ const FLAGS: readonly FlagSpec[] = [
 ];
 
 /**
- * The event store that this helper reads when `--store` names none. The corpus is cross-repo: One store holds every
+ * The event store that this helper reads when `--store` names none. The corpus is cross-repo: One store contains every
  * lede decision, whichever repository the pull request merged in.
  */
 const LEDE_DECISION_STORE = 'codeassembly';
@@ -45,11 +45,11 @@ export type RequestArgs = { kind: 'type'; type: string } | { kind: 'tier'; tier:
 export interface ParsedArgs {
   request: RequestArgs;
   count: number;
-  /** Lowest rating that a record may carry and still be selected; `null` reads every record, rated or not. */
+  /** Lowest rating that a record may have and still be selected; `null` reads every record, rated or not. */
   minQuality: LedeQuality | null;
   /** The corpus to read; falls back to the one that this helper serves when `--store` names none. */
   store: string;
-  /** Directory holding `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
+  /** Directory containing `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
   dataDir: string | null;
   /** Whether each exemplar also reports the agent lede, the merged lede, and the author's comment. */
   withPair: boolean;
@@ -250,7 +250,7 @@ function parseRequest(raw: { type: string | undefined; tier: string | undefined 
 
 /**
  * Resolves the corpus by registry name alone: no `.kb/` discovery and no ancestor walk, so a project-local store
- * that the invocation happened to sit inside cannot stand in for the corpus. A store marked `readonly` resolves like
+ * that the invocation happened to run inside cannot stand in for the corpus. A store marked `readonly` resolves like
  * any other, since that marker refuses writes and nothing here writes.
  */
 async function resolveCorpus(input: {
@@ -274,7 +274,7 @@ async function resolveCorpus(input: {
   return { ok: true, store: { name: match.name, path: match.path } };
 }
 
-/** Resolves the `_data` directory shipped beside the installed helper, holding the work-type taxonomy. */
+/** Resolves the `_data` directory installed beside the helper, which contains the work-type taxonomy. */
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');

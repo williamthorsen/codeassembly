@@ -1,7 +1,7 @@
 // Shapes for the select-lede-exemplars helper: the exemplars that it emits, how far it reached to find them, and the
-// stdout payload carrying both.
+// stdout payload that contains both.
 //
-// The payload is a discriminated union on `ok`. An exhausted corpus is a success carrying a diagnostic rather than a
+// The payload is a discriminated union on `ok`. An exhausted corpus is a success with a diagnostic rather than a
 // failure: A drafter degrades to no exemplars, and is never blocked by their absence.
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
@@ -17,7 +17,7 @@ export type ExemplarRequest =
 
 /** One author-approved lede, with the change identity against which a drafter calibrates a new lede. */
 export interface LedeExemplar {
-  /** The approved text: the record's merged lede when it carries one, its agent lede otherwise. */
+  /** The approved text: the record's merged lede when it has one, its agent lede otherwise. */
   lede: string;
   /** The agent's own lede. Present only when the request asked for the decision pair. */
   agentLede?: string;
@@ -30,7 +30,7 @@ export interface LedeExemplar {
   tier: string;
   /** Scope the change belongs to; absent for a change that names none. */
   scope?: string;
-  /** Number of the pull request with which the lede shipped. */
+  /** Number of the pull request in which the lede was merged. */
   pr: string;
   capturedAt: string;
 }

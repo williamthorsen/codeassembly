@@ -14,7 +14,7 @@ const TAXONOMY: Taxonomy = {
 };
 
 describe(validate, () => {
-  it('reports a refactor carrying the marker forbidden by its policy', () => {
+  it('reports a refactor with the marker forbidden by its policy', () => {
     expect(validate({ breaking: true, type: 'refactor' }, TAXONOMY)).toStrictEqual({
       policy: 'forbidden',
       type: 'refactor',
@@ -32,7 +32,7 @@ describe(validate, () => {
     expect(record).toStrictEqual({ breaking: true, title: 'Restructure the guard', type: 'refactor' });
   });
 
-  it('accepts a drop carrying its required marker', () => {
+  it('accepts a drop with its required marker', () => {
     expect(validate({ breaking: true, type: 'drop' }, TAXONOMY)).toBeUndefined();
   });
 

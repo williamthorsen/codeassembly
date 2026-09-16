@@ -21,7 +21,7 @@ describe(readCommits, () => {
     expect(commits[0]?.trailers).toStrictEqual([]);
   });
 
-  it('reads a commit’s Change trailers, and reports none for a commit carrying none', async () => {
+  it('reads a commit’s Change trailers, and reports none for a commit containing none', async () => {
     const cwd = await buildRepo([
       'agents|refactor: Extract the reader',
       [

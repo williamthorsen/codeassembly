@@ -120,7 +120,7 @@ if (isEntryPoint()) {
  * scanned against that subcommand's flags alone, so a flag that only another subcommand takes is refused as unknown.
  *
  * `render-titles`, `resolve-effective-record`, and `render-block` accept `--type feat!`, which the engine splits into the
- * bare type and the breaking marker. An `--override-type` carrying the marker is refused, since the breaking overrides
+ * bare type and the breaking marker. An `--override-type` spelled with the marker is refused, since the breaking overrides
  * set it.
  *
  * @internal - Exported to allow testing.
@@ -137,13 +137,13 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Runs the helper end to end: parses the arguments, then dispatches to the subcommand that they name.
  *
- * A subcommand loads its own inputs and nothing else, so a defect reaches only the subcommands that read it. The
+ * A subcommand loads its own inputs and nothing else, so a defect affects only the subcommands that read it. The
  * runners below state their own inputs; three of those inputs can fail, and each failure has one policy:
  *
  * - A subcommand that loads the title templates refuses any template that cannot round-trip, naming the surface and
  *   the defect. Verification needs the taxonomy. `render-titles` runs without one and renders from unverified
  *   templates.
- * - A subcommand that loads the taxonomy refuses when `dataDir` holds no readable one. `render-titles` is again the
+ * - A subcommand that loads the taxonomy refuses when `dataDir` contains no readable one. `render-titles` is again the
  *   exception: It warns and renders anyway.
  * - A subcommand that resolves the project root never refuses when git finds no repository. It warns, reads `cwd` as
  *   the root, and continues: the preferences under `home` still supply the templates, and a missing label map maps
@@ -306,7 +306,7 @@ function readConsolidateBranchArgs({ flags, positionals }: ScanResult): ParsedAr
   };
 }
 
-/** Reads `--override-type`, refusing a type that carries the breaking marker. */
+/** Reads `--override-type`, refusing a type spelled with the breaking marker. */
 function readOverrideType(values: Record<string, string>): string | undefined {
   const type = values['override-type']?.trim();
   if (type?.endsWith(BREAKING_MARKER) === true) {
@@ -370,7 +370,7 @@ function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
 
 /**
  * Reads the `render-titles` invocation into a record. Every flag is optional, and a flag left off resolves its token to
- * empty, so an invocation carrying no flags renders each template against an empty record.
+ * empty, so an invocation with no flags renders each template against an empty record.
  */
 function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
@@ -442,13 +442,13 @@ function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   return { merge, subcommand: 'resolve-merge' };
 }
 
-/** Reads the `resolve-ticket-type` invocation: every label that the ticket carries. */
+/** Reads the `resolve-ticket-type` invocation: every label on the ticket. */
 function readResolveTicketTypeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   return { subcommand: 'resolve-ticket-type', ticketLabels: readRepeatedValues(flags, 'ticket-label') };
 }
 
-/** Reads a subject back through one surface's template, reporting each field that the record carries. */
+/** Reads a subject back through one surface's template, reporting each field that the record names. */
 function readSubject(surface: Surface, template: string, subject: string, taxonomy: Taxonomy): ParseTitleOutcome {
   if (template === '') {
     throw new Error(`${surface}.title_format is empty, so a ${surface} subject cannot be read back`);
@@ -494,7 +494,7 @@ function renderTemplate(template: string, record: ChangeRecord): string {
   return template === '' ? '' : render(compileTemplate(template), record);
 }
 
-/** Resolves the `_data` directory shipped beside the installed helper, holding the work-type taxonomy. */
+/** Resolves the `_data` directory shipped beside the installed helper, containing the work-type taxonomy. */
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');

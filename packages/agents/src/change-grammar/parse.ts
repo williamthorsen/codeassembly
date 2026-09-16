@@ -12,7 +12,7 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * run so that a trailing group wins the tail of the string.
  *
  * When an optional group could be read as present or absent, present wins, which is release-kit's reading. The cost is
- * a plain title carrying a pipe and a declared type: Under `[[{scope}|]{type}: ]{title}`, `Rename kb|docs: the shared
+ * a plain title containing a pipe and a declared type: Under `[[{scope}|]{type}: ]{title}`, `Rename kb|docs: the shared
  * layer` parses as scope `Rename kb`, type `docs`, title `the shared layer`.
  *
  * A template naming `{type}` requires one: A subject that names a scope but no declared type is unmatched. A template

@@ -60,7 +60,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toHaveLength(5);
   });
 
-  it('widens straight to any type for a tier that carries nothing else', async () => {
+  it('widens straight to any type for a tier that contains nothing else', async () => {
     const decisions = [{ id: 'A', type: 'ci', capturedAt: '2026-01-01T00:00:00Z' }];
 
     const selection = await select({ decisions, type: 'feat', count: 2 });
@@ -81,7 +81,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
   });
 
-  it('buckets a record of a retired type by the tier that the record carries', async () => {
+  it('buckets a record of a retired type by the tier that the record names', async () => {
     const decisions: DecisionSpec[] = [
       { id: 'A', type: 'retired', capturedAt: '2026-01-01T00:00:00Z', tier: 'public' },
       { id: 'B', type: 'docs', capturedAt: '2026-09-01T00:00:00Z' },
@@ -140,7 +140,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toHaveLength(1);
   });
 
-  it('returns an empty list for a corpus holding no decisions', async () => {
+  it('returns an empty list for a corpus with no decisions', async () => {
     const selection = await select({ decisions: [], type: 'feat', count: 5 });
 
     expect(selection).toStrictEqual({ exemplars: [], widening: 'none', warnings: [] });
@@ -160,7 +160,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toStrictEqual([]);
   });
 
-  it('reads the merged lede when a record carries one', async () => {
+  it('reads the merged lede when a record has one', async () => {
     const decisions = [
       { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', mergedLede: 'The lede that merged.' },
     ];
@@ -179,7 +179,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars.map((exemplar) => exemplar.type)).toStrictEqual(['feat']);
   });
 
-  it('carries the change identity of each exemplar', async () => {
+  it('reports the change identity of each exemplar', async () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', scope: 'kb', pr: '1124' }];
 
     const selection = await select({ decisions, type: 'feat', count: 1 });
@@ -242,7 +242,7 @@ describe(selectExemplars, () => {
     });
   });
 
-  it('omits the merged lede and the comment for a record carrying neither', async () => {
+  it('omits the merged lede and the comment for a record that has neither', async () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' }];
 
     const selection = await select({ decisions, type: 'feat', count: 1, withPair: true });
@@ -263,7 +263,7 @@ describe(selectExemplars, () => {
     expect(withPair.widening).toBe(withoutPair.widening);
   });
 
-  it('reports a record whose body carries no agent lede when the pair is asked for', async () => {
+  it('reports a record whose body contains no agent lede when the pair is asked for', async () => {
     const files = {
       'Z.md':
         '---\nrecordType: event\nid: Z\ncaptured-at: 2026-09-01T00:00:00Z\ncwd: /repo\nsummary: Decision\n' +
@@ -291,7 +291,7 @@ describe(selectExemplars, () => {
   it.each([
     ['a broken YAML block', '---\ntags: [lede-decision\ncwd: /repo\n---\n\n## Agent lede\n\nText.\n'],
     ['no frontmatter block at all', '## Agent lede\n\nText.\n'],
-  ])('reports a record with %s, which carries no tag to place it by', async (_label, content) => {
+  ])('reports a record with %s, which names no tag to place it by', async (_label, content) => {
     const selection = await select({ decisions: CORPUS, files: { 'Z.md': content }, type: 'feat', count: 2 });
 
     expect(selection.warnings).toHaveLength(1);
@@ -308,7 +308,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toHaveLength(2);
   });
 
-  it('reports a decision carrying neither lede heading', async () => {
+  it('reports a decision with neither lede heading', async () => {
     const files = {
       'Z.md':
         "---\nrecordType: event\nid: Z\ncaptured-at: 2026-09-01T00:00:00Z\ncwd: /repo\nsummary: S\ntags: [lede-decision]\ntype: feat\ntier: public\nscope: agents\npr: '1'\n---\n\n## Comment\n\nCut it.\n",

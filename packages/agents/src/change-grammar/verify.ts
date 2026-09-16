@@ -9,7 +9,7 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * result; each message names the template and the defect, so the refusal says what to change.
  *
  * The structural rules run first and hold whatever the values are. Render-and-parse passes over well-formed values then
- * backstop them, because a later grammar extension could otherwise outrun the checker silently: One pass carries every
+ * backstop them, because a later grammar extension could otherwise outrun the checker silently: One pass includes every
  * token named by the template, and one more drops each optional group in turn.
  *
  * Value-dependent ambiguity is not a defect. Under `[{ticket_ref} ]{title}` a title opening with `#466 ` is
@@ -46,7 +46,7 @@ function admitsMarker(node: FlatNode | undefined, edge: 'end' | 'start'): boolea
   return FREE_TEXT_TOKENS.has(node.name);
 }
 
-/** Builds a well-formed record carrying exactly the tokens that `present` names. */
+/** Builds a well-formed record containing exactly the tokens that `present` names. */
 function buildSample(present: ReadonlySet<TokenName>, breaking: boolean, taxonomy: Taxonomy): ChangeRecord {
   const sample: ChangeRecord = {};
   if (breaking) {
@@ -96,7 +96,7 @@ function findAdjacentTokenDefects(template: string, flattened: readonly FlatNode
 
 /**
  * Reports `{breaking}` placed where the marker cannot be told from its neighbours: beside free text that may itself
- * carry a `!`, or beside a literal that spells one.
+ * contain a `!`, or beside a literal that spells one.
  */
 function findBreakingMarkerDefects(template: string, flattened: readonly FlatNode[]): string[] {
   const defects: string[] = [];
@@ -156,16 +156,16 @@ function findRepeatedTokenDefects(template: string, flattened: readonly FlatNode
 }
 
 /**
- * Renders well-formed values and reads them back, so that a defect that no structural rule names still surfaces. One
- * pass carries every token named by the template; one further pass per optional group drops that group, since a group
+ * Renders well-formed values and reads them back, so that a defect that no structural rule names is still reported. One
+ * pass includes every token named by the template; one further pass per optional group drops that group, since a group
  * that a parse cannot tell from an absent one is the ordinary case for which a group exists.
  *
- * A group carrying `{type}` is left populated. Dropping it takes the type out of the rendered string, which the
+ * A group containing `{type}` is left populated. Dropping it takes the type out of the rendered string, which the
  * type-required rule then reads as unmatched however well-formed the template is.
  *
- * A group carrying `{breaking}` is left populated too, for a reason of its own: The sample takes the marker from the
+ * A group containing `{breaking}` is left populated too, for a reason of its own: The sample takes the marker from the
  * pass rather than from the tokens that it names, so a pass that dropped such a group would still expect a marker back
- * from a string that no longer carries one.
+ * from a string that no longer contains one.
  */
 function findRoundTripDefects(
   template: string,

@@ -45,7 +45,7 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'refactor' });
   });
 
-  it('carries the scope on which every entry agrees', () => {
+  it('names the scope on which every entry agrees', () => {
     const entries = [
       { scope: 'agents', type: 'fix' },
       { scope: 'agents', type: 'feat' },
@@ -54,7 +54,7 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
-  it('names no scope for a branch carrying two', () => {
+  it('names no scope for a branch with two', () => {
     const entries = [
       { scope: 'agents', type: 'feat' },
       { scope: 'run-core', type: 'fix' },
@@ -63,7 +63,7 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
   });
 
-  it('names no scope when one entry carries none', () => {
+  it('names no scope when one entry declares none', () => {
     const entries = [{ scope: 'agents', type: 'feat' }, { type: 'fix' }];
 
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });

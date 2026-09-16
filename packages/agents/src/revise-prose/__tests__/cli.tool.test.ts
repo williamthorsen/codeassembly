@@ -21,7 +21,7 @@ const OBJECT_RELATIVE = 'The helper reports the source it names.';
 const EM_DASH_SENTENCE = 'The cache is cold\u{2014}so the transport reconnects.';
 
 /**
- * A fixture tree carrying one site of each rule, in two directories, so that batching and per-file coverage both
+ * A fixture tree containing one site of each rule, in two directories, so that batching and per-file coverage both
  * have something to separate.
  */
 const FIXTURE_FILES: Readonly<Record<string, string>> = {
@@ -29,7 +29,7 @@ const FIXTURE_FILES: Readonly<Record<string, string>> = {
   'src/notes.md': `${EM_DASH_SENTENCE}\n`,
 };
 
-/** Every field that the helper's candidates carried before rules were introduced. */
+/** Every field that the helper's candidates included before rules were introduced. */
 const LEGACY_CANDIDATE_FIELDS: ReadonlyArray<string> = [
   'file',
   'head',
@@ -41,7 +41,7 @@ const LEGACY_CANDIDATE_FIELDS: ReadonlyArray<string> = [
   'verb',
 ];
 
-/** Every field that the helper's summary carried before rules were introduced. */
+/** Every field that the helper's summary included before rules were introduced. */
 const LEGACY_SUMMARY_FIELDS: ReadonlyArray<string> = ['byFile', 'byShape', 'filesScanned', 'filesSkipped', 'total'];
 
 describe(runDetect, () => {
@@ -61,7 +61,7 @@ describe(runDetect, () => {
   });
 
   describe('the pre-rules invocation', () => {
-    it('carries every field that it reported before, and adds the rule', async () => {
+    it('keeps every field that it reported before, and adds the rule', async () => {
       const candidate = expectSuccess(await sweep()).candidates[0];
 
       expect(candidate).toBeDefined();
@@ -71,7 +71,7 @@ describe(runDetect, () => {
       expect(candidate).toMatchObject({ rule: 'reduced-object-relative', file: 'docs/guide.md', head: 'source' });
     });
 
-    it('carries every summary field that it reported before, and adds the per-rule counts', async () => {
+    it('keeps every summary field that it reported before, and adds the per-rule counts', async () => {
       const { summary } = expectSuccess(await sweep());
 
       for (const field of LEGACY_SUMMARY_FIELDS) {
@@ -126,7 +126,7 @@ describe(runDetect, () => {
       });
     });
 
-    it('reports which named rules it detected and which it holds no detector for', async () => {
+    it('reports which named rules it detected and which it has no detector for', async () => {
       const { rules } = expectSuccess(await sweep([...bothRules(), '--rule', 'sentence-case@1=writing']));
 
       expect(rules).toStrictEqual({ detected: BOTH_RULES, undetected: ['sentence-case'] });
@@ -263,7 +263,7 @@ describe(runDetect, () => {
       expect(rejections).toStrictEqual([]);
     });
 
-    it("skips nothing when the record's sweep did not run a detector that the run holds", async () => {
+    it("skips nothing when the record's sweep did not run a detector that the run has", async () => {
       const record = recordFor(await rejectedPhrase());
       record.rules['em-dash'] = { version: '1', 'swept-at': '2026-09-02', detected: false, roots: ['.'] };
       await writeRecord(record);
@@ -405,7 +405,7 @@ describe(runDetect, () => {
       await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
     });
 
-    it('keeps an inherited rejection whose phrase the file still holds, though the run reported none', async () => {
+    it('keeps an inherited rejection whose phrase the file still contains, though the run reported none', async () => {
       const phrase = await rejectedPhrase();
       await writeRecord(recordFor(phrase));
 
@@ -414,7 +414,7 @@ describe(runDetect, () => {
       expect(await readRecordedPhrases()).toStrictEqual([phrase]);
     });
 
-    it('drops an inherited rejection once the file no longer holds its phrase', async () => {
+    it('drops an inherited rejection once the file no longer contains its phrase', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
       const foldJson = JSON.stringify(await foldRejectingNothing());
       await writeFile(path.join(scratch, 'docs/guide.md'), 'The helper reports the source that it names.\n', 'utf8');
@@ -459,7 +459,7 @@ describe(runDetect, () => {
       expect(await readRecordedPhrases()).toStrictEqual([phrase]);
     });
 
-    it('keeps an inherited rejection whose phrase holds an inline code span as the source writes it', async () => {
+    it('keeps an inherited rejection whose phrase contains an inline code span as the source writes it', async () => {
       const file = 'docs/reasons.md';
       const phrase = 'the `unavailable` reasons it lists';
       await writeFile(path.join(scratch, file), `Each check reports ${phrase}.\n`, 'utf8');
@@ -592,7 +592,7 @@ describe(runDetect, () => {
     return candidate.phrase;
   }
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so that no real preferences reach the run. */
+  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so that the run reads no real preferences. */
   async function sweep(argv: readonly string[] = []): Promise<DetectResult> {
     return runDetect({ argv, root: scratch, home: scratch });
   }

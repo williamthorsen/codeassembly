@@ -98,7 +98,7 @@ describe(runSelect, () => {
     expect(expectSuccess(result)).toMatchObject({ type: 'feat', tier: 'public', store: STORE_NAME });
   });
 
-  it('carries the decision pair into the payload when --with-pair is passed', async () => {
+  it('includes the decision pair in the payload when --with-pair is passed', async () => {
     const decisions = [
       { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', mergedLede: 'Merged.', comment: 'Too long.' },
     ];
@@ -142,7 +142,7 @@ describe(runSelect, () => {
     expect(expectSuccess(result).store).toBe(OTHER_STORE_NAME);
   });
 
-  it('reports an exhausted corpus as a success carrying a diagnostic', async () => {
+  it('reports an exhausted corpus as a success with a diagnostic', async () => {
     const fixture = await createCorpusFixture({ decisions: [] });
 
     const result = await run({ argv: ['--type', 'feat'], fixture });
@@ -172,7 +172,7 @@ describe(runSelect, () => {
     expect(expectSuccess(result).minQuality).toBe('none');
   });
 
-  it('carries the reason a decision record could not be read', async () => {
+  it('reports the reason a decision record could not be read', async () => {
     const files = { 'Z.md': '---\nrecordType: event\ntags: [lede-decision]\n---\n\n## Agent lede\n\nText.\n' };
     const fixture = await createCorpusFixture({ decisions: CORPUS, files });
 
@@ -181,7 +181,7 @@ describe(runSelect, () => {
     expect(expectSuccess(result).warnings).toHaveLength(1);
   });
 
-  it('resolves a work type carrying the breaking-change marker', async () => {
+  it('resolves a work type spelled with the breaking-change marker', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await run({ argv: ['--type', 'feat!'], fixture });
@@ -226,7 +226,7 @@ describe(runSelect, () => {
     expect(expectFailure(result)).toBe('store-not-registered');
   });
 
-  it('reports a data directory carrying no taxonomy', async () => {
+  it('reports a data directory containing no taxonomy', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await runSelect({

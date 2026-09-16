@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { convertLegacyRecord, LEGACY_STALE_VERSION } from '../convert-record.ts';
 import type { LegacyRecord, LegacyRejection, LegacyUnitCoverage, SweepVersions } from '../types.ts';
 
-/** The versions that a run holds: `writing` at 8 with two versioned rules, and `plain-speech` at 6. */
+/** The versions that a run declares: `writing` at 8 with two versioned rules, and `plain-speech` at 6. */
 const VERSIONS: SweepVersions = {
   units: new Map([
     ['plain-speech', '6'],

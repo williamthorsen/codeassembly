@@ -74,7 +74,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('when the title carries the same typed prefix, merges it once', () => {
+    it('when the title includes the same typed prefix, merges it once', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), prTitle: '#466 agents|feat: Add foo' }),
       );
@@ -123,7 +123,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('compares commits that hold no entry like any other record', () => {
+    it('compares commits that contain no entry like any other record', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), commits: { kind: 'read' } }),
       );
@@ -298,7 +298,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('are attributed to the flags when they set the value that the record already holds', () => {
+    it('are attributed to the flags when they set the value that the record already has', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), overrides: { type: 'feat' } }),
       );
@@ -329,7 +329,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({ effective_record: { breaking: false }, effective_sources: { breaking: 'flags' } });
     });
 
-    it('add a marker to a record that carries none', () => {
+    it('add a marker to a record that has none', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), overrides: { breaking: true } }));
 
       expect(report.merge_title).toBe('#466 feat!: Add foo (#470)');
@@ -376,7 +376,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('report a block that holds no consolidated record with a null record', () => {
+    it('report a block that names no consolidated record with a null record', () => {
       const block: ChangeRecordBlockReading = { block: { title: 'Add foo' }, kind: 'read' };
 
       const report = resolveMerge(buildInput({ block }));
@@ -484,7 +484,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('takes the flag’s ticket reference when the title carries none', () => {
+    it('takes the flag’s ticket reference when the title names none', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), prTitle: 'Add foo' }));
 
       expect(report).toMatchObject({
@@ -560,7 +560,7 @@ describe(resolveMerge, () => {
 /**
  * Builds a merge input from the house templates and a taxonomy of one type per policy. A `commitsRecord` stands for
  * commits that were read and consolidate to it; without one, the commits agree with the block's consolidated record, or
- * hold no entry when no block is readable. A `ticketRef` of null leaves the flag's reference out.
+ * contain no entry when no block is readable. A `ticketRef` of null leaves the flag's reference out.
  */
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {
@@ -592,8 +592,8 @@ function buildInput(
 }
 
 /**
- * Builds a block reading holding the consolidated record given, with the author's overrides if any are given, and a
- * title that defaults to the pull request's.
+ * Builds a block reading that contains the consolidated record given, with the author's overrides if any are given,
+ * and a title that defaults to the pull request's.
  */
 function readBlock(
   consolidatedRecord: ChangeRecord,

@@ -35,7 +35,7 @@ describe(verify, () => {
       expect(verify('[{ticket_ref} ]{title}', TAXONOMY)).toStrictEqual([]);
     });
 
-    it('accepts a template whose scope group carries the type, whose drop leaves nothing to read back', () => {
+    it('accepts a template whose scope group contains the type, whose drop leaves nothing to read back', () => {
       expect(verify('[{scope}|{type}: ]{title}', TAXONOMY)).toStrictEqual([]);
     });
   });

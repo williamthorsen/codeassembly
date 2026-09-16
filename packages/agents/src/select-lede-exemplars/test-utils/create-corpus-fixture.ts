@@ -19,11 +19,11 @@ export interface DecisionSpec {
   type: string;
   capturedAt: string;
   /**
-   * Merged lede, written to the section that a revised decision carries; absent leaves the record with the agent lede
+   * Merged lede, written to the section that a revised decision contains; absent leaves the record with the agent lede
    * alone.
    */
   mergedLede?: string;
-  /** Author's critique, written to the section that a commented decision carries; absent leaves the record without one. */
+  /** Author's critique, written to the section that a commented decision contains; absent leaves the record without one. */
   comment?: string;
   /** Scope as the record's frontmatter spells it; `null` leaves the record naming none. */
   scope?: string | null;
@@ -35,21 +35,21 @@ export interface DecisionSpec {
   tags?: readonly string[];
 }
 
-/** A temporary corpus: the event store, the `_data` directory holding the taxonomy, and a home registering the store. */
+/** A temporary corpus: the event store, the `_data` directory containing the taxonomy, and a home registering the store. */
 export interface CorpusFixture {
   storePath: string;
   dataDir: string;
-  /** Isolated home carrying a `kb.yaml` that registers the store, so that no test reads the developer's own registry. */
+  /** Isolated home containing a `kb.yaml` that registers the store, so that no test reads the developer's own registry. */
   home: string;
 }
 
-/** The agent lede that a planted record carries, distinct per record so that a test can tell which was selected. */
+/** The agent lede that a planted record contains, distinct per record so that a test can tell which was selected. */
 export function agentLedeFor(id: string): string {
   return `Agent lede of ${id}.`;
 }
 
 /**
- * Stands up a temporary event store holding one record per decision spec, plus a `_data` directory carrying the
+ * Stands up a temporary event store with one record per decision spec, plus a `_data` directory containing the
  * fixture taxonomy and an isolated home registering the store. `files` plants raw content under `content/events/`, for
  * a record whose own shape is the subject of the test; `storeName` registers the store under something other than the
  * name that the helper serves, which is how a test tells a resolved default from an unregistered one.

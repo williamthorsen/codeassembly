@@ -7,7 +7,7 @@
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
 
-/** The verdicts that a record can carry, derived from whether the two ledes differ rather than supplied by a caller. */
+/** The verdicts that a record can name, derived from whether the two ledes differ rather than supplied by a caller. */
 export const LEDE_VERDICTS = ['accepted', 'revised'] as const;
 
 /** What became of the agent's lede: It merged as written, or it was rewritten before merge. */
@@ -17,13 +17,13 @@ export type LedeVerdict = (typeof LEDE_VERDICTS)[number];
 export interface EpisodeIdentity {
   type: string;
   tier: string;
-  /** Whether the work type carried the breaking marker; the doctrine requires a `Migration:` paragraph of these alone. */
+  /** Whether the work type had the breaking marker; the doctrine requires a `Migration:` paragraph of these alone. */
   breaking: boolean;
   /** Scope to which the change belongs; absent for a change that names none. */
   scope?: string;
   pr: string;
   mergeCommit: string;
-  /** Ticket served by the change; absent for a branch that carried none. */
+  /** Ticket served by the change; absent for a branch that names none. */
   ticket?: string;
 }
 
@@ -79,7 +79,7 @@ export interface CommitSuccess {
   mode: 'commit';
   /** The author's rating of the lede in the merged pull request. */
   quality: LedeQuality;
-  /** Derived from whether the ledes differ, so it always agrees with the sections that the record carries. */
+  /** Derived from whether the ledes differ, so it always agrees with the sections that the record contains. */
   verdict: LedeVerdict;
   /** The generated ULID, which is also the record's filename stem. */
   id: string;

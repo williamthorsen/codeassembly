@@ -1,14 +1,14 @@
 // Shapes for the revise-prose helper: the prose extracted, the candidates detected, and the JSON payload
 // written to stdout.
 //
-// The helper reports; it never writes. Repair selection is judgment, so the payload carries everything an adjudicator
+// The helper reports; it never writes. Repair selection is judgment, so the payload includes everything an adjudicator
 // needs to decide without reading the file: the sentence, the matched phrase, and the shape that ranks the cost.
 
 /** A detected site, discriminated on the rule whose detector reported it. */
 export type Candidate =
   EmDashCandidate | ObjectRelativeCandidate | SecondPersonCandidate | SoCandidate | WhereCandidate;
 
-/** What every candidate carries, whichever rule found it. */
+/** What every candidate contains, whichever rule found it. */
 export interface CandidateBase {
   /** The rule whose detector reported the site. */
   rule: RuleId;
@@ -83,7 +83,7 @@ export interface Batch {
   /** Combined byte length of those files. */
   bytes: number;
   /**
-   * Whether this batch holds components of files linked by a shared sentence. The budget binds it like any other,
+   * Whether this batch contains components of files linked by a shared sentence. The budget binds it like any other,
    * except when one component exceeds the budget on its own.
    */
   recurring: boolean;
@@ -104,7 +104,7 @@ export interface ScannedFile {
 }
 
 /**
- * What the record holds for one rule: the sweep version swept, when it was last swept, whether its detector ran, and
+ * What the record stores for one rule: the sweep version swept, when it was last swept, whether its detector ran, and
  * the path roots covered at that version.
  */
 export interface RuleCoverage {
@@ -122,7 +122,7 @@ export interface RuleCoverage {
 export interface RecordedRejection {
   /**
    * The rule under which the site was adjudicated. Any versioned rule declared by a bound rulebook, whether or not the
-   * helper holds a detector for it, so that a sweeper's judgment is recorded without a detector.
+   * helper has a detector for it, so that a sweeper's judgment is recorded without a detector.
    */
   rule: string;
   /** The rule's sweep version when the rejection was recorded, which a raised version marks stale. */
@@ -136,8 +136,7 @@ export interface RecordedRejection {
 
 /**
  * One rejection inherited by a later run: a site that an earlier sweep adjudicated and left, at a version of its
- * rule that still stands. The sweeper needs no argument for a settled site, so the record's own bookkeeping is left
- * behind.
+ * rule that still stands.
  */
 export interface PriorRejection {
   rule: string;
@@ -161,7 +160,7 @@ export interface ProseRecord {
   rejections: readonly RecordedRejection[];
 }
 
-/** What a record written before rules were versioned holds for one unit, a rulebook or `plain-speech`. */
+/** What a record written before rules were versioned stores for one unit, a rulebook or `plain-speech`. */
 export interface LegacyUnitCoverage {
   version: string;
   'swept-at': string;
@@ -170,7 +169,7 @@ export interface LegacyUnitCoverage {
   roots: readonly string[];
 }
 
-/** One rejection as a record written before rules were versioned holds it, stale by its unit's version. */
+/** One rejection as a record written before rules were versioned stores it, stale by its unit's version. */
 export interface LegacyRejection {
   rule: string;
   unit: string;
@@ -193,8 +192,8 @@ export interface VersionedRule {
 }
 
 /**
- * The versions that a run holds: each named unit's, which converting a legacy record reads, and each versioned rule's,
- * which keys coverage and rejections.
+ * The versions in force for a run: each named unit's, which converting a legacy record reads, and each versioned
+ * rule's, which keys coverage and rejections.
  */
 export interface SweepVersions {
   units: ReadonlyMap<string, string>;
@@ -202,7 +201,7 @@ export interface SweepVersions {
 }
 
 /**
- * One rejection as a run reports it. It carries no version, which the helper derives from the fold's entry for its rule.
+ * One rejection as a run reports it. It names no version, which the helper derives from the fold's entry for its rule.
  */
 export interface FoldRejection {
   /** The rule under which the site was adjudicated, detected or not, which must be one that the fold versions. */
@@ -237,7 +236,7 @@ export type ProseKind = 'markdown' | 'script' | 'shell' | 'yaml';
  * A block of prose lifted out of a file: a Markdown paragraph, a comment, a string literal, a block scalar, or a
  * table cell.
  *
- * `text` preserves the source's own newlines, so the line holding any offset within it is `line` plus the newlines
+ * `text` preserves the source's own newlines, so the line containing any offset within it is `line` plus the newlines
  * preceding that offset. Every transformation applied by the extractor is line-preserving for that reason.
  */
 export interface ProseSpan {
@@ -261,7 +260,7 @@ export interface ParsedArgs {
    * a detector for it. Empty detects the legacy rule alone.
    */
   rules: readonly NamedRule[];
-  /** The units in force, by name, each at the version that the caller holds. Empty reads and writes no record. */
+  /** The units in force, by name, each at the version that the caller names. Empty reads and writes no record. */
   units: ReadonlyMap<string, string>;
   /** Ceiling on a batch's combined file bytes. */
   budget: number;
@@ -292,7 +291,7 @@ export interface CandidateSummary {
   batchesPlanned: number;
   /** Batches that the record's coverage let the run skip. */
   batchesSkipped: number;
-  /** Candidates carrying a rejection recorded at an older version of their rule, which re-opens them for review. */
+  /** Candidates with a rejection recorded at an older version of their rule, which re-opens them for review. */
   stale: number;
   /** Per-file counts, descending by count and then by path. */
   byFile: readonly FileCount[];
@@ -315,7 +314,7 @@ export interface DetectSuccess {
    */
   candidates: readonly Candidate[];
   /**
-   * Sites for which the record already holds a live rejection, in the reported batches' files and under a rule that
+   * Sites for which the record already contains a live rejection, in the reported batches' files and under a rule that
    * the batch lists as unswept. A sweeper given these leaves each under the rule that its entry names and judges it
    * under every other rule that the batch applies; one recorded at an older version of its rule, or under a rule that
    * the run does not version, is absent, and its site is judged afresh.
@@ -351,7 +350,7 @@ export interface RecordSuccess {
   path: string;
   /** How many rules the written record covers. */
   rules: number;
-  /** How many rejections it holds. */
+  /** How many rejections it contains. */
   rejections: number;
 }
 

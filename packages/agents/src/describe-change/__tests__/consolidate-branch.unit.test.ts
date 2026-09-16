@@ -19,7 +19,7 @@ const TAXONOMY: Taxonomy = {
 const NODES = compileTemplate('[[{scope}|]{type}: ]{title}');
 
 describe(consolidateBranch, () => {
-  it('lets one feat speak for a branch carrying three fixes', () => {
+  it('lets one feat represent a branch containing three fixes', () => {
     const result = consolidateBranch(
       buildCommits([
         'agents|fix: Correct the guard',
@@ -35,7 +35,7 @@ describe(consolidateBranch, () => {
     expect(result.entries).toHaveLength(4);
   });
 
-  it('carries the breaking marker onto the consolidated record', () => {
+  it('sets the breaking marker on the consolidated record', () => {
     const result = consolidateBranch(
       buildCommits(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']),
       NODES,
@@ -55,7 +55,7 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ type: 'feat' });
   });
 
-  it('reports a refactor that carries the marker forbidden by its policy, leaving the entry as written', () => {
+  it('reports a refactor that spells the marker forbidden by its policy, leaving the entry as written', () => {
     const result = consolidateBranch(buildCommits(['agents|refactor!: Restructure the guard']), NODES, TAXONOMY);
 
     expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'forbidden', type: 'refactor' }]);

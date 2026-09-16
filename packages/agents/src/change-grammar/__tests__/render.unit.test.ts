@@ -90,7 +90,7 @@ describe(render, () => {
       expect(render(compileTemplate(GLOBAL_MERGE), record)).toBe('#466 agents|feat: Add foo (#470)');
     });
 
-    it('carries the marker on the type, since no configured template names {breaking}', () => {
+    it('renders the marker on the type, since no configured template names {breaking}', () => {
       const record = { breaking: true, scope: 'agents', title: TITLE, type: 'feat' };
 
       expect(render(compileTemplate(FLAT_SCOPE_COMMIT), record)).toBe('agents|feat!: Add foo');
@@ -116,7 +116,7 @@ describe(render, () => {
       );
     });
 
-    it('keeps a group holding {breaking} when the change is not breaking', () => {
+    it('keeps a group containing {breaking} when the change is not breaking', () => {
       expect(render(compileTemplate('[{type}{breaking}: ]{title}'), { title: TITLE, type: 'fix' })).toBe(
         'fix: Add foo',
       );

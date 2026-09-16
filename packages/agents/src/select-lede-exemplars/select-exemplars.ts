@@ -16,13 +16,13 @@ import type { ExemplarRequest, ExemplarSelection, LedeExemplar, Widening } from 
 interface Candidate {
   exemplar: LedeExemplar;
   resolved: WorkType | null;
-  /** The record's rating; `null` for a record carrying none, which fails every floor. */
+  /** The record's rating; `null` for an unrated record, which fails every floor. */
   quality: LedeQuality | null;
 }
 
 /**
  * What reading one event file yielded: a candidate, the reason the record was unreadable, or nothing to report. A
- * candidate carries its own warnings, for a record selectable despite a field that could not be read as written.
+ * candidate includes its own warnings, for a record selectable despite a field that could not be read as written.
  */
 type RecordOutcome =
   | { kind: 'candidate'; candidate: Candidate; warnings: readonly string[] }
@@ -42,9 +42,9 @@ type RecordOutcome =
  * Each of the three buckets is capped at `count`, and the fill takes the exact matches first. Widening only ever makes
  * up a shortfall and never displaces an exact match with a newer tier-mate.
  *
- * Because a `minQuality` floor filters candidates before they reach a bucket, a request left short by the floor widens
- * exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while qualifying
- * tier-mates went untaken.
+ * Because a `minQuality` floor filters candidates before the scan buckets them, a request left short by the floor
+ * widens exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while
+ * qualifying tier-mates went untaken.
  *
  * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: A
  * record is admitted on its rating and its type alone. The same request returns the same records either way.
@@ -146,7 +146,7 @@ function compareDescending(left: string, right: string): number {
 }
 
 /**
- * Reads one event file as an exemplar candidate. A record that parses and carries no `lede-decision` tag belongs to
+ * Reads one event file as an exemplar candidate. A record that parses and has no `lede-decision` tag belongs to
  * another capture path and is passed over in silence. Everything else that cannot be read as an exemplar is reported
  * so that the run goes on without it, unparseable frontmatter included: A record whose tags cannot be read might be a
  * decision.
@@ -187,7 +187,7 @@ async function readDecision(input: {
   }
 
   // The taxonomy decides a candidate's type and tier, so a request and a candidate are matched through one reading of
-  // it. A type no longer declared by the taxonomy keeps the tier that its record carries, which is what the taxonomy
+  // it. A type no longer declared by the taxonomy keeps the tier that its record names, which is what the taxonomy
   // said when the change merged.
   const resolved = input.workTypes.get(type) ?? null;
   const tier = resolved?.tier ?? extractString(extra, 'tier');
@@ -195,7 +195,7 @@ async function readDecision(input: {
     return { kind: 'warning', warning: `${basename}: names work type "${type}", which no taxonomy or record tiers` };
   }
 
-  // Because a record carrying no rating is the ordinary case for one captured before ratings existed, only a value
+  // Because an unrated record is the ordinary case for one captured before ratings existed, only a value
   // outside the scale is worth reporting. Either way the candidate stays selectable by a request that names no floor.
   const rawQuality = extractString(extra, 'quality');
   const quality = isLedeQuality(rawQuality) ? rawQuality : null;
@@ -204,7 +204,7 @@ async function readDecision(input: {
       ? [`${basename}: carries quality "${rawQuality}", which the scale does not declare`]
       : [];
 
-  // A decision written by `capture-lede-decision` always carries an agent lede. A body without one was edited by hand.
+  // A decision written by `capture-lede-decision` always includes an agent lede. A body without one was edited by hand.
   const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
   if (input.withPair && pair === null) {
     warnings.push(`${basename}: carries no agent lede, so its decision pair cannot be read`);

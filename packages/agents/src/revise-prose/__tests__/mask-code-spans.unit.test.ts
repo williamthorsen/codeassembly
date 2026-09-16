@@ -8,7 +8,7 @@ import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD, maskCodeSpans } from
 const MASK = ` ${CODE_SPAN_PLACEHOLDER} `;
 
 describe(maskCodeSpans, () => {
-  it('returns text holding no code span unchanged', () => {
+  it('returns text containing no code span unchanged', () => {
     expect(maskCodeSpans('The source that it names.')).toBe('The source that it names.');
   });
 
@@ -16,7 +16,7 @@ describe(maskCodeSpans, () => {
     expect(maskCodeSpans('The root `tsconfig.json` names it.')).toBe(`The root ${MASK} names it.`);
   });
 
-  it('replaces a multi-backtick span, which may hold a backtick of its own', () => {
+  it('replaces a multi-backtick span, which may contain a backtick of its own', () => {
     expect(maskCodeSpans('The form ``a `b` pair`` reads oddly.')).toBe(`The form ${MASK} reads oddly.`);
   });
 
