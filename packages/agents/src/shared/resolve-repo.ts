@@ -10,8 +10,8 @@ const execFileAsync = promisify(execFile);
 
 /**
  * Resolves the `owner/repo` of the git remote at `cwd`, best-effort. Prefers the `origin` remote and falls back to the
- * first listed remote when `origin` is absent, then parses the resulting URL to its `owner/repo`. Any failure (no
- * remote, unparseable URL) returns `undefined` so a caller is never blocked on an unresolvable repo.
+ * first listed remote when `origin` is absent, then parses the resulting URL to its `owner/repo`. Returns `undefined`
+ * on any failure (no remote, unparseable URL) so that a caller is never blocked on an unresolvable repo.
  */
 export async function resolveRepo(cwd: string): Promise<string | undefined> {
   const url = await resolveRemoteUrl(cwd);

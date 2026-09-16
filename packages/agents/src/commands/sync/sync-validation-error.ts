@@ -4,8 +4,8 @@ import { type ContentDefect, formatContentDefects } from '../../lib/content-defe
 import type { HomeFailure } from '../../lib/home-provenance.ts';
 
 /**
- * Describes a failed home-domain sync for the provenance record, carrying the whole defect report where the failure
- * has one. The report is held for a reader who opens the stamp; `status` prints the count alone, because a stored
+ * Describes a failed home-domain sync for the provenance record, including the whole defect report when the failure
+ * has one. The report is kept for a reader who opens the stamp; `status` prints the count alone, because a stored
  * report describes the content as it stood at the attempt rather than as it stands now.
  */
 export function describeSyncFailure(error: unknown): HomeFailure {
@@ -14,16 +14,16 @@ export function describeSyncFailure(error: unknown): HomeFailure {
     : { summary: describeError(error) };
 }
 
-/** Narrows a caught error to the aggregate a pre-write validation raises. */
+/** Narrows a caught error to the aggregate raised by a pre-write validation. */
 export function isSyncValidationError(error: unknown): error is SyncValidationError {
   return error instanceof SyncValidationError;
 }
 
 /**
- * Every defect a sync's pre-write validation found, raised once so a run reports the whole list rather than its first
- * entry. The message carries the grouped report, so any consumer reading the error alone still sees what to fix; the
- * defects travel alongside it for the CLI, which renders them without the top-level `Error:` prefix that a finding
- * list must not wear.
+ * Every defect found by a sync's pre-write validation, raised once so that a run reports the whole list rather than
+ * its first entry. The message contains the grouped report, so any consumer reading the error alone still sees what to
+ * fix; the defects are stored alongside it for the CLI, which renders them without the top-level `Error:` prefix that
+ * a finding list must not have.
  */
 export class SyncValidationError extends Error {
   readonly defects: ReadonlyArray<ContentDefect>;

@@ -85,8 +85,8 @@ export async function syncCommand(
 
 /**
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
- * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in the
- * ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
+ * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Writes ambient blocks into
+ * the ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
  * mechanically; no agent-read host file is written. When the home declaration is absent, changes nothing and returns
  * the outcome naming `init --global` as the remedy.
  */
@@ -95,7 +95,7 @@ export async function syncGlobalCommand(
   homeDir: string = homedir(),
   contentDirOverride?: string,
 ): Promise<SyncOutcome> {
-  // Runs first, and before the dry-run gate: a preview must refuse wherever the real run would.
+  // Runs first, and before the dry-run gate: A preview must refuse whenever the real run would.
   await assertDesignatedWriter({
     command: 'sync --global',
     homeDir,
@@ -142,10 +142,10 @@ export async function syncGlobalCommand(
  * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
  * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent. An
  * absent `codeassembly.yaml` is a total no-op. Repo and home domains share this one reconciler, differing only in
- * the `SyncDomain` they pass.
+ * the `SyncDomain` that they pass.
  *
  * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: It
- * carries the user-global half of the `harnesses` chain and the harnesses targeting falls back to.
+ * contains the user-global half of the `harnesses` chain and the harnesses to which targeting falls back.
  */
 async function reconcileDomain(
   options: InstallOptions,
@@ -168,7 +168,7 @@ async function reconcileDomain(
   const contentDir = contentDirOverride ?? resolveContentDir();
 
   // Resolution searches declared sources (highest precedence first) then the built-in library. Every declared source
-  // is validated up front, so a non-directory or unreadable one fails the whole run — dry-run included — before any
+  // is validated up front, so a non-directory or unreadable one fails the whole run (dry-run included) before any
   // write.
   const { sources, missingSources } = await resolveDeclaredSources({
     baseDir: domain.baseDir,
@@ -177,18 +177,18 @@ async function reconcileDomain(
   });
   const resolver = createSourceResolver(sources, contentDir);
 
-  // Everything a declared package ships seeds the closure, which is what makes naming the package the whole
-  // declaration. A package whose content dir is missing enumerates nothing: The walk reads through a directory listing
-  // that answers an absent directory with no entries.
+  // Everything a declared package ships seeds the closure, which makes naming the package the whole declaration. A
+  // package whose content dir is missing enumerates nothing: The walk reads through a directory listing that returns
+  // no entries for an absent directory.
   const packageCatalogs = await Promise.all(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
   );
 
-  // Every gate in this phase reports into one collector rather than throwing, so a run reports every defect it found
-  // instead of its first. The list is raised below, before the first call that writes.
+  // Because every gate in this phase reports into one collector rather than throwing, a run reports every defect that
+  // it found instead of its first. The list is raised below, before the first call that writes.
   const defects = createDefectCollector();
 
-  // Checked before the closure resolves so a typo names the hook that bound it or the file that declared it;
+  // Checked before the closure resolves so that a typo names the hook that bound it or the file that declared it;
   // seeding alone would report only that some artifact went missing.
   const bound = await findUnresolvableBindingDefects(declaration.guidanceHooks, resolver);
   defects.add(bound.defects);
@@ -198,16 +198,18 @@ async function reconcileDomain(
     resolver,
   );
   defects.add(declared.defects);
-  // A binding seeds the closure, so a bound rulebook resolving from nowhere joins the declared set skipped by the walk.
+  // A binding seeds the closure, so a bound rulebook resolving from nowhere belongs in the declared set skipped by
+  // the walk.
   const unresolvable: UnresolvableSlugs = {
     ...declared.unresolvable,
     rulebook: new Set([...declared.unresolvable.rulebook, ...bound.unresolvable]),
   };
 
-  // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
-  // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
-  // The walk runs one seed at a time, so a bad edge is attributed to the artifact that owns it and every remaining
-  // seed still resolves. A seed already reported as unresolvable is dropped, so it is not reported twice.
+  // Expand declared collections (and any artifact's own dependencies) into the deployable per-type sets before
+  // resolving against the sources and library, so that a declared collection deploys exactly its transitive closure.
+  // Because the walk runs one seed at a time, a bad edge is attributed to the artifact that owns it and every
+  // remaining seed still resolves. A seed already reported as unresolvable is dropped, so that it is not reported
+  // twice.
   const seeded = await resolveSeedClosures(
     dropUnresolvableSeeds(
       mergeSeeds([
@@ -229,9 +231,9 @@ async function reconcileDomain(
   const closure = seeded.closure;
   const declaredRulebooks = closure.rulebooks;
 
-  // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
-  // file, invalid frontmatter, or a still-`install` artifact is reported rather than leaving a partial sync. Each pass
-  // resolves what it can: an artifact reported here is simply absent from the passes below.
+  // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so that a missing
+  // library file, invalid frontmatter, or a still-`install` artifact is reported rather than leaving a partial sync.
+  // Each pass resolves what it can: An artifact reported here is simply absent from the passes below.
   const rulebookResolution = await resolveEachArtifact('rulebook', declaredRulebooks, (slug) =>
     resolveRulebook(slug, resolver),
   );
@@ -250,15 +252,15 @@ async function reconcileDomain(
   const resolvedSubagents = subagentResolution.resolved;
   defects.add(subagentResolution.defects);
 
-  // Maps each skill-delivery rulebook's stable slug to the directory its skill currently belongs in. Retraction
-  // compares this against what each owned directory's marker reports, so a renamed skill retracts its old dir.
+  // Maps each skill-delivery rulebook's stable slug to the directory in which its skill currently belongs. Retraction
+  // compares this against what each owned directory's marker reports, so it retracts the old dir of a renamed skill.
   const desiredSkillDirs = new Map(
     resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
   );
 
-  // One catalog for every body that addresses a rulebook by token — rulebook, skill, and subagent alike — so no two
-  // passes can disagree about what is addressable. The closure it indexes already holds a rulebook named only by a
-  // skill's or subagent's token, since those tokens are dependency edges.
+  // One catalog for every body that addresses a rulebook by token (rulebook, skill, and subagent alike), so that no
+  // two passes can disagree about what is addressable. The closure that it indexes already contains a rulebook named
+  // only by a skill's or subagent's token, since those tokens are dependency edges.
   const rulebookCatalog = buildRulebookInvocationCatalog(resolved);
   const declaredSkillSet = new Set(resolvedSkills.map((skill) => skill.slug));
 
@@ -266,14 +268,15 @@ async function reconcileDomain(
   // delivery namespaces would clobber, so reject the overlap before any write.
   defects.add(findCrossNamespaceCollisionDefects(desiredSkillDirs.values().toArray(), declaredSkillSet));
 
-  // Every delivery pass below targets this one set of harnesses, and each renders its content for the harness it
-  // lands on, so the set is resolved once and threaded rather than re-derived per pass.
+  // Because every delivery pass below targets this one set of harnesses, and each renders its content for the harness
+  // to which it writes, the set is resolved once and threaded rather than re-derived per pass.
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
 
-  // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
-  // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
-  // everything this run writes into a domain skills dir, and the collision gate has already proven them disjoint.
+  // Resolved before every render gate, so that the gates and the writes that they guard cannot disagree about where a
+  // link target lands. The deployed skill dirs that it reads are settled above: `resolvedSkills` and
+  // `desiredSkillDirs` name everything this run writes into a domain skills dir, and the collision gate has already
+  // proven them disjoint.
   const resolveAnchorContext = createAnchorContextResolver(
     resolvedSkills,
     desiredSkillDirs.values().toArray(),
@@ -281,8 +284,8 @@ async function reconcileDomain(
   );
   const resolveRulebookContext = createRulebookContextResolver(resolved, resolveAnchorContext);
 
-  // Rendered per harness, because a bound body carries that harness's link targets, sigils, and home dir. Built once
-  // here so the skill pass and the subagent pass splice the same guidance.
+  // Rendered per harness, because a bound body contains that harness's link targets, sigils, and home dir. Built once
+  // here so that the skill pass and the subagent pass splice the same guidance.
   const fillsByHarness = new Map(
     harnessIds.map((harnessId) => [
       harnessId,
@@ -301,39 +304,40 @@ async function reconcileDomain(
     resolveSubagentTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
   );
 
-  // Memoized, so the pre-write render gate and the write that follows it read one overlay per (harness, source)
+  // Memoized, so that the pre-write render gate and the write that follows it read one overlay per (harness, source)
   // rather than one per subagent.
   const resolveOverlay = createOverlayLoader();
 
-  // Scanned against the pre-write filesystem, so each delivery pass below can retract before it writes and free a
-  // name for reuse within the same run. The two skill namespaces share these dirs and are scanned separately, each
+  // Scanned against the pre-write filesystem, so that each delivery pass below can retract before it writes and free
+  // a name for reuse within the same run. The two skill namespaces share these dirs and are scanned separately, each
   // reading only its own marker, so neither ever claims the other's.
   const skillOrphansByDir = await findRulebookSkillOrphans(harnessSkillTargets, desiredSkillDirs);
   const declaredSkillOrphansByDir = await findDeclaredSkillOrphans(harnessSkillTargets, resolvedSkills);
   const subagentOrphansByDir = await findSubagentOrphans(harnessSubagentTargets, declaredSubagentSet);
 
   // Before any write or delete, fail closed on any skill or subagent target that already exists without this sync's
-  // ownership marker — an install-managed or hand-authored file. The marker-gated retraction scans keep such files
-  // from being deleted; this keeps them from being overwritten. Runs in dry-run too, so a preview surfaces the conflict.
+  // ownership marker: an install-managed or hand-authored file. The marker-gated retraction scans keep such files
+  // from being deleted; this keeps them from being overwritten. Runs in dry-run too, so that a preview reports the
+  // conflict.
   defects.add(
     await findForeignOwnedTargetDefects(
       collectOwnedTargets(harnessSkillTargets, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
     ),
   );
 
-  // Render every declared skill against every targeted harness up front, so a broken include or an unmapped tool
-  // placeholder fails the whole run — dry-run included — before any file is written. The rendered output is discarded
+  // Render every declared skill against every targeted harness up front, so that a broken include or an unmapped tool
+  // placeholder fails the whole run (dry-run included) before any file is written. The rendered output is discarded
   // here; `deploySkill` re-renders it at write time.
   defects.add(await findDeclaredSkillRenderDefects(harnessSkillTargets, resolvedSkills, resolveAnchorContext));
 
-  // Same gate for each source's support entries, whose defects would otherwise surface only at the write below. The
-  // rendered result is carried to the preview and the delivery pass rather than rendered again by each.
+  // Same gate for each source's support entries, whose defects would otherwise appear only at the write below. The
+  // rendered result is passed to the preview and the delivery pass rather than rendered again by each.
   const sourceSupport = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
   const sourceSupportPlans = sourceSupport.plans;
   defects.add(sourceSupport.defects);
 
-  // Same gate for subagents, whose deploy is the last write pass: Without it a render failure lands after the ambient
-  // host and every skill file are already on disk.
+  // Same gate for subagents, whose deploy is the last write pass: Without it a render failure occurs after the
+  // ambient host and every skill file are already on disk.
   defects.add(
     await findDeclaredSubagentRenderDefects(
       harnessSubagentTargets,
@@ -343,8 +347,8 @@ async function reconcileDomain(
     ),
   );
 
-  // Same gate for rulebooks: A link target the delivery pipeline cannot honor fails the run before either delivery
-  // pass writes, rather than shipping a path that resolves to nothing.
+  // Same gate for rulebooks: A link target that the delivery pipeline cannot honor fails the run before either
+  // delivery pass writes, rather than deploying a path that resolves to nothing.
   defects.add(findRulebookRenderDefects(harnessIds, resolved, resolveRulebookContext));
 
   // Reject a sync-owned ambient host whose region is half-written before anything is written, dry-run included.
@@ -358,19 +362,21 @@ async function reconcileDomain(
     throw new SyncValidationError(defects.found);
   }
 
-  // Attribute each deployed artifact to the source it resolved from, flagging any that shadows a same-slug library
-  // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
+  // Attribute each deployed artifact to the source from which it resolved, flagging any that shadows a same-slug
+  // library artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow
+  // warning.
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
-  // Derived before the paths part, so a dry run cannot describe an ambient host differently from the run it previews.
+  // Derived before the paths diverge, so that a dry run cannot describe an ambient host differently from the run that
+  // it previews.
   const ambientHostPlans = planAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext);
 
-  // Advisory only, and gathered for both paths: a dry run that would create the host warns about it too.
+  // Advisory only, and gathered for both paths: A dry run that would create the host warns about it too.
   const unignoredHosts =
     domain.ambient === 'project-local' ? await findUnignoredHosts(domain.baseDir, ambientHostPlans) : [];
 
-  // Read after the render gates above, which is what leaves a malformed directive to fail from the gate that can
-  // name its body and line rather than from this pass.
+  // Read after the render gates above, which leaves a malformed directive to fail from the gate that can name its
+  // body and line rather than from this pass.
   const declaredHooks = await listDeclaredGuidanceHooks(resolvedSkills, resolvedSubagents, harnessIds);
 
   const retirements = await retireRetiredOutputs(options, domain);
@@ -411,8 +417,9 @@ async function reconcileDomain(
     return { kind: 'reconciled', plan };
   }
 
-  // First write of the run, so a harness leaving the target set is cleared before anything is delivered to the ones
-  // that remain. Its paths are disjoint from every targeted harness's, so the order costs the delivery passes nothing.
+  // First write of the run, so that a harness leaving the target set is cleared before anything is delivered to the
+  // ones that remain. Its paths are disjoint from every targeted harness's, so the order does not affect the delivery
+  // passes.
   await retractDroppedHarnesses(plan.droppedHarnesses);
 
   await deliverAmbient(ambientHostPlans);
@@ -425,7 +432,7 @@ async function reconcileDomain(
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
 
-  // Deliver each source's support entries into its own namespace, then retract the namespaces no source claims.
+  // Deliver each source's support entries into its own namespace, then retract the namespaces claimed by no source.
   await reconcileSourceSupport(harnessSkillTargets, sourceSupportPlans);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
@@ -462,9 +469,9 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
 }
 
 /**
- * Attributes each deployed rulebook, skill, and subagent to the source it resolved from, flagging any source-resolved
- * artifact whose slug also exists in the library as shadowing it. The library probe runs only for source-resolved
- * artifacts — a library-resolved artifact cannot shadow the library — and is batched across all of them.
+ * Attributes each deployed rulebook, skill, and subagent to the source from which it resolved, flagging any
+ * source-resolved artifact whose slug also exists in the library as shadowing it. The library probe runs only for
+ * source-resolved artifacts (a library-resolved artifact cannot shadow the library) and is batched across all of them.
  */
 async function buildResolutionReport(
   resolver: SourceResolver,

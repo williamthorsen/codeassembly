@@ -11,8 +11,8 @@ export function isInsideArtifactBaseDir(absolutePath: string, artifactBaseDir: s
 
 /**
  * Resolves the artifact base directory configured for a repository root, from the same preferences read by the
- * session-context deriver. A preferences file that cannot be read falls back to the documented default rather than
- * failing the caller, since the directory matters only where a repository keeps its artifacts in tree.
+ * session-context deriver. When the preferences file cannot be read, returns the documented default rather than
+ * failing the caller, since the directory matters only when a repository keeps its artifacts in tree.
  */
 export async function resolveRootArtifactBaseDir(root: string, home: string): Promise<string> {
   try {

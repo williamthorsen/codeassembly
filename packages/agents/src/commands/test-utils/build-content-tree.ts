@@ -28,11 +28,12 @@ export interface ContentTreeOptions {
 
 /**
  * Writes a minimal but realistic CodeAssembly content tree into `contentDir` for use as the third argument to
- * `installCommand`, so install-command tests exercise the full pipeline against a small fixture. The default tree
- * carries every shape the integration tests rely on: a relative-link skill, an opt-out skill (`user-invocable: false`),
- * a `_data` support file, one claude-only and one rovo-only harness skill, a subagent with overlay-merged
- * frontmatter and a `{harness_home_dir}` script token, a script, shared guidance, and per-harness guidance that
- * inlines the shared file via include directives. Provided options shallow-merge over the defaults by top-level key.
+ * `installCommand`, so that install-command tests exercise the full pipeline against a small fixture. The default tree
+ * contains every shape on which the integration tests rely: a relative-link skill, an opt-out skill
+ * (`user-invocable: false`), a `_data` support file, one claude-only and one rovo-only harness skill, a subagent with
+ * overlay-merged frontmatter and a `{harness_home_dir}` script token, a script, shared guidance, and per-harness
+ * guidance that inlines the shared file via include directives. Provided options shallow-merge over the defaults by
+ * top-level key.
  */
 export async function buildContentTree(contentDir: string, options: ContentTreeOptions = {}): Promise<string> {
   const skills = { ...DEFAULT_SKILLS, ...options.skills };
@@ -49,7 +50,8 @@ export async function buildContentTree(contentDir: string, options: ContentTreeO
     await writeSkillTree(path.join(contentDir, 'skills', '_harnesses', harness), harnessSkills);
   }
 
-  // Overlays are written under their frontmatter-file name (`claude.yaml`, `rovo.yaml`) so the loader resolves them.
+  // Overlays are written under their frontmatter-file name (`claude.yaml`, `rovo.yaml`) so that the loader resolves
+  // them.
   const overlayFiles: Record<string, string> = {};
   for (const harness of HARNESS_IDS) {
     overlayFiles[`${harness}.yaml`] = options.overlays?.[harness] ?? DEFAULT_OVERLAYS[harness];
@@ -71,7 +73,7 @@ export async function buildContentTree(contentDir: string, options: ContentTreeO
 const HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovo'];
 
 const DEFAULT_SKILLS: Record<string, Record<string, string>> = {
-  // `alpha` is user-invocable (default) and carries a relative `../_data/` link, so the install exercises path
+  // `alpha` is user-invocable (default) and contains a relative `../_data/` link, so the install exercises path
   // rewriting and `alpha` appears in the generated Rovo Dev prompts.yml.
   alpha: {
     'SKILL.md': [
@@ -87,7 +89,7 @@ const DEFAULT_SKILLS: Record<string, Record<string, string>> = {
       '',
     ].join('\n'),
   },
-  // `beta` opts out of discovery, so it is excluded from prompts.yml.
+  // Because `beta` opts out of discovery, it is excluded from prompts.yml.
   beta: {
     'SKILL.md': [
       '---',
@@ -130,7 +132,8 @@ const DEFAULT_DATA_FILES: Record<string, string> = {
 };
 
 const DEFAULT_SUBAGENTS: Record<string, string> = {
-  // Carries frontmatter (so the overlay merge applies) and a `{harness_home_dir}` token (so template expansion runs).
+  // Contains frontmatter (so that the overlay merge applies) and a `{harness_home_dir}` token (so that template
+  // expansion runs).
   'demo-agent.md': [
     '---',
     'name: demo-agent',
