@@ -10,8 +10,8 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
  * Stands up a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
  * `SmokeTestInvocation` that pipes a Claude `SessionStart` payload at the relay exactly as the harness would.
  *
- * The bundle is the only place the relay's stdin read is exercised against a real pipe: the unit suite hands `runRelay`
- * a string, so a regression in the stream read — the one thing standing between a hook firing and an event existing —
+ * The bundle is the only place the relay's stdin read is exercised against a real pipe: The unit suite hands `runRelay`
+ * a string, so a regression in the stream read -- the one thing standing between a hook firing and an event existing --
  * would pass unit tests and fail silently in every installed harness.
  */
 export function makeRelayHookEventSmokeTest(): SmokeTestInvocation {
@@ -46,8 +46,9 @@ export function makeRelayHookEventSmokeTest(): SmokeTestInvocation {
 // region | Helpers
 
 /**
- * Assert the relay smoke read its payload from the pipe and appended a `session.started` envelope at the path the
- * payload's `cwd` implies — attribution the relay could only have derived from stdin, since it was spawned elsewhere.
+ * Asserts the relay smoke read its payload from the pipe and appended a `session.started` envelope at the path implied
+ * by the payload's `cwd`: attribution that the relay could only have derived from stdin, since it was spawned
+ * elsewhere.
  */
 function assertRelayHookEventSmokeResult(result: unknown, expectedPath: string): void {
   if (!isRecord(result)) {
