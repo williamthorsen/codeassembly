@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { convertLegacyRecord, LEGACY_STALE_VERSION } from '../convert-record.ts';
 import type { LegacyRecord, LegacyRejection, LegacyUnitCoverage, SweepVersions } from '../types.ts';
 
-/** The versions a run holds: `writing` at 8 with two versioned rules, and `plain-speech` at 6. */
+/** The versions that a run holds: `writing` at 8 with two versioned rules, and `plain-speech` at 6. */
 const VERSIONS: SweepVersions = {
   units: new Map([
     ['plain-speech', '6'],
@@ -17,7 +17,7 @@ const VERSIONS: SweepVersions = {
 };
 
 describe(convertLegacyRecord, () => {
-  it("carries a unit's coverage at its current version to each of its versioned rules, at the rule's version", () => {
+  it("copies a unit's coverage at its current version to each of its versioned rules, at the rule's version", () => {
     const converted = convertLegacyRecord(legacyRecord({ units: { writing: unitCoverage() } }), VERSIONS);
 
     expect(converted.rules).toStrictEqual({
@@ -26,7 +26,7 @@ describe(convertLegacyRecord, () => {
     });
   });
 
-  it("records a rule as detected only where the unit's sweeps ran its detector", () => {
+  it("records a rule as detected only when the unit's sweeps ran its detector", () => {
     const converted = convertLegacyRecord(legacyRecord({ units: { writing: unitCoverage({ rules: [] }) } }), VERSIONS);
 
     expect(converted.rules['em-dash']?.detected).toBe(false);

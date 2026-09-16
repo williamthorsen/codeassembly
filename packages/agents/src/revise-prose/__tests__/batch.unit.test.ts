@@ -47,7 +47,7 @@ describe(planBatches, () => {
     expect(batches[1]?.files).toStrictEqual(['docs/b.md']);
   });
 
-  it('lets one component exceed the budget, splitting it being what the grouping exists to prevent', () => {
+  it('lets one component exceed the budget, since the grouping exists to prevent splitting it', () => {
     const sentence = 'A sentence that recurs.';
     const batches = plan(
       [file('docs/a.md', 80), file('docs/b.md', 80)],
@@ -138,7 +138,7 @@ describe(planBatches, () => {
     expect(planBatches({ files: [file('docs/a.md', 40)], candidates: [] })[0]?.files).toStrictEqual(['docs/a.md']);
   });
 
-  it('refuses a budget no batch could satisfy', () => {
+  it('refuses a budget that no batch could satisfy', () => {
     expect(() => plan([], [], 0)).toThrow(/positive integer/);
     expect(() => plan([], [], 1.5)).toThrow(/positive integer/);
   });
@@ -146,7 +146,7 @@ describe(planBatches, () => {
 
 // region | Helpers
 
-/** Builds a candidate carrying only the fields batch planning reads. */
+/** Builds a candidate with only the fields that batch planning reads. */
 function candidate(file: string, sentence: string): Candidate {
   return { rule: 'em-dash', file, line: 1, phrase: sentence, sentence };
 }
@@ -156,7 +156,7 @@ function file(name: string, bytes: number): ScannedFile {
   return { file: name, bytes };
 }
 
-/** Plans batches over a file set, naming the budget every assertion above depends on. */
+/** Plans batches over a file set, naming the budget on which every assertion above depends. */
 function plan(files: readonly ScannedFile[], candidates: readonly Candidate[], budget: number) {
   return planBatches({ files, candidates, budget });
 }

@@ -17,7 +17,7 @@ describe(parseArgs, () => {
     });
   });
 
-  it('refuses a flag the helper does not recognize', () => {
+  it('refuses a flag that the helper does not recognize', () => {
     expect(() => parseArgs(['--apply'])).toThrow(/unknown flag/i);
   });
 
@@ -65,11 +65,11 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'Sentence_Case=writing'])).toThrow(/kebab-case/);
   });
 
-  it('refuses a rule naming a unit no flag declares', () => {
+  it('refuses a rule naming a unit that no flag declares', () => {
     expect(() => parseArgs(['--rule', 'em-dash=writing'])).toThrow(/which no --unit declares/);
   });
 
-  it('refuses one rule named twice, a rule having one unit', () => {
+  it('refuses one rule named twice, since a rule has one unit', () => {
     expect(() =>
       parseArgs([
         '--unit',
@@ -88,7 +88,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--unit', 'writing'])).toThrow(/takes <name>=<value>/);
   });
 
-  it('refuses a batch budget no batch could satisfy', () => {
+  it('refuses a batch budget that no batch could satisfy', () => {
     expect(() => parseArgs(['--batch-budget', '0'])).toThrow(/positive integer/);
   });
 

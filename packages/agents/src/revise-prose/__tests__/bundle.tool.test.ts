@@ -50,7 +50,7 @@ describe('the deployed bundle', () => {
     expect(result.batches.length).toBeGreaterThan(0);
   });
 
-  it('detects the rules its invocation names', () => {
+  it('detects the rules named by its invocation', () => {
     const result = sweepResult(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
 
     expect(result.summary.byRule).toStrictEqual({
@@ -108,7 +108,7 @@ describe('the deployed bundle', () => {
 
 // region | Helpers
 
-/** Narrows the bundle's parsed stdout to a successful sweep, the process boundary offering no type of its own. */
+/** Narrows the bundle's parsed stdout to a successful sweep, since the process boundary offers no type of its own. */
 function isSweepSuccess(value: unknown): value is DetectSuccess {
   return typeof value === 'object' && value !== null && 'ok' in value && value.ok === true && 'batches' in value;
 }
