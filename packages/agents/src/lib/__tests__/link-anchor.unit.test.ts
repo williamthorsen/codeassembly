@@ -31,7 +31,7 @@ describe(createSkillLinkAnchor, () => {
       expect(anchor('_data/concision.md')).toBe('~/.claude/skills/_data/concision.md');
     });
 
-    it('keeps a skill the run does not deploy in the harness home, its only addressable location', () => {
+    it('keeps a skill that the run does not deploy in the harness home, its only addressable location', () => {
       const anchor = createSkillLinkAnchor(buildContext({ domainBase: PROJECT_BASE }));
       expect(anchor('wrap-up/SKILL.md')).toBe('~/.claude/skills/wrap-up/SKILL.md');
     });
@@ -43,8 +43,8 @@ describe(createSkillLinkAnchor, () => {
   });
 
   describe('home domain', () => {
-    // The invariant the whole change rests on: with the domain base at `~`, both destinations render the same string,
-    // so no home-domain output can shift however the deployed set is populated.
+    // The invariant on which the whole change rests: With the domain base at `~`, both destinations render the same
+    // string, so no home-domain output can shift however the deployed set is populated.
     it.each([
       ['a deployed skill', 'commit/SKILL.md', '~/.claude/skills/commit/SKILL.md'],
       ['a support entry', '_data/concision.md', '~/.claude/skills/_data/concision.md'],
@@ -61,8 +61,8 @@ describe(createSkillLinkAnchor, () => {
       expect(anchor('_data/house-style.md')).toBe('/repo/project/.claude/skills/_sources/org/_data/house-style.md');
     });
 
-    // Unlike the library case, this destination applies in the home domain too: the source's support entries deploy
-    // into the namespace there as well, which is the address they had nowhere else.
+    // Unlike the library case, this destination applies in the home domain too: The source's support entries deploy
+    // into the namespace there as well, which is the address that they had nowhere else.
     it('anchors a support entry in the namespace in the home domain', () => {
       const anchor = createSkillLinkAnchor(buildContext({ supportNamespace: 'org' }));
       expect(anchor('_data/house-style.md')).toBe('~/.claude/skills/_sources/org/_data/house-style.md');
@@ -83,7 +83,7 @@ describe(createSkillLinkAnchor, () => {
     });
   });
 
-  it('renders the harness its context names', () => {
+  it('renders the harness named by its context', () => {
     const anchor = createSkillLinkAnchor(buildContext({ domainBase: PROJECT_BASE, homeDir: ROVO_HOME }));
     expect(anchor('commit/SKILL.md')).toBe(`${PROJECT_BASE}/${ROVO_HOME}/skills/commit/SKILL.md`);
   });
@@ -113,7 +113,7 @@ describe(createContentRootLinkAnchor, () => {
   });
 
   // The namespace addresses support content under `skills/`, so a sibling tree keeps the harness home even when the
-  // body carrying the link belongs to a source.
+  // body containing the link belongs to a source.
   it('keeps a scripts target at the harness home for a source-owned body', () => {
     const anchor = createContentRootLinkAnchor(buildContext({ domainBase: PROJECT_BASE, supportNamespace: 'org' }));
     expect(anchor('scripts/describe-change.mjs')).toBe('~/.claude/scripts/describe-change.mjs');

@@ -105,7 +105,7 @@ describe(assertDesignatedWriter, () => {
     await expect(assertDesignatedWriter({ command: 'install', homeDir, packageRoot })).resolves.toBeUndefined();
   });
 
-  it('fails on an empty value rather than lapsing into dormancy', async () => {
+  it('fails on an empty value rather than disabling the guard', async () => {
     await writeDeclaration("home-writer: ''\n");
 
     await expect(assertDesignatedWriter({ command: 'install', homeDir, packageRoot })).rejects.toThrow(

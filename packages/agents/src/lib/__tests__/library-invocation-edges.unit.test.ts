@@ -8,10 +8,10 @@ import { libraryResolver } from '../content-sources.ts';
 import { resolveClosure } from '../dependency-resolver.ts';
 import { enumerateCatalogSlugs } from '../library-catalog.ts';
 
-// Asserts that the content library's invocation edges resolve: declaring a skill pulls the skills and subagents it
-// invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
-// frontmatter. An optional body token is the one invocation that contributes no edge, so the closure it stays out of
-// is asserted here alongside the closures the others enter.
+// Asserts that the content library's invocation edges resolve: Declaring a skill pulls the skills and subagents that
+// it invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
+// frontmatter. An optional body token is the one invocation that contributes no edge, so the closure that it stays
+// out of is asserted here alongside the closures entered by the others.
 describe('library invocation edges', () => {
   const contentDir = resolveContentDir();
 
@@ -54,7 +54,7 @@ describe('library invocation edges', () => {
     expect(closure.subagents).toEqual(expect.arrayContaining(['plan-reviewer', 'plan-reviser']));
   });
 
-  it('ships create-pr as a dependency of merge-pr, which names it in its body', async () => {
+  it('includes create-pr as a dependency of merge-pr, which names it in its body', async () => {
     const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toContain('create-pr');
@@ -62,18 +62,18 @@ describe('library invocation edges', () => {
 
   it('resolves the entire content library without a cycle or missing artifact', async () => {
     // The whole-catalog resolution exercises every self-token (dropped, so no self-cycle) and every cross-reference
-    // edge (resolves to a real artifact) at once — the strongest end-to-end check on the reference reclassification.
+    // edge (resolves to a real artifact) at once: the strongest end-to-end check on the reference reclassification.
     const catalog = await enumerateCatalogSlugs(contentDir);
 
     await expect(resolveClosure(catalog, libraryResolver(contentDir))).resolves.toBeDefined();
   });
 
   it('leaves no literal command reference to a known skill or subagent in any deployed content', async () => {
-    // A bare `/slug` naming a library artifact is never rewritten — the render pass only touches `{skill:}` /
-    // `{subagent:}` tokens — so it renders only on Claude wherever it lives. The guard scans every deployed markdown
+    // A bare `/slug` naming a library artifact is never rewritten (the render pass only touches `{skill:}` /
+    // `{subagent:}` tokens). It renders only on Claude wherever it lives. The guard scans every deployed markdown
     // file, not just top-level skill/subagent bodies: `_data` reference docs, `_partials`, rulebooks, and collections
-    // all ship too, and a literal reference in a non-rendered doc is the same defect. The trailing-boundary guard
-    // excludes script paths (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
+    // are all deployed too, and a literal reference in a non-rendered doc is the same defect. The trailing-boundary
+    // guard excludes script paths (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
     const catalog = await enumerateCatalogSlugs(contentDir);
     const known = new Set([...(catalog.skill ?? []), ...(catalog.subagent ?? [])]);
     const tokenRe = /\{(?:skill|subagent)\??:[a-z][a-z0-9-]*\}/g;
@@ -94,7 +94,7 @@ describe('library invocation edges', () => {
   });
 });
 
-/** Lists every markdown file under `dir` recursively — the full set of deployed content the completeness guard scans. */
+/** Lists every markdown file under `dir` recursively: the full set of deployed content scanned by the completeness guard. */
 async function listMarkdownFilesRecursively(dir: string): Promise<Array<string>> {
   const found: Array<string> = [];
   const entries = await readdir(dir, { withFileTypes: true });

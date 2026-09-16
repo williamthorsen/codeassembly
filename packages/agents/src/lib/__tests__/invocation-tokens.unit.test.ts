@@ -13,13 +13,13 @@ import {
 const CLAUDE_SIGILS: InvocationSigils = { skillSigil: '/', subagentSigil: '' };
 const ROVO_SIGILS: InvocationSigils = { skillSigil: '!', subagentSigil: '' };
 
-// The host a rejected token is attributed to, in the content-root-relative form both transforms pass.
+// The host to which a rejected token is attributed, in the content-root-relative form that both transforms pass.
 const HOST = 'skills/wrap-up/SKILL.md';
 
-// A support entry renders with no catalog, because `install` ships one having resolved no declaration.
+// A support entry renders with no catalog, because `install` deploys one having resolved no declaration.
 const SUPPORT_HOST = 'skills/_data/artifact-conventions.md';
 
-// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+// `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
   ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
@@ -81,7 +81,7 @@ describe(extractOptionalInvocationTargets, () => {
 });
 
 describe(locateInvocationTokens, () => {
-  it('reports each token in source order with the index where it begins', () => {
+  it('reports each token in source order with the index at which it begins', () => {
     const content = 'Run {skill:create-commit}, then {subagent:canary}.';
 
     expect(locateInvocationTokens(content)).toEqual([
@@ -124,7 +124,7 @@ describe(resolveRulebookToken, () => {
 
   it.each([
     {
-      name: 'when no catalog is supplied, rejects as honored only where a declaration supplies the set',
+      name: 'when no catalog is supplied, rejects as honored only if a declaration supplies the set',
       slug: 'nmr-scripts',
       rulebooks: undefined,
       reason: /a support entry under skills\/ renders without one/,

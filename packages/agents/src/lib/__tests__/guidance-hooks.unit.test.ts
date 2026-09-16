@@ -23,7 +23,7 @@ describe(listGuidanceHooks, () => {
     ]);
   });
 
-  it('recognizes a directive carrying leading and trailing whitespace', () => {
+  it('recognizes a directive with leading and trailing whitespace', () => {
     const body = '  <!--  guidance-hook:   project-glossary  -->  \t';
 
     expect(listGuidanceHooks(body, SOURCE_LABEL)).toEqual([{ name: 'project-glossary', lineNumber: 1 }]);
@@ -41,7 +41,7 @@ describe(listGuidanceHooks, () => {
     expect(listGuidanceHooks(body, SOURCE_LABEL)).toEqual([]);
   });
 
-  it('rejects a full-line comment that misses the directive shape while reaching for it', () => {
+  it('rejects a full-line comment that resembles the directive shape without matching it', () => {
     for (const line of [
       '<!-- guidance-hooks: implementation-preferences -->',
       '<!-- guidance-hook -->',
@@ -139,7 +139,7 @@ describe(isGuidanceHookName, () => {
     expect(isGuidanceHookName('impl2')).toBe(true);
   });
 
-  it('rejects a name the directive would also reject', () => {
+  it('rejects a name that the directive would also reject', () => {
     expect(isGuidanceHookName('Implementation-Preferences')).toBe(false);
     expect(isGuidanceHookName('2fast')).toBe(false);
     expect(isGuidanceHookName('impl_prefs')).toBe(false);
@@ -209,7 +209,7 @@ describe(fillGuidanceHooks, () => {
     expect(result.filled).toEqual([{ hook: 'impl', slugs: ['layout', 'types'] }]);
   });
 
-  it('carries the stripped body alongside the filled one', () => {
+  it('returns the stripped body alongside the filled one', () => {
     const result = fillGuidanceHooks(
       'Before.\n<!-- guidance-hook: impl -->\nAfter.\n',
       bind({ impl: [layout] }),
@@ -278,14 +278,14 @@ describe(assertFilledAnchorsResolve, () => {
     expect(() => assertFilledAnchorsResolve(result, 'a.md')).not.toThrow();
   });
 
-  it('attributes a collision the fill introduces to the binding that caused it', () => {
+  it('attributes a collision that the fill introduces to the binding that caused it', () => {
     const source = '## Layout\n\n[see](#layout)\n\n<!-- guidance-hook: impl -->\n';
     const result = fillGuidanceHooks(source, bind({ impl: [layout] }), 'a.md');
 
     expect(() => assertFilledAnchorsResolve(result, 'a.md')).toThrow(/binding introduced the failure: impl <- layout/);
   });
 
-  it('reports a collision the host carried on its own without blaming a binding', () => {
+  it('reports a collision that the host contains on its own without blaming a binding', () => {
     const source = '## Dup\n\n## Dup\n\n[see](#dup)\n\n<!-- guidance-hook: impl -->\n';
     const result = fillGuidanceHooks(source, bind({ impl: [types] }), 'a.md');
 
@@ -299,7 +299,7 @@ describe(assertFilledAnchorsResolve, () => {
 const layout = { slug: 'layout', body: '# Layout\n\nGroup source by role.\n' };
 const types = { slug: 'types', body: '# Types\n\nExport by name.\n' };
 
-/** Builds the fills map from a plain object, so a test names bindings without constructing a Map inline. */
+/** Builds the fills map from a plain object, so that a test names bindings without constructing a Map inline. */
 function bind(bindings: Record<string, ReadonlyArray<GuidanceHookFill>>): GuidanceHookFills {
   return new Map(Object.entries(bindings));
 }

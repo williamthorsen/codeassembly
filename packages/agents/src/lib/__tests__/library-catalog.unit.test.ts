@@ -108,19 +108,19 @@ describe(isSkillDirectory, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('recognizes a directory holding a SKILL.md file', async () => {
+  it('recognizes a directory containing a SKILL.md file', async () => {
     await writeSkill(contentDir, 'people-report');
 
     expect(await isSkillDirectory(path.join(contentDir, 'skills', 'people-report'))).toBe(true);
   });
 
-  it('rejects a directory named SKILL.md, which carries no body to install', async () => {
+  it('rejects a directory named SKILL.md, which contains no body to install', async () => {
     await mkdir(path.join(contentDir, 'skills', 'weird', 'SKILL.md'), { recursive: true });
 
     expect(await isSkillDirectory(path.join(contentDir, 'skills', 'weird'))).toBe(false);
   });
 
-  it('follows a symlinked SKILL.md to the file it points at', async () => {
+  it('follows a symlinked SKILL.md to the file that it points at', async () => {
     await writeSkill(contentDir, 'people-report');
     const linked = path.join(contentDir, 'skills', 'linked');
     await mkdir(linked, { recursive: true });
@@ -129,7 +129,7 @@ describe(isSkillDirectory, () => {
     expect(await isSkillDirectory(linked)).toBe(true);
   });
 
-  it('rejects a plain file sitting directly under skills/', async () => {
+  it('rejects a plain file directly under skills/', async () => {
     const skillsDir = path.join(contentDir, 'skills');
     await mkdir(skillsDir, { recursive: true });
     await writeFile(path.join(skillsDir, 'notes.json'), '{}\n', 'utf8');
@@ -163,8 +163,8 @@ describe(listSupportEntries, () => {
   });
 
   // `_data` establishes that a `_` prefix marks support content rather than an exclusion, so `__tests__` needs one of
-  // its own or it installs into every harness home alongside the reference files skills actually read.
-  it('excludes a test directory, which shares the support-content prefix without shipping', async () => {
+  // its own or it installs into every harness home alongside the reference files that skills actually read.
+  it('excludes a test directory, which shares the support-content prefix without being installed', async () => {
     const skillsDir = path.join(contentDir, 'skills');
     await writeSkill(contentDir, 'people-report');
     await mkdir(path.join(skillsDir, '_data'), { recursive: true });
@@ -178,7 +178,7 @@ describe(listSupportEntries, () => {
   });
 });
 
-/** Sorts each type's slugs so assertions are independent of filesystem read order. */
+/** Sorts each type's slugs so that assertions are independent of filesystem read order. */
 function sortCatalog(catalog: ArtifactDependencies): ArtifactDependencies {
   return {
     rulebook: (catalog.rulebook ?? []).toSorted(),

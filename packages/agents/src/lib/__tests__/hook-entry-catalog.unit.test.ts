@@ -11,11 +11,11 @@ const ROVO_SCRIPTS_DIR = `/home/user/${HARNESSES.rovo.homeDir}/scripts`;
 function readClaudeCommand(group: Record<string, unknown>): string {
   const hooks = group.hooks;
   if (!Array.isArray(hooks) || hooks.length !== 1) {
-    throw new Error('Expected the matcher group to hold exactly one hook');
+    throw new Error('Expected the matcher group to contain exactly one hook');
   }
   const hook: unknown = hooks[0];
   if (!isRecord(hook) || typeof hook.command !== 'string') {
-    throw new Error('Expected the hook to carry a command string');
+    throw new Error('Expected the hook to have a command string');
   }
   return hook.command;
 }
@@ -62,7 +62,7 @@ describe(buildRovoHookEntries, () => {
     }
   });
 
-  it('produces entries the sentinel matcher claims', () => {
+  it('produces entries claimed by the sentinel matcher', () => {
     for (const entry of buildRovoHookEntries(ROVO_SCRIPTS_DIR)) {
       expect(isSentinelOwned(entry)).toBe(true);
     }
@@ -73,7 +73,7 @@ describe(buildRovoHookEntries, () => {
   });
 
   it('keeps the sentinel value frozen', () => {
-    // Asserted as a literal: every other assertion in this file compares against the constant and
+    // Asserted as a literal: Every other assertion in this file compares against the constant and
     // would pass for any value.
     expect(HOOK_SENTINEL).toBe('--sentinel codeassembly-agents');
   });
