@@ -12,7 +12,7 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The cutter's assignment, which selects what survives. */
-const ASSIGNMENT_QUESTION = 'would this reader act on it?';
+const ASSIGNMENT_QUESTION = 'Would this reader act on it?';
 
 /** Phrases stating the deletion-only authority, which a rewrite granting the cutter license to reword would lose. */
 const AUTHORITY_PHRASES: ReadonlyArray<string> = [

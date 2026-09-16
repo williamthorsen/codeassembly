@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
+# Emits canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
 # Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced on demand by the bundled `derive-session-context`
 # helper) for session-level fields and runs git for the rest. Skills consume the
@@ -78,7 +78,7 @@ Usage:
   $PROG --format json
   $PROG --help
 
-Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
+Emits canonical artifact-frontmatter fields as YAML (default) or JSON.
 See script header for field list, ordering, and omission semantics.
 EOF
   exit "$exit_code"
@@ -261,8 +261,8 @@ add_extra() {
 
 # Appends one item to a flow-list extension key, registering the key on its
 # first item. Items accumulate joined by ASCII US, the one character that an
-# item may not contain; `--extra-list` splits on `,` instead, which a title
-# carrying one would break apart.
+# item may not contain; `--extra-list` splits on `,` instead, which would break
+# apart a title containing one.
 add_extra_item() {
   local arg="$1"
   local -n keys_ref="$2"

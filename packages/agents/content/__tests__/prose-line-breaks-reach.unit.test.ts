@@ -18,21 +18,21 @@ const PARTIAL = '_partials/prose-line-breaks.md';
 /** The rule's opening, which the single-statement counts key on. */
 const RULE_HEADLINE = 'No hard line breaks';
 
-/** Phrases that must survive an edit to the partial, so a gutted rule cannot still pass on its opening alone. */
+/** Phrases that must survive an edit to the partial, so that a gutted rule cannot still pass on its opening alone. */
 const RULE_PHRASES: ReadonlyArray<string> = [
   RULE_HEADLINE,
   'Do not insert newlines to wrap at a column width',
   "the project's formatter decides instead",
 ];
 
-// Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
+// Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
 // Delivery is narrower than application. The partial applies to any generated Markdown, saved artifacts included,
-// but a place here goes to a body in context as prose is composed for somewhere outside the repository: a commit
-// body, or a GitHub issue, pull request, or comment. A body that composes only into a local artifact is absent by
-// decision, not by oversight, and one that passes along prose someone else composed belongs with that composer
-// instead.
+// but this list contains a body only when it is in context as prose is composed for somewhere outside the
+// repository: a commit body, or a GitHub issue, pull request, or comment. A body that composes only into a local
+// artifact is absent by decision, not by oversight, and one that passes along prose composed by someone else
+// belongs with that composer instead.
 const CARRIERS: ReadonlyArray<string> = [
   'guidance/rulebooks/commit-conventions.md',
   'skills/create-commit/SKILL.md',

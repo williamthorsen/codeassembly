@@ -311,7 +311,7 @@ async function listSkillSlugsDeclaring(hook: string): Promise<ReadonlyArray<stri
   const slugs: Array<string> = [];
   const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
   for (const entry of entries) {
-    // `_data` joins the skipped names here: A support entry is no skill, and the support route renders fills dropped.
+    // `_data` joins the skipped names here: A support entry is no skill, and the support route does not render a fill.
     if (!entry.isDirectory() || entry.name.startsWith('_') || isSkippedSkillEntry(entry.name)) {
       continue;
     }

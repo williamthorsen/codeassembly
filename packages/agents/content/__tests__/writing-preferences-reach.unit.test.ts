@@ -7,7 +7,7 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Two routes deliver these rules, and each is asserted where it can be: the ambient route is a `delivery` value on the
+// Two routes deliver these rules, and each is asserted where it can be: The ambient route is a `delivery` value on the
 // rulebook, checked here, and the hook route is a row in `guidance-hook-reach.unit.test.ts`. Both rest on each rule
 // having one statement home, which the last assertion checks. A second statement elsewhere in the corpus is the drift
 // that separated these rules from their rulebook to begin with.

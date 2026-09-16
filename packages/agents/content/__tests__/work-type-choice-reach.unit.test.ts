@@ -17,7 +17,7 @@ const PARTIAL = '_partials/work-type-choice.md';
 /** The test's opening, which the single-statement counts key on. */
 const RULE_HEADLINE = 'Whom a change affects decides its type';
 
-/** Phrases that must survive an edit to the partial, so a gutted test cannot still pass on its opening alone. */
+/** Phrases that must survive an edit to the partial, so that a gutted test cannot still pass on its opening alone. */
 const RULE_PHRASES: ReadonlyArray<string> = [
   RULE_HEADLINE,
   'Never infer a type from how earlier changes were typed',
@@ -26,7 +26,7 @@ const RULE_PHRASES: ReadonlyArray<string> = [
   'Guidance to agents is never `docs`',
 ];
 
-// Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
+// Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug. `orchestrated-coder` reads the test through its `commit-conventions`
 // injection, so it carries none directly.
 const CARRIERS: ReadonlyArray<string> = [

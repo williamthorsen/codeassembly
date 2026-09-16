@@ -60,7 +60,7 @@ You will receive:
 Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc. Format:
 
 ```markdown
-# Implementation Plan
+# Implementation plan
 
 ## Overview
 
