@@ -149,7 +149,7 @@ var default_default = defineRdyKit({
             const content = readFile(GUIDANCE_PATH);
             return content !== void 0 && content.trim().length > 0;
           },
-          fix: `Run \`/update-project-guidance\` to author ${GUIDANCE_PATH} with the context agents need`
+          fix: `Run \`/update-project-guidance\` to author ${GUIDANCE_PATH} with the context that agents need`
         },
         {
           name: `${CLAUDE_MEMORY_PATH} imports ${GUIDANCE_PATH}`,
