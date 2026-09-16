@@ -73,7 +73,7 @@ export async function retractDroppedHarnesses(options: {
 
 /**
  * Removes the harness's session-lifecycle hook entries, so its config stops invoking a relay script that this pass has
- * just deleted. An unparseable config costs the unwiring a warning rather than the file removals that it accompanies.
+ * just deleted. Reports a warning when the config cannot be parsed, and does not fail the retraction.
  */
 async function unwireHooks(
   harnessId: HarnessId,

@@ -244,8 +244,8 @@ function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
  * one: A rulebook resolved from the library has frontmatter that they cannot edit, leaving the binding as the half
  * that is theirs.
  *
- * `bound-unreached` is info rather than a warning, because a home-tier binding legitimately outruns a project that
- * declares few skills and no subagents, and warning on that would be noise on every sync there.
+ * `bound-unreached` is info rather than a warning: A home-tier binding applies to every project, so a project that
+ * deploys nothing declaring the hook would see a warning on every sync.
  */
 function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLine {
   switch (advisory.kind) {
