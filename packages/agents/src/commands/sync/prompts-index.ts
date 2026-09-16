@@ -9,11 +9,12 @@ import type { HarnessId } from '../../lib/types.ts';
 import type { SyncDomain } from './sync-domain.ts';
 
 /**
- * Reconciles the Rovo Dev `prompts.yml` index so it lists the user-invocable skills currently in the harness skills
- * dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file, preserving any
- * foreign entries; when no skills remain, the region is stripped — and the file deleted when nothing foreign is left. A
- * no-op for non-Rovo Dev harnesses and for a file carrying no codeassembly region. Both domains share this one path, so
- * the home file is merged rather than whole-file overwritten, matching the repo file's non-clobbering shape.
+ * Reconciles the Rovo Dev `prompts.yml` index so that it lists the user-invocable skills currently in the harness
+ * skills dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file,
+ * preserving any foreign entries; when no skills remain, the region is stripped, and the file deleted when nothing
+ * foreign is left. A no-op for non-Rovo Dev harnesses and for a file with no codeassembly region. Both domains share
+ * this one path, so the home file is merged rather than whole-file overwritten, matching the repo file's
+ * non-clobbering shape.
  */
 export async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): Promise<void> {
   for (const harnessId of harnessIds) {
@@ -30,8 +31,8 @@ export async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, do
       continue;
     }
 
-    // No skills remain: strip our region, deleting the file when nothing foreign survives. A file we never owned (no
-    // region) is left untouched.
+    // No skills remain: Strip our region, deleting the file when nothing foreign survives. A file that we never owned
+    // (no region) is left untouched.
     if (!hasPromptsRegion(existing)) {
       continue;
     }
@@ -40,7 +41,9 @@ export async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, do
   }
 }
 
-/** Lists the Rovo Dev `prompts.yml` paths a sync of `domain` would reconcile — one per targeted Rovo Dev harness. */
+/**
+ * Lists the Rovo Dev `prompts.yml` paths that a sync of `domain` would reconcile: one per targeted Rovo Dev harness.
+ */
 export function resolvePromptsYmlPaths(
   harnessIds: ReadonlyArray<HarnessId>,
   domain: SyncDomain,

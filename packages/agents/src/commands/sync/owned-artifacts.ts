@@ -1,6 +1,6 @@
 /**
- * What `sync` recognizes as its own on disk: the provenance markers it stamps, and the scans that recover the owned
- * skills and subagents under a harness's deployed trees. Every scan reads a marker and nothing else, which is what
+ * What `sync` recognizes as its own on disk: the provenance markers that it stamps, and the scans that recover the
+ * owned skills and subagents under a harness's deployed trees. Every scan reads a marker and nothing else, which
  * keeps a hand-authored artifact from being claimed for deletion.
  */
 
@@ -15,9 +15,9 @@ import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
 import type { HarnessId } from '../../lib/types.ts';
 
 /**
- * Lists the owned declared-skill dirs each targeted harness no longer declares, so delivery retracts them before it
- * writes. A dir is an orphan once its slug is no longer among the declared skills targeting that harness, which
- * covers both an undeclared skill and one that dropped this harness.
+ * Lists the owned declared-skill dirs that each targeted harness no longer declares, so that delivery retracts them
+ * before it writes. A dir is an orphan once its slug is no longer among the declared skills targeting that harness,
+ * which covers both an undeclared skill and one that dropped this harness.
  */
 export async function findDeclaredSkillOrphans(
   targets: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string }>,
@@ -39,9 +39,9 @@ export async function findDeclaredSkillOrphans(
 }
 
 /**
- * Lists the owned rulebook-skill dirs each targeted harness no longer wants, keyed against the directory each stable
- * slug currently belongs in. A dir is an orphan once its marker slug no longer maps to it — because the rulebook is
- * no longer skill-delivered, or because its resolved skill name changed.
+ * Lists the owned rulebook-skill dirs that each targeted harness no longer wants, keyed against the directory in
+ * which each stable slug currently belongs. A dir is an orphan once its marker slug no longer maps to it, because the
+ * rulebook is no longer skill-delivered, or because its resolved skill name changed.
  */
 export async function findRulebookSkillOrphans(
   targets: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string }>,
@@ -59,8 +59,8 @@ export async function findRulebookSkillOrphans(
 }
 
 /**
- * Lists the owned subagent files each targeted harness no longer declares. A marker-less hand-authored file is never
- * claimed, so it survives untouched.
+ * Lists the owned subagent files that each targeted harness no longer declares. A marker-less hand-authored file is
+ * never claimed, so it survives untouched.
  */
 export async function findSubagentOrphans(
   targets: ReadonlyArray<{ subagentsDir: string }>,
@@ -77,10 +77,10 @@ export async function findSubagentOrphans(
 }
 
 /**
- * Lists the declared skills sync owns under `skillsDir` as `{ dir, slug }` pairs — those whose `SKILL.md` carries the
- * declared-skill marker, paired with the slug recovered from it. Reads only the declared-skill marker, so it never
- * claims a rulebook-skill dir or a hand-authored skill. Returns an empty list when the directory is absent; entries
- * without a readable `SKILL.md` are skipped.
+ * Lists the declared skills that sync owns under `skillsDir` as `{ dir, slug }` pairs: those whose `SKILL.md`
+ * contains the declared-skill marker, paired with the slug recovered from it. Reads only the declared-skill marker,
+ * so it never claims a rulebook-skill dir or a hand-authored skill. Returns an empty list when the directory is
+ * absent; entries without a readable `SKILL.md` are skipped.
  */
 export async function listOwnedDeclaredSkills(
   skillsDir: string,
@@ -115,7 +115,7 @@ export async function listOwnedDeclaredSkills(
 }
 
 /**
- * Lists the sync-owned skills under `skillsDir` as `{ dir, slug }` pairs — those whose `SKILL.md` carries the
+ * Lists the sync-owned skills under `skillsDir` as `{ dir, slug }` pairs: those whose `SKILL.md` contains the
  * rulebook provenance marker, paired with the slug recovered from it. The directory locates the skill on disk;
  * the slug is its stable identity, which the directory may no longer match. Returns an empty list when the
  * directory is absent. Entries without a readable `SKILL.md` (a marker-less hand-authored skill, a stray
@@ -138,7 +138,7 @@ export async function listOwnedSkills(skillsDir: string): Promise<ReadonlyArray<
     try {
       content = await readFile(path.join(skillsDir, entry, 'SKILL.md'), 'utf8');
     } catch (error: unknown) {
-      // Not a skill dir: the SKILL.md is absent, or the entry is a regular file (ENOTDIR on read-through).
+      // Not a skill dir: The SKILL.md is absent, or the entry is a regular file (ENOTDIR on read-through).
       if (isMissingFile(error)) {
         continue;
       }
@@ -153,8 +153,8 @@ export async function listOwnedSkills(skillsDir: string): Promise<ReadonlyArray<
 }
 
 /**
- * Lists the sync-owned subagents under `subagentsDir` as `{ file, slug }` pairs — the flat `.md` files whose content
- * carries the `codeassembly-subagent:` ownership marker, paired with the slug recovered from it. Reads only that
+ * Lists the sync-owned subagents under `subagentsDir` as `{ file, slug }` pairs: the flat `.md` files whose content
+ * contains the `codeassembly-subagent:` ownership marker, paired with the slug recovered from it. Reads only that
  * marker, so a marker-less hand-authored file is never claimed. Returns an empty list when the directory is absent;
  * non-`.md` entries and directories are skipped.
  */

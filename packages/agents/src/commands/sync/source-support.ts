@@ -16,9 +16,9 @@ import {
 import type { HarnessSkillTarget, ResolveAnchorContext } from './render-contexts.ts';
 
 /**
- * Lists the namespace paths a real run would retract, one per targeted harness's support root, judged against the tree
- * delivery leaves rather than the one on disk. The plans name both halves of that: which namespaces gain content and
- * which delivery empties.
+ * Lists the namespace paths that a real run would retract, one per targeted harness's support root, judged against
+ * the tree left by delivery rather than the one on disk. The plans name both halves of that: which namespaces gain
+ * content and which delivery empties.
  */
 export async function planSourceSupportRetractions(
   targets: ReadonlyArray<HarnessSkillTarget>,
@@ -33,8 +33,8 @@ export async function planSourceSupportRetractions(
 
 /**
  * Delivers each source's skill support entries into that source's namespace under every targeted harness's skills dir,
- * then retracts the namespaces no declared source claims. Delivery runs first so a source that dropped its last
- * support entry leaves an empty namespace root for the retraction to retire in the same pass.
+ * then retracts the namespaces that no declared source claims. Delivery runs first so that a source that dropped its
+ * last support entry leaves an empty namespace root for the retraction to retire in the same pass.
  */
 export async function reconcileSourceSupport(
   targets: ReadonlyArray<HarnessSkillTarget>,
@@ -43,7 +43,7 @@ export async function reconcileSourceSupport(
   for (const plan of plans) {
     await deploySourceSupport(plan.destDir, plan.entries);
   }
-  // Rooted in the targets rather than the plans: a run that declares no source has no plans, and its support roots
+  // Rooted in the targets rather than the plans: A run that declares no source has no plans, and its support roots
   // are exactly the ones whose every namespace is now undeclared.
   for (const sourcesRoot of resolveSupportRoots(targets)) {
     await retractUndeclaredSourceSupport(sourcesRoot, resolveSupportOutcome(plans, sourcesRoot));
@@ -53,10 +53,10 @@ export async function reconcileSourceSupport(
 /**
  * Renders every source's support entries for every targeted harness, pairing each result with where it deploys.
  *
- * Rendering is where a defect in a package's reference content surfaces, so calling this ahead of every write is what
- * fails the run — dry-run included — before anything lands. The gate, the dry-run preview, and the delivery pass all
- * read this one result, which is what keeps them from disagreeing about what a source ships and from rendering the
- * same content more than once.
+ * Rendering is the step that reveals a defect in a package's reference content, so calling this ahead of every write
+ * fails the run, dry-run included, before anything is written. The gate, the dry-run preview, and the delivery pass
+ * all read this one result, which keeps them from disagreeing about what a source ships and from rendering the same
+ * content more than once.
  */
 export async function renderSourceSupportPlans(
   targets: ReadonlyArray<HarnessSkillTarget>,
@@ -101,9 +101,9 @@ export async function renderSourceSupportPlans(
 }
 
 /**
- * One source's support entries rendered for one harness, paired with the namespace directory they deploy into and
- * what delivery will do there: Write the entries, remove a namespace the source no longer fills, or nothing at all.
- * Carrying the verdict is what lets the preview describe the removals without re-deriving them from the tree that
+ * One source's support entries rendered for one harness, paired with the namespace directory into which they deploy
+ * and what delivery will do there: write the entries, remove a namespace that the source no longer fills, or nothing
+ * at all. Including the verdict lets the preview describe the removals without re-deriving them from the tree that
  * delivery is about to change.
  */
 export interface SourceSupportPlan {
@@ -125,7 +125,7 @@ function resolveSupportOutcome(plans: ReadonlyArray<SourceSupportPlan>, sourcesR
   };
 }
 
-/** Lists the support root each targeted harness keeps its per-source namespaces under. */
+/** Lists the support root under which each targeted harness keeps its per-source namespaces. */
 function resolveSupportRoots(targets: ReadonlyArray<HarnessSkillTarget>): ReadonlyArray<string> {
   return targets.map((target) => path.join(target.skillsDir, SOURCE_SUPPORT_DIR));
 }

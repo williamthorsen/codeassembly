@@ -9,11 +9,11 @@ import type { InstallOptions } from '../../lib/types.ts';
 import type { SyncDomain } from './sync-domain.ts';
 
 /**
- * Retires a former ambient host: removes the sync-owned rulebook blocks it carries and writes back the stripped
+ * Retires a former ambient host: removes the sync-owned rulebook blocks that it contains and writes back the stripped
  * remainder, so hand-authored content survives. Ambient delivery targets the harness regions now, and a lingering
- * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing — right for
- * one sync created itself, wrong for a hand-authored file like the project's own `AGENTS.md`, which is never
- * deleted. A missing host, and one carrying nothing to retire, are both no-ops.
+ * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing: right for
+ * one that sync created itself, wrong for a hand-authored file like the project's own `AGENTS.md`, which is never
+ * deleted. A missing host, and one with nothing to retire, are both no-ops.
  */
 export async function retireAmbientHost(
   options: InstallOptions,
@@ -45,15 +45,16 @@ export async function retireAmbientHost(
   return { kind: 'ambient-host', hostPath, emptied: deletable };
 }
 
-/** A retired legacy output, and whether the host it names held nothing but retired blocks. */
+/** A retired legacy output, and whether the host that it names held nothing but retired blocks. */
 export type Retirement =
   | { readonly kind: 'ambient-host'; readonly hostPath: string; readonly emptied: boolean }
   | { readonly kind: 'neutral-rulebooks'; readonly dir: string };
 
 /**
- * Retires the outputs this domain no longer produces: the neutral rulebook tree in both domains, and, in the project
- * domain, the rulebook blocks the hand-authored project guidance used to host. Runs on every sync that has a
- * declaration to act on, so a project picks the retirement up on its next run rather than needing a migration step.
+ * Retires the outputs that this domain no longer produces: the neutral rulebook tree in both domains, and, in the
+ * project domain, the rulebook blocks formerly hosted by the hand-authored project guidance. Runs on every sync that
+ * has a declaration to act on, so a project picks the retirement up on its next run rather than needing a migration
+ * step.
  *
  * Both guidance locations are swept. A project that renames `.agents/PROJECT.md` to the repository-root `AGENTS.md`
  * before its next sync would otherwise carry the stale blocks into the new location for good.
@@ -77,8 +78,8 @@ export async function retireRetiredOutputs(
 
 /**
  * Retires the neutral rulebook tree at `<baseDir>/.agents/rulebooks/`. Nothing reads it, so it is removed rather than
- * maintained. Only the `.md` files sync materialized are deleted, and the directory itself only once nothing else
- * remains in it, so anything a user placed alongside them survives. A missing directory is a no-op.
+ * maintained. Only the `.md` files that sync materialized are deleted, and the directory itself only once nothing
+ * else remains in it; anything a user placed alongside them survives. A missing directory is a no-op.
  */
 async function retireNeutralRulebooks(options: InstallOptions, baseDir: string): Promise<Retirement | undefined> {
   const neutralDir = path.join(baseDir, '.agents', 'rulebooks');

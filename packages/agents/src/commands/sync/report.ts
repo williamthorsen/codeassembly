@@ -20,7 +20,7 @@ const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
   collection: 3,
 };
 
-/** The verbs a retraction line takes, so the same renderer serves a preview and the run it previews. */
+/** The verbs that a retraction line takes, so that the same renderer serves a preview and the run that it previews. */
 interface RetractionVerbs {
   readonly remove: string;
   readonly strip: string;
@@ -31,7 +31,7 @@ const PLANNED_VERBS: RetractionVerbs = { remove: 'remove', strip: 'strip' };
 
 /**
  * Renders what a dry run reports: where it would deploy, what it would retire, how each artifact resolved, and every
- * write and retraction it would perform.
+ * write and retraction that it would perform.
  */
 export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLine> {
   if (outcome.kind === 'no-declaration') {
@@ -63,8 +63,8 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
   for (const hostPath of plan.unignoredHosts) {
     lines.push(describeUnignoredHost(hostPath));
   }
-  // Reported here as well as on a live run: each names a property of the declaration rather than of the writes, and a
-  // dry run is where a declaration gets checked before it is committed to.
+  // Reported here as well as on a live run: Each names a property of the declaration rather than of the writes, and a
+  // dry run is when a declaration gets checked before it is committed to.
   lines.push(
     ...plan.missingSources.map(describeMissingSource),
     ...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory),
@@ -74,7 +74,7 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
 
 /**
  * Renders what a live run reports: where it deployed, what it retired, what it delivered and retracted, and every
- * warning the run raised.
+ * warning that the run raised.
  */
 export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine> {
   if (outcome.kind === 'no-declaration') {
@@ -121,12 +121,12 @@ function compareResolutionEntries(a: ResolutionEntry, b: ResolutionEntry): numbe
   return a.slug.localeCompare(b.slug);
 }
 
-/** Totals the orphan paths one retraction pass found across the directories it swept. */
+/** Totals the orphan paths found by one retraction pass across the directories that it swept. */
 function countOrphans(byDir: ReadonlyArray<{ readonly orphans: ReadonlyArray<string> }>): number {
   return byDir.reduce((total, entry) => total + entry.orphans.length, 0);
 }
 
-/** The dry-run line for one host's plan, naming the host and the action a real run would take on it. */
+/** The dry-run line for one host's plan, naming the host and the action that a real run would take on it. */
 function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): ReportLine | undefined {
   if (plan.kind === 'skip') {
     const reason = describeAmbientSkip(plan.reason, hostPath);
@@ -145,7 +145,7 @@ function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): Repor
 /**
  * The reason one ambient host is skipped, or `undefined` when the skip is not worth reporting. A scope declaring
  * nothing ambient is an ordinary outcome rather than news, so neither path reports it; every other cause names a
- * problem the user can act on, and both paths report it in these same words.
+ * problem that the user can act on, and both paths report it in these same words.
  */
 function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): string | undefined {
   switch (reason.cause) {
@@ -160,8 +160,8 @@ function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): strin
 
 /**
  * The warning for each dropped harness whose ambient host the sweep declines to touch. Emitted at the report's top
- * level, beside the ambient-delivery skips it mirrors, rather than inside the harness's block: nothing was retracted
- * there, and a run that says only what it removed reads clean over guidance the declaration has withdrawn.
+ * level, beside the ambient-delivery skips that it mirrors, rather than inside the harness's block: Nothing was
+ * retracted there, and a run that says only what it removed reads clean over guidance withdrawn by the declaration.
  */
 function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> =>
@@ -205,7 +205,7 @@ function describeDeliveries(plan: SyncPlan): string {
 
 /**
  * The lines naming what one dropped harness still holds: one for each path removed and each region stripped. `verbs`
- * carries the tense, so a preview reads as what a run would do and a run as what it did.
+ * supplies the tense, so a preview reads as what a run would do and a run as what it did.
  */
 function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: RetractionVerbs): ReadonlyArray<string> {
   const lines = [
@@ -225,7 +225,7 @@ function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: Ret
 
 /**
  * The live-run lines for the dropped-harness sweep, one headed block per harness. Headed rather than counted into the
- * closing summary: that sentence reconciles the targeted set, and a harness leaving that set is a different event.
+ * closing summary: That sentence reconciles the targeted set, and a harness leaving that set is a different event.
  */
 function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => {
@@ -241,7 +241,7 @@ function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
 
 /**
  * Renders one guidance-hook advisory. `bound-undeclared` names both remedies because the reader may control only
- * one: a rulebook resolved from the library carries frontmatter they cannot edit, leaving the binding as the half
+ * one: A rulebook resolved from the library has frontmatter that they cannot edit, leaving the binding as the half
  * that is theirs.
  *
  * `bound-unreached` is info rather than a warning, because a home-tier binding legitimately outruns a project that
@@ -261,7 +261,7 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
         level: 'info',
         text:
           `💡 Guidance hook "${advisory.hook}" is bound, but no deployed skill or subagent declares it, so the ` +
-          'binding delivers nothing. Check the hook name, or declare a skill or subagent that carries it.',
+          'binding delivers nothing. Check the hook name, or declare a skill or subagent that declares it.',
       };
     case 'declared-unbound':
       return {
@@ -273,14 +273,14 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
   }
 }
 
-/** Names what retraction does to one host carrying a sync-owned region: delete the file, or strip the region. */
+/** Names what retraction does to one host containing a sync-owned region: delete the file, or strip the region. */
 function describeHostRetraction(retraction: HostRetraction, region: string, verbs: RetractionVerbs): string {
   return retraction.kind === 'delete'
     ? `${verbs.remove} ${retraction.path}`
     : `${verbs.strip} the ${region} region from ${retraction.path}`;
 }
 
-/** The advice for a scope that carries no declaration to act on, naming the remedy the global tier has. */
+/** The advice for a scope that has no declaration to act on, naming the remedy that the global tier has. */
 function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
@@ -300,7 +300,7 @@ function describePlannedDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLi
   });
 }
 
-/** The dry-run lines for every retraction a run would perform, across the three delivery namespaces. */
+/** The dry-run lines for every retraction that a run would perform, across the three delivery namespaces. */
 function describePlannedRetractions(plan: SyncPlan): ReadonlyArray<ReportLine> {
   const lines: Array<ReportLine> = [];
   for (const { skillsDir, orphans } of plan.skillOrphansByDir) {
@@ -327,7 +327,7 @@ function describePlannedRetractions(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return lines;
 }
 
-/** The dry-run lines for every write a run would perform, in the order the delivery passes run. */
+/** The dry-run lines for every write that a run would perform, in the order the delivery passes run. */
 function describePlannedWrites(plan: SyncPlan): ReadonlyArray<ReportLine> {
   const lines: Array<ReportLine> = [];
   for (const { hostPath, plan: hostPlan } of plan.ambientHosts) {
@@ -416,37 +416,37 @@ function describeStaleAmbientHost(status: 'malformed' | 'missing' | 'no-region',
     case 'no-region':
       return `${guidanceFile} carries no ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
     case 'malformed':
-      return `${guidanceFile} carries a damaged ambient region — an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
+      return `${guidanceFile} carries a damaged ambient region: an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
   }
 }
 
-/** The advisory naming a host a run writes that git does not ignore. */
+/** The advisory naming a host that a run writes and that git does not ignore. */
 function describeUnignoredHost(hostPath: string): ReportLine {
   return {
     level: 'warn',
     text:
-      `⚠️ ${hostPath} is not git-ignored. It carries machine-local guidance, so add it to .gitignore to keep it ` +
+      `⚠️ ${hostPath} is not git-ignored. It contains machine-local guidance, so add it to .gitignore to keep it ` +
       'out of version control.',
   };
 }
 
 /**
- * Renders the advice naming each dependency that ships content the project has not declared, as the `packages:` block
- * that adopts them. Emitted as the block rather than as prose so it can be pasted rather than transcribed.
+ * Renders the advice naming each dependency that ships content that the project has not declared, as the `packages:`
+ * block that adopts them. Emitted as the block rather than as prose so that it can be pasted rather than transcribed.
  */
 function renderPackageAdvice(names: ReadonlyArray<string>): string {
   const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
   const entries = names.map((name) => `    - '${name}'`).join('\n');
   return (
-    `💡 ${names.length} ${subject} CodeAssembly guidance this project has not declared. ` +
+    `💡 ${names.length} ${subject} CodeAssembly guidance that this project has not declared. ` +
     `To adopt, add to .agents/codeassembly.yaml:\n\npackages:\n  use:\n${entries}\n`
   );
 }
 
 /**
- * Renders the per-artifact resolution report — each deployed artifact and the source it resolved from (`← library` or
- * `← source "<name>"`), with `(shadows library)` appended on a shadow — sorted by type then slug. Type and slug columns
- * are padded for scannability. Pure and deterministic for a given entry set.
+ * Renders the per-artifact resolution report, sorted by type then slug: each deployed artifact and the source from
+ * which it resolved (`← library` or `← source "<name>"`), with `(shadows library)` appended on a shadow. Type and slug
+ * columns are padded for scannability. Pure and deterministic for a given entry set.
  */
 function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string {
   const sorted = entries.toSorted(compareResolutionEntries);
