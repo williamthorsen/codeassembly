@@ -87,7 +87,7 @@ export async function linkItem(src: string, dest: string): Promise<void> {
 }
 
 /**
- * Remove an existing symlink at the destination so subsequent writes create a real file
+ * Removes an existing symlink at the destination so that subsequent writes create a real file
  * instead of writing through the symlink into an unrelated directory (e.g., a dotfiles repo).
  */
 export async function unlinkIfSymlink(destPath: string): Promise<void> {

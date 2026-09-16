@@ -31,7 +31,7 @@ const CHILDREN_PLACEHOLDER_REGEX = /^[ \t]*<!--[ \t]*children[ \t]*-->[ \t]*$/;
  */
 const ANY_INCLUDE_LIKE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*.*-->[ \t]*$/;
 
-/** Reason an include directive failed to resolve, surfaced in error messages. */
+/** Reason an include directive failed to resolve, reported in error messages. */
 type FailureReason =
   | 'cycle'
   | 'not-found'
@@ -58,7 +58,7 @@ export class DirectiveExpansionError extends Error {
  * Recursively expands include directives in a markdown file. Three directive shapes are
  * supported: self-close (`<!-- include: path / -->`), open (`<!-- include: path -->`)
  * paired with close (`<!-- /include -->`), and the `<!-- children -->` slot placeholder
- * inside a partial. Resolution is anchored to the source tree: each directive's path is
+ * inside a partial. Resolution is anchored to the source tree: Each directive's path is
  * resolved against the directive-bearing file's directory, and resolved paths must remain
  * under `contentDir`. Throws `DirectiveExpansionError` for missing targets, out-of-tree
  * paths, include cycles, malformed directives, and slot/children mismatches.
@@ -209,7 +209,7 @@ function resolveTarget(filePath: string, contentDir: string, target: string, lin
   const resolved = path.resolve(path.dirname(filePath), target);
 
   // Lexical containment check. Symlinks under contentDir that point outside are not realpath'd
-  // — source trees are not expected to contain symlinks; widen this guard if that changes.
+  // -- source trees are not expected to contain symlinks; widen this guard if that changes.
   const relative = path.relative(contentDir, resolved);
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new DirectiveExpansionError(
@@ -247,7 +247,7 @@ async function expandPartialWithSlot(
   const partialLines = partialBody.split('\n');
 
   // Locate the `<!-- children -->` placeholder. There may be at most one; multiple
-  // are not currently used and would substitute identically — we substitute the first.
+  // are not currently used and would substitute identically -- we substitute the first.
   let placeholderIndex = -1;
   for (const [idx, line] of partialLines.entries()) {
     if (CHILDREN_PLACEHOLDER_REGEX.test(line)) {
@@ -263,13 +263,13 @@ async function expandPartialWithSlot(
         'slot-without-children',
       );
     }
-    // No placeholder, no slot content — trim a single trailing blank line from the
-    // partial's split result so an included file ending in a newline does not introduce
-    // a stray blank line at the host's expansion site.
+    // No placeholder, no slot content -- trim a single trailing blank line from the
+    // partial's split result so that an included file ending in a newline does not
+    // introduce a stray blank line at the host's expansion site.
     return trimTrailingEmptyLine(partialLines);
   }
 
-  // Substitute: remove the placeholder line and insert the (possibly empty) slot lines
+  // Substitute: Remove the placeholder line and insert the (possibly empty) slot lines
   // verbatim in its place.
   const result: Array<string> = [
     ...partialLines.slice(0, placeholderIndex),
@@ -280,9 +280,9 @@ async function expandPartialWithSlot(
 }
 
 /**
- * Routes lines either to the top of the open-frame stack (accumulating slot content) or
+ * Appends lines either to the top of the open-frame stack (accumulating slot content) or
  * to the output buffer when no frame is open. `filePath` is included in invariant-failure
- * messages so a runaway invariant violation points at the file under expansion.
+ * messages so that a runaway invariant violation points at the file under expansion.
  */
 function appendLines(
   stack: Array<OpenFrame>,
@@ -305,7 +305,7 @@ function appendLines(
 
 /**
  * Drops a single trailing empty string produced by `split('\n')` on a file ending with
- * a newline. This preserves the previous expander's behavior: an included file with a
+ * a newline. This preserves the previous expander's behavior: An included file with a
  * trailing newline does not introduce a stray blank line at the host's expansion site.
  */
 function trimTrailingEmptyLine(lines: ReadonlyArray<string>): Array<string> {

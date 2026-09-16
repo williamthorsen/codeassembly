@@ -2,23 +2,25 @@ import type { ResolveLinkAnchor } from './path-rewriter.ts';
 
 /**
  * Directory under a harness skills dir holding each declared source's support entries, one subtree per source. Kept out
- * of the skills dir's flat namespace so a source's `_data` can never mask the library's, or another source's.
+ * of the skills dir's flat namespace so that a source's `_data` can never mask the library's, or another source's.
  */
 export const SOURCE_SUPPORT_DIR = '_sources';
 
 /**
- * What deciding a target's deployed location depends on, resolved once per harness — and, where support entries are
- * reachable, once per owning source — by the caller.
+ * The inputs on which a target's deployed location depends, resolved once per harness -- and, when support entries are
+ * reachable, once per owning source -- by the caller.
  */
 export interface LinkAnchorContext {
   /**
-   * Skill directory names this run writes into the domain's skills dir, for the harness being rendered for. A target
-   * opening with one of these names something the run just deployed; anything else it cannot place under the domain.
+   * Skill directory names that this run writes into the domain's skills dir, for the harness being rendered for. A
+   * target opening with one of these names something that the run just deployed; anything else it cannot place under
+   * the domain.
    */
   readonly deployedSkillDirs: ReadonlySet<string>;
   /**
-   * Root the deploying domain writes under: `~` for the home domain, the absolute project root for the project domain.
-   * Only the trees `sync` populates are anchored here; the trees `install` populates stay under `~` in both domains.
+   * Root under which the deploying domain writes: `~` for the home domain, the absolute project root for the project
+   * domain. Only the trees that `sync` populates are anchored here; the trees that `install` populates stay under `~`
+   * in both domains.
    */
   readonly domainBase: string;
   /** Harness home segment (e.g. `.claude`). */
@@ -34,7 +36,7 @@ export interface LinkAnchorContext {
 }
 
 /**
- * Anchors targets written relative to a content root, the form a rulebook or subagent body uses (`skills/…`,
+ * Anchors targets written relative to a content root, the form that a rulebook or subagent body uses (`skills/…`,
  * `scripts/…`). A target reaching into `skills/` is handed to the skills anchor; anything else keeps the harness home,
  * since `scripts/` and its siblings deploy there and nowhere else.
  */
@@ -48,16 +50,16 @@ export function createContentRootLinkAnchor(context: LinkAnchorContext): Resolve
 }
 
 /**
- * Anchors targets written relative to a harness skills dir, the form a skill body's links resolve to.
+ * Anchors targets written relative to a harness skills dir, the form to which a skill body's links resolve.
  *
- * Three destinations. A target whose first segment names a skill directory this run deploys resolves under the
+ * Three destinations. A target whose first segment names a skill directory that this run deploys resolves under the
  * deploying domain, because that is where the run just wrote it. A target owned by a declared source resolves into
  * that source's support namespace under the domain, because this run delivers it there. Everything else keeps the
- * harness home: the library's support entries land there because `install` puts them there in either domain, and a
- * skill this run does not deploy is addressable there or nowhere.
+ * harness home: The library's support entries resolve there because `install` puts them there in either domain, and a
+ * skill that this run does not deploy is addressable there or nowhere.
  *
  * In the home domain the domain-rooted destinations coincide with the harness home, so home-domain output changes only
- * where a source namespace applies — which is content that reached no address at all before.
+ * when a source namespace applies -- which is content that reached no address at all before.
  */
 export function createSkillLinkAnchor(context: LinkAnchorContext): ResolveLinkAnchor {
   const { deployedSkillDirs, domainBase, homeDir, skillsDirName, supportNamespace } = context;
@@ -74,7 +76,7 @@ export function createSkillLinkAnchor(context: LinkAnchorContext): ResolveLinkAn
 
 // region | Helpers
 
-/** Reads the first path segment of a POSIX-style relative path, which is the whole path when it carries no separator. */
+/** Reads the first path segment of a POSIX-style relative path, which is the whole path when it contains no separator. */
 function readFirstSegment(relPath: string): string {
   const slashIndex = relPath.indexOf('/');
   return slashIndex === -1 ? relPath : relPath.slice(0, slashIndex);
