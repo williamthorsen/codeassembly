@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { isEnoent, isErrorCode, isRecord } from '../type-guards.ts';
 
 describe(isErrorCode, () => {
-  it('returns true when the error carries the matching code', () => {
+  it('returns true when the error has the matching code', () => {
     expect(isErrorCode({ code: 'EACCES' }, 'EACCES')).toBe(true);
   });
 

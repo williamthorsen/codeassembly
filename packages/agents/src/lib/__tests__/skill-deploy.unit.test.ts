@@ -90,7 +90,7 @@ describe(deploySkill, () => {
     expect(await readFile(path.join(destDir, 'reference.md'), 'utf8')).not.toContain('codeassembly-skill');
   });
 
-  it('removes a destination file the source no longer carries on re-deploy', async () => {
+  it('removes a destination file that the source no longer contains on re-deploy', async () => {
     await writeLibrarySkill('multi', { 'SKILL.md': '---\nname: multi\n---\n\n# Multi\n', 'stale.md': 'old\n' });
     const destDir = path.join(destParent, 'multi');
     await deploySkill(resolvedSkill('multi'), destDir, context());
@@ -126,7 +126,7 @@ describe(deploySkill, () => {
     expect(existsSync(path.join(destDir, '_partials'))).toBe(false);
   });
 
-  it('deploys the same body install composes from the shared transform steps, markers aside', async () => {
+  it('deploys the same body that install composes from the shared transform steps, markers aside', async () => {
     await writeLibrarySkill('demo', {
       'SKILL.md':
         '---\nname: demo\n---\n\nUse {tool:Read}. See [guide](./reference/guide.md). Run `{harness_home_dir}/x`.\n',
@@ -172,7 +172,7 @@ describe(deploySkill, () => {
     }
   }
 
-  /** Builds a ResolvedSkill without the deploy-field check, so deploySkill tests can use minimal fixtures. */
+  /** Builds a ResolvedSkill without the deploy-field check, so that deploySkill tests can use minimal fixtures. */
   function resolvedSkill(slug: string): { slug: string; srcDir: string; contentRoot: string; source: undefined } {
     return { slug, srcDir: path.join(librarySkillsDir, slug), contentRoot: librarySkillsDir, source: undefined };
   }
@@ -210,7 +210,7 @@ describe(resolveDeclaredSkill, () => {
     expect(resolved.source).toBeUndefined();
   });
 
-  it('carries the declared source name when the skill resolves from a source', async () => {
+  it('returns the declared source name when the skill resolves from a source', async () => {
     const sourceDir = path.join(contentDir, 'org');
     const dir = path.join(sourceDir, 'skills', 'people-report');
     await mkdir(dir, { recursive: true });

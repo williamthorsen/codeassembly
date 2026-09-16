@@ -16,13 +16,13 @@ const TAXONOMY = {
 };
 
 describe(loadTaxonomy, () => {
-  it('preserves the listing order, which is what ranks one type over another', async () => {
+  it('preserves the listing order, which ranks one type over another', async () => {
     const taxonomy = await readTaxonomy(TAXONOMY);
 
     expect(taxonomy.types.map((entry) => entry.key)).toStrictEqual(['feat', 'fix', 'ci']);
   });
 
-  it('carries the declared tiers in order', async () => {
+  it('returns the declared tiers in order', async () => {
     const taxonomy = await readTaxonomy({ ...TAXONOMY, tiers: ['public', 'internal', 'process'] });
 
     expect(taxonomy.tiers).toStrictEqual(['public', 'internal', 'process']);
@@ -34,31 +34,31 @@ describe(loadTaxonomy, () => {
     expect(taxonomy.tiers).toStrictEqual(['public', 'process']);
   });
 
-  it('yields no tiers where the taxonomy declares none', async () => {
+  it('yields no tiers when the taxonomy declares none', async () => {
     const taxonomy = await readTaxonomy(TAXONOMY);
 
     expect(taxonomy.tiers).toStrictEqual([]);
   });
 
-  it('yields no tiers where the declared value is not a list', async () => {
+  it('yields no tiers when the declared value is not a list', async () => {
     const taxonomy = await readTaxonomy({ ...TAXONOMY, tiers: 'public' });
 
     expect(taxonomy.tiers).toStrictEqual([]);
   });
 
-  it('carries a declared breaking policy', async () => {
+  it('keeps a declared breaking policy', async () => {
     const taxonomy = await readTaxonomy({ types: [{ key: 'drop', tier: 'public', breakingPolicy: 'required' }] });
 
     expect(taxonomy.types[0]?.breakingPolicy).toBe('required');
   });
 
-  it('drops a breaking policy the taxonomy misspells, so nothing enforces an invented one', async () => {
+  it('drops a breaking policy misspelled by the taxonomy, so nothing enforces an invented one', async () => {
     const taxonomy = await readTaxonomy({ types: [{ key: 'drop', tier: 'public', breakingPolicy: 'mandatory' }] });
 
     expect(taxonomy.types[0]).toStrictEqual({ aliases: [], key: 'drop', tier: 'public' });
   });
 
-  it('carries each entry its declared aliases, and an empty list where it declares none', async () => {
+  it('gives each entry its declared aliases, and an empty list when it declares none', async () => {
     const taxonomy = await readTaxonomy(TAXONOMY);
 
     expect(taxonomy.types.map((entry) => entry.aliases)).toStrictEqual([['feature'], ['bugfix'], []]);
@@ -70,7 +70,7 @@ describe(loadTaxonomy, () => {
     expect(taxonomy.types.map((entry) => entry.key)).toStrictEqual(['feat']);
   });
 
-  it('yields null when the directory holds no taxonomy', async () => {
+  it('yields null when the directory contains no taxonomy', async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'work-types-'));
 
     await expect(loadTaxonomy(dataDir)).resolves.toBeNull();
@@ -94,13 +94,13 @@ describe(loadWorkTypes, () => {
     expect(index.get('feature')).toStrictEqual({ key: 'feat', tier: 'public' });
   });
 
-  it('carries each type its declared tier', async () => {
+  it('gives each type its declared tier', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(index.get('ci')?.tier).toBe('process');
   });
 
-  it('yields nothing for a type the taxonomy does not declare', async () => {
+  it('yields nothing for a type that the taxonomy does not declare', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(index.get('invented')).toBeUndefined();
@@ -126,7 +126,7 @@ describe(loadWorkTypes, () => {
     expect(index.get('feat')).toStrictEqual({ key: 'feat', tier: 'public' });
   });
 
-  it('yields null when the directory holds no taxonomy', async () => {
+  it('yields null when the directory contains no taxonomy', async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'work-types-'));
 
     await expect(loadWorkTypes(dataDir)).resolves.toBeNull();
@@ -156,7 +156,7 @@ describe(resolveWorkType, () => {
     });
   });
 
-  it('resolves a key carrying the breaking marker, so feat! names the declared feat', async () => {
+  it('resolves a key ending with the breaking marker, so feat! names the declared feat', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(resolveWorkType('feat!', index)).toStrictEqual({
@@ -165,7 +165,7 @@ describe(resolveWorkType, () => {
     });
   });
 
-  it('resolves an alias carrying the marker through the same index', async () => {
+  it('resolves an alias ending with the marker through the same index', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(resolveWorkType('feature!', index)).toStrictEqual({
@@ -174,13 +174,13 @@ describe(resolveWorkType, () => {
     });
   });
 
-  it('yields null for a type the taxonomy does not declare', async () => {
+  it('yields null for a type that the taxonomy does not declare', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(resolveWorkType('invented', index)).toBeNull();
   });
 
-  it('yields null for an undeclared type carrying the marker, so the marker declares nothing', async () => {
+  it('yields null for an undeclared type ending with the marker, so the marker declares nothing', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(resolveWorkType('invented!', index)).toBeNull();

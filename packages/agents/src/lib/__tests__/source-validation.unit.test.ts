@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { describeSourceNameProblem, findSourceProblem } from '../source-validation.ts';
 
-// Root bypasses the permission bits the unreadable case depends on.
+// Root bypasses the permission bits on which the unreadable case depends.
 const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
 
 describe(describeSourceNameProblem, () => {
@@ -66,7 +66,7 @@ describe(findSourceProblem, () => {
     });
   });
 
-  it.runIf(canEnforceDirPermissions)('classifies a directory it cannot traverse as unreadable', async () => {
+  it.runIf(canEnforceDirPermissions)('classifies a directory that it cannot traverse as unreadable', async () => {
     const dir = path.join(root, 'locked');
     await mkdir(dir);
     await chmod(dir, 0o000);

@@ -14,7 +14,7 @@ import { homeAnchor } from '../path-rewriter.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 
-/** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
+/** An empty catalog: No source under test contains a `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 const CLAUDE_OVERLAY = dedent`
@@ -60,7 +60,7 @@ describe(deploySubagent, () => {
     };
   }
 
-  /** Renders the bytes `deploySubagent` should write for `canary` by mirroring its expand → render → mark composition. */
+  /** Renders the bytes that `deploySubagent` should write for `canary`, mirroring its expand → render → mark composition. */
   async function renderExpectedDeploy(srcPath: string): Promise<string> {
     const expanded = await expandIncludes(srcPath, contentDir);
     const rendered = renderSubagentForHarness(expanded, {
@@ -168,7 +168,7 @@ describe(resolveDeclaredSubagent, () => {
     expect(resolved.source).toBeUndefined();
   });
 
-  it('carries the declared source name when the subagent resolves from a source', async () => {
+  it('returns the declared source name when the subagent resolves from a source', async () => {
     const sourceDir = path.join(contentDir, 'org');
     await mkdir(path.join(sourceDir, 'subagents'), { recursive: true });
     await writeFile(path.join(sourceDir, 'subagents', 'canary.md'), '---\nname: canary\n---\n\n# canary\n', 'utf8');

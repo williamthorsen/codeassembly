@@ -10,10 +10,10 @@ import { rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
-/** An empty catalog: no source under test carries a `{rulebook:<slug>}` token, so nothing addresses one. */
+/** An empty catalog: No source under test contains a `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
-// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+// Because `shell-conventions` declares a `skill-name` override, its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
   ['shell-conventions', { skillName: 'shell-rules', skill: true }],
@@ -127,7 +127,7 @@ describe(renderSubagentForHarness, () => {
     expect(rovo).toContain('Invoke !capture-event, then dispatch code-reviewer.');
   });
 
-  it('renders a rulebook token as the deploy name its target takes', () => {
+  it("renders a rulebook token as its target's deploy name", () => {
     const source = dedent`
       ---
       name: demo-agent
@@ -182,7 +182,7 @@ describe(renderSubagentForHarness, () => {
     ).toThrow(/names an ambient-only rulebook/);
   });
 
-  it('rewrites a relative Markdown link to the path its anchor names', () => {
+  it('rewrites a relative Markdown link to the path named by its anchor', () => {
     const output = renderSubagentForHarness(SOURCE, {
       overlayYaml: CLAUDE_OVERLAY,
       fileRelPath: 'demo-agent.md',
@@ -301,7 +301,7 @@ describe(renderSubagentForHarness, () => {
     ).toThrow(/subagents\/demo-agent\.md carries 1 unresolvable anchor link target/);
   });
 
-  it('throws ToolNameRewriteError for a tool the harness does not name', () => {
+  it('throws ToolNameRewriteError for a tool that the harness does not name', () => {
     expect(() =>
       renderSubagentForHarness(SOURCE.replace('{tool:Read}', '{tool:NoSuchTool}'), {
         overlayYaml: '',
