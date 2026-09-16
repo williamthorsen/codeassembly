@@ -25,8 +25,8 @@ export type ResolveCaptureTargetOutcome =
  * default like any readonly store, and reporting `no-default` when none is configured); an omitted `--store`
  * (`explicitName === null`) is refused with `missing-store`, never resolved to a silent default.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it defaults to the real `$HOME` and exists
- * so tests can isolate registry resolution from the developer's environment.
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
+ * and exists so that tests can isolate registry resolution from the developer's environment.
  */
 export async function resolveCaptureTarget(input: {
   explicitName: string | null;
