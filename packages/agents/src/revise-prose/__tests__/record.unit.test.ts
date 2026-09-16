@@ -62,7 +62,7 @@ describe(parseRecord, () => {
     ).toThrow(/ISO calendar date/);
   });
 
-  it('reads a rejection under a rule the helper holds no detector for', () => {
+  it('reads a rejection under a rule for which the helper holds no detector', () => {
     const record = parseRecord(rejectionYaml({ rule: 'plain-speech' }), NO_VERSIONS);
 
     expect(record.rejections[0]?.rule).toBe('plain-speech');
@@ -124,7 +124,7 @@ describe(applyRejections, () => {
     expect(applied).toStrictEqual([]);
   });
 
-  it('suppresses a site whose recorded phrase sits inside the span reported by the detector', () => {
+  it('suppresses a site whose recorded phrase is inside the span reported by the detector', () => {
     const sentence = 'The cache is cold, so the transport reconnects.';
     const applied = applyRejections(
       [{ rule: 'em-dash', file: 'docs/guide.md', line: 3, phrase: sentence, sentence }],
@@ -223,7 +223,7 @@ describe(applyRejections, () => {
 });
 
 describe(composeRecord, () => {
-  it('records each rule the run versioned, with whether the helper holds its detector', () => {
+  it('records each rule that the run versioned, with whether the helper holds its detector', () => {
     const record = composeRecord(EMPTY, fold({ rules: WRITING_RULES }), hasEverySite, hasEmDashDetector);
 
     expect(record.rules).toStrictEqual({
@@ -232,7 +232,7 @@ describe(composeRecord, () => {
     });
   });
 
-  it('sorts the roots it records, so a rewrite does not depend on the order of the run', () => {
+  it('sorts the roots that it records, so a rewrite does not depend on the order of the run', () => {
     const record = composeRecord(EMPTY, fold({ roots: ['src', 'docs'] }), hasEverySite, hasEmDashDetector);
 
     expect(record.rules['em-dash']?.roots).toStrictEqual(['docs', 'src']);
@@ -275,7 +275,7 @@ describe(composeRecord, () => {
     expect(record.rules['em-dash']).toMatchObject({ detected: true, roots: ['src'] });
   });
 
-  it('leaves the coverage and rejections of a rule the run did not version untouched', () => {
+  it('leaves the coverage and rejections of a rule that the run did not version untouched', () => {
     const prior: ProseRecord = {
       rules: { 'plain-speech': coverage({ version: '5', detected: false, 'swept-at': '2026-01-01' }) },
       rejections: [rejection({ rule: 'plain-speech', 'rule-version': '5' })],
@@ -352,7 +352,7 @@ describe(composeRecord, () => {
     });
   });
 
-  it('refuses a fold whose rejection names a rule it does not version', () => {
+  it('refuses a fold whose rejection names a rule that it does not version', () => {
     expect(() =>
       composeRecord(
         EMPTY,
@@ -363,7 +363,7 @@ describe(composeRecord, () => {
     ).toThrow(/which the fold does not version/);
   });
 
-  it('retires the entry it supersedes across a reflow, a rewrapped line naming the same site', () => {
+  it('retires the entry that it supersedes across a reflow, a rewrapped line naming the same site', () => {
     const standing = rejection({ phrase: 'The cache\n  is cold', ground: 'an earlier ground' });
     const prior: ProseRecord = { rules: {}, rejections: [standing] };
 
@@ -516,7 +516,7 @@ describe(isStaleRejection, () => {
 describe(selectPriorRejections, () => {
   const versions = new Map([['em-dash', '1']]);
 
-  it('selects a live rejection over a file the sweep read', () => {
+  it('selects a live rejection over a file that the sweep read', () => {
     const record: ProseRecord = { rules: {}, rejections: [rejection()] };
 
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([
@@ -524,7 +524,7 @@ describe(selectPriorRejections, () => {
     ]);
   });
 
-  it('selects a rejection under a rule the helper holds no detector for', () => {
+  it('selects a rejection under a rule for which the helper holds no detector', () => {
     const record: ProseRecord = { rules: {}, rejections: [rejection({ rule: 'plain-speech', 'rule-version': '6' })] };
 
     expect(selectPriorRejections(record, new Map([['plain-speech', '6']]), ['docs/guide.md'])).toHaveLength(1);
@@ -542,7 +542,7 @@ describe(selectPriorRejections, () => {
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
   });
 
-  it('withholds a rejection over a file the sweep did not read', () => {
+  it('withholds a rejection over a file that the sweep did not read', () => {
     const record: ProseRecord = { rules: {}, rejections: [rejection()] };
 
     expect(selectPriorRejections(record, versions, ['docs/other.md'])).toStrictEqual([]);

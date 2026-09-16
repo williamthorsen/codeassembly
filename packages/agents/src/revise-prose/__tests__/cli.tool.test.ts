@@ -21,15 +21,15 @@ const OBJECT_RELATIVE = 'The helper reports the source it names.';
 const EM_DASH_SENTENCE = 'The cache is cold\u{2014}so the transport reconnects.';
 
 /**
- * A fixture tree carrying one site of each rule, in two directories, so batching and per-file coverage both have
- * something to separate.
+ * A fixture tree carrying one site of each rule, in two directories, so that batching and per-file coverage both
+ * have something to separate.
  */
 const FIXTURE_FILES: Readonly<Record<string, string>> = {
   'docs/guide.md': `${OBJECT_RELATIVE}\n`,
   'src/notes.md': `${EM_DASH_SENTENCE}\n`,
 };
 
-/** Every field the helper's candidates carried before rules were introduced. */
+/** Every field that the helper's candidates carried before rules were introduced. */
 const LEGACY_CANDIDATE_FIELDS: ReadonlyArray<string> = [
   'file',
   'head',
@@ -41,7 +41,7 @@ const LEGACY_CANDIDATE_FIELDS: ReadonlyArray<string> = [
   'verb',
 ];
 
-/** Every field the helper's summary carried before rules were introduced. */
+/** Every field that the helper's summary carried before rules were introduced. */
 const LEGACY_SUMMARY_FIELDS: ReadonlyArray<string> = ['byFile', 'byShape', 'filesScanned', 'filesSkipped', 'total'];
 
 describe(runDetect, () => {
@@ -61,7 +61,7 @@ describe(runDetect, () => {
   });
 
   describe('the pre-rules invocation', () => {
-    it('carries every field it reported before, and adds the rule', async () => {
+    it('carries every field that it reported before, and adds the rule', async () => {
       const candidate = expectSuccess(await sweep()).candidates[0];
 
       expect(candidate).toBeDefined();
@@ -71,7 +71,7 @@ describe(runDetect, () => {
       expect(candidate).toMatchObject({ rule: 'reduced-object-relative', file: 'docs/guide.md', head: 'source' });
     });
 
-    it('carries every summary field it reported before, and adds the per-rule counts', async () => {
+    it('carries every summary field that it reported before, and adds the per-rule counts', async () => {
       const { summary } = expectSuccess(await sweep());
 
       for (const field of LEGACY_SUMMARY_FIELDS) {
@@ -108,13 +108,13 @@ describe(runDetect, () => {
   });
 
   describe('a rule-naming invocation', () => {
-    it('detects only the rules it names', async () => {
+    it('detects only the rules that it names', async () => {
       const { candidates } = expectSuccess(await sweep(['--unit', 'writing=2', '--rule', 'em-dash@1=writing']));
 
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
     });
 
-    it('detects both rules where both are named', async () => {
+    it('detects both rules when both are named', async () => {
       const { summary } = expectSuccess(await sweep(bothRules()));
 
       expect(summary.byRule).toStrictEqual({
@@ -183,7 +183,7 @@ describe(runDetect, () => {
       expect(summary.batchesPlanned).toBeGreaterThan(0);
     });
 
-    it('skips nothing where the record covers a different version', async () => {
+    it('skips nothing when the record covers a different version', async () => {
       await writeRecord(recordFor(await rejectedPhrase(), '2'));
 
       expect(expectSuccess(await sweep(bothRules())).summary.batchesSkipped).toBe(0);
@@ -271,7 +271,7 @@ describe(runDetect, () => {
       expect(expectSuccess(await sweep(bothRules())).summary.batchesSkipped).toBe(0);
     });
 
-    it('skips nothing where the record covers a narrower root', async () => {
+    it('skips nothing when the record covers a narrower root', async () => {
       const record = recordFor(await rejectedPhrase());
       for (const rule of BOTH_RULES) {
         record.rules[rule] = { version: '1', 'swept-at': '2026-09-02', detected: true, roots: ['docs'] };
@@ -298,7 +298,7 @@ describe(runDetect, () => {
       expect(expectSuccess(await sweep(bothRules())).rejections).toStrictEqual([]);
     });
 
-    it('reports a rejection under a rule no detector covers', async () => {
+    it('reports a rejection under a rule covered by no detector', async () => {
       const phrase = 'a figure the document displays on purpose';
       await writeRecord({
         rules: {},
@@ -367,7 +367,7 @@ describe(runDetect, () => {
   });
 
   describe(runRecord, () => {
-    it('writes a record the next run reads back', async () => {
+    it('writes a record that the next run reads back', async () => {
       const result = runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
 
       expect(result).toMatchObject({ ok: true, path: RECORD_PATH, rules: 2, rejections: 1 });
@@ -394,7 +394,7 @@ describe(runDetect, () => {
       await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
     });
 
-    it('refuses a fold whose rejection names a rule it does not version and writes nothing', async () => {
+    it('refuses a fold whose rejection names a rule that it does not version and writes nothing', async () => {
       const base = await fold();
       const unversioned = { ...base, rejections: [{ ...base.rejections[0], rule: 'sentence-case' }] };
 
@@ -470,7 +470,7 @@ describe(runDetect, () => {
       expect(await readRecordedPhrases()).toStrictEqual([phrase]);
     });
 
-    it('closes the loop: recording a run suppresses its candidate on the next sweep', async () => {
+    it('closes the loop: Recording a run suppresses its candidate on the next sweep', async () => {
       expect(expectSuccess(await sweep(bothRules())).summary.byRule['reduced-object-relative']).toBe(1);
 
       runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
@@ -489,7 +489,7 @@ describe(runDetect, () => {
       expect(written.rejections.map((rejection) => rejection.rule)).toContain('sentence-case');
     });
 
-    it('closes the loop for a run naming a rule without a detector: the next sweep skips what it covered', async () => {
+    it('closes the loop for a run naming a rule without a detector: The next sweep skips what it covered', async () => {
       const argv = [...bothRules(), '--rule', 'sentence-case@1=writing'];
 
       runRecord({ foldJson: JSON.stringify(await foldNamingUndetected()), root: scratch });
@@ -582,8 +582,9 @@ describe(runDetect, () => {
   }
 
   /**
-   * The phrase the detector reports for the fixture's object-relative site. Read from a sweep rather than written out,
-   * so a change to the span a detector reports fails the assertion instead of silently missing the rejection.
+   * The phrase reported by the detector for the fixture's object-relative site. Read from a sweep rather than
+   * written out, so that a change to the span that a detector reports fails the assertion instead of silently
+   * missing the rejection.
    */
   async function rejectedPhrase(): Promise<string> {
     const candidate = expectSuccess(await sweep()).candidates[0];
@@ -591,7 +592,7 @@ describe(runDetect, () => {
     return candidate.phrase;
   }
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so no real preferences reach the run. */
+  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so that no real preferences reach the run. */
   async function sweep(argv: readonly string[] = []): Promise<DetectResult> {
     return runDetect({ argv, root: scratch, home: scratch });
   }
@@ -658,7 +659,7 @@ function recordFor(phrase: string, version = '1', file = 'docs/guide.md'): Prose
   };
 }
 
-/** The record from `recordFor` with no coverage, so the batch holding the rejected site applies both rules. */
+/** The record from `recordFor` with no coverage, so that the batch holding the rejected site applies both rules. */
 function uncoveredRecordFor(phrase: string): ProseRecord {
   return { ...recordFor(phrase), rules: {} };
 }
