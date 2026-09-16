@@ -50,8 +50,8 @@ BeforeEach "setup_repo"
 AfterEach "cleanup_repo"
 
 It "returns the repo-root-anchored absolute path for a simple branch"
-# Resolve symlinks so the comparison matches `git rev-parse --show-toplevel`, which always reports the canonical path
-# (e.g. on macOS `/tmp` -> `/private/tmp`).
+# Resolve symlinks so that the comparison matches `git rev-parse --show-toplevel`, which always reports the canonical
+# path (e.g. on macOS `/tmp` -> `/private/tmp`).
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 When call resolve_manifest_path "main"
 The output should equal "$resolved_tmpdir/.agents/main.branch-manifest.json"
@@ -188,12 +188,12 @@ When call needs_yaml_quoting "foo123"
 The status should be failure
 End
 
-It "returns true for values where a colon is followed by whitespace"
+It "returns true for values in which a colon is followed by whitespace"
 When call needs_yaml_quoting "key: value"
 The status should be success
 End
 
-It "returns false for values where a colon is followed by a non-space character"
+It "returns false for values in which a colon is followed by a non-space character"
 When call needs_yaml_quoting "key:value"
 The status should be failure
 End
@@ -679,8 +679,8 @@ setup_unreadable_repo() {
 BeforeEach "setup_unreadable_repo"
 
 It "names the unreadable repository rather than an unresolvable branch"
-# `GIT_DIR` points nowhere while the working directory is a healthy repository, which is the shape a
-# sandboxed nested `git` produces: the repository is present and git refuses to read it.
+# `GIT_DIR` points nowhere while the working directory is a healthy repository, which is the shape produced by a
+# sandboxed nested `git`: The repository is present and git refuses to read it.
 run_unreadable_repo() {
   GIT_DIR=/nonexistent/x main --skill foo --interactive true
 }
@@ -694,7 +694,7 @@ End
 
 Context "when git cannot resolve the branch"
 setup_unborn_head() {
-  # No commit: `git rev-parse --git-dir` answers while `--abbrev-ref HEAD` fails, which is the only
+  # No commit: `git rev-parse --git-dir` succeeds while `--abbrev-ref HEAD` fails, which is the only
   # condition that reaches the branch diagnostic past the readability probe.
   git init --quiet --initial-branch=main .
 }
@@ -723,7 +723,7 @@ setup_missing_manifest() {
   # so the script's own `BASH_SOURCE[0]`-based path computation resolves to the shellspec runner
   # rather than the agents content tree.
   export RESOLVE_FRONTMATTER_BUNDLE_PATH="$PROJECT_ROOT/content/skills/derive-session-context/derive-session-context.mjs"
-  # Pass --home pointing at the tmpdir so the deriver does not read the developer's real
+  # Pass --home pointing at the tmpdir so that the deriver does not read the developer's real
   # `~/.agents/preferences.yaml` (whose schema-validity is environment-specific). Using a flag
   # instead of HOME env override avoids breaking PATH-resolution tools (e.g., asdf shims).
   export RESOLVE_FRONTMATTER_BUNDLE_ARGS="--home $tmpdir"
@@ -781,7 +781,7 @@ When run main --skill foo --interactive true
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
-# The deriver emits a stderr diagnostic when it overwrites the corrupt file so an operator can
+# The deriver emits a stderr diagnostic when it overwrites the corrupt file so that an operator can
 # distinguish a normal cache miss from recurring corruption. Assert that it appears.
 The stderr should include "manifest"
 The stderr should include "is corrupt"
@@ -793,12 +793,12 @@ End
 Describe "main end-to-end"
 setup_main_e2e() {
   enter_tmpdir || return 1
-  # Initialize a minimal git repository so `current_branch` and `git rev-parse --short HEAD` succeed.
+  # Initialize a minimal git repository so that `current_branch` and `git rev-parse --short HEAD` succeed.
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
-  # Write the branch manifest the script reads for session-level fields.
+  # Write the branch manifest that the script reads for session-level fields.
   mkdir -p .agents
   cat >.agents/main.branch-manifest.json <<'JSON'
 {
