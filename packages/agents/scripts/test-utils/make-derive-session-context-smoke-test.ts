@@ -17,7 +17,7 @@ export function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
   mkdirSync(path.join(fixtureDir, '.agents'), { recursive: true });
   writeFileSync(path.join(fixtureDir, '.agents', 'preferences.yaml'), 'project:\n  slug: smoke-test-project\n', 'utf8');
   return {
-    // `--home` points at the fixture so the deriver does not read the developer's real
+    // `--home` points at the fixture so that the deriver does not read the developer's real
     // `~/.agents/preferences.yaml` (whose schema-validity is environment-specific). Using the flag
     // rather than the `HOME` env var avoids breaking PATH-resolution tools (e.g., asdf shims) that
     // depend on the real `HOME`.

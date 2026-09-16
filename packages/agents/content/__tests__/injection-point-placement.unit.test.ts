@@ -8,15 +8,15 @@ import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
 
 // An include and a guidance hook both splice content that has its own headings, so a host heading deeper than the
 // injected content's shallowest one renders as a subsection of the injection rather than of the host body. For a hook
-// the parent is worse than misattributed: it is whichever rulebook the local binding supplied.
+// the parent is worse than misattributed: It is whichever rulebook the local binding supplied.
 //
 // The scan reads source rather than rendered output. Once includes expand, an inlined partial is byte-identical to the
 // text around it, and no pass over the result can tell a host heading from an injected one.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
-// Mirrors of the production grammars in `directive-expander.ts` and `guidance-hooks.ts`: each occupies a full line
-// and matches despite surrounding whitespace, and self-close is tested before open so a path ending in `/` reads as
-// a self-close.
+// Mirrors of the production grammars in `directive-expander.ts` and `guidance-hooks.ts`: Each occupies a full line
+// and matches despite surrounding whitespace, and self-close is tested before open so that a path ending in `/`
+// reads as a self-close.
 const CLOSE_INCLUDE_REGEX = /^[ \t]*<!--[ \t]*\/include[ \t]*-->[ \t]*$/;
 const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
 const HEADING_REGEX = /^(#{1,6})\s/;
@@ -24,10 +24,12 @@ const HOOK_DIRECTIVE_REGEX = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*.*?[ \t]*-->[
 const OPEN_INCLUDE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+)[ \t]*-->[ \t]*$/;
 const SELF_CLOSE_INCLUDE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+?)[ \t]*\/[ \t]*-->[ \t]*$/;
 
-/** The level a bound rulebook's title renders at: `fillGuidanceHooks` demotes every heading in the fill by one. */
+/**
+ * The level at which a bound rulebook's title renders: `fillGuidanceHooks` demotes every heading in the fill by one.
+ */
 const HOOK_FILL_LEVEL = 2;
 
-/** A heading the host body declares itself, outside any fence or slot region. */
+/** A heading that the host body declares itself, outside any fence or slot region. */
 interface Heading {
   readonly kind: 'heading';
   readonly lineNumber: number;
@@ -35,7 +37,7 @@ interface Heading {
   readonly text: string;
 }
 
-/** A directive and the level its injected content starts at, against which a following host heading is judged. */
+/** A directive and the level at which its injected content starts, against which a following host heading is judged. */
 interface Injection {
   readonly kind: 'injection';
   readonly lineNumber: number;
@@ -43,7 +45,7 @@ interface Injection {
   readonly text: string;
 }
 
-/** One source line that contributes structure, paired with the 1-based line it occupies. */
+/** One source line that contributes structure, paired with the 1-based line that it occupies. */
 interface LiveLine {
   readonly lineNumber: number;
   readonly text: string;
@@ -64,7 +66,7 @@ describe('injection-point placement', () => {
     expect(
       violations,
       `These directives inject content whose headings adopt the section below them:\n  ${violations.join('\n  ')}\n` +
-        `A host heading following a directive must sit at or above the injected content's shallowest heading level. ` +
+        `A host heading following a directive must be at or above the injected content's shallowest heading level. ` +
         `Promote the section, or move the directive below it.`,
     ).toEqual([]);
   });
@@ -73,8 +75,9 @@ describe('injection-point placement', () => {
 // region | Helpers
 
 /**
- * Reports each directive in one body whose next host heading is deeper than the content it injects, rendered as one
- * line per violation. Two directives sharing a following heading are both reported: each is independently misplaced.
+ * Reports each directive in one body whose next host heading is deeper than the content that it injects, rendered as
+ * one line per violation. Two directives sharing a following heading are both reported: Each is independently
+ * misplaced.
  */
 async function findViolations(relativePath: string): Promise<ReadonlyArray<string>> {
   const violations: Array<string> = [];
@@ -109,8 +112,8 @@ async function listContentMarkdown(): Promise<ReadonlyArray<string>> {
 /**
  * Yields the lines of a body that contribute structure, skipping every line inside a fenced block. A `#` inside a
  * fence is content, so the fence is tracked rather than each line matched in isolation. A fenced directive is skipped
- * for a different reason: the expander tracks no fences and still expands it, but the fence turns the headings it
- * injects into literal text, which adopts nothing.
+ * for a different reason: The expander tracks no fences and still expands it, but the fence turns the headings that
+ * it injects into literal text, which adopts nothing.
  */
 function* readLiveLines(body: string): Generator<LiveLine> {
   let openFence: string | undefined;
@@ -131,10 +134,10 @@ function* readLiveLines(body: string): Generator<LiveLine> {
 }
 
 /**
- * Returns the shallowest level a partial contributes, or `undefined` when it contributes nothing a following section
- * could nest under. A hook the partial declares counts at the fill level: hooks resolve after includes expand, so such
- * a hook fills inside the host and can splice shallower than the partial's own headings. Memoized, since one partial
- * reaches many consumers.
+ * Returns the shallowest level that a partial contributes, or `undefined` when it contributes nothing a following
+ * section could nest under. A hook that the partial declares counts at the fill level: Hooks resolve after includes
+ * expand, so such a hook fills inside the host and can splice shallower than the partial's own headings. Memoized,
+ * since one partial reaches many consumers.
  */
 async function readPartialLevel(partialPath: string): Promise<number | undefined> {
   if (!levelByPartial.has(partialPath)) {

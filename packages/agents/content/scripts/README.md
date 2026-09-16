@@ -4,12 +4,12 @@
 
 Shared helpers installed into every platform target. The install pipeline copies (or symlinks) each `.sh` and `.mjs` file in this directory into `~/<platform_home>/scripts/` (e.g., `~/.claude/scripts/`, `~/.codex/scripts/`).
 
-This directory holds two kinds of helper, distinguished by who invokes them:
+This directory contains two kinds of helper, distinguished by who invokes them:
 
-- **Agent-invoked.** Helpers a skill or subagent runs, via the `{harness_home_dir}/scripts/` prefix documented below.
+- **Agent-invoked.** Helpers run by a skill or subagent, via the `{harness_home_dir}/scripts/` prefix documented below.
 - **Harness-invoked.** Helpers wired into a harness's own configuration, with no agent in the loop.
 
-The extension says how a helper is written, not who runs it: a `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are tracked build output, generated here by `scripts/bundle-skill-helpers.ts`, so a source edit lands with its rebuilt bundle in the same commit. Either kind serves either invoker.
+The extension says how a helper is written, not who runs it: A `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are tracked build output, generated here by `scripts/bundle-skill-helpers.ts`, so a source edit is committed together with its rebuilt bundle. Either kind serves either invoker.
 
 Files of any other extension (such as this README) are not installed.
 
@@ -21,7 +21,7 @@ Agent-facing content must invoke these scripts using the `{harness_home_dir}/scr
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill my-skill --interactive false` via Bash.
 ```
 
-At install time, `{harness_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.opencode`, or the equivalent per target platform, producing an explicit absolute path the agent can execute.
+At install time, `{harness_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.opencode`, or the equivalent per target platform, producing an explicit absolute path that the agent can execute.
 
 Bare invocations (e.g., `` Run `resolve-frontmatter.sh ...` ``) do not resolve at runtime: The install directory is not on `$PATH`, and only `feedback-memories.sh` is symlinked into `/usr/local/bin`. An agent that encounters a bare invocation typically guesses a path and fails before succeeding, wasting tool calls.
 
@@ -31,7 +31,7 @@ Prose mentions of script names that are not invocations (e.g., ``"the `describe-
 
 Agent-invoked:
 
-- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, reads a rendered title back into its parts, consolidates a commit range's entries into a consolidated record, applies overrides to a record, renders the fenced `change-record` block that ends a pull-request body, and resolves what a pull request merges as from that block and the pull request's commits. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs <subcommand>`, where [title-templates.md](../skills/_data/title-templates.md#invoking-the-bundle) names the subcommand for each; the bundle carries no shebang.
+- `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, reads a rendered title back into its parts, consolidates a commit range's entries into a consolidated record, applies overrides to a record, renders the fenced `change-record` block that ends a pull-request body, and resolves what a pull request merges as from that block and the pull request's commits. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs <subcommand>`, where [title-templates.md](../skills/_data/title-templates.md#invoking-the-bundle) names the subcommand for each; the bundle has no shebang.
 - `get-ticket-id.sh`: Extracts a ticket ID from a branch name.
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields, plus scalar and list extension keys.
 - `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.

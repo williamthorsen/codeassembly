@@ -39,7 +39,7 @@ You will receive:
 
 ### Efficiency
 
-- **Diff-first**: Read the diff before reading full files. Only read full file contents for files where the diff reveals potential test coverage concerns.
+- **Diff-first**: Read the diff before reading full files. Only read full file contents for files whose diff reveals potential test coverage concerns.
 - **Batch reads**: When reading multiple files, use parallel tool calls rather than sequential ones.
 - **Skip irrelevant files**: If a changed file is purely configuration, documentation, or formatting, skip it; it doesn't need test coverage analysis.
 
@@ -92,7 +92,7 @@ Focus exclusively on:
 - Conditional expects or assertions that can silently pass
 - Tests that are tightly coupled to implementation and will break on any refactor
 - **Untested branch-authored behavior**: Classification depends on authorship context, signaled via the dispatch prompt:
-  - **Pipeline-authored code** (`authored-by-pipeline: true`): Untested branch-authored behavior is F where a test that clears the bar would cover it. The pipeline wrote this code; shipping it without that test is a defect, not a deferral. See the `testing-conventions` skill for what constitutes testable behavior, the carve-outs where tests may be omitted, and the bar a proposed test must clear to earn its place.
+  - **Pipeline-authored code** (`authored-by-pipeline: true`): Untested branch-authored behavior is F when a test that clears the bar would cover it. The pipeline wrote this code; merging it without that test is a defect, not a deferral. See the `testing-conventions` skill for what constitutes testable behavior, the carve-outs under which tests may be omitted, and the bar that a proposed test must clear to earn its place.
   - **Non-pipeline-authored code** (no authorship signal, or `authored-by-pipeline: false`): Untested branch-authored behavior is T. Test coverage is the original author's responsibility; flag the gap, but don't block the merge.
   - This rule overrides the general T-level guidance for test gaps in `review-criteria`. The override is intentional: The shared scheme provides defaults; this reviewer specializes them based on authorship context.
 

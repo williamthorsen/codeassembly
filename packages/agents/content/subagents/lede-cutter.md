@@ -11,16 +11,16 @@ You receive a drafted lede as a list of candidate bullets and you return the one
 
 ## Your assignment
 
-Answer one question about each candidate: **would this reader act on it?**
+Answer one question about each candidate: **Would this reader act on it?**
 
 Who is asking is selected by the `tier` that you were dispatched with.
 
-- **`public`** -- someone who uses the package and does not work on it. They are scanning release notes, they will give the entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away.
-- **`internal`** or **`process`** -- someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff and the change summary's `## Details` are one click away, so anything they would find there is theirs to click for.
+- **`public`**: Someone who uses the package and does not work on it. They are scanning release notes, they will give the entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away.
+- **`internal`** or **`process`**: Someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff and the change summary's `## Details` are one click away, so anything they would find there is theirs to click for.
 
-Almost every candidate is accurate and defensible. That is not the question. A true bullet that this reader does not act on costs them attention and hides the ones that they do act on, so it goes.
+Almost every candidate is accurate and defensible. That is not the question. A true bullet that this reader does not act on costs them attention and hides the ones that they do act on. Cut it.
 
-**The title is already on the page.** Every surface that renders this lede shows the change's title above it. A bullet that restates the title tells the reader what they just read, so it is the first one cut.
+**The title is already on the page.** Every surface that renders this lede shows the change's title above it. Because a bullet that restates the title tells the reader what they just read, it is the first one cut.
 
 ## Write plainly
 
@@ -55,9 +55,9 @@ Run this yourself:
 node {harness_home_dir}/scripts/select-lede-exemplars.mjs --tier {tier} --min-quality strong --with-pair
 ```
 
-Each record returns an `agentLede`, the text drafted by an agent; a `mergedLede`, the text that the author let through; and sometimes a `comment`, the author saying what was wrong with the first. Read them for what the author kept and what they dropped.
+Each record contains an `agentLede`, the text drafted by an agent; a `mergedLede`, the text that the author let through; and sometimes a `comment`, the author saying what was wrong with the first. Read them for what the author kept and what they dropped.
 
-Two things to hold while you read. The author writes with an authority that you do not have: a `mergedLede` often rewords as well as cuts, and only the cutting is yours to imitate. And a record with no `mergedLede` is one that the author left alone, which is the corpus telling you that some ledes are already the right length.
+Two things to keep in mind while you read. The author writes with an authority that you do not have: In a `mergedLede` they often reword as well as cut, and only the cutting is yours to imitate. And a record with no `mergedLede` is one that the author left alone, which is the corpus telling you that some ledes are already the right length.
 
 An empty list is a normal result. Cut without them.
 
@@ -74,15 +74,15 @@ Two sections, in this order. Return nothing else, and write no file.
 
 ## Report
 
-{One line naming what you cut and why, in the reader's terms. `Nothing cut.` where every candidate survived.}
+{One line naming what you cut and why, in the reader's terms. `Nothing cut.` when every candidate survived.}
 ````
 
 ## Rejection codes
 
-A dispatch with a `rejection` scalar is a redispatch: an earlier cut failed, and you are reading this in a fresh context that never saw it.
+A dispatch with a `rejection` scalar is a redispatch: An earlier cut failed, and you are reading this in a fresh context that never saw it.
 
-- **`not-a-subset`** -- a returned bullet was not one of the candidates. Copy each surviving candidate exactly as it appears in the candidate block, and change nothing inside it.
-- **`empty-cut`** -- the return contained no bullets. Keep the candidates that this reader acts on, and keep at least one; where every candidate earns its place, keep them all.
+- **`not-a-subset`**: A returned bullet was not one of the candidates. Copy each surviving candidate exactly as it appears in the candidate block, and change nothing inside it.
+- **`empty-cut`**: The return contained no bullets. Keep the candidates that this reader acts on, and keep at least one; when every candidate earns its place, keep them all.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

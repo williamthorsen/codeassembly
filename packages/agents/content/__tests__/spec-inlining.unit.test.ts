@@ -13,10 +13,10 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // fill from its prior rather than follow the link, producing a block that looks right and is wrong. These tests
 // assert the specs are present in each consumer's include-expanded body, which is what the install pipeline writes.
 //
-// The consumer lists are explicit rather than discovered from the include directives themselves: the failure this
-// guards against is a consumer being *dropped*, and a discovered list would move with the bug.
+// The consumer lists are explicit rather than discovered from the include directives themselves: The failure against
+// which this guards is a consumer being *dropped*, and a discovered list would move with the bug.
 //
-// A second guard runs beside them, over the diff-audit checklist. Its risk is the mirror image: a host that states
+// A second guard runs beside them, over the diff-audit checklist. Its risk is the mirror image: A host that states
 // the checklist in its own prose has no include directive and no anchor, so nothing in the deployment mechanism
 // can see the fork. Two carriers of `prose-line-breaks` drifted that way before it was guarded.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
@@ -25,7 +25,7 @@ const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 interface Spec {
   readonly name: string;
   readonly heading: string;
-  /** Phrases that must survive distillation; each is a rule an improvised block has been observed to get wrong. */
+  /** Phrases that must survive distillation; each is a rule that an improvised block has been observed to get wrong. */
   readonly rules: ReadonlyArray<string>;
 }
 
@@ -39,25 +39,25 @@ const OPTION_FORMAT: Spec = {
     '   - ➕ minimal surface area',
     'Apply this even when an option has only one pro or con.',
     // The gate that decides whether a menu exists at all. Without it the block reads as a formatting spec, and a
-    // settled call gets rendered as a fork the reader has to evaluate.
+    // settled call gets rendered as a fork that the reader has to evaluate.
     '**Earn the menu before rendering it.**',
     // The gate's carve-out. Without it the gate reads as license to decide an authorization ask, trading a menu
-    // problem for an agent that acts where it should have asked.
+    // problem for an agent that acts when it should have asked.
     'This gate governs judgment asks alone',
     // The test that tells a real bullet from a manufactured one. Without it the rule states what a bullet must be
-    // and not how to tell, which is the wording four captured failures got through.
+    // and not how to tell, which is the wording that four captured failures got through.
     'must be false for at least one other option',
     // The ban on padding. Without it an option with real pros and no real con gets a con invented for balance, and
     // the invented con is what makes a settled call look like a fork.
     'Never add a bullet to fill a slot',
-    // The gate's one observed blind spot. Without it the agent prices each option on its own ledger, where elapsed
-    // time and round trips are scarce, and treats having measured one as license to rank.
+    // The gate's one observed blind spot. Without it the agent measures each option by its own elapsed time and
+    // round trips, which are scarce to it, and treats having measured one as license to rank.
     '**Never rank the options by your own elapsed time, round trips, or effort.**',
     // What sorts an ordering question, stated as a test rather than a list of cases. An enumeration here contradicts
-    // the gate it is appended to, which is how a combine-or-split call lost its recommendation.
+    // the gate to which it is appended, which is how a combine-or-split call lost its recommendation.
     'When the order changes the code or the total effort',
-    // What the gate requires of the menu it produces for a timing-only ordering. Without it a menu satisfies the gate
-    // while carrying the agent's lean, which the marker table's ■■□ row licenses.
+    // What the gate requires of the menu that it produces for a timing-only ordering. Without it a menu satisfies the
+    // gate while carrying the agent's lean, which the marker table's ■■□ row licenses.
     'render the options unmarked',
   ],
 };
@@ -81,7 +81,7 @@ const IMPLEMENT_PLAN_MENU: Spec = {
     // the marker varies with nothing and the reader has to investigate every menu to find the real forks.
     "The selected option's marker follows how cleanly its rule matched",
     // The fallthrough carve-out. Without it rule 3's default selection can claim ■■■, which is the
-    // over-correction the unpinning invites.
+    // over-correction that the unpinning invites.
     "Rule 3 is the cascade's fallthrough rather than a positive match",
   ],
 };
@@ -93,13 +93,13 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     '| 3   | 🚀    | Implement   |',
     '🎶 **Orchestrate** -> `orchestrate-dev`',
     // The Implement option's skill mapping. Without it the agent improvises "implement manually", which is the
-    // ungoverned path this option exists to replace.
+    // ungoverned path that this option exists to replace.
     '🚀 **Implement** -> `implement-plan`',
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
-    // enough to turn away: the round trip the carve-out exists to prevent.
+    // enough to turn away: the round trip that the carve-out exists to prevent.
     'Render option 3 as 🔬 Investigate, invoking no skill',
-    // The rule a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and falls
-    // through to rule 3, recommending the development pipeline for work that produces no diff.
+    // The rule that a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and
+    // falls through to rule 3, recommending the development pipeline for work that produces no diff.
     'rule 2 matches whenever rule 1 does not',
     // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
     // one of them reintroduces the failure named beneath it.
@@ -108,19 +108,19 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
     'when it was ratified interactively',
     'from prior design work, verified against source, or copied from an established pattern',
-    // Why a refine pass cannot resolve an empirical unknown, which is what routes such plans to rule 2.
+    // Why a refine pass cannot resolve an empirical unknown, which is what sends such plans to rule 2.
     'A refine pass re-reads the plan and structurally cannot answer those',
     // The demotion of the structural triggers. Without it they are sufficient again, and every substantive plan
     // trips them.
     'They are evidence to weigh, and none of them matches rule 1 on its own',
-    // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
+    // The obligation that makes the test structural rather than advisory: An agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
     '`➕` line naming the specific unsettled decision that the pass would raise',
     // The marker rule. Without it the selected option is pinned to ■■□ whatever the analysis found, so the marker
     // varies with nothing and the reader has to investigate every menu to find the real forks.
     "The selected option's marker follows how cleanly its rule matched",
     // The fallthrough carve-out. Without it rule 3's default selection can claim ■■■, which is the over-correction
-    // the unpinning invites.
+    // that the unpinning invites.
     "Rule 3 is the cascade's fallthrough rather than a positive match",
   ],
 };
@@ -131,42 +131,43 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
   rules: [
     '### Source divergence sub-block',
     '### Combined output format',
-    // The heading both artifact-mutating sub-blocks link to. Renaming it breaks the `#proposed-edit-preview`
+    // The heading to which both artifact-mutating sub-blocks link. Renaming it breaks the `#proposed-edit-preview`
     // anchors silently, leaving each sub-block pointing at nothing.
     '### Proposed-edit preview',
     // The carve-out that exempts the preview from the sub-blocks' terseness default. Without it that default
-    // suppresses the preview again, which is the consent-blind render this spec exists to prevent.
+    // suppresses the preview again, which is the consent-blind render that this spec exists to prevent.
     'It never suppresses the proposed-edit preview, which is required content',
-    // The directive that keeps the Deviations edit inside the criteria it previews. Without it the option names no
-    // bound, and the delegate's own scope is the only thing holding the edit to what the preview showed.
+    // The directive that keeps the Deviations edit inside the criteria that it previews. Without it the option names
+    // no bound, and the delegate's own scope is the only thing holding the edit to what the preview showed.
     'which revises acceptance criteria alone',
     // The trigger's computation order. Without it the sub-block renders off the compliance status rows again,
     // prompting for a ticket edit wherever a criterion's wording merely differs from what was built.
     'Compute the delta first: An empty delta renders no sub-block',
     // The carve-out for work that is unfinished rather than redirected. Without it a mid-implementation review
-    // proposes dropping criteria the branch has not reached yet, aligning the contract to a moving target.
+    // proposes dropping criteria that the branch has not reached yet, aligning the contract to a moving target.
     'A criterion that is merely unbuilt contributes no line',
-    // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation the review already
-    // flagged gets the contract rewritten to match it, and the finding disappears along with the conflict.
+    // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation already flagged by the
+    // review gets the contract rewritten to match it, and the finding disappears along with the conflict.
     'revising the contract to match it',
     // The marker rule for the Deviations cascade. Without it rules 1 and 2 re-pin their markers inline, and the
     // marker varies with nothing.
     "the recommended option's marker follows how cleanly the rule's test is met",
-    // The marker rule for the source-divergence cases, in that block's own wording so the near-duplicate rules
+    // The marker rule for the source-divergence cases, in that block's own wording so that the near-duplicate rules
     // above and below cannot mask its removal. Without it the recommended option re-pins to ■■□ however stark
     // the divergence.
     "the recommended option's marker follows how cleanly the case's own test is met",
     // The rule that puts the ticket edit's destination in the rendered line. Without it the option renders as a bare
     // label again, and selecting it is consent to a write whose target the user was never shown.
     '**Name the artifact that the edit writes.**',
-    // The rule that offers the local-only form when the snapshot may be the working contract. Without it a ticket the
-    // user cannot edit has no path but a remote write that fails or lands on a ticket that is not theirs.
+    // The rule that offers the local-only form when the snapshot may be the working contract. Without it a ticket
+    // that the user cannot edit has no path but a remote write that fails or updates a ticket that is not theirs.
     '**Offer the local-only form when the snapshot may be the contract.**',
     // The marker rule for the findings cascade. Without it the selected option is pinned to ■■□ whatever the
     // findings turned out to be, so the marker carries no information about how clear the call was.
     "The selected option's marker follows how cleanly its rule matched",
     // The clause that fixes what the implement option's commit is. Without it the option's name is the only thing
-    // saying a commit happens, and an amend takes back the diff and the revert point the separate commit exists for.
+    // saying a commit happens, and an amend takes back the diff and the revert point for which the separate commit
+    // exists.
     'The commit is always a new one, never an amend',
   ],
 };
@@ -185,7 +186,10 @@ const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: Readonly
   { slug: 'update-project-guidance', specs: [OPTION_FORMAT] },
 ];
 
-/** The `_data` paths the specs were reached through before they were inlined. A surviving link is a missed consumer. */
+/**
+ * The `_data` paths through which the specs were reached before they were inlined. A surviving link is a missed
+ * consumer.
+ */
 const RELOCATED_SPEC_LINKS: ReadonlyArray<string> = [
   '_data/next-steps-after-plan.md',
   '_data/next-steps-after-review.md',
@@ -268,7 +272,9 @@ describe('diff-audit checklist inlining', () => {
 
 // region | Helpers
 
-/** Returns a skill's include-expanded `SKILL.md`, the body the install pipeline goes on to rewrite and write out. */
+/**
+ * Returns a skill's include-expanded `SKILL.md`, the body that the install pipeline goes on to rewrite and write out.
+ */
 async function expandSkill(slug: string): Promise<string> {
   return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
 }

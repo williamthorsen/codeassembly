@@ -7,9 +7,9 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Bitbucket Cloud reads a 2-space nested item as a sibling and reports nothing, so the rule binds only where it is
-// already in context as a body is composed. Each carrier inlines it rather than linking to it, for the reason the
-// `_partials` README gives: a runtime link is an optional read, and the model fills from its prior instead.
+// Bitbucket Cloud reads a 2-space nested item as a sibling and reports nothing, so the rule binds only when it is
+// already in context as a body is composed. Each carrier inlines it rather than linking to it, for the reason given
+// by the `_partials` README: A runtime link is an optional read, and the model fills from its prior instead.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the rule; every carrier reaches it through an include. */
@@ -18,7 +18,7 @@ const PARTIAL = 'skills/_partials/nested-list-indent.md';
 /** The rule's opening, which the single-statement counts key on. */
 const RULE_HEADLINE = 'Indent a nested list item 4 spaces';
 
-/** Phrases that must survive an edit to the partial, so a gutted rule cannot still pass on its opening alone. */
+/** Phrases that must survive an edit to the partial, so that a gutted rule cannot still pass on its opening alone. */
 const RULE_PHRASES: ReadonlyArray<string> = [
   RULE_HEADLINE,
   'the only way to notice is to view the published text',
@@ -28,10 +28,10 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 /** The example's nesting, which a code fence protects from Prettier's normalization to the parent's column. */
 const RULE_EXAMPLE = '- parent\n    - child\n        - grandchild\n';
 
-// Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
+// Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A place here goes to a step that composes a body rendered by Bitbucket, plus the data entry read by both
+// This list contains each step that composes a body rendered by Bitbucket, plus the data entry read by both
 // Bitbucket write delegates. Branch commit bodies are absent by decision: Bitbucket renders a commit message too,
 // but a squash merge discards the branch's own commits, so the commit body that reaches the default branch is the
 // merge body composed by `merge-pr`. The delegates are absent because they submit a body rather than compose one.

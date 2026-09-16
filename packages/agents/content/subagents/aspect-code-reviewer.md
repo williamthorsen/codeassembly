@@ -34,7 +34,7 @@ You will receive:
 
 ### Efficiency
 
-- **Diff-first**: Read the diff before reading full files. Only read full file contents for files where the diff reveals potential issues in your scope.
+- **Diff-first**: Read the diff before reading full files. Only read full file contents for files whose diff reveals potential issues in your scope.
 - **Batch reads**: When reading multiple files, use parallel tool calls rather than sequential ones.
 - **Skip irrelevant files**: If the diff for a file shows only documentation, formatting, or test changes, skip reading its full content.
 

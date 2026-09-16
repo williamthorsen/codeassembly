@@ -5,18 +5,21 @@ import { describe, expect, it } from 'vitest';
 
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// A content fence is the one channel that hands a subagent text rather than scalars: the candidates a cutter chooses
-// among, and the passages a redispatched drafter revises. Everything the fence carries is copied from a subagent's
-// own earlier return, so the caller writes none of it. A sentence templated here would seed the subagent exactly as
-// a prose scalar in the dispatch block does, which `dispatch-block-scalars` forbids by holding that block's keys to
-// a closed set. Neither failure shows at runtime -- each yields a plausible lede carrying the caller's weighting --
-// so the guard has to be here.
+// A content fence is the one channel that hands a subagent text rather than scalars: the candidates among which a
+// cutter chooses, and the passages that a redispatched drafter revises. Everything the fence carries is copied from
+// a subagent's own earlier return, so the caller writes none of it. A sentence templated here would seed the subagent
+// exactly as a prose scalar in the dispatch block does, which `dispatch-block-scalars` forbids by holding that
+// block's keys to a closed set. Because neither failure shows at runtime -- each yields a plausible lede carrying the
+// caller's weighting -- the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
-/** Every info string a content fence may carry. A channel absent from this set is one nothing reviewed. */
+/** Every info string that a content fence may carry. A channel absent from this set is one that nothing reviewed. */
 const DECLARED_FENCES: ReadonlySet<string> = new Set(['candidates', 'rejected']);
 
-/** A line a content fence may carry: a bullet whose whole content is one placeholder the caller fills at dispatch. */
+/**
+ * A line that a content fence may carry: a bullet whose whole content is one placeholder filled by the caller at
+ * dispatch.
+ */
 const PLACEHOLDER_LINE = /^- \{[^{}]*\}$/;
 
 /** One offending fence line, or one fence's undeclared info string, located for the failure message. */
@@ -34,8 +37,8 @@ describe('content fences', () => {
     const missing = [...DECLARED_FENCES.difference(found)];
 
     const message =
-      'Each declared info string names a channel some skill sends. One that no fence carries makes its half of the ' +
-      `assertions below pass vacuously, so drop it from DECLARED_FENCES:\n  ${missing.join('\n  ')}`;
+      'Each declared info string names a channel that some skill sends. One that no fence carries makes its half ' +
+      `of the assertions below pass vacuously, so drop it from DECLARED_FENCES:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -49,9 +52,9 @@ describe('content fences', () => {
       );
 
     const message =
-      "A content fence carries placeholders the caller fills with a subagent's own earlier text, and no prose: a " +
-      'sentence templated here makes the caller the author of the facts, which is the arrangement the fresh-context ' +
-      `dispatch replaced. These lines are not placeholder bullets:\n  ${violations.map(describeViolation).join('\n  ')}`;
+      "A content fence carries placeholders that the caller fills with a subagent's own earlier text, and no prose: " +
+      'A sentence templated here makes the caller the author of the facts, which is the arrangement replaced by the ' +
+      `fresh-context dispatch. These lines are not placeholder bullets:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 
@@ -62,8 +65,8 @@ describe('content fences', () => {
 
     const message =
       'A fence carrying placeholder bullets is a content channel whatever it is named, and an undeclared one is a ' +
-      'channel that reached a subagent without review. Add it to DECLARED_FENCES where a subagent reads it, and ' +
-      `drop the fence where none does:\n  ${violations.map(describeViolation).join('\n  ')}`;
+      'channel that reached a subagent without review. Add it to DECLARED_FENCES if a subagent reads it, and ' +
+      `drop the fence if none does:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 });
@@ -78,7 +81,7 @@ interface Fence {
   readonly relativePath: string;
 }
 
-/** Reads every fence in the content tree, so all three assertions scan it once. */
+/** Reads every fence in the content tree, so that all three assertions scan it once. */
 async function collectFences(): Promise<ReadonlyArray<Fence>> {
   const files = await listMarkdownFiles(CONTENT_ROOT);
   const fences: Array<Fence> = [];
@@ -130,7 +133,7 @@ function findFences(content: string, relativePath: string): ReadonlyArray<Fence>
   return fences;
 }
 
-/** Reports whether every line a fence carries, blank lines aside, is a placeholder bullet. */
+/** Reports whether every line that a fence carries, blank lines aside, is a placeholder bullet. */
 function isPlaceholderFence(fence: Fence): boolean {
   return fence.lines.filter((text) => text !== '').every((text) => PLACEHOLDER_LINE.test(text));
 }

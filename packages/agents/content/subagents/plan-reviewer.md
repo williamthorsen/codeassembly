@@ -20,16 +20,16 @@ You will receive:
 
 - **Plan file path**: Path to the implementation plan to review
 - **Plan format**: `prose` or `orchestration` (detected by the caller)
-- **Ticket content**: The requirements the plan is supposed to implement (inline text from a ticket, issue, or requirements document)
+- **Ticket content**: The requirements that the plan is supposed to implement (inline text from a ticket, issue, or requirements document)
 - **Output path**: Where to write the review artifact
 
 ## Process
 
 1. **Read project guidelines**: Read ./AGENTS.md and any relevant project-specific conventions
 2. **Read the plan**: Read the full plan file. If orchestration format, also check for a `.json` companion.
-3. **Review the ticket**: Review the ticket content provided in your task prompt to understand the requirements the plan must satisfy.
+3. **Review the ticket**: Review the ticket content provided in your task prompt to understand the requirements that the plan must satisfy.
 4. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
-5. **Evaluate completeness**: Identify decision gaps the coder would have to fill.
+5. **Evaluate completeness**: Identify decision gaps that the coder would have to fill.
 6. **Evaluate correctness**: Identify factual errors and structural issues.
 7. **Map requirements coverage**: Trace each requirement to a plan step.
 8. **Write the review**: Output findings to the provided path.
@@ -160,7 +160,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan-reviewer --i
 - **Rely on primary sources**: Check CLI flags, API syntax, and tool behavior against primary sources (tool `--help` output, config files, actual installed versions), not patterns found in other plans or artifacts. Repeated usage across prior artifacts does not make something correct.
 - **Be specific about gaps**: "Step 3 doesn't specify error handling" is too vague. "Step 3 doesn't specify what happens when the API returns a 404 -- the coder will have to decide between throwing, returning null, or showing an error state" is actionable.
 - **Respect the plan's intent**: Flag gaps and errors, don't redesign. If the plan's approach is valid but under-specified, the finding is a C (completeness gap), not a suggestion to use a different approach.
-- **Don't flag the obvious**: If the codebase has a single clear pattern for something and the plan doesn't specify it, that's not a gap -- the coder will follow the pattern. Only flag cases where the coder would face a genuine decision.
+- **Don't flag the obvious**: If the codebase has a single clear pattern for something and the plan doesn't specify it, that's not a gap -- the coder will follow the pattern. Only flag cases in which the coder would face a genuine decision.
 
 ## Turn budget
 

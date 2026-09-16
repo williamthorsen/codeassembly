@@ -19,17 +19,17 @@ import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-sub
 import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// A guidance hook reaches an agent two ways, and both are checked here: a body declares the directive itself, or a
-// subagent preloads a skill that declares it. Each route is one line an edit can drop with no other test failing.
+// A guidance hook reaches an agent two ways, and both are checked here: A body declares the directive itself, or a
+// subagent preloads a skill that declares it. Each route is one line that an edit can drop with no other test failing.
 //
 // Every hook is a row of one table rather than a file of its own, so a hook added with no row is visible as an absence
-// here instead of as a suite nobody wrote.
+// here instead of as a suite that nobody wrote.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const RULEBOOKS_ROOT = path.join(CONTENT_ROOT, 'guidance', 'rulebooks');
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
 
-/** A rulebook a declaration binds to a hook, with a phrase that would not survive the rulebook being gutted. */
+/** A rulebook that a declaration binds to a hook, with a phrase that would not survive the rulebook being gutted. */
 interface BoundRulebook {
   readonly slug: string;
   readonly rule: string;
@@ -47,7 +47,7 @@ interface DeclaringBody {
   readonly relativePath: string;
 }
 
-/** One hook, the bodies that declare it, the rulebooks bound to it, and the body its splice is proven against. */
+/** One hook, the bodies that declare it, the rulebooks bound to it, and the body against which its splice is proven. */
 interface HookGuard {
   readonly hook: string;
   readonly role: string;
@@ -56,13 +56,13 @@ interface HookGuard {
   readonly spliceProbe: SpliceProbe;
 }
 
-/** The body one hook's splice is asserted against, and injected text a fill must not displace. */
+/** The body against which one hook's splice is asserted, and injected text that a fill must not displace. */
 interface SpliceProbe {
   readonly body: DeclaringBody;
   readonly coexisting: ReadonlyArray<string>;
 }
 
-// Listed explicitly rather than discovered from the directives: the failure guarded against is a body dropping off,
+// Listed explicitly rather than discovered from the directives: The failure guarded against is a body dropping off,
 // and a discovered list would move with the bug.
 const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
@@ -154,16 +154,19 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
 /**
  * Skills permitted to declare a hook whose bound rulebooks deliver `ambient`, each with the reason it is permitted.
  * A session running such a skill reads the rulebook twice, once from the harness guidance file and once from the
- * fill, so the pairing is only worth its cost where the skill reads the fill rather than only carrying it.
+ * fill, so the pairing is only worth its cost when the skill reads the fill rather than only carrying it.
  *
- * Nothing else reports this. `sync` used to warn on every pairing and could not tell these apart from an accident,
- * so this list is where the library records which ones are deliberate.
+ * Nothing else reports this. `sync` used to warn on every pairing and could not tell these apart from an accident.
+ * This list records which ones are deliberate.
  */
 const AMBIENT_FILL_READERS: ReadonlyMap<string, string> = new Map([
   ['revise-prose', 'resolves its units, their versions, and its rule ids from the fills in its own body'],
 ]);
 
-/** The skill every reviewer subagent preloads, and so the one that delivers the hooks it declares to all of them. */
+/**
+ * The skill preloaded by every reviewer subagent, and so the one that delivers the hooks that it declares to all of
+ * them.
+ */
 const REVIEWER_CARRIER = 'review-criteria';
 
 const REVIEWER_SUBAGENTS: ReadonlyArray<string> = [
@@ -208,9 +211,9 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
   });
 });
 
-// The reviewer subagents reach a hook through a preloaded skill rather than a directive of their own, a route only
-// `implementation-preferences` takes. Kept beside the table rather than in it, so no other hook has an empty field
-// for a route it does not use.
+// The reviewer subagents reach a hook through a preloaded skill rather than a directive of their own, a route that
+// only `implementation-preferences` takes. Kept beside the table rather than in it, so that no other hook has an
+// empty field for a route that it does not use.
 describe('reviewer-subagent carrier', () => {
   it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {
     const content = await readFile(path.join(SUBAGENTS_ROOT, `${slug}.md`), 'utf8');
@@ -240,7 +243,7 @@ describe('ambient-bound hook declarations', () => {
     expect(offenders, message).toEqual([]);
   });
 
-  // The inverse of the assertion above, over the same population: an exemption naming a skill that no longer
+  // The inverse of the assertion above, over the same population: An exemption naming a skill that no longer
   // declares an ambient-bound hook silences nothing and would outlive the reason it was granted for.
   it.each(AMBIENT_FILL_READERS.entries().toArray())('%s still declares an ambient-bound hook', async (slug, reason) => {
     const declarers = await listAmbientFillDeclarers();
@@ -254,7 +257,9 @@ describe('ambient-bound hook declarations', () => {
 
 // region | Helpers
 
-/** Renders one ambient binding for a failure message: the hook, and the ambient rulebooks a fill would duplicate. */
+/**
+ * Renders one ambient binding for a failure message: the hook, and the ambient rulebooks that a fill would duplicate.
+ */
 function describeAmbientBinding({ ambientSlugs, hook }: AmbientHookBinding): string {
   return `"${hook}", bound to ambient-delivering ${ambientSlugs.join(', ')}`;
 }
@@ -298,14 +303,15 @@ async function listAmbientFillDeclarers(): Promise<ReadonlyMap<string, ReadonlyA
 }
 
 /**
- * Returns every skill slug declaring `hook` in a Markdown body the deploy walk reaches. `isSkippedSkillEntry` is what
- * `sync` applies, so a directive in a skill-local partial counts here only where a deployed body inlines it, as there.
+ * Returns every skill slug declaring `hook` in a Markdown body reached by the deploy walk. `isSkippedSkillEntry` is
+ * what `sync` applies, so a directive in a skill-local partial counts here only when a deployed body inlines it, as
+ * there.
  */
 async function listSkillSlugsDeclaring(hook: string): Promise<ReadonlyArray<string>> {
   const slugs: Array<string> = [];
   const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
   for (const entry of entries) {
-    // `_data` joins the skipped names here: a support entry is no skill, and the support route renders fills dropped.
+    // `_data` joins the skipped names here: A support entry is no skill, and the support route does not render a fill.
     if (!entry.isDirectory() || entry.name.startsWith('_') || isSkippedSkillEntry(entry.name)) {
       continue;
     }
@@ -327,9 +333,9 @@ async function listSkillSlugsDeclaring(hook: string): Promise<ReadonlyArray<stri
 }
 
 /**
- * Builds the fills a declaration produces, keyed by hook, spanning every guard rather than one hook at a time: a body
- * can declare more than one, and an anchor collision only shows up once they fill together the way `sync` fills them.
- * Bound bodies stay unrendered: link rewriting and invocation-token resolution belong to `sync` and are covered
+ * Builds the fills that a declaration produces, keyed by hook, spanning every guard rather than one hook at a time: A
+ * body can declare more than one, and an anchor collision only shows up once they fill together the way `sync` fills
+ * them. Bound bodies stay unrendered: Link rewriting and invocation-token resolution belong to `sync` and are covered
  * there, and what these assertions cover is the splice into the real consumer bodies.
  */
 async function buildFills(): Promise<GuidanceHookFills> {
@@ -344,12 +350,12 @@ async function buildFills(): Promise<GuidanceHookFills> {
   return new Map(entries);
 }
 
-/** Returns a skill or subagent body with its includes expanded, the body the deploy pipeline goes on to fill. */
+/** Returns a skill or subagent body with its includes expanded, the body that the deploy pipeline goes on to fill. */
 async function expandBody(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
 }
 
-/** Returns a rulebook's body with its frontmatter stripped, the form a fill splices. */
+/** Returns a rulebook's body with its frontmatter stripped, the form that a fill splices. */
 async function readRulebookBody(slug: string): Promise<string> {
   const content = await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8');
   return parseFrontmatter(content).body;

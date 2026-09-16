@@ -329,7 +329,7 @@ script="$PROJECT_ROOT/content/scripts/get-ticket-id.sh"
 setup_tmpdir() {
   enter_tmpdir || return 1
   mkdir -p workdir/.agents
-  # Make workdir a real repo so the resolver anchors there and the not-a-repo diagnostic stays
+  # Make workdir a real repo so that the resolver anchors there and the not-a-repo diagnostic stays
   # silent; cases that need the not-a-repo path run from a separate uninitialized directory.
   git -C workdir init --quiet
   cd workdir || return 1
@@ -338,7 +338,7 @@ setup_tmpdir() {
 BeforeEach "setup_tmpdir"
 AfterEach "leave_tmpdir"
 
-# Each end-to-end case runs the script as a child process so the
+# Each end-to-end case runs the script as a child process so that the
 # preferences-file lookup honors the resolved repo root.
 
 It "returns COMPPLAN-795 for an author-prefixed branch"
@@ -464,7 +464,7 @@ The output should equal "MAC-147"
 End
 
 It "warns to stderr when a bare number is resolved outside a git repository"
-# Run from a sibling directory that is deliberately not a repo so the prefix lookup falls back to
+# Run from a sibling directory that is deliberately not a repo so that the prefix lookup falls back to
 # the working directory and must announce the misanchor on stderr rather than failing silently.
 run_outside_repo() {
   mkdir -p "$tmpdir/outside"

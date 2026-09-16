@@ -26,7 +26,7 @@ You receive:
 
 ## Data quality
 
-Events may include token-based usage metrics (`tokens`, `toolUses`, `durationMs`) on `phase_completed`, `reviewer_completed`, `coder_fix_completed`, and `re_review_completed` events. These fields are optional -- older runs and runs where usage parsing failed will not have them.
+Events may include token-based usage metrics (`tokens`, `toolUses`, `durationMs`) on `phase_completed`, `reviewer_completed`, `coder_fix_completed`, and `re_review_completed` events. These fields are optional -- older runs and runs in which usage parsing failed will not have them.
 
 **Metric preference:** When both `tokens` and timestamp-derived duration are available, prefer `tokens` for cost comparisons. Token counts directly measure agentic effort, while timestamps measure wall-clock time that includes user waits, CI delays, MCP latency, and other idle time unrelated to agent work. When token data is absent, fall back to timestamp-derived duration.
 
@@ -58,9 +58,9 @@ Analyze in priority order:
 
 Tag every suggestion:
 
-- **zero-risk** -- pure waste, no quality impact
-- **low-risk** -- efficiency improvement, quality preserved
-- **tradeoff** -- could affect quality, present data and let human decide
+- **zero-risk**: Pure waste, no quality impact
+- **low-risk**: Efficiency improvement, quality preserved
+- **tradeoff**: Could affect quality, present data and let human decide
 
 <!-- include: ../_partials/plain-speech.md / -->
 
@@ -109,7 +109,7 @@ Resolve fields before writing the artifact:
 - `provenance.timestamp`: Current UTC time in ISO 8601 format.
 - `provenance.baseSha`: Passed in via your dispatch prompt; the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
 - `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block: Look for the line `model named ... model ID is ...` and use the model ID value.
+- `provenance.model`: The model identifier under which you are executing. Read this from your system-prompt environment block: Look for the line `model named ... model ID is ...` and use the model ID value.
 - `ticket_id`, `ticket_ref`: Passed in via your dispatch prompt. Omit when absent.
 - `branch`: Passed in via your dispatch prompt.
 - `commit`: The short HEAD SHA at run time, passed in via your dispatch prompt.
@@ -122,6 +122,6 @@ The seal marker follows the closing `---`, as it does in every artifact:
 
 Because `savings-analyzer` does not have the {tool:Bash} tool in its default tool set, fields that normally require {tool:Bash} (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
 
-## ARTIFACT-WRITE SAFEGUARD
+## Artifact-write safeguard
 
 **You MUST write your artifact file before exhausting your turn budget.** If you are approaching your turn limit, immediately write what you have. A partial analysis is better than no artifact.

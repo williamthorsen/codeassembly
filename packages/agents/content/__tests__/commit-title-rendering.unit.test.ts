@@ -6,14 +6,17 @@ import { describe, expect, it } from 'vitest';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Two skills had hand-maintained copies of the `describe-change.mjs` invocation, which drifted in wording while
-// agreeing in substance. One statement is what keeps a correction to the invocation contract -- the flags, the JSON
-// parse, the fallback -- from having to be applied twice.
+// agreeing in substance. One statement keeps a correction to the invocation contract -- the flags, the JSON parse,
+// the fallback -- from having to be applied twice.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the invocation; every consumer reaches it through an include. */
 const PARTIAL = 'skills/_partials/commit-title-rendering.md';
 
-/** The extraction the invocation ends in, which the `pr_title` and `ticket_title` variants beside it do not match. */
+/**
+ * The extraction in which the invocation ends, which the `pr_title` and `ticket_title` variants beside it do not
+ * match.
+ */
 const EXTRACTION = "json.load(sys.stdin).get('commit_title'";
 
 describe('commit-title rendering', () => {

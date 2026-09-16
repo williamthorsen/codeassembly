@@ -1,13 +1,15 @@
 rules:
   capitalization-after-colon:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: false
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -95,16 +97,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   doc-descriptions:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: false
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -192,16 +197,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   em-dash:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: true
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -289,16 +297,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   inline-comments:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: false
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -386,16 +397,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   plain-speech:
     version: '6'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: false
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -483,16 +497,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   reduced-object-relative:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: true
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -580,16 +597,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   second-person:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: true
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -677,16 +697,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   sentence-case:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: false
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -774,16 +797,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   so:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: true
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -871,16 +897,19 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
   where:
     version: '1'
-    swept-at: 2026-09-15
+    swept-at: 2026-09-16
     detected: true
     roots:
+      - packages/agents/content/__tests__
       - packages/agents/content/_partials
       - packages/agents/content/codeassembly-content.yaml
       - packages/agents/content/collections
       - packages/agents/content/guidance
+      - packages/agents/content/scripts
       - packages/agents/content/skills/_data/action-items.md
       - packages/agents/content/skills/_data/artifact-conventions.md
       - packages/agents/content/skills/_data/bitbucket-pr-access.md
@@ -968,7 +997,8 @@ rules:
       - packages/agents/content/skills/update-project-guidance
       - packages/agents/content/skills/upgrade-dependencies
       - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents/prose-reviser.md
+      - packages/agents/content/subagents
+      - packages/agents/content/test-utils
 rejections:
   - rule: capitalization-after-colon
     rule-version: '1'
@@ -1051,25 +1081,240 @@ rejections:
     phrase: Treat timeout increases as a red flag that the test is doing unnecessary work
     ground: 'a quoted record: a dated log entry'
   - rule: plain-speech
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: Two things to hold while you read.
-    ground: '`hold in mind` is ordinary idiom here, not the flagged storage sense of `hold`'
-  - rule: plain-speech
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: where every candidate earns its place
+    rule-version: '6'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: the bar that a proposed test must clear to earn its place
     ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
   - rule: plain-speech
-    rule-version: '0'
+    rule-version: '6'
+    file: packages/agents/content/subagents/lede-cutter.md
+    phrase: A drafter holding its reasons for a bullet defends the bullet.
+    ground: the repair would pick the memory reading, and the next sentence suggests the original means attachment as well
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/lede-cutter.md
+    phrase: when every candidate earns its place, keep them all
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: earns its place after a compiler-target bump
-    ground: settled corpus vocabulary, as with the coverage bar the same phrase names elsewhere
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
   - rule: plain-speech
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: plants the doubt that it means to remove
-    ground: a conventional collocation rather than a figure built for the sentence; it parses on one pass
+    rule-version: '6'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/planner.md
+    phrase: the bar that a proposed test must clear to earn its place
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
+    file: packages/agents/content/subagents/planner.md
+    phrase: These go to the user for input.
+    ground: the repair would name the Risks and Questions sections as the destination, which the original leaves open; it may instead mean the return block
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/banned-codepoints.unit.test.ts
+    phrase: a verbatim superpowers extract
+    ground: 'not the construction: "superpowers extract" is a noun phrase, and "extract" is its head noun rather than a verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/banned-codepoints.unit.test.ts
+    phrase: which option its reasoning belongs to
+    ground: 'not the construction: an embedded interrogative, not a relative clause on a head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/bash-invocation-conventions.unit.test.ts
+    phrase: The call runs contained
+    ground: 'not the construction: "runs" is the clause''s own verb and "contained" a participial complement'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/bash-invocation-conventions.unit.test.ts
+    phrase: the read expands to nothing however carefully the prose above
+    ground: 'not the construction: "the read" is the subject of "expands", its own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/bash-invocation-conventions.unit.test.ts
+    phrase: Three conventions bind the Bash invocations
+    ground: 'not the construction: "bind" is the sentence''s own verb and "invocations" its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
+    phrase: Renders every shipped rulebook the way `sync` does
+    ground: 'outside the rule: a manner adjunct whose gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
+    phrase: Resolving every link the way the installer does
+    ground: 'outside the rule: a manner adjunct whose gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
+    phrase: Skills reach their inlined output-shaping specs
+    ground: 'not the construction: "reach" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/dispatch-block-scalars.unit.test.ts
+    phrase: makes the caller the author of the facts
+    ground: 'not the construction: object plus predicative complement of "makes"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/dispatch-block-scalars.unit.test.ts
+    phrase: which made the caller the author of the facts
+    ground: 'not the construction: object plus predicative complement of "made"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/dispatch-content-fences.unit.test.ts
+    phrase: makes the caller the author of the facts
+    ground: 'not the construction: object plus predicative complement of "makes"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/gh-body-file-reach.unit.test.ts
+    phrase: a Markdown file's fenced `bash` blocks
+    ground: 'not the construction: no relative clause, only a possessive noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/gh-body-file-reach.unit.test.ts
+    phrase: which the single-statement counts key on
+    ground: 'not the construction: the relativizer "which" is already present, and "key on" is a phrasal verb whose particle cannot be pied-piped'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: the way `sync` fills them
+    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: they guard a body dropping off
+    ground: 'not the construction: a verb with its object and a participle, no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
+    phrase: the injected content's shallowest one renders
+    ground: 'not the construction: "renders" is the sentence''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
+    phrase: whichever rulebook the local binding supplied
+    ground: 'outside the rule: a fused relative headed by "whichever", which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
+    phrase: granting the cutter license to reword would lose
+    ground: 'not the construction: "cutter" is the indirect object of "granting", and the clause has no relative gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-drafter-contract.unit.test.ts
+    phrase: a flag that this pipeline passes internally is
+    ground: 'not the construction: the relativizer "that" is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-drafter-contract.unit.test.ts
+    phrase: without the bound a migration grows a worked example per call shape
+    ground: 'not the construction: "grows" is the main clause''s own verb and "the bound" is the object of "without"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/nested-list-indent-reach.unit.test.ts
+    phrase: which the single-statement counts key on
+    ground: 'not the construction: the relativizer "which" is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-line-breaks-reach.unit.test.ts
+    phrase: which the single-statement counts key on
+    ground: 'not the construction: the relativizer "which" is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: '**Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.**'
+    ground: 'not prose: a literal pinned byte-for-byte against the `revise-prose` skill body, and the span already carries "that"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: every rule id that the library's rulebooks declare
+    ground: 'not the construction: the relativizer "that" is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: leaves the subagent no id to report its sites under
+    ground: 'not the construction: an infinitival complement with no embedded finite subject'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: so the fold's rules leave it out
+    ground: 'not the construction: "leave" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
+    phrase: the last three write artifacts
+    ground: 'not the construction: "write" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
+    phrase: wherever it appears
+    ground: 'outside the rule: an adverbial free relative, not a lexical head with an argument gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/shared-doctrine-reach.unit.test.ts
+    phrase: a dropped one would strip the doctrine from that skill
+    ground: 'not the construction: "dropped" is a participial modifier, and "would strip" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/shared-guidance-references.unit.test.ts
+    phrase: This pins an exclusion beside the inclusion above.
+    ground: 'not the construction: no relative clause in the sentence'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: a load-bearing decision that the plan leaves unsettled
+    ground: 'not the construction: the relativizer "that" is already present, and the span is a pinned literal'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: a settled call gets rendered
+    ground: 'not the construction: "gets rendered" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: The gate's one observed blind spot.
+    ground: 'not the construction: a noun phrase with no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: wherever a criterion's wording merely differs
+    ground: 'not the construction: "wherever" is no lexical head and the clause has no argument gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/subagent-content.unit.test.ts
+    phrase: whichever guidance file the target harness loads
+    ground: 'outside the rule: a fused relative headed by "whichever", which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: renders wherever a support entry does
+    ground: 'not the construction: "wherever" is no lexical head and the clause has no argument gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: these two fixtures are what prove the walk still judges correctly
+    ground: 'not the construction: "what" is a fused head, and "prove" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/work-type-choice-reach.unit.test.ts
+    phrase: single-statement counts key
+    ground: 'not the construction: the clause is "which the single-statement counts key on", which already has the overt relativizer "which"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/writing-preferences-reach.unit.test.ts
+    phrase: keep a rule gutted
+    ground: 'not the construction: the sentence is "keep X from passing", whose object is "a rule gutted to its heading"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/_partials/comment-discipline.md
@@ -1390,6 +1635,16 @@ rejections:
     file: packages/agents/content/guidance/shared/AGENTS.md
     phrase: written it stays
     ground: 'not the construction: a reduced adverbial clause followed by the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/scripts/resolve-frontmatter.sh
+    phrase: In production no extra args are needed beyond `--cwd`.
+    ground: 'not the construction: no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/scripts/resolve-reviewer-context.sh
+    phrase: The script can't infer any package keys from it
+    ground: "not the construction: the candidate's verb is the sentence's own"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/skills/_data/action-items.md
@@ -2396,55 +2651,280 @@ rejections:
     phrase: whichever the user selected
     ground: 'outside the rule: a fused relative head that admits no relativizer'
   - rule: reduced-object-relative
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: they will give the entry a few seconds
-    ground: 'not the construction: a ditransitive clause, with `the entry` and `a few seconds` both objects of `give`'
+    rule-version: '1'
+    file: packages/agents/content/subagents/_partials/review-insight-gate.md
+    phrase: '"a thing I noticed" is not one'
+    ground: 'a marked exhibit: a quoted phrase that the sentence says does not qualify'
   - rule: reduced-object-relative
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: which part of the codebase it changed
-    ground: 'not the construction: an embedded interrogative whose fronted wh-phrase admits no relativizer'
+    rule-version: '1'
+    file: packages/agents/content/subagents/_partials/review-insight-gate.md
+    phrase: the moment it implies a change to make now
+    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
   - rule: reduced-object-relative
-    rule-version: '0'
+    rule-version: '1'
+    file: packages/agents/content/subagents/_partials/review-writes-hard-gate.md
+    phrase: This guarantees a durable artifact exists at the canonical path
+    ground: 'not the construction: a that-complement of "guarantees", not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/_partials/review-writes-interim.md
+    phrase: the current findings appended under `### Findings`
+    ground: 'not the construction: "appended" is a participle modifying "findings"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-code-reviewer.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"; "turns" is the head noun, not a verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-silent-failure-reviewer.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: If you're not confident a test gap matters
+    ground: 'not the construction: a that-complement of "confident", not a relative clause with an object gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: no source files require test coverage
+    ground: 'not the construction: "require" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: no source files required test coverage
+    ground: 'not the construction: "required" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: If you're not confident a simplification improves the code
+    ground: 'not the construction: a that-complement of "confident"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-cutter.md
+    phrase: codebase it changed
+    ground: 'not the construction: "which part of the codebase it changed" is an embedded interrogative, which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-cutter.md
+    phrase: entry a few seconds
+    ground: 'not the construction: "give the entry a few seconds" is ditransitive, with both noun phrases arguments of the same verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: worth the reader's seconds
-    ground: "not the construction: `worth` is an adjective and `the reader's seconds` is its complement, not a relative clause"
+    ground: 'not the construction: "worth" heads a predicative adjective phrase, and "the reader''s seconds" is its complement'
   - rule: reduced-object-relative
-    rule-version: '0'
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: codebase it changed
+    ground: 'not the construction: an embedded interrogative, which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: entry a few seconds
+    ground: 'not the construction: "give your entry a few seconds" is ditransitive'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: in the order the fence listed them
-    ground: 'outside the rule: an adjunct relative whose gap fills no argument position, like "the way it works"'
+    ground: 'outside the rule: the gap fills an adjunct rather than an argument position'
   - rule: reduced-object-relative
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: not worth the reader's seconds
-    ground: 'not the construction: the noun phrase is the complement of the adjective `worth`, and `worth` heads no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: The form your answer takes
-    ground: 'not the construction: an embedded interrogative used as a section heading'
-  - rule: reduced-object-relative
-    rule-version: '0'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: they will give your entry a few seconds
-    ground: 'not the construction: a double-object clause, not a relative clause with an object gap'
-  - rule: reduced-object-relative
-    rule-version: '0'
+    rule-version: '1'
     file: packages/agents/content/subagents/lede-drafter.md
     phrase: what form your answer takes
-    ground: 'not the construction: an embedded interrogative with a fronted wh-determiner, which admits no relativizer'
+    ground: 'not the construction: "what form" fronts an embedded interrogative, which admits no relativizer'
   - rule: reduced-object-relative
-    rule-version: '0'
+    rule-version: '1'
     file: packages/agents/content/subagents/lede-drafter.md
-    phrase: which part of the codebase it changed
-    ground: 'not the construction: an embedded interrogative whose fronted wh-phrase admits no relativizer'
+    phrase: worth the reader's seconds
+    ground: 'not the construction: a predicative adjective phrase and its complement'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: Changes affect many downstream consumers
+    ground: 'not the construction: "affect" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: No integration points affected
+    ground: 'not the construction: "affected" is a participle modifying the head'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: No new patterns introduced
+    ground: 'not the construction: "introduced" is a participle modifying the head'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: During implementation you discovered that
+    ground: 'not the construction: "During implementation" is a prepositional phrase, and "you discovered" is the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: enumerate all finding IDs (F1, F2, W1
+    ground: 'not the construction: "enumerate" is the clause''s own verb and "IDs" its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: Then write your final structured return block.
+    ground: 'not the construction: "structured" modifies "return block"; there is no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: confirm the approach aligns with established patterns
+    ground: 'not the construction: a that-complement of "confirm"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: File paths where you write your plan artifacts
+    ground: 'not the construction: the clause is an adjunct relative introduced by "where", with no argument gap'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-reviewer.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-reviewer.md
+    phrase: Which review iteration this is (1, 2, or 3)
+    ground: 'not the construction: an embedded interrogative clause, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/plan-reviewer.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/plan-reviser.md
+    phrase: "Detect and preserve the original plan's format:"
+    ground: 'not the construction: "preserve" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/plan-reviser.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/plan-reviser.md
+    phrase: You take the reviewer's findings and the user's answers as inputs
+    ground: 'not the construction: "take" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/planner.md
+    phrase: a complex one might have 8-10
+    ground: 'not the construction: "one" is the subject of its own clause, with no relative clause after it'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/planner.md
+    phrase: Reserve your last 3 turns
+    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/subagents/prose-reviser.md
     phrase: not a detector covers
     ground: "not the construction: 'covers' is the verb of the clause 'whether or not a detector covers the rule', and 'not' is no head noun"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/savings-analyzer.md
+    phrase: If all review phases converged to `none`/`low` criticality
+    ground: "not the construction: the candidate's verb is the sentence's own"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/savings-analyzer.md
+    phrase: Were the right resources used?
+    ground: 'not the construction: an interrogative, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/savings-analyzer.md
+    phrase: You analyze a completed orchestrated run
+    ground: 'not the construction: no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/test-utils/comment-authoring-subagents.ts
+    phrase: a subagent added to one route and not the other
+    ground: 'not the construction: no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/test-utils/list-governed-subagents.ts
+    phrase: covered the day it appears
+    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/test-utils/rule-markers.ts
+    phrase: a malformed one reads as malformed
+    ground: "not the construction: the candidate's verb is the sentence's own"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/test-utils/shared-doctrine-carriers.ts
+    phrase: covered the day it appears
+    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/test-utils/shared-doctrine-carriers.ts
+    phrase: wherever the section governs every subagent
+    ground: 'not the construction: no relative clause'
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
+    phrase: you never add a candidate
+    ground: "not prose: a literal pinned to the lede-cutter subagent body's wording"
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
+    phrase: you never merge two candidates
+    ground: "not prose: a literal pinned to the lede-cutter subagent body's wording"
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
+    phrase: you never reword a candidate
+    ground: "not prose: a literal pinned to the lede-cutter subagent body's own wording, which the assertion matches character for character"
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: '**Never rank the options by your own elapsed time, round trips, or effort.**'
+    ground: "not prose: a literal pinned to the option-format spec's own wording, which the assertion matches exactly"
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: Recommend only when you can name a load-bearing decision that the plan leaves unsettled
+    ground: "not prose: a literal pinned to the next-steps spec's wording"
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: the site that you were pointed at is a sample of its class
+    ground: "not prose: a literal pinned to the diff-audit partial's wording"
+  - rule: second-person
+    rule-version: '1'
+    file: packages/agents/content/__tests__/spec-inlining.unit.test.ts
+    phrase: This audit is bounded by your own edit
+    ground: "not prose: a literal pinned to the diff-audit partial's wording"
   - rule: second-person
     rule-version: '1'
     file: packages/agents/content/_partials/comment-discipline.md
@@ -2722,6 +3202,143 @@ rejections:
     ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
   - rule: so
     rule-version: '1'
+    file: packages/agents/content/__tests__/collection-dispositions.unit.test.ts
+    phrase: A collection outside ${optIn} reaches one of its members, so declaring that collection deploys an artifact
+    ground: states a direct result; the nearest earlier `so` is in a separate assertion message that no reader meets as part of this paragraph
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
+    phrase: The deployed tree unions library content
+    ground: the `so` it repeated was repaired earlier in the block; this lone `so` states a direct result
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: |-
+      `isSkippedSkillEntry` is
+       * what `sync` applies, so a directive in a skill-local partial counts here only when a deployed body inlines it
+    ground: states a direct result, and the previous `so` is in another function's doc comment
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: and so the one that delivers the hooks that it declares to all of them
+    ground: states a direct result, and the repeat it was reported for was removed by an earlier repair
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: Both assertions above read this one population, so neither can drift from the other
+    ground: states a direct result, and the previous `so` is in another function's doc comment rather than in this paragraph
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: but declares no ${hook} hook, so a binding cannot reach it
+    ground: a lone `so` stating a direct result in its own assertion message, not a sentence in the paragraph that precedes it
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: but its delivery does not name the route, so sync warns about it
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
+    phrase: Hooks resolve after includes expand, so such a hook fills inside the host
+    ground: states a direct result, and the previous `so` is in another function's doc comment
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
+    phrase: turns them into example text, so they contribute no token
+    ground: states a direct result, and the previous `so` is in another function's doc comment
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
+    phrase: A redispatch hands the cutter a code and nothing else, so a code that the caller sends and this file does not
+    ground: states a direct result; the nearest earlier `so` is in a separate assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: field, so its dispatch does not take each batch's rules from the helper
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: marker declares ${missing.join
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: no longer folds every rejection, so a judgment is discarded again
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: scalar, so the skill writes a file that nothing opens
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: so the fold's rules leave it out and the record command refuses a plain-speech rejection
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: so the sweeper meets a candidate under a rule not described by its own body
+    ground: a lone `so` stating a direct result in its own assertion message
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/rulebook-version-pins.unit.test.ts
+    phrase: Every assertion above is negative, so a hash that stopped varying with the body would leave the suite green.
+    ground: states a direct result, and the previous `so` is inside an assertion message rather than in this comment
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
+    phrase: write artifacts that carry no frontmatter at all, so for them the marker opens the file
+    ground: states a direct result, and more than three sentences separate it from the previous clause-joining `so`
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/shared-doctrine-reach.unit.test.ts
+    phrase: '`comment-discipline.md` opens with the same words, so the phrase stops at the verb that parts the two.'
+    ground: states a direct result; the `so` it repeated was repaired to "so that" just above, so this one is now a lone `so`
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/shared-guidance-references.unit.test.ts
+    phrase: Shared guidance serves every harness, so a skill received by only some of them is as dead a pointer there as one that does not exist.
+    ground: states a direct result, and more than three sentences separate it from the previous clause-joining `so`
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: A heading opens a section that runs until the next heading of its level or shallower, so the open headings at any point are the chain
+    ground: states a direct result; the nearest earlier `so` is in another function's doc block
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: A support entry is a directory or a plain file, so the walk decides on what the entry is rather than on its name
+    ground: states a direct result; the nearest earlier `so` is in another function's doc block
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: A token is attributed to its own section and to every section enclosing it, so a link to an ancestor heading carries the same requirement
+    ground: states a direct result; the only earlier `so` in this block opens a sentence and joins no clauses
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: is listed under both, so a host linking either heading carries the same requirement
+    ground: states a direct result; the nearest earlier `so` is in another function's doc block
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: resolves a support entry's tokens, so it ships as a rendered pointer to nothing
+    ground: a lone `so` stating a direct result once the earlier repeat was repaired
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
+    phrase: The assertion above only ever reports what it fails to find, so a walk that silently returned nothing would leave the suite green and the guard gone.
+    ground: states a direct result; the nearest earlier `so` is in a separate assertion message rather than this paragraph
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/__tests__/writing-preferences-reach.unit.test.ts
+    phrase: The home keys the corpus scan per rule rather than per file, so a home is skipped for its own rule
+    ground: a lone `so` stating a direct result; the earlier `so` is in a separate doc comment, separated by code and an interface declaration
+  - rule: so
+    rule-version: '1'
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
     ground: the earlier uses are 'and so does', which stand for a clause and fall outside the rule; the remaining so states a direct result
@@ -2730,6 +3347,21 @@ rejections:
     file: packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it
     ground: the nearby earlier so is 'and so does naming two', which stands for a clause and falls outside the rule; this lone so states a direct result
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/scripts/__tests__/resolve_frontmatter_test.sh
+    phrase: previously omitted `--cwd`, so the deriver wrote to
+    ground: the only earlier `so` in reach is repaired to "so that", so this is a lone `so` stating a direct result of the omitted flag
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/scripts/get-ticket-id.sh
+    phrase: The greedy `[0-9]+` boundary stops at the first non-digit, so `.N` sub-ticket suffixes and `-description` suffixes are naturally truncated.
+    ground: the earlier `so` it repeated is a bare candidate repaired with "so that", so this is now a lone `so` stating a direct result
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/scripts/resolve-reviewer-context.sh
+    phrase: The script can't infer any package keys from it, so the entire lookup mechanism would silently no-op.
+    ground: every earlier `so` it repeated is a bare candidate repaired with "so that", so this is now a lone `so` stating a direct result
   - rule: so
     rule-version: '1'
     file: packages/agents/content/skills/_data/artifact-conventions.md
@@ -2825,6 +3457,66 @@ rejections:
     file: packages/agents/content/skills/update-project-guidance/SKILL.md
     phrase: not against the repository root, so an include written in `.claude/CLAUDE.md` must point up
     ground: states a direct result, and no earlier clause-joining so remains within three sentences
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: is usually what the change accomplished, so a bullet that names it reports the change rather than its implementation
+    ground: four sentences separate it from the previous one, and the second clause states a direct result
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: Not so small that they're trivial, not so large that they're hard to verify.
+    ground: 'outside the rule: a degree adverb, not a clause-joining connective'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/content/test-utils/shared-doctrine-carriers.ts
+    phrase: reaches no subagent and so appears here under no key
+    ground: the earlier `so` it repeated was removed by a repair above, leaving four sentences before this one; it states a direct result
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/bash-invocation-conventions.unit.test.ts
+    phrase: assign the variable inside the invocation where it genuinely runs as written.
+    ground: 'outside the rule: the word names a place, the invocation in which the assignment must sit'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/bash-invocation-conventions.unit.test.ts
+    phrase: back inside the sandbox, where it fails on
+    ground: 'outside the rule: the word names a place, the inside of the sandbox'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/collection-dispositions.unit.test.ts
+    phrase: A member is deployed only where its own collection is declared
+    ground: 'outside the rule: the word names the machines to which the member is deployed'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/content-path-conventions.unit.test.ts
+    phrase: documentation naming where the canonical source is
+    ground: 'outside the rule: the word names a place, the location of the canonical source'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/dispatch-block-scalars.unit.test.ts
+    phrase: 'One dispatch block: where it came from, and the lines between its fences.'
+    ground: 'outside the rule: the word names a place, the file and line the block came from'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/dispatch-content-fences.unit.test.ts
+    phrase: 'One fenced block: where it came from, what its info string is'
+    ground: 'outside the rule: the word names a place, the file and line the block came from'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
+    phrase: which are in list items where an include directive cannot be placed
+    ground: 'outside the rule: the word names a place, the list items'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/shared-doctrine-reach.unit.test.ts
+    phrase: inside `<HARD-GATE>` blocks where a heading would be wrong
+    ground: 'outside the rule: the word names a place, the blocks'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/__tests__/writing-preferences-reach.unit.test.ts
+    phrase: each is asserted where it can be
+    ground: 'outside the rule: the word names a place, the test file in which each route can be asserted'
   - rule: where
     rule-version: '1'
     file: packages/agents/content/_partials/comment-discipline.md
@@ -2995,6 +3687,16 @@ rejections:
     file: packages/agents/content/guidance/rulebooks/williamthorsen-typescript-preferences.md
     phrase: 'Two exceptions, each with a comment saying why: a TypeScript limitation in which the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.'
     ground: 'names a place: "test code" names the test files in the codebase'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/scripts/README.md
+    phrase: where [title-templates.md](../skills/_data/title-templates.md#invoking-the-bundle) names the subcommand for each
+    ground: 'outside the rule: the clause follows the invocation expression and states what its `<subcommand>` placeholder stands for'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/scripts/resolve-frontmatter.sh
+    phrase: matching where the bundled `derive-session-context` helper writes the manifest
+    ground: 'outside the rule: the word names a place, a filesystem path'
   - rule: where
     rule-version: '1'
     file: packages/agents/content/skills/_data/action-items.md
@@ -3185,6 +3887,61 @@ rejections:
     file: packages/agents/content/skills/wrap-up/SKILL.md
     phrase: Where to write
     ground: 'names a place: the artifact path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-code-reviewer.md
+    phrase: '**Artifact directory**: Path where you write your output'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-silent-failure-reviewer.md
+    phrase: '**Artifact directory**: Path where you write your output'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: '**Artifact directory**: Path where you write your output'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: '**Artifact directory**: Path where you write your output'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: an exception that the replacement throws where the predecessor returned
+    ground: 'outside the rule: the word names the point in the code path at which the predecessor returned'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/lede-drafter.md
+    phrase: Everything below says where the facts come from
+    ground: 'outside the rule: the word names a source, the locative use, inside an embedded question'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: cite where it appears in the API surface
+    ground: 'outside the rule: the word names a place, the location within the API surface'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-planner.md
+    phrase: '**Output paths**: File paths where you write your plan artifacts'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/orchestrated-reviewer.md
+    phrase: '**Artifact directory**: Path where you write your output'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/plan-reviewer.md
+    phrase: '**Output path**: Where to write the review artifact'
+    ground: 'outside the rule: the word names a place, a filesystem path'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/content/subagents/plan-reviser.md
+    phrase: '**Output path**: Where to write the refined plan'
+    ground: 'outside the rule: the word names a place, a filesystem path'
   - rule: where
     rule-version: '1'
     file: packages/agents/content/subagents/prose-reviser.md

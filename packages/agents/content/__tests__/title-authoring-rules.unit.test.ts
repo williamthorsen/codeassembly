@@ -11,8 +11,8 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // documents; the invariant is wider than any enumeration, since a subagent restating a rule is the same defect.
 //
 // Each probe keys on a string distinctive enough that only a restatement matches it. That catches the copy-and-adapt
-// path the duplication actually took and misses a paraphrase written from scratch, which is the weaker half of the
-// guard and the reason the pointers themselves carry no rule text to copy.
+// path that the duplication actually took and misses a paraphrase written from scratch, which is the weaker half of
+// the guard and the reason the pointers themselves contain no rule text to copy.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state a title-authoring rule; every other site reaches it through a pointer. */
@@ -41,7 +41,7 @@ describe.each(RULES)('$label', (rule: TitleRule) => {
 
     const message =
       `No text in ${HOME} matches the probe for ${rule.label}, so the probe guards nothing and every other file ` +
-      'passes it vacuously. Re-key it on the wording the file carries now, or drop the rule from this suite.';
+      'passes it vacuously. Re-key it on the wording that the file states now, or drop the rule from this suite.';
     expect(home !== undefined && rule.pattern.test(home.content), message).toBe(true);
   });
 

@@ -1,6 +1,7 @@
 # claude.yaml
 
-# Frontmatter this harness merges into each deployed subagent: _defaults for every agent, then per-agent overrides.
+# Frontmatter that this harness merges into each deployed subagent: _defaults for every agent, then per-agent
+# overrides.
 
 _defaults:
   permissionMode: bypassPermissions

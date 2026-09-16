@@ -37,7 +37,7 @@ export async function loadPreferences(input: { home: string; projectRoot: string
 /**
  * Resolves the directory the `.agents/` lookup is anchored at: the repository root, so the templates a run reads do
  * not depend on which subdirectory the caller invoked it from. Falls back to `cwd` outside a repository, reporting
- * git's own diagnostic so a misanchored run is debuggable rather than silent.
+ * git's own diagnostic so that a misanchored run is debuggable rather than silent.
  */
 export async function resolveProjectRoot(cwd: string): Promise<{ projectRoot: string; warning?: string }> {
   try {

@@ -1,6 +1,6 @@
 ---
 name: target
-description: The artifact the support entry's token names.
+description: The artifact named by the support entry's token.
 ---
 
 # Target

@@ -18,7 +18,7 @@ const RULE = '_partials/plain-speech.md';
 /** The calibration text that this suite pins. */
 const PINNED_CALIBRATION_HASH = '4f66e790cbbfb8855bdc6be5fb4f4c845a5b37712d8aa5c634a5c7e5e1e2d965';
 
-/** The version declared by the calibration, and the rule text that version was calibrated against. */
+/** The version declared by the calibration, and the rule text against which that version was calibrated. */
 const PINNED_RULE_HASH = '0f6f3f0dd79d1720b8d7dc803a6482d357ea7835203247525d6898b5288838a7';
 const PINNED_VERSION = '6';
 
@@ -28,14 +28,14 @@ const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*plain-speech\s+(\S+)\s*-->$/
 const CALIBRATION_DRIFT_MESSAGE =
   `${CALIBRATION} no longer matches the text pinned here. Choose one remedy: bump the calibration's ` +
   `\`unit-version\` marker (and \`PINNED_VERSION\` here) if some text that complied with the old calibration could ` +
-  `fail the new one, or if unsure, so every repository's record re-opens its plain-speech coverage for review; or ` +
-  `re-pin \`PINNED_CALIBRATION_HASH\` alone for a relaxation, a clarification, or a rewording.`;
+  `fail the new one, or if unsure, so that every repository's record re-opens its plain-speech coverage for review; ` +
+  `or re-pin \`PINNED_CALIBRATION_HASH\` alone for a relaxation, a clarification, or a rewording.`;
 
 const RULE_DRIFT_MESSAGE =
   `${RULE} no longer matches the text against which ${CALIBRATION} was calibrated. Choose one remedy: bump the ` +
   `calibration's \`unit-version\` marker (and \`PINNED_VERSION\` here) if some text that complied with the old rule ` +
-  `could fail the new one, or if unsure, so every repository's record re-opens its plain-speech coverage for review; ` +
-  `or re-pin \`PINNED_RULE_HASH\` alone for a relaxation, a clarification, or a rewording.`;
+  `could fail the new one, or if unsure, so that every repository's record re-opens its plain-speech coverage for ` +
+  `review; or re-pin \`PINNED_RULE_HASH\` alone for a relaxation, a clarification, or a rewording.`;
 
 describe('plain-speech calibration', () => {
   it('declares the pinned unit version', async () => {
@@ -72,7 +72,7 @@ describe('plain-speech calibration', () => {
 
 // region | Helpers
 
-/** Hashes a file's text, which is the whole file rather than its operative content: any edit at all reports drift. */
+/** Hashes a file's text, which is the whole file rather than its operative content: Any edit at all reports drift. */
 function hashText(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }

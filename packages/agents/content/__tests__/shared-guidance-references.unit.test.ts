@@ -10,16 +10,16 @@ import { readTargetHarnesses } from '../../src/lib/skill-deploy.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Shared guidance is inlined into every harness guidance file, a route that rewrites no invocation token, so
-// `{skill:<slug>}` is unavailable here and a skill must be named in prose. That leaves the name outside every parse gate the tokenized
-// trees pass through, which is how the guidance went on naming `git-commit-conventions` for as long as it did after
-// that skill was renamed. A dead pointer is worse than none: an agent that follows one finds nothing, treats the
-// lookup as satisfied, and falls back to its own defaults.
+// `{skill:<slug>}` is unavailable here and a skill must be named in prose. That leaves the name outside every parse
+// gate through which the tokenized trees pass, which is how the guidance went on naming `git-commit-conventions` for
+// as long as it did after that skill was renamed. A dead pointer is worse than none: An agent that follows one finds
+// nothing, treats the lookup as satisfied, and falls back to its own defaults.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SHARED_GUIDANCE_ROOT = path.join(CONTENT_ROOT, 'guidance', 'shared');
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
-// The two forms shared guidance uses to name a skill. Anchoring on the word "skill" rather than on a slug shape is
-// what keeps `usage` and `payload` -- backticked identifiers in the naming and style sections -- out of the result.
+// The two forms that shared guidance uses to name a skill. Anchoring on the word "skill" rather than on a slug shape
+// is what keeps `usage` and `payload` -- backticked identifiers in the naming and style sections -- out of the result.
 const SKILL_REFERENCE_PATTERNS: ReadonlyArray<RegExp> = [
   /`([a-z][a-z0-9-]*)`\s+skill\b/g,
   /\bskill\s+`([a-z][a-z0-9-]*)`/g,
@@ -47,7 +47,7 @@ describe('shared guidance references', () => {
   });
 
   // A `delivery: skill` rulebook deploys an invocable skill that no `skills/` directory contains. The assertion above
-  // only ever reports names it fails to find, so a rulebook half that returned nothing would leave it green.
+  // only ever reports names that it fails to find, so a rulebook half that returned nothing would leave it green.
   it('accepts a skill that a rulebook deploys', async () => {
     expect(await listDeployedSkillNames()).toContain('consult-shell-conventions');
   });
@@ -77,7 +77,7 @@ describe('shared guidance references', () => {
 
 // region | Helpers
 
-/** Collects the distinct skill slugs `content` names, in no particular order. */
+/** Collects the distinct skill slugs that `content` names, in no particular order. */
 function collectSkillReferences(content: string): ReadonlySet<string> {
   const slugs = new Set<string>();
   for (const pattern of SKILL_REFERENCE_PATTERNS) {
@@ -92,8 +92,8 @@ function collectSkillReferences(content: string): ReadonlySet<string> {
 }
 
 /**
- * Returns every skill name shared guidance may address: the catalog skills that reach all harnesses, plus the skills
- * that skill-delivery rulebooks deploy under.
+ * Returns every skill name that shared guidance may address: the catalog skills that reach all harnesses, plus the
+ * skills that skill-delivery rulebooks deploy under.
  */
 async function listDeployedSkillNames(): Promise<ReadonlyArray<string>> {
   const [catalog, fromRulebooks] = await Promise.all([listUniversalSkillSlugs(), listRulebookSkillNames()]);
@@ -113,8 +113,8 @@ async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
 
 /**
  * Returns the slugs of every catalog skill that reaches all harnesses: one whose frontmatter declares no `supported-harnesses:`
- * narrowing. Shared guidance serves every harness, so a skill only some of them receive is as dead a pointer there as
- * one that does not exist.
+ * narrowing. Shared guidance serves every harness, so a skill received by only some of them is as dead a pointer
+ * there as one that does not exist.
  */
 async function listUniversalSkillSlugs(): Promise<ReadonlyArray<string>> {
   const catalogSlugs = await listSkillDirectories(SKILLS_ROOT);

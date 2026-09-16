@@ -8,8 +8,8 @@ import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // `gh` accepts `--body-file ""` without complaint and publishes its own default body, so a call site that reaches
-// the CLI with an unset path fails silently. The contract binds only where it is already in context as the call is
-// composed. Each carrier inlines it rather than linking to it, for the reason the `_partials` README gives: a
+// the CLI with an unset path fails silently. The contract binds only when it is already in context as the call is
+// composed. Each carrier inlines it rather than linking to it, for the reason given by the `_partials` README: A
 // runtime link is an optional read, and the model fills from its prior instead.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
@@ -19,7 +19,9 @@ const PARTIAL = 'skills/_partials/gh-body-file.md';
 /** The contract's opening, which the single-statement counts key on. */
 const CONTRACT_HEADLINE = 'Resolve the scratch directory; never reference it.';
 
-/** Phrases that must survive an edit to the partial, so a gutted contract cannot still pass on its opening alone. */
+/**
+ * Phrases that must survive an edit to the partial, so that a gutted contract cannot still pass on its opening alone.
+ */
 const CONTRACT_PHRASES: ReadonlyArray<string> = [
   CONTRACT_HEADLINE,
   'Name the file for its consumer.',
@@ -28,21 +30,22 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * A body-file argument and the variable it passes; `acli` names the description flag on its create call, and
+ * A body-file argument and the variable that it passes; `acli` names the description flag on its create call, and
  * `describe-change.mjs` names the pull-request body `--pr-body-file`. Capturing the variable is what ties the guard to
- * the path the call actually passes, rather than to any guard the block happens to carry: a carrier arrives by copying
- * an existing block, and a renamed path with an un-renamed guard is the drift that copying produces.
+ * the path that the call actually passes, rather than to any guard that the block happens to carry: A carrier is
+ * created by copying an existing block, and a renamed path with an un-renamed guard is the drift that copying
+ * produces.
  */
 const BODY_FILE_ARGUMENT = /--(?:body|description|pr-body)-file "\$(\w+)"/g;
 
 /** The guard itself, which is what turns a missing or empty body file into a refusal. */
 const GUARD = '[ -s "$body_path" ]';
 
-// Listed explicitly rather than discovered: the failure guarded against is a carrier dropping off the list, and a
+// Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A place here goes to a file that composes a body and hands it to a CLI through a file. The Bitbucket delegates are
-// absent because they submit a body inline through the API.
+// A file belongs here if it composes a body and hands it to a CLI through a file. The Bitbucket delegates are absent
+// because they submit a body inline through the API.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/_data/gh-body-file.md',
   'skills/_data/ticket-source-resolution.md',
@@ -86,7 +89,7 @@ describe('gh-body-file reach', () => {
         }
       }
     }
-    const message = `An unguarded body-file call publishes the platform's default body when the path is unset; these paths reach a CLI without a guard on the variable the call passes:\n  ${violations.join('\n  ')}`;
+    const message = `An unguarded body-file call publishes the platform's default body when the path is unset; these paths reach a CLI without a guard on the variable that the call passes:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 
@@ -116,7 +119,7 @@ async function expandCarrier(relativePath: string): Promise<string> {
   return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
 }
 
-/** Returns the variable each of a block's body-file arguments passes, one entry per argument. */
+/** Returns the variable passed by each of a block's body-file arguments, one entry per argument. */
 function listBodyFileVariables(block: string): Array<string> {
   const variables: Array<string> = [];
   for (const match of block.matchAll(BODY_FILE_ARGUMENT)) {

@@ -4,14 +4,14 @@
 
 Describe "workspace helpers under a failing mktemp"
 setup_failing_mktemp() {
-  # Run from a throwaway directory so a broken guard writes there rather than into the repository.
+  # Run from a throwaway directory so that a broken guard writes there rather than into the repository.
   enter_tmpdir || return 1
-  # Hold both paths separately: the calls under test reassign `tmpdir` and `original_pwd`.
+  # Keep both paths separately: The calls under test reassign `tmpdir` and `original_pwd`.
   stub_dir="$tmpdir"
   saved_pwd="$original_pwd"
   mkdir -p bin
-  # Shadow `mktemp` rather than pointing TMPDIR at an unwritable path: a stub fails on every platform and under any
-  # sandbox, where an unwritable path depends on what this machine lets the suite create.
+  # Shadow `mktemp` rather than pointing TMPDIR at an unwritable path: A stub fails on every platform and under any
+  # sandbox, whereas an unwritable path depends on what this machine lets the suite create.
   cat >bin/mktemp <<'STUB'
 #!/usr/bin/env bash
 echo "mktemp: stubbed failure" >&2

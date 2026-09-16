@@ -11,24 +11,24 @@ import { resolveClosure } from '../../src/lib/dependency-resolver.ts';
 import { readDirEntries } from '../../src/lib/fs-helpers.ts';
 
 // The vetted collection claims its members name nothing specific to one author's environment, and a knowledge-store
-// name is the form that claim fails in most quietly: a reader copies the invocation, and the capture is refused
+// name is the form in which that claim fails most quietly: A reader copies the invocation, and the capture is refused
 // against a registry that has no such store. The scanned set is the collection's resolved closure, so a promotion
 // brings an artifact under the rule and a demotion releases it, and there is no exemption list to go stale.
 //
-// What this cannot catch: a concrete store named in prose rather than in an argument position, and a value sitting
+// What this cannot catch: a concrete store named in prose rather than in an argument position, and a value that is
 // further from its flag than the neighboring table cell. The guard keeps the decidable position from regressing; it
 // does not prove the closure names no store at all.
 
 /** The collection whose closure the rule applies to. */
 const VETTED_COLLECTION = 'recommended';
 
-/** A flag and the value it takes, in either the spaced or the `=` form; a following flag is not a value. */
+/** A flag and the value that it takes, in either the spaced or the `=` form; a following flag is not a value. */
 const STORE_FLAG_PATTERN = /(?:--store|--kb)(?:=|[ \t]+)(?!-)(\S+)/g;
 
 /** A table cell containing a store flag and nothing else, the left half of the table form. */
 const FLAG_CELL_PATTERN = /^`(?:--store|--kb)`$/;
 
-/** The code span a value cell opens with, whose content is the store the row assigns to the flag. */
+/** The code span opening a value cell, whose content is the store that the row assigns to the flag. */
 const LEADING_CODE_SPAN_PATTERN = /^`([^`]+)`/;
 
 const CODE_SPAN_PATTERN = /`([^`]+)`/g;
@@ -103,7 +103,7 @@ describe('vetted store conventions', () => {
 // region | Helpers
 
 /**
- * Reports every concrete store one content line names in a `--store` or `--kb` argument position. Two positions
+ * Reports every concrete store that one content line names in a `--store` or `--kb` argument position. Two positions
  * count: the value sharing a code span (or a fenced line) with the flag, and the value opening the cell beside a
  * table cell containing the flag alone. Prose outside a code span is not an argument position and is never read.
  */
@@ -195,7 +195,7 @@ async function listMarkdownFilesUnder(root: string, relativeDir: string): Promis
   return foundFiles;
 }
 
-/** Reads each value a store flag takes within one span of text, in either the spaced or the `=` form. */
+/** Reads each value that a store flag takes within one span of text, in either the spaced or the `=` form. */
 function readFlagValues(text: string): Array<string> {
   return text
     .matchAll(STORE_FLAG_PATTERN)
@@ -204,7 +204,7 @@ function readFlagValues(text: string): Array<string> {
 }
 
 /**
- * Reads the store a table row assigns to a flag: the row has a cell that is the flag alone, and the cell beside it
+ * Reads the store assigned to a flag by a table row: The row has a cell that is the flag alone, and the cell beside it
  * opens with a code span. A value cell opening with prose states no argument, so it yields nothing.
  */
 function readTableCellStore(line: string): string | undefined {

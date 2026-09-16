@@ -33,7 +33,7 @@ You will receive:
 
 ### Efficiency
 
-- **Diff-first**: Read the diff before reading full files. Only read full file contents for files where the diff reveals potential issues in your scope.
+- **Diff-first**: Read the diff before reading full files. Only read full file contents for files whose diff reveals potential issues in your scope.
 - **Batch reads**: When reading multiple files, use parallel tool calls rather than sequential ones.
 - **Skip irrelevant files**: If the diff for a file shows only documentation, formatting, or test changes, skip reading its full content.
 
@@ -80,7 +80,7 @@ Focus exclusively on simplification opportunities in changed code:
 - Unnecessary nesting and complexity
 - Comment-discipline violations. Put every comment in the changed code through the three comment-discipline tests in your context
 - Test-structure violations. See `{harness_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
-  - Adjacent tests with near-identical setup where only one input varies (parameterize with `it.each` or extract a helper)
+  - Adjacent tests with near-identical setup in which only one input varies (parameterize with `it.each` or extract a helper)
   - Specific-fixture-label assertions repeated per row when the rule is a count or predicate
   - Helpers whose parameters the test bodies still re-specify (the abstraction did not remove the duplication)
 - Logic that can be consolidated without sacrificing clarity

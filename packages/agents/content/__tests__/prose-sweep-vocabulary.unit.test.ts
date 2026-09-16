@@ -10,7 +10,7 @@ import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts
 
 // The rulebooks' `<!-- rule: <id> <version> -->` markers are the one list of rule names. The helper's detector registry,
 // the names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within
-// it: a rejection under a rule that the skill leaves out of the fold's versioned rules makes the `record` command refuse
+// it: A rejection under a rule that the skill leaves out of the fold's versioned rules makes the `record` command refuse
 // the whole fold, and a rule stated without a marker leaves the subagent no id to report its sites under.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
@@ -28,8 +28,8 @@ const SWEPT_RULEBOOKS: ReadonlyArray<string> = [
 ];
 
 /**
- * The sentence in the skill that folds every rejection under a versioned rule. Pinned so a rewrite that reinstates a
- * filter by detector fails here.
+ * The sentence in the skill that folds every rejection under a versioned rule. Pinned so that a rewrite that
+ * reinstates a filter by detector fails here.
  */
 const FOLD_EVERY =
   '**Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.**';
@@ -43,7 +43,7 @@ const PLAIN_SPEECH_VERSIONING: ReadonlyArray<string> = [
 /** The dispatch key naming the file of already-adjudicated sites, as the skill's dispatch block writes it. */
 const REJECTIONS_KEY = 'rejections:';
 
-/** The same scalar as the subagent names it, so the two surfaces cannot drift onto different key names. */
+/** The same scalar as the subagent names it, so that the two surfaces cannot drift onto different key names. */
 const REJECTIONS_SCALAR = '**`rejections`**';
 
 /** Matches every `"rule": "<name>"` field in a JSON example, whose captured group is the name. */
@@ -83,7 +83,7 @@ describe('prose-sweep rule vocabulary', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('folds a rejection under every versioned name the subagent reports', async () => {
+  it('folds a rejection under every versioned name that the subagent reports', async () => {
     const body = await readContentFile(SKILL);
 
     expect(body, `${SKILL} no longer folds every rejection, so a judgment is discarded again`).toContain(FOLD_EVERY);
@@ -119,7 +119,7 @@ describe('prose-sweep rule vocabulary', () => {
     const declared = new Set(await readDeclaredIds());
     const missing = RULE_IDS.filter((rule) => !declared.has(rule));
 
-    const message = `no \`<!-- rule: <id> <version> -->\` marker declares ${missing.join(', ')}, so step 1 of ${SKILL} names it to no run: its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry carries a rule that no document declares`;
+    const message = `no \`<!-- rule: <id> <version> -->\` marker declares ${missing.join(', ')}, so step 1 of ${SKILL} names it to no run: Its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry lists a rule that no document declares`;
     expect(missing, message).toEqual([]);
   });
 });
