@@ -135,14 +135,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, then runs the subcommand that they name, loading only what that subcommand
- * reads. A subcommand that loads the title templates refuses any template that the engine cannot round-trip, so a
- * defective template refuses none of `render-block`, `resolve-effective-record`, and `resolve-ticket-type`, which load
- * none.
+ * Runs the helper end to end: parses the arguments, then dispatches to the subcommand that they name.
  *
- * A subcommand that reads the repository warns outside one and anchors its lookups at `cwd` rather than failing, since a
- * title still renders from the global templates. An unreadable taxonomy warns under `render-titles`, which renders
- * without one, and refuses `resolve-effective-record` and every other subcommand that loads templates.
+ * A subcommand loads its own inputs and nothing else, so a defect reaches only the subcommands that read it. The
+ * runners below state their own inputs; three of those inputs can fail, and each failure has one policy:
+ *
+ * - A subcommand that loads the title templates refuses any template that cannot round-trip, naming the surface and
+ *   the defect. Verification needs the taxonomy. `render-titles` runs without one and renders from unverified
+ *   templates.
+ * - A subcommand that loads the taxonomy refuses when `dataDir` holds no readable one. `render-titles` is again the
+ *   exception: It warns and renders anyway.
+ * - A subcommand that resolves the project root never refuses when git finds no repository. It warns, reads `cwd` as
+ *   the root, and continues: the preferences under `home` still supply the templates, and a missing label map maps
+ *   no label.
  *
  * @internal - Exported to allow testing.
  */
