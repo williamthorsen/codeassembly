@@ -31,7 +31,7 @@ describe('syncCommand with a declared collection', () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('deploys the transitive members of a declared collection — a skill and a subagent', async () => {
+  it('deploys the transitive members of a declared collection: a skill and a subagent', async () => {
     await writeOverlays(contentDir);
     await writeLibrarySkill(contentDir, 'people-report');
     await writeLibrarySubagent(contentDir, 'canary');
@@ -55,7 +55,7 @@ describe('syncCommand with a declared collection', () => {
   });
 });
 
-/** Build sync options targeting only the Claude harness. */
+/** Builds sync options targeting only the Claude harness. */
 function makeOptions(): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false };
 }
@@ -95,7 +95,7 @@ async function writeLibrarySubagent(contentDir: string, slug: string): Promise<v
   await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n# ${slug}\n\nUse {tool:Read}.\n`, 'utf8');
 }
 
-/** Writes the Claude harness overlay supplying the `_defaults` the subagent frontmatter merge applies. */
+/** Writes the Claude harness overlay supplying the `_defaults` applied by the subagent frontmatter merge. */
 async function writeOverlays(contentDir: string): Promise<void> {
   const dataDir = path.join(contentDir, 'subagents', '_data');
   await mkdir(dataDir, { recursive: true });

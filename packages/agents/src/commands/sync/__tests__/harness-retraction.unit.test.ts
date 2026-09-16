@@ -39,7 +39,7 @@ describe(planDroppedHarnessRetractions, () => {
     await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('names every surface the dropped harness holds', async () => {
+  it('names every surface occupied by the dropped harness', async () => {
     const { harnessHome, skillsDir, subagentsDir } = await scaffoldHarnessTree('rovo', baseDir);
     const rulebookSkill = await writeRulebookSkill(skillsDir, 'writing-prefs', 'writing-preferences');
     const declaredSkill = await writeDeclaredSkill(skillsDir, 'create-commit');
@@ -67,7 +67,7 @@ describe(planDroppedHarnessRetractions, () => {
     expect(retraction?.promptsYml).toEqual({ kind: 'delete', path: path.join(harnessHome, 'prompts.yml') });
   });
 
-  it('claims nothing that carries no ownership marker', async () => {
+  it('claims nothing that lacks an ownership marker', async () => {
     const { skillsDir, subagentsDir } = await scaffoldHarnessTree('rovo', baseDir);
     await writeForeignSkill(skillsDir, 'hand-authored');
     await writeForeignSubagent(subagentsDir, 'hand-authored');
@@ -77,7 +77,7 @@ describe(planDroppedHarnessRetractions, () => {
     ).toEqual([]);
   });
 
-  it('omits a harness that holds no residue', async () => {
+  it('omits a harness that has no residue', async () => {
     await scaffoldHarnessTree('rovo', baseDir);
 
     expect(
@@ -85,7 +85,7 @@ describe(planDroppedHarnessRetractions, () => {
     ).toEqual([]);
   });
 
-  it('deletes a project-local host the region was all of', async () => {
+  it('deletes a project-local host whose only content is the region', async () => {
     const { skillsDir } = await scaffoldHarnessTree('rovo', baseDir);
     await writeDeclaredSkill(skillsDir, 'create-commit');
     await writeFile(path.join(baseDir, 'AGENTS.local.md'), `${AMBIENT_REGION}\n`, 'utf8');
@@ -143,7 +143,7 @@ describe(planDroppedHarnessRetractions, () => {
     expect(retraction?.ambientHost).toEqual({ kind: 'damaged', path: path.join(harnessHome, 'AGENTS.md') });
   });
 
-  // The harness would otherwise drop out of the plan, and the damaged host would reach no report at all.
+  // The harness would otherwise drop out of the plan, and no report would name the damaged host at all.
   it('keeps a harness whose only residue is a damaged ambient host', async () => {
     await scaffoldHarnessTree('rovo', baseDir);
     await writeFile(path.join(baseDir, 'AGENTS.local.md'), `${DAMAGED_REGION}\n`, 'utf8');
@@ -159,7 +159,7 @@ describe(planDroppedHarnessRetractions, () => {
     expect(retraction?.skillDirs).toEqual([]);
   });
 
-  it('leaves a prompts.yml carrying foreign entries, with the codeassembly region gone', async () => {
+  it('leaves a prompts.yml containing foreign entries, with the codeassembly region gone', async () => {
     const { harnessHome } = await scaffoldHarnessTree('rovo', baseDir);
     await writeFile(path.join(harnessHome, 'prompts.yml'), `prompts:\n  - name: foreign\n${PROMPTS_REGION}\n`, 'utf8');
 
@@ -176,7 +176,7 @@ describe(planDroppedHarnessRetractions, () => {
     });
   });
 
-  it('leaves a prompts.yml carrying no codeassembly region alone', async () => {
+  it('leaves a prompts.yml containing no codeassembly region alone', async () => {
     const { harnessHome, skillsDir } = await scaffoldHarnessTree('rovo', baseDir);
     await writeDeclaredSkill(skillsDir, 'create-commit');
     await writeFile(path.join(harnessHome, 'prompts.yml'), 'prompts:\n  - name: foreign\n', 'utf8');
@@ -229,7 +229,7 @@ describe(retractDroppedHarnesses, () => {
     await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('clears every surface the plan names and spares everything else', async () => {
+  it('clears every surface that the plan names and spares everything else', async () => {
     const { harnessHome, skillsDir, subagentsDir } = await scaffoldHarnessTree('rovo', baseDir);
     const rulebookSkill = await writeRulebookSkill(skillsDir, 'writing-prefs', 'writing-preferences');
     const declaredSkill = await writeDeclaredSkill(skillsDir, 'create-commit');

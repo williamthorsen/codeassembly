@@ -106,7 +106,7 @@ describe('syncCommand pre-write validation', () => {
 
 // region | Helpers
 
-/** Runs a sync expected to fail validation and returns the defects the aggregate carries. */
+/** Runs a sync expected to fail validation and returns the aggregate's defects. */
 async function collectDefects(
   projectRoot: string,
   contentDir: string,
@@ -133,7 +133,7 @@ async function declareRulebooks(projectRoot: string, ...slugs: ReadonlyArray<str
   await declareRaw(projectRoot, `rulebooks:\n  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`);
 }
 
-/** Build sync options targeting only the Claude harness. */
+/** Builds sync options targeting only the Claude harness. */
 function makeOptions(): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false };
 }

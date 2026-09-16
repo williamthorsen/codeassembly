@@ -8,9 +8,9 @@ const HOME_HOST = '/home/.claude/CLAUDE.md';
 const LOCAL_HOST = '/project/CLAUDE.local.md';
 
 /**
- * A phrase unique to each guidance-hook advisory's rendered line. Shared so the per-kind tests and the
- * nothing-rendered test anchor on one set: a phrase only some kinds carry would let the latter pass while a
- * regression emits one of the others.
+ * A phrase unique to each guidance-hook advisory's rendered line. Shared so that the per-kind tests and the
+ * nothing-rendered test anchor on one set: A phrase that appears in only some kinds' lines would let the latter
+ * pass while a regression emits one of the others.
  */
 const ADVISORY_ANCHORS = {
   'bound-undeclared': 'whose delivery does not name',
@@ -18,12 +18,12 @@ const ADVISORY_ANCHORS = {
   'declared-unbound': 'guidance-hook delivery that nothing binds',
 } as const;
 
-/** Wraps a plan as the outcome a completed reconciliation returns. */
+/** Wraps a plan as the outcome returned by a completed reconciliation. */
 function reconciled(overrides: Partial<SyncPlan> = {}): SyncOutcome {
   return { kind: 'reconciled', plan: buildSyncPlan(overrides) };
 }
 
-/** The text of every line one renderer produces, joined as the terminal would show it. */
+/** The text of every line produced by one renderer, joined as the terminal would show it. */
 function textOf(lines: ReadonlyArray<{ text: string }>): string {
   return lines.map((line) => line.text).join('\n');
 }
@@ -58,7 +58,7 @@ describe('dropped-harness retraction', () => {
     expect(output).toContain('    strip the codeassembly region from /project/.rovo/prompts.yml');
   });
 
-  it('says the ambient region is stripped where the host survives it', () => {
+  it('says the ambient region is stripped when the host survives it', () => {
     const output = textOf(
       renderSyncReport(
         reconciled({
@@ -88,7 +88,7 @@ describe('dropped-harness retraction', () => {
     expect(textOf(renderDryRunReport(reconciled({ droppedHarnesses: [damaged] })))).toContain(warning);
   });
 
-  it('names no ambient action for a damaged host, whose block carries only the other removals', () => {
+  it('names no ambient action for a damaged host, whose block contains only the other removals', () => {
     const output = textOf(
       renderSyncReport(
         reconciled({
@@ -179,7 +179,7 @@ describe('retirements', () => {
 });
 
 describe('unignored hosts', () => {
-  it('warns on both paths about a host the run writes that git does not ignore', () => {
+  it('warns on both paths about a host that the run writes and git does not ignore', () => {
     const outcome = reconciled({ unignoredHosts: [LOCAL_HOST] });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
@@ -217,7 +217,7 @@ describe('missing sources', () => {
     }
   });
 
-  it('offers a path-entry source the remedies its declaration allows', () => {
+  it('offers a path-entry source the remedies allowed by its declaration', () => {
     const outcome = reconciled({ missingSources: [{ name: 'org', dir: '/repo/guidance', declaredAs: 'path' }] });
 
     const warning = renderSyncReport(outcome).find((line) => line.text.includes('"org"'));
@@ -300,7 +300,7 @@ describe('targeting', () => {
   });
 });
 
-describe('a scope carrying no declaration', () => {
+describe('a scope with no declaration', () => {
   it('tells a project scope there is nothing to sync', () => {
     const outcome: SyncOutcome = {
       kind: 'no-declaration',

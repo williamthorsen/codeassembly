@@ -9,17 +9,17 @@ import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand } from '../sync.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-// Exercises the `packages:` declaration: a package's content dir joins the source search order and its catalog seeds
+// Exercises the `packages:` declaration: A package's content dir joins the source search order and its catalog seeds
 // the closure, so naming the package is the whole declaration. Fixture packages live under the temp project's own
-// `node_modules`, which is the first directory Node's resolver searches from there — no real install involved.
+// `node_modules`, which is the first directory that Node's resolver searches from there (no real install involved).
 describe('sync with a declared package', () => {
   const PACKAGE_NAME = '@ca-fixture/guide';
 
   let projectRoot: string;
   let contentDir: string;
   let packageDir: string;
-  // Targeting reads the home tier's declaration and detects installed harnesses under it, so every run below is
-  // given a temp home rather than the developer's own.
+  // Because targeting reads the home tier's declaration and detects installed harnesses under it, every run below
+  // is given a temp home rather than the developer's own.
   let homeDir: string;
 
   beforeEach(async () => {
@@ -107,7 +107,7 @@ describe('sync with a declared package', () => {
   const packageContent = (): string => path.join(packageDir, 'codeassembly');
 
   // A hand-declared source outranks a package, so overriding one by pointing a `sources` entry at a local directory is
-  // the documented pattern; naming that entry after the package it overrides is what makes the two tiers collide.
+  // the documented pattern; naming that entry after the package that it overrides makes the two tiers collide.
   it('fails the run with nothing written when a hand-declared source takes an adopted package name', async () => {
     const localDir = path.join(projectRoot, 'local-guidance');
     await mkdir(path.join(localDir, 'skills'), { recursive: true });
@@ -152,7 +152,7 @@ describe('sync with a declared package', () => {
     expect(await readFile(subagentPath('lib-agent'), 'utf8')).toContain('model: sonnet');
   });
 
-  it('deploys every deployable artifact the package ships, from the package name alone', async () => {
+  it('deploys every deployable artifact shipped by the package, from the package name alone', async () => {
     await writeRulebook(packageContent(), 'pkg-rules', 'delivery: skill\ndescription: From the package.', 'Pkg rules.');
     await writeSkill(packageContent(), 'pkg-skill');
     await writeSubagent(packageContent(), 'pkg-agent');
@@ -165,7 +165,7 @@ describe('sync with a declared package', () => {
     expect(existsSync(subagentPath('pkg-agent'))).toBe(true);
   });
 
-  it('delivers an ambient rulebook the package ships to the local host', async () => {
+  it('delivers an ambient rulebook from the package to the local host', async () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
@@ -174,7 +174,7 @@ describe('sync with a declared package', () => {
     expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
   });
 
-  it('resolves a collection the package ships when the project declares it', async () => {
+  it('resolves a collection from the package when the project declares it', async () => {
     await writeSkill(packageContent(), 'member-skill');
     await writeCollection(packageContent(), 'pkg-bundle', ['member-skill']);
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\ncollections:\n  use:\n    - pkg-bundle\n`);
@@ -184,7 +184,7 @@ describe('sync with a declared package', () => {
     expect(existsSync(skillPath('member-skill'))).toBe(true);
   });
 
-  it('pulls in a library artifact a package artifact depends on', async () => {
+  it('pulls in a library artifact on which a package artifact depends', async () => {
     await writeRulebook(contentDir, 'library-dep', 'delivery: skill', 'Library dependency.');
     await writeSkill(packageContent(), 'pkg-skill', 'dependencies:\n  rulebooks:\n    - library-dep\n');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
@@ -288,7 +288,7 @@ describe('sync with a declared package', () => {
     expect(localHost).not.toContain('First body.');
   });
 
-  it('stops advising a package the project declined with drop', async () => {
+  it('stops advising a package that the project declined with drop', async () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await writeFile(
       path.join(projectRoot, 'package.json'),
@@ -307,7 +307,7 @@ describe('sync with a declared package', () => {
     expect(renderReportText(outcome)).not.toContain(PACKAGE_NAME);
   });
 
-  it('advises adopting an installed dependency that ships guidance the project has not declared', async () => {
+  it('advises adopting an installed dependency whose guidance the project has not declared', async () => {
     await writeFile(
       path.join(projectRoot, 'package.json'),
       JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
@@ -345,7 +345,7 @@ describe('sync with a declared package', () => {
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
   });
 
-  it('warns and completes when a declared package points at a content directory it does not ship', async () => {
+  it('warns and completes when a declared package points at a content directory that it does not ship', async () => {
     await installPackage('@ca-fixture/empty', 'missing-dir');
     await declare("packages:\n  use:\n    - '@ca-fixture/empty'\n");
 

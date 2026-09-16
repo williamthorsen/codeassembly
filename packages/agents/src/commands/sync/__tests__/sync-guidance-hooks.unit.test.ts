@@ -102,7 +102,7 @@ describe('syncCommand with guidance-hook bindings', () => {
     expect(existsSync(consultSkill)).toBe(true);
   });
 
-  it('leaves a hook no binding names contributing nothing at all', async () => {
+  it('leaves a hook named by no binding contributing nothing at all', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', 'Prose.\n\n<!-- guidance-hook: glossary -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n');
     await declare(projectRoot, [
@@ -190,7 +190,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
     });
 
-    // A rulebook reaching a session through both routes duplicates its own text there, which the author has already
+    // A rulebook delivered to a session through both routes duplicates its own text there, which the author has already
     // weighed by writing both into `delivery`. The skill filling the hook may also be parsing what it receives.
     it('reports nothing when a bound rulebook delivers ambient as well as hook', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
@@ -231,7 +231,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       expect(advisories).toEqual([{ kind: 'declared-unbound', slug: 'layout-preferences' }]);
     });
 
-    it('reports nothing when a binding and the rulebook it names agree', async () => {
+    it('reports nothing when a binding and the rulebook that it names agree', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
       await declareBinding(projectRoot, 'layout-preferences');
@@ -250,7 +250,7 @@ async function declare(projectRoot: string, lines: ReadonlyArray<string>): Promi
   await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `${lines.join('\n')}\n`, 'utf8');
 }
 
-/** Declares the `implement-plan` skill with `slug` bound to the `impl` hook, the shape the advisory cases share. */
+/** Declares the `implement-plan` skill with `slug` bound to the `impl` hook, the shape shared by the advisory cases. */
 async function declareBinding(projectRoot: string, slug: string): Promise<void> {
   await declare(projectRoot, [
     'skills:',
@@ -263,12 +263,12 @@ async function declareBinding(projectRoot: string, slug: string): Promise<void> 
   ]);
 }
 
-/** Build sync options targeting only the Claude harness. */
+/** Builds sync options targeting only the Claude harness. */
 function makeOptions(): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false };
 }
 
-/** Runs a sync and returns the guidance-hook advisories its plan carries. */
+/** Runs a sync and returns the guidance-hook advisories in its plan. */
 async function syncAdvisories(
   projectRoot: string,
   contentDir: string,
@@ -313,7 +313,7 @@ async function writeLibrarySubagent(contentDir: string, slug: string, body: stri
   await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n# ${slug}\n\n${body}`, 'utf8');
 }
 
-/** Writes the Claude harness overlay supplying the `_defaults` the subagent frontmatter merge applies. */
+/** Writes the Claude harness overlay supplying the `_defaults` applied by the subagent frontmatter merge. */
 async function writeOverlays(contentDir: string): Promise<void> {
   const dataDir = path.join(contentDir, 'subagents', '_data');
   await mkdir(dataDir, { recursive: true });
