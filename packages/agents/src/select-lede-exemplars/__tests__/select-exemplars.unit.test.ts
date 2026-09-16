@@ -136,7 +136,7 @@ describe(selectExemplars, () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'excellent' }];
     const selection = await select({ decisions, type: 'feat', count: 5 });
 
-    expect(selection.warnings[0]).toContain('A.md: carries quality "excellent"');
+    expect(selection.warnings[0]).toContain('A.md: names quality "excellent"');
     expect(selection.exemplars).toHaveLength(1);
   });
 
@@ -273,7 +273,7 @@ describe(selectExemplars, () => {
 
     const selection = await select({ decisions: [], files, type: 'feat', count: 1, withPair: true });
 
-    expect(selection.warnings).toStrictEqual(['Z.md: carries no agent lede, so its decision pair cannot be read']);
+    expect(selection.warnings).toStrictEqual(['Z.md: contains no agent lede, so its decision pair cannot be read']);
     expect(selection.exemplars[0]).not.toHaveProperty('agentLede');
   });
 
@@ -316,7 +316,7 @@ describe(selectExemplars, () => {
 
     const selection = await select({ decisions: CORPUS, files, type: 'feat', count: 2 });
 
-    expect(selection.warnings[0]).toContain('Z.md: carries neither a merged nor an agent lede');
+    expect(selection.warnings[0]).toContain('Z.md: contains neither a merged nor an agent lede');
   });
 
   it('reports a decision that does not name the change that it describes', async () => {

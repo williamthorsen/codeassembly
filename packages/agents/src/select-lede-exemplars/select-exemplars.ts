@@ -175,7 +175,7 @@ async function readDecision(input: {
 
   const lede = extractApprovedLede(parsed.record.body);
   if (lede === null) {
-    return { kind: 'warning', warning: `${basename}: carries neither a merged nor an agent lede` };
+    return { kind: 'warning', warning: `${basename}: contains neither a merged nor an agent lede` };
   }
 
   const { extra } = parsed.record;
@@ -192,7 +192,10 @@ async function readDecision(input: {
   const resolved = input.workTypes.get(type) ?? null;
   const tier = resolved?.tier ?? extractString(extra, 'tier');
   if (tier === null) {
-    return { kind: 'warning', warning: `${basename}: names work type "${type}", which no taxonomy or record tiers` };
+    return {
+      kind: 'warning',
+      warning: `${basename}: names work type "${type}", to which neither the taxonomy nor the record gives a tier`,
+    };
   }
 
   // Because an unrated record is the ordinary case for one captured before ratings existed, only a value
@@ -201,13 +204,13 @@ async function readDecision(input: {
   const quality = isLedeQuality(rawQuality) ? rawQuality : null;
   const warnings =
     rawQuality !== null && quality === null
-      ? [`${basename}: carries quality "${rawQuality}", which the scale does not declare`]
+      ? [`${basename}: names quality "${rawQuality}", which the scale does not declare`]
       : [];
 
   // A decision written by `capture-lede-decision` always includes an agent lede. A body without one was edited by hand.
   const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
   if (input.withPair && pair === null) {
-    warnings.push(`${basename}: carries no agent lede, so its decision pair cannot be read`);
+    warnings.push(`${basename}: contains no agent lede, so its decision pair cannot be read`);
   }
 
   return {
