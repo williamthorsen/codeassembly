@@ -19,9 +19,9 @@ export async function uninstallCommand(
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Retire the withdrawn `~/.agents/` tier ahead of the harness-detection return, so a home that targets no harness is
-  // still cleared. `install` runs the same pass, and a user who upgrades and uninstalls without installing first
-  // reaches it only here.
+  // Retire the withdrawn `~/.agents/` tier ahead of the harness-detection return, so that a home that targets no
+  // harness is still cleared. `install` runs the same pass, and a user who upgrades and uninstalls without
+  // installing first reaches it only here.
   const didRetire = await retireSharedGuidance(manifest, { force: options.force, dryRun: false }, baseDir);
 
   if (harnesses.length === 0) {
@@ -39,9 +39,9 @@ export async function uninstallCommand(
   for (const harnessId of harnesses) {
     console.info(`\nUninstalling for harness: ${harnessId}`);
 
-    // Remove the hook entries regardless of manifest state: they live inside a shared user config rather than as
-    // tracked files, and configure-hooks can have written them without an install. An unparseable config costs the
-    // hook removal a warning, never the removal of the tracked items or the manifest update.
+    // Remove the hook entries regardless of manifest state: They live inside a shared user config rather than as
+    // tracked files, and configure-hooks can have written them without an install. An unparseable config stops the
+    // hook removal with a warning, never the removal of the tracked items or the manifest update.
     try {
       await removeHarnessHookEntries(harnessId, baseDir);
     } catch (error) {
@@ -81,7 +81,7 @@ export async function uninstallCommand(
 // region | Helpers
 
 /**
- * Removes each tracked entry the policy marks for removal, collects user-modified entries to keep tracking,
+ * Removes each tracked entry marked for removal by the policy, collects user-modified entries to keep tracking,
  * reports the tally, and returns the skipped entries.
  */
 async function removeTrackedEntries(
