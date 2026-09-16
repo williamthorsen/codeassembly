@@ -2,7 +2,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 
 /**
- * Resolves a declared source's authored `path` to an absolute directory, against `fileDir` — the `.agents/` directory
+ * Resolves a declared source's authored `path` to an absolute directory, against `fileDir`, the `.agents/` directory
  * of the file that declared it. A leading `~` (or `~/…`) expands to the home directory, an already-absolute path is
  * returned unchanged, and a relative path resolves against `fileDir`.
  */

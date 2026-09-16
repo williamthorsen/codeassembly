@@ -2,14 +2,14 @@
 //
 // Every kb helper hand-rolled the same value-flag scan: match `--flag` / `--flag=value`, then resolve the value either
 // inline or from the next token. This module is the single owner of that mechanic. It deliberately stops at matching and
-// value resolution — which flags are required, how often one may appear, whether two are mutually exclusive, and whether
-// an empty value is meaningful are all per-command rules each helper composes from the scan result.
+// value resolution. Each helper composes the per-command rules from the scan result: which flags are required, how often
+// one may appear, whether two are mutually exclusive, and whether an empty value is meaningful.
 
 // `Name` is the union of canonical flag names. It defaults to `string`, but a command that types its specs with a
 // literal-name union (e.g. an operation-name union) gets matched flags reported under that union, so it can switch on
 // the name exhaustively without a cast.
 
-/** A flag the scanner recognizes: its canonical name, optional alternate spellings, and whether it consumes a value. */
+/** A flag recognized by the scanner: its canonical name, optional alternate spellings, and whether it consumes a value. */
 export interface FlagSpec<Name extends string = string> {
   /** Canonical flag name without the leading `--` (e.g. `store`). Matched flags are reported under this name. */
   name: Name;
@@ -35,14 +35,14 @@ export interface ScanResult<Name extends string = string> {
 /**
  * Scans `argv` into positionals and recognized flags, resolving each value-bearing flag's value.
  *
- * Matching: a token equal to `--name` (or an alias) matches with no inline value; a token `--name=value` matches and
- * binds `value` inline. The inline form binds **verbatim** — an empty or `--`-prefixed value is accepted, because the
+ * Matching: A token equal to `--name` (or an alias) matches with no inline value; a token `--name=value` matches and
+ * binds `value` inline. The inline form binds **verbatim**: An empty or `--`-prefixed value is accepted, because the
  * `=` already disambiguates the value from a following flag. A value-bearing flag with no inline value consumes the next
  * token, which is rejected when it is absent or itself begins with `--`.
  *
  * The scanner owns matching and value resolution only. It does not enforce which flags are required, how many times one
- * may appear, mutual exclusivity, or whether an empty value is meaningful — each command composes those from the result.
- * Flags are returned in encounter order so a command can detect duplicates or mutually exclusive selections.
+ * may appear, mutual exclusivity, or whether an empty value is meaningful; each command composes those from the result.
+ * Flags are returned in encounter order so that a command can detect duplicates or mutually exclusive selections.
  *
  * Throws on an unknown `--`-prefixed token, a value-bearing flag missing its value, or a boolean flag given an inline
  * `=value`.
@@ -96,8 +96,8 @@ export function scanFlags<Name extends string = string>(
 
 /**
  * Reduces matched flags to a last-wins map of value-bearing flags, keyed by canonical name; boolean flags are dropped.
- * A command that allows a flag at most once reads each key directly, and a repeated flag keeps its last occurrence —
- * the same last-wins behavior the hand-rolled scanners had. A command that must reject duplicates inspects
+ * A command that allows a flag at most once reads each key directly, and a repeated flag keeps its last occurrence,
+ * the same last-wins behavior that the hand-rolled scanners had. A command that must reject duplicates inspects
  * {@link ScanResult.flags} directly instead.
  */
 export function valueFlagMap(flags: readonly MatchedFlag[]): Record<string, string> {

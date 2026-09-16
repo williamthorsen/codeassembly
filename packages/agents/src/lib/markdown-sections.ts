@@ -26,7 +26,7 @@ export function extractSection(input: { text: string; heading: string }): string
 
 // region | Helpers
 
-/** Joins section lines and trims them, yielding `null` for a section that holds no text. */
+/** Joins section lines and trims them, yielding `null` for a section that contains no text. */
 function joinSection(lines: readonly string[]): string | null {
   const section = lines.join('\n').trim();
   return section.length > 0 ? section : null;

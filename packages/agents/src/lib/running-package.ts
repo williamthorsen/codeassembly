@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { isRecord } from './type-guards.ts';
 
 /**
- * Reads the running package's declared version, so a record of what a command wrote names the build that wrote it.
+ * Reads the running package's declared version, so that a record of what a command wrote names the build that wrote it.
  */
 export function readRunningPackageVersion(): string {
   const manifestPath = path.join(resolveRunningPackageRoot(), 'package.json');
@@ -17,9 +17,9 @@ export function readRunningPackageVersion(): string {
 }
 
 /**
- * Resolves the root of the package this code runs from: the nearest ancestor of this module holding a `package.json`.
- * The module sits at `src/lib/` in a source tree and `dist/esm/lib/` in a build, and no intermediate directory carries
- * a manifest of its own, so both layouts land on the same root.
+ * Resolves the root of the package from which this code runs: the nearest ancestor of this module holding a
+ * `package.json`. The module is at `src/lib/` in a source tree and `dist/esm/lib/` in a build, and no intermediate
+ * directory contains a manifest of its own, so both layouts resolve to the same root.
  */
 export function resolveRunningPackageRoot(): string {
   let currentDir = path.dirname(fileURLToPath(import.meta.url));

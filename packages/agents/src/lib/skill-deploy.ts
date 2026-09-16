@@ -22,17 +22,17 @@ const skillMarker = makeArtifactMarker('skill');
 export const SUPPORTED_HARNESSES_KEY = 'supported-harnesses';
 
 /**
- * Matches the key's own frontmatter line. Anchored at line start, which is what keeps it from also matching a longer
- * key ending in the same word — the qualifier is the whole point of the name.
+ * Matches the key's own frontmatter line. Anchored at line start, which keeps it from also matching a longer
+ * key ending in the same word: The qualifier is the whole point of the name.
  */
 const SUPPORTED_HARNESSES_LINE = new RegExp(String.raw`^${SUPPORTED_HARNESSES_KEY}\s*:`);
 
 /**
  * A declared skill resolved through the source resolver: its stable slug, the directory to copy from, the content root
- * its includes resolve against, the source it resolved from, and the harnesses it targets. `contentRoot` is the library
- * for a library skill and the declaring source for a source skill. `source` is the declaring source's name, or
- * `undefined` for the built-in library. `targetHarnesses` is absent when the skill carries no `supported-harnesses:` field,
- * meaning it deploys to all harnesses.
+ * against which its includes resolve, the source from which it resolved, and the harnesses that it targets.
+ * `contentRoot` is the library for a library skill and the declaring source for a source skill. `source` is the
+ * declaring source's name, or `undefined` for the built-in library. `targetHarnesses` is absent when the skill declares
+ * no `supported-harnesses:` field, meaning it deploys to all harnesses.
  */
 export interface ResolvedSkill {
   readonly slug: string;
@@ -44,10 +44,10 @@ export interface ResolvedSkill {
 
 /**
  * Resolves a declared skill slug through the source resolver (declared sources first, then the library), confirming its
- * `SKILL.md` exists and reading the harnesses it targets from frontmatter. Carries the resolved content root — the
- * source or library directory the slug resolved from — so the render pass expands the skill's includes against its own
- * tree. A slug found in no source or the library throws an error naming every location searched; an unknown harness id
- * in the `supported-harnesses:` field throws naming the slug and the offending id.
+ * `SKILL.md` exists and reading the harnesses that it targets from frontmatter. The result names the resolved content
+ * root (the source or library directory from which the slug resolved), so the render pass expands the skill's includes
+ * against its own tree. A slug found in no source or the library throws an error naming every location searched; an
+ * unknown harness id in the `supported-harnesses:` field throws naming the slug and the offending id.
  */
 export async function resolveDeclaredSkill(slug: string, resolver: SourceResolver): Promise<ResolvedSkill> {
   const resolved = await resolver.resolve('skill', slug);
@@ -67,17 +67,17 @@ export async function resolveDeclaredSkill(slug: string, resolver: SourceResolve
 }
 
 /**
- * Materializes a resolved skill into `destDir/` for one harness: every `.md` file is include-expanded and
+ * Materializes a resolved skill into `destDir/` for one harness: Every `.md` file is include-expanded and
  * tool-name/link/template-rewritten through the shared skill transform, non-`.md` files are mirrored verbatim, and the
  * declared-skill ownership marker is stamped into the deployed root `SKILL.md`.
- * The write is byte-stable: unchanged files are left untouched, and destination files the source no longer carries —
- * along with any directory left empty by their removal — are pruned, so re-deploying an unchanged skill makes no
- * filesystem change.
+ * The write is byte-stable: Unchanged files are left untouched, and destination files that the source no longer
+ * contains (along with any directory left empty by their removal) are pruned, so re-deploying an unchanged skill makes
+ * no filesystem change.
  */
 export async function deploySkill(skill: ResolvedSkill, destDir: string, context: SkillDeployContext): Promise<void> {
   const entries = await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, context);
-  // Strip the build-only `supported-harnesses:` directive from the deployed root SKILL.md — it steers deployment, not the
-  // harness, which would otherwise carry a frontmatter key it ignores.
+  // Strip the build-only `supported-harnesses:` directive from the deployed root SKILL.md: It steers deployment, not
+  // the harness, which would otherwise receive a frontmatter key that it ignores.
   await writeRenderedTree(
     destDir,
     entries.map((entry) =>
@@ -93,7 +93,8 @@ export async function deploySkill(skill: ResolvedSkill, destDir: string, context
  * Returns `undefined` when the field is absent or empty, meaning the skill targets all harnesses. Throws when a listed
  * value is not a known harness id, naming the slug and the offending value.
  *
- * Exported so a caller asking whether a skill reaches every harness reads the narrowing here rather than modelling it.
+ * Exported so that a caller asking whether a skill targets every harness reads the narrowing here rather than
+ * modelling it.
  */
 export function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<HarnessId> | undefined {
   const { lines } = parseFrontmatter(skillContent);

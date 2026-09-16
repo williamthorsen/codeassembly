@@ -1,18 +1,18 @@
 /**
  * Managed event-hook entries within a Rovo Dev `config.yml`. CodeAssembly owns individual items of the
  * `eventHooks.events` list, interleaved with foreign items written by other tools. Ownership is per-item, identified by
- * a caller-supplied sentinel matcher — no comment fence can delimit interleaved ownership. Every function operates on a
+ * a caller-supplied sentinel matcher: No comment fence can delimit interleaved ownership. Every function operates on a
  * parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so foreign items, foreign
  * comments, and unrelated keys survive untouched. File IO belongs to the caller.
  *
  * The schema is the one real configs use, verified against a live config and a hook experiment: `eventHooks.events` is
  * a YAML list of `{name, commands}` items, where `name` is the hook event (several items may share one) and each
- * `commands` item is a map carrying a `command` string. A map keyed by event name — the shape some documentation
- * describes — makes Rovo Dev treat the whole config as corrupt, so this module refuses it rather than modeling it.
+ * `commands` item is a map containing a `command` string. A map keyed by event name (the shape that some documentation
+ * describes) makes Rovo Dev treat the whole config as corrupt. This module refuses it rather than modeling it.
  *
  * The module is agnostic about how the sentinel is encoded (a token in a command string, etc.); the caller fixes the
  * encoding and passes a matcher. The ensure/check/remove shapes come from `managed-entry-contract.ts`, shared with the
- * Claude sibling so the harness wiring stays uniform.
+ * Claude sibling so that the harness wiring stays uniform.
  */
 
 import { type Document, isMap, isSeq, YAMLMap, YAMLSeq } from 'yaml';
@@ -20,17 +20,17 @@ import { type Document, isMap, isSeq, YAMLMap, YAMLSeq } from 'yaml';
 import type { EnsureResult, EntryCheck, ManagedEntryStatus, RemoveResult } from './managed-entry-contract.ts';
 
 /**
- * A single `eventHooks.events` item, mirroring the Rovo Dev shape: the hook event it fires on, and its command
+ * A single `eventHooks.events` item, mirroring the Rovo Dev shape: the hook event on which it fires, and its command
  * strings. In the file each command string is wrapped as a `{command}` map; this module owns that translation. The
  * module never interprets command contents.
  */
 export interface HookEntry {
-  /** The hook event this entry fires on (e.g. `on_session_start`). Not unique: foreign items may share it. */
+  /** The hook event on which this entry fires (e.g. `on_session_start`). Not unique: foreign items may share it. */
   readonly name: string;
   readonly commands: readonly string[];
 }
 
-/** Identifies CodeAssembly-owned entries wherever they sit. Encoding is the caller's concern. */
+/** Identifies CodeAssembly-owned entries wherever they appear. Encoding is the caller's concern. */
 export type HookSentinelMatcher = (entry: HookEntry) => boolean;
 
 /** Thrown when an operation is asked to mutate a `Document` that failed to parse cleanly. */
@@ -48,7 +48,7 @@ export class RovoConfigParseError extends Error {
  * Reports each supplied entry as `present` (an owned item with its name is equal to it), `drifted` (an owned item with
  * its name differs, or owned items exist under other names only), or `absent` (no owned item anywhere). The report is
  * scoped to the entries supplied; an all-present result does not imply ensure would leave the document unchanged,
- * since ensure would still drop an owned item the caller did not supply.
+ * since ensure would still drop an owned item that the caller did not supply.
  */
 export function checkHookEntries(
   doc: Document,
@@ -64,12 +64,12 @@ export function checkHookEntries(
 
 /**
  * Installs `entries` into the `eventHooks.events` list, creating missing structure (`eventHooks`, `events`) as needed.
- * The owned subset of the list is replaced wholesale by the supplied entries — spliced in at the first owned position,
- * appended when the list holds none. That is what makes a re-run a no-op, replaces drifted entries in place, collapses
+ * The owned subset of the list is replaced wholesale by the supplied entries: spliced in at the first owned position,
+ * appended when the list contains none. That makes a re-run a no-op, replaces drifted entries in place, collapses
  * accidental duplicates into the supplied set, and leaves foreign items in their original relative order. `changed` is
  * false when nothing moved.
  *
- * Throws when a supplied entry does not itself satisfy the matcher: an entry written without the sentinel could never
+ * Throws when a supplied entry does not itself satisfy the matcher: An entry written without the sentinel could never
  * be found again by check or remove.
  */
 export function ensureHookEntries(
@@ -87,9 +87,9 @@ export function ensureHookEntries(
 }
 
 /**
- * Deletes every sentinel-matching item from the `eventHooks.events` list, then prunes structure the deletion emptied:
- * an emptied `events` drops its key, and an `eventHooks` left holding nothing drops too. An `eventHooks` still holding
- * other keys (`logFile`) survives. `removedCount` counts the owned items deleted.
+ * Deletes every sentinel-matching item from the `eventHooks.events` list, then prunes structure that the deletion
+ * emptied: An emptied `events` drops its key, and an `eventHooks` left empty drops too. An `eventHooks` still
+ * containing other keys (`logFile`) survives. `removedCount` counts the owned items deleted.
  */
 export function removeHookEntries(doc: Document, isOwned: HookSentinelMatcher): RemoveResult {
   assertParsable(doc);
@@ -132,7 +132,7 @@ function assertAllOwned(entries: readonly HookEntry[], isOwned: HookSentinelMatc
   }
 }
 
-/** Throws {@link RovoConfigParseError} when the document carries parse errors, guarding every mutation and read. */
+/** Throws {@link RovoConfigParseError} when the document has parse errors, guarding every mutation and read. */
 function assertParsable(doc: Document): void {
   const errorMessages = doc.errors.map((error) => error.message);
   if (errorMessages.length > 0) {
@@ -142,7 +142,7 @@ function assertParsable(doc: Document): void {
 
 /**
  * Classifies a desired entry against the owned items present, matched by name: `present` needs an equal, pristine
- * match; an owned item under its name that differs — or owned items under other names only — is `drifted`; no owned
+ * match; an owned item under its name that differs (or owned items under other names only) is `drifted`; no owned
  * item anywhere is `absent`.
  */
 function classify(owned: readonly ReadItem[], desired: HookEntry): ManagedEntryStatus {
@@ -174,8 +174,8 @@ function ensureEventsList(doc: Document): YAMLSeq {
 
 /**
  * Returns the `eventHooks.events` list, or undefined when `eventHooks` or `events` is missing. A present `events`
- * that is not a list — the map shape in particular — throws rather than reading as empty: Rovo Dev rejects such a
- * config as corrupt, and treating it as empty would append entries the CLI never runs.
+ * that is not a list (the map shape in particular) throws rather than reading as empty: Rovo Dev rejects such a
+ * config as corrupt, and treating it as empty would append entries that the CLI never runs.
  */
 function getEventsList(doc: Document): YAMLSeq | undefined {
   const events = doc.getIn(['eventHooks', 'events'], true);
@@ -188,7 +188,7 @@ function getEventsList(doc: Document): YAMLSeq | undefined {
   return events;
 }
 
-/** True when the YAML item reads as a hook entry the matcher claims. */
+/** True when the YAML item reads as a hook entry that the matcher claims. */
 function isOwnedItem(item: unknown, isOwned: HookSentinelMatcher): boolean {
   const read = readItem(item);
   return read !== undefined && isOwned(read.entry);
@@ -206,7 +206,7 @@ function ownedItemsEqual(current: readonly ReadItem[], desired: readonly HookEnt
 }
 
 /**
- * A YAML item read back as an entry. `pristine` records that every command map carried only the `command` key; a
+ * A YAML item read back as an entry. `pristine` records that every command map contained only the `command` key; a
  * hand-added extra key (a timeout, say) must read as drift, not as an equal entry, so ensure rebuilds it and check
  * reports it honestly.
  */
@@ -216,10 +216,10 @@ interface ReadItem {
 }
 
 /**
- * Reads a YAML list item into a {@link ReadItem}, or undefined when it is not a well-formed entry: a map holding a
+ * Reads a YAML list item into a {@link ReadItem}, or undefined when it is not a well-formed entry: a map containing a
  * string `name` and a `commands` list whose every item is a map with a string `command`. Reading is lenient about
- * extra keys — a foreign item carrying more than this module writes must still be recognizable, or ownership checks
- * would go blind to it.
+ * extra keys: A foreign item carrying more than this module writes must still be recognizable, or ownership checks
+ * would miss it.
  */
 function readItem(item: unknown): ReadItem | undefined {
   if (!isMap(item)) {
@@ -260,8 +260,8 @@ function readOwnedItems(array: YAMLSeq, isOwned: HookSentinelMatcher): ReadItem[
 }
 
 /**
- * Replaces the owned subset of the events list with `entries`: the supplied set is spliced in at the first owned
- * position (appended when the list holds none), other owned items are dropped, and foreign items keep their order.
+ * Replaces the owned subset of the events list with `entries`: The supplied set is spliced in at the first owned
+ * position (appended when the list contains none), other owned items are dropped, and foreign items keep their order.
  * Returns whether the list changed.
  */
 function replaceOwnedItems(array: YAMLSeq, entries: readonly HookEntry[], isOwned: HookSentinelMatcher): boolean {

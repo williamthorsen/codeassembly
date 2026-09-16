@@ -5,7 +5,7 @@ import type { ContentRootRef } from './content-root-manifest.ts';
 
 /**
  * Git ref used in Source: URLs of provenance markers. Hardcoded until
- * version-pinning lands (tracked in williamthorsen/codeassembly#444).
+ * version-pinning is added (tracked in williamthorsen/codeassembly#444).
  */
 export const SOURCE_REF = 'main';
 
@@ -22,10 +22,11 @@ const HTML_MARKER_CLOSE = ' -->';
 const FRONTMATTER_OPEN = '---';
 
 /**
- * Builds the `Source:` reference a deployed file's provenance marker carries, naming where its content came from.
+ * Builds the `Source:` reference in a deployed file's provenance marker, naming where its content came from.
  * The built-in library resolves to its public blob URL; a declared source has none, so its reference names the file's
- * path within the source, the source's name, and the directory holding it — the name locates the declaration entry,
- * and the directory locates the file to edit, which a package source's `node_modules` path does not reveal on its own.
+ * path within the source, the source's name, and the directory containing it. The name locates the declaration
+ * entry, and the directory locates the file to edit, which a package source's `node_modules` path does not reveal on
+ * its own.
  */
 export function buildSourceReference(root: ContentRootRef, contentRelativePath: string): string {
   if (root.name === undefined) {
@@ -35,7 +36,7 @@ export function buildSourceReference(root: ContentRootRef, contentRelativePath: 
 }
 
 /**
- * Build the GitHub URL pointing to a source file under `packages/agents/content/`.
+ * Builds the GitHub URL pointing to a source file under `packages/agents/content/`.
  * `contentRelativePath` is the path relative to that directory (e.g., `skills/collaborate/SKILL.md`).
  */
 export function buildSourceUrl(contentRelativePath: string): string {
@@ -43,11 +44,11 @@ export function buildSourceUrl(contentRelativePath: string): string {
 }
 
 /**
- * Inject a provenance marker into a Markdown file's content. Files starting with `---\n`
+ * Injects a provenance marker into a Markdown file's content. Files starting with `---\n`
  * receive three YAML comment lines immediately after the opening delimiter; all other
  * files receive three HTML comment lines at the top followed by a blank line.
  *
- * Idempotent: if the expected marker (any existing marker in the correct position) is already
+ * Idempotent: If the expected marker (any existing marker in the correct position) is already
  * present, it is replaced with the marker computed from `sourceUrl`, leaving the surrounding
  * content unchanged. A repeat call with the same `sourceUrl` returns identical content.
  */
@@ -59,7 +60,7 @@ export function injectProvenanceMarker(content: string, sourceUrl: string): stri
 }
 
 /**
- * Walk a directory tree and apply `injectProvenanceMarker` in place to every `.md` file found.
+ * Walks a directory tree and applies `injectProvenanceMarker` in place to every `.md` file found.
  * `resolveSourceUrl` is called with each file's path relative to `rootDir` and must return the
  * canonical source URL for that file.
  */
@@ -71,7 +72,7 @@ export async function injectMarkersInDirectory(
 }
 
 /**
- * Apply `injectProvenanceMarker` in place to a single file.
+ * Applies `injectProvenanceMarker` in place to a single file.
  */
 export async function injectMarkerInFile(filePath: string, sourceUrl: string): Promise<void> {
   const content = await readFile(filePath, 'utf8');
@@ -99,7 +100,7 @@ function injectYamlMarker(content: string, sourceUrl: string): string {
 
 function stripExistingYamlMarkerLines(rest: ReadonlyArray<string>): ReadonlyArray<string> {
   // An existing marker, if present, is three consecutive YAML comment lines whose first line
-  // begins with "# GENERATED FILE". Remove them so we can write fresh marker lines. This also
+  // begins with "# GENERATED FILE". Remove them to write fresh marker lines. This also
   // handles the migration case of a different Source: URL.
   if (rest.length >= 3 && rest[0] === `${YAML_MARKER_PREFIX}${LINE_1_TEXT}`) {
     return rest.slice(3);

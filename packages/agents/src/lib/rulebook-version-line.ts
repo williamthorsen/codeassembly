@@ -5,8 +5,8 @@
  */
 
 /**
- * Renders the version line for a rulebook as a one-entry list, or an empty list when it declares no version, so a
- * caller splices the result in rather than testing it. The line carries no slug: It is written directly below the
+ * Renders the version line for a rulebook as a one-entry list, or an empty list when it declares no version, so that a
+ * caller splices the result in rather than testing it. The line contains no slug: It is written directly below the
  * marker that names one.
  */
 export function renderRulebookVersionLines(version: string | undefined): ReadonlyArray<string> {

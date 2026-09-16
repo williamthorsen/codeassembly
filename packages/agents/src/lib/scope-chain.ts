@@ -10,7 +10,7 @@ interface ScopeChainOptions {
  * Resolves the ordered chain of existing config files named `filename`, lowest to highest precedence. Two tiers
  * are walked, both under `<cwd>/.agents/`: the committed project file (`<filename>`) and its gitignored
  * project-local override (`<filename>` with `.local` inserted before the extension). Only existing files are
- * returned, so the caller can treat the result as the exact set to combine.
+ * returned, so that the caller can treat the result as the exact set to combine.
  */
 export async function resolveScopeChain(filename: string, options: ScopeChainOptions): Promise<ReadonlyArray<string>> {
   const agentsDir = path.join(options.cwd, '.agents');
