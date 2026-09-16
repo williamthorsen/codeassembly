@@ -153,7 +153,7 @@ export function findCrossNamespaceCollisionDefects(
     kind: 'collision',
     detail:
       `Skill directory name collision across delivery namespaces: ${name} is delivered as both a rulebook skill ` +
-      'and a declared skill. Rename one so they no longer share a directory.',
+      'and a declared skill. Rename one so that they no longer share a directory.',
   }));
 }
 
