@@ -25,7 +25,7 @@ describe(resolvePackageSources, () => {
     ]);
   });
 
-  it('resolves a scoped package to a content directory nested under one it already owns', async () => {
+  it('resolves a scoped package to a content directory nested under one that it already owns', async () => {
     const dir = await installPackage(baseDir, '@ca-fixture/nmr', { codeassembly: { content: 'content/agents' } });
 
     expect(await resolvePackageSources(['@ca-fixture/nmr'], baseDir)).toEqual([
@@ -41,7 +41,7 @@ describe(resolvePackageSources, () => {
     ]);
   });
 
-  // Mirrors how pnpm lays out both an external dependency (a link into `.pnpm/`) and a `workspace:*` sibling: the
+  // Mirrors how pnpm lays out both an external dependency (a link into `.pnpm/`) and a `workspace:*` sibling: The
   // `node_modules` entry is a symlink, and the content resolves through it to the real directory.
   it('resolves a package whose node_modules entry is a symlink', async () => {
     const realDir = path.join(baseDir, 'workspace-packages', 'linked');
@@ -78,8 +78,8 @@ describe(resolvePackageSources, () => {
     await expect(resolvePackageSources(['node:fs'], baseDir)).rejects.toThrow(/"node:fs" is not installed/);
   });
 
-  // Node answers a relative specifier with the anchor directory itself, so a path here names a directory rather than
-  // resolving through `node_modules`: `./guidance` sits under `baseDir`, and `../sibling` outside it.
+  // Node resolves a relative specifier to the anchor directory itself, so a path here names a directory rather than
+  // resolving through `node_modules`: `./guidance` is under `baseDir`, and `../sibling` outside it.
   it.each(['./guidance', '../sibling', '.', path.join(path.sep, 'abs', 'path')])(
     'throws when a declared name is the filesystem path %s',
     async (name) => {
@@ -87,7 +87,7 @@ describe(resolvePackageSources, () => {
     },
   );
 
-  it('resolves a path-shaped name to nothing rather than a directory that happens to sit there', async () => {
+  it('resolves a path-shaped name to nothing rather than a directory that happens to exist there', async () => {
     const stray = path.join(baseDir, 'guidance');
     await mkdir(stray, { recursive: true });
     await writeFile(
@@ -137,7 +137,7 @@ describe(findUndeclaredGuidancePackages, () => {
     await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('reports a guidance-shipping dependency the project has not declared', async () => {
+  it('reports a guidance-shipping dependency that the project has not declared', async () => {
     await installPackage(baseDir, '@ca-fixture/ships', { codeassembly: { content: 'c' } });
     await writeProjectManifest(baseDir, { dependencies: { '@ca-fixture/ships': '1.0.0' } });
 

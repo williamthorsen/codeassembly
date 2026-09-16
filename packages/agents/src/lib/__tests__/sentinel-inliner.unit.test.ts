@@ -16,7 +16,7 @@ describe(extractInstalledSlugs, () => {
     expect(extractInstalledSlugs('<!-- rulebook:shell -->\nBody text\n')).toEqual([]);
   });
 
-  it('returns the slug of a block carrying a version line', () => {
+  it('returns the slug of a block containing a version line', () => {
     expect(extractInstalledSlugs(injectRulebook('', 'shell', 'Body text', '3'))).toEqual(['shell']);
   });
 });
@@ -107,7 +107,7 @@ describe(removeRulebook, () => {
     expect(removeRulebook('# Title\n', 'shell')).toBe('# Title\n');
   });
 
-  it('removes a block carrying a version line together with the line', () => {
+  it('removes a block containing a version line together with the line', () => {
     const once = injectRulebook('# Title\n', 'shell', 'Body text', '3');
     expect(removeRulebook(once, 'shell')).toBe('# Title\n');
   });

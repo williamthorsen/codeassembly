@@ -7,7 +7,7 @@ import { renderRulebookBody, type RulebookRenderContext } from '../rulebook-tran
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
-// `shell-conventions` carries a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it deploys no skill.
+// `shell-conventions` declares a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it deploys no skill.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['a-rulebook', { skillName: 'consult-a-rulebook', skill: true }],
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
@@ -62,7 +62,7 @@ describe(renderRulebookBody, () => {
     });
 
     it('anchors the rewrite at the rulebook, two levels below the content root', () => {
-      // A sibling tree is reached with `../../`; one level shallower lands inside `guidance/`, which never deploys.
+      // `../../` resolves to a sibling tree; one level shallower resolves inside `guidance/`, which never deploys.
       expect(() => renderRulebookBody('[x](../skills/a.md)', 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
         /resolves to "guidance\/skills\/a\.md"/,
       );
@@ -212,7 +212,7 @@ describe(renderRulebookBody, () => {
   });
 
   describe('guidance hooks', () => {
-    it('strips a declared hook, so neither delivery mode carries the directive', () => {
+    it('strips a declared hook, so neither delivery mode includes the directive', () => {
       const body = '# Heading\n\n<!-- guidance-hook: implementation-preferences -->\n\nGuidance text.\n';
 
       expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe('# Heading\n\n\nGuidance text.\n');

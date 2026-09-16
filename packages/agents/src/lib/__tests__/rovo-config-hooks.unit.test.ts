@@ -13,10 +13,10 @@ import {
 
 const ROVO_LOG_FILE_SETTING = `logFile: "~/${HARNESSES.rovo.homeDir}/event_hooks.log"`;
 
-/** A test sentinel: ownership is marked by a `--ca` token in any command. Encoding is the caller's choice. */
+/** A test sentinel: Ownership is marked by a `--ca` token in any command. Encoding is the caller's choice. */
 const isOwned: HookSentinelMatcher = (entry) => entry.commands.some((command) => command.includes('--ca'));
 
-/** The shape the vendor documents and real configs use: a list of `{name, commands: [{command}]}` items. */
+/** The shape that the vendor documents and real configs use: a list of `{name, commands: [{command}]}` items. */
 const VENDOR_SHAPED_CONFIG = [
   'eventHooks:',
   `  ${ROVO_LOG_FILE_SETTING}`,
@@ -30,7 +30,7 @@ const VENDOR_SHAPED_CONFIG = [
   '',
 ].join('\n');
 
-/** Builds an owned entry for the named hook event, carrying the sentinel token. */
+/** Builds an owned entry for the named hook event, containing the sentinel token. */
 function buildOwnedEntry(name: string): HookEntry {
   return { name, commands: [`run ${name} --ca`] };
 }
@@ -216,7 +216,7 @@ describe(checkHookEntries, () => {
     expect(results[1]?.status).toBe('drifted');
   });
 
-  it('reports absent when the document holds no owned entries', () => {
+  it('reports absent when the document contains no owned entries', () => {
     const document = parseConfig(VENDOR_SHAPED_CONFIG);
 
     const result = checkHookEntries(document, [buildOwnedEntry('on_session_start')], isOwned);
@@ -231,7 +231,7 @@ describe(checkHookEntries, () => {
     expect(result[0]?.status).toBe('drifted');
   });
 
-  it('reports drifted when an owned entry carries a hand-added extra key', () => {
+  it('reports drifted when an owned entry has a hand-added extra key', () => {
     const source = [
       'eventHooks:',
       '  events:',

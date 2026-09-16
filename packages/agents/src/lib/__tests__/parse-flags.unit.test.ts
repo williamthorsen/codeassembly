@@ -64,7 +64,7 @@ describe(scanFlags, () => {
     });
   });
 
-  it('records a repeated flag once per occurrence so a command can detect duplicates', () => {
+  it('records a repeated flag once per occurrence so that a command can detect duplicates', () => {
     expect(scanFlags(['--tag', 'a', '--tag', 'b'], SPECS).flags).toEqual([
       { name: 'tag', value: 'a' },
       { name: 'tag', value: 'b' },

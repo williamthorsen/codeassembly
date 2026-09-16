@@ -38,7 +38,7 @@ describe('manifest', () => {
       expect(silent.warn).toHaveBeenCalledWith(expect.stringContaining('existing manifest is invalid or incompatible'));
     });
 
-    it('should reset a pre-rename manifest carrying the legacy `platforms` key', async () => {
+    it('should reset a pre-rename manifest containing the legacy `platforms` key', async () => {
       const manifestPath = path.join(tempDir, 'legacy-manifest.json');
       const legacyManifest = {
         schemaVersion: 1,

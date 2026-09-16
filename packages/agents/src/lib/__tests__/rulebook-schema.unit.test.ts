@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { parseRulebookFile } from '../rulebook-schema.ts';
 
-/** The rejection an unrecognized delivery mode must carry: naming the permitted set, not a bare "Invalid input". */
+/** The rejection required for an unrecognized delivery mode: naming the permitted set, not a bare "Invalid input". */
 const DELIVERY_MESSAGE = "delivery must be 'ambient', 'hook', or 'skill', or a non-empty list of them";
 
-/** The rejection a non-string version must carry: naming quoting as the fix, not a bare "Invalid input". */
+/** The rejection required for a non-string version: naming quoting as the fix, not a bare "Invalid input". */
 const VERSION_TYPE_MESSAGE = "version must be quoted (e.g. version: '1.10'); unquoted, 1.10 is read as the number 1.1";
 
-/** The rejection a version that cannot occupy its deployed line must carry, distinct from the quoting message. */
+/** The rejection required for a version that cannot occupy its deployed line, distinct from the quoting message. */
 const VERSION_SHAPE_MESSAGE = "version must be a non-blank single line containing no '-->'";
 
 /** Wraps frontmatter and a body into a rulebook source file. */
@@ -53,25 +53,25 @@ describe(parseRulebookFile, () => {
     expect(rulebook.delivery).toEqual(['hook']);
   });
 
-  it('accepts hook alongside the modes the resolver acts on', () => {
+  it('accepts hook alongside the modes on which the resolver acts', () => {
     const { rulebook } = parseRulebookFile(rulebookFile('slug: x\ndelivery: [ambient, hook, skill]'));
 
     expect(rulebook.delivery).toEqual(['ambient', 'hook', 'skill']);
   });
 
-  it('throws when a delivery list is empty, which would name no route', () => {
+  it('throws when a delivery list is empty, which would name no delivery mode', () => {
     expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: []'))).toThrow(DELIVERY_MESSAGE);
   });
 
-  it('throws when delivery names a mode the resolver does not act on', () => {
+  it('throws when delivery names a mode on which the resolver does not act', () => {
     expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: skil'))).toThrow(DELIVERY_MESSAGE);
   });
 
-  it('throws when a delivery list carries a mode the resolver does not act on', () => {
+  it('throws when a delivery list contains a mode on which the resolver does not act', () => {
     expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: [ambient, skil]'))).toThrow(DELIVERY_MESSAGE);
   });
 
-  it('reads a quoted version verbatim, keeping the digits an unquoted one would lose', () => {
+  it('reads a quoted version verbatim, keeping the digits that an unquoted one would lose', () => {
     const { rulebook } = parseRulebookFile(rulebookFile("slug: x\nversion: '1.10'"));
 
     expect(rulebook.version).toBe('1.10');
@@ -89,8 +89,8 @@ describe(parseRulebookFile, () => {
   it.each([
     ['blank', "version: '   '"],
     ['multi-line', String.raw`version: "1\n2"`],
-    ['closing the comment it is rendered into', "version: 'a --> b'"],
-  ])('throws on a %s version, naming the shape the deployed line requires', (_label, declaration) => {
+    ['closing the comment into which it is rendered', "version: 'a --> b'"],
+  ])('throws on a %s version, naming the shape required by the deployed line', (_label, declaration) => {
     expect(() => parseRulebookFile(rulebookFile(`slug: x\n${declaration}`))).toThrow(VERSION_SHAPE_MESSAGE);
   });
 

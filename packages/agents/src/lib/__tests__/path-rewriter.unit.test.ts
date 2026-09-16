@@ -33,7 +33,7 @@ describe(isRewritableLinkTarget, () => {
 
   it.each([
     'https://example.com/docs',
-    // eslint-disable-next-line unicorn/prefer-https -- Test data: the passthrough set covers plain HTTP too, which is what the regex's optional `s` exists for.
+    // eslint-disable-next-line unicorn/prefer-https -- Test data: The passthrough set covers plain HTTP too, which is what the regex's optional `s` exists for.
     'http://example.com/docs',
     '/absolute/path.md',
     '~/.claude/skills/_data/concision.md',
@@ -163,7 +163,7 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, ROVO_VARIABLES)).toBe(`~/${ROVO_HOME}/scripts/describe-change.mjs`);
   });
 
-  it('inserts a substitution value carrying a replacement pattern verbatim', () => {
+  it('inserts a substitution value containing a replacement pattern verbatim', () => {
     const content = '{harness_home_dir}/x --harness {harness_id}';
 
     const variables = { guidanceFileName: 'CLAUDE.md', harnessId: 'claude', homeDir: ".cl$&$$$'aude" } as const;
@@ -192,7 +192,7 @@ describe(rewriteTemplateVariables, () => {
 describe(rewritePathsInFile, () => {
   const absentPath = path.join(tmpdir(), 'path-rewriter-absent.md');
 
-  it('names the file it could not rewrite', async () => {
+  it('names the file that it could not rewrite', async () => {
     await expect(rewritePathsInFile(absentPath, 'absent.md', '.claude/skills', CLAUDE_VARIABLES)).rejects.toThrow(
       /Failed to rewrite paths in/,
     );

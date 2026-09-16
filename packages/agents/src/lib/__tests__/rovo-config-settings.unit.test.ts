@@ -11,10 +11,10 @@ import { checkRovoHookEntries, ensureRovoHookEntries, removeRovoHookEntries } fr
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
-/** A test sentinel: ownership is marked by a `--ca` token in any command. */
+/** A test sentinel: Ownership is marked by a `--ca` token in any command. */
 const isOwned: HookSentinelMatcher = (entry) => entry.commands.some((command) => command.includes('--ca'));
 
-/** Builds an owned entry for the named hook event, carrying the sentinel token. */
+/** Builds an owned entry for the named hook event, containing the sentinel token. */
 function buildOwnedEntry(name: string): HookEntry {
   return { name, commands: [`run ${name} --ca`] };
 }
@@ -109,7 +109,7 @@ describe('rovo-config-settings', () => {
     expect(existsSync(configPath)).toBe(false);
   });
 
-  it('surfaces a parse failure naming the file, and never writes', async () => {
+  it('reports a parse failure naming the file, and never writes', async () => {
     await mkdir(path.dirname(configPath), { recursive: true });
     const broken = 'eventHooks: [unterminated\n';
     await writeFile(configPath, broken, 'utf8');

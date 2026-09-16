@@ -25,11 +25,11 @@ describe(extractSection, () => {
     expect(extractSection({ text: '## WHAT\n\nThe lede.\n', heading: 'What' })).toBe('The lede.');
   });
 
-  it('yields null for a heading the document does not carry', () => {
+  it('yields null for a heading that the document does not contain', () => {
     expect(extractSection({ text: '## Why\n\nThe motivation.\n', heading: 'What' })).toBeNull();
   });
 
-  it('yields null for a heading whose section holds no text', () => {
+  it('yields null for a heading whose section contains no text', () => {
     expect(extractSection({ text: '## What\n\n## Why\n\nThe motivation.\n', heading: 'What' })).toBeNull();
   });
 });
