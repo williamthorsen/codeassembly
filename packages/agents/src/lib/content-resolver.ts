@@ -15,7 +15,7 @@ export function resolveContentDir(): string {
   const thisDir = dirname(thisFile);
 
   // Works for both dev (src/lib/) and built (dist/esm/lib/):
-  // two levels up lands at the package root (dev) or dist/ (built),
+  // Two levels up reaches the package root (dev) or dist/ (built),
   // both of which contain a content/ subdirectory.
   const primaryPath = path.resolve(thisDir, '../../content');
   if (existsSync(primaryPath)) {

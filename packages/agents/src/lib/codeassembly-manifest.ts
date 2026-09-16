@@ -13,16 +13,16 @@ import { resolveScopeChain } from './scope-chain.ts';
 import { resolveSourcePath } from './source-path.ts';
 
 /**
- * The effective slugs a project declares per artifact type, after combining the scope chain. `rulebooks`, `skills`,
- * and `subagents` are deployable; `collections` are dependency-only aggregates the caller expands into the others.
- * `sources` are the declared content sources, each resolved to an absolute directory, in precedence order (highest
- * first). `packages` are the declared package names in that same precedence order, left unresolved: Locating one probes
- * `node_modules`, which is filesystem work this parser deliberately leaves to its caller. `declinedPackages` are the
- * names a tier dropped and no higher tier re-adopted, which distinguishes "declined" from "never mentioned".
- * `guidanceHooks` maps each bound hook name to the rulebooks bound to it, in declaration order; a hook every binding
- * dropped is absent rather than empty, so its presence means something is bound. `declaredIn` maps each slug, per
- * type, to the chain files that declare it, in chain order, so a caller reporting an unresolvable slug can name the
- * file to edit.
+ * The effective slugs that a project declares per artifact type, after combining the scope chain. `rulebooks`,
+ * `skills`, and `subagents` are deployable; `collections` are dependency-only aggregates that the caller expands into
+ * the others. `sources` are the declared content sources, each resolved to an absolute directory, in precedence order
+ * (highest first). `packages` are the declared package names in that same precedence order, left unresolved: Locating
+ * one probes `node_modules`, which is filesystem work that this parser deliberately leaves to its caller.
+ * `declinedPackages` are the names that a tier dropped and no higher tier re-adopted, which distinguishes "declined"
+ * from "never mentioned". `guidanceHooks` maps each bound hook name to the rulebooks bound to it, in declaration
+ * order; a hook every binding dropped is absent rather than empty, so its presence means something is bound.
+ * `declaredIn` maps each slug, per type, to the chain files that declare it, in chain order, which lets a caller
+ * reporting an unresolvable slug name the file to edit.
  */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
@@ -37,18 +37,18 @@ export interface ResolvedDeclaration {
 }
 
 /**
- * Resolves the effective set of slugs a project declares per artifact type, by combining every `codeassembly.yaml`
- * in the scope chain from lowest to highest precedence in a single pass. Each tier contributes additively via `use`;
- * `drop` subtracts an inherited slug; `root: true` discards every type's lower-precedence contributions before that
- * tier is applied. Each type accumulates independently.
+ * Resolves the effective set of slugs that a project declares per artifact type, by combining every
+ * `codeassembly.yaml` in the scope chain from lowest to highest precedence in a single pass. Each tier contributes
+ * additively via `use`; `drop` subtracts an inherited slug; `root: true` discards every type's lower-precedence
+ * contributions before that tier is applied. Each type accumulates independently.
  *
  * Returns the direct, unexpanded sets: A declared collection appears in `collections`, not yet expanded into its
- * members — the caller passes the result to the closure resolver for that. Returns `undefined` when no
- * `codeassembly.yaml` exists anywhere in the chain — a total no-op for `sync`, distinct from a present-but-empty
+ * members; the caller passes the result to the closure resolver for that. Returns `undefined` when no
+ * `codeassembly.yaml` exists anywhere in the chain: a total no-op for `sync`, distinct from a present-but-empty
  * declaration, which returns empty lists.
  *
  * @param options.cwd The project whose `.agents/` tiers are resolved.
- * @param options.domain Which tier pair the chain belongs to, deciding which keys the files may carry.
+ * @param options.domain Which tier pair the chain belongs to, deciding which keys the files may declare.
  */
 export async function resolveDeclaration(options: {
   cwd: string;
@@ -59,15 +59,15 @@ export async function resolveDeclaration(options: {
     return undefined;
   }
 
-  // A Map preserves first-seen order while deduplicating, and carries each slug's declaring files as its value;
-  // `delete` powers `drop`, `clear` powers `root`.
+  // A Map preserves first-seen order while deduplicating, and stores each slug's declaring files as its value;
+  // `delete` implements `drop`, `clear` implements `root`.
   const rulebooks = new Map<string, Array<string>>();
   const skills = new Map<string, Array<string>>();
   const subagents = new Map<string, Array<string>>();
   const collections = new Map<string, Array<string>>();
   const packages = new Set<string>();
   const declinedPackages = new Set<string>();
-  // Sources key on `name` so a repeated name remaps its path; the value is the resolved absolute dir.
+  // Sources key on `name` so that a repeated name remaps its path; the value is the resolved absolute dir.
   const sources = new Map<string, string>();
   // Each hook name accumulates its own binding set, so a tier binding to one hook leaves the others untouched.
   const guidanceHooks = new Map<string, Map<string, Array<string>>>();
@@ -98,8 +98,8 @@ export async function resolveDeclaration(options: {
     skills: skills.keys().toArray(),
     subagents: subagents.keys().toArray(),
     collections: collections.keys().toArray(),
-    // Both accumulate lowest-to-highest tier; reverse so the highest tier and the last declaration within it win, the
-    // precedence rule every other block follows.
+    // Both accumulate lowest-to-highest tier; reverse so that the highest tier and the last declaration within it
+    // win, the precedence rule followed by every other block.
     packages: [...packages].toReversed(),
     declinedPackages: [...declinedPackages],
     sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
@@ -111,8 +111,8 @@ export async function resolveDeclaration(options: {
 // region | Helpers
 
 /**
- * Applies one `guidance-hooks` block to the accumulator, one hook at a time. Each hook's block carries the same
- * `use`/`drop` shape an artifact type does and is accumulated by the same rule, so a binding behaves the way a
+ * Applies one `guidance-hooks` block to the accumulator, one hook at a time. Each hook's block has the same
+ * `use`/`drop` shape that an artifact type does and is accumulated by the same rule, so a binding behaves the way a
  * declaration elsewhere in the file does.
  */
 function accumulateGuidanceHooks(
@@ -130,8 +130,8 @@ function accumulateGuidanceHooks(
 
 /**
  * Applies one `packages` block's `use` and `drop` entries to the adopted and declined accumulators, keeping them
- * disjoint: adopting a name clears any earlier decline, and declining one removes it from the adopted set. Tracking
- * declines is what separates a package a project turned down from one it has never mentioned.
+ * disjoint: Adopting a name clears any earlier decline, and declining one removes it from the adopted set. Tracking
+ * declines separates a package that a project turned down from one that it has never mentioned.
  */
 function accumulatePackages(adopted: Set<string>, declined: Set<string>, block: TypeDeclaration | undefined): void {
   const adoptions = block?.use ?? [];
@@ -190,9 +190,9 @@ function accumulateType(
 }
 
 /**
- * Freezes the guidance-hook accumulator into its resolved form, omitting a hook a later tier emptied. An empty entry
- * would be indistinguishable from a live binding at every call site downstream, where presence is what says something
- * is bound.
+ * Freezes the guidance-hook accumulator into its resolved form, omitting a hook emptied by a later tier. An empty
+ * entry would be indistinguishable from a live binding at every call site downstream, where presence means that
+ * something is bound.
  */
 function buildGuidanceHookMap(
   accumulated: Map<string, Map<string, Array<string>>>,

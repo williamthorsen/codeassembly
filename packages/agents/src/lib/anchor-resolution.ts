@@ -12,7 +12,7 @@ const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
 /** A top-level YAML key, the shape that tells a frontmatter block from a pair of thematic breaks. */
 const FRONTMATTER_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_-]*\s*:(\s|$)/;
 
-/** The ATX heading grammar this module derives anchors from. No content file uses the setext form. */
+/** The ATX heading grammar from which this module derives anchors. No content file uses the setext form. */
 const HEADING_REGEX = /^(#{1,6})\s+(.+?)\s*$/gm;
 
 /** A heading's anchor slug, its ATX level, and the index in the body where its line begins. */
@@ -36,14 +36,14 @@ interface FenceScan {
  * A fence that nothing closes throws too. Everything below it reads as code. No anchor there can be checked, and a
  * silent pass over an unchecked remainder is indistinguishable from a clean one.
  *
- * `body` is checked before any rewriting, and where the pipeline expands includes, after that expansion. Rewriting
+ * `body` is checked before any rewriting, and when the pipeline expands includes, after that expansion. Rewriting
  * leaves anchor-only targets untouched, so the verdict is harness-invariant: one failure per artifact, phrased against
- * the file the author edits, rather than one per harness. That ordering also settles the case rewriting would confuse,
- * since a heading carrying a `{tool:NAME}` token slugs differently on each harness and so can be addressed by no
- * single fragment.
+ * the file edited by the author, rather than one per harness. That ordering also settles the case that rewriting would
+ * confuse, since a heading containing a `{tool:NAME}` token slugs differently on each harness and can be addressed by
+ * no single fragment.
  *
- * Only same-body anchors are checked. A fragment on a path target resolves against the deployed tree, which unions
- * library content with each declared source's content, so it cannot be settled from the one content root at hand.
+ * Only same-body anchors are checked. Because a fragment on a path target resolves against the deployed tree, which
+ * unions library content with each declared source's content, it cannot be settled from the one content root at hand.
  */
 export function assertAnchorsResolve(body: string, sourceLabel: string): void {
   const scan = scanFences(body);
@@ -87,8 +87,8 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
  * Lists every heading in `normalized` in document order, each with the index where its line begins. Expects the
  * output of `normalizeForAnchorScan`, for the reason `collectHeadingSlugs` gives.
  *
- * The index and level are what let a caller attribute a passage to the section holding it, and to that section's
- * ancestors: a slug count answers whether an anchor resolves, never what lies under it.
+ * The index and level let a caller attribute a passage to the section containing it, and to that section's
+ * ancestors: A slug count reports whether an anchor resolves, never what lies under it.
  */
 export function collectHeadingPositions(normalized: string): ReadonlyArray<HeadingPosition> {
   return Array.from(normalized.matchAll(HEADING_REGEX), (match) => ({
@@ -100,7 +100,7 @@ export function collectHeadingPositions(normalized: string): ReadonlyArray<Headi
 
 /**
  * Counts each heading slug in `normalized`, so a fragment matching two headings is rejected rather than resolved
- * against whichever came first. Expects the output of `normalizeForAnchorScan`: an unnormalized body would offer a
+ * against whichever came first. Expects the output of `normalizeForAnchorScan`: An unnormalized body would offer a
  * fenced sample heading as a live target.
  */
 export function collectHeadingSlugs(normalized: string): ReadonlyMap<string, number> {
@@ -147,7 +147,7 @@ export function normalizeForAnchorScan(content: string): string {
  * link scanning only: a span inside a heading contributes to that heading's slug and must survive `collectHeadingSlugs`.
  *
  * A span is matched within one line. A code span may span lines, but a runaway match across a stray backtick would
- * blank real anchors, and losing a locator to a silent pass is the failure this module exists to prevent.
+ * blank real anchors, and losing a locator to a silent pass is the failure that this module exists to prevent.
  */
 function blankCodeSpans(content: string): string {
   return content.replace(CODE_SPAN_REGEX, (span) => ' '.repeat(span.length));
@@ -161,7 +161,7 @@ function blankCodeSpans(content: string): string {
  * cannot skip the check. A YAML comment is not the discriminator, because `# Text` is also an ATX heading.
  *
  * A prose line of the form `Word: text` at column zero inside a thematic-break pair reads as a key. Real frontmatter
- * always carries one, so the recognition is loose in that one direction rather than tight enough to miss it.
+ * always contains one; the recognition is loose in that one direction rather than tight enough to miss it.
  */
 function findBodyStart(lines: ReadonlyArray<string>): number {
   if (lines[0] !== '---') {
@@ -175,9 +175,9 @@ function findBodyStart(lines: ReadonlyArray<string>): number {
 }
 
 /**
- * Reads the anchor a link target addresses, or `undefined` when the target names something other than a heading in
+ * Reads the anchor addressed by a link target, or `undefined` when the target names something other than a heading in
  * this body. A Markdown link title (`#section "Some title"`) is dropped, so a titled link is resolved on its fragment
- * rather than rejected for a fragment it never had.
+ * rather than rejected for a fragment that it never had.
  */
 function readAnchorTarget(target: string | undefined): string | undefined {
   return target === undefined ? undefined : (ANCHOR_TARGET_REGEX.exec(target.trim())?.[0] ?? undefined);
@@ -185,8 +185,8 @@ function readAnchorTarget(target: string | undefined): string | undefined {
 
 /**
  * Walks `content` a line at a time, blanking its frontmatter and every fenced code block, and reports the opening run
- * of a fence nothing closed. A block closes only on a marker of the same character and at least the opening length,
- * which is what lets a fenced example carry a shorter fence of its own.
+ * of a fence that nothing closed. A block closes only on a marker of the same character and at least the opening
+ * length, which lets a fenced example contain a shorter fence of its own.
  */
 function scanFences(content: string): FenceScan {
   const lines = content.split('\n');
@@ -217,7 +217,7 @@ function scanFences(content: string): FenceScan {
 /**
  * Derives a heading's anchor the way GitHub does: lowercase, drop everything but letters, numbers, spaces, and
  * hyphens, then map each remaining space to a hyphen. Runs of spaces are preserved rather than collapsed, because
- * stripping punctuation between two spaces is what yields the double hyphen in an anchor such as
+ * stripping punctuation between two spaces yields the double hyphen in an anchor such as
  * `#finding-scheme-fwtrs--legacy-suffix`.
  */
 function slugifyHeading(heading: string): string {

@@ -2,7 +2,7 @@ import type { HarnessId } from './types.ts';
 
 /**
  * One rejected artifact: the path to which the defect is attributed, which stage rejected it, and why. The path is
- * relative to the content root for an artifact, and absolute for a deploy target, which sits outside any root.
+ * relative to the content root for an artifact, and absolute for a deploy target, which is outside any root.
  */
 export interface ContentDefect {
   readonly file: string;
@@ -47,7 +47,7 @@ export function foldHarnessDefects(
   );
 }
 
-/** Groups defects by file and renders each as an indented, kind-tagged block, ordered so two runs read alike. */
+/** Groups defects by file and renders each as an indented, kind-tagged block, ordered so that two runs read alike. */
 export function formatContentDefects(defects: ReadonlyArray<ContentDefect>): string {
   const byFile = new Map<string, Array<ContentDefect>>();
   for (const defect of defects) {

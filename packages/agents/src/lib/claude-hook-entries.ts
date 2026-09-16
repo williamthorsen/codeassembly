@@ -1,8 +1,8 @@
 /**
  * Idempotent management of codeassembly-owned hook entries within a parsed Claude Code `settings.json` value. An entry
- * is one element of a `hooks.{Event}` array — a matcher group — and is owned when any of its inner `hooks[].command`
- * strings carries the sentinel token. Owned entries are replaced or deleted as a unit; foreign entries, foreign events,
- * and unrelated settings keys are preserved. Every function is a pure transform with no filesystem access.
+ * is one element of a `hooks.{Event}` array (a matcher group) and is owned when any of its inner `hooks[].command`
+ * strings contains the sentinel token. Owned entries are replaced or deleted as a unit; foreign entries, foreign
+ * events, and unrelated settings keys are preserved. Every function is a pure transform with no filesystem access.
  */
 
 import { isDeepStrictEqual } from 'node:util';
@@ -10,7 +10,10 @@ import { isDeepStrictEqual } from 'node:util';
 import type { EnsureResult, EntryCheck, RemoveResult } from './managed-entry-contract.ts';
 import { isRecord } from './type-guards.ts';
 
-/** One managed hook entry: the `hooks.{Event}` array it belongs to, and the matcher group written into that array. */
+/**
+ * One managed hook entry: the `hooks.{Event}` array to which it belongs, and the matcher group written into that
+ * array.
+ */
 export interface ClaudeHookEntry {
   readonly event: string;
   readonly group: Record<string, unknown>;
@@ -27,9 +30,9 @@ export interface HookEntriesTransform<TResult> {
  * holds owned entries but none match), or `absent` (its event holds no owned entry). Deep equality ignores key order,
  * so a re-serialized file never reads as drift.
  *
- * The report is scoped to the entries supplied. An owned entry the caller does not supply has nothing to be reported
- * against, so an all-present result does not imply `ensureHookEntries` would leave the document unchanged: it would
- * still drop that entry.
+ * The report is scoped to the entries supplied. Because an owned entry that the caller does not supply has nothing to
+ * be reported against, an all-present result does not imply `ensureHookEntries` would leave the document unchanged:
+ * It would still drop that entry.
  */
 export function checkHookEntries(
   settings: unknown,
@@ -49,11 +52,11 @@ export function checkHookEntries(
 
 /**
  * Installs `entries` into their `hooks.{Event}` arrays, creating whatever structure is missing. Per event, the owned
- * subset of the array is replaced wholesale by the supplied entries for that event — spliced in at the first owned
- * position, appended when the event holds none. That is what makes a re-run a no-op, collapses accidental duplicates
- * into the supplied set, and leaves foreign entries in their original relative order.
+ * subset of the array is replaced wholesale by the supplied entries for that event: spliced in at the first owned
+ * position, appended when the event holds none. That makes a re-run a no-op, collapses accidental duplicates into the
+ * supplied set, and leaves foreign entries in their original relative order.
  *
- * Throws when a supplied entry does not itself carry the sentinel: an entry written without it could never be found
+ * Throws when a supplied entry does not itself contain the sentinel: An entry written without it could never be found
  * again by `checkHookEntries` or `removeHookEntries`.
  */
 export function ensureHookEntries(
@@ -64,8 +67,8 @@ export function ensureHookEntries(
   for (const entry of entries) {
     if (!isOwnedGroup(entry.group, sentinel)) {
       throw new Error(
-        `Refusing to write a hook entry for '${entry.event}' whose commands do not carry the sentinel '${sentinel}'; ` +
-          'an entry without it could not be found again.',
+        `Refusing to write a hook entry for '${entry.event}' whose commands do not contain the sentinel ` +
+          `'${sentinel}'; an entry without it could not be found again.`,
       );
     }
   }
@@ -95,9 +98,10 @@ export function ensureHookEntries(
 }
 
 /**
- * Deletes every owned entry, whichever event holds it, and prunes the structure the deletion emptied: an event array
- * left with no entries is dropped, and `hooks` is dropped once it holds no events. Takes only the sentinel, so it also
- * reaches entries written by earlier versions. An event array that was already empty is foreign content and survives.
+ * Deletes every owned entry, whichever event holds it, and prunes the structure emptied by the deletion: An event
+ * array left with no entries is dropped, and `hooks` is dropped once it holds no events. Takes only the sentinel, so
+ * it also deletes entries written by earlier versions. An event array that was already empty is foreign content and
+ * survives.
  */
 export function removeHookEntries(settings: unknown, sentinel: string): HookEntriesTransform<RemoveResult> {
   const root = readSettingsRoot(settings);
@@ -143,7 +147,7 @@ function groupEntriesByEvent(entries: ReadonlyArray<ClaudeHookEntry>): Map<strin
   return byEvent;
 }
 
-/** True when a matcher group carries the sentinel in any of its commands — the ownership check. */
+/** True when a matcher group contains the sentinel in any of its commands: the ownership check. */
 function isOwnedGroup(group: unknown, sentinel: string): boolean {
   if (!isRecord(group) || !Array.isArray(group.hooks)) {
     return false;
@@ -186,7 +190,7 @@ function readSettingsRoot(settings: unknown): Record<string, unknown> {
 }
 
 /**
- * Rebuilds an event array with `groups` standing in for its owned entries: they take the first owned position, or the
+ * Rebuilds an event array with `groups` standing in for its owned entries: They take the first owned position, or the
  * end of the array when the event holds no owned entry. Everything preceding the first owned entry is foreign by
  * construction, so only the tail needs filtering.
  */
