@@ -14,14 +14,14 @@ const TAXONOMY: Taxonomy = {
 };
 
 describe(validate, () => {
-  it('reports a refactor carrying the marker its policy forbids', () => {
+  it('reports a refactor carrying the marker forbidden by its policy', () => {
     expect(validate({ breaking: true, type: 'refactor' }, TAXONOMY)).toStrictEqual({
       policy: 'forbidden',
       type: 'refactor',
     });
   });
 
-  it('reports a drop omitting the marker its policy requires', () => {
+  it('reports a drop omitting the marker required by its policy', () => {
     expect(validate({ type: 'drop' }, TAXONOMY)).toStrictEqual({ policy: 'required', type: 'drop' });
   });
 
@@ -45,7 +45,7 @@ describe(validate, () => {
     expect(validate({ breaking: true, type: 'tests' }, TAXONOMY)).toBeUndefined();
   });
 
-  it('reports nothing for a type the taxonomy does not declare', () => {
+  it('reports nothing for a type that the taxonomy does not declare', () => {
     expect(validate({ breaking: true, type: 'invented' }, TAXONOMY)).toBeUndefined();
   });
 });

@@ -21,7 +21,7 @@ const CLI_PATH = fileURLToPath(new URL('../cli.ts', import.meta.url));
 /** The `consolidate-branch` invocation that reads the range from the fixture repository's `base` tag. */
 const CONSOLIDATE_BASE = ['consolidate-branch', '--base', 'base'];
 
-/** The taxonomy the installed helper reads, so the suite verifies against the types the repository actually declares. */
+/** The taxonomy read by the installed helper, so the suite verifies against the types that the repository actually declares. */
 const DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
 
 /** A commit template that the engine cannot round-trip, since nothing separates the scope from the type. */
@@ -314,7 +314,7 @@ describe('parse-title', () => {
     });
   });
 
-  it('reports a subject the template does not match as unmatched', async () => {
+  it('reports a subject as unmatched when the template does not match it', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -369,7 +369,7 @@ describe('consolidate-branch', () => {
     );
   });
 
-  it('lets one feat speak for a branch carrying three fixes', async () => {
+  it('lets one feat represent a branch carrying three fixes', async () => {
     const { cwd, home } = await makeCommittedRepo([
       'agents|fix: Correct the guard',
       'agents|feat: Add the parser',
@@ -401,7 +401,7 @@ describe('consolidate-branch', () => {
     });
   });
 
-  it('reports a refactor carrying the marker its policy forbids', async () => {
+  it('reports a refactor carrying the marker forbidden by its policy', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|refactor!: Restructure the guard']);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -512,7 +512,7 @@ describe('resolve-ticket-type', () => {
     expect(output).toStrictEqual({ ticket_type: 'feat' });
   });
 
-  it('yields a null ticket type where the repository configures no label map', async () => {
+  it('yields a null ticket type when the repository configures no label map', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const argv = ['resolve-ticket-type', '--ticket-label', 'feature'];
@@ -521,7 +521,7 @@ describe('resolve-ticket-type', () => {
     expect(output).toStrictEqual({ ticket_type: null });
   });
 
-  it('succeeds where a configured title template is defective', async () => {
+  it('succeeds when a configured title template is defective', async () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
     await writeLabelMap(cwd, { types: { feat: 'feature' } });
 
@@ -620,7 +620,7 @@ describe('resolve-effective-record', () => {
     expect(warnings).toStrictEqual([]);
   });
 
-  it('keeps a marker spelled on the type where only the type is overridden, and clears the scope for *', async () => {
+  it('keeps a marker spelled on the type when only the type is overridden, and clears the scope for *', async () => {
     const argv = ['resolve-effective-record', '--scope', 'agents', '--type', 'feat!', '--override-scope', '*'];
 
     const { output } = await runDescribe({
@@ -656,7 +656,7 @@ describe('resolve-effective-record', () => {
     expect(output).toMatchObject({ defects });
   });
 
-  it('succeeds where a configured title template is defective', async () => {
+  it('succeeds when a configured title template is defective', async () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -764,7 +764,7 @@ describe('render-block', () => {
     });
   });
 
-  it('succeeds where a configured title template is defective', async () => {
+  it('succeeds when a configured title template is defective', async () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -931,7 +931,7 @@ describe('resolve-merge', () => {
     });
   });
 
-  it('where the head commit is absent from the repository, resolves without the commits and says so', async () => {
+  it('when the head commit is absent from the repository, resolves without the commits and says so', async () => {
     const { cwd, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const absent = '0123456789abcdef0123456789abcdef01234567';
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
@@ -946,7 +946,7 @@ describe('resolve-merge', () => {
     expect(output).toMatchObject({ notices: [{ kind: 'commits-unavailable' }], sources: { commits: null } });
   });
 
-  it('where commit.title_format is empty, resolves without the commits rather than refusing', async () => {
+  it('when commit.title_format is empty, resolves without the commits rather than refusing', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     await writeAgentsPreferences(
       cwd,
@@ -1008,7 +1008,7 @@ interface CliResult {
   stdout: string;
 }
 
-/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing a fixture cannot supply. */
+/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing that a fixture cannot supply. */
 async function commitAll(cwd: string, message: string): Promise<void> {
   await execFileAsync('git', ['-C', cwd, 'add', '--all']);
   await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);
@@ -1063,7 +1063,7 @@ async function makeHome(content: string): Promise<string> {
 
 /**
  * Creates a throwaway repository whose pull-request branch holds one commit per message on top of `base`, and returns
- * to the default branch, so the branch's head commit is not the checkout's `HEAD`.
+ * to the default branch, so that the branch's head commit is not the checkout's `HEAD`.
  */
 async function makePullRequestRepo(
   messages: readonly string[],

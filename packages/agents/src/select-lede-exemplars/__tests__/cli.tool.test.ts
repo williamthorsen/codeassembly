@@ -10,7 +10,7 @@ import {
 import type { SelectResult, SelectSuccess } from '../types.ts';
 
 const STORE_NAME = 'codeassembly';
-// A registry name the helper does not serve, so an assertion on it cannot be satisfied by the bound default.
+// A registry name that the helper does not serve, so an assertion on it cannot be satisfied by the bound default.
 const OTHER_STORE_NAME = 'some-other-corpus';
 
 const CORPUS: readonly DecisionSpec[] = [
@@ -44,7 +44,7 @@ describe(parseArgs, () => {
     });
   });
 
-  it('reports --with-pair as the boolean flag it is', () => {
+  it('reports --with-pair as the boolean flag that it is', () => {
     expect(parseArgs(['--type', 'feat', '--with-pair']).withPair).toBe(true);
   });
 
@@ -60,7 +60,7 @@ describe(parseArgs, () => {
     expect(parseArgs(['--type', 'feat']).count).toBe(5);
   });
 
-  it('reads the corpus this helper serves when --store names none', () => {
+  it('reads the corpus that this helper serves when --store names none', () => {
     expect(parseArgs(['--type', 'feat']).store).toBe(STORE_NAME);
   });
 
@@ -134,7 +134,7 @@ describe(runSelect, () => {
     expect(success.exemplars.map((exemplar) => exemplar.lede)).toContain(agentLedeFor('A'));
   });
 
-  it('reads the corpus a --store name points at', async () => {
+  it('reads the corpus at which a --store name points', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS, storeName: OTHER_STORE_NAME });
 
     const result = await run({ argv: ['--type', 'feat', '--store', OTHER_STORE_NAME], fixture });
@@ -152,7 +152,7 @@ describe(runSelect, () => {
     expect(success.diagnostic).toContain('no lede decisions were found');
   });
 
-  it('reports the floor a request applied, so an empty draw names its cause', async () => {
+  it('reports the floor applied by a request, so an empty draw names its cause', async () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'adequate' }];
     const fixture = await createCorpusFixture({ decisions });
 
@@ -191,7 +191,7 @@ describe(runSelect, () => {
     expect(success.tier).toBe('public');
   });
 
-  it('reports a work type the taxonomy does not declare', async () => {
+  it('reports a work type that the taxonomy does not declare', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await run({ argv: ['--type', 'invented'], fixture });
@@ -199,7 +199,7 @@ describe(runSelect, () => {
     expect(expectFailure(result)).toBe('unknown-type');
   });
 
-  it('reports a tier the taxonomy does not declare, which would otherwise read as an exhausted corpus', async () => {
+  it('reports a tier not declared by the taxonomy, which would otherwise read as an exhausted corpus', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await run({ argv: ['--tier', 'pubic'], fixture });
@@ -207,7 +207,7 @@ describe(runSelect, () => {
     expect(expectFailure(result)).toBe('unknown-tier');
   });
 
-  it('omits the type it reports back on a tier request, which named none', async () => {
+  it('omits the type that it reports back on a tier request, which named none', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await run({ argv: ['--tier', 'public', '--count', '2'], fixture });

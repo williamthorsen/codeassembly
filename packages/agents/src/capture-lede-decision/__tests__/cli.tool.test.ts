@@ -11,7 +11,7 @@ import type { DecisionResult } from '../types.ts';
 
 const NOW = new Date('2026-07-30T20:41:17.000Z');
 const STORE_NAME = 'codeassembly';
-// A registry name the helper does not serve, so an assertion on it cannot be satisfied by the bound default.
+// A registry name that the helper does not serve, so an assertion on it cannot be satisfied by the bound default.
 const OTHER_STORE_NAME = 'some-other-corpus';
 
 describe(parseArgs, () => {
@@ -74,7 +74,7 @@ describe(parseArgs, () => {
     expect(parsed.quality).toBeNull();
   });
 
-  it('resolves the store this helper serves when --store names none', () => {
+  it('resolves the store that this helper serves when --store names none', () => {
     const parsed = parseArgs(['--inspect', ...requiredFlags()]);
 
     expect(parsed.store).toBe('codeassembly');
@@ -123,7 +123,7 @@ describe(runDecision, () => {
     expect(expectInspect(result).episode.differ).toBe(true);
   });
 
-  it('reports the store a decision would record into', async () => {
+  it('reports the store into which a decision would be recorded', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
 
@@ -187,7 +187,7 @@ describe(runDecision, () => {
     expect(content).not.toContain('## Merged lede');
   });
 
-  it('records a flag-sourced identity with no scope where the change summary names one', async () => {
+  it('records a flag-sourced identity with no scope even though the change summary names one', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
     const argv = ['--quality', 'good', ...withoutFlag(flagsFor(fixture), 'scope'), '--breaking'];
@@ -218,7 +218,7 @@ describe(runDecision, () => {
     expect(expectFailure(result)).toBe('no-artifact-dir');
   });
 
-  it('records into the store it serves when --store names none', async () => {
+  it('records into the store that it serves when --store names none', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
     const argv = ['--quality', 'good', ...flagsFor(fixture)];
@@ -238,7 +238,7 @@ describe(runDecision, () => {
     expect(expectCommit(result).store).toBe(OTHER_STORE_NAME);
   });
 
-  it('refuses a decision where the store it serves is registered under no name', async () => {
+  it('refuses a decision when the store that it serves is registered under no name', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore(OTHER_STORE_NAME);
     const argv = ['--quality', 'good', ...flagsFor(fixture)];
@@ -283,7 +283,7 @@ function expectInspect(result: DecisionResult): Extract<DecisionResult, { mode: 
   throw new Error(`expected an inspect report, got ${JSON.stringify(result)}`);
 }
 
-/** The flags a merge caller supplies, pointing at a fixture tree. */
+/** The flags supplied by a merge caller, pointing at a fixture tree. */
 function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'provenancePath' | 'subagentsDir'>): string[] {
   return [
     '--artifact-dir',
@@ -307,8 +307,8 @@ function flagsFor(fixture: Pick<LedeFixture, 'artifactDir' | 'dataDir' | 'proven
 
 /**
  * Stands up a temp event store plus an isolated home registering it, so registry resolution never reads the real one.
- * `name` registers the store under something other than the one the helper serves, which is how a test tells a default
- * that resolves to the helper's own constant from one that resolves to whatever the registry happens to hold.
+ * `name` registers the store under something other than the one that the helper serves, which is how a test tells a
+ * default that resolves to the helper's own constant from one that resolves to whatever the registry happens to hold.
  */
 async function makeStore(name: string = STORE_NAME): Promise<{ storePath: string; home: string }> {
   const storePath = await mkdtemp(join(tmpdir(), 'lede-decision-store-'));
@@ -325,14 +325,15 @@ async function makeStore(name: string = STORE_NAME): Promise<{ storePath: string
   return { storePath, home };
 }
 
-/** The three flags every invocation must carry, used to build otherwise-minimal argv in parser tests. */
+/** The three flags that every invocation must carry, used to build otherwise-minimal argv in parser tests. */
 function requiredFlags(): string[] {
   return ['--artifact-dir', '/tickets/1107', '--pr', '1124', '--merge-commit', '35aa58d7'];
 }
 
 /**
- * Builds runner input over a fixture, defaulting the environment so no test reads the developer's own. `home` falls back
- * to the fixture root, which carries no `.agents/kb.yaml`, so a store resolves to `not-registered` deterministically.
+ * Builds runner input over a fixture, defaulting the environment so that no test reads the developer's own. `home`
+ * falls back to the fixture root, which carries no `.agents/kb.yaml`, so a store resolves to `not-registered`
+ * deterministically.
  */
 function runInput(input: {
   argv: string[];
