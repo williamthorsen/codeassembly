@@ -4208,7 +4208,7 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/.readyup/lib/guidance-import.ts
-    phrase: Bounded to one line, so a stray backtick masks no more than the line it sits on.
+    phrase: Bounded to one line, so a stray backtick masks no more than the line on which it appears.
     ground: a lone `so` stating a direct result
   - rule: so
     rule-version: '1'
@@ -4490,7 +4490,7 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/README.md
-    phrase: '`install` reads no `guidance-hooks:` block, so every hook it meets is unbound'
+    phrase: '`install` reads no `guidance-hooks:` block, so every hook that it meets is unbound'
     ground: states a direct result; the `so` it repeated was the bare one at line 240, now repaired to `so that`
   - rule: so
     rule-version: '1'
