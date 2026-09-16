@@ -6,10 +6,10 @@ import { ALL_HARNESS_IDS, detectHarnesses } from './harness.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import type { HarnessId, InstallOptions } from './types.ts';
 
-/** What decided a run's harness targeting, so the run can report it rather than leaving the set unexplained. */
+/** What decided a run's harness targeting, so that the run can report it rather than leaving the set unexplained. */
 export type HarnessTargetOrigin = 'declaration' | 'detection' | 'flag';
 
-/** The harnesses a run targets, paired with what decided them. */
+/** The harnesses targeted by a run, paired with what decided them. */
 export interface ResolvedHarnessTargets {
   readonly harnessIds: ReadonlyArray<HarnessId>;
   readonly origin: HarnessTargetOrigin;
@@ -17,7 +17,7 @@ export interface ResolvedHarnessTargets {
 
 /**
  * Renders what a run targets and what decided it. Reported on every run, because the closing summary counts harnesses
- * without naming them: a run that deploys somewhere unexpected — or nowhere — otherwise reads as a success.
+ * without naming them: A run that deploys somewhere unexpected, or nowhere, otherwise reads as a success.
  */
 export function describeHarnessTargeting(targets: ResolvedHarnessTargets): string {
   const subject = targets.harnessIds.length === 0 ? 'no harnesses' : targets.harnessIds.join(', ');
@@ -31,7 +31,7 @@ export function describeHarnessTargeting(targets: ResolvedHarnessTargets): strin
  *
  * Detection reads the home directory rather than `cwd`, because a harness home is created by that harness's own
  * installer while a repository has no reason to hold one. A declaration is honored even when it resolves to an empty
- * set — a run that deploys nowhere on purpose is distinct from one that never declared a target.
+ * set: A run that deploys nowhere on purpose is distinct from one that never declared a target.
  *
  * @param options.cwd The domain's base: the project root for a repo sync, the home directory for a global one or for
  * `install`.
@@ -62,17 +62,16 @@ interface ChainFile {
 /**
  * Folds each file's `harnesses` block into the effective set, lowest precedence first. `use` adds and `drop` subtracts
  * across the domain boundary, so a project-local file can withdraw a home-declared harness. `root: true` clears only
- * what its own domain contributed, which is what keeps a committed project file from discarding the user-global
- * declaration.
+ * what its own domain contributed, which keeps a committed project file from discarding the user-global declaration.
  *
- * Returns `undefined` when no file in the chain carried the block, which is what separates a chain declaring nothing
- * (the caller falls back to detection) from one declaring an empty set (the caller honors it).
+ * Returns `undefined` when no file in the chain contains the block, which separates a chain declaring nothing (the
+ * caller falls back to detection) from one declaring an empty set (the caller honors it).
  */
 async function accumulateDeclaredHarnesses(
   chain: ReadonlyArray<ChainFile>,
 ): Promise<ReadonlyArray<HarnessId> | undefined> {
-  // Keyed by harness id, so re-declaring one neither duplicates it nor reorders it; the value records the domain that
-  // contributed it, which is what `root` filters on.
+  // Keyed by harness id, so that re-declaring one neither duplicates it nor reorders it; the value records the domain
+  // that contributed it, which `root` filters on.
   const effective = new Map<HarnessId, DeclarationDomain>();
   let anyDeclared = false;
 
@@ -80,7 +79,7 @@ async function accumulateDeclaredHarnesses(
     const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath, domain);
 
     if (declaration.root) {
-      // Materialized before deleting, so the walk never mutates the map it is reading.
+      // Materialized before deleting, so that the walk never mutates the map that it is reading.
       const ownContributions = effective
         .entries()
         .filter(([, contributor]) => contributor === domain)
@@ -103,12 +102,12 @@ async function accumulateDeclaredHarnesses(
     }
   }
 
-  // Ordered canonically rather than by declaration, so the reported set does not vary with authoring order — matching
-  // how detection orders its own result.
+  // Ordered canonically rather than by declaration, so that the reported set does not vary with authoring order,
+  // matching how detection orders its own result.
   return anyDeclared ? ALL_HARNESS_IDS.filter((harnessId) => effective.has(harnessId)) : undefined;
 }
 
-/** Names what settled a run's harness set, in the phrasing the targeting line embeds. */
+/** Names what settled a run's harness set, in the phrasing that the targeting line embeds. */
 function describeHarnessOrigin(targets: ResolvedHarnessTargets): string {
   switch (targets.origin) {
     case 'declaration':
