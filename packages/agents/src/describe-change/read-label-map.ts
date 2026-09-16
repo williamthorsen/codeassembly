@@ -5,7 +5,7 @@ import { isMissingFile, isRecord } from '../lib/type-guards.ts';
 
 /**
  * Reads a repository's label map into its `types` and `scopes` sections, each mapping a work type or scope to the label
- * that names it. A map that is absent or unparseable, and a section that it does not declare, read as empty: a
+ * that names it. A map that is absent or unparseable, and a section that it does not declare, read as empty: A
  * repository that configures no map has no label to resolve, which is a missing signal rather than a failure.
  */
 export async function readLabelMap(path: string): Promise<LabelMap> {
@@ -33,7 +33,7 @@ export async function readLabelMap(path: string): Promise<LabelMap> {
 
 /**
  * Resolves the record that a pull request's labels name: a type and a scope, each under the one-distinct-value rule, and
- * the marker, which is `true` where the `breaking` label that `create-pr` applies is present, `false` where a type label
+ * the marker, which is `true` when the `breaking` label that `create-pr` applies is present, `false` when a type label
  * resolved without it, and absent otherwise.
  */
 export function resolveLabeledRecord(map: LabelMap, labels: readonly string[]): ChangeRecord {
@@ -50,7 +50,7 @@ export function resolveLabeledRecord(map: LabelMap, labels: readonly string[]): 
 /**
  * Resolves the one key that a section's labels name, by inverting the section and intersecting it with the labels.
  *
- * Yields nothing where the labels name no key and where they name more than one. Two type labels on one ticket say
+ * Yields nothing when the labels name no key and when they name more than one. Two type labels on one ticket say
  * that nobody has decided which it is, and picking either would record a decision that no one made.
  */
 export function resolveLabelKey(section: LabelSection, labels: readonly string[]): string | undefined {
