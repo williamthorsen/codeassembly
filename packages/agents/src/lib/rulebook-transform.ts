@@ -16,48 +16,50 @@ import {
   type TemplateVariables,
 } from './path-rewriter.ts';
 
-/** The per-harness inputs a rulebook body render depends on, resolved once per harness by the caller. */
+/** The per-harness inputs on which a rulebook body render depends, resolved once per harness by the caller. */
 export interface RulebookRenderContext extends TemplateVariables {
-  /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
+  /** Maps a resolved Markdown link target, relative to the content root, to the path at which it deploys. */
   readonly anchor: ResolveLinkAnchor;
   /** Sigil prefixed to a rendered `{skill:<slug>}` or `{rulebook:<slug>}` token (e.g. `/` for Claude). */
   readonly skillSigil: string;
   /** Sigil prefixed to a rendered `{subagent:<slug>}` token (empty on both current harnesses). */
   readonly subagentSigil: string;
-  /** The deployed rulebooks a `{rulebook:<slug>}` token may address, keyed by slug. */
+  /** The deployed rulebooks that a `{rulebook:<slug>}` token may address, keyed by slug. */
   readonly rulebooks: RulebookInvocationCatalog;
 }
 
 /**
- * Content-root-relative directory a rulebook source lives in. Anchoring the rewrite here is what lets a rulebook
+ * Content-root-relative directory in which a rulebook source lives. Anchoring the rewrite here lets a rulebook
  * address a sibling tree the way its own source tree is laid out.
  */
 const RULEBOOK_SOURCE_DIR = 'guidance/rulebooks';
 
 /**
- * Content-root children a rulebook link target may address, because each deploys to a same-named directory under
- * every harness home. `subagents/` is excluded: a subagent definition is dispatched rather than read, so there is no
- * link worth authoring into one. `_partials/`, `collections/`, and `guidance/` never deploy as files at all.
+ * Content-root children that a rulebook link target may address, because each deploys to a same-named directory
+ * under every harness home. `subagents/` is excluded: A subagent definition is dispatched rather than read, so
+ * there is no link worth authoring into one. `_partials/`, `collections/`, and `guidance/` never deploy as files at
+ * all.
  */
 const LINKABLE_ROOTS: ReadonlyArray<string> = ['scripts', 'skills'];
 
 /**
- * Renders one rulebook's neutral body for a single harness: guidance-hook declarations are stripped, relative Markdown
- * links become that harness's absolute paths, invocation tokens become that harness's sigil plus the slug they invoke,
- * and template variables expand. In-body anchors, link targets, and rulebook tokens are validated after the strip, so a
- * reference the delivery pipeline cannot honor fails the run instead of shipping as a dead address.
+ * Renders one rulebook's neutral body for a single harness: Guidance-hook declarations are stripped, relative
+ * Markdown links become that harness's absolute paths, invocation tokens become that harness's sigil plus the slug
+ * that they invoke, and template variables expand. In-body anchors, link targets, and rulebook tokens are validated
+ * after the strip, so that a reference that the delivery pipeline cannot honor fails the run instead of deploying as
+ * a dead address.
  *
- * Both delivery modes render through here, so the strip covers the `consult-<slug>` skill a rulebook deploys as and the
- * ambient region its body is spliced into.
+ * Because both delivery modes render through here, the strip covers the `consult-<slug>` skill that a rulebook
+ * deploys as and the ambient region into which its body is spliced.
  *
- * `slug` anchors link rewriting: a relative target resolves against `guidance/rulebooks/<slug>.md`, matching where the
- * rulebook sits in its content root, and the context's anchor maps that result to its deployed path.
- * A `{rulebook:<slug>}` token renders the deployed skill name of the rulebook it names, which is why the context
- * carries the deployed set.
+ * `slug` anchors link rewriting: A relative target resolves against `guidance/rulebooks/<slug>.md`, matching the
+ * rulebook's location in its content root, and the context's anchor maps that result to its deployed path.
+ * A `{rulebook:<slug>}` token renders the deployed skill name of the rulebook that it names, which is why the context
+ * includes the deployed set.
  */
 export function renderRulebookBody(body: string, slug: string, context: RulebookRenderContext): string {
-  // Labelled by source path where the asserts below name the slug: this rejection is raised identically for skills and
-  // subagents, so it identifies a rulebook the way it identifies them.
+  // Labelled by source path, whereas the asserts below name the slug: This rejection is raised identically for skills
+  // and subagents, so it identifies a rulebook the way it identifies them.
   const sourceLabel = `${RULEBOOK_SOURCE_DIR}/${slug}.md`;
   const stripped = stripGuidanceHooks(body, sourceLabel);
   assertAnchorsResolve(stripped, sourceLabel);
@@ -71,12 +73,12 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
 // region | Helpers
 
 /**
- * Throws when any rewritable link target in `body` names a location the delivery pipeline never creates: one escaping
- * the content root, or one rooted outside `LINKABLE_ROOTS`. Every offending target is reported together, so an author
- * fixing a rulebook sees the whole list rather than one target per run.
+ * Throws when any rewritable link target in `body` names a location that the delivery pipeline never creates: one
+ * escaping the content root, or one rooted outside `LINKABLE_ROOTS`. Every offending target is reported together, so
+ * that an author fixing a rulebook sees the whole list rather than one target per run.
  *
  * Existence is deliberately not checked here. A target resolves against the deployed tree, which unions library
- * content with each declared source's content, so testing it against the one content root this rulebook came from
+ * content with each declared source's content. Testing it against the one content root that this rulebook came from
  * would reject a project or machine-local rulebook's link to library content.
  */
 function assertLinkTargetsAreDeliverable(body: string, slug: string): void {
@@ -90,7 +92,7 @@ function assertLinkTargetsAreDeliverable(body: string, slug: string): void {
 
   if (rejections.length > 0) {
     throw new Error(
-      `Rulebook "${slug}" carries ${rejections.length} unusable Markdown link target(s). A rulebook may link only ` +
+      `Rulebook "${slug}" contains ${rejections.length} unusable Markdown link target(s). A rulebook may link only ` +
         `into ${LINKABLE_ROOTS.join('/ and ')}/, the trees that deploy under every harness home:\n` +
         rejections.join('\n'),
     );
@@ -99,8 +101,8 @@ function assertLinkTargetsAreDeliverable(body: string, slug: string): void {
 
 /**
  * Throws when any `{rulebook:<slug>}` token in `body` names a rulebook that deploys no skill to invoke. Every
- * offending token is reported together, matching how link targets are reported, so an author fixing a rulebook sees
- * the whole list rather than one token per run.
+ * offending token is reported together, matching how link targets are reported, so that an author fixing a rulebook
+ * sees the whole list rather than one token per run.
  */
 function assertRulebookTokensResolve(body: string, slug: string, rulebooks: RulebookInvocationCatalog): void {
   const rejections: Array<string> = [];
@@ -113,7 +115,7 @@ function assertRulebookTokensResolve(body: string, slug: string, rulebooks: Rule
 
   if (rejections.length > 0) {
     throw new Error(
-      `Rulebook "${slug}" carries ${rejections.length} unusable invocation token(s):\n${rejections.join('\n')}`,
+      `Rulebook "${slug}" contains ${rejections.length} unusable invocation token(s):\n${rejections.join('\n')}`,
     );
   }
 }

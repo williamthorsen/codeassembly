@@ -1,7 +1,7 @@
 /**
  * Idempotent management of a single codeassembly-owned region within a Rovo Dev `prompts.yml`. The region lives inside
  * the `prompts:` sequence, delimited by `# codeassembly:managed:start` / `# codeassembly:managed:end` comment markers
- * that double as the ownership marker. Everything outside the region — foreign list items and other top-level keys —
+ * that double as the ownership marker. Everything outside the region (foreign list items and other top-level keys)
  * is preserved verbatim. Every function is a pure string transform with no filesystem access.
  */
 
@@ -9,24 +9,24 @@ const OPEN_MARKER = '  # codeassembly:managed:start';
 const CLOSE_MARKER = '  # codeassembly:managed:end';
 const REGION_PATTERN = /^[ \t]*# codeassembly:managed:start\n[\s\S]*?^[ \t]*# codeassembly:managed:end[ \t]*$/m;
 
-/** True when the content holds a complete codeassembly region marker pair — the ownership check. */
+/** True when the content holds a complete codeassembly region marker pair: the ownership check. */
 export function hasPromptsRegion(content: string): boolean {
   return REGION_PATTERN.test(content);
 }
 
 /**
- * Inserts or replaces the codeassembly region carrying `regionBody` (the rendered entry list). An existing region is
- * replaced in place; otherwise the region is appended at the end of the `prompts:` sequence — after any foreign items
- * and before any following top-level key — creating a `prompts:` key when the file has none. An empty flow-style
- * `prompts: []` is normalized to a block header first; an inline-valued `prompts:` carrying content is refused (throws)
+ * Inserts or replaces the codeassembly region containing `regionBody` (the rendered entry list). An existing region is
+ * replaced in place; otherwise the region is appended at the end of the `prompts:` sequence (after any foreign items
+ * and before any following top-level key), creating a `prompts:` key when the file has none. An empty flow-style
+ * `prompts: []` is normalized to a block header first; an inline-valued `prompts:` with content is refused (throws)
  * rather than silently duplicating the key into an unloadable file. Re-inserting an identical body yields byte-identical
- * content, which is what keeps `sync` diff-free on re-run.
+ * content, which keeps `sync` diff-free on re-run.
  */
 export function injectPromptsRegion(content: string, regionBody: string): string {
   const region = renderRegion(regionBody);
 
   if (hasPromptsRegion(content)) {
-    // Replace via a function so `$`-sequences in the body are not treated as replacement patterns.
+    // Replace via a function so that `$`-sequences in the body are not treated as replacement patterns.
     return content.replace(REGION_PATTERN, () => region);
   }
 
@@ -112,7 +112,7 @@ function hasIndentedContentAfter(lines: ReadonlyArray<string>, promptsIdx: numbe
   return false;
 }
 
-/** True for a block-style `prompts:` header — column 0, no inline value. */
+/** True for a block-style `prompts:` header: column 0, no inline value. */
 function isBlockPromptsHeader(line: string): boolean {
   return /^prompts:[ \t]*$/.test(line);
 }
@@ -121,7 +121,7 @@ function isCloseMarker(line: string): boolean {
   return line.trim() === '# codeassembly:managed:end';
 }
 
-/** True for an empty flow-style sequence (`prompts: []`), which carries no foreign items. */
+/** True for an empty flow-style sequence (`prompts: []`), which contains no foreign items. */
 function isEmptyFlowPrompts(line: string): boolean {
   return /^prompts:[ \t]*\[[ \t]*\][ \t]*$/.test(line);
 }
@@ -146,7 +146,7 @@ function renderRegion(regionBody: string): string {
   return body === '' ? `${OPEN_MARKER}\n${CLOSE_MARKER}` : `${OPEN_MARKER}\n${body}\n${CLOSE_MARKER}`;
 }
 
-/** Splits content into lines, dropping the artifact empty element a trailing newline would produce. */
+/** Splits content into lines, dropping the artifact empty element produced by a trailing newline. */
 function splitContentLines(content: string): Array<string> {
   return content === '' ? [] : content.replace(/\n$/, '').split('\n');
 }

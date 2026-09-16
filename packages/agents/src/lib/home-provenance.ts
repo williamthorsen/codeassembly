@@ -16,7 +16,7 @@ const PROVENANCE_FILENAME = 'home-provenance.json';
 /** How long a commit lookup may take before the stamp is written without one. */
 const COMMIT_LOOKUP_TIMEOUT_MS = 5_000;
 
-/** Membership set for `isHomeWrite`, widened to `string` so an arbitrary value tests without a type assertion. */
+/** Membership set for `isHomeWrite`, widened to `string` so that an arbitrary value tests without a type assertion. */
 const HOME_WRITE_COMMANDS: ReadonlySet<string> = new Set<HomeWriteCommand>(['install', 'sync --global']);
 
 /** What the last home-domain command attempted, recorded whether or not it went on to write. */
@@ -26,7 +26,7 @@ export interface HomeAttempt {
   readonly outcome: 'failed' | 'succeeded';
   /** Rendered failure text, for a reader who opens the stamp. Absent on a success. */
   readonly failureSummary?: string;
-  /** How many defects the failure carried, where it carried a list of them. */
+  /** How many defects the failure reported, when it included a list of them. */
   readonly defectCount?: number;
 }
 
@@ -41,9 +41,10 @@ export interface HomeFailure {
  * failed attempt writes nothing, and a reader that sees only the write cannot tell a current deployment from one
  * left behind by an abandoned run.
  *
- * The version-1 write fields are still mirrored at the top level, so a `codeassembly` predating `lastWrite` reads the
- * stamp rather than rejecting it and reporting nothing. Every worktree carries a binary of its own, so a machine
- * mid-upgrade is the normal case rather than an edge one. The mirror is removable once no such binary is in use.
+ * The version-1 write fields are still mirrored at the top level, so that a `codeassembly` predating `lastWrite`
+ * reads the stamp rather than rejecting it and reporting nothing. Every worktree has a binary of its own, so a
+ * machine mid-upgrade is the normal case rather than an edge one. The mirror is removable once no such binary is in
+ * use.
  */
 export interface HomeProvenance {
   readonly schemaVersion: number;
@@ -62,7 +63,7 @@ export interface HomeWrite {
   readonly version: string;
   /** Absolute, symlink-resolved root of that package. */
   readonly sourcePath: string;
-  /** Commit the source tree was on, absent where the source is not a git tree (an npm install has none). */
+  /** Commit that the source tree was on, absent when the source is not a git tree (an npm install has none). */
   readonly sourceCommit?: string;
   readonly command: HomeWriteCommand;
   readonly writtenAt: string;
@@ -74,7 +75,7 @@ export function getHomeProvenancePath(homeDir?: string): string {
 }
 
 /**
- * Reads the provenance stamp, or `undefined` where none can be read — no stamp has been written, or the one on disk
+ * Reads the provenance stamp, or `undefined` when none can be read: No stamp has been written, or the one on disk
  * is truncated or malformed. A stamp that cannot be read reports nothing, so a damaged file costs `status` one line
  * rather than the whole report.
  */
@@ -108,7 +109,7 @@ export async function readHomeProvenanceAt(provenancePath: string): Promise<Home
 
 /**
  * Records a failed home-domain attempt, keeping whatever write the stamp already reports. Swallows its own failure:
- * an error is already on its way to the caller, and losing the record must not replace it with a different one.
+ * An error is already on its way to the caller, and losing the record must not replace it with a different one.
  */
 export async function recordFailedHomeAttempt(
   command: HomeWriteCommand,
@@ -137,9 +138,9 @@ export async function recordFailedHomeAttempt(
 }
 
 /**
- * Records what wrote the home domain, so a later reader can tell which installation the current state came from, and
- * the attempt that produced it. Called once a command has finished writing, never on a dry run: the stamp reports
- * what wrote, not what tried.
+ * Records what wrote the home domain, so that a later reader can tell which installation the current state came
+ * from, and the attempt that produced it. Called once a command has finished writing, never on a dry run: The stamp
+ * reports what wrote, not what tried.
  */
 export async function recordHomeProvenance(command: HomeWriteCommand, homeDir?: string): Promise<void> {
   const packageRoot = resolveRunningPackageRoot();
@@ -188,7 +189,7 @@ function isHomeWrite(value: unknown): value is HomeWrite {
   );
 }
 
-/** Reads the version-1 write fields off a stamp that carries them at the top level. */
+/** Reads the version-1 write fields off a stamp that contains them at the top level. */
 function liftWrite(parsed: HomeWrite): HomeWrite {
   return {
     version: parsed.version,
@@ -200,7 +201,7 @@ function liftWrite(parsed: HomeWrite): HomeWrite {
 }
 
 /**
- * Normalizes a parsed stamp into the current shape, or `undefined` where it carries neither a write nor an attempt.
+ * Normalizes a parsed stamp into the current shape, or `undefined` when it contains neither a write nor an attempt.
  */
 function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
   if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
@@ -219,9 +220,9 @@ function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
 }
 
 /**
- * Reads the commit `packageRoot` sits on, or `undefined` where the question has no answer — the path is not a git
- * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write it
- * describes.
+ * Reads the commit that `packageRoot` is on, or `undefined` when the question has no answer: The path is not a git
+ * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write that
+ * it describes.
  */
 async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
   try {
@@ -235,8 +236,8 @@ async function readSourceCommit(packageRoot: string): Promise<string | undefined
 }
 
 /**
- * Reads a stamp's write block, from `lastWrite` or from the version-1 fields a stamp predating it carries at the top
- * level, so an existing machine keeps its stamp.
+ * Reads a stamp's write block, from `lastWrite` or from the version-1 fields at the top level of a stamp predating
+ * it, so that an existing machine keeps its stamp.
  */
 function resolveLastWrite(parsed: Record<string, unknown>): HomeWrite | undefined {
   if (isHomeWrite(parsed.lastWrite)) {

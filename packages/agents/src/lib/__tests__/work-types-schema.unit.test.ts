@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
-// `BASIC` is only exported from `/experimental` in version 1.17.6 — used only on the diagnostic
+// `BASIC` is only exported from `/experimental` in version 1.17.6. It is used only on the diagnostic
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest';
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
-/** Shape of a single record under `types[]` — used to type the live JSON for cross-element checks. */
+/** Shape of a single record under `types[]`, used to type the live JSON for cross-element checks. */
 interface WorkTypeRecord {
   aliases: string[];
   breakingPolicy: string;
@@ -37,7 +37,7 @@ interface MarkersBlock {
   breaking: MarkerRecord;
 }
 
-/** Shape of the live `work-types.json` document — used to type the live JSON for cross-element checks. */
+/** Shape of the live `work-types.json` document, used to type the live JSON for cross-element checks. */
 interface WorkTypesDocument {
   markers: MarkersBlock;
   tiers: string[];
@@ -65,7 +65,7 @@ if (typeof schemaId !== 'string') {
 // Register once at module load. `registerSchema` only stores the schema in-memory keyed by `$id`;
 // structural compilation (and any well-formedness errors) happens at the first `validate()` call.
 // In Vitest watch mode, HMR can re-evaluate this module and re-invoke `registerSchema` with the
-// same `$id` — `@hyperjump/json-schema` throws on duplicate registration. Swallow that one case
+// same `$id`: `@hyperjump/json-schema` throws on duplicate registration. Swallow that one case
 // while letting any other error propagate.
 registerSchemaIdempotent(schema, schemaId);
 
@@ -86,8 +86,8 @@ describe('work-types.schema.json', () => {
 
     const output = await validate(schemaId, jsonValue, FLAG);
 
-    // FLAG output is the stable assertion target — it returns only `{ valid }`. On failure,
-    // re-validate with `BASIC` (from `/experimental`) so the failure message includes per-keyword
+    // FLAG output is the stable assertion target; it returns only `{ valid }`. On failure,
+    // re-validate with `BASIC` (from `/experimental`) so that the failure message includes per-keyword
     // error locations instead of an opaque `{ valid: false }`. The diagnostic is computed only
     // when the assertion fails, so the second `validate()` call is paid for only on the failure path.
     let diagnosticMessage = '';
@@ -163,7 +163,7 @@ describe('work-types.schema.json', () => {
     {
       description: 'rejects a `tiers` array whose order does not match the canonical precedence',
       // Guards the `prefixItems` constraint on `tiers`. The schema pins each position via `const`,
-      // so any reordering — even of the same three values — must fail validation.
+      // so any reordering (even of the same three values) must fail validation.
       input: buildMinimalDoc({ tiers: ['process', 'internal', 'public'] }),
     },
     {
@@ -234,7 +234,7 @@ describe('work-types.schema.json', () => {
 
   it('enforces globally unique `aliases` (no alias collides with another alias or any `key`)', () => {
     // Cross-element uniqueness is asserted in-test. Aliases must be globally unique and must not
-    // shadow any canonical `key` — otherwise resolution from alias to canonical key is ambiguous.
+    // shadow any canonical `key`; otherwise resolution from alias to canonical key is ambiguous.
     const keys = new Set(liveData.types.map((entry) => entry.key));
     const aliases = liveData.types.flatMap((entry) => entry.aliases);
 
@@ -272,8 +272,8 @@ describe('work-types.schema.json', () => {
   });
 
   it('orders top-level `tiers` in canonical precedence order', () => {
-    // Sanity check on top of the schema-level `prefixItems` constraint. Belt-and-braces: if the
-    // schema is ever weakened, this assertion still catches a misordered live file.
+    // Sanity check on top of the schema-level `prefixItems` constraint. Deliberate redundancy: If
+    // the schema is ever weakened, this assertion still catches a misordered live file.
     expect(liveData.tiers).toEqual(['public', 'internal', 'process']);
   });
 
@@ -292,7 +292,7 @@ describe('work-types.schema.json', () => {
 /**
  * Builds a minimal-but-valid `work-types.json` document, then shallow-merges in the supplied overrides.
  * Each rejection test is one constraint violation introduced via overrides; the baseline keeps every
- * other field valid so the failure isolates to the mutation.
+ * other field valid so that the failure isolates to the mutation.
  */
 function buildMinimalDoc(overrides: Record<string, JsonValue> = {}): JsonValue {
   return {
@@ -331,7 +331,7 @@ function buildTypeRecord(overrides: Record<string, JsonValue> = {}): JsonValue {
  * The caller-supplied `T` types the returned value at the call site without a type assertion;
  * the runtime shape is the responsibility of the caller (this is a test helper for fixture loading).
  */
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- `T` appears only in the return position by design: callers annotate the call site (e.g., `parseJsonFile<Schema>(...)`) so that `JSON.parse`'s `any` narrows into the desired type without a forbidden type assertion.
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- `T` appears only in the return position by design: Callers annotate the call site (e.g., `parseJsonFile<Schema>(...)`) so that `JSON.parse`'s `any` narrows into the desired type without a forbidden type assertion.
 function parseJsonFile<T>(filePath: string, label: string): T {
   let parsed: T;
   try {
