@@ -14,7 +14,7 @@ const TAXONOMY: Taxonomy = {
 };
 
 describe(verify, () => {
-  describe('templates it accepts', () => {
+  describe('templates that it accepts', () => {
     it.each(Object.entries(TEMPLATE_CATALOGUE))('accepts the %s convention', (_convention, template) => {
       expect(verify(template, TAXONOMY)).toStrictEqual([]);
     });
@@ -87,7 +87,7 @@ describe(verify, () => {
   });
 
   describe('the round-trip backstop', () => {
-    it('refuses a template that renders a value it cannot read back', () => {
+    it('refuses a template that renders a value which it cannot read back', () => {
       const defects = verify('{title} {scope}', TAXONOMY);
 
       expect(defects.some((defect) => defect.includes('does not round-trip'))).toBe(true);

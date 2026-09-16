@@ -5,8 +5,8 @@ import { CODE_SPAN_PLACEHOLDER, maskCodeSpans } from '../mask-code-spans.ts';
 import type { ObjectRelativeCandidate, SubjectShape } from '../types.ts';
 
 /**
- * The sites williamthorsen/toolbelt@5dd0ad2 repaired, each paired with the wording that replaced it. The commit is the
- * worked before-and-after for this rule, so its "before" column is the recall floor the detector is tuned against and
+ * The sites repaired by williamthorsen/toolbelt@5dd0ad2, each paired with the wording that replaced it. The commit is the
+ * worked before-and-after for this rule, so its "before" column is the recall floor against which the detector is tuned and
  * its "after" column is the precision floor.
  */
 const REPAIRED_SITES: ReadonlyArray<{ shape: SubjectShape; before: string; after: string }> = [
@@ -90,7 +90,7 @@ const REPAIRED_SITES: ReadonlyArray<{ shape: SubjectShape; before: string; after
 /** The one replacement wording that still carries the construction, at a second site on the same line. */
 const SURVIVING_SITE = 'A bound, offset, or key rejected by the library exits 2 carrying the message it raises.';
 
-/** Neighbouring constructions the rulebook puts outside the rule, decidable from the head noun alone. */
+/** Neighbouring constructions that the rulebook puts outside the rule, decidable from the head noun alone. */
 const OUT_OF_SCOPE_HEADS: ReadonlyArray<string> = [
   'The reason it fails is that the cache is cold.',
   'The way it works is documented on the helper.',
@@ -111,7 +111,7 @@ describe(detectObjectRelatives, () => {
       expect(detect(after)).toStrictEqual([]);
     });
 
-    it('reports the site the commit left behind on a line it otherwise repaired', () => {
+    it('reports the site left behind by the commit on a line that it otherwise repaired', () => {
       const candidates = detect(SURVIVING_SITE);
 
       expect(candidates).toHaveLength(1);
@@ -120,7 +120,7 @@ describe(detectObjectRelatives, () => {
   });
 
   describe('shapes', () => {
-    it('reads a numeral-led subject as the quantified shape the rulebook ranks worst', () => {
+    it('reads a numeral-led subject as the quantified shape that the rulebook ranks worst', () => {
       const candidates = detect('The rules decide which kit claims an idiom two of them recognize.');
 
       expect(candidates).toHaveLength(1);
@@ -142,7 +142,7 @@ describe(detectObjectRelatives, () => {
     });
 
     it.each(['Reports the file the parser may read.', 'Reports the file the parser will not read.'])(
-      'reads through a modal to the verb it carries: %s',
+      'reads through a modal to the verb that it carries: %s',
       (sentence) => {
         expect(detect(sentence)).toHaveLength(1);
       },
@@ -166,7 +166,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ shape: 'bare', head: 'idiom', subject: 'developers', verb: 'recognize' });
     });
 
-    it('reports the head, the subject, and the verb the reading turns on', () => {
+    it('reports the head, the subject, and the verb on which the reading turns', () => {
       const candidates = detect('Reports the ticket the branch name encodes.');
 
       expect(candidates[0]).toMatchObject({
@@ -206,7 +206,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ subject: 'the parser', verb: 'read' });
     });
 
-    it('prefers the lexical verb an auxiliary carries over the auxiliary itself', () => {
+    it('prefers the lexical verb that an auxiliary carries over the auxiliary itself', () => {
       const candidates = detect('Declares the version the consumer has read.');
 
       expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'version the consumer has read' });
@@ -234,13 +234,13 @@ describe(detectObjectRelatives, () => {
       expect(detect('Reports the fields records has.')).toStrictEqual([]);
     });
 
-    it('reads through an adverb to the verb the auxiliary carries', () => {
+    it('reads through an adverb to the verb that the auxiliary carries', () => {
       const candidates = detect('Reports the file the parser may explicitly read.');
 
       expect(candidates[0]).toMatchObject({ verb: 'read', phrase: 'file the parser may explicitly read' });
     });
 
-    it('reads a verb ending in `ly` as the verb rather than as the adverb it resembles', () => {
+    it('reads a verb ending in `ly` as the verb rather than as the adverb that it resembles', () => {
       const candidates = detect('Drops an owned item the caller did not supply.');
 
       expect(candidates[0]).toMatchObject({ verb: 'supply', phrase: 'item the caller did not supply' });
@@ -296,7 +296,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('Reports the phase the ticket was not approved.')).toStrictEqual([]);
     });
 
-    it('closes on the copula a chain ends with rather than on the auxiliary before it', () => {
+    it('closes on the copula with which a chain ends rather than on the auxiliary before it', () => {
       const candidates = detect('Declares the version the consumer has been.');
 
       expect(candidates).toHaveLength(1);
@@ -342,7 +342,7 @@ describe(detectObjectRelatives, () => {
     it.each([
       { sentence: 'That is the consent these checks rest on.', verb: 'rest' },
       { sentence: 'The report names the baseline the values sit above.', verb: 'sit' },
-    ])('rescues a verb no lexicon holds: $verb', ({ sentence, verb }) => {
+    ])('rescues a verb that no lexicon holds: $verb', ({ sentence, verb }) => {
       const candidates = detect(sentence);
 
       expect(candidates).toHaveLength(1);
@@ -358,7 +358,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ head: 'body', verb: 'read', shape: 'pronoun' });
     });
 
-    it('keeps the pronoun shape where an adverb sits between the demonstrative and the verb', () => {
+    it('keeps the pronoun shape when an adverb sits between the demonstrative and the verb', () => {
       const candidates = detect('The reviewer opened a body this also read in full and found no throw in.');
 
       expect(candidates).toHaveLength(1);
@@ -372,7 +372,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ subject: 'this package', shape: 'definite' });
     });
 
-    it('passes over a plural noun beside a demonstrative, which reads as the noun it specifies', () => {
+    it('passes over a plural noun beside a demonstrative, which reads as the noun that it specifies', () => {
       const candidates = detect('The sweep repairs the checks these gates enforce.');
 
       expect(candidates).toHaveLength(1);
@@ -407,7 +407,7 @@ describe(detectObjectRelatives, () => {
       'Nobody said how many files the parser reads.',
       'Before asking, settle whose call it is.',
       'An ask is theirs however confident you are.',
-    ])('passes over a head a wh-word fronts, which binds its own gap: %s', (sentence) => {
+    ])('passes over a head fronted by a wh-word, which binds its own gap: %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);
     });
 
@@ -422,7 +422,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('Nobody said how the source it names got stale.')).toHaveLength(1);
     });
 
-    it('closes on a copula an auxiliary chain ends with', () => {
+    it('closes on a copula with which an auxiliary chain ends', () => {
       const candidates = detect('Reports whether the file the parser should be.');
 
       expect(candidates).toHaveLength(1);
@@ -457,7 +457,7 @@ describe(detectObjectRelatives, () => {
       expect(detect(sentence)).toStrictEqual([]);
     });
 
-    it('holds a verb an auxiliary carries to the same gate', () => {
+    it('holds a verb that an auxiliary carries to the same gate', () => {
       const stranded = detect('The sweep covers the sources this prose about the idioms has drawn on.');
 
       expect(stranded).toHaveLength(1);
@@ -649,7 +649,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ head: 'clause', verb: 'reports' });
     });
 
-    it('keeps a filled preposition unstranded where an object pronoun fills it', () => {
+    it('keeps a filled preposition unstranded when an object pronoun fills it', () => {
       expect(detect('The store the entries belong to them is closed.')).toStrictEqual([]);
     });
   });
@@ -691,7 +691,7 @@ describe(detectObjectRelatives, () => {
   });
 
   describe('location', () => {
-    it('reports the line the site sits on within a wrapped block', () => {
+    it('reports the line on which the site sits within a wrapped block', () => {
       const candidates = detectObjectRelatives([
         { file: 'docs/guide.md', line: 40, text: 'A clean first line.\nThen the source it names.' },
       ]);
@@ -709,7 +709,7 @@ function detect(sentence: string): ObjectRelativeCandidate[] {
   return detectObjectRelatives([{ file: 'fixture.md', line: 1, text: sentence }]);
 }
 
-/** Detects over one sentence masked as the extractor masks it, which is the form the detector reads in a sweep. */
+/** Detects over one sentence masked as the extractor masks it, which is the form that the detector reads in a sweep. */
 function detectMasked(sentence: string): ObjectRelativeCandidate[] {
   return detect(maskCodeSpans(sentence));
 }

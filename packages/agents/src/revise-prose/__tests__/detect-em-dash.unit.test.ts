@@ -20,7 +20,7 @@ describe(detectEmDashes, () => {
     });
   });
 
-  it('passes over a double hyphen, which is the form the rule asks for', () => {
+  it('passes over a double hyphen, which is the form that the rule asks for', () => {
     expect(detect('The cache is cold--so the transport reconnects.')).toStrictEqual([]);
   });
 
@@ -57,7 +57,7 @@ describe(detectEmDashes, () => {
     expect(candidates).toHaveLength(1);
   });
 
-  it('reports an em-dash where an unclosed backtick run delimits no span', () => {
+  it('reports an em-dash when an unclosed backtick run delimits no span', () => {
     const candidates = detect(`A stray \` backtick${EM_DASH}then a dash.`);
 
     expect(candidates).toHaveLength(1);

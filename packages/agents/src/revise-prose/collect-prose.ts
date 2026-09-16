@@ -106,8 +106,7 @@ export async function collectProse(input: {
       continue;
     }
 
-    // YAML spans data as readily as prose, and a batch covers the scanned set rather than the candidate-bearing
-    // subset, so a file carrying no prose at all would hand a subagent a lockfile to read for nothing.
+    // Skip a YAML file that contains no prose.
     if (kind === 'yaml' && extracted.length === 0) continue;
 
     scannedFiles.push({ file, bytes: Buffer.byteLength(content, 'utf8') });

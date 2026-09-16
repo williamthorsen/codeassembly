@@ -85,7 +85,7 @@ describe(extractProse, () => {
       expect(text).not.toContain('name: fixture');
     });
 
-    it('yields body prose where the frontmatter cannot be parsed', () => {
+    it('yields body prose when the frontmatter cannot be parsed', () => {
       const spans = extract('---\naliases:\n  git: [vcs, version-control\n---\n\nBody prose survives.\n', 'markdown');
 
       expect(joinText(spans)).toContain('Body prose survives.');
@@ -297,7 +297,7 @@ describe(extractProse, () => {
 
 // region | Helpers
 
-/** Extracts prose from a fixture body under one kind, holding the file name constant so assertions read cleanly. */
+/** Extracts prose from a fixture body under one kind, holding the file name constant so that assertions read cleanly. */
 function extract(content: string, kind: ProseKind) {
   return extractProse({ file: 'fixture.md', content, kind });
 }

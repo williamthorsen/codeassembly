@@ -33,7 +33,7 @@ describe(extractApprovedLede, () => {
 
 // region | Helpers
 
-/** Renders a decision body in the shape `prepareDecision` writes: the agent lede, then the optional merged lede and comment. */
+/** Renders a decision body in the shape that `prepareDecision` writes: the agent lede, then the optional merged lede and comment. */
 function bodyWith(input: { merged: boolean; comment?: string }): string {
   const sections = [`## Agent lede\n\n${AGENT_LEDE}`];
   if (input.merged) {
