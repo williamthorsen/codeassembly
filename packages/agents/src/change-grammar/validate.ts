@@ -1,11 +1,11 @@
 import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
- * Reports the breaking-policy violation a record carries, or nothing where it carries none. The record is returned
- * untouched: normalizing a violation away would hide the mistake from the author who can still fix it.
+ * Reports the breaking-policy violation in a record, or nothing when the record has none. The record is returned
+ * untouched: Normalizing a violation away would hide the mistake from the author who can still fix it.
  *
  * A type whose policy forbids the marker violates by carrying it; one whose policy requires it violates by omitting it.
- * A record naming a type the taxonomy does not declare carries no policy to break.
+ * A record naming a type not declared by the taxonomy has no policy to break.
  */
 export function validate(record: ChangeRecord, taxonomy: Taxonomy): PolicyViolation | undefined {
   const workType = taxonomy.types.find((candidate) => candidate.key === record.type);

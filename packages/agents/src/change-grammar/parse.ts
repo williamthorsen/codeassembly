@@ -4,18 +4,18 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
  * Inverts a template: reads a rendered surface string back into the record that produced it, or reports the string as
- * unmatched. It compiles the same node tree `render` walks, so the two stay inverses of each other.
+ * unmatched. It compiles the same node tree that `render` walks, so the two stay inverses of each other.
  *
- * Every token compiles to a constrained sub-pattern, which is what makes the inversion decidable: `{type}` an
- * alternation over the taxonomy's keys and aliases, `{ticket_ref}` a `#123` or `ABC-123` reference, `{pr_number}`
- * digits, `{breaking}` the marker, `{scope}` a run bounded by the delimiter the template itself places after it, and
- * `{title}` a lazy run so a trailing group wins the tail of the string.
+ * Every token compiles to a constrained sub-pattern, which makes the inversion decidable: `{type}` an alternation over
+ * the taxonomy's keys and aliases, `{ticket_ref}` a `#123` or `ABC-123` reference, `{pr_number}` digits, `{breaking}`
+ * the marker, `{scope}` a run bounded by the delimiter that the template itself places after it, and `{title}` a lazy
+ * run so that a trailing group wins the tail of the string.
  *
- * Where an optional group could be read as present or absent, present wins, which is release-kit's reading. The cost is
- * a plain title carrying a pipe and a declared type: under `[[{scope}|]{type}: ]{title}`, `Rename kb|docs: the shared
+ * When an optional group could be read as present or absent, present wins, which is release-kit's reading. The cost is
+ * a plain title carrying a pipe and a declared type: Under `[[{scope}|]{type}: ]{title}`, `Rename kb|docs: the shared
  * layer` parses as scope `Rename kb`, type `docs`, title `the shared layer`.
  *
- * A template naming `{type}` requires one: a subject that names a scope but no declared type is unmatched. A template
+ * A template naming `{type}` requires one: A subject that names a scope but no declared type is unmatched. A template
  * naming no `{ticket_ref}` has release-kit's three ticket-prefix forms stripped from the subject first.
  */
 export function parse(nodes: readonly TemplateNode[], subject: string, taxonomy: Taxonomy): ChangeRecord | undefined {
@@ -59,7 +59,7 @@ export const TICKET_PREFIX_PATTERNS: readonly RegExp[] = [/^##\s+/, /^#\d+([.-]\
 
 // region | Helpers
 
-/** Compiles the nodes to a regular-expression source, each optional group greedy so a present reading wins. */
+/** Compiles the nodes to a regular-expression source, each optional group greedy so that a present reading wins. */
 function buildPattern(nodes: readonly TemplateNode[], options: PatternOptions): string {
   let pattern = '';
   for (const node of nodes) {
@@ -90,14 +90,16 @@ function buildTokenPattern(node: TokenNode, options: PatternOptions): string {
     case 'title':
       return '(?<title>.+?)';
     case 'type':
-      // Where the template names no `{breaking}`, the marker rides on the type, exactly as `render` writes it.
+      // When the template names no `{breaking}`, the marker follows the type, exactly as `render` writes it.
       return options.namesBreaking
         ? `(?<type>${options.typeAlternation})`
         : `(?<type>${options.typeAlternation})(?<breaking>${escapeForPattern(BREAKING_MARKER)})?`;
   }
 }
 
-/** Builds the alternation of every spelling the taxonomy declares, longest first so `feature` outranks `feat`. */
+/**
+ * Builds the alternation of every spelling declared by the taxonomy, longest first so that `feature` outranks `feat`.
+ */
 function buildTypeAlternation(taxonomy: Taxonomy): string {
   return [...collectSpellings(taxonomy)]
     .toSorted((a, b) => b.length - a.length || a.localeCompare(b))
@@ -119,7 +121,7 @@ function canonicalizeType(spelling: string, taxonomy: Taxonomy): string | undefi
   return undefined;
 }
 
-/** The record field each capturing token writes, `{type}` and `{breaking}` excepted; both need resolution first. */
+/** The record field written by each capturing token, `{type}` and `{breaking}` excepted; both need resolution first. */
 const CAPTURED_FIELDS: ReadonlyArray<[string, 'prNumber' | 'scope' | 'ticketRef' | 'title']> = [
   ['pr_number', 'prNumber'],
   ['scope', 'scope'],
@@ -127,7 +129,7 @@ const CAPTURED_FIELDS: ReadonlyArray<[string, 'prNumber' | 'scope' | 'ticketRef'
   ['title', 'title'],
 ];
 
-/** Gathers every key and alias the taxonomy declares. */
+/** Gathers every key and alias that the taxonomy declares. */
 function collectSpellings(taxonomy: Taxonomy): Set<string> {
   const spellings = new Set<string>();
   for (const entry of taxonomy.types) {
@@ -145,7 +147,7 @@ function escapeForCharacterClass(char: string): string {
   return /[\]\\^-]/.test(char) ? `\\${char}` : char;
 }
 
-/** Escapes literal text so it matches itself rather than acting as pattern syntax. */
+/** Escapes literal text so that it matches itself rather than acting as pattern syntax. */
 function escapeForPattern(text: string): string {
   return text.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
@@ -163,8 +165,8 @@ function flatten(nodes: readonly TemplateNode[], into: TemplateNode[]): void {
 
 /**
  * Records, for each `{scope}` token, the first character of the next literal text in document order. That character is
- * the delimiter the template itself places after the scope, and bounding the scope by it is what keeps a scope holding
- * spaces or a `*` from swallowing the rest of the subject.
+ * the delimiter that the template itself places after the scope, and bounding the scope by it keeps a scope containing
+ * spaces or a `*` from matching the rest of the subject.
  */
 function mapScopeDelimiters(nodes: readonly TemplateNode[]): ReadonlyMap<TokenNode, string> {
   const flattened: TemplateNode[] = [];
@@ -200,7 +202,7 @@ interface PatternOptions {
   typeAlternation: string;
 }
 
-/** Removes the ticket-reference forms release-kit strips before reading a subject. */
+/** Removes the ticket-reference forms that release-kit strips before reading a subject. */
 function stripTicketPrefix(subject: string): string {
   let stripped = subject;
   for (const pattern of TICKET_PREFIX_PATTERNS) {

@@ -5,12 +5,12 @@ import type { TokenName } from './tokens.ts';
 import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
- * Reports every reason a template cannot round-trip, empty where it can. A caller refuses the template on a non-empty
+ * Reports every reason a template cannot round-trip, empty when it can. A caller refuses the template on a non-empty
  * result; each message names the template and the defect, so the refusal says what to change.
  *
  * The structural rules run first and hold whatever the values are. Render-and-parse passes over well-formed values then
- * backstop them, so a later grammar extension cannot outrun the checker silently: one pass carries every token the
- * template names, and one more drops each optional group in turn.
+ * backstop them, because a later grammar extension could otherwise outrun the checker silently: One pass carries every
+ * token named by the template, and one more drops each optional group in turn.
  *
  * Value-dependent ambiguity is not a defect. Under `[{ticket_ref} ]{title}` a title opening with `#466 ` is
  * indistinguishable from a ticket reference, as it is for release-kit, and the template is accepted.
@@ -46,7 +46,7 @@ function admitsMarker(node: FlatNode | undefined, edge: 'end' | 'start'): boolea
   return FREE_TEXT_TOKENS.has(node.name);
 }
 
-/** Builds a well-formed record carrying exactly the tokens `present` names. */
+/** Builds a well-formed record carrying exactly the tokens that `present` names. */
 function buildSample(present: ReadonlySet<TokenName>, breaking: boolean, taxonomy: Taxonomy): ChangeRecord {
   const sample: ChangeRecord = {};
   if (breaking) {
@@ -71,7 +71,7 @@ function buildSample(present: ReadonlySet<TokenName>, breaking: boolean, taxonom
   return sample;
 }
 
-/** Serializes a record with its keys ordered, so two equal records compare equal as text. */
+/** Serializes a record with its keys ordered, so that two equal records compare equal as text. */
 function describeRecord(record: ChangeRecord | undefined): string {
   if (record === undefined) {
     return 'unmatched';
@@ -156,16 +156,16 @@ function findRepeatedTokenDefects(template: string, flattened: readonly FlatNode
 }
 
 /**
- * Renders well-formed values and reads them back, so a defect no structural rule names still surfaces. One pass carries
- * every token the template names; one further pass per optional group drops that group, since a group a parse cannot
- * tell from an absent one is the ordinary case a group exists for.
+ * Renders well-formed values and reads them back, so that a defect that no structural rule names still surfaces. One
+ * pass carries every token named by the template; one further pass per optional group drops that group, since a group
+ * that a parse cannot tell from an absent one is the ordinary case for which a group exists.
  *
  * A group carrying `{type}` is left populated. Dropping it takes the type out of the rendered string, which the
  * type-required rule then reads as unmatched however well-formed the template is.
  *
- * A group carrying `{breaking}` is left populated too, for a reason of its own: the sample takes the marker from the
- * pass rather than from the tokens it names, so a pass that dropped such a group would still expect a marker back from
- * a string that no longer carries one.
+ * A group carrying `{breaking}` is left populated too, for a reason of its own: The sample takes the marker from the
+ * pass rather than from the tokens that it names, so a pass that dropped such a group would still expect a marker back
+ * from a string that no longer carries one.
  */
 function findRoundTripDefects(
   template: string,
@@ -219,7 +219,7 @@ function flattenTemplate(nodes: readonly TemplateNode[]): FlatNode[] {
 /** The tokens whose values are free text, so either edge of one may spell the breaking marker. */
 const FREE_TEXT_TOKENS: ReadonlySet<TokenName> = new Set<TokenName>(['scope', 'title']);
 
-/** Maps each token an optional group can drop to every token that vanishes when that group drops. */
+/** Maps each token that an optional group can drop to every token that vanishes when that group drops. */
 function mapDroppableTokens(nodes: readonly TemplateNode[]): Map<TokenName, ReadonlySet<TokenName>> {
   const droppable = new Map<TokenName, ReadonlySet<TokenName>>();
 
@@ -246,7 +246,7 @@ function mapDroppableTokens(nodes: readonly TemplateNode[]): Map<TokenName, Read
   return droppable;
 }
 
-/** The group's own opening literal, where it opens with one. */
+/** The group's own opening literal, if it opens with one. */
 function readLeadingLiteral(group: GroupNode): string | undefined {
   const first = group.children.at(0);
   if (first?.kind === 'literal') {
