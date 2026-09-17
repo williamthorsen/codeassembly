@@ -8,7 +8,6 @@ import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
 import { resolveStore } from '../resolve-store.ts';
 import type { CommandOutput } from './check.ts';
 
-/** Usage text for `kb scaffold`. */
 export const SCAFFOLD_HELP = `Usage: kb scaffold [options]
 
 Write into an existing knowledge base any canonical file that it lacks, so a store
@@ -41,9 +40,8 @@ Exit codes:
 /**
  * Runs `kb scaffold`: parses options, resolves the store, and writes the canonical files it lacks.
  *
- * Store resolution matches `kb check`. A store the registry marks `readonly` is refused, as `kb taxonomy init` does.
- * A resolved path holding no `.kb/` is refused too: the command back-fills a store rather than creating one, and a
- * registry entry names a path without proving a store is there.
+ * A store that the registry marks `readonly` is refused. A resolved path holding no `.kb/` is refused too: the command
+ * back-fills a store rather than creating one, and a registry entry names a path without proving a store is there.
  */
 export async function runScaffold(input: {
   argv: readonly string[];
@@ -83,11 +81,8 @@ export async function runScaffold(input: {
   return { exitCode: 0, stdout: formatScaffolded(store, entries), stderr: '' };
 }
 
-/** Parsed `kb scaffold` options. */
 interface ScaffoldOptions {
-  /** Whether `--force` was supplied. */
   force: boolean;
-  /** Whether `--help`/`-h` was supplied. */
   help: boolean;
   /** Explicit store name from `--kb`, or `null` for ancestor-walk discovery. */
   kb: string | null;

@@ -12,7 +12,6 @@ import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
 import { resolveStore } from '../resolve-store.ts';
 import type { CommandOutput } from './check.ts';
 
-/** Usage text for `kb taxonomy`. */
 export const TAXONOMY_HELP = `Usage: kb taxonomy init [options]
 
 Derive a starting taxonomy from the notes a knowledge base already holds, so a
@@ -39,9 +38,9 @@ Exit codes:
  * Runs `kb taxonomy`: parses options, resolves the store, derives the domains its notes imply, and declares them.
  *
  * The derivation reads the same enumeration `kb check` does, so a store back-filled by this command reports no
- * taxonomy drift. A store the registry marks `readonly` is refused, matching `kb-curate --apply`. A malformed
- * `.kb/config.yaml` or `.kb/taxonomy.yaml` surfaces as a `KbLoaderError` and maps to exit 2; any other error
- * propagates to the caller as a real crash.
+ * taxonomy drift. A store that the registry marks `readonly` is refused. A malformed `.kb/config.yaml` or
+ * `.kb/taxonomy.yaml` surfaces as a `KbLoaderError` and maps to exit 2; any other error propagates to the caller as a
+ * real crash.
  */
 export async function runTaxonomy(input: {
   argv: readonly string[];
@@ -87,15 +86,11 @@ export async function runTaxonomy(input: {
   }
 }
 
-/** Parsed `kb taxonomy` options. */
 interface TaxonomyOptions {
-  /** The subcommand to run, or `null` when none was given. */
   subcommand: 'init' | null;
   /** Explicit store name from `--kb`, or `null` for ancestor-walk discovery. */
   kb: string | null;
-  /** Whether `--merge` was supplied. */
   merge: boolean;
-  /** Whether `--help`/`-h` was supplied. */
   help: boolean;
 }
 

@@ -7,8 +7,9 @@ import type { KbRegistryEntry } from '../types.ts';
 export type SelectKbChoice = { kind: 'kb'; index: number } | { kind: 'none' } | { kind: 'cancel' };
 
 /**
- * Presents the registered KBs and resolves the user's choice. Injected into `runSetDefault` so the dispatcher itself
- * stays free of terminal I/O and remains directly testable; the real implementation is {@link readlineSelectKbPrompt}.
+ * Presents the registered KBs and resolves the user's choice. A command takes it as an injected dependency, so that the
+ * command stays free of terminal I/O and remains directly testable; the real implementation is
+ * {@link readlineSelectKbPrompt}.
  */
 export type SelectKbPrompt = (input: {
   entries: readonly KbRegistryEntry[];
@@ -45,8 +46,7 @@ export function parseSelection(answer: string, kbCount: number): SelectKbChoice 
 
 /**
  * A readline-backed {@link SelectKbPrompt}: it prints the selection list, reads a line, and re-prompts until the answer
- * resolves to a choice. This is the feature's sole interactive seam — `cli/index.ts` supplies it only when stdin is a
- * TTY, and other commands (e.g. `kb create`) can reuse it for their own interactive default-KB selection.
+ * resolves to a choice.
  */
 export const readlineSelectKbPrompt: SelectKbPrompt = async ({ entries, currentDefaultName }) => {
   const rl = createInterface({ input: process.stdin, output: process.stdout });

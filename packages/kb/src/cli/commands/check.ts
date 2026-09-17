@@ -10,7 +10,6 @@ import { resolveStore } from '../resolve-store.ts';
 import { resolveChangedPaths } from '../targeting/resolve-changed-paths.ts';
 import { selectNotes } from '../targeting/select-notes.ts';
 
-/** The outcome of a command run: the exit code plus the streams to write. */
 export interface CommandOutput {
   /** Process exit code: 0 clean, 1 error-severity findings, 2 usage/config error. */
   exitCode: 0 | 1 | 2;
@@ -18,7 +17,6 @@ export interface CommandOutput {
   stderr: string;
 }
 
-/** Usage text for `kb check`. */
 export const CHECK_HELP = `Usage: kb check [paths...] [options]
 
 Validate notes in a knowledge base against its tag aliases and cross-note
@@ -51,10 +49,9 @@ Exit codes:
 /**
  * Runs `kb check`: parses options, resolves the store, runs the shared `check`, and formats the report.
  *
- * Store resolution composes the package's own exports inline — `findKbRoot` for the default ancestor-walk and
- * `tryLoadKbRegistry` for an explicit `--kb <name>`. The lookup is read-only, so a store's registry `readonly` flag
- * is ignored. A malformed `.kb/config.yaml`/`tag-aliases.yaml` surfaces as a `KbLoaderError` from `check`, which maps
- * to exit 2; any other error from `check` propagates to the caller as a real crash.
+ * The command writes nothing to the store, so it ignores the registry's `readonly` flag. A malformed
+ * `.kb/config.yaml`/`tag-aliases.yaml` surfaces as a `KbLoaderError` from `check`, which maps to exit 2; any other
+ * error from `check` propagates to the caller as a real crash.
  */
 export async function runCheck(input: { argv: readonly string[]; cwd: string; home?: string }): Promise<CommandOutput> {
   let options: CheckOptions;
@@ -106,13 +103,10 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
   return { exitCode: summary.errors > 0 ? 1 : 0, stdout, stderr: '' };
 }
 
-/** Parsed `kb check` options. */
 interface CheckOptions {
   /** Explicit store name from `--kb`, or `null` for ancestor-walk discovery. */
   kb: string | null;
-  /** Whether `--json` was supplied. */
   json: boolean;
-  /** Whether `--help`/`-h` was supplied. */
   help: boolean;
   /** Positional glob/path/directory arguments selecting which notes to check; empty for a whole-vault run. */
   patterns: string[];

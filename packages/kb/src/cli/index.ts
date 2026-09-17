@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the bin's resolved exit code must reach the OS, and this module is loaded only via `bin/kb.js`, never imported as a library; throwing-to-set-exitCode would lose the explicit 0/1/2 contract. */
-/* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
+/* eslint n/no-process-exit: off -- The bin's resolved exit code must reach the OS, and this module is loaded only by `bin/kb.js`. */
+/* eslint unicorn/no-process-exit: off -- The bin's resolved exit code must reach the OS, and this module is loaded only by `bin/kb.js`. */
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
@@ -10,12 +10,12 @@ import { readlineSelectKbPrompt } from './select-kb-prompt.ts';
 
 /**
  * Entry point for the `kb` bin. The module is only ever loaded via `bin/kb.js`'s dynamic import of the build output,
- * so `main` runs unconditionally on load — there is no entry-point guard. It dispatches the parsed argv through the
- * pure {@link run} dispatcher, writes the resolved streams, and exits with the resolved code.
+ * so `main` runs unconditionally on load. It dispatches the parsed argv through the pure {@link run} dispatcher, writes
+ * the resolved streams, and exits with the resolved code.
  *
- * An unexpected throw from a command (e.g. a rule-engine crash that `runCheck` deliberately re-propagates) is caught
- * here at the process seam and exits 2 — never the bin wrapper's `ERR_MODULE_NOT_FOUND` "failed to load" branch, and
- * never exit 1, which is reserved for "error-severity findings present".
+ * An unexpected throw from a command, such as a rule-engine crash that `runCheck` re-propagates, is caught here and
+ * exits 2. Uncaught, it would reach the bin wrapper's "failed to load" branch and exit 1, which is reserved for
+ * error-severity findings.
  */
 async function main(): Promise<void> {
   let output: CommandOutput;

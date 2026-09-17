@@ -14,8 +14,8 @@ import { run } from '../run.ts';
 
 const { check: realCheck } = await vi.importActual<typeof import('../../check/check.ts')>('../../check/check.ts');
 
-// Mock `check` with a passthrough to the real implementation so most tests run
-// against real stores; the non-loader-error pass-through test overrides it per-call.
+// Mock `check` with a passthrough to the real implementation so that most tests run against real stores; a test that
+// needs a different result overrides it for one call.
 vi.mock('../../check/check.ts', async () => {
   const actual = await vi.importActual<typeof import('../../check/check.ts')>('../../check/check.ts');
   return { ...actual, check: vi.fn(actual.check) };
