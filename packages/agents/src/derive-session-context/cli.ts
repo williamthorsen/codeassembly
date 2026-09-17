@@ -1,38 +1,15 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isMain()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 /**
  * CLI entry for the session-context deriver.
  *
- * - Resolves the current branch (via `git branch --show-current`, or the `--branch` flag for tests).
- * - Reads project + global preferences via `read-preferences.ts`.
- * - Idempotent: if a current-schema manifest already exists at the canonical path, reads and returns
- *   it. Otherwise composes a fresh manifest, writes it, and returns it. Stale-schema or corrupt
- *   manifests are overwritten in place.
- * - Single mutation point: the `--set-*` / `--clear-*` flags read-or-compose a manifest, apply the
- *   mutation, and emit the updated JSON, writing the file atomically when a stored URL changed. A
- *   mutation that resolves to the value already held writes nothing. With no mutation flag the
- *   read-or-compose behavior is unchanged.
+ * Every diagnostic goes to stderr, so stdout carries the JSON manifest alone. An error that escapes the derivation
+ * exits 1.
+ *
  * - Default-branch invariant: a manifest whose branch is the default branch carries no `ticket_url`
  *   and no `pr_url`. The default branch is derived from no ticket and belongs to no pull request, so
  *   a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. It is the one
  *   thing that makes a no-mutation cache hit write: an already-stored value is cleared, once.
- * - Writes JSON to stdout, diagnostics to stderr. Exit 0 on success; exit 1 on hard failures
- *   (detached HEAD, no git, schema-validation error).
- *
- * Flags:
- *   --branch <name>      Override branch lookup (used by tests and the smoke harness).
- *   --cwd <path>         Caller-supplied base directory for repo-relative paths (`.agents/`). When omitted, the base
- *                        resolves to the git repo root (worktree-aware), falling back to the current working directory.
- *                        Callers that already hold the root (e.g. `resolve-frontmatter.sh`) pass it explicitly; tests
- *                        use it for isolation. See `resolveProjectRoot` for the full precedence.
- *   --home <path>        Override home directory for `~/.agents/preferences.yaml` lookup.
- *                        Defaults to `os.homedir()`.
- *   --set-ticket-url <url>  Store `url` as the manifest's `ticket_url` (write-through overwrite).
- *                           Refused on the default branch, where it reports and leaves the field null.
- *   --set-pr-url <url>      Store `url` as the manifest's `pr_url` (write-through overwrite).
- *                           Refused on the default branch, as `--set-ticket-url` is.
- *   --clear-ticket-url      Reset the manifest's `ticket_url` to `null`.
- *   --clear-pr-url          Reset the manifest's `pr_url` to `null`.
  */
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -70,19 +47,14 @@ const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
 /** The manifest fields the mutation flags write, and the ones the default-branch invariant governs. */
 const STORED_URL_FIELDS = ['ticket_url', 'pr_url'] as const;
 
-/** One of the stored-URL fields. Derived from `STORED_URL_FIELDS` so the two cannot drift apart. */
 type StoredUrlField = (typeof STORED_URL_FIELDS)[number];
 
-/**
- * A request to set or clear one stored URL field. `value` is the new value: a string for a
- * `--set-*` flag, `null` for a `--clear-*` flag.
- */
+/** A request to set or clear one stored URL field. */
 interface ManifestMutation {
   readonly field: StoredUrlField;
   readonly value: string | null;
 }
 
-/** Parsed CLI args. `mutations` is empty when no `--set-*`/`--clear-*` flag was supplied. */
 interface ParsedArgs {
   readonly branch: string | null;
   readonly cwd: string | null;
@@ -90,7 +62,7 @@ interface ParsedArgs {
   readonly mutations: readonly ManifestMutation[];
 }
 
-/** Top-level runner: parses args, derives the manifest, writes JSON to stdout. */
+/** Executes the deriver from `process.argv`, writing the JSON manifest to stdout. */
 async function main(): Promise<void> {
   try {
     const parsed = parseArgs(process.argv.slice(2));
@@ -113,13 +85,8 @@ async function main(): Promise<void> {
 }
 
 /**
- * Idempotent derivation with an optional mutation point. With no `mutations`, reads an existing
- * current-schema manifest or composes and writes a fresh one. With `mutations`, obtains the base
- * manifest the same way, applies the set/clear operations, and writes the result atomically. A
- * fresh compose carries previously stored URLs forward from any prior file so a required-field
- * bump never silently drops them. The default-branch invariant is enforced last, over whatever the
- * earlier steps produced, so it covers a refused mutation, a carry-forward, and an already-stored
- * value read from cache alike.
+ * Derives the manifest for `branch` idempotently, applying any mutations to the manifest that the read-or-compose path
+ * produced. The default-branch invariant is enforced last, over whatever the earlier steps produced.
  *
  * @internal Exported for testing.
  */
@@ -152,20 +119,15 @@ export async function deriveSessionContext(input: {
   const mutated = mutations.length === 0 ? base.manifest : applyMutations(base.manifest, mutations);
   const final = enforceDefaultBranchInvariant(mutated, mutations);
 
-  // Write when the read-or-compose path owes one, or when this run changed a stored URL. Comparing
-  // the two fields rather than object identity is what keeps a refused mutation from rewriting a
-  // clean cache hit: it produces a new object holding the values it started with.
+  // A refused mutation returns a new object holding the values already stored, so comparing object identity would
+  // report a change that did not happen.
   if (base.needsWrite || !hasSameStoredUrls(base.manifest, final)) {
     await writeManifest(newPath, final);
   }
   return final;
 }
 
-/**
- * Reads a manifest file at `filePath`. Returns the parsed manifest when the file exists, parses
- * as JSON, and has every required field. Returns `null` when the file does not exist, fails to
- * parse, or is missing required fields (caller will overwrite).
- */
+/** Reads the manifest at `filePath`, or returns `null` when there is no current-schema manifest to read. */
 async function tryReadManifest(filePath: string): Promise<BranchManifest | null> {
   let text: string;
   try {
@@ -180,9 +142,7 @@ async function tryReadManifest(filePath: string): Promise<BranchManifest | null>
   try {
     parsed = JSON.parse(text);
   } catch {
-    // Corrupt manifest: caller composes afresh. Surface a one-line diagnostic so an operator
-    // can distinguish a normal cache miss (ENOENT) from a recurring storage problem (every call
-    // recomposes because the cached file keeps becoming corrupt).
+    // Warn so that an operator can distinguish a normal cache miss from a file that keeps becoming corrupt.
     process.stderr.write(`derive-session-context: warning: manifest at ${filePath} is corrupt; recomposing\n`);
     return null;
   }
@@ -207,10 +167,8 @@ function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMu
  * branch's association but whichever one the last session happened to resolve, and a later session
  * auto-resolving from it would proceed against an arbitrary ticket or PR.
  *
- * A field holding no value is left exactly as found, absent or null alike, so a manifest already
- * satisfying the invariant is returned unchanged and needs no write. `mutations` distinguishes a
- * refused `--set-*` from the repair of a value that was already stored; both are reported, since a
- * silently vanishing URL is the harder of the two to explain.
+ * A field holding no value is left exactly as found, absent or null alike. Both a refused `--set-*` and the repair of
+ * a value already stored are reported, since a silently vanishing URL is the harder of the two to explain.
  */
 function enforceDefaultBranchInvariant(
   manifest: BranchManifest,
@@ -255,12 +213,8 @@ function hasSameStoredUrls(a: BranchManifest, b: BranchManifest): boolean {
 }
 
 /**
- * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly
- * composed one. The prior file is read best-effort and at the raw-JSON level — deliberately *not*
- * gated on `isCurrentSchema`, because the point of carry-forward is to survive a required-field
- * bump that makes the prior manifest stale. A missing or unparseable file yields no carry-forward,
- * the same outcome as a first compose. Only string values overlay; the composed `null` defaults
- * stand otherwise.
+ * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly composed one. The
+ * prior file is read at the raw-JSON level, so a required-field bump that leaves it stale still yields its stored URLs.
  */
 async function carryForwardStoredUrls(composed: BranchManifest, priorPath: string): Promise<BranchManifest> {
   let text: string;
@@ -276,9 +230,7 @@ async function carryForwardStoredUrls(composed: BranchManifest, priorPath: strin
   try {
     prior = JSON.parse(text);
   } catch {
-    // Best-effort salvage: a corrupt prior file means we cannot carry stored URLs forward, but a
-    // fresh compose is still the right outcome. Surface a diagnostic so an operator can explain a
-    // vanished `ticket_url`/`pr_url` rather than debugging a silent loss.
+    // Warn so that an operator can explain a vanished `ticket_url` or `pr_url`.
     process.stderr.write(
       `derive-session-context: warning: prior manifest at ${priorPath} is corrupt; stored URLs not carried forward\n`,
     );
@@ -295,9 +247,8 @@ async function carryForwardStoredUrls(composed: BranchManifest, priorPath: strin
 }
 
 /**
- * Result of obtaining the manifest before any mutation: the manifest itself and whether the
- * read-or-compose path that produced it still needs to be written to disk. The fast-path read
- * sets `needsWrite: false`; the old-format migration and the fresh compose set `needsWrite: true`.
+ * Result of obtaining the manifest before any mutation: the manifest itself and whether the read-or-compose path that
+ * produced it still needs to be written to disk.
  */
 interface BaseManifestResult {
   readonly manifest: BranchManifest;
@@ -305,9 +256,8 @@ interface BaseManifestResult {
 }
 
 /**
- * Obtains the base manifest via the existing read-or-compose cascade: fast-path read of the
- * canonical file, old-format read with migration, then a fresh compose. A fresh compose overlays
- * any previously stored URLs from a prior file so they survive a required-field bump.
+ * Obtains the base manifest by cascade: a fast-path read of the canonical file, an old-format read with migration,
+ * then a fresh compose.
  */
 async function resolveBaseManifest(input: {
   cwd: string;
@@ -328,8 +278,7 @@ async function resolveBaseManifest(input: {
   }
 
   const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
-  // Resolve the git remote only here, on the fresh-compose path — the cache-hit fast path above
-  // returns without paying for it. Used to seed `pr_url` for a `PR-<n>` identity.
+  // Resolve the git remote only on this path, so that a cache hit does not pay for it.
   const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
   const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
   const composed = composeManifest({
@@ -364,11 +313,8 @@ async function writeManifest(targetPath: string, manifest: BranchManifest): Prom
 }
 
 /**
- * True when `value` is an object containing every required manifest field with the right type.
- * Hand-rolled type narrowing rather than Zod because the schema is small, stable, and Zod is not
- * in use elsewhere in this module. Fields not checked here (e.g., `project_slug`, `created_at`) are
- * present-but-unchecked; the downstream consumers tolerate `unknown` for those. A field a consumer
- * dereferences belongs in the checks below, so a corrupt value recomposes rather than throwing.
+ * True when `value` is an object containing every required manifest field with the right type. A field dereferenced by
+ * a consumer belongs in the checks below, so a corrupt value recomposes rather than throwing.
  */
 function isCurrentSchema(value: unknown): value is BranchManifest {
   if (!isRecord(value)) {
@@ -379,9 +325,6 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
       return false;
     }
   }
-  // Type-narrow the fields most load-bearing for downstream code paths. A hand-edited or
-  // corrupt manifest that passed presence checks but failed these is treated as stale and
-  // recomposed, matching the "stale-schema overwrite" path.
   if (!isStringOrNull(value.ticket_id) || !isStringOrNull(value.ticket_ref)) {
     return false;
   }
@@ -394,9 +337,6 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
   if (typeof value.default_branch !== 'string' || typeof value.branch_name !== 'string') {
     return false;
   }
-  // The stored-URL fields are optional and not part of REQUIRED_MANIFEST_FIELDS, so a manifest
-  // lacking them stays valid. When present, they must be `string | null`; a wrong-typed value
-  // marks the manifest stale and triggers a recompose.
   if ('ticket_url' in value && !isStringOrNull(value.ticket_url)) {
     return false;
   }
@@ -409,16 +349,14 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
   return true;
 }
 
-/** True when `value` is a string or `null` (matches the `string | null` union in `BranchManifest`). */
+/** True when `value` is a string or `null`. */
 function isStringOrNull(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
 
 /**
- * Best-effort resolution of the git remote's fetch URL at `cwd` for the named remote. Returns the
- * raw URL (e.g. `git@github.com:owner/repo.git`) or null on any failure — no remote, not a git
- * repository, or `git` being unavailable — so a caller can treat an unresolvable remote as absent
- * rather than handling an error.
+ * Resolves the named git remote's fetch URL at `cwd` as git reports it, or null on any failure, which lets a caller
+ * treat an unresolvable remote as absent.
  */
 async function resolveRemoteUrl(cwd: string, remoteName: string): Promise<string | null> {
   try {
@@ -431,8 +369,7 @@ async function resolveRemoteUrl(cwd: string, remoteName: string): Promise<string
 }
 
 /**
- * Parses CLI argv. Supports `--branch <name>` and `--cwd <path>`. Throws on unknown flags or
- * missing values.
+ * Parses the CLI's argv, throwing on an unknown flag or a missing value.
  *
  * @internal Exported for testing.
  */
@@ -491,8 +428,6 @@ function consumeValue(argv: readonly string[], index: number, flag: string): str
   return value;
 }
 
-// Run as a script. Importable for tests because the file uses `isMain()` rather than a top-level
-// invocation when imported.
 if (isMain()) {
   await main();
 }
@@ -506,10 +441,8 @@ function isMain(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
-    // Fall back to `true` rather than `false`: a broken symlink during entry-point resolution
-    // most plausibly means we *are* the entry point (the CLI is being invoked through a stale link).
-    // Returning `false` here would silently no-op the CLI; running `main()` defensively at worst
-    // runs the script on an unexpected import, which surfaces an error rather than a silent skip.
+    // A resolution failure most plausibly means this module is the entry point, invoked through a stale link, and
+    // returning `false` would silently no-op the CLI.
     const message = describeError(error);
     process.stderr.write(`derive-session-context: warning: could not determine entry point: ${message}\n`);
     return true;

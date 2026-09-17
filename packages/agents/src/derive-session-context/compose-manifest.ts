@@ -1,18 +1,12 @@
-/**
- * Pure function composing the branch-manifest JSON from preferences, branch name, working
- * directory, and timestamp. No I/O.
- */
+/** Composes the branch-manifest JSON. Every function here is pure; the CLI performs the I/O. */
 import path from 'node:path';
 
 import { parseRemoteToOwnerRepo } from '../shared/parse-remote-url.ts';
 import { extractPrNumber, extractTicketId, isPrIdentifier } from './extract-ticket-id.ts';
 import type { BranchManifest, ResolvedPreferences } from './types.ts';
 
-/** Default values when not set in preferences. */
 const DEFAULT_SCM = 'github';
-/** Where artifacts are written when no `preferences.yaml` names a base directory. */
 export const DEFAULT_ARTIFACT_BASE_DIR = '~/ai-artifacts';
-/** Default remote name, used when preferences don't configure one. */
 export const DEFAULT_REMOTE_NAME = 'origin';
 const DEFAULT_REMOTE_BRANCH = 'main';
 const DEFAULT_ARTIFACT_PATHS: Readonly<Record<string, string>> = Object.freeze({
@@ -21,22 +15,13 @@ const DEFAULT_ARTIFACT_PATHS: Readonly<Record<string, string>> = Object.freeze({
   plans: 'plans',
 });
 
-/**
- * Per-`scm` pull-request URL shape: the canonical Cloud host and the path segment. Mirrors the
- * shapes documented in `pr-resolution.md`; only `owner/repo` is taken from the git remote.
- */
+/** Per-`scm` pull-request URL shape: the canonical Cloud host and the path segment, per `pr-resolution.md`. */
 const PR_URL_SHAPES: Readonly<Record<'github' | 'bitbucket', { host: string; prPath: string }>> = Object.freeze({
   github: { host: 'github.com', prPath: 'pull' },
   bitbucket: { host: 'bitbucket.org', prPath: 'pull-requests' },
 });
 
-/**
- * Composes the full manifest object. `cwd` is the working directory (used for `~` expansion,
- * relative-path resolution, and the project-slug fallback). `home` is used for `~` expansion when
- * supplied; it defaults to `os.homedir()` via the caller. `now` is the moment to stamp into
- * `created_at`. `remoteUrl` is the git remote's fetch URL (or `null`), used to seed `pr_url` for a
- * `PR-<n>` identity; absent or unresolvable leaves `pr_url` null.
- */
+/** Composes the full manifest object. */
 export function composeManifest(input: {
   preferences: ResolvedPreferences;
   branchName: string;
@@ -110,11 +95,8 @@ export function resolveArtifactBaseDir(rawBaseDir: string, cwd: string, home: st
 // region | Helpers
 
 /**
- * Resolves the ticket base URL from preferences and, when a ticket id is also known, the full
- * ticket URL built from base and id. Either is null when its inputs are absent, leaving `ticketUrl`
- * for a skill to resolve and store (e.g. GitHub, which fetches the URL via `gh`). A PR-sentinel id
- * (`PR-<n>`) is not a ticket, so no ticket URL is built for it. An explicitly stored URL overrides
- * the constructed default through `carryForwardStoredUrls`.
+ * Resolves the ticket base URL from preferences and, when a ticket id is also known, the full ticket URL built from
+ * base and id. Either is null when its inputs are absent.
  */
 function resolveTicketUrls(
   preferences: ResolvedPreferences,
@@ -137,10 +119,8 @@ function joinTicketUrl(baseUrl: string, ticketId: string): string {
 }
 
 /**
- * Builds the pull-request URL for a `PR-<n>` sentinel id from the git remote's `owner/repo` and the
- * `scm`-selected URL shape. Returns null for a non-PR id, when no remote is known, or when the
- * remote cannot be parsed to `owner/repo`. The host and path segment come from `scm`; only the
- * `owner/repo` is taken from the remote. An explicitly stored `pr_url` overrides this seeded default.
+ * Builds the pull-request URL for a `PR-<n>` sentinel id from the git remote's `owner/repo` and the `scm`-selected URL
+ * shape, or null when any of those is unavailable.
  */
 function resolvePrUrl(scm: 'github' | 'bitbucket', ticketId: string | null, remoteUrl: string | null): string | null {
   const prNumber = extractPrNumber(ticketId);
@@ -157,7 +137,6 @@ function resolvePrUrl(scm: 'github' | 'bitbucket', ticketId: string | null, remo
 
 /** Formats a `Date` as an ISO 8601 UTC string trimmed to second precision (e.g., `2026-05-26T02:07:41Z`). */
 function formatIsoUtc(date: Date): string {
-  // `toISOString()` returns `YYYY-MM-DDTHH:mm:ss.sssZ`. Strip the fractional milliseconds.
   return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
