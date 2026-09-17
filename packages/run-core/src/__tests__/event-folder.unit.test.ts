@@ -405,8 +405,6 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Phase startedAt/completedAt timestamps --
-
   it('sets startedAt on phase_started for architecture', () => {
     const header = createHeader();
     const events: RunEvent[] = [{ t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' }];
@@ -463,8 +461,6 @@ describe('foldEvents', () => {
     expect(result.phases.holisticReview?.startedAt).toBe('2026-01-01T00:09:00Z');
     expect(result.phases.holisticReview?.completedAt).toBe('2026-01-01T00:10:00Z');
   });
-
-  // -- ReviewIteration tracking --
 
   it('builds review iteration from dispatched and completed events', () => {
     const header = createHeader();
@@ -545,8 +541,6 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Implementation phase folding --
-
   it('sets implementation to in_progress on phase_started', () => {
     const header = createHeader();
     const events: RunEvent[] = [{ t: '2026-01-01T00:05:00Z', event: 'phase_started', phase: 'implementation' }];
@@ -601,8 +595,6 @@ describe('foldEvents', () => {
       qualityGates: { typecheck: 'pass', lint: 'pass', tests: 'pass' },
     });
   });
-
-  // -- Planning phase folding --
 
   it('sets planning to in_progress on phase_started', () => {
     const header = createHeader();
@@ -677,8 +669,6 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview?.reviewers?.['code-reviewer']?.reReviewCriticality).toBe('low');
     expect(result.phases.parallelReview?.reviewers?.['unknown-reviewer']).toBeUndefined();
   });
-
-  // -- Usage metrics folding --
 
   it('folds usage metrics from reviewer_completed into ReviewerInfo', () => {
     const header = createHeader();

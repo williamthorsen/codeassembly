@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { v1StatusSchema } from '../status-json-schema.ts';
 
-// -- fixtures --
-
 /** Builds the smallest v1 status object that the schema accepts. */
 function minimalValid(): Record<string, unknown> {
   return {

@@ -14,8 +14,6 @@ import {
   v2RunIndexSchema,
 } from '../run-index-schema.ts';
 
-// -- fixtures --
-
 /** Builds the smallest v2 context block that the schema accepts. */
 function minimalContext(): Record<string, unknown> {
   return {
@@ -51,8 +49,6 @@ function fullArtifact(): Record<string, unknown> {
     createdAt: '2026-01-01T00:00:00Z',
   };
 }
-
-// -- enum schemas --
 
 describe('runStatusSchema', () => {
   it.each(['in_progress', 'completed', 'failed', 'needs_manual_review'])('accepts "%s"', (value) => {
@@ -180,8 +176,6 @@ describe('phasesSchema', () => {
     expect(phasesSchema.safeParse({ customPhase: { status: 'in_progress' } }).success).toBe(true);
   });
 });
-
-// -- phase decisions --
 
 describe('phaseDecisionSchema', () => {
   it('accepts entry with run and reason', () => {
