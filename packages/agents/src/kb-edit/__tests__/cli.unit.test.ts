@@ -27,7 +27,7 @@ function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
-/** Creates a temporary KB holding one seed note, and returns both paths. */
+/** Creates a temporary KB containing one seed note, and returns both paths. */
 async function makeKbWithNote(): Promise<{ kbPath: string; notePath: string }> {
   const kbPath = await mkdtemp(join(tmpdir(), 'kb-edit-cli-'));
   await mkdir(join(kbPath, '.kb'), { recursive: true });
@@ -230,7 +230,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('replaces tags via --retag without bumping updated and surfaces canonicalization audit', async () => {
+  it('replaces tags via --retag without bumping updated and reports canonicalization audit', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
 
     const result = await runEdit({
@@ -402,7 +402,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('commits both writes on --supersede-with and surfaces KB-relative pointers', async () => {
+  it('commits both writes on --supersede-with and reports KB-relative pointers', async () => {
     const { kbPath, notePath: oldPath } = await makeKbWithNote();
     const newPath = join(kbPath, 'New.md');
     await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'Replacement'), 'utf8');
@@ -524,7 +524,7 @@ describe(runEdit, () => {
     const { kbPath, notePath: oldPath } = await makeKbWithNote();
     const newPath = join(kbPath, 'New.md');
     await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'Replacement'), 'utf8');
-    // Declare an alias so `deprecated` canonicalizes to `archived` when added to the old note.
+    // Declare an alias so that `deprecated` canonicalizes to `archived` when added to the old note.
     await writeFile(join(kbPath, '.kb', 'tag-aliases.yaml'), 'aliases:\n  archived: [deprecated]\n', 'utf8');
 
     const result = await runEdit({
@@ -547,7 +547,7 @@ describe(runEdit, () => {
     await mkdir(join(kbPath, '.kb'), { recursive: true });
     const oldPath = join(kbPath, 'Old.md');
     const newPath = join(kbPath, 'New.md');
-    // The old note already carries the deprecated tag.
+    // The old note already has the deprecated tag.
     await writeFile(
       oldPath,
       '---\ntitle: Old\nrecordType: assertion\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [legacy, deprecated]\ntype: howto\n---\n\nbody\n',
@@ -643,7 +643,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('is idempotent: re-appending an existing reference does not duplicate it', async () => {
+  it('is idempotent: Re-appending an existing reference does not duplicate it', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
     const argv = [notePath, '--add-addressed-by', '[[fix]]'];
     const baseInput = { stdin: bodyStream(''), startDir: kbPath, now: NOW, home: kbPath };
@@ -663,7 +663,7 @@ describe(runEdit, () => {
   it('reports a per-record note-parse failure while writing the valid targets', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
     const badType = join(kbPath, 'BadType.md');
-    // A recordType outside the assertion contract: the target fails to load, so it is skipped.
+    // A recordType outside the assertion contract: The target fails to load, so it is skipped.
     await writeFile(
       badType,
       '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [x]\n---\n\nbody\n',

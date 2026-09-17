@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
@@ -177,7 +177,7 @@ function absoluteNotePath(input: { path: string; startDir: string }): string {
 
 /**
  * Resolves the writable KB that owns the note at `notePath`. The walk starts at the note's directory, so the KB
- * context tracks where the note lives rather than where the helper was invoked.
+ * context depends on where the note is rather than on where the helper was invoked.
  */
 async function resolveKbForPath(input: {
   notePath: string;
@@ -192,8 +192,8 @@ async function resolveKbForPath(input: {
     return { ok: true, kb: resolved.kb };
   }
   switch (resolved.reason) {
-    // kb-edit never passes --kb, so of the three reasons grouped here only `missing-destination` can arise. The other
-    // two are mapped alongside it, which keeps the switch total against the shared resolver's outcome union.
+    // Because kb-edit never passes --kb, of the three reasons grouped here only `missing-destination` can arise. The
+    // other two are mapped alongside it, which keeps the switch total against the shared resolver's outcome union.
     case 'missing-destination':
     case 'no-kb-resolvable':
     case 'no-default':
@@ -234,7 +234,7 @@ async function loadAliasesForKb(input: { kb: ResolvedKb }): Promise<AliasMap> {
 
 /**
  * Loads tag aliases, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map and emitting a warning
- * to stderr so the operator can see why canonicalization was skipped.
+ * to stderr so that the operator can see why canonicalization was skipped.
  */
 async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasMap> {
   try {
@@ -426,7 +426,7 @@ async function runSupersedeWith(input: {
  * failure on one target becomes that record's result and the rest of the batch still runs. An unexpected throw
  * propagates to `main`.
  *
- * The operation adds no duplicate reference, so the batch needs no cross-file rollback.
+ * Because the operation adds no duplicate reference, the batch needs no cross-file rollback.
  */
 async function runAddAddressedBy(input: {
   args: Extract<ParsedArgs, { operation: 'add-addressed-by' }>;
@@ -482,7 +482,7 @@ async function editOneAddressedBy(input: {
 /** Projects a top-level recoverable `EditFailure` onto a per-record failure entry, attaching the record's path. */
 function toRecordFailure(path: string, failure: EditResult): Extract<AddAddressedByResult, { ok: false }> {
   if (failure.ok) {
-    // Unreachable: the helpers feeding this only return failures here.
+    // Unreachable: The helpers that supply this function's input only return failures here.
     throw new Error(`internal error: expected a failure result for ${path}`);
   }
   return {
@@ -532,7 +532,7 @@ function composeParsedArgs(input: { positionals: string[]; selectedOps: Selected
 
   const [op] = selectedOps;
   if (op === undefined) {
-    // Unreachable: length checks above guarantee a single entry.
+    // Unreachable: Length checks above guarantee a single entry.
     throw new Error('internal error: missing operation after length checks');
   }
 
@@ -557,8 +557,8 @@ function composeParsedArgs(input: { positionals: string[]; selectedOps: Selected
       return { operation: 'add-addressed-by', paths: positionals, references };
     }
     case 'supersede-with':
-      // Empty `--supersede-with` value is rejected here so it surfaces as a clear `invalid-args`, not a confusing
-      // EISDIR downstream when `''` resolves to the start directory.
+      // Reject an empty `--supersede-with` value here so that the helper reports it as a clear `invalid-args`, not a
+      // confusing EISDIR downstream when `''` resolves to the start directory.
       if (op.value === null || op.value === '') {
         throw new Error('--supersede-with requires a value');
       }
@@ -577,7 +577,7 @@ function singlePositional(positionals: string[]): string {
     throw new Error(`unexpected extra positional argument: ${second}`);
   }
   if (first === undefined) {
-    // Unreachable: the caller's length check guarantees at least one positional.
+    // Unreachable: The caller's length check guarantees at least one positional.
     throw new Error('missing required <path> positional argument');
   }
   return first;
@@ -585,7 +585,8 @@ function singlePositional(positionals: string[]): string {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. A `realpathSync` failure warns on stderr and returns `false`.
+ * symlinked invocation path still matches. On a `realpathSync` failure, the function warns on stderr and returns
+ * `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

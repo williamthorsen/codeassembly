@@ -6,7 +6,7 @@ import type { EnumeratedNote } from '@williamthorsen/kb/check';
 interface SupersedeNode {
   /** The absolute path of the note that supersedes this one, resolved from `superseded-by`; `null` when absent. */
   supersededBy: string | null;
-  /** The absolute path of the note this one supersedes, resolved from `supersedes`; `null` when absent. */
+  /** The absolute path of the note that this one supersedes, resolved from `supersedes`; `null` when absent. */
   supersedes: string | null;
 }
 

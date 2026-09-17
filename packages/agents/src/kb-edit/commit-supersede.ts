@@ -15,14 +15,14 @@ export interface CommitSupersedeIo {
 
 const REAL_IO: CommitSupersedeIo = { writeFile, rename, unlink };
 
-/** Successful commit: both renames succeeded. */
+/** Successful commit: Both renames succeeded. */
 export interface CommitSuccess {
   ok: true;
 }
 
 /**
- * Commit aborted and the rollback also failed: the old note holds either its edited content or a partial rollback, and
- * the new note is unchanged.
+ * Commit aborted and the rollback also failed: The old note contains either its edited content or a partial rollback,
+ * and the new note is unchanged.
  */
 export interface CommitFailure {
   ok: false;
@@ -35,9 +35,9 @@ export type CommitOutcome = CommitSuccess | CommitFailure;
  * Commits two pre-validated note writes with best-effort atomicity: stages each write in a temp file, and restores the
  * old note's captured original bytes when the second rename fails.
  *
- * Every failure throws, which keeps a rename failure uniform with any other I/O failure. The one exception is a
- * rollback that itself fails: it returns `{ ok: false }`, because the two notes are then inconsistent and only the
- * caller can report that.
+ * The function throws on every failure, which keeps a rename failure uniform with any other I/O failure. The one
+ * exception is a rollback that itself fails: In that case the function returns `{ ok: false }`, because the two notes
+ * are then inconsistent and only the caller can report that.
  */
 export async function commitSupersede(input: {
   oldPath: string;
@@ -105,7 +105,7 @@ async function tryRollbackOld(input: {
   }
 }
 
-/** Deletes a temp file, ignoring a failure so the caller's own error is the one that surfaces. */
+/** Deletes a temp file, ignoring a failure so that the caller's own error is the one reported. */
 async function unlinkQuietly(io: CommitSupersedeIo, filePath: string): Promise<void> {
   try {
     await io.unlink(filePath);
