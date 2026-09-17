@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { Client } from '@modelcontextprotocol/sdk/client';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { v3RunIndexSchema } from 'codeassembly-run-core';
+import { runEventSchema, v3RunIndexSchema } from 'codeassembly-run-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createServer } from '../server.ts';
@@ -255,7 +255,7 @@ describe('full lifecycle via protocol', () => {
   });
 });
 
-describe('review cycle events - all 13 event types', () => {
+describe('review cycle events - every run event type', () => {
   it('emits and reconstructs a full review cycle', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
     cleanups.push(cleanup);
@@ -304,6 +304,22 @@ describe('review cycle events - all 13 event types', () => {
       arguments: {
         runDir: mainRunDir,
         event: { event: 'phase_started', phase: 'review' },
+      },
+    });
+
+    await client.callTool({
+      name: 'emit_event',
+      arguments: {
+        runDir: mainRunDir,
+        event: { event: 'waiting_for_input', reason: 'permission_prompt' },
+      },
+    });
+
+    await client.callTool({
+      name: 'emit_event',
+      arguments: {
+        runDir: mainRunDir,
+        event: { event: 'input_received' },
       },
     });
 
@@ -481,22 +497,8 @@ describe('review cycle events - all 13 event types', () => {
 
     const allEventNames = [...mainEventNames, ...failEventNames];
 
-    const expected13 = [
-      'run_started',
-      'run_completed',
-      'run_failed',
-      'phase_decision',
-      'phase_started',
-      'phase_completed',
-      'reviewer_dispatched',
-      'reviewer_completed',
-      'coder_fix_started',
-      'coder_fix_completed',
-      're_review_dispatched',
-      're_review_completed',
-      'artifact_written',
-    ];
-    for (const eventType of expected13) {
+    const declaredEventTypes = runEventSchema.options.map((option) => option.shape.event.value);
+    for (const eventType of declaredEventTypes) {
       expect(allEventNames).toContain(eventType);
     }
 
