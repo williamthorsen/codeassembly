@@ -42,8 +42,6 @@ describe(composeEnvelope, () => {
   });
 
   it('omits every unresolvable context field rather than carrying its path placeholder', () => {
-    // The placeholders exist so an event still lands somewhere on disk. Carrying one into the envelope would leave a
-    // consumer unable to tell an unresolved repo from one genuinely named `_no-repo`.
     const envelope = composeEnvelope({
       id: ID,
       now: NOW,

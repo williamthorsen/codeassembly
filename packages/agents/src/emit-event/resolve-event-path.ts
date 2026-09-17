@@ -2,13 +2,11 @@ import path from 'node:path';
 
 import { sanitizeBranch } from '../shared/branch-helpers.ts';
 
-/** The events root, relative to the home directory the helper writes under. */
 const EVENTS_ROOT = ['.codeassembly', 'events'];
 
 /**
- * Path segments substituted for an unresolvable field. An event with no resolvable repo, branch, or session is still
- * appended — under these segments — rather than dropped, so a session on a detached HEAD or outside a git repository
- * still produces a readable log.
+ * Path segments substituted for the context fields that do not resolve, so that an event still lands in a readable
+ * log when its context is incomplete.
  */
 export const PLACEHOLDERS = {
   repo: '_no-repo',

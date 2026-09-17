@@ -6,7 +6,6 @@ import { resolveEventPath } from '../resolve-event-path.ts';
 
 const HOME = '/home/agent';
 
-/** The events root every resolved path hangs under. */
 const ROOT = path.join(HOME, '.codeassembly', 'events');
 
 describe(resolveEventPath, () => {
@@ -17,8 +16,6 @@ describe(resolveEventPath, () => {
   });
 
   it('sanitizes the branch the way the branch manifest does', () => {
-    // The branch segment must agree with the on-disk spelling the branch manifest uses, so a reader can line up an
-    // event log with the artifacts of the branch that produced it.
     const resolved = resolveEventPath({ home: HOME, repo: 'owner/name', branch: 'MAC-42/feat/thing', session: 's' });
 
     expect(resolved).toBe(path.join(ROOT, 'owner', 'name', 'MAC-42-feat-thing', 's.jsonl'));
