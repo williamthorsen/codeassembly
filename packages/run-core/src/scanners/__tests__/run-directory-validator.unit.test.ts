@@ -11,6 +11,7 @@ vi.mock('node:fs/promises', () => ({
   readFile: mockedReadFile,
 }));
 
+/** Mocks `readFile` to resolve the mapped content for a known path and to reject with ENOENT for any other. */
 function mockFileContents(pathContentMap: Record<string, string>): void {
   mockedReadFile.mockImplementation((path: string) => {
     const content = pathContentMap[path];
@@ -23,12 +24,14 @@ function mockFileContents(pathContentMap: Record<string, string>): void {
   });
 }
 
+/** Mocks `readFile` to reject every read with ENOENT. */
 function mockEnoent(): void {
   const error = new Error('ENOENT: no such file or directory');
   Object.assign(error, { code: 'ENOENT' });
   mockedReadFile.mockRejectedValue(error);
 }
 
+/** Builds the smallest v2 run index that the schema accepts. */
 function minimalV2(): Record<string, unknown> {
   return {
     version: 2,
@@ -46,6 +49,7 @@ function minimalV2(): Record<string, unknown> {
   };
 }
 
+/** Builds the smallest v1 status object that the schema accepts. */
 function minimalV1(): Record<string, unknown> {
   return {
     runId: 'test-run',
@@ -59,6 +63,7 @@ function minimalV1(): Record<string, unknown> {
   };
 }
 
+/** Builds a v3 run-index header: the required context fields, plus a `mode` and a `model` in the config. */
 function minimalV3Header(): Record<string, unknown> {
   return {
     version: 3,

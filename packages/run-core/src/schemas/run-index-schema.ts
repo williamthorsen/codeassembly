@@ -1,12 +1,9 @@
 import { z } from 'zod';
 
-/** Valid run-level statuses. */
 export const runStatusSchema = z.enum(['in_progress', 'completed', 'failed', 'needs_manual_review']);
 
-/** Valid phase-level statuses. */
 export const phaseStatusSchema = z.enum(['completed', 'skipped', 'failed', 'in_progress', 'approved']);
 
-/** Valid criticality levels. */
 export const criticalitySchema = z.enum(['none', 'low', 'medium', 'high']);
 
 /**
@@ -45,10 +42,8 @@ export const phaseDecisionSchema = z
   })
   .loose();
 
-/** Optional map of phase names to phase decisions. */
 export const phaseDecisionMapSchema = z.record(z.string(), phaseDecisionSchema).optional();
 
-/** A single artifact entry with 7 required string fields plus optional metadata. */
 export const artifactEntrySchema = z.object({
   filename: z.string(),
   role: z.string(),
@@ -61,7 +56,6 @@ export const artifactEntrySchema = z.object({
   note: z.string().optional(),
 });
 
-/** V2 context block: run metadata plus phases and decisions. */
 export const v2ContextSchema = z.object({
   runId: z.string(),
   projectSlug: z.string(),
@@ -95,7 +89,6 @@ export const v2ConfigSchema = z
   })
   .loose();
 
-/** Top-level V2 run-index.json schema. */
 export const v2RunIndexSchema = z.object({
   version: z.literal(2),
   context: v2ContextSchema,

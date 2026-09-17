@@ -14,6 +14,7 @@ import { scoreRun, WEIGHTS } from '../demo-scorer.ts';
 
 const NOW = new Date('2026-04-19T00:00:00Z');
 
+/** Builds a run status from per-signal inputs. With no override, `recent` is the only signal that the status sets. */
 function buildStatus(
   overrides: {
     status?: RunStatus;
@@ -88,6 +89,7 @@ function buildStatus(
   };
 }
 
+/** Builds `count` completed reviewers with no findings. */
 function buildReviewers(count: number): Record<string, ReviewerInfo> {
   const reviewers: Record<string, ReviewerInfo> = {};
   for (let i = 0; i < count; i++) {
@@ -103,6 +105,7 @@ function buildReviewers(count: number): Record<string, ReviewerInfo> {
   return reviewers;
 }
 
+/** Builds `count` events, none of which contains a usage field. */
 function buildEvents(count: number, options: { withUsage?: boolean } = {}): RunEvent[] {
   const events: RunEvent[] = [];
   for (let i = 0; i < count; i++) {
@@ -115,6 +118,7 @@ function buildEvents(count: number, options: { withUsage?: boolean } = {}): RunE
   return events;
 }
 
+/** Builds a status that sets every status-derived signal. */
 function perfectStatus(): CanonicalRunStatus {
   return buildStatus({
     status: 'completed',
@@ -127,11 +131,11 @@ function perfectStatus(): CanonicalRunStatus {
   });
 }
 
+/** Builds 50 events, a count inside the scored range, the first of which contains a usage field. */
 function perfectEvents(): RunEvent[] {
   const events: RunEvent[] = [
     { t: '2026-04-10T00:01:00Z', event: 'phase_completed', phase: 'architecture', status: 'completed', tokens: 1_000 },
   ];
-  // Add one usage-carrying event.
   for (let i = 1; i < 50; i++) {
     events.push({ t: '2026-04-10T00:00:00Z', event: 'run_started' });
   }

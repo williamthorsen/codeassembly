@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { resolveBaseDir } from '../resolve-base-dir.ts';
 
 describe('resolveBaseDir', () => {
+  /** Creates a temporary directory whose name starts with `prefix`. */
   async function createTmpDir(prefix = 'run-core-test-resolve-'): Promise<string> {
     return mkdtemp(join(tmpdir(), prefix));
   }
@@ -44,12 +45,10 @@ describe('resolveBaseDir', () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
 
-    // Create project-level preferences
     const projectAgentsDir = join(projectRoot, '.agents');
     await mkdir(projectAgentsDir, { recursive: true });
     await writeFile(join(projectAgentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: /project-level\n');
 
-    // Create global preferences
     const globalAgentsDir = join(fakeHome, '.agents');
     await mkdir(globalAgentsDir, { recursive: true });
     await writeFile(join(globalAgentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: /global-level\n');
@@ -94,7 +93,6 @@ describe('resolveBaseDir', () => {
   it('explicit baseDir parameter overrides preferences (absolute)', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
-    // Create a project-level preference that should be ignored
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: /should-be-ignored\n');

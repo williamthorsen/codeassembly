@@ -139,10 +139,12 @@ async function captureRejection(operation: () => Promise<unknown>): Promise<unkn
   throw new Error('Expected the operation to reject, but it resolved.');
 }
 
+/** Mocks `readFile` to resolve every read with `data` serialized as JSON. */
 function mockJson(data: Record<string, unknown>): void {
   mockedReadFile.mockResolvedValue(JSON.stringify(data));
 }
 
+/** Mocks `readFile` to resolve the mapped content for a known path and to reject with ENOENT for any other. */
 function mockFileContents(pathContentMap: Record<string, string>): void {
   mockedReadFile.mockImplementation((path: string) => {
     const content = pathContentMap[path];
@@ -155,12 +157,14 @@ function mockFileContents(pathContentMap: Record<string, string>): void {
   });
 }
 
+/** Mocks `readFile` to reject every read with ENOENT. */
 function mockEnoent(): void {
   const error = new Error('ENOENT: no such file or directory');
   Object.assign(error, { code: 'ENOENT' });
   mockedReadFile.mockRejectedValue(error);
 }
 
+/** Builds the smallest v1 status object that the schema accepts. */
 function minimalValid(): Record<string, unknown> {
   return {
     runId: 'test-run',
@@ -181,6 +185,7 @@ interface MinimalV2 {
   artifacts?: unknown[];
 }
 
+/** Builds the smallest v2 run index that the schema accepts. */
 function minimalV2(): MinimalV2 {
   return {
     version: 2,
@@ -554,7 +559,6 @@ describe('parseStatusFile', () => {
     it('throws on missing required fields', async () => {
       const incomplete = JSON.stringify({
         runId: 'test',
-        // missing other required fields
       });
       mockedReadFile.mockResolvedValue(incomplete);
 
@@ -572,7 +576,6 @@ describe('parseStatusFile', () => {
         task: 'test',
         startedAt: '2026-01-01T09:42:11Z',
         status: 'completed',
-        // missing phases
       });
       mockedReadFile.mockResolvedValue(noPhases);
 
@@ -943,6 +946,7 @@ describe('parseRunData', () => {
   });
 
   describe('v3 (header + log)', () => {
+    /** Builds a v3 run-index header: the required context fields, plus a `mode` and a `model` in the config. */
     function minimalV3Header(): Record<string, unknown> {
       return {
         version: 3,
@@ -961,6 +965,7 @@ describe('parseRunData', () => {
       };
     }
 
+    /** Serializes the events as JSONL, one event per line. */
     function jsonlLines(...events: Record<string, unknown>[]): string {
       return events.map((e) => JSON.stringify(e)).join('\n');
     }
@@ -1080,7 +1085,6 @@ describe('parseRunData', () => {
 
       const result = await parseRunData('/runs/test-run');
 
-      // Events before and after the corrupt line are processed correctly
       expect(result.status).toBe('completed');
       expect(result.completedAt).toBe('2026-01-01T00:10:00Z');
       expect(result.phases.architecture).toMatchObject({ status: 'completed', impactLevel: 'high' });
@@ -1231,6 +1235,7 @@ describe('parseRunData', () => {
 });
 
 describe(parseRunRawData, () => {
+  /** Builds a v3 run-index header: the required context fields, plus a `mode` and a `model` in the config. */
   function minimalV3Header(): Record<string, unknown> {
     return {
       version: 3,
@@ -1249,6 +1254,7 @@ describe(parseRunRawData, () => {
     };
   }
 
+  /** Serializes the events as JSONL, one event per line. */
   function jsonlLines(...events: Record<string, unknown>[]): string {
     return events.map((e) => JSON.stringify(e)).join('\n');
   }

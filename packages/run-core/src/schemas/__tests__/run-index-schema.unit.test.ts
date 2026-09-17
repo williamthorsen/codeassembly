@@ -16,6 +16,7 @@ import {
 
 // -- fixtures --
 
+/** Builds the smallest v2 context block that the schema accepts. */
 function minimalContext(): Record<string, unknown> {
   return {
     runId: 'test-run',
@@ -29,6 +30,7 @@ function minimalContext(): Record<string, unknown> {
   };
 }
 
+/** Builds the smallest v2 run index that the schema accepts. */
 function minimalV2(): Record<string, unknown> {
   return {
     version: 2,
@@ -37,6 +39,7 @@ function minimalV2(): Record<string, unknown> {
   };
 }
 
+/** Builds an artifact entry with every required field and no optional one. */
 function fullArtifact(): Record<string, unknown> {
   return {
     filename: 'architecture.md',
@@ -80,8 +83,6 @@ describe('criticalitySchema', () => {
     expect(criticalitySchema.safeParse(value).success).toBe(false);
   });
 });
-
-// -- phase entry --
 
 describe('phaseEntrySchema', () => {
   it('accepts empty object', () => {
@@ -153,8 +154,6 @@ describe('phaseEntrySchema', () => {
     }
   });
 });
-
-// -- phases record --
 
 describe('phasesSchema', () => {
   it('accepts empty object', () => {
@@ -236,8 +235,6 @@ describe('phaseDecisionMapSchema', () => {
   });
 });
 
-// -- artifact entry --
-
 describe('artifactEntrySchema', () => {
   it('accepts entry with all required fields', () => {
     expect(artifactEntrySchema.safeParse(fullArtifact()).success).toBe(true);
@@ -272,8 +269,6 @@ describe('artifactEntrySchema', () => {
     expect(artifactEntrySchema.safeParse('not an object').success).toBe(false);
   });
 });
-
-// -- v2 context --
 
 describe('v2ContextSchema', () => {
   it('accepts minimal valid context', () => {
@@ -327,8 +322,6 @@ describe('v2ContextSchema', () => {
     }
   });
 });
-
-// -- v2 config --
 
 describe('v2ConfigSchema', () => {
   it('accepts empty config', () => {
@@ -396,8 +389,6 @@ describe('v2ConfigSchema', () => {
     }
   });
 });
-
-// -- v2 run-index --
 
 describe('v2RunIndexSchema', () => {
   it('accepts minimal valid v2', () => {

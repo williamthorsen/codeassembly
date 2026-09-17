@@ -131,7 +131,6 @@ const inputReceivedSchema = z.object({
   event: z.literal('input_received'),
 });
 
-/** Discriminated union over the `event` field covering all 15 event types. */
 export const runEventSchema = z.discriminatedUnion('event', [
   runStartedSchema,
   runCompletedSchema,
@@ -150,7 +149,7 @@ export const runEventSchema = z.discriminatedUnion('event', [
   inputReceivedSchema,
 ]);
 
-/** Parse a single JSONL line into a validated RunEvent. */
+/** Parses a single JSONL line into a validated RunEvent. */
 export function parseRunLogLine(line: string): RunEvent {
   const raw: unknown = JSON.parse(line);
   const parsed: z.infer<typeof runEventSchema> = runEventSchema.parse(raw);

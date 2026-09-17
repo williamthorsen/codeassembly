@@ -14,10 +14,12 @@ vi.mock('node:fs/promises', () => ({
   stat: mockedStat,
 }));
 
+/** Queues the entry names that the next `readdir` call resolves with. */
 function mockReaddirResult(names: string[]): void {
   mockedReaddir.mockResolvedValueOnce(names);
 }
 
+/** Queues the result of the next `stat` call: a directory, or a non-directory when `isDir` is false. */
 function mockStatDirectory(isDir = true): void {
   mockedStat.mockResolvedValueOnce({ isDirectory: () => isDir });
 }
