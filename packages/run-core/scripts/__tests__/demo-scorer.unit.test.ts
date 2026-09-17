@@ -244,6 +244,7 @@ describe('scoreRun', () => {
   });
 
   describe('event-count boundaries', () => {
+    /** Builds a status that sets no signal: Its start date is outside the recency window. */
     const baseStatus = () => buildStatus({ startedAt: '2020-01-01T00:00:00Z' });
 
     it('29 events is out of range', () => {
@@ -321,6 +322,7 @@ describe('scoreRun', () => {
   });
 
   describe('multipleReviewers by count', () => {
+    /** Builds a status whose parallel-review phase has `count` reviewers and whose start date is outside the recency window. */
     const withReviewers = (count: number): CanonicalRunStatus =>
       buildStatus({
         startedAt: '2020-01-01T00:00:00Z',
@@ -346,6 +348,7 @@ describe('scoreRun', () => {
   });
 
   describe('usageData detection', () => {
+    /** Builds a status that sets no signal: Its start date is outside the recency window. */
     const status = () => buildStatus({ startedAt: '2020-01-01T00:00:00Z' });
 
     it('no usage fields → false', () => {
