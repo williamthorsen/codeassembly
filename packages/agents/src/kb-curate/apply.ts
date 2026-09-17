@@ -11,17 +11,8 @@ import { rewriteWikilinks } from './apply/rewrite-wikilinks.ts';
 import type { AppliedFix } from './types.ts';
 
 /**
- * Performs the two mechanically safe fixes for a `--apply` run and returns one {@link AppliedFix} per attempted fix:
- *
- * - **Tag canonicalization** — for each note that produced a `tag-alias` finding, delegate to `kb-edit --retag`
- *   (subprocess) once, so `kb-edit` stays the sole writer of frontmatter. A single failure does not abort the run.
- * - **Path-only wikilink rewrites** — sweep every note body, rewriting stale path-qualified links whose basename
- *   resolves to exactly one note. These touch the body, not the frontmatter, so they are written inline.
- *
- * Returns the fixes in tag-then-wikilink order. The vault index for the rewrite sweep is built from the enumerated
- * notes' paths. The inline writer re-reads each note from disk immediately before rewriting, so when a note has both
- * fixes the tag canonicalization that ran first (and rewrote the frontmatter on disk) is preserved rather than
- * clobbered by the stale enumeration snapshot.
+ * Performs the two mechanically safe fixes for a `--apply` run, tag canonicalization then path-only wikilink
+ * rewrites, and returns one {@link AppliedFix} per attempted fix. A failing fix is recorded and the run continues.
  */
 export async function applyFixes(input: {
   kbPath: string;
@@ -54,16 +45,16 @@ async function canonicalizeAffectedNotes(input: {
 
 /** Sweeps every note body for stale path-qualified wikilinks and rewrites them inline, in vault order. */
 async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }): Promise<AppliedFix[]> {
-  // Index on vault-relative paths so a rewrite resolves a link to a note's relative target, not the absolute path
-  // the detection index keys on.
+  // Index on vault-relative paths, because a rewritten link names the note's relative target; the detection index
+  // keys on absolute paths.
   const vaultIndex = buildVaultIndex(input.notes.map((entry) => ({ path: entry.relativePath })));
   const fixes: AppliedFix[] = [];
   for (const entry of input.notes) {
     const result = rewriteWikilinks({ body: entry.body, vaultIndex });
     if (!result.changed) continue;
-    // Re-read current on-disk content rather than splicing into the enumeration snapshot: a tag fix that ran
-    // earlier in this run rewrote the frontmatter on disk, and writing from the stale snapshot would silently
-    // revert it. The body is untouched by the tag fix, so the snapshot's body still anchors the replacement.
+    // Re-read the current on-disk content: a tag fix earlier in this run rewrote the frontmatter, and a write built
+    // from the enumeration snapshot would revert it. The tag fix leaves the body alone, so the snapshot's body still
+    // anchors the replacement.
     let currentContent: string;
     try {
       currentContent = await readFile(entry.path, 'utf8');
@@ -111,10 +102,9 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
 }
 
 /**
- * Rebuilds a note's full content with a rewritten body. `content` is the current on-disk content; the body is its
- * suffix after the frontmatter block, so replacing the final occurrence preserves whatever frontmatter is currently
- * on disk verbatim (including a tag canonicalization applied earlier this run). Returns `null` when `oldBody` is not
- * found verbatim in `content`, so the caller skips the write rather than persisting a frontmatter-stripped file.
+ * Rebuilds a note's full content with a rewritten body. `content` is the current on-disk content and the body is its
+ * suffix after the frontmatter block, so replacing the final occurrence preserves the on-disk frontmatter verbatim.
+ * Returns `null` when `oldBody` is absent from `content`, leaving no safe splice point.
  */
 function replaceBody(content: string, oldBody: string, newBody: string): string | null {
   const bodyStart = content.lastIndexOf(oldBody);

@@ -7,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 import { isRecord } from '../../lib/type-guards.ts';
 import type { AppliedFix } from '../types.ts';
 
-/** Milliseconds to wait for the `kb-edit` subprocess before killing it and failing the fix. */
 const KB_EDIT_TIMEOUT_MS = 30_000;
 
 /** Outcome of invoking the kb-edit subprocess. */
@@ -20,14 +19,11 @@ export type RetagOutcome = { ok: true } | { ok: false; message: string };
 export type RetagRunner = (args: readonly string[]) => Promise<RetagOutcome>;
 
 /**
- * Canonicalizes the tags of one note by delegating to the sibling `kb-edit` helper as a subprocess, honoring
- * "one writer of frontmatter" literally — only the `kb-edit` process mutates frontmatter.
+ * Canonicalizes the tags of one note by delegating to the sibling `kb-edit` helper as a subprocess, so that
+ * `kb-edit` stays the only writer of frontmatter. It receives the note's current tag list unchanged and applies the
+ * KB's alias map.
  *
- * The note's **current** tag list is passed to `kb-edit --retag` as a single comma-joined argv element (next-argv
- * form, not inline `--retag=value`); `kb-edit` rewrites each tag through the KB's alias map. `kb-edit.mjs` is
- * resolved as a sibling of the bundled `kb-curate.mjs` via `import.meta.url`; when it is absent (skills deployed
- * without co-location), the fix fails with a clear message and does not abort the run. A non-zero exit or
- * `{ ok: false }` from `kb-edit` likewise yields `ok: false` for this fix. `run` is injectable for tests.
+ * Every failure returns an `ok: false` fix. `run` is injectable for tests.
  */
 export async function canonicalizeTags(input: {
   notePath: string;

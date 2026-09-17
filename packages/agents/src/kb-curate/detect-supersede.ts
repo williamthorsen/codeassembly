@@ -3,7 +3,6 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import type { Finding } from '@williamthorsen/kb';
 import type { EnumeratedNote } from '@williamthorsen/kb/check';
 
-/** A note's resolved supersession edges, keyed by absolute path. */
 interface SupersedeNode {
   /** The absolute path of the note that supersedes this one, resolved from `superseded-by`; `null` when absent. */
   supersededBy: string | null;
@@ -12,14 +11,8 @@ interface SupersedeNode {
 }
 
 /**
- * Validates the vault-wide supersede graph built from every note's `superseded-by` and `supersedes` fields
- * (resolved relative to the referring note's directory). Emits:
- *
- * - `supersede.dangling` (error) — a `superseded-by` or `supersedes` target that is not a note in the vault.
- * - `supersede.cycle` (error) — a cycle reachable by following `superseded-by` edges, reported on each member.
- * - `supersede.asymmetric` (warning) — `A.superseded-by → B` without the matching `B.supersedes → A`.
- *
- * Findings are returned in vault order (the order `notes` was enumerated in).
+ * Validates the vault-wide supersede graph built from every note's `superseded-by` and `supersedes` fields, emitting
+ * one finding per dangling target, per cycle member, and per asymmetric edge.
  */
 export function detectSupersede(notes: readonly EnumeratedNote[]): Finding[] {
   const present = new Set(notes.map((note) => note.path));
@@ -78,7 +71,7 @@ function asymmetricFindings(input: { path: string; graph: ReadonlyMap<string, Su
   const node = graph.get(path);
   if (node === undefined || node.supersededBy === null) return [];
   const successor = graph.get(node.supersededBy);
-  // A dangling target is reported separately; only flag asymmetry when the successor exists in the graph.
+  // A dangling target is reported separately.
   if (successor === undefined) return [];
   if (successor.supersedes === path) return [];
   return [
@@ -92,9 +85,9 @@ function asymmetricFindings(input: { path: string; graph: ReadonlyMap<string, Su
 }
 
 /**
- * Detects cycles reachable by following `superseded-by` edges, using a DFS coloring walk. Each note found on a cycle
- * gets one `supersede.cycle` finding. Edges to notes outside the vault terminate the walk (a dangling edge cannot
- * close a cycle).
+ * Detects cycles reachable by following `superseded-by` edges, in a depth-first walk. Each note on a cycle gets one
+ * `supersede.cycle` finding. An edge to a note outside the vault terminates the walk, because a dangling edge cannot
+ * close a cycle.
  */
 function cycleFindings(input: {
   notes: readonly EnumeratedNote[];
@@ -102,10 +95,9 @@ function cycleFindings(input: {
 }): Finding[] {
   const { notes, graph } = input;
   const onCycle = new Set<string>();
-  // The supersede graph is functional: each note has at most one outgoing `superseded-by` edge, so every walk
-  // follows a unique successor chain. A node is only ever marked `visited` by the walk that follows that chain, and
-  // if the chain contains a cycle the `onStack` check below catches it within the same walk. A real cycle therefore
-  // cannot be skipped by the shared `visited` set, so a single shared set is safe here (no two-color DFS needed).
+  // The supersede graph is functional: each note has at most one outgoing `superseded-by` edge, so every walk follows
+  // a unique successor chain, and a node is marked `visited` only by the walk that follows its chain. The `onStack`
+  // check below catches a cycle in that chain within the same walk, and one shared `visited` set never hides a cycle.
   const visited = new Set<string>();
 
   for (const note of notes) {

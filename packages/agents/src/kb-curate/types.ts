@@ -1,8 +1,4 @@
 // Shapes for the kb-curate helper: parsed CLI input and the JSON result emitted to stdout.
-//
-// The helper's stdout payload is a discriminated union on `ok`. Recoverable failures (no resolvable KB, a readonly
-// KB under `--apply`, invalid args) return `{ ok: false, error, message }`; successes return `{ ok: true, ... }`
-// carrying the findings and, under `--apply`, the per-fix results. System errors print to stderr and exit non-zero.
 
 import type { Finding } from '@williamthorsen/kb';
 
@@ -15,7 +11,6 @@ export type CurateMode = 'report' | 'apply';
 export interface ParsedArgs {
   /** Explicit KB name from `--kb`, or `null` to fall back to discovery/registry default. */
   kb: string | null;
-  /** Whether `--apply` was supplied. */
   apply: boolean;
   /** Staleness threshold in whole days; defaults to 90. */
   staleAfterDays: number;
@@ -27,7 +22,6 @@ export interface AppliedFix {
   path: string;
   /** The rule code whose finding the fix addresses. */
   rule: string;
-  /** Whether the fix succeeded. */
   ok: boolean;
   /** The operation invoked, e.g. `kb-edit --retag` or `rewrite-wikilink`. */
   operation: string;
@@ -48,7 +42,6 @@ export interface CurateSummary {
 /** The helper's stdout payload on success. */
 export interface CurateSuccess {
   ok: true;
-  /** The run mode. */
   mode: CurateMode;
   /** The KB that was curated. */
   kb: ResolvedKb;
@@ -66,7 +59,6 @@ export type CurateErrorCode = 'invalid-args' | 'invalid-config' | 'no-kb-resolva
 /** The helper's stdout payload on a recoverable failure. */
 export interface CurateFailure {
   ok: false;
-  /** Categorical error code. */
   error: CurateErrorCode;
   /** Short human-readable explanation. */
   message: string;

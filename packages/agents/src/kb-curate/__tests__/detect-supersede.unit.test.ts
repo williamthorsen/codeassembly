@@ -21,6 +21,7 @@ function enumeratedNote(path: string, content: string): EnumeratedNote {
   return { path, relativePath: path, fields, body, content, bodyStartLine, ...(error !== undefined && { error }) };
 }
 
+/** Lists the rule code of each finding that `detectSupersede` reports for the given notes. */
 function rules(notes: EnumeratedNote[]): string[] {
   return detectSupersede(notes).map((finding) => finding.rule);
 }

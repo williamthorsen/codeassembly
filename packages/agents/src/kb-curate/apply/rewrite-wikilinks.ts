@@ -4,7 +4,6 @@ import { lookupKey, type ScannedWikilink, scanWikilinks, type VaultIndex } from 
 export interface RewriteResult {
   /** The rewritten body, identical to the input when no link changed. */
   body: string;
-  /** Whether any link was rewritten. */
   changed: boolean;
   /** One entry per link rewritten, naming the stale and canonical targets. */
   rewrites: Array<{ from: string; to: string }>;
@@ -15,14 +14,12 @@ export interface RewriteResult {
  *
  * A link is a rewrite candidate iff it is **store-local**, **path-qualified** (its target contains a `/`), its
  * basename resolves to **exactly one** vault note (`index.size === 1`), and the written target differs from that
- * note's canonical vault-relative path (sans `.md`). Only stale path prefixes are repaired: a bare-basename link that
- * resolves uniquely (e.g. `[[Foo]]`) is left untouched, because it is a valid link the `wikilinks` rule emits no
- * finding for — rewriting it would mutate links the report never flagged and flip a bare-basename vault's link style
- * en masse. A store-qualified link (`[[fde:notes/Title]]`) names a note in another store, which this vault's index
- * cannot speak for, so it is never rewritten. The rewrite preserves any `|alias`, `#anchor`, and the embed (`!`)
- * prefix, and keeps the path-qualified style (it does not strip to a bare basename). Unresolved (zero matches) and
- * ambiguous (multiple matches) links are never rewritten. Links inside fenced or inline code are skipped, because
- * detection and remediation read the same {@link scanWikilinks} walk.
+ * note's canonical vault-relative path (sans `.md`). A store-qualified link (`[[fde:notes/Title]]`) names a note in
+ * another store, which this vault's index cannot resolve.
+ *
+ * The rewrite preserves any `|alias`, `#anchor`, and the embed (`!`) prefix, and keeps the path-qualified style.
+ * Links inside fenced or inline code are skipped, because detection and remediation read the same
+ * {@link scanWikilinks} walk.
  */
 export function rewriteWikilinks(input: { body: string; vaultIndex: VaultIndex }): RewriteResult {
   const { body, vaultIndex } = input;
@@ -54,8 +51,8 @@ function rewriteLink(input: {
   if (link.store !== undefined) {
     return null;
   }
-  // Only repair stale path prefixes. A bare basename (no `/`) that resolves uniquely is a valid link the
-  // `wikilinks` rule never flags, so leave it alone rather than path-qualifying links the report never surfaced.
+  // Only repair stale path prefixes: a bare basename (no `/`) that resolves uniquely is a valid link that the
+  // `wikilinks` rule never flags.
   if (!link.target.includes('/')) {
     return null;
   }

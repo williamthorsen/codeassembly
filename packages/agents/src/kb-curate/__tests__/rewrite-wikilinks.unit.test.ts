@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { rewriteWikilinks } from '../apply/rewrite-wikilinks.ts';
 
+/** Builds a vault index from basename-to-paths entries. */
 function indexOf(entries: Array<[string, string[]]>): VaultIndex {
   return new Map(entries.map(([key, paths]) => [key, new Set(paths)]));
 }
