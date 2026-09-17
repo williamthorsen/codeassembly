@@ -27,7 +27,7 @@ describe(resolveMemoryStore, () => {
     expect(probes).toBe(0);
   });
 
-  it('resolves the label a store displays to that store', async () => {
+  it('resolves the label that a store displays to that store', async () => {
     const result = await resolveMemoryStore({
       requested: 'app',
       memoryStores: ['-Users-me-repos-app', '-Users-me-repos-web'],
@@ -41,7 +41,7 @@ describe(resolveMemoryStore, () => {
     expect(result).toEqual({ ok: true, memoryStore: '-Users-me-repos-app' });
   });
 
-  it('resolves a store with no live repo by the slug it falls back to displaying', async () => {
+  it('resolves a store with no live repo by the slug that it falls back to displaying', async () => {
     const result = await resolveMemoryStore({
       requested: '-Users-me-repos-gone',
       memoryStores: ['-Users-me-repos-gone'],

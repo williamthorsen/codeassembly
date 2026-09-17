@@ -41,7 +41,7 @@ describe(composeEnvelope, () => {
     expect(envelope.ts).toBe('2026-07-14T14:10:46.123Z');
   });
 
-  it('omits every unresolvable context field rather than carrying its path placeholder', () => {
+  it('omits every unresolvable context field rather than including its path placeholder', () => {
     const envelope = composeEnvelope({
       id: ID,
       now: NOW,
@@ -63,7 +63,7 @@ describe(composeEnvelope, () => {
     expect(Object.keys(envelope)).not.toContain('harness');
   });
 
-  it('carries an undeclared type through unchanged', () => {
+  it('keeps an undeclared type unchanged', () => {
     const envelope = composeEnvelope({ id: ID, now: NOW, type: 'skill.invented', context: { cwd: '/x' }, payload: {} });
 
     expect(envelope.type).toBe('skill.invented');

@@ -1,13 +1,13 @@
 /**
  * Extracts a ticket ID from a branch name per the contract in `_data/ticket-id-extraction.md`.
  *
- * The revisit ordinal `parseTicketRef` captures is dropped: session context attributes to the parent ticket.
+ * The revisit ordinal captured by `parseTicketRef` is dropped: Session context is attributed to the parent ticket.
  */
 import { parseTicketRef } from 'codeassembly-lifecycle';
 
 import type { TicketIdResult } from './types.ts';
 
-/** Bare-numeric id — the form the configured `ticket_ref_prefix` applies to; a Jira-style key carries its own. */
+/** Bare-numeric id: the form to which the configured `ticket_ref_prefix` applies; a Jira-style key contains its own. */
 const BARE_NUMERIC_ID_PATTERN = /^[0-9]+$/;
 
 const PR_IDENTIFIER_PATTERN = /^PR-[0-9]+$/;

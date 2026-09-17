@@ -14,9 +14,9 @@ import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import type { PreferencesReadResult, ResolvedPreferences } from './types.ts';
 
 /**
- * Reads the project and global preferences files, merges them with the project's values winning, and projects the
- * result to the fields that the deriver consumes. A missing file is not an error; malformed YAML and a wrong-typed
- * consumed field throw, naming the offending file or key path.
+ * Reads the project and global preferences files, merges them with the project's values taking precedence, and projects
+ * the result to the fields that the deriver consumes. A missing file is not an error; the function throws on malformed
+ * YAML and on a wrong-typed consumed field, naming the offending file or key path.
  */
 export async function readPreferences(input: { cwd: string; home?: string }): Promise<PreferencesReadResult> {
   const home = input.home ?? homedir();
@@ -44,7 +44,7 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
 
 /**
  * Reads a YAML file. Returns `null` when the file does not exist (ENOENT). Throws with a
- * file-anchored message when the YAML is malformed.
+ * message that names the file when the YAML is malformed.
  */
 async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | null> {
   let text: string;
@@ -68,7 +68,7 @@ async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | 
 }
 
 /**
- * Merges two preference objects at the top level: a key present in `project` replaces the global value verbatim, and a
+ * Merges two preference objects at the top level: A key present in `project` replaces the global value verbatim, and a
  * key only in `global` is retained. The merge stays shallow so that a project setting one `artifacts.paths` key does
  * not inherit the rest from the global file.
  */
@@ -164,7 +164,7 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
   return result;
 }
 
-/** Mutable mirror of `ResolvedPreferences` used during projection construction. */
+/** Mutable version of `ResolvedPreferences` used during projection construction. */
 interface WritablePreferences {
   scm?: 'github' | 'bitbucket';
   project?: {

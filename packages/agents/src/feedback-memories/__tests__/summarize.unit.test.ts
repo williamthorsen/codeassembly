@@ -8,7 +8,7 @@ import { summarizeFeedbackMemories } from '../summarize.ts';
 
 const MACHINE = 'test-host';
 
-/** Renders a nested-schema feedback memory carrying the given description. */
+/** Renders a nested-schema feedback memory containing the given description. */
 function feedback(description: string): string {
   return `---\nname: feedback-example\ndescription: ${description}\nmetadata:\n  type: feedback\n---\n\nBody.\n`;
 }

@@ -43,7 +43,7 @@ describe(removeMemoryIndexEntry, () => {
     expect(content).toContain('## Project');
   });
 
-  it('keeps the header when a sibling entry survives', () => {
+  it('keeps the header when a sibling entry remains', () => {
     const { content } = removeMemoryIndexEntry(INDEX, 'alpha.md');
 
     expect(content).toContain('## User preferences');
