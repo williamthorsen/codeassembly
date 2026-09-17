@@ -1,6 +1,6 @@
 import { asStringList, isValidDate } from '../note-io/field-validators.ts';
 
-// The `assertion` record: the canonical knowledge-base note. Its required fields are the typed, validated contract;
+// The `assertion` record: the canonical knowledge-base note. Its declared fields are the typed, validated contract;
 // any other frontmatter field is preserved verbatim in `extra` for faithful round-trip and is promoted to a typed
 // field by the operation that comes to depend on it.
 
@@ -146,8 +146,8 @@ function requireDate(value: unknown, field: string, errors: string[]): string | 
 }
 
 /**
- * Reads an optional string-list field: an absent value coerces to an empty list, a list-shaped value yields its string
- * members, and a present-but-not-list value records an error and returns `undefined`.
+ * Reads an optional string-list field through {@link asStringList}, recording an error for a present value that is not
+ * a list.
  */
 function readListField(value: unknown, field: string, errors: string[]): string[] | undefined {
   const list = asStringList(value);
@@ -158,10 +158,7 @@ function readListField(value: unknown, field: string, errors: string[]): string[
   return list;
 }
 
-/**
- * Reads an optional date field: an absent value yields `undefined`, a valid UTC instant yields it typed, and any other
- * value records an error and yields `undefined`.
- */
+/** Reads an optional date field, recording an error for a present value that is not a valid UTC instant. */
 function readOptionalDate(value: unknown, field: string, errors: string[]): string | undefined {
   if (value === undefined) {
     return undefined;
@@ -173,10 +170,7 @@ function readOptionalDate(value: unknown, field: string, errors: string[]): stri
   return undefined;
 }
 
-/**
- * Reads an optional scalar string field: an absent value yields `undefined`, a string yields it typed, and any other
- * value records an error and yields `undefined`.
- */
+/** Reads an optional scalar string field, recording an error for a present value that is not a string. */
 function readOptionalString(value: unknown, field: string, errors: string[]): string | undefined {
   if (value === undefined) {
     return undefined;

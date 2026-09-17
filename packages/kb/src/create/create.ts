@@ -24,7 +24,6 @@ export interface CreatedStore {
   storePath: string;
   /** The description written into the registry entry; absent when none was supplied. */
   description?: string;
-  /** Whether the store was registered in the kb.yaml registry. */
   registered: boolean;
   /** Store-relative paths created by the scaffold. */
   created: readonly string[];
@@ -86,10 +85,8 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
 // region | Helpers
 
 /**
- * Decides — and, for the sole-KB case, applies — what happens to `default_kb` for a freshly-registered store, given
- * the registry state captured before registering. Sets the new store as the default only when no default exists and
- * it is the only registered KB; an existing default is never overwritten, and an ambiguous case is deferred to the
- * caller for an interactive choice.
+ * Decides what happens to `default_kb` for a freshly registered store, given the registry state captured before
+ * registering, and sets the pointer in the one case that calls for it. See {@link DefaultKbOutcome} for the cases.
  */
 async function ensureDefaultKb(input: {
   registryPath: string;

@@ -31,8 +31,7 @@ export interface ScaffoldEntry {
  * unless `force` is set. Directories are ensured either way, since a directory has no content to replace.
  *
  * The function asserts nothing about the store: a caller that requires one to exist, or requires one not to, checks
- * that itself. `create` calls it on a directory it has just confirmed holds no store, and `kb scaffold` on one it has
- * just confirmed does.
+ * that itself.
  */
 export async function scaffold(input: { storePath: string; force?: boolean }): Promise<readonly ScaffoldEntry[]> {
   const { storePath, force = false } = input;
@@ -45,7 +44,7 @@ export async function scaffold(input: { storePath: string; force?: boolean }): P
       entries.push({ path: file.path, action: 'present' });
       continue;
     }
-    // A canonical file's parent is either the store root or `.kb/`; `create` scaffolds a directory holding neither.
+    // A canonical file's parent is the store root or `.kb/`, and a store that is being created may have neither yet.
     await mkdir(dirname(absolutePath), { recursive: true });
     await writeAtomic(absolutePath, file.render());
     entries.push({ path: file.path, action: exists ? 'replaced' : 'created' });
@@ -69,10 +68,8 @@ export async function scaffold(input: { storePath: string; force?: boolean }): P
 // `.kb/taxonomy.yaml` is not canonical: `kb taxonomy init` derives its content from the notes a store holds rather
 // than writing a fixed template. Nor is `content/assertions/`: `kb-add` creates its target folder on demand.
 
-/** The directories every store holds. */
 const CANONICAL_DIRECTORIES: readonly string[] = [CONTENT_DIR, EVENTS_DIR];
 
-/** The files every store holds, each paired with the seed it is written from. */
 const CANONICAL_FILES: readonly { path: string; render: () => string }[] = [
   { path: EDITORCONFIG_FILE, render: renderEditorconfigSeed },
   { path: CONFIG_FILE, render: renderConfigSeed },

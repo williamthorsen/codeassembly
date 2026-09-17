@@ -8,7 +8,7 @@ import type { Frontmatter, FrontmatterRaw, ParsedNote } from '../types.ts';
 const FENCE = '---';
 
 /**
- * Reads a note from disk and parse it into a `ParsedNote`. I/O errors (e.g. a missing file) are thrown;
+ * Reads a note from disk and parses it into a `ParsedNote`. I/O errors (e.g. a missing file) are thrown;
  * YAML parse errors are not.
  */
 export async function parseNote(input: { path: string }): Promise<ParsedNote> {
@@ -17,7 +17,7 @@ export async function parseNote(input: { path: string }): Promise<ParsedNote> {
 }
 
 /**
- * Parse a note from a literal string into a `ParsedNote` carrying typed frontmatter.
+ * Parses a note from a literal string into a `ParsedNote` carrying typed frontmatter.
  * Parse errors are recorded in `frontmatterRaw.parseError`, never thrown — the rule layer decides how to report them.
  * `path` defaults to `<string>` and labels the result for diagnostics.
  */

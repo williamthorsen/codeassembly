@@ -14,10 +14,7 @@ export function renderNote(fields: Record<string, unknown>, body: string): strin
   return `${FENCE}\n${frontmatter}\n${FENCE}\n\n${normalizedBody}`;
 }
 
-/**
- * Atomically writes a note to `path`, so a concurrent reader never sees a partial write. See {@link writeAtomic} for
- * the guarantee and its failure behavior.
- */
+/** Atomically writes a note to `path`. See {@link writeAtomic} for the guarantee and its failure behavior. */
 export async function writeNote(path: string, fields: Record<string, unknown>, body: string): Promise<void> {
   await writeAtomic(path, renderNote(fields, body));
 }
