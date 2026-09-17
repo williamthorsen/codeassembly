@@ -94,7 +94,7 @@ export function recordTypeOf(hit: SearchHit): string {
 
 // region | Helpers
 
-/** Returns true when a hit's path is inside its KB's configured note set, and for every hit of a KB with no matcher. */
+/** Returns true when a hit's path is inside its KB's configured note set, or when that KB has no matcher, which admits every hit. */
 function isNoteHit(hit: RawHit, matchers: Map<string, NoteScopeMatcher>): boolean {
   const matcher = matchers.get(hit.kbPath);
   return matcher === undefined || matcher.isNote(toRelativePath(hit.kbPath, hit.path));
