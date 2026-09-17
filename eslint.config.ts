@@ -17,13 +17,13 @@ const config = defineConfig([
     '**/local/**',
     // Throwaway spikes live outside the workspace and are exempt from lint.
     'spikes/**',
-    // Ignore test fixtures no parser can read, marked by a `.malformed` infix.
+    // Ignore test fixtures that no parser can read, marked by a `.malformed` infix.
     '**/__tests__/**/fixtures/**/*.malformed/**',
     '**/__tests__/**/fixtures/**/*.malformed.*',
   ]),
   {
     settings: {
-      // `import-x/extensions` needs a resolver to tell a `.js` specifier from the `.ts` file it names.
+      // `import-x/extensions` needs a resolver to tell a `.js` specifier from the `.ts` file that it names.
       'import-x/resolver-next': [
         createTypeScriptImportResolver({
           noWarnOnMultipleProjects: true,
@@ -39,8 +39,8 @@ const config = defineConfig([
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {
-      // The rule resolves specifiers itself rather than through the resolver settings above, so imports of
-      // fleet's `source`-only export map report as missing.
+      // The rule resolves specifiers itself rather than through the resolver settings above, so it reports imports of
+      // fleet's `source`-only export map as missing.
       'n/no-missing-import': 'off',
     },
   },

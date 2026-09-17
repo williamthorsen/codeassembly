@@ -74,7 +74,7 @@ describe('buildSnapshot', () => {
     ]);
   });
 
-  it('spells absent values as null so the snapshot survives a JSON round-trip unchanged', () => {
+  it('spells absent values as null so that the snapshot survives a JSON round-trip unchanged', () => {
     const lane = composeLane('no-ticket-here', { 'sess-a': [composeEvent('turn.started')] });
 
     const snapshot = buildSnapshot([lane], DERIVE_INPUT);
@@ -132,7 +132,7 @@ describe('buildSnapshot', () => {
     });
   });
 
-  it('leaves the git block null for a lane the observations do not cover', () => {
+  it('leaves the git block null for a lane that the observations do not cover', () => {
     const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
 
     const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, observations: new Map() });
@@ -211,7 +211,7 @@ describe('buildSnapshot', () => {
     });
   });
 
-  it('spells an absent check verdict, review decision, and ticket as null so the wire survives a JSON round-trip', () => {
+  it('spells an absent check verdict, review decision, and ticket as null so that the wire survives a JSON round-trip', () => {
     const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
     const forge = composeForge({
       'acme/app/101': { pr: composePrFacts(), ticket: undefined, fetchedAt: BASE_TS, stale: true },
@@ -245,7 +245,7 @@ describe('buildSnapshot', () => {
     expect(snapshot.lanes[0]?.forge).toBeNull();
   });
 
-  it('mints synthetic PR-<n> attribution for a lane with a pull request but no parsed ticket', () => {
+  it('assigns synthetic PR-<n> attribution to a lane with a pull request but no parsed ticket', () => {
     const lane = composeLane('no-ticket-here', { 'sess-a': [composeEvent('turn.started')] });
     const forge = composeForge({
       'acme/app/no-ticket-here': {

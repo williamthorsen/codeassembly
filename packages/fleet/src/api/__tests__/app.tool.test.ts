@@ -17,7 +17,7 @@ function composeApp(snapshot: FleetSnapshot = EMPTY_SNAPSHOT) {
 
 /** Reads the next SSE chunk from a stream response as text. */
 async function readChunk(response: Response): Promise<string> {
-  assert(response.body !== null, 'The stream response should carry a body');
+  assert(response.body !== null, 'The stream response should have a body');
   const reader = response.body.getReader();
   const { value } = await reader.read();
   await reader.cancel();
@@ -69,7 +69,7 @@ describe('createApp', () => {
   });
 
   it('disposes the subscription when the client aborts the stream', async () => {
-    // Abort propagation needs a real socket; an in-memory `app.request` cancellation never reaches `onAbort`.
+    // Abort propagation needs a real socket; an in-memory `app.request` cancellation never triggers `onAbort`.
     const { app, unsubscribe } = composeApp();
     const bound = Promise.withResolvers<number>();
     const server = serve({ fetch: app.fetch, port: 0 }, (info) => bound.resolve(info.port));
@@ -91,8 +91,8 @@ describe('createApp', () => {
   });
 
   it('exposes both routes to an hc typed client', () => {
-    // Compile-time proof of the typed-client contract: these property accesses only typecheck while `AppType`
-    // carries the chained route map.
+    // Compile-time proof of the typed-client contract: These property accesses only typecheck while `AppType`
+    // contains the chained route map.
     const client = hc<AppType>('http://localhost');
 
     expect(typeof client.api.lanes.$get).toBe('function');

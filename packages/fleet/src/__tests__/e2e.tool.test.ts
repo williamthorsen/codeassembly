@@ -12,8 +12,8 @@ import { type RunningFleetServer, startFleetServer } from '../server.ts';
 const SHORT_INTERVALS = {
   closeAfterMs: 600_000,
   debounceMs: 10,
-  // Forge polling is disabled so the suite stays hermetic — no `gh`, no network. Forge derivation is covered by the
-  // layer tests; here one assertion confirms the wire serves `forge: null` with polling off.
+  // Forge polling is disabled so that the suite stays hermetic: no `gh`, no network. Forge derivation is covered by
+  // the layer tests; here one assertion confirms the server serves `forge: null` with polling off.
   forge: 'none' as const,
   forgePollMs: 60_000,
   gitPollMs: 60_000,
@@ -34,11 +34,11 @@ describe('fleet server', () => {
     expect(await response.json()).toEqual({ lanes: [] });
   });
 
-  it('pushes an SSE frame within a second of an event line landing on disk', async () => {
+  it('pushes an SSE frame within a second of an event line being written to disk', async () => {
     const eventsDir = createEventsDir();
     const running = await startTestServer(eventsDir);
     const response = await fetch(`http://localhost:${running.port}/api/stream`);
-    assert(response.body !== null, 'The stream response should carry a body');
+    assert(response.body !== null, 'The stream response should have a body');
     const reader = response.body.getReader();
     const pending = { buffer: '' };
 
@@ -60,7 +60,7 @@ describe('fleet server', () => {
     expect(pushed.lanes[0]?.forge).toBeNull();
   });
 
-  it('surfaces git ground truth within a poll interval and closes the lane when the worktree disappears', async () => {
+  it('reports git ground truth within a poll interval and closes the lane when the worktree disappears', async () => {
     const eventsDir = createEventsDir();
     const laneDir = join(eventsDir, 'acme', 'app', '101');
     mkdirSync(laneDir, { recursive: true });
@@ -99,7 +99,7 @@ describe('fleet server', () => {
     appendFileSync(join(laneDir, 'sess-a.jsonl'), composeLine('turn.started', new Date().toISOString()));
     const running = await startTestServer(eventsDir, { staleMs: 200 });
     const response = await fetch(`http://localhost:${running.port}/api/stream`);
-    assert(response.body !== null, 'The stream response should carry a body');
+    assert(response.body !== null, 'The stream response should have a body');
     const reader = response.body.getReader();
     const pending = { buffer: '' };
 
@@ -159,7 +159,7 @@ async function readSnapshotFrame(
   let frameEnd = pending.buffer.indexOf('\n\n');
   while (frameEnd === -1 || !pending.buffer.startsWith('data:')) {
     if (frameEnd !== -1) {
-      // Not a data frame (a heartbeat comment): drop it and keep reading.
+      // Not a data frame (a heartbeat comment): Drop it and keep reading.
       pending.buffer = pending.buffer.slice(frameEnd + 2);
     } else {
       const { done, value } = await reader.read();
@@ -172,7 +172,7 @@ async function readSnapshotFrame(
   const frame = pending.buffer.slice(0, frameEnd);
   pending.buffer = pending.buffer.slice(frameEnd + 2);
   const parsed: unknown = JSON.parse(frame.replace(/^data:\s*/, ''));
-  assert(typeof parsed === 'object' && parsed !== null && 'lanes' in parsed, 'A frame should carry a snapshot');
+  assert(typeof parsed === 'object' && parsed !== null && 'lanes' in parsed, 'A frame should contain a snapshot');
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowed structurally above; test-code carve-out
   return parsed as FleetSnapshot;
 }

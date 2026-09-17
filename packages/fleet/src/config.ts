@@ -1,5 +1,5 @@
-// Runtime configuration. The environment arrives as a parameter — nothing here reads `process.env` — so tests
-// resolve against a plain object instead of mutating global state.
+// Runtime configuration. The caller passes the environment as a parameter (nothing here reads `process.env`), so
+// tests resolve against a plain object instead of mutating global state.
 
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -18,7 +18,7 @@ export const RETENTION_MS = 259_200_000;
 /** Which forge backend Fleet polls for enrichment; `none` disables polling entirely. */
 export type ForgeKind = 'github' | 'none';
 
-/** Resolved server configuration; every timing value is injectable so tests run on short intervals. */
+/** Resolved server configuration; every timing value is injectable so that tests run on short intervals. */
 export interface FleetConfig {
   /** Milliseconds of lane-wide quiet after which a lane derives as closed. */
   closeAfterMs: number;
@@ -34,11 +34,11 @@ export interface FleetConfig {
   /** Milliseconds between SSE comment heartbeats, which keep idle connections alive through proxies and browsers. */
   heartbeatMs: number;
   port: number;
-  /** Milliseconds between full rescans of the events tree — the correctness backstop when watching degrades. */
+  /** Milliseconds between full rescans of the events tree, the correctness backstop when watching degrades. */
   rescanMs: number;
   /** Milliseconds of lane-wide quiet after which an idle lane is evicted from the store. */
   retentionMs: number;
-  /** Milliseconds of quiet after which a working session reads as stale. */
+  /** Milliseconds of quiet after which a working session is reported as stale. */
   staleMs: number;
 }
 

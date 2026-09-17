@@ -26,7 +26,7 @@ describe('readAppendedLines', () => {
     expect(second.lines).toEqual(['{"b":2}']);
   });
 
-  it('leaves a torn trailing line unconsumed until its newline arrives', () => {
+  it('leaves a torn trailing line unconsumed until its newline is written', () => {
     const filePath = composeFile('{"a":1}\n{"torn"');
 
     const first = expectAppended(readAppendedLines({ filePath, offset: 0 }));
@@ -38,7 +38,7 @@ describe('readAppendedLines', () => {
     expect(second.lines).toEqual(['{"torn":2}']);
   });
 
-  it('when no newline has arrived at all, returns no lines and keeps the offset', () => {
+  it('when no newline has been written at all, returns no lines and keeps the offset', () => {
     const filePath = composeFile('{"torn"');
 
     const result = expectAppended(readAppendedLines({ filePath, offset: 0 }));
