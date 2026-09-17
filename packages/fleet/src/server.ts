@@ -1,6 +1,6 @@
-// The composed server: config → store → watcher → app, plus the publish pipeline. Every trigger — a watch signal or
-// a rescan tick — folds and then publishes through one JSON-diff gate, so a staleness threshold crossing broadcasts
-// with no new event on disk, and a no-op scan broadcasts nothing.
+// The composed server: config → store → forge poller → git adapter → watcher → app, plus the publish pipeline. Every
+// trigger calls `tick`, which folds and then publishes through one JSON-diff gate, so a staleness threshold crossing
+// broadcasts with no new event on disk, and a no-op scan broadcasts nothing.
 
 import { serve } from '@hono/node-server';
 import { resolveLaneCwd } from 'codeassembly-lifecycle';
