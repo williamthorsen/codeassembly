@@ -47,8 +47,9 @@ export type CreateOutcome =
 /**
  * Scaffolds a new knowledge-base store in `targetDir` and, unless `register` is false, registers it in the kb.yaml
  * registry. Both preconditions — an existing `.kb/`, and (when registering) an already-registered name — are checked
- * before anything is written, so a precondition failure leaves the filesystem untouched. Genuine I/O failures
- * propagate.
+ * before anything is written, so a precondition failure leaves the filesystem untouched. A name collision that the
+ * registry writer detects only at write time also returns `name-registered`, after the scaffold is written. Genuine
+ * I/O failures propagate.
  */
 export async function create(input: CreateInput): Promise<CreateOutcome> {
   const storePath = resolve(input.targetDir);

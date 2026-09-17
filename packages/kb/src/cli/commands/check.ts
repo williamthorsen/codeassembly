@@ -49,9 +49,9 @@ Exit codes:
 /**
  * Runs `kb check`: parses options, resolves the store, runs the shared `check`, and formats the report.
  *
- * The command writes nothing to the store, so it ignores the registry's `readonly` flag. A malformed
- * `.kb/config.yaml`/`tag-aliases.yaml` surfaces as a `KbLoaderError` from `check`, which maps to exit 2; any other
- * error from `check` propagates to the caller as a real crash.
+ * The command writes nothing to the store, so it ignores the registry's `readonly` flag. A structural defect in a
+ * store file that `check` loads surfaces as a `KbLoaderError`, which maps to exit 2; any other error from `check`
+ * propagates to the caller as a real crash.
  */
 export async function runCheck(input: { argv: readonly string[]; cwd: string; home?: string }): Promise<CommandOutput> {
   let options: CheckOptions;

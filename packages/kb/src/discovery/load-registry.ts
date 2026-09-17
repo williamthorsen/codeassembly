@@ -20,8 +20,8 @@ const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
  * Project entries replace user entries by name on collision and append new names. The top-level `default_kb`
  * pointer resolves by name against the merged entries (the project's value overriding the user's); the resolved
  * entry is exposed as `defaultKb`.
- * Within a single file, relative `path` values resolve against that file's directory and a leading `~/` expands
- * against `$HOME`. Both files are optional; when neither exists the result has no entries.
+ * Within a single file, relative `path` values resolve against that file's directory and a leading `~` or `~/`
+ * expands against `$HOME`. Both files are optional; when neither exists the result has no entries.
  * Malformed YAML, a structural defect, or a `default_kb` that names no registered KB throw.
  */
 export async function loadKbRegistry(

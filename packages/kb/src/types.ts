@@ -90,7 +90,7 @@ export interface Finding {
   scope?: 'note' | 'vault';
   /** 1-based source line number, when known. */
   line?: number;
-  /** Rule code, e.g. `frontmatter.required`. */
+  /** Rule code, e.g. `wikilinks.basename`. */
   rule: string;
   severity: FindingSeverity;
   message: string;
