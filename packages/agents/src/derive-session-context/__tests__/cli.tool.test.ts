@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -160,7 +160,6 @@ describe(deriveSessionContext, () => {
       now: NOW,
       home: workDir,
     });
-    // The deriver fell through and produced a fresh manifest with all required fields.
     expect(result.scm).toBe('github');
     expect(result.artifact_base_dir).toBeDefined();
     expect(result.ticket_id).toBeNull();
@@ -245,14 +244,20 @@ describe(deriveSessionContext, () => {
     await mkdir(agentsDir, { recursive: true });
     try {
       await chmod(agentsDir, 0o555);
-      // Sanity check: confirm the directory is in fact unwritable in this environment
-      // (some filesystems / CI runners ignore chmod on the test user's own directories).
+      // Some filesystems and CI runners ignore chmod on a directory the test user owns. Probe with a real write, and
+      // skip the assertion when the directory turns out to be writable after all.
+      const probe = path.join(agentsDir, '.write-probe');
+      let isWritable = true;
       try {
-        await access(path.join(agentsDir, '.write-probe'));
+        await writeFile(probe, '', 'utf8');
       } catch {
-        // expected: the probe file does not exist. We rely on the writeFile inside the
-        // deriver to surface EACCES; the access call here is just a placeholder for clarity.
+        isWritable = false;
       }
+      if (isWritable) {
+        await rm(probe, { force: true });
+        return;
+      }
+
       await expect(deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir })).rejects.toThrow();
     } finally {
       // Restore permissions so afterEach cleanup can remove the directory tree.
