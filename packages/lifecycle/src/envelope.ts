@@ -34,8 +34,9 @@ export function isEventType(value: string): value is EventType {
 /**
  * One appended event.
  *
- * An optional field is absent when it cannot be resolved. The file path substitutes a placeholder for such a field so
- * that the event still lands somewhere; the absent key is what tells a consumer that the field was not resolved.
+ * An optional field is absent when its value is unknown. For `repo`, `branch`, and `session`, the file path
+ * substitutes a placeholder so that the event still lands somewhere; the absent key is what tells a consumer that the
+ * field was not resolved.
  */
 export interface EventEnvelope {
   /** ULID, unique per event and monotonic within a millisecond. */
