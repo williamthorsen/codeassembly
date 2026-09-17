@@ -1,6 +1,3 @@
-// Shapes for the streamline-guidance helper: the files that a run may cut, the evidence against a candidate cut, and the
-// record of cuts that the user declined.
-
 /** A candidate cut submitted to `check`: the file that it edits and the text that it removes or rewords. */
 export interface CheckInput {
   file: string;

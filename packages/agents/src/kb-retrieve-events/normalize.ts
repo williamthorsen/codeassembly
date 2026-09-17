@@ -6,14 +6,7 @@ import type { SearchHit } from '../kb-search/types.ts';
 import { extractString, readStringList } from '../kb-shared/note-helpers.ts';
 import type { EventCandidate } from './types.ts';
 
-/**
- * Projects the shared search primitive's event hits onto the event candidate table. Each candidate carries its
- * recurrence signals — `captured-at`, `repo`, and an `occurrences` count — plus its `summary`, tags, any
- * `addressed-by` references, and its `impact` rating when set. After projection, each candidate is stamped with the
- * size of its `repo` recurrence group:
- * the count of query-matched events sharing the same repository. A note whose frontmatter is missing or malformed still
- * projects to a low-signal candidate carrying a diagnostic rather than being dropped.
- */
+/** Projects the shared search primitive's event hits onto the event candidate table. */
 export function normalizeEvents(input: { hits: SearchHit[] }): EventCandidate[] {
   const candidates = input.hits.map((hit) => toEventCandidate(hit));
   stampOccurrences(candidates);

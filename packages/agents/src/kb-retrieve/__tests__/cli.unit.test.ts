@@ -113,7 +113,6 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [eventNote('01HZCEVENTAAAAAAAAAAAAAAAA.md')] }),
     });
 
-    // The only recalled note is an event, so the assertion table is empty and the diagnostic routes to event recall.
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toMatch(/kb-retrieve-events/);
   });
@@ -303,7 +302,7 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(CUSTOM_SCHEMA_VAULT, 'insight-note.md')] }),
     });
 
-    // insight-note declares recordType: insight — neither an assertion nor an event — so no retrieve command claims it.
+    // `insight-note` declares `recordType: insight`.
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toMatch(/none are assertions/);
     expect(result.warnings).toEqual([]);
@@ -320,7 +319,7 @@ describe(runRetrieve, () => {
 
     expect(result.candidates).toHaveLength(1);
     expect(result.warnings).toEqual([]);
-    // Ranking is unaffected: the assertion note still ranks by freshness (2026-04-20 to 2026-05-01).
+    // 2026-04-20 to 2026-05-01 is 11 days.
     expect(result.candidates[0]?.lastVerifiedAgeDays).toBe(11);
     expect(result.diagnostic).toBeUndefined();
   });
@@ -338,7 +337,6 @@ describe(runRetrieve, () => {
 
     const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
     const plain = result.candidates.find((candidate) => candidate.path.includes('plain-note.md'));
-    // A non-assertion record type is excluded from recall; the assertion surfaces; the invalid sibling schema is inert.
     expect(insight).toBeUndefined();
     expect(plain).toBeDefined();
     expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(0);
@@ -389,7 +387,6 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(INVALID_CONFIG_VAULT, 'content', 'note.md')] }),
     });
 
-    // The content/ note still survives under the degraded default config, and the defect surfaces as one warning.
     expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0]).toMatch(/config invalid/);

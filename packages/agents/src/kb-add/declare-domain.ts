@@ -25,17 +25,14 @@ export interface AddedDomain {
  * declares it. Returns where the note sits and what the declaration added, or `undefined` for a store that has not
  * adopted a taxonomy, which this leaves untouched.
  *
- * Adoption is the file's presence, not what it declares. A store with no `.kb/taxonomy.yaml` behaves as it did before
- * the taxonomy existed, while a store whose taxonomy is empty grows its first domain from its first capture. (The
- * drift rules read an empty taxonomy as "not adopted" instead, correctly: reporting on a structure is a different
- * question from recording one.)
+ * Adoption is the file's presence, not what it declares, so a store whose taxonomy is empty grows its first domain
+ * from its first capture.
  *
  * The declaration fires on the note's exact folder, aligning with `taxonomy.undeclared` — a folder nested under a
  * declared domain is itself undeclared. It then covers every undeclared ancestor, because `taxonomy.orphan` warns on a
  * declared domain whose parent is not, and a leaf-only append would have routine nested captures minting lint warnings
- * on the next `kb check`. Ancestors are declared bare and provisional whatever the mode: nothing names what a grouping
- * folder is for, and the supplied description belongs to the leaf. A folder some domain already declares is left
- * alone, ancestors included: that is pre-existing drift the lints own.
+ * on the next `kb check`. A folder some domain already declares is left alone, ancestors included: that is
+ * pre-existing drift the lints own.
  *
  * The note's domain comes from its written path through the same mapping the drift rules use, so this cannot disagree
  * with what a later `kb check` observes.

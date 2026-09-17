@@ -1,12 +1,7 @@
 // Minimal HTML tokenizer for the pre-flight checker.
 //
-// Not a conformant HTML5 parser. Just enough to:
-//   - recognize tag boundaries, including self-closing and namespaced tags like `ac:task-list`,
-//   - separate text content from attribute values (so named-entity scans skip `&quot;` inside `href="..."`),
-//   - track source offsets so rules can derive 1-based line numbers.
-//
-// Malformed input (unbalanced quotes, runaway `<`) is tolerated — the tokenizer prefers progress over
-// strictness, since the goal is finding known-bad patterns, not validating that the HTML is well-formed.
+// Not a conformant HTML5 parser. The checker finds known-bad patterns rather than validating that the HTML is
+// well-formed, so the tokenizer favors progress over strictness on malformed input.
 //
 // Known limitations (intentional; documented here so future contributors don't quietly "fix" them):
 //   - HTML comments (`<!-- ... -->`), CDATA sections (`<![CDATA[ ... ]]>`), and `<!DOCTYPE ...>` declarations are
@@ -18,7 +13,7 @@
 //     finding. This is fail-loud by design: an imbalanced payload almost certainly indicates a generation
 //     bug, and surfacing it as a finding is preferable to silently auto-balancing.
 
-/** A single open-tag token. Self-closing variants like `<br>` or `<hr/>` set `selfClosing: true`. */
+/** A single open-tag token. */
 export interface OpenTagToken {
   type: 'open-tag';
   name: string;
@@ -49,7 +44,7 @@ export interface TextToken {
 
 export type Token = OpenTagToken | CloseTagToken | TextToken;
 
-/** A parsed attribute. `value` is `null` for valueless attributes (rare in well-formed HTML). */
+/** A parsed attribute. `value` is `null` for a valueless attribute. */
 export interface Attribute {
   name: string;
   value: string | null;
@@ -58,7 +53,7 @@ export interface Attribute {
 /** Self-closing element names per HTML — used to treat `<br>` and `<hr>` as self-closing without `/`. */
 const VOID_ELEMENTS = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source']);
 
-/** Tokenize `html` into a flat stream. Always returns; never throws on malformed input. */
+/** Tokenizes `html` into a flat stream. Always returns; never throws on malformed input. */
 export function tokenize(html: string): Token[] {
   const tokens: Token[] = [];
   const length = html.length;
@@ -88,12 +83,12 @@ export function tokenize(html: string): Token[] {
   return tokens;
 }
 
-/** A tag-start char is `/` (close tag) or an ASCII letter (open tag). */
+/** Returns true when `char` may follow `<`: `/` for a close tag, an ASCII letter for an open tag. */
 function isTagStartChar(char: string): boolean {
   return char === '/' || (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
 }
 
-/** Parse a single tag starting at `html[start]` (which is `<`). Returns the token and the index just past `>`. */
+/** Parses a single tag starting at `html[start]` (which is `<`). Returns the token and the index just past `>`. */
 function parseTag(html: string, start: number): { token: Token; nextIndex: number } {
   const isClose = html[start + 1] === '/';
   const nameStart = start + (isClose ? 2 : 1);
@@ -127,7 +122,7 @@ function parseTag(html: string, start: number): { token: Token; nextIndex: numbe
   };
 }
 
-/** Parse the attribute section of an open tag. Returns parsed attrs, the self-closing flag, and the offset of `>`. */
+/** Parses the attribute section of an open tag. `end` is the offset of `>`. */
 function parseAttributes(html: string, startIndex: number): { attrs: Attribute[]; selfClosing: boolean; end: number } {
   const length = html.length;
   const attrs: Attribute[] = [];
@@ -160,7 +155,7 @@ function parseAttributes(html: string, startIndex: number): { attrs: Attribute[]
   return { attrs, selfClosing, end: index };
 }
 
-/** Read an optional `=value` clause; returns the value (or `null` for valueless attrs) and the next index. */
+/** Reads an optional `=value` clause, quoted or bare. */
 function parseAttributeValue(html: string, startIndex: number): { value: string | null; next: number } {
   let index = skipWhitespace(html, startIndex);
   if (html[index] !== '=') return { value: null, next: index };
@@ -179,7 +174,7 @@ function parseAttributeValue(html: string, startIndex: number): { value: string 
   return { value: html.slice(valueStart, valueEnd), next: valueEnd };
 }
 
-/** Advance `index` while the predicate holds for the current char. Returns the index of the first char that fails. */
+/** Advances `index` while the predicate holds for the current char. Returns the index of the first char that fails. */
 function readWhile(html: string, startIndex: number, predicate: (char: string) => boolean): number {
   const length = html.length;
   let index = startIndex;
@@ -191,7 +186,7 @@ function readWhile(html: string, startIndex: number, predicate: (char: string) =
   return index;
 }
 
-/** Advance until the target char is found. Returns its index, or `html.length` if not found. */
+/** Advances until the target char is found. Returns its index, or `html.length` if not found. */
 function readUntilChar(html: string, startIndex: number, target: string): number {
   const length = html.length;
   let index = startIndex;
@@ -199,12 +194,12 @@ function readUntilChar(html: string, startIndex: number, target: string): number
   return index;
 }
 
-/** Skip whitespace starting at `startIndex`; returns the index of the first non-whitespace char. */
+/** Skips whitespace starting at `startIndex`; returns the index of the first non-whitespace char. */
 function skipWhitespace(html: string, startIndex: number): number {
   return readWhile(html, startIndex, isWhitespace);
 }
 
-/** Tag-name chars: ASCII letters, digits, `:` (namespaces), `-` (custom elements). */
+/** Returns true for a tag-name char: an ASCII letter, a digit, `:` (namespaces), or `-` (custom elements). */
 function isNameChar(char: string): boolean {
   return (
     (char >= 'a' && char <= 'z') ||
@@ -215,7 +210,7 @@ function isNameChar(char: string): boolean {
   );
 }
 
-/** Attribute names are more permissive than tag names — letters, digits, `-`, `_`, `:`. */
+/** Returns true for an attribute-name char: a tag-name char or `_`. */
 function isAttrNameChar(char: string): boolean {
   return (
     (char >= 'a' && char <= 'z') ||
@@ -227,11 +222,12 @@ function isAttrNameChar(char: string): boolean {
   );
 }
 
+/** Reports whether `char` is an HTML whitespace character. */
 function isWhitespace(char: string): boolean {
   return [' ', '\t', '\n', '\r', '\f'].includes(char);
 }
 
-/** Derive a 1-based line number from a byte offset into the original source. */
+/** Derives a 1-based line number from an offset into the original source. */
 export function lineOf(source: string, offset: number): number {
   let line = 1;
   for (let i = 0; i < offset && i < source.length; i += 1) {
@@ -240,10 +236,10 @@ export function lineOf(source: string, offset: number): number {
   return line;
 }
 
-/** Visitor signature for {@link walkTokens}. Receives the current open-tag token and its parent stack. */
+/** Visitor signature for {@link walkTokens}. */
 export type Visitor = (token: OpenTagToken, parents: readonly OpenTagToken[]) => void;
 
-/** Walk `tokens` and call `visit` for each open tag, exposing the chain of currently-open ancestors. */
+/** Walks `tokens` and calls `visit` for each open tag, exposing the chain of currently-open ancestors. */
 export function walkTokens(tokens: readonly Token[], visit: Visitor): void {
   const stack: OpenTagToken[] = [];
   for (const token of tokens) {
@@ -251,7 +247,7 @@ export function walkTokens(tokens: readonly Token[], visit: Visitor): void {
       visit(token, stack);
       if (!token.selfClosing) stack.push(token);
     } else if (token.type === 'close-tag') {
-      // Pop the matching open tag if present; tolerate mismatches by popping the innermost match.
+      // Pop to the innermost open tag of the same name, so that a mismatched close tag cannot desync the stack.
       for (let i = stack.length - 1; i >= 0; i -= 1) {
         if (stack[i]?.name === token.name) {
           stack.length = i;

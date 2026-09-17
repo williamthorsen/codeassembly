@@ -270,8 +270,6 @@ describe(runEmit, () => {
   it('reports a payload that is valid JSON but not an object without writing anything', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
-    // A bare array or scalar is refused rather than wrapped: the payload's shape is the per-family contract consumers
-    // read, so a silently reshaped payload would be worse than a refused event the caller is told about.
     const result = await runEmit({
       argv: ['--type', 'skill.started', '--payload', '["a"]', '--home', home],
       cwd,

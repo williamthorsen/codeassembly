@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { check } from '../check.ts';
 import type { Finding, RuleId } from '../types.ts';
 
-/** Convenience: assert that `check(html)` returns `ok: false` and includes a finding whose `rule` is `ruleId`. */
+/** Asserts that `check(html)` returns `ok: false` with a finding whose `rule` is `ruleId`. */
 function expectFinding(html: string, ruleId: RuleId): Finding {
   const result = check(html);
   if (result.ok) {
@@ -17,7 +17,7 @@ function expectFinding(html: string, ruleId: RuleId): Finding {
   return finding;
 }
 
-/** Convenience: assert that `check(html)` returns `ok: true`. Fails with the seen findings on mismatch. */
+/** Asserts that `check(html)` returns `ok: true`. */
 function expectClean(html: string): void {
   const result = check(html);
   if (!result.ok) {
@@ -180,8 +180,6 @@ describe(check, () => {
     });
 
     it('does not flag literal angle brackets inside quoted attribute values', () => {
-      // Regression guard for the parser's quote-awareness: literal `<Y>` inside a quoted attribute value must not be
-      // tokenized as a tag, so no `disallowed-element` finding for `<Y>` should be produced.
       expectClean('<p><a href="https://x.test" title="X<Y>Z">link</a></p>');
     });
 
@@ -191,19 +189,13 @@ describe(check, () => {
   });
 
   describe('documented parser limitations', () => {
-    // These tests lock in the tokenizer's intentional behavior at known edges; see the parser.ts header.
-    // If a future change "fixes" any of these, the test will fail and force a conscious doctrine change.
+    // The parser.ts header documents these limitations.
 
     it('tokenizes tag-shaped content inside HTML comments as real tags (no comment handling)', () => {
-      // `<!--` is not a recognized tag start, so the surrounding text continues to be scanned and the inner
-      // `<strong><code>` is tokenized as nested tags. Jira HTML in this codebase does not carry comments,
-      // so this false-positive surface is theoretical — but the behavior is documented and worth locking in.
       expectFinding('<p>before <!-- <strong><code>x</code></strong> --> after</p>', 'composition-code-inline-mark');
     });
 
     it('treats sibling tags after an unclosed ancestor as nested under that ancestor', () => {
-      // Unclosed `<code>` followed by `<strong>` registers the `<strong>` as nested under `<code>`,
-      // firing the composition rule. This is fail-loud on imbalanced input, not a bug.
       expectFinding('<p><code>x<p><strong>y</strong></p>', 'composition-code-inline-mark');
     });
   });

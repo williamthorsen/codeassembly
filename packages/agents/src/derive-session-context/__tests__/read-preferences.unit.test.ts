@@ -175,12 +175,14 @@ describe(readPreferences, () => {
 
 // region | Helpers
 
+/** Writes `body` as the project's `.agents/preferences.yaml` under `projectDir`. */
 async function writeProjectYaml(projectDir: string, body: string): Promise<void> {
   const agentsDir = path.join(projectDir, '.agents');
   await mkdir(agentsDir, { recursive: true });
   await writeFile(path.join(agentsDir, 'preferences.yaml'), body, 'utf8');
 }
 
+/** Writes `body` as the global `.agents/preferences.yaml` under `homeDir`. */
 async function writeGlobalYaml(homeDir: string, body: string): Promise<void> {
   const agentsDir = path.join(homeDir, '.agents');
   await mkdir(agentsDir, { recursive: true });

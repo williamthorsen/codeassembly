@@ -382,8 +382,7 @@ describe(runRelay, () => {
 
   it('reports a failed write rather than throwing', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
-    // A regular file where the events root needs a directory: the recursive `mkdir` cannot succeed, which is the
-    // cheapest reproduction of an unwritable events root.
+    // A regular file where the events root needs a directory, so the recursive `mkdir` cannot succeed.
     const blockedHome = path.join(home, 'blocked');
     await writeFile(blockedHome, 'not a directory', 'utf8');
 

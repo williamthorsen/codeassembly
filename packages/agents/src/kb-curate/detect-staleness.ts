@@ -6,15 +6,12 @@ import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 /**
  * Reports verification-staleness findings for one note, both at `warning` severity:
  *
- * - `verification.unmarked` — the note carries no `last-verified` field, or its value is absent or unparseable as a
- *   date. An unparseable stamp is treated the same as a missing one rather than being silently accepted as fresh.
- *   Emitted only when `vaultUsesVerification` is true, i.e. at least one note in the vault carries a well-formed
- *   `last-verified`. In a vault that has not adopted verification stamps, an absent stamp is not a finding.
- * - `verification.stale` — `last-verified` is older than `staleAfterDays` whole days before `now`. Always flagged,
- *   regardless of `vaultUsesVerification`.
+ * - `verification.unmarked`: the note carries no parseable `last-verified` date. Emitted only when
+ *   `vaultUsesVerification` is true.
+ * - `verification.stale`: `last-verified` is older than `staleAfterDays` whole days before `now`. Emitted regardless
+ *   of `vaultUsesVerification`.
  *
- * `now` is injected for testability, mirroring `kb-retrieve`'s normalizer. A note with no parseable frontmatter has
- * no `last-verified`, so it is treated as unmarked.
+ * A note with no parseable frontmatter has no `last-verified`, so it counts as unmarked.
  */
 export function detectStaleness(input: {
   note: EnumeratedNote;
@@ -55,9 +52,8 @@ export function detectStaleness(input: {
 }
 
 /**
- * Reports whether a vault has adopted verification stamps: true when at least one note carries a well-formed,
- * parseable `last-verified` value. A malformed stamp does not count, so a vault whose only verification-ish value
- * is unparseable is treated as not using verification.
+ * Reports whether a vault has adopted verification stamps: true when at least one note carries a parseable
+ * `last-verified` value.
  */
 export function vaultUsesVerification(notes: readonly EnumeratedNote[], now: Date): boolean {
   return notes.some((note) => {
@@ -68,7 +64,7 @@ export function vaultUsesVerification(notes: readonly EnumeratedNote[], now: Dat
 
 // region | Helpers
 
-/** Reads a string-valued field from a note's frontmatter field map; `null` when absent or non-string. */
+/** Reads a trimmed string-valued field from a note's frontmatter; `null` when absent, non-string, or blank. */
 function extractString(fields: Record<string, unknown>, key: string): string | null {
   const value = fields[key];
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;

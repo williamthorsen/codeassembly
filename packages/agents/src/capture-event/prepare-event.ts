@@ -3,7 +3,7 @@ import { type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/record
 
 import type { CaptureContext, ParsedArgs } from './types.ts';
 
-/** A prepared event ready to write: its ULID-keyed filename stem and the full rendered note content. */
+/** A prepared event ready to write. */
 export interface PreparedEvent {
   /** The event's ULID, also the filename stem. */
   id: string;
@@ -29,17 +29,11 @@ export interface PrepareFailure {
 export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 
 /**
- * Composes a `KbEvent` from agent-supplied args and auto-filled context, renders it through the record module's
- * `renderEvent`, and validates the serialized note as an `event` record by re-parsing through `parseEvent`. The record
- * carries the stored `recordType: event` discriminant and the typed event spine (`id`, `captured-at`, `cwd`, `summary`,
- * plus `session` when the harness exposes one and any supplied `tags`/`impact`); `repo`/`skill`/`model`/`harness` have
- * no typed field and ride in `extra`, which `renderEvent` emits after the spine. No `updated`/`last-verified` field is
- * written: an event carries a single canonical state, editable in place via `capture-event --amend`.
+ * Composes a `KbEvent` from the agent-supplied args and the auto-filled context, and renders it as the note to write.
  *
- * Rendering the composed record through the same `renderEvent`/`renderNote` path the amend path uses keeps a fresh
- * capture and its later amendments identical in field order. Validation round-trips the serialized note through
- * `readNoteContent` and `parseEvent`; when the record does not validate, the outcome is `{ ok: false, errors }` and
- * nothing is written.
+ * An event carries a single canonical state, edited in place through `capture-event --amend`, so the record has no
+ * `updated` or `last-verified` field. Rendering through the same `renderEvent`/`renderNote` path that an amend uses
+ * keeps a fresh capture and its later amendments identical in field order.
  */
 export function prepareEvent(input: {
   args: ParsedArgs;

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { loadNote } from '../load-note.ts';
 
+/** Creates a temporary directory whose name starts with `prefix`, and returns its path. */
 async function makeTempDir(prefix: string): Promise<string> {
   return mkdtemp(join(tmpdir(), prefix));
 }

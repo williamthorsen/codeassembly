@@ -2,53 +2,51 @@
 
 /** A narrow projection of `schemas/preferences.json` covering the fields the deriver consumes. */
 export interface ResolvedPreferences {
-  /** Top-level `scm`, the VCS host (`"github"` or `"bitbucket"`); may be undefined when not configured. */
+  /** The VCS host. */
   readonly scm?: 'github' | 'bitbucket';
-  /** `project.slug`, `project.ticket_ref_prefix`. */
   readonly project?: {
     readonly slug?: string;
     readonly ticket_ref_prefix?: string;
   };
-  /** `repository.slug` (deprecated fallback), `repository.default_remote.{name,default_branch}`. */
   readonly repository?: {
+    /** A deprecated fallback for `project.slug`. */
     readonly slug?: string;
     readonly default_remote?: {
       readonly name?: string;
       readonly default_branch?: string;
     };
   };
-  /** `artifacts.base_dir`, `artifacts.paths.*`. */
   readonly artifacts?: {
     readonly base_dir?: string;
     readonly paths?: Readonly<Record<string, string>>;
   };
-  /** `ticket.base_url`, the org-stable base a bare ticket id is appended to (e.g. Jira `https://org.atlassian.net/browse/`). */
   readonly ticket?: {
+    /** The org-stable base to which a bare ticket id is appended (e.g. Jira `https://org.atlassian.net/browse/`). */
     readonly base_url?: string;
   };
 }
 
 /** Result of reading and merging the project and global preferences files. */
 export interface PreferencesReadResult {
-  /**
-   * The merged preferences, projected to the fields the deriver consumes.
-   * Unknown sibling keys at any depth are dropped; wrong-typed consumed fields throw at read time.
-   */
+  /** The merged preferences, projected to the fields the deriver consumes. */
   readonly preferences: ResolvedPreferences;
-  /** Source-file paths actually present and read (project, global). */
+  /** The source-file paths present and read. */
   readonly sources: {
     readonly project?: string;
     readonly global?: string;
   };
 }
 
-/** Parsed ticket-ID extraction result. Both fields are nullable when no ID can be derived. */
+/** Parsed ticket-ID extraction result. */
 export interface TicketIdResult {
   readonly ticket_id: string | null;
   readonly ticket_ref: string | null;
 }
 
-/** The canonical session-context manifest persisted at `.agents/{sanitized-branch}.branch-manifest.json`. */
+/**
+ * The canonical session-context manifest persisted at `.agents/{sanitized-branch}.branch-manifest.json`. Its optional
+ * fields stay out of the required-field set, so a manifest written before one of them existed remains valid.
+ */
 export interface BranchManifest {
   readonly ticket_id: string | null;
   readonly ticket_ref: string | null;
@@ -59,23 +57,16 @@ export interface BranchManifest {
   readonly artifact_base_dir: string;
   readonly artifact_paths: Readonly<Record<string, string>>;
   readonly created_at: string;
-  /**
-   * The resolved ticket URL, stored so consumers can prefer it over reconstructing one from
-   * `ticket_id`. Optional and excluded from the required-field set so pre-existing manifests stay
-   * valid; a fresh compose seeds `null`.
-   */
+  /** The resolved ticket URL, stored so consumers can prefer it over reconstructing one from `ticket_id`. */
   readonly ticket_url?: string | null;
   /**
-   * The org-stable base URL a bare ticket id is appended to, mirroring the `ticket.base_url`
-   * preference. Lets skills expand a bare reference to a full URL on platforms where one can't be
-   * reconstructed (e.g. Jira). Optional and excluded from the required-field set so pre-existing
-   * manifests stay valid; a fresh compose seeds it from preferences, or `null` when unset.
+   * The org-stable base URL a bare ticket id is appended to, mirroring the `ticket.base_url` preference. Lets skills
+   * expand a bare reference to a full URL on platforms where one can't be reconstructed (e.g. Jira).
    */
   readonly ticket_base_url?: string | null;
   /**
-   * The resolved pull-request URL, stored so PR-aware skills can reuse it across sessions. Optional
-   * and excluded from the required-field set so pre-existing manifests stay valid. A fresh compose
-   * seeds it from a `PR-<n>` branch identity (the constructed PR URL), or `null` otherwise.
+   * The resolved pull-request URL, stored so PR-aware skills can reuse it across sessions. A fresh compose seeds it
+   * from a `PR-<n>` branch identity, or `null` otherwise.
    */
   readonly pr_url?: string | null;
 }

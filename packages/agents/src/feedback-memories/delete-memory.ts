@@ -6,10 +6,8 @@ import { removeMemoryIndexEntry } from './reconcile-memory-index.ts';
 import type { DeleteOutcome, DeleteSuccess } from './types.ts';
 
 /**
- * Deletes a batch of memory files and reconciles each affected `MEMORY.md`. Files are removed first, then the index of
- * each store is read, stripped of every deleted memory's line, and rewritten once — so a store with many deletions is
- * touched a single time. An already-absent file and a store with no `MEMORY.md` line are non-fatal, reported per path.
- * A missing filesystem entry is tolerated; other I/O errors propagate as system failures.
+ * Deletes a batch of memory files and reconciles each affected `MEMORY.md`. An already-absent file and a store with no
+ * matching `MEMORY.md` line are non-fatal and reported per path; any other I/O error propagates as a system failure.
  */
 export async function deleteMemories(input: { paths: readonly string[] }): Promise<DeleteSuccess> {
   const deleted = await deleteFiles(input.paths);
@@ -51,9 +49,8 @@ async function deleteFiles(paths: readonly string[]): Promise<Map<string, boolea
 }
 
 /**
- * Reconciles each store's `MEMORY.md` once, mapping every path to whether its index line was found and removed. Paths
- * are grouped by their sibling index so a store is read and rewritten a single time regardless of how many of its
- * memories are in the batch. An absent index leaves every grouped path at `false`.
+ * Reconciles each store's `MEMORY.md` once, mapping every path to whether its index line was found and removed. An
+ * absent index leaves every path in that store at `false`.
  */
 async function reconcileIndexes(paths: readonly string[]): Promise<Map<string, boolean>> {
   const indexUpdated = new Map<string, boolean>();

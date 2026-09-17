@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import process from 'node:process';
@@ -37,7 +37,7 @@ import type {
 } from './types.ts';
 import { renderGuarded, writeBackNote } from './write-back.ts';
 
-/** Operation flags, in the documented surface order in SKILL.md. Each name doubles as the operation name. */
+/** Operation flags, in the surface order that SKILL.md documents. */
 const OPERATION_FLAGS = [
   { name: 'bump-updated', takesValue: false },
   { name: 'verify', takesValue: false },
@@ -57,8 +57,6 @@ async function main(): Promise<void> {
       now: new Date(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
-    // System failures (unexpected throws) take the catch arm below.
   } catch (error) {
     const message = describeError(error);
     process.stderr.write(`kb-edit: ${message}\n`);
@@ -71,13 +69,8 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv.
- *
- * Layout: one or more positional `<path>` arguments plus exactly one operation flag. `--add-addressed-by` is the
- * sole multi-target operation and accepts more than one path; every other operation accepts exactly one and rejects a
- * second positional. `--retag`, `--add-addressed-by`, and `--supersede-with` take an inline or following value;
- * `--bump-updated`, `--verify`, and `--append` are boolean. Multiple operation flags, an unknown flag, a missing
- * positional, or a missing required value throws with a usage-style message.
+ * Parses the helper's argv: one or more positional `<path>` arguments plus exactly one operation flag. Throws on any
+ * defect in it, and `runEdit` turns the throw into an `invalid-args` result.
  *
  * @internal - Exported to allow testing.
  */
@@ -87,11 +80,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, resolves the writable KB that owns the note, loads the note as an
- * assertion record and the KB's tag aliases, dispatches to the operation module, and atomically writes the result
- * back. Recoverable failures (no KB, readonly KB, note not found, a note that does not parse as an assertion, op-side
- * rejections) become structured `{ ok: false, ... }` results. System failures (out-of-disk, EPERM) propagate to
- * `main`'s try/catch.
+ * Runs the helper end to end, from argv to the note written back.
+ *
+ * A recoverable failure returns a structured `{ ok: false, ... }` result; a system failure propagates to `main`.
  *
  * @internal - Exported to allow testing.
  */
@@ -185,9 +176,8 @@ function absoluteNotePath(input: { path: string; startDir: string }): string {
 }
 
 /**
- * Resolves the writable KB that owns the note at `notePath`. Walks up from the note's directory, not the
- * caller's cwd, so the KB context tracks where the note lives rather than where the helper was invoked.
- * Maps resolver failures onto top-level `EditResult` failures.
+ * Resolves the writable KB that owns the note at `notePath`. The walk starts at the note's directory, so the KB
+ * context tracks where the note lives rather than where the helper was invoked.
  */
 async function resolveKbForPath(input: {
   notePath: string;
@@ -202,10 +192,8 @@ async function resolveKbForPath(input: {
     return { ok: true, kb: resolved.kb };
   }
   switch (resolved.reason) {
-    // kb-edit never passes --kb, so a failed resolution always means the note's directory is not inside a writable
-    // KB, which the resolver reports as `missing-destination`. The `no-kb-resolvable` (unmatched --kb name) and
-    // `no-default` (--kb @default) reasons cannot arise here, but are mapped to the same failure so the switch stays
-    // total against the shared resolver's outcome union.
+    // kb-edit never passes --kb, so of the three reasons grouped here only `missing-destination` can arise. The other
+    // two are mapped alongside it, which keeps the switch total against the shared resolver's outcome union.
     case 'missing-destination':
     case 'no-kb-resolvable':
     case 'no-default':
@@ -239,7 +227,7 @@ function kbRootFor(kb: ResolvedKb): KbRoot {
   return { path: kb.path, kbDir: resolveKbDir(kb.path) };
 }
 
-/** Loads tag aliases for a resolved KB. Falls back to an empty alias map on a malformed aliases file. */
+/** Loads tag aliases for a resolved KB. */
 async function loadAliasesForKb(input: { kb: ResolvedKb }): Promise<AliasMap> {
   return loadAliasesWithWarning({ kbRoot: kbRootFor(input.kb) });
 }
@@ -286,7 +274,6 @@ function validationFailure(errors: string[]): EditFailure {
   };
 }
 
-/** Shape returned by `prepareOperation`: a mutated record plus optional per-op metadata. */
 interface PreparedOperation {
   ok: true;
   record: KbAssertion;
@@ -334,10 +321,8 @@ async function prepareOperation(input: {
 }
 
 /**
- * Orchestrates `--supersede-with`: resolves and validates both paths into the same KB, prepares the in-memory
- * edits, re-parses both rendered records as a guard, then commits both writes with best-effort
- * atomicity. On the second rename's failure, the captured original bytes of the old note are restored. If
- * restoration also fails, the result surfaces as `partial-supersede` with both paths in `details`.
+ * Orchestrates `--supersede-with`: validates that both paths name notes in the same KB, then commits both writes
+ * through `commitSupersede`.
  */
 async function runSupersedeWith(input: {
   args: Extract<ParsedArgs, { operation: 'supersede-with' }>;
@@ -437,13 +422,11 @@ async function runSupersedeWith(input: {
 }
 
 /**
- * Orchestrates `--add-addressed-by`: applies the same reference list to each target record independently. Every target
- * resolves its own writable KB, loads, appends to `addressed-by`, and writes atomically; a recoverable failure on one
- * target is captured in that record's result and does not abort the others. Per-record isolation covers the
- * recoverable `EditResult` failures only: an unexpected throw (a filesystem error) still propagates to `main`, as it
- * does for the single-file operations. The append de-duplicates, so a re-run is
- * idempotent for `addressed-by` (entries are never duplicated) even though each run re-bumps `updated:`; no cross-file
- * rollback is needed.
+ * Orchestrates `--add-addressed-by`: applies the same reference list to each target independently, so a recoverable
+ * failure on one target becomes that record's result and the rest of the batch still runs. An unexpected throw
+ * propagates to `main`.
+ *
+ * The operation adds no duplicate reference, so the batch needs no cross-file rollback.
  */
 async function runAddAddressedBy(input: {
   args: Extract<ParsedArgs, { operation: 'add-addressed-by' }>;
@@ -518,26 +501,19 @@ interface SelectedOp {
 }
 
 /**
- * Walks `argv` once, separating positional `<path>` arguments from operation flags. Captures every positional and
- * every operation flag seen; arity (zero or more-than-one of each, and which operations accept multiple positionals)
- * is enforced in `composeParsedArgs`. Rejects unknown flags and missing values for value-bearing flags. Returns the
- * captured shape so the per-op composition can be a separate, narrow function.
+ * Separates positional `<path>` arguments from operation flags, capturing every one of each. `composeParsedArgs`
+ * enforces arity.
  */
 function scanArgv(argv: readonly string[]): { positionals: string[]; selectedOps: SelectedOp[] } {
-  // The specs are typed with the OperationName union, so the kernel reports each matched flag under that union. A
-  // boolean op carries a `null` value; a value op carries its resolved (possibly empty) string. Empty inline values
-  // are intentionally allowed at this layer — each op decides whether empty is meaningful (`--retag=` clears tags) or
-  // downstream-rejected (`--supersede-with=` fails path resolution, `--add-addressed-by=` yields no references).
+  // An empty inline value passes through, because each operation decides for itself whether empty is meaningful.
   const { positionals, flags } = scanFlags(argv, OPERATION_FLAGS);
   const selectedOps: SelectedOp[] = flags.map((flag) => ({ name: flag.name, value: flag.value }));
   return { positionals, selectedOps };
 }
 
 /**
- * Validates the scanned argv shape (at least one positional, exactly one operation flag) and projects it onto the
- * typed `ParsedArgs` union. Per-op value requirements (`--retag`, `--add-addressed-by`, `--supersede-with`) and
- * positional arity (single-target ops reject a second path; `--add-addressed-by` accepts many) are checked here, so
- * the loop in `scanArgv` doesn't need to know which op is selected.
+ * Validates the scanned argv shape and projects it onto the typed `ParsedArgs` union, including every per-operation
+ * requirement: the value that a flag needs, and the number of positionals that it accepts.
  */
 function composeParsedArgs(input: { positionals: string[]; selectedOps: SelectedOp[] }): ParsedArgs {
   const { positionals, selectedOps } = input;
@@ -609,8 +585,7 @@ function singlePositional(positionals: string[]): string {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure (broken symlink, permission denied) the
- * function emits a warning to stderr and returns `false`, matching the degrade-with-warning pattern kb-add uses.
+ * symlinked invocation path still matches. A `realpathSync` failure warns on stderr and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

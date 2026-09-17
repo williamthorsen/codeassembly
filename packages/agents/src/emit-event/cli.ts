@@ -1,19 +1,8 @@
 /**
- * CLI entry for the lifecycle-event emitter.
+ * CLI entry for the lifecycle-event emitter. Composes one lifecycle event from the flags, the environment, and git at
+ * `cwd`, then appends it to the session's JSONL log.
  *
- * - Autofills the envelope's context: `repo` and `branch` from git at `cwd`, `session` from `--session` or the
- *   harness's session variable, `cwd` from the process, `harness` from the install-injected flag.
- * - Appends one JSON line to `{home}/.codeassembly/events/{owner}/{name}/{sanitized-branch}/{session}.jsonl`.
- * - Never blocks the skill it observes: every failure — bad arguments, an unusable payload, a failed write, an
- *   unexpected throw — prints a structured `{ ok: false, error, message }` to stdout, warns on stderr, and exits 0.
- *   A success prints `{ ok: true, id, path }`. There is no non-zero exit path.
- *
- * Flags:
- *   --type <name>        The event type. Required. An undeclared type warns and is appended anyway.
- *   --payload <json>     A JSON object carrying the per-family event body. Defaults to `{}`.
- *   --session <id>       Session id overriding the environment-derived one, for a harness that relays it out of band.
- *   --harness <id>       The agent platform; install-injected, not derived at runtime.
- *   --home <path>        Events-root override, so a test can point the write at a fixture directory.
+ * Every exit is 0, failures included, because a lost event must not derail the skill that emitted it.
  */
 import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -34,7 +23,6 @@ import { resolveEventPath } from './resolve-event-path.ts';
 import type { EmitContext, EmitErrorCode, EmitFailure, EmitResult, ParsedArgs } from './types.ts';
 import { appendEvent } from './write-event.ts';
 
-/** The flags this helper accepts. Every one takes a value; the event body arrives inline via `--payload`, not stdin. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'type', takesValue: true },
   { name: 'payload', takesValue: true },
@@ -54,8 +42,8 @@ async function main(): Promise<void> {
       now: new Date(),
     });
   } catch (error) {
-    // The never-block backstop. `runEmit` converts every failure it anticipates into a structured result, so reaching
-    // here means something unforeseen threw — which still must not take down the skill being observed.
+    // `runEmit` converts every failure that it anticipates into a structured result, so reaching here means something
+    // unforeseen threw.
     result = failure('internal-error', describeError(error));
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -66,12 +54,10 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end: parses args, validates the payload, resolves the context git and the environment supply,
- * composes the envelope, and appends it to the session's JSONL log. An undeclared `--type` warns and is appended
- * regardless, so a skill can emit a type the v0 vocabulary has not caught up with.
+ * Runs the helper end to end, from the invocation's argv to the appended event. The helper warns on an undeclared
+ * `--type` and appends the event regardless, so that the v0 vocabulary never blocks an emission.
  *
- * Every failure is recoverable by contract. Invalid args, an unparseable or non-object payload, and a failed write all
- * return `{ ok: false, ... }` without writing anything, leaving the calling skill to carry on unaffected.
+ * Every failure is recoverable by contract, and each returns `{ ok: false, ... }` having written nothing.
  *
  * @internal - Exported to allow testing.
  */
@@ -123,8 +109,7 @@ export async function runEmit(input: {
 }
 
 /**
- * Parses the helper's argv. Each flag accepts both `--flag value` and `--flag=value`. An unknown flag, an unexpected
- * positional, an empty value, or a missing `--type` throws; the caller turns that into an `invalid-args` result.
+ * Parses the helper's argv, throwing on any defect in it. The caller turns the throw into an `invalid-args` result.
  *
  * @internal - Exported to allow testing.
  */
@@ -156,13 +141,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 // region | Helpers
 
-/**
- * Resolves the context the envelope carries beyond the agent-supplied fields. Each field is best-effort: an
- * unresolvable one is omitted from the envelope and stands in as a placeholder path segment, never a failure.
- *
- * `--session` wins over the environment so a harness that runs the helper outside the agent's own process — the Rovo
- * relay — can still attribute the event to the session that produced it.
- */
+/** Resolves the envelope's auto-filled context from git at `cwd`, the environment, and the flags. */
 async function resolveContext(input: { args: ParsedArgs; cwd: string; env: NodeJS.ProcessEnv }): Promise<EmitContext> {
   // The repo and branch reads are independent, and the repo read is itself two chained git invocations. Overlapping
   // them keeps the emission's git cost to the longer chain rather than the sum, on a helper the agent blocks on at
@@ -202,9 +181,7 @@ async function resolveBranch(cwd: string): Promise<string | undefined> {
 /**
  * Parses the raw `--payload` text into the envelope's payload object; an omitted flag yields `{}`.
  *
- * Anything that is not a JSON object — malformed JSON, or a valid array, string, or `null` — fails the emission rather
- * than being coerced into a wrapper object. The payload's shape is the per-family contract consumers read, so a
- * silently reshaped payload is worse than a refused event the caller is told about.
+ * The payload must be a JSON object, because its shape is the per-family contract that consumers read.
  */
 function parsePayload(
   raw: string | null,
@@ -227,7 +204,7 @@ function parsePayload(
   return { ok: true, value: parsed };
 }
 
-/** Builds a failure result, warning on stderr so the failure is visible to an operator and not only to the caller. */
+/** Builds a failure result and warns on stderr, so that an operator sees the failure. */
 function failure(error: EmitErrorCode, message: string): EmitFailure {
   warn(message);
   return { ok: false, error, message };
@@ -240,8 +217,7 @@ function warn(message: string): void {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`, matching the degrade-with-warning pattern used by `capture-event`.
+ * symlinked invocation path still matches. A `realpathSync` failure warns and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

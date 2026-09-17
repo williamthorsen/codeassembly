@@ -36,18 +36,13 @@ export interface SurveyedFolder {
 }
 
 /**
- * Reads a store's shape without opening a note: the domains its taxonomy declares, with each one's description,
- * review state, and note count, and the folders holding notes that no domain declares.
+ * Reads a store's shape without opening a note.
  *
- * The note set comes from the same enumeration `kb check` runs, so the survey sees exactly the notes the store's
- * `targets` and `exclude` admit and cannot disagree with what a later check reports. A folder is undeclared here on
- * the same terms `taxonomy.undeclared` uses: the folder a note sits in directly, matched against the taxonomy exactly,
- * so a folder nested under a declared domain still surfaces. Unlike the drift rules, the survey stays on for a store
- * declaring nothing, where every folder holding notes is undeclared — that is the reading a store adopting a taxonomy
- * needs.
- *
- * `noteCount` carries one meaning throughout: notes at the path or beneath it. A grouping domain holding only
- * subfolders therefore reads as populated rather than empty, matching how the rules decide a domain is in use.
+ * The note set comes from the same enumeration that `kb check` runs, so the survey sees exactly the notes admitted by
+ * the store's `targets` and `exclude` and cannot disagree with what a later check reports. A folder is undeclared here
+ * on the same terms that `taxonomy.undeclared` uses: the folder in which a note sits directly, matched against the
+ * taxonomy exactly. A folder nested under a declared domain therefore still surfaces. The survey stays on for a store
+ * declaring nothing: every folder holding notes is then undeclared.
  *
  * A malformed `.kb/config.yaml` or `.kb/taxonomy.yaml` throws a `KbLoaderError` from the loader that read it.
  */

@@ -1,9 +1,4 @@
-// Writer-side shapes for the emit-event helper: the auto-filled context, the parsed CLI input, and the JSON result
-// emitted to stdout.
-//
-// The helper must never block the skill it observes, so every failure it can reach — bad arguments, an unusable
-// payload, a failed write — surfaces as a `{ ok: false, error, message }` payload on stdout with a stderr warning and a
-// zero exit. There is no out-of-band failure channel; the result union is total.
+// Writer-side shapes for the emit-event helper.
 
 /** The auto-filled context an envelope carries beyond the agent-supplied `type` and `payload`. */
 export interface EmitContext {
@@ -45,13 +40,12 @@ export interface EmitSuccess {
 /** The helper's stdout payload when the event could not be emitted. Nothing was written. */
 export interface EmitFailure {
   ok: false;
-  /** Categorical error code. */
   error: EmitErrorCode;
   /** Short human-readable explanation, also written to stderr. */
   message: string;
 }
 
-/** Categorical error codes the helper can return. Each exits 0: telemetry never blocks the skill it observes. */
+/** Categorical error codes the helper can return. */
 export type EmitErrorCode = 'invalid-args' | 'invalid-payload' | 'write-failed' | 'internal-error';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */

@@ -13,6 +13,7 @@ function feedback(description: string): string {
   return `---\nname: feedback-example\ndescription: ${description}\nmetadata:\n  type: feedback\n---\n\nBody.\n`;
 }
 
+/** Creates an empty temporary projects root and returns its absolute path. */
 async function makeProjectsRoot(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'fm-summarize-'));
 }

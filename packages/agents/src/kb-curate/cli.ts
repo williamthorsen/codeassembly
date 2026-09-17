@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and this module runs `main` only behind the `isEntryPoint()` guard, never when imported as a library; throwing-to-set-exitCode would lose the explicit failure-exit contract. */
-/* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +15,6 @@ import { applyFixes } from './apply.ts';
 import { detectCurateFindings, sortFindings } from './detect.ts';
 import type { CurateResult, CurateSummary, ParsedArgs } from './types.ts';
 
-/** Default staleness threshold in whole days when `--stale-after` is not supplied. */
 const DEFAULT_STALE_AFTER_DAYS = 90;
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -27,8 +26,7 @@ async function main(): Promise<void> {
       now: new Date(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
-    // System failures (unexpected throws) take the catch arm below.
+    // A recoverable `{ ok: false, ... }` result exits 0; the non-zero exit below is reserved for a system failure.
   } catch (error) {
     const message = describeError(error);
     process.stderr.write(`kb-curate: ${message}\n`);
@@ -41,9 +39,7 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv. Layout is flag-only: `--kb <name>`, `--apply`, and `--stale-after <days>`. Value-bearing
- * flags accept both `--flag value` and `--flag=value`. `--stale-after` must be a positive integer. An unknown flag,
- * a missing required value, or a non-positive-integer threshold throws with a usage-style message.
+ * Parses the helper's argv, throwing on any defect in it. The caller turns the throw into an `invalid-args` result.
  *
  * @internal - Exported to allow testing.
  */
@@ -82,10 +78,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, resolves a single KB, enumerates and parses every note, runs detection
- * across all six categories, and (under `--apply`) performs the two safe fixes before re-reporting residual
- * findings. Recoverable failures (invalid args, no resolvable KB, a readonly KB under `--apply`) become structured
- * `{ ok: false, ... }` results. System failures propagate to `main`'s try/catch.
+ * Runs the helper end to end, from argv to the curated result, performing the safe fixes under `--apply`.
+ *
+ * A recoverable failure returns `{ ok: false, ... }`; a system failure propagates to `main`.
  *
  * @internal - Exported to allow testing.
  */
@@ -146,14 +141,12 @@ export async function runCurate(input: {
 
 // region | Helpers
 
-/** A guarded `curateCheck` outcome: the check result, or an `invalid-config` failure mapped from a loader defect. */
 type GuardedCheck =
   { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } } | { ok: false; failure: CurateResult };
 
 /**
  * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config, aliases, or taxonomy) to a structured
- * `invalid-config` failure. Any other throw — an enumeration or detection crash — propagates as a real failure rather
- * than being relabeled as a config error. Both `runCurate` check calls route through here so the guard cannot drift.
+ * `invalid-config` failure. Any other throw propagates.
  */
 async function guardedCurateCheck(input: { kbRoot: string; now: Date; staleAfterDays: number }): Promise<GuardedCheck> {
   try {
@@ -167,10 +160,8 @@ async function guardedCurateCheck(input: { kbRoot: string; now: Date; staleAfter
 }
 
 /**
- * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration: the
- * link/basename/tag-alias/paths findings come from `check`, and verification-staleness plus supersede-graph findings
- * are detected here. The combined set is sorted by path, then line, then rule. A loader defect propagates as a
- * `KbLoaderError` for the caller to map to `invalid-config`.
+ * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration, returning the sorted
+ * union. A loader defect propagates as a `KbLoaderError`.
  */
 async function curateCheck(input: {
   kbRoot: string;
@@ -194,9 +185,8 @@ function summarize(findings: readonly { severity: 'error' | 'warning' }[]): Cura
 }
 
 /**
- * Resolves the KB to curate and maps a resolution failure to a structured `CurateResult`. A report run passes
- * `requireWritable: false`, so a store the registry marks `readonly: true` is reported on; `--apply` requires a
- * writable one and fails with `readonly-kb`.
+ * Resolves the KB to curate and maps a resolution failure to a structured `CurateResult`. A report run curates a
+ * store marked `readonly: true` by the registry; `--apply` refuses it.
  */
 async function resolveKb(input: {
   startDir: string;
@@ -296,8 +286,7 @@ function parseStaleAfter(value: string): number {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`, matching the degrade-with-warning pattern used elsewhere in the kb skills.
+ * symlinked invocation path still matches. A `realpathSync` failure warns on stderr and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

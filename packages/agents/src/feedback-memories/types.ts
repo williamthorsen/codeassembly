@@ -1,13 +1,11 @@
-// Shapes for the feedback-memories helper: the enumerated feedback-memory record, and the JSON results emitted
-// to stdout by the `enumerate` and `delete` subcommands.
+// Shapes for the feedback-memories helper.
 //
-// Each helper subcommand prints a discriminated union on `ok`. Recoverable failures return `{ ok: false, error, message }`;
-// successes return `{ ok: true, ... }`. System errors (permission denied, out-of-disk) print to stderr and exit non-zero.
+// Each subcommand prints a discriminated union on `ok`. A recoverable failure returns `{ ok: false, error, message }`
+// and a success returns `{ ok: true, ... }`. A system error (permission denied, out-of-disk) prints to stderr and exits
+// non-zero.
 
 /**
- * A single feedback memory discovered during enumeration, carrying the provenance a caller needs to route it. Identity
- * is drawn from parsed frontmatter, not the filename, so both the legacy top-level `type:` schema and the current nested
- * `metadata.type:` schema are represented uniformly here.
+ * A single feedback memory discovered during enumeration, carrying the provenance that a caller needs to route it.
  */
 export interface FeedbackMemory {
   /** Absolute path to the memory file. */
@@ -16,8 +14,7 @@ export interface FeedbackMemory {
   memoryStore: string;
   /**
    * Absolute path to the origin project's working directory when the memory-store slug resolves to a live repo on this
-   * machine, else `null`. Lets a caller ground routing decisions in that project's guidance; `null` when the slug
-   * decodes to no existing directory (a dead store, or a name whose `.` punctuation cannot be recovered).
+   * machine, else `null`. Lets a caller ground routing decisions in that project's guidance.
    */
   repoPath: string | null;
   /** Machine hostname captured at enumeration time. */
@@ -36,11 +33,11 @@ export interface FeedbackMemory {
   memoryIndexPath: string;
 }
 
-/** A memory file that could not be read as a note, surfaced rather than silently dropped. */
+/** A memory file that enumeration could not read as a note. */
 export interface SkippedMemory {
   /** Absolute path to the unreadable file. */
   path: string;
-  /** Why the file was skipped (missing or malformed frontmatter). */
+  /** Why the file was skipped (frontmatter that could not be parsed). */
   reason: string;
 }
 
@@ -57,10 +54,7 @@ export interface EnumerateSuccess {
   skipped: SkippedMemory[];
 }
 
-/**
- * The `enumerate` subcommand's stdout payload when the projects root is absent, or a `--memory-store` names no memory
- * store on the machine — or names more than one, when a label is shared by two stores.
- */
+/** The `enumerate` subcommand's stdout payload when the walk cannot start; `error` names the condition. */
 export interface EnumerateFailure {
   ok: false;
   error: 'ambiguous-memory-store' | 'no-projects-root' | 'no-such-memory-store';
@@ -77,14 +71,11 @@ export interface MemorySummary {
   description: string | null;
 }
 
-/**
- * One memory store's feedback-memory rollup: its count, the newest memory's modification time, and each memory's
- * identity for verbose rendering.
- */
+/** One memory store's feedback-memory rollup. */
 export interface ProjectSummary {
-  /** The memory-store slug — the directory name `--memory-store` accepts. */
+  /** The memory-store slug (the `<project>` directory name under the projects root). */
   memoryStore: string;
-  /** Display label: the resolved repo directory's basename, or the slug itself when the store has no live repo. */
+  /** Display label for the store, as `deriveLabel` derives it. */
   label: string;
   /** Absolute path to the origin repo when the slug resolves to a live directory, else null. */
   repoPath: string | null;
@@ -96,7 +87,7 @@ export interface ProjectSummary {
   memories: MemorySummary[];
 }
 
-/** The per-project rollup returned by `summarizeFeedbackMemories`, with projects sorted alphabetically by label. */
+/** The per-project rollup returned by `summarizeFeedbackMemories`. */
 export interface FeedbackMemorySummary {
   ok: true;
   /** Machine hostname the summary was computed on. */
@@ -111,7 +102,6 @@ export interface FeedbackMemorySummary {
   skipped: SkippedMemory[];
 }
 
-/** The result of summarizing: a successful rollup, or an enumeration failure propagated unchanged. */
 export type SummarizeResult = FeedbackMemorySummary | EnumerateFailure;
 
 /** The outcome of deleting one memory and reconciling its store's `MEMORY.md`. */
@@ -122,11 +112,11 @@ export interface DeleteOutcome {
   deleted: boolean;
   /** Whether a matching `MEMORY.md` line was found and removed. */
   indexUpdated: boolean;
-  /** A non-fatal note, e.g. the file was already gone or the store has no `MEMORY.md` line for it. */
+  /** A non-fatal note, present only when the delete was not clean. */
   note?: string;
 }
 
-/** The `delete` subcommand's stdout payload on success (per-path outcomes are individually reported). */
+/** The `delete` subcommand's stdout payload on success. */
 export interface DeleteSuccess {
   ok: true;
   results: DeleteOutcome[];
@@ -144,7 +134,7 @@ export type DeleteResult = DeleteSuccess | FeedbackMemoriesFailure;
 export type FeedbackMemoriesResult = EnumerateResult | DeleteResult;
 
 /**
- * What `runFeedbackMemories` hands the process entry point: a JSON-serializable result for `enumerate` and `delete`, or
- * pre-rendered human text for `list` and `--help`. `main` writes each to stdout accordingly.
+ * What `runFeedbackMemories` hands the process entry point: a JSON-serializable result, or text already rendered for a
+ * human reader.
  */
 export type RenderedResult = { render: 'json'; value: FeedbackMemoriesResult } | { render: 'text'; value: string };

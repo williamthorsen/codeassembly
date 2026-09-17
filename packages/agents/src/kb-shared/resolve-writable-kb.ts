@@ -15,18 +15,10 @@ export interface ResolvedKb {
 }
 
 /**
- * The selection outcome: a resolved writable KB, or a categorical failure the caller turns into a structured
- * error.
+ * The selection outcome: a resolved writable KB, or a categorical failure the caller turns into a structured error.
  *
- * - `no-kb-resolvable`: an explicit `--kb <name>` matched no registered entry. Carries the unmatched name.
- * - `missing-destination`: no `--kb` was given and no `.kb/` was discoverable, so no destination could be
- *   determined. The registry default is reachable only via `--kb @default`, never by silent fall-through. Carries
- *   the registered KB names and the resolved default name so the caller can build a self-documenting error that
- *   names the alternatives, plus the registry-load error when one occurred.
- * - `no-default`: `--kb @default` was given but the registry declares no usable `default_kb`. Carries the
- *   registry-load error when one occurred, so an unresolvable `default_kb` surfaces its cause.
- * - `readonly-kb`: the resolved KB is registered with `readonly: true` and the caller required a writable one. Always
- *   carries the resolved name and path so the caller can surface them in its structured error.
+ * `missing-destination` and `no-default` carry the registry-load error when one occurred, so that an unusable registry
+ * surfaces its cause rather than reading as an absent entry.
  */
 export type ResolveKbOutcome =
   | { ok: true; kb: ResolvedKb }
@@ -38,15 +30,13 @@ export type ResolveKbOutcome =
 /**
  * Resolves the single knowledge base a command operates on, refusing a read-only KB to a caller that intends to write.
  *
- * Precedence: an explicit `--kb @default` sentinel (the only path to the registry's `default_kb`) beats a concrete
- * `--kb <name>`, which beats `.kb/` discovery. When no `--kb` is given and no `.kb/` is discoverable, resolution fails
- * with `missing-destination` rather than falling through to `default_kb`. After a KB is selected, the matching
- * `kb.yaml` entry's `readonly` flag is consulted: a `true` value fails with `'readonly-kb'` unless `requireWritable`
- * is `false`. A discovered KB with no registry entry has no metadata to consult and is assumed writable.
+ * Precedence: the `--kb @default` sentinel, the only path to the registry's `default_kb`, beats a concrete
+ * `--kb <name>`, which beats `.kb/` discovery. With no `--kb` and no discoverable `.kb/`, resolution fails with
+ * `missing-destination`; the registry default is never a silent fall-through.
  *
- * `requireWritable` defaults to `true`, so a caller that says nothing gets the write-safe answer. A read-only
- * operation — a report, a survey — passes `false` and reaches a store the registry marks `readonly: true`, which it
- * has every right to read.
+ * `requireWritable` defaults to `true`, so a caller that says nothing gets the write-safe answer; a report or a survey
+ * passes `false` and reads a store that the registry marks `readonly: true`. A discovered KB with no registry entry
+ * has no `readonly` flag to consult and counts as writable.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.
@@ -59,8 +49,7 @@ export async function resolveWritableKb(input: {
 }): Promise<ResolveKbOutcome> {
   const requireWritable = input.requireWritable ?? true;
 
-  // Warn to stderr so a permission error or YAML defect is distinguishable from "no config file at all,"
-  // which would otherwise make the resulting failure hard to diagnose.
+  // Warn to stderr so that a permission error or a YAML defect is distinguishable from "no config file at all".
   const { config, error: registryError } = await tryLoadKbRegistry({
     projectDir: input.startDir,
     ...(input.home !== undefined && { home: input.home }),
@@ -69,8 +58,7 @@ export async function resolveWritableKb(input: {
     process.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${registryError}\n`);
   }
 
-  // The reserved sentinel is the only path to the registry default. It is checked before by-name lookup so it is
-  // never mistaken for a KB literally named "@default", and it overrides discovery like a concrete `--kb <name>`.
+  // Check the sentinel before the by-name lookup, so that a KB literally named "@default" cannot shadow it.
   if (input.explicitKb === DEFAULT_KB_SENTINEL) {
     const { defaultKb } = config;
     if (defaultKb === undefined) {
@@ -109,8 +97,7 @@ export async function resolveWritableKb(input: {
     };
   }
 
-  // No `--kb` and no discoverable `.kb/`: refuse rather than silently writing to `default_kb`. Carry the registered
-  // KB names and the default's name so the caller can build a self-documenting error that points to `--kb @default`.
+  // Carry the registered KB names and the default's name, so that the caller's error can point to `--kb @default`.
   return {
     ok: false,
     reason: 'missing-destination',

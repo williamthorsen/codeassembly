@@ -313,7 +313,7 @@ function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolv
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`, matching the degrade-with-warning pattern used by the sibling helpers.
+ * `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

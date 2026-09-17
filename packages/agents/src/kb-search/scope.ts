@@ -2,7 +2,7 @@ import { findKbRoot, tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 
 import type { ScopedKb } from './types.ts';
 
-/** The resolved query scope: the in-scope KBs plus a captured registry-load error when one occurred. */
+/** The resolved query scope: the in-scope KBs, plus any resolution problem for the caller to surface. */
 export interface ScopeResult {
   /** The knowledge bases the query should search. */
   kbs: ScopedKb[];
@@ -16,16 +16,13 @@ export interface ScopeResult {
  * Resolves which knowledge bases a query should search.
  *
  * When `storeName` is set, scope is the single registry entry of that name and nothing else: `findKbRoot` is skipped
- * entirely, so a project-local `.kb/` cannot leak into results. This mirrors the write path's resolve-by-name
- * guarantee. A name that matches no entry yields an empty scope and a `storeNotFound` marker for the caller to surface.
+ * entirely, so a project-local `.kb/` cannot leak into results.
  *
  * Otherwise, default scope is the `.kb/`-discovered KB nearest `startDir` plus the registry's resolved `default_kb`; and
- * `allKbs` widens scope to every entry in the merged `kb.yaml` registry. Entries are de-duplicated by absolute path so
- * a discovered KB that also appears in the registry is searched once. When neither a `.kb/` root nor any registry
- * entry is found, the scope is empty; callers report that as an empty result rather than an error.
+ * `allKbs` widens scope to every entry in the merged `kb.yaml` registry. A KB that is both discovered and registered
+ * enters scope once, de-duplicated by absolute path.
  *
- * A malformed or unreadable registry degrades to no registry entries; its captured message is returned as
- * `registryError` for the caller to surface, never formatted or printed here.
+ * A malformed or unreadable registry degrades to no registry entries, its message captured in `registryError`.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.
@@ -36,7 +33,6 @@ export async function resolveScope(input: {
   storeName?: string;
   home?: string;
 }): Promise<ScopeResult> {
-  // A named store resolves by registry lookup only — no discovery, no ancestor walk.
   if (input.storeName !== undefined) {
     const { config, error: registryError } = await tryLoadKbRegistry({
       ...(input.home !== undefined && { home: input.home }),

@@ -1,10 +1,6 @@
 /**
- * Read `.agents/preferences.yaml` (project-local) and `~/.agents/preferences.yaml` (global), merge
- * with project-overrides-global precedence, project to the typed shape the deriver consumes, and
- * return that alongside the source paths actually read.
- *
- * Unknown sibling keys at any depth are tolerated. Schema validation is an authoring-time concern,
- * not a read-time one.
+ * Reads the project and global `preferences.yaml` files. Schema validation is an authoring-time concern, not a
+ * read-time one, so unknown keys pass through at any depth.
  */
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -18,14 +14,9 @@ import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import type { PreferencesReadResult, ResolvedPreferences } from './types.ts';
 
 /**
- * Reads project and global preferences files (both optional), merges them with project values
- * winning over global, projects to the typed `ResolvedPreferences` shape by reading only the
- * fields the deriver consumes, and returns the result.
- *
- * - Missing files (project or global) are not errors — treated as empty and the other source is used.
- * - Malformed YAML throws with a message that names the offending file.
- * - Wrong type or out-of-enum value on a consumed field throws with a key-path-anchored message.
- * - Unknown sibling keys at any depth pass through silently.
+ * Reads the project and global preferences files, merges them with the project's values winning, and projects the
+ * result to the fields that the deriver consumes. A missing file is not an error; malformed YAML and a wrong-typed
+ * consumed field throw, naming the offending file or key path.
  */
 export async function readPreferences(input: { cwd: string; home?: string }): Promise<PreferencesReadResult> {
   const home = input.home ?? homedir();
@@ -52,7 +43,7 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
 // region | Helpers
 
 /**
- * Read a YAML file. Returns `null` when the file does not exist (ENOENT). Throws with a
+ * Reads a YAML file. Returns `null` when the file does not exist (ENOENT). Throws with a
  * file-anchored message when the YAML is malformed.
  */
 async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | null> {
@@ -77,13 +68,9 @@ async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | 
 }
 
 /**
- * Top-level merge of two preference objects: For each top-level key present in `project`, the
- * project value replaces the global value verbatim. Top-level keys only in `global` are retained.
- *
- * The merge is deliberately shallow (top-level only). Project-level values always win at the
- * section level. Shallow merge avoids surprising deep-merge behavior for fields like
- * `artifacts.paths`, where a project that sets one path key would otherwise inherit the others
- * from the global file.
+ * Merges two preference objects at the top level: a key present in `project` replaces the global value verbatim, and a
+ * key only in `global` is retained. The merge stays shallow so that a project setting one `artifacts.paths` key does
+ * not inherit the rest from the global file.
  */
 function mergeTopLevel(global: unknown, project: unknown): Record<string, unknown> {
   const result: Record<string, unknown> = {};
@@ -100,17 +87,11 @@ function mergeTopLevel(global: unknown, project: unknown): Record<string, unknow
   return result;
 }
 
-/**
- * Walks `merged` and returns a typed `ResolvedPreferences` populated from the fields the deriver
- * consumes. Unknown sibling keys at any depth are ignored. Throws when a consumed field has the
- * wrong type or an out-of-enum value, with a key-path-anchored message.
- */
+/** Walks `merged` and returns a typed `ResolvedPreferences` populated from the fields that the deriver consumes. */
 function projectPreferences(merged: Record<string, unknown>): ResolvedPreferences {
   const result: WritablePreferences = {};
 
-  // Resolve `scm` from the new key, falling back to the legacy top-level `platform` key so an
-  // existing `bitbucket` configuration is not silently dropped. The fallback is temporary; a
-  // separate ticket removes it once preferences files have migrated.
+  // Fall back to the legacy top-level `platform` key, so that an existing `bitbucket` configuration still resolves.
   const scmValue = merged.scm ?? merged.platform;
   if (scmValue !== undefined) {
     if (merged.scm === undefined) {
@@ -234,9 +215,8 @@ function expectRecord(value: unknown, keyPath: string): Record<string, unknown> 
 }
 
 /**
- * Renders an unknown value for an error message. Strings are quoted; everything else goes through
- * `JSON.stringify` so arrays, numbers, booleans, and `null` render distinguishably. Symbols and
- * other non-serializable values fall back to `String(value)`.
+ * Renders an unknown value for an error message through `JSON.stringify`, falling back to `String` for a value that it
+ * cannot serialize.
  */
 function formatValue(value: unknown): string {
   if (typeof value === 'string') {

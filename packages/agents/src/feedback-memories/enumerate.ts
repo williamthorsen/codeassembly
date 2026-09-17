@@ -10,14 +10,12 @@ import { resolveRepoPath } from './resolve-repo-path.ts';
 import type { EnumerateResult, FeedbackMemory, SkippedMemory } from './types.ts';
 
 /**
- * Walks every `<projects-root>/<project>/memory/` directory and returns each memory whose effective type is `feedback`.
- * When `memoryStore` is set, enumeration is scoped to that one memory store — named by its directory or by the label
- * `list` displays — so a machine with many memories can be worked one store per invocation. Membership is decided by
- * parsed frontmatter — `metadata.type` when nested, else a top-level `type` — never by filename or a single-schema
- * regex, so both the legacy and current memory schemas are enumerated. A file that cannot be read as a note is reported
- * in `skipped` rather than dropped. An absent projects root is the one categorical failure; a `memoryStore` that
- * resolves to no store, or to more than one, fails per `resolveMemoryStore`, so a mistyped or ambiguous name fails
- * loudly rather than looking like a clean store; an absent per-store `memory/` directory is simply skipped.
+ * Walks every `<projects-root>/<project>/memory/` directory and returns each memory whose effective type is `feedback`,
+ * scoped to one memory store when `memoryStore` is set. Membership is decided by parsed frontmatter, so both the legacy
+ * and the current memory schema are enumerated, and a file that cannot be read as a note is reported in `skipped`.
+ *
+ * An absent projects root is the one categorical failure; an unresolvable `memoryStore` fails per `resolveMemoryStore`,
+ * and an absent per-store `memory/` directory is skipped.
  */
 export async function enumerateFeedbackMemories(input: {
   projectsRoot: string;
@@ -57,7 +55,7 @@ export async function enumerateFeedbackMemories(input: {
     const memoryDir = join(input.projectsRoot, memoryStore, 'memory');
     const files = await listMemoryFiles(memoryDir);
     const memoryIndexPath = join(memoryDir, 'MEMORY.md');
-    // Resolve the store's origin repo once — every memory in it shares the slug — and only when it has memories to route.
+    // Resolve the store's origin repo once (every memory in it shares the slug), and only when it has memories.
     const repoPath = files.length > 0 ? await resolveRepoPath(memoryStore) : null;
 
     for (const file of files) {
@@ -68,7 +66,6 @@ export async function enumerateFeedbackMemories(input: {
       } else if (record.kind === 'unreadable') {
         skipped.push({ path, reason: record.reason });
       }
-      // record.kind === 'other' — a non-feedback memory — is intentionally omitted.
     }
   }
 
@@ -102,9 +99,8 @@ async function readMemory(input: {
   const content = await readFile(input.path, 'utf8');
   const note = readNoteContent(content);
   if (note.error !== undefined) {
-    // Surface a malformed memory (a frontmatter fence with unparseable YAML) so it is routed by hand rather than
-    // dropped; a file with no frontmatter fence is not a memory at all — and a feedback memory always has frontmatter,
-    // so omitting it never hides one.
+    // Surface a malformed memory (a fence wrapping unparseable YAML) so an operator can route it by hand. A file with
+    // no fence is not a memory at all, and a feedback memory always has frontmatter, so skipping it never hides one.
     return hasFrontmatterFence(content) ? { kind: 'unreadable', reason: note.error } : { kind: 'other' };
   }
   if (effectiveType(note.fields) !== 'feedback') {
@@ -127,7 +123,7 @@ async function readMemory(input: {
   };
 }
 
-/** True when content opens with a `---` frontmatter fence and carries a closing fence — the shape every memory has. */
+/** True when content opens with a `---` frontmatter fence and carries a closing fence, the shape every memory has. */
 function hasFrontmatterFence(content: string): boolean {
   const lines = content.split('\n');
   return lines[0] === '---' && lines.slice(1).includes('---');

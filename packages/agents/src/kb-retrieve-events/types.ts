@@ -1,7 +1,3 @@
-// Shape of the kb-retrieve-events helper's candidate table. The helper performs mechanical recall via the shared
-// `kb-search` primitive and projects event records into candidates carrying their recurrence signals; the agent ranks
-// by recurrence then recency and presents.
-
 import type { EventImpact } from '@williamthorsen/kb/records';
 
 import type { ScopedKb } from '../kb-search/types.ts';
@@ -24,29 +20,28 @@ export interface EventCandidate {
   snippet: string;
   /**
    * References to whatever was done about the problem this event notes (its `addressed-by` list): a KB
-   * wikilink/relative path, commit SHA, PR/issue ref, or URL. `undefined` when the event declares none.
+   * wikilink/relative path, commit SHA, PR/issue ref, or URL.
    */
   addressedBy?: string[];
   /**
    * The author's revisable rating of how much addressing this event matters. `undefined` when the event is unrated or
-   * carries a value outside the declared levels. Shown to the reader and usable by `--min-impact`, but not a ranking
-   * signal.
+   * carries a value outside the declared levels.
    */
   impact?: EventImpact;
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
-  /** A diagnostic note for this candidate, e.g. malformed frontmatter degraded to a low-signal hit. */
+  /** A diagnostic note for this candidate. */
   diagnostic?: string;
 }
 
-/** The helper's full stdout payload: the event candidate table plus run-level diagnostics. */
+/** The helper's full stdout payload. */
 export interface EventRetrieveResult {
   /** The normalized event candidates, one per matched event. */
   candidates: EventCandidate[];
   /** The knowledge bases that were actually searched: in-scope KBs minus any whose path did not exist on disk. */
   scopedKbs: ScopedKb[];
-  /** Registry-health problems (malformed registry, dead entry paths), always present and possibly empty. */
+  /** Registry-health problems (malformed registry, dead entry paths). */
   warnings: string[];
-  /** A run-level diagnostic, set when scope is empty or no events matched. */
+  /** A run-level diagnostic, set whenever the candidate list is empty. */
   diagnostic?: string;
 }

@@ -6,9 +6,8 @@ import { detectSupersede } from './detect-supersede.ts';
 
 /**
  * Produces the curate-only findings over an already-enumerated note set: verification staleness (threshold
- * `staleAfterDays`) and supersede-graph defects. Whole-vault integrity (unresolved links, basename collisions) and the
- * `tag-alias`/`paths` lints are owned by `@williamthorsen/kb/check`; curate layers only its own detectors over the same
- * enumeration here.
+ * `staleAfterDays`) and supersede-graph defects. Whole-vault integrity and the shared lints belong to
+ * `@williamthorsen/kb/check`, which runs over the same enumeration.
  */
 export function detectCurateFindings(input: {
   notes: readonly EnumeratedNote[];

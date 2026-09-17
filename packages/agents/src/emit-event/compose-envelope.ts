@@ -3,10 +3,9 @@ import type { EventEnvelope } from 'codeassembly-lifecycle';
 import type { EmitContext } from './types.ts';
 
 /**
- * Composes the envelope from the agent-supplied `type` and `payload` plus the resolved context. Every context field is
- * optional in the output: an unresolvable one is dropped rather than filled with the placeholder that stands in for it
- * in the file path, so a consumer can always tell an unresolved field from a resolved one that happens to look like a
- * placeholder.
+ * Composes the envelope from the agent-supplied `type` and `payload` plus the resolved context. Every context field
+ * is optional in the output. An unresolvable one is dropped, so that a consumer can tell it from a resolved field
+ * whose value happens to match the path placeholder.
  *
  * Key order is the envelope's documented v0 field order, which JSON serialization preserves; a reader scanning raw
  * JSONL lines sees the same shape on every line.

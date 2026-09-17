@@ -9,8 +9,7 @@ import { dedupeInOrder } from '../../kb-shared/note-helpers.ts';
  * first-occurrence order. An empty list is a valid result. Does **not** bump `updated`: retagging reorganizes how a
  * record is found, not what it asserts.
  *
- * Canonicalization can collapse distinct inputs onto the same canonical, so dedupe runs after canonicalize. The
- * pre-canonicalization list is returned as `originalTags` so the caller can surface an audit trail.
+ * Canonicalization can collapse distinct inputs onto the same canonical, so dedupe runs after canonicalize.
  */
 export function retag(
   record: KbAssertion,

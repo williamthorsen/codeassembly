@@ -32,7 +32,7 @@ originSessionId: sess-legacy
 Legacy schema body.
 `;
 
-/** A legacy feedback memory with no session id, matching the devtools-afg store shape. */
+/** A legacy feedback memory with no session id. */
 const LEGACY_NO_SESSION = `---
 name: Atlaskit xcss requires static literals
 description: no session id present
@@ -63,6 +63,7 @@ type: feedback
 Body of a malformed memory.
 `;
 
+/** Creates an empty temporary projects root and returns its absolute path. */
 async function makeProjectsRoot(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'migrate-enum-'));
 }
@@ -74,7 +75,7 @@ async function writeMemory(root: string, store: string, filename: string, conten
   await writeFile(join(dir, filename), content, 'utf8');
 }
 
-/** Builds the memory-store slug a repo path produces, the way Claude Code does: every path separator becomes `-`. */
+/** Builds the memory-store slug that a repo path produces, the way Claude Code does: every separator becomes `-`. */
 function slugFor(repoPath: string): string {
   return repoPath.split('/').join('-');
 }

@@ -44,8 +44,7 @@ describe(resolveStoreByName, () => {
   });
 
   it('does not rescue an unregistered name from a discoverable project-local .kb/', async () => {
-    // project-kb has a discoverable `.kb/` that resolveWritableKb would walk into. resolveStoreByName matches only
-    // registry names, so an unregistered name fails rather than silently landing in the discovered store.
+    // project-kb has a discoverable `.kb/` that an ancestor walk would find.
     const result = await resolveStoreByName({
       name: 'unregistered-name',
       projectDir: join(FIXTURES, 'project-kb'),

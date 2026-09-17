@@ -1,26 +1,18 @@
 /**
  * CLI entry for the harness hook relay.
  *
- * A harness's event hooks fire at boundaries no skill is running to observe — a session ends, a turn completes — so the
- * hook, not the agent, is what reports them. Configured as a hook command, this relay reads the hook's JSON payload on
- * stdin, maps `{harness, hook}` to a lifecycle event type, and appends the event attributed to the session and working
- * directory the payload names.
+ * A harness's event hooks fire at boundaries no skill is running to observe, so the hook reports them in the agent's
+ * place. Configured as a hook command, this relay reads the hook's JSON payload on stdin and appends the lifecycle
+ * event that `{harness, hook}` maps to.
  *
- * The hook's identity comes from the flags, never from stdin: the two harnesses' payload shapes differ, so stdin
- * supplies only data and the flags — baked in when the hook entry is configured — supply the mapping key.
+ * The hook's identity comes from the flags: the two harnesses' payload shapes differ, so stdin supplies only data and
+ * the flags, baked in when the hook entry is configured, supply the mapping key.
  *
- * Never blocks the session it observes: every failure — bad flags, an unusable payload, an unknown hook, a failed
- * write, an unexpected throw — prints a structured `{ ok: false, error, message }` to stdout, warns on stderr, and
- * exits 0. A success prints `{ ok: true, id, path }`. There is no non-zero exit path, because Claude Code reads some
- * non-zero hook exits as control signals rather than as failures.
+ * Every exit is 0, failures included, because Claude Code reads some non-zero hook exits as control signals rather
+ * than as failures: a `Stop` hook exiting 2 blocks the agent from stopping. A relay that exited non-zero on a bad
+ * payload would wedge the session rather than merely lose an event.
  *
- * Flags:
- *   --harness <id>      The harness whose hook fired (`claude`, `rovo`). Required.
- *   --hook <name>       The harness's own name for the hook, e.g. `SessionStart`. Required.
- *   --home <path>       Events-root override, so a test can point the write at a fixture directory.
- *   --sentinel <token>  Ownership marker the configured hook entries carry so the config tools can find them again.
- *                       Accepted and ignored here: it rides as an ordinary argument so it survives any execution
- *                       semantics a harness uses, rather than relying on shell comment stripping.
+ * `--sentinel` is accepted and ignored here: it marks the configured hook entries for the config tools that wrote them.
  */
 import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -42,7 +34,6 @@ import { resolveSession } from '../shared/resolve-session.ts';
 import { isRelayHarness, listRelayHarnesses, resolveHookMapping } from './hook-mappings.ts';
 import type { HookMapping, HookPayload, ParsedArgs, RelayErrorCode, RelayFailure, RelayResult } from './types.ts';
 
-/** The flags this relay accepts. Every one takes a value; the hook's data arrives on stdin, never as a flag. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'harness', takesValue: true },
   { name: 'hook', takesValue: true },
@@ -68,8 +59,8 @@ async function main(): Promise<void> {
       now: new Date(),
     });
   } catch (error) {
-    // The never-block backstop. `runRelay` converts every failure it anticipates into a structured result, so reaching
-    // here means something unforeseen threw — which still must not disturb the session being observed.
+    // `runRelay` converts every failure it anticipates into a structured result, so reaching here means something
+    // unforeseen threw.
     result = failure('internal-error', describeError(error));
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -80,8 +71,7 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the relay end to end: parses the flags, looks the hook up in its harness's mapping, reads the payload, resolves
- * the event's context against the working directory the payload names, and appends the event.
+ * Runs the relay end to end, from the hook's argv and stdin to the appended event.
  *
  * Every failure is recoverable by contract, and each returns `{ ok: false, ... }` having written nothing.
  *
@@ -91,7 +81,7 @@ export async function runRelay(input: {
   argv: readonly string[];
   /** The hook's raw JSON payload, as read from stdin. */
   stdin: string;
-  /** The relay's own working directory; the fallback when the payload names none. */
+  /** The relay's own working directory. */
   cwd: string;
   env: NodeJS.ProcessEnv;
   now: Date;
@@ -150,9 +140,7 @@ export async function runRelay(input: {
 }
 
 /**
- * Parses the relay's argv. Each flag accepts both `--flag value` and `--flag=value`. An unknown flag, an unexpected
- * positional, an empty value, a missing or unserved `--harness`, or a missing `--hook` throws; the caller turns that
- * into an `invalid-args` result.
+ * Parses the relay's argv, throwing on any defect in it. The caller turns the throw into an `invalid-args` result.
  *
  * @internal - Exported to allow testing.
  */
@@ -186,13 +174,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 /**
  * Reads the fields the relay needs out of the hook's raw stdin payload: the session, the working directory, and the
- * mapping's discriminator keys. The payload must be a JSON object; anything else fails the relay rather than being
- * coerced, because a hook that sent something else is not a hook this relay understands.
+ * mapping's discriminator keys. The payload must be a JSON object, because a hook that sent anything else is not a
+ * hook this relay understands.
  *
- * Within a well-formed object every field is optional. The harnesses agree on `session_id` and `cwd` today, but a
- * harness that stops supplying one should cost that event its attribution — which the envelope already models as an
- * omitted key — rather than cost the session its event. A field present but not a string is treated as absent for the
- * same reason.
+ * Within a well-formed object every field is optional, and a field present but not a string counts as absent. The
+ * harnesses agree on `session_id` and `cwd` today, but a harness that stops supplying one costs that event its
+ * attribution, which the envelope already models as an omitted key, and never costs the session its event.
  *
  * @internal - Exported to allow testing.
  */
@@ -233,7 +220,7 @@ export function parseHookPayload(input: {
 
 // region | Helpers
 
-/** Builds a failure result, warning on stderr so the failure is visible to an operator and not only on stdout. */
+/** Builds a failure result and warns on stderr, so that an operator watching the session sees the failure. */
 function failure(error: RelayErrorCode, message: string): RelayFailure {
   warn(message);
   return { ok: false, error, message };
@@ -241,8 +228,7 @@ function failure(error: RelayErrorCode, message: string): RelayFailure {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`, matching the degrade-with-warning pattern the emit-event helper uses.
+ * symlinked invocation path still matches. A `realpathSync` failure warns and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

@@ -327,7 +327,7 @@ describe(runAdd, () => {
   });
 
   it('returns readonly-kb when the explicit --kb names a readonly registry entry', async () => {
-    // Stand up an isolated HOME with a `.agents/kb.yaml` declaring the only writable target as readonly.
+    // Isolate HOME, so that the registry's only writable target is the readonly entry.
     // runAdd resolves through resolveWritableKb, so the refusal surfaces as a top-level readonly-kb error
     // without ever touching disk inside the KB.
     const kbPath = await makeKb();
@@ -354,7 +354,6 @@ describe(runAdd, () => {
       expect(result.details?.readonlyKbName).toBe('locked');
       expect(result.details?.readonlyKbPath).toBe(kbPath);
     }
-    // No note should have landed in the readonly KB.
     const entries = await readdir(kbPath);
     expect(entries.filter((name) => name !== '.kb')).toEqual([]);
   });
@@ -391,7 +390,6 @@ describe(runAdd, () => {
     if (!result.ok) {
       expect(result.error).toBe('invalid-title');
     }
-    // Confirm no file landed at the KB root either.
     const entries = await readdir(kbPath);
     expect(entries.filter((name) => name !== '.kb')).toEqual([]);
   });
@@ -415,8 +413,8 @@ describe(runAdd, () => {
   });
 
   it('warns on stderr and falls back to an empty alias map when tag-aliases.yaml is malformed', async () => {
-    // Stand up a fresh KB and copy in the intentionally malformed tag-aliases.yaml fixture, so the write
-    // itself stays in an isolated tempdir while the alias-load arm hits a real parse failure.
+    // Copy the malformed fixture into a fresh KB, so that the write stays in an isolated tempdir while the
+    // alias-load arm hits a real parse failure.
     const kbPath = await makeKb();
     await copyFile(
       join(FIXTURES, 'aliases.malformed', '.kb', 'tag-aliases.yaml'),
@@ -426,7 +424,6 @@ describe(runAdd, () => {
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
       const result = await runAdd({
-        // `nodejs` would canonicalize to `node` if the aliases loaded; with the empty-map fallback it stays as-is.
         argv: ['--diataxis', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
         stdin: bodyStream('Body.\n'),
         startDir: kbPath,
@@ -436,7 +433,6 @@ describe(runAdd, () => {
 
       expect(result.ok).toBe(true);
       if (result.ok && result.mode === 'write') {
-        // Empty-map fallback fired: canonicalTags equals originalTags (no rewriting happened).
         expect(result.originalTags).toEqual(['node.js', 'react']);
         expect(result.canonicalTags).toEqual(['node.js', 'react']);
         expect(result.record.tags).toEqual(['node.js', 'react']);
@@ -625,7 +621,6 @@ describe(runAdd, () => {
   });
 
   it('subprocess smoke: piping a body into the built bundle produces a written note and well-shaped JSON', async () => {
-    // The bundled `.mjs` is produced by the build step; we run it directly via node to verify wire shape.
     const kbPath = await makeKb();
     const bundlePath = join(import.meta.dirname, '..', '..', '..', 'content', 'skills', 'kb-add', 'kb-add.mjs');
 

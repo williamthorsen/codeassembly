@@ -6,6 +6,7 @@ import { detectStaleness, vaultUsesVerification } from '../detect-staleness.ts';
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
+/** Builds a note whose frontmatter carries the given extra lines. */
 function note(extraFrontmatter: string): EnumeratedNote {
   const content = `---\ntitle: A\ntype: howto\ncreated: 2026-01-01\nupdated: 2026-01-01\ntags: [x]\n${extraFrontmatter}---\n\nBody.\n`;
   return enumeratedNote('Note.md', content);

@@ -1,10 +1,3 @@
-// Shapes for the capture-event helper: parsed CLI input, the prepared event record, and the JSON result emitted to
-// stdout.
-//
-// The helper's stdout payload is a discriminated union on `ok`. Recoverable failures (no resolvable store, schema
-// validation, invalid args) return `{ ok: false, error, ... }`; a success returns `{ ok: true, ... }`. System errors
-// (out-of-disk, permission denied) are out of band: they print to stderr and exit non-zero.
-
 import type { EventImpact } from '@williamthorsen/kb/records';
 
 /** Parsed command-line invocation of the capture-event helper. */
@@ -18,13 +11,11 @@ export interface ParsedArgs {
   summary: string;
   /** Optional skill the event relates to. */
   skill: string | null;
-  /** Optional model identifier. */
   model: string | null;
   /** Optional harness (agent runtime) identifier, injected from the installed invocation template. */
   harness: string | null;
   /** Optional tag list, in the order the agent supplied them. */
   tags: string[];
-  /** Optional impact rating; `null` when `--impact` is omitted. */
   impact: EventImpact | null;
   /** The id of an existing event to amend instead of capturing a new one; `null` for a fresh capture. */
   amend: string | null;
@@ -56,7 +47,6 @@ export interface CaptureSuccess {
 /** The helper's stdout payload on a recoverable failure. */
 export interface CaptureFailure {
   ok: false;
-  /** Categorical error code. */
   error: CaptureErrorCode;
   /** Short human-readable explanation. */
   message: string;
