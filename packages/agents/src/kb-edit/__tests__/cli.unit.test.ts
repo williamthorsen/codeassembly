@@ -22,12 +22,12 @@ type: howto
 Original body.
 `;
 
-/** Build a Readable stream that emits the given body and ends. */
+/** Builds a Readable stream that emits the given body and ends. */
 function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
-/** Stand up a temp KB with a single seed note; return paths. */
+/** Creates a temporary KB holding one seed note, and returns both paths. */
 async function makeKbWithNote(): Promise<{ kbPath: string; notePath: string }> {
   const kbPath = await mkdtemp(join(tmpdir(), 'kb-edit-cli-'));
   await mkdir(join(kbPath, '.kb'), { recursive: true });
@@ -287,7 +287,6 @@ describe(runEdit, () => {
       expect(result.error).toBe('invalid-args');
       expect(result.message).toMatch(/non-empty stdin/);
     }
-    // Original file untouched.
     const written = await readFile(notePath, 'utf8');
     expect(written).toBe(SAMPLE_NOTE);
   });
@@ -374,7 +373,6 @@ describe(runEdit, () => {
       expect(result.details?.readonlyKbName).toBe('locked');
       expect(result.details?.readonlyKbPath).toBe(kbPath);
     }
-    // Original file untouched.
     const written = await readFile(notePath, 'utf8');
     expect(written).toBe(SAMPLE_NOTE);
   });
@@ -450,7 +448,6 @@ describe(runEdit, () => {
       expect(result.error).toBe('supersede-target-missing');
       expect(result.details?.missingPath).toBe(missingNew);
     }
-    // Old note untouched.
     const onDisk = await readFile(oldPath, 'utf8');
     expect(onDisk).toBe(SAMPLE_NOTE);
   });
@@ -471,7 +468,6 @@ describe(runEdit, () => {
       expect(result.error).toBe('invalid-args');
       expect(result.message).toMatch(/distinct paths/);
     }
-    // Original note untouched: no superseded-by or supersedes pointers, no deprecated tag.
     const onDisk = await readFile(notePath, 'utf8');
     expect(onDisk).toBe(SAMPLE_NOTE);
   });
@@ -520,7 +516,6 @@ describe(runEdit, () => {
     if (!result.ok) {
       expect(result.error).toBe('note-parse');
     }
-    // Both files untouched.
     const oldAfter = await readFile(oldPath, 'utf8');
     expect(oldAfter).toBe(SAMPLE_NOTE);
   });
@@ -552,7 +547,7 @@ describe(runEdit, () => {
     await mkdir(join(kbPath, '.kb'), { recursive: true });
     const oldPath = join(kbPath, 'Old.md');
     const newPath = join(kbPath, 'New.md');
-    // Old note already carries the deprecated tag; supersede-with should not duplicate it.
+    // The old note already carries the deprecated tag.
     await writeFile(
       oldPath,
       '---\ntitle: Old\nrecordType: assertion\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [legacy, deprecated]\ntype: howto\n---\n\nbody\n',
@@ -644,7 +639,6 @@ describe(runEdit, () => {
       if (missingRecord && !missingRecord.ok) {
         expect(missingRecord.error).toBe('note-not-found');
       }
-      // The valid record was still written despite the sibling failure.
       expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
     }
   });
@@ -693,7 +687,6 @@ describe(runEdit, () => {
       if (badRecord && !badRecord.ok) {
         expect(badRecord.error).toBe('note-parse');
       }
-      // The valid record was written; the failing one was left untouched.
       expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
       expect(await readFile(badType, 'utf8')).not.toContain('addressed-by');
     }

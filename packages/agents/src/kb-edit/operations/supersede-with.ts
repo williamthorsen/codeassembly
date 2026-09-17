@@ -7,16 +7,10 @@ import { canonicalize } from '@williamthorsen/kb/tags';
 import { dedupeInOrder, formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
- * Prepares the in-memory edits for `--supersede-with`. Old note: `supersededBy` pointer plus a `deprecated` tag
- * (canonicalized through the alias map, idempotent if already present). New note: `supersedes` pointer. Both notes'
- * `updated` are bumped.
+ * Prepares the in-memory edits that link two notes into a supersede chain: the old note gains a forward pointer and a
+ * `deprecated` tag, the new note gains a back pointer, and both gain a bumped `updated`.
  *
- * Pointers are written KB-relative so a vault can be moved without rewriting every chain. The KB-relative computation
- * runs here so the operation owns its pointer convention rather than scattering `relative()` calls across the
- * orchestrator.
- *
- * Returns only the prepared records per file. The atomic two-file write is the caller's job (see `runEdit`), because
- * rollback is tied to the on-disk staging sequence and lives at that layer.
+ * The pointers are KB-relative, so a vault can be moved without rewriting every chain.
  */
 export function prepareSupersedeWith(input: {
   oldRecord: KbAssertion;
@@ -49,10 +43,7 @@ export function prepareSupersedeWith(input: {
   return { old, new: superseding };
 }
 
-/**
- * Adds the `deprecated` tag to a list, canonicalizing through the alias map and deduping in first-occurrence order.
- * Already-present (canonical) `deprecated` results in a no-op.
- */
+/** Adds the `deprecated` tag to a list, canonicalizing through the alias map and deduping in first-occurrence order. */
 function addDeprecatedTag(input: { existingTags: readonly string[]; aliases: AliasMap }): string[] {
   const canonicalDeprecated = canonicalize('deprecated', input.aliases);
   return dedupeInOrder([...input.existingTags, canonicalDeprecated]);

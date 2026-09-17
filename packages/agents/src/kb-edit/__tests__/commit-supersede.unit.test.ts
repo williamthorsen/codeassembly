@@ -78,7 +78,6 @@ describe(commitSupersede, () => {
 
     await expect(commitSupersede({ ...INPUT, io })).rejects.toBe(error);
 
-    // After step-2 failure: oldTmp unlinked, no renames attempted.
     const fns = calls.map((c) => c.fn);
     expect(fns).toEqual(['writeFile', 'writeFile', 'unlink']);
   });
@@ -89,14 +88,13 @@ describe(commitSupersede, () => {
 
     await expect(commitSupersede({ ...INPUT, io })).rejects.toBe(error);
 
-    // After step-3 failure: both temps unlinked, second rename not attempted.
     const fns = calls.map((c) => c.fn);
     expect(fns).toEqual(['writeFile', 'writeFile', 'rename', 'unlink', 'unlink']);
   });
 
   it('restores the old note from captured original bytes when the second rename fails but rollback succeeds, then re-throws the rename error', async () => {
     // Rename index 0 = oldTmp->oldPath (succeeds), index 1 = newTmp->newPath (fails),
-    // index 2 = rollbackTmp->oldPath (succeeds). Rollback succeeds → original error re-thrown.
+    // index 2 = rollbackTmp->oldPath (succeeds).
     const renameError = new Error('rename to new failed');
     const { io, calls } = makeIo({ renameFailures: new Map([[1, renameError]]) });
 
@@ -129,7 +127,7 @@ describe(commitSupersede, () => {
   });
 
   it('returns ok: false when the second rename fails and the rollback writeFile fails', async () => {
-    // Rename index 1 fails, writeFile index 2 (rollbackTmp) fails. Rollback can't even stage; partial-supersede.
+    // Rename index 1 fails, writeFile index 2 (rollbackTmp) fails, so the rollback cannot even stage.
     const renameError = new Error('rename to new failed');
     const writeError = new Error('rollback write failed');
     const { io } = makeIo({
