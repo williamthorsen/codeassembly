@@ -14,10 +14,8 @@ import { normalizeHits } from './normalize.ts';
 import { collectTypelessCandidates } from './typeless-tolerance.ts';
 import type { RetrieveResult } from './types.ts';
 
-/** The record type kb-retrieve owns; every other declared type (e.g. `event`) is left to its own retrieve command. */
 const ASSERTION = 'assertion';
 
-/** The flags this helper accepts; positionals join into the free-text query. `--kb` is an alias for `--store`. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'all-kbs', takesValue: false },
   { name: 'store', aliases: ['kb'], takesValue: true },
@@ -32,13 +30,12 @@ export interface ParsedArgs {
   query: string;
   /** Whether `--all-kbs` widened scope to every registered KB. */
   allKbs: boolean;
-  /** The registry name from `--store`/`--kb`, scoping recall to that store alone (no cwd-walk); `null` when absent. */
+  /** The registry name from `--store`/`--kb`, scoping recall to that store alone; `null` when absent. */
   storeName: string | null;
-  /** The mechanical filters from `--diataxis`, `--tag`, `--folder`. */
   filters: RecallFilters;
 }
 
-/** Executes the helper from `process.argv` and write the JSON result to stdout. */
+/** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
   try {
     const result = await runRetrieve({
@@ -54,7 +51,6 @@ async function main(): Promise<void> {
   }
 }
 
-// Run as a script, but not when imported by tests.
 if (isEntryPoint()) {
   await main();
 }
@@ -63,7 +59,7 @@ if (isEntryPoint()) {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so that a
- * symlinked invocation path (e.g. a `mktemp` directory under `/var` that resolves to `/private/var`) still matches.
+ * symlinked invocation path still matches.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -78,9 +74,7 @@ function isEntryPoint(): boolean {
 }
 
 /**
- * Parses the helper's argv into a query, the `--all-kbs` flag, the `--store`/`--kb` store scope, and the
- * `--diataxis`/`--tag`/`--folder` filters. Each value-bearing flag accepts both `--flag value` and `--flag=value`.
- * An unknown flag, or a value-bearing flag given no value (or an empty one), throws with a usage-style message.
+ * Parses the helper's argv, throwing on any defect in it.
  *
  * @internal - Exported to allow testing.
  */
@@ -113,12 +107,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, searches the in-scope knowledge bases through the shared search primitive,
- * projects the assertion candidate table, and returns the structured result. A no-query, no-KB, or no-match outcome
- * yields an empty candidate list with a `diagnostic` field rather than throwing.
- *
- * `home` overrides the directory from which the user-global `kb.yaml` is read; it exists so that tests can isolate
- * registry resolution from the developer's environment.
+ * Runs the helper end to end, from argv to the candidate table. A result with no candidates states the cause in its
+ * `diagnostic`.
  *
  * @internal - Exported to allow testing.
  */
@@ -154,8 +144,7 @@ export async function runRetrieve(input: {
     };
   }
 
-  // kb-retrieve owns assertions. Project assertion records, plus — transitionally — notes that carry no recordType, so a
-  // broken note is not hidden from recall. Records of another type (e.g. events) are left to their own retrieve command.
+  // kb-retrieve owns assertions; a record of another declared type belongs to its own retrieve command.
   const assertionHits = search.hits.filter((hit) => recordTypeOf(hit) === ASSERTION);
   const typelessHits = search.hits.filter((hit) => recordTypeOf(hit) === '');
   const candidates = [
@@ -178,9 +167,8 @@ export async function runRetrieve(input: {
 }
 
 /**
- * Phrases the empty-result diagnostic: `no notes matched the query` when recall found nothing; `all matches were
- * filtered out` when the mechanical `--diataxis`/`--tag`/`--folder` filters excluded everything; otherwise the matches
- * were all of another record type, so the reader is pointed at the event-recall command.
+ * Phrases the empty-result diagnostic, naming which stage emptied the table: recall, the mechanical filters, or the
+ * record-type projection.
  */
 function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: number }): string {
   if (input.recalledCount === 0) {

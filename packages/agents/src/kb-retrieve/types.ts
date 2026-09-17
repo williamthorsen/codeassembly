@@ -1,9 +1,4 @@
-// Shape of the kb-retrieve helper's candidate table and the inputs the helper modules exchange.
-//
-// The candidate table is the helper's stable contract with `SKILL.md`: the helper performs mechanical recall (via the
-// shared `kb-search` primitive) and emits raw assertion signals (freshness age, tags, supersession), and the agent
-// ranks and presents. The shape is deliberately backend-agnostic so a future non-ripgrep recall can populate the same
-// structure without changing `SKILL.md`.
+// The candidate table is the helper's contract with `SKILL.md`, so the shape and the skill change together.
 
 import type { ScopedKb } from '../kb-search/types.ts';
 
@@ -19,18 +14,18 @@ export interface AssertionCandidate {
   tags: string[];
   /** A context snippet drawn from the ripgrep match. */
   snippet: string;
-  /** Whole days between the note's `last-verified` date and now, or `null` when the field is absent. */
+  /** Whole days between the note's `last-verified` date and now, or `null` when no age could be computed. */
   lastVerifiedAgeDays: number | null;
   /** Supersession status, following the `superseded-by` chain to the canonical successor. */
   supersession: Supersession;
   /**
-   * References to whatever was done about the problem this record notes (its `addressed-by` list): a KB
-   * wikilink/relative path, commit SHA, PR/issue ref, or URL. `undefined` when the record declares none.
+   * References to whatever was done about the problem that this record notes (its `addressed-by` list): a KB
+   * wikilink/relative path, commit SHA, PR/issue ref, or URL.
    */
   addressedBy?: string[];
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
-  /** A diagnostic note for this candidate, e.g. malformed frontmatter or a missing recordType degraded to a low-signal hit. */
+  /** Why this candidate degraded to a low-signal hit. */
   diagnostic?: string;
 }
 
@@ -38,11 +33,11 @@ export interface AssertionCandidate {
 export interface RetrieveResult {
   /** The normalized assertion candidates, one per matched note. */
   candidates: AssertionCandidate[];
-  /** The knowledge bases that were actually searched: in-scope KBs minus any whose path did not exist on disk. */
+  /** The knowledge bases that the search covered. */
   scopedKbs: ScopedKb[];
-  /** Registry-health problems (malformed registry, dead entry paths), always present and possibly empty. */
+  /** Knowledge-base health problems, always present and possibly empty. */
   warnings: string[];
-  /** A run-level diagnostic, set when scope is empty or no notes matched. */
+  /** A run-level diagnostic, set when the run produced no candidates. */
   diagnostic?: string;
 }
 
@@ -52,6 +47,6 @@ export interface Supersession {
   superseded: boolean;
   /** Absolute path of the canonical successor note, when the chain resolved. `null` otherwise. */
   canonicalPath: string | null;
-  /** Set when a `superseded-by` cycle or unresolvable hop was detected. */
+  /** Set when a defect ended the walk early. */
   diagnostic?: string;
 }

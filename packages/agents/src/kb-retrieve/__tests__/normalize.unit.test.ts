@@ -109,7 +109,7 @@ describe('normalizeHits addressed-by surfacing', () => {
   });
 });
 
-/** Builds a `SearchHit` for a fixture note by parsing it. The assertion projection ignores the recall field. */
+/** Builds a `SearchHit` for a fixture note by parsing it. */
 async function hitFor(path: string): Promise<SearchHit> {
   return {
     hit: { path, kbName: 'fixtures', kbPath: NOTES_VAULT, snippet: 'snippet text' },

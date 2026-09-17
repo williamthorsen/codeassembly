@@ -6,16 +6,9 @@ import type { RawHit, SearchHit } from '../kb-search/types.ts';
 import { computeAgeDays, extractString, parseNoteSafely, readStringList } from '../kb-shared/note-helpers.ts';
 import type { AssertionCandidate, Supersession } from './types.ts';
 
-/** Upper bound on `superseded-by` hops, guarding against a chain cycle. */
 const MAX_SUPERSESSION_HOPS = 32;
 
-/**
- * Projects the shared search primitive's parsed hits onto the assertion candidate table.
- *
- * Each hit arrives already parsed. For each, a `superseded-by` chain is followed to the canonical successor with a cycle
- * guard, and `last-verified` is converted to an age in whole days against `now`. A hit whose frontmatter is missing or
- * malformed still projects to a low-signal candidate carrying a diagnostic rather than being dropped.
- */
+/** Projects the shared search primitive's parsed hits onto the assertion candidate table. */
 export async function normalizeHits(input: { hits: SearchHit[]; now: Date }): Promise<AssertionCandidate[]> {
   const candidates: AssertionCandidate[] = [];
   for (const { hit, note } of input.hits) {
@@ -27,9 +20,8 @@ export async function normalizeHits(input: { hits: SearchHit[]; now: Date }): Pr
 // region | Helpers
 
 /**
- * Follows a note's `superseded-by` chain to its canonical successor. Each hop's frontmatter is parsed and inspected
- * for a further `superseded-by`. A repeated path or an unreadable hop ends the walk; cycles are reported in the
- * `diagnostic` field rather than throwing.
+ * Follows a note's `superseded-by` chain to its canonical successor. On a defective chain it stops early, reporting
+ * the furthest successor that it reached and a `diagnostic` naming the defect.
  */
 async function resolveSupersession(input: { path: string; note: ParsedNote }): Promise<Supersession> {
   const firstHop = extractString(input.note.frontmatter?.extra, 'superseded-by');
@@ -72,9 +64,8 @@ async function resolveSupersession(input: { path: string; note: ParsedNote }): P
 }
 
 /**
- * Projects a parsed note and its hit metadata onto an assertion candidate, emitting the freshness ranking signals: a
- * `last-verified` age and the note's `title`, `diataxis`, and `tags`. An `addressed-by` list is surfaced flat when
- * present. A note with missing or malformed frontmatter degrades to a low-signal candidate carrying a diagnostic.
+ * Projects a parsed note and its hit metadata onto an assertion candidate. A note whose frontmatter is missing or
+ * malformed yields a low-signal candidate with a `diagnostic`.
  */
 async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }): Promise<AssertionCandidate> {
   const { hit, note, now } = input;
