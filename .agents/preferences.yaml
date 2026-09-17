@@ -6,7 +6,7 @@ commit:
 editors:
   - extensions: '*.md'
     name: Webstorm
-    command: webstorm # The file path will be appended to this command
+    command: webstorm
 integrations:
   jira:
     enabled: false
@@ -16,7 +16,7 @@ pr:
   title_format: '[{ticket_ref} ]{title}'
 project:
   slug: codeassembly
-  ticket_ref_prefix: '#' # ignored in file names
+  ticket_ref_prefix: '#'
 repository:
   default_remote:
     name: origin

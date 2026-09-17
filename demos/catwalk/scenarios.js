@@ -45,7 +45,6 @@ export const STATION_COLORS = [
   '#FFFFFF', // 6: outputs — white
 ];
 
-// Artifact colors
 export const ARTIFACT_COLORS = {
   reqs: '#dee2e6',
   xplan: '#d0ebff',
@@ -59,11 +58,9 @@ export const ARTIFACT_COLORS = {
   summary: '#f8f9fa',
 };
 
-// Orchestrator color
 export const ORCH_COLOR = '#FFD700';
 
 // Verdict icon config — maps reviewer criticality to glyph + color.
-// Modify this object to change what icons appear above reviewer agents.
 export const VERDICT_DISPLAY = {
   none: { glyph: '✓', color: '#55FF55' },
   low: { glyph: '!', color: '#FFFF55' },
@@ -76,7 +73,6 @@ export function verdictIcon(criticality) {
   return VERDICT_DISPLAY[criticality] || null;
 }
 
-// Phase definitions
 export const PHASES = [
   { name: 'Architecture', agents: ['arch'], color: STATION_COLORS[0] },
   { name: 'Planning', agents: ['plan'], color: STATION_COLORS[1] },
@@ -87,9 +83,8 @@ export const PHASES = [
   { name: 'Outputs', agents: [], color: STATION_COLORS[6] },
 ];
 
-// Place stations using asymmetric extents that account for artifact overhang.
+// Places stations using asymmetric extents that account for artifact overhang.
 // Input artifacts extend left of the leftmost agent; output records extend right.
-// STATION_GAP is the clear space between the visual content of adjacent stations.
 // Returns { positions, platformW }.
 function layoutStations(phaseIndices) {
   var agentSpacing = AGENT_RADIUS * 2 + 20;
@@ -113,7 +108,7 @@ function layoutStations(phaseIndices) {
   return { positions: positions, platformW: platformW };
 }
 
-// Compute default positions for all stations.
+// Computes the default positions of all stations and sets PLATFORM_W to match.
 export function computeDefaultPositions() {
   var indices = [];
   for (var i = 0; i < PHASES.length; i++) indices.push(i);
@@ -122,8 +117,8 @@ export function computeDefaultPositions() {
   return result.positions;
 }
 
-// Compute compact positions for visible stations only.
-// Returns { positions, platformW } or null if nothing to compact.
+// Computes compact positions for the stations that no `absent` step names, placing the others at -200.
+// Returns { positions, platformW }, or null when no station is absent.
 export function computeCompactPositions(scenario) {
   var absent = new Set();
   for (var s = 0; s < scenario.steps.length; s++) {
@@ -151,7 +146,7 @@ var DEFAULT_PHASE_AGENTS = PHASES.map(function (p) {
   return p.agents.slice();
 });
 
-// Override the agent list for a single station. Recomputes positions.
+// Overrides the agent list for a single station. Recomputes positions.
 export function setPhaseAgents(stationIndex, agents) {
   PHASES[stationIndex].agents = agents;
   STATION_X = computeDefaultPositions();
@@ -159,7 +154,7 @@ export function setPhaseAgents(stationIndex, agents) {
   DEFAULT_PLATFORM_W = PLATFORM_W;
 }
 
-// Restore all phases to their original agent lists. Recomputes positions.
+// Restores all phases to their original agent lists. Recomputes positions.
 export function resetPhaseAgents() {
   for (const [i, PHASE] of PHASES.entries()) {
     PHASE.agents = DEFAULT_PHASE_AGENTS[i].slice();
@@ -174,11 +169,12 @@ export function resetPhaseAgents() {
 var DEFAULT_STATION_X = STATION_X.slice();
 var DEFAULT_PLATFORM_W = PLATFORM_W;
 
+// Returns the x position of the station at `index`.
 export function stationX(index) {
   return STATION_X[index];
 }
 
-// Override station positions (for compact mode).
+// Overrides station positions (for compact mode).
 // Pass null to restore defaults.
 export function setStationPositions(positions, platformW) {
   if (positions) {
@@ -210,6 +206,7 @@ export function visibleStationRange() {
   return { first: first, last: last };
 }
 
+// Returns the x position of the agent at `agentIndex`, in a row of `agentCount` agents centered on the station.
 export function agentX(stationIndex, agentIndex, agentCount) {
   const cx = stationX(stationIndex);
   const spacing = AGENT_RADIUS * 2 + 20;
@@ -230,6 +227,7 @@ const STEP_WEIGHTS = {
   outputs: 2,
 };
 
+// Returns the relative time that a step consumes. A review cycle adds 2 for each round after the first.
 export function computeStepWeight(step) {
   if (step.type === 'reviewCycle') {
     return STEP_WEIGHTS.reviewCycle + (step.rounds.length - 1) * 2;
@@ -237,6 +235,7 @@ export function computeStepWeight(step) {
   return STEP_WEIGHTS[step.type] || 1;
 }
 
+// Sums the weights of the steps.
 export function computeTotalWeight(steps) {
   return steps.reduce(function (sum, step) {
     return sum + computeStepWeight(step);

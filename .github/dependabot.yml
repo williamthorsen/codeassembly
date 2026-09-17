@@ -2,7 +2,7 @@
 version: 2
 
 updates:
-  # Rotates the commit-SHA pins in .github/workflows, restoring the upgrade channel that pinning closes.
+  # Bumps the action and reusable-workflow versions referenced by .github/workflows.
   # Every bump is grouped into one pull request per run; the cadence is one review a month rather than one per action.
   - package-ecosystem: github-actions
     directory: /

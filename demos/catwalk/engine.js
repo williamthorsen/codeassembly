@@ -19,7 +19,7 @@ import {
   WORK_DURATION,
 } from './scenarios.js';
 
-// Apply per-scenario agent overrides before layout computation.
+// Applies per-scenario agent overrides before layout computation.
 // Call this before compact positioning and before playScenario.
 export function initScenarioPhases(scenario) {
   resetPhaseAgents();
@@ -32,17 +32,21 @@ export function initScenarioPhases(scenario) {
 
 // § ANIMATION PRIMITIVES
 
+// Interpolates linearly from `a` to `b` by `t`.
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
+// Eases `t`, in [0, 1], along a cubic in-out curve.
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
 // § ENGINE FACTORY — closes over state and playback
 
+// Creates the engine that plays a scenario by mutating `state`, paced by `playback`.
 export function createEngine(state, playback) {
+  // Resolves after `ms` scaled by the playback speed. While playback is paused, the timer starts when the pause ends.
   function wait(ms) {
     const actualMs = ms / playback.speedMultiplier;
     return new Promise(function (resolve) {
@@ -57,12 +61,14 @@ export function createEngine(state, playback) {
     });
   }
 
+  // Animates `target[prop]` to `end` over `duration` ms scaled by the playback speed. `easeFn` defaults to easeInOutCubic.
   function animateProp(target, prop, end, duration, easeFn) {
     duration /= playback.speedMultiplier;
     if (easeFn === undefined) easeFn = easeInOutCubic;
     const start = target[prop];
     const startTime = performance.now();
     return new Promise(function (resolve) {
+      // Sets the property for the frame at `now`, and resolves once the duration has elapsed.
       function tick(now) {
         const elapsed = now - startTime;
         if (elapsed >= duration) {
@@ -78,12 +84,14 @@ export function createEngine(state, playback) {
     });
   }
 
+  // Walks the orchestrator to `targetX` at WALK_SPEED.
   function orchWalkTo(targetX) {
     const distance = Math.abs(targetX - state.orch.x);
     const duration = (distance / WALK_SPEED) * 1_000;
     return animateProp(state.orch, 'x', targetX, duration);
   }
 
+  // Flies an artifact down the chute at `x`, from the catwalk to the ground floor.
   function chuteDescend(x, label, color) {
     const art = { x: x, y: CHUTE_TOP, label: label, color: color, alpha: 1 };
     state.flyingArtifacts.push(art);
@@ -93,6 +101,7 @@ export function createEngine(state, playback) {
     });
   }
 
+  // Flies an artifact up the chute at `x`, from the ground floor to the catwalk.
   function chuteAscend(x, label, color) {
     const art = { x: x, y: CHUTE_BOT, label: label, color: color, alpha: 1 };
     state.flyingArtifacts.push(art);
@@ -102,6 +111,7 @@ export function createEngine(state, playback) {
     });
   }
 
+  // Fades an artifact in at a station, then files it in the station's records, labeled with `version` when one is given.
   function materialize(stationIndex, label, color, version) {
     const art = {
       x: stationX(stationIndex),
@@ -123,6 +133,7 @@ export function createEngine(state, playback) {
     });
   }
 
+  // Fades the phase display out, if it is showing, then fades it in with `text`.
   async function showPhaseLabel(text) {
     if (state.phaseDisplay.alpha > 0) {
       await animateProp(state.phaseDisplay, 'alpha', 0, 150);
@@ -133,16 +144,19 @@ export function createEngine(state, playback) {
 
   // § VERDICT HELPERS
 
+  // Records an agent's verdict for the renderer to draw above the agent.
   function setVerdict(agentLabel, criticality, dismissed) {
     state.agentVerdicts[agentLabel] = { criticality: criticality, dismissed: !!dismissed };
   }
 
+  // Removes an agent's verdict.
   function clearVerdict(agentLabel) {
     delete state.agentVerdicts[agentLabel];
   }
 
   // § GATE + TRANSIENT HELPERS
 
+  // Shrinks the gate at `index` open. Does nothing for an open gate or an index out of range.
   async function openGate(index) {
     if (!(index >= 0 && index < state.gates.length && !state.gates[index].open)) {
       return;
@@ -152,10 +166,12 @@ export function createEngine(state, playback) {
     await animateProp(state.gates[index], 'size', 0, 300);
   }
 
+  // Adds an artifact to those carried by the orchestrator on its platform rail.
   function orchAddTransient(label, color) {
     state.orch.transient.push({ label, color, alpha: 1 });
   }
 
+  // Removes the carried artifact labeled `label`.
   function orchRemoveTransient(label) {
     const idx = state.orch.transient.findIndex(function (a) {
       return a.label === label;
@@ -163,6 +179,7 @@ export function createEngine(state, playback) {
     if (idx !== -1) state.orch.transient.splice(idx, 1);
   }
 
+  // Fades out the carried artifact labeled `label`, then removes it.
   async function orchFadeTransient(label) {
     const item = state.orch.transient.find(function (a) {
       return a.label === label;
@@ -175,6 +192,7 @@ export function createEngine(state, playback) {
 
   // § CHOREOGRAPHY
 
+  // Plays a station's three beats: The orchestrator dispatches an artifact down the chute, the agent produces one, and the product ascends to the orchestrator.
   async function threeBeat(stationIndex, agentLabel, dispatch, produce) {
     const sx = stationX(stationIndex);
     await orchWalkTo(sx);
@@ -191,6 +209,7 @@ export function createEngine(state, playback) {
     await wait(PAUSE_DURATION);
   }
 
+  // Plays a station's two beats: dispatch and production. The product stays at the station.
   async function twoBeat(stationIndex, agentLabel, dispatch, produce) {
     const sx = stationX(stationIndex);
     await orchWalkTo(sx);
@@ -207,6 +226,7 @@ export function createEngine(state, playback) {
 
   // § STEP HANDLERS
 
+  // Shows the run's input artifacts.
   async function showInputs() {
     state.inputs = [
       { label: 'reqs', color: ARTIFACT_COLORS.reqs },
@@ -215,6 +235,7 @@ export function createEngine(state, playback) {
     await wait(600);
   }
 
+  // Walks the orchestrator to a station, has it deliberate, and marks the station skipped.
   async function skipStation(stationIndex) {
     await orchWalkTo(stationX(stationIndex));
     await wait(PAUSE_DURATION);
@@ -226,6 +247,8 @@ export function createEngine(state, playback) {
     await wait(PAUSE_DURATION);
   }
 
+  // Plays the review rounds at `station`: Each round dispatches the code to its reviewers and collects their verdicts.
+  // A round with a fix also shuttles the fixes to the coder for the next code version.
   async function reviewCycle(station, rounds, codeVersionRef) {
     const reviewAgents = PHASES[station].agents;
     const totalDisplayRounds = rounds.reduce(function (n, r) {
@@ -256,12 +279,11 @@ export function createEngine(state, playback) {
         }),
       );
 
-      // Reviewers work
       for (const idx of round.reviewers) {
         state.agents[reviewAgents[idx]] = 'working';
       }
 
-      // Staggered completion
+      // Stagger completion
       await Promise.all(
         round.reviewers.map(function (reviewerIdx, arrIdx) {
           const agent = reviewAgents[reviewerIdx];
@@ -279,7 +301,7 @@ export function createEngine(state, playback) {
 
       await wait(PAUSE_DURATION);
 
-      // Fix shuttle (if this round requires it)
+      // Shuttle the fixes (if this round requires it)
       if (round.fix) {
         state.orch.working = true;
         await wait(800);
@@ -295,7 +317,7 @@ export function createEngine(state, playback) {
         state.stationInputs[2].push({ label: 'fixes', color: ARTIFACT_COLORS.fixes });
         await chuteDescend(stationX(2), 'fixes', ARTIFACT_COLORS.fixes);
 
-        // Coder produces next version
+        // Have the coder produce the next version
         codeVersionRef.version++;
         const newLabel = 'code v' + codeVersionRef.version;
         state.agents.coder = 'working';
@@ -305,10 +327,8 @@ export function createEngine(state, playback) {
         await chuteAscend(stationX(2), newLabel, ARTIFACT_COLORS.code);
         state.orch.code = { label: newLabel, color: ARTIFACT_COLORS.code };
 
-        // Record new code version as review station input
         state.stationInputs[station].push({ label: newLabel, color: ARTIFACT_COLORS.code });
 
-        // Return to review station for next round (if there is one)
         if (ri < rounds.length - 1) {
           await orchWalkTo(stationX(station));
           await wait(PAUSE_DURATION);
@@ -316,11 +336,11 @@ export function createEngine(state, playback) {
       }
     }
 
-    // Convergence
+    // Mark convergence
     state.reviewRound.visible = false;
     await openGate(station);
 
-    // Brief celebration
+    // Celebrate briefly
     for (const agent of reviewAgents) {
       state.agents[agent] = 'working';
     }
@@ -331,6 +351,7 @@ export function createEngine(state, playback) {
     await wait(PAUSE_DURATION);
   }
 
+  // Carries fixes to the coder at `targetStation` and brings back the next code version.
   async function fixShuttle(targetStation, codeVersionRef) {
     state.orch.working = true;
     await wait(600);
@@ -351,6 +372,7 @@ export function createEngine(state, playback) {
     state.orch.code = { label: newLabel, color: ARTIFACT_COLORS.code };
   }
 
+  // Walks the orchestrator to the outputs station and drops the run summary there.
   async function showOutputs(stationIndex) {
     await orchWalkTo(stationX(stationIndex));
     await wait(PAUSE_DURATION);
@@ -366,6 +388,7 @@ export function createEngine(state, playback) {
     await wait(PAUSE_DURATION);
   }
 
+  // Marks the run complete: opens every gate, and has every agent and the orchestrator celebrate.
   async function completion() {
     state.completed = true;
 
@@ -394,6 +417,7 @@ export function createEngine(state, playback) {
 
   // § SCENARIO INITIALIZATION
 
+  // Records the scenario's absent stations and resets the gates, opening each gate adjacent to an absent station.
   function initGatesForScenario(scenario) {
     const absentStations = new Set();
     for (const step of scenario.steps) {
@@ -409,6 +433,7 @@ export function createEngine(state, playback) {
 
   // § MAIN ENGINE
 
+  // Plays the scenario's steps in order, advancing the clock by each step's share of the total weight.
   async function playScenario(scenario) {
     const totalWeight = computeTotalWeight(scenario.steps);
     const codeVersionRef = { version: 1 };
@@ -513,7 +538,6 @@ export function createEngine(state, playback) {
           break;
       }
 
-      // Advance clock proportionally
       const weight = computeStepWeight(step);
       state.clock.elapsed += (weight / totalWeight) * state.clock.targetDuration;
     }
