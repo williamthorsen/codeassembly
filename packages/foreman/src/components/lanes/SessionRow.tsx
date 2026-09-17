@@ -53,6 +53,7 @@ export function SessionRow({ nowMs, session }: SessionRowProps): ReactElement {
 
 // region | Helpers
 
+/** Resolves the badge color for a harness, falling back to gray for an unknown or absent one. */
 function resolveHarnessColor(harness: string | null): string {
   return (harness === null ? undefined : HARNESS_COLORS[harness]) ?? 'gray';
 }

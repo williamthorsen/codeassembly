@@ -7,6 +7,7 @@ import { LaneView } from '../LaneView.tsx';
 
 const NOW_MS = Date.parse('2026-07-19T12:00:00.000Z');
 
+/** Builds an open, session-free lane on the given branch. */
 function buildLane(branch: string): LaneSnapshot {
   return {
     repo: 'owner/repo',
@@ -21,6 +22,7 @@ function buildLane(branch: string): LaneSnapshot {
   };
 }
 
+/** Renders the view inside the Mantine provider that its components require. */
 function renderView(snapshot: FleetSnapshot | null): void {
   render(
     <MantineProvider>

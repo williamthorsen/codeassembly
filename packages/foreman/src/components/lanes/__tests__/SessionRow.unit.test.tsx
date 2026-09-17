@@ -7,6 +7,7 @@ import { SessionRow } from '../SessionRow.tsx';
 
 const NOW_MS = Date.parse('2026-07-19T12:00:00.000Z');
 
+/** Builds a working `claude` session whose last event is 12 seconds before `NOW_MS`; tests override fields. */
 function buildSession(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
   return {
     session: 'abcd1234-5678-90ef-ghij-klmnopqrstuv',
@@ -20,6 +21,7 @@ function buildSession(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot
   };
 }
 
+/** Renders the row inside the Mantine provider that its components require. */
 function renderRow(session: SessionSnapshot): void {
   render(
     <MantineProvider>
