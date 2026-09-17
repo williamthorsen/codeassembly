@@ -8,6 +8,7 @@ const CAPTURED_AT = '2026-06-04T06:57:22Z';
 
 const CONTEXT: CaptureContext = { session: 'session-abc', cwd: '/tmp/work', repo: 'owner/name' };
 
+/** Builds the parsed args of a fresh capture, with overrides merged in. */
 function argsFor(overrides: Partial<ParsedArgs>): ParsedArgs {
   return {
     store: 'codeassembly',

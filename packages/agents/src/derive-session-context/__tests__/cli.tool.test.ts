@@ -726,6 +726,7 @@ function findStderrLine(spy: MockInstance<typeof process.stderr.write>, needle: 
     .find((arg): arg is string => typeof arg === 'string' && arg.includes(needle));
 }
 
+/** Writes `body` as the project's `.agents/preferences.yaml` under `workDir`. */
 async function writeProjectPrefs(workDir: string, body: string): Promise<void> {
   const agentsDir = path.join(workDir, '.agents');
   await mkdir(agentsDir, { recursive: true });

@@ -21,6 +21,7 @@ metadata:
 Body.
 `;
 
+/** Builds a Readable stream that emits the given body and ends. */
 function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }

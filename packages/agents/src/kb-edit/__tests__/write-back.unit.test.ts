@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { writeBackNote } from '../write-back.ts';
 
+/** Returns the path of a `note.md` that does not exist yet, inside a fresh temporary directory. */
 async function makeTempPath(prefix: string): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), prefix));
   return join(dir, 'note.md');
