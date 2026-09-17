@@ -106,16 +106,8 @@ function buildReviewers(count: number): Record<string, ReviewerInfo> {
 }
 
 /** Builds `count` events, none of which contains a usage field. */
-function buildEvents(count: number, options: { withUsage?: boolean } = {}): RunEvent[] {
-  const events: RunEvent[] = [];
-  for (let i = 0; i < count; i++) {
-    if (options.withUsage && i === 0) {
-      events.push({ t: '2026-04-18T00:00:00Z', event: 'run_started' });
-      continue;
-    }
-    events.push({ t: '2026-04-18T00:00:00Z', event: 'run_started' });
-  }
-  return events;
+function buildEvents(count: number): RunEvent[] {
+  return Array.from({ length: count }, () => ({ t: '2026-04-18T00:00:00Z', event: 'run_started' }));
 }
 
 /** Builds a status that sets every status-derived signal. */
