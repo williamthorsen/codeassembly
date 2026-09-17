@@ -2,7 +2,7 @@
  * The per-repository record of declined cuts, `.agents/streamline-guidance.yaml`.
  *
  * A declined cut stays declined while its file still contains its phrase. A later run proposes no cut that removes or
- * rewords a live declined phrase, which is what lets a run at a small level move on to the next candidates.
+ * rewords a live declined phrase, which lets a run at a small level move on to the next candidates.
  *
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record, and the helper's `record` command is its one
  * write path.
@@ -38,7 +38,7 @@ const DeclineRecordSchema = z.object({
 /**
  * Merges one run's declined cuts into the record and drops every entry that is no longer live, so the record contains only
  * cuts that a later run could still propose. A cut declined again replaces the entry that it repeats. `readFile`
- * returns a repository-relative file's content, or undefined where the file no longer exists.
+ * returns a repository-relative file's content, or undefined when the file no longer exists.
  */
 export function composeRecord(
   prior: DeclineRecord,
@@ -60,7 +60,7 @@ export function composeRecord(
   };
 }
 
-/** Reports whether a declined cut still applies: its file exists and contains its phrase. */
+/** Reports whether a declined cut still applies: Its file exists and contains its phrase. */
 export function isLive(entry: DeclinedPhrase, content: string | undefined): boolean {
   return content !== undefined && normalizePhrase(content).includes(normalizePhrase(entry.phrase));
 }
@@ -93,7 +93,7 @@ export function parseRecord(content: string): DeclineRecord {
   return result.data;
 }
 
-/** Renders the record as YAML sorted by file and then phrase, so rewriting unchanged content is byte-identical. */
+/** Renders the record as YAML sorted by file and then phrase, so that rewriting unchanged content is byte-identical. */
 export function stringifyRecord(record: DeclineRecord): string {
   const declined = record.declined
     .toSorted((a, b) => a.file.localeCompare(b.file) || a.phrase.localeCompare(b.phrase))

@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -49,8 +49,8 @@ if (isEntryPoint()) {
  * Runs the helper end to end, from argv to the edited events.
  *
  * The operation applies to each id independently, so a recoverable per-event failure becomes that id's result and never
- * aborts the others. An invocation-level failure returns `{ ok: false, ... }` having written nothing; a system failure
- * propagates to the caller.
+ * aborts the others. On an invocation-level failure, `runUpdate` returns `{ ok: false, ... }` having written nothing; a
+ * system failure propagates to the caller.
  *
  * @internal - Exported to allow testing.
  */
@@ -71,7 +71,7 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
   }
   const store = resolved.store;
 
-  // Only `retag` canonicalizes through the alias map, so the other operations skip the load.
+  // Load the alias map only for `retag`, because no other operation canonicalizes through it.
   const aliases: AliasMap =
     args.operation === 'retag' ? await loadAliasesForStore(store.path) : new Map<string, string>();
 
@@ -154,8 +154,8 @@ function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): K
 }
 
 /**
- * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. Re-parsing the
- * rendered output before the write keeps a render that would produce an invalid event from overwriting the file.
+ * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. It re-parses
+ * the rendered output before the write, so that it never overwrites the file with an invalid event.
  */
 async function editOne(input: {
   storePath: string;
@@ -208,7 +208,7 @@ async function editOne(input: {
   return { ok: true, id, path };
 }
 
-/** Returns true when this module is the process entry point, resolving both sides through `realpathSync` so a symlinked invocation still matches. */
+/** Returns true when this module is the process entry point, resolving both sides through `realpathSync` so that a symlinked invocation still matches. */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
   if (entry === undefined) {

@@ -11,7 +11,7 @@ import type { HelperFailure, ResolveSuccess } from '../types.ts';
 
 const TARGET = 'lib/skills/demo/SKILL.md';
 
-/** A repository holding one content root, whose skill includes a partial that includes and links onward. */
+/** A repository containing one content root, whose skill includes a partial that includes and links onward. */
 const REPOSITORY_FILES: Readonly<Record<string, string>> = {
   '.agents/preferences.yaml': 'artifacts:\n  base_dir: sealed\n',
   'AGENTS.md':
@@ -95,7 +95,7 @@ describe(runResolve, () => {
   it.each([
     { copy: '.claude/skills/demo/SKILL.md', source: TARGET, marker: 'an ownership marker' },
     { copy: '.claude/skills/_data/ref.md', source: 'lib/skills/_data/ref.md', marker: 'a Source line' },
-  ])('if a named path is a deployed copy carrying $marker, resolves it to its source', async ({ copy, source }) => {
+  ])('if a named path is a deployed copy containing $marker, resolves it to its source', async ({ copy, source }) => {
     const copyPath = path.join(home, copy);
 
     const result = expectSuccess(await resolve(copyPath));

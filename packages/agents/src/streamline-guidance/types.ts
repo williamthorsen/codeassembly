@@ -52,7 +52,7 @@ export interface GuidanceFile {
   dirty: boolean;
   /** Line ranges that a deployment rewrites, such as an ambient region, inside which no cut may fall. */
   generatedRegions: LineRange[];
-  /** The path as the caller named it, where that path was a deployed copy of this file. */
+  /** The path as the caller named it, when that path was a deployed copy of this file. */
   redirectedFrom?: string;
 }
 

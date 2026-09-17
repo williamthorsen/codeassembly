@@ -16,7 +16,7 @@ export function listWorkingTreeFiles(root: string, pathspecs: readonly string[] 
 
 // region | Helpers
 
-/** Output cap for one git listing, sized past what a large repository produces. */
+/** Output cap for one git listing, sized to exceed what a large repository produces. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
 /** Runs one `git ls-files` form in the repository, returning repository-relative paths. */

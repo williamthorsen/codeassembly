@@ -52,7 +52,7 @@ const CheckInputSchema = z.object({
 /** Separates one commit's fields in the log format. */
 const FIELD_SEPARATOR = '\u{1F}';
 
-/** Output cap for one git invocation, sized past a long history. */
+/** Output cap for one git invocation, sized to exceed the output of a long history. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
 /** The most commits reported for one phrase. */
@@ -64,7 +64,7 @@ const MIN_LITERAL_LENGTH = 12;
 /** Separates one commit from the next in the log format. */
 const RECORD_SEPARATOR = '\u{1E}';
 
-/** Matches a single-quoted, double-quoted, or template string literal, each group holding one form's contents. */
+/** Matches a single-quoted, double-quoted, or template string literal, each group capturing one form's contents. */
 const STRING_LITERAL_REGEX = /'((?:\\.|[^'\\\n])*)'|"((?:\\.|[^"\\\n])*)"|`((?:\\.|[^`\\])*)`/g;
 
 /** Matches a template literal's interpolation, whose text is code rather than a literal. */
@@ -145,7 +145,10 @@ function listTestLiterals(root: string): TestAssertion[] {
   return literals;
 }
 
-/** Resolves the escape sequences in a literal's source text, so the literal compares as the string that it denotes. */
+/**
+ * Resolves the escape sequences in a literal's source text, so that the literal is compared as the string that it
+ * denotes.
+ */
 function unescapeLiteral(text: string): string {
   return text.replaceAll(/\\(.)/gs, (_match, char: string) => {
     if (char === 'n') return '\n';

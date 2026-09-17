@@ -119,7 +119,7 @@ const GENERATED_REGION_START_REGEX =
 /** Matches a `{harness_home_dir}` reference into a deployed tree, whose captured group is the path beneath the home. */
 const HARNESS_HOME_REFERENCE_REGEX = /\{harness_home_dir\}\/((?:scripts|skills)\/[^\s`'"()<>[\]]+)/g;
 
-/** Output cap for one git listing, sized past what a large repository produces. */
+/** Output cap for one git listing, sized to exceed what a large repository produces. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
 /** The values that resolution fixes for one run. */
@@ -238,7 +238,7 @@ function describeFile(file: string, context: ResolutionContext, dirty: ReadonlyS
 
 /**
  * Lists a target and every file that its includes reach, in discovery order, with each include edge found on the way.
- * Returns undefined where a directive in any of those files does not resolve, such as an example directive in
+ * Returns undefined when a directive in any of those files does not resolve, such as an example directive in
  * documentation that deployment never expands.
  */
 async function expandTarget(
@@ -267,14 +267,14 @@ async function expandTarget(
   return { files: [...visited], includes };
 }
 
-/** Returns the innermost content root containing a file, or undefined where none does. */
+/** Returns the innermost content root containing a file, or undefined when none does. */
 function findContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
   return contentRoots
     .filter((contentRoot) => isInside(file, contentRoot))
     .toSorted((left, right) => right.length - left.length)[0];
 }
 
-/** Returns the line ranges of every region that a deployment rewrites, running to the end where no end marker closes one. */
+/** Returns the line ranges of every region that a deployment rewrites, running to the end when no end marker closes one. */
 function findGeneratedRegions(content: string): LineRange[] {
   const lines = content.split('\n');
   const regions: LineRange[] = [];
@@ -333,7 +333,7 @@ function listDirtyFiles(root: string, files: readonly string[]): Set<string> {
 
 /**
  * Lists the existing Markdown files to which content links: Markdown links resolved against the host's directory, and
- * `{harness_home_dir}` references mapped into the content root, whose tree is what deploys beneath the harness home.
+ * `{harness_home_dir}` references mapped into the content root, whose tree is deployed beneath the harness home.
  */
 function listLinkedPaths(
   content: string,
@@ -412,7 +412,7 @@ function resolveNamedPath(
   );
 }
 
-/** Returns a path's real path where it exists, and the path unchanged where it does not. */
+/** Returns a path's real path when it exists, and the path unchanged when it does not. */
 function resolveRealPath(candidate: string): string {
   return existsSync(candidate) ? realpathSync(candidate) : candidate;
 }

@@ -1,18 +1,18 @@
 /**
  * CLI entry for the harness hook relay.
  *
- * A harness's event hooks fire at boundaries no skill is running to observe, so the hook reports them in the agent's
- * place. Configured as a hook command, this relay reads the hook's JSON payload on stdin and appends the lifecycle
- * event that `{harness, hook}` maps to.
+ * A harness's event hooks fire at boundaries that no skill is running to observe, so the hook reports them in the
+ * agent's place. Configured as a hook command, this relay reads the hook's JSON payload on stdin and appends the
+ * lifecycle event that `{harness, hook}` maps to.
  *
- * The hook's identity comes from the flags: the two harnesses' payload shapes differ, so stdin supplies only data and
- * the flags, baked in when the hook entry is configured, supply the mapping key.
+ * The hook's identity comes from the flags: Because the two harnesses' payload shapes differ, stdin supplies only
+ * data, and the flags, which are fixed when the hook entry is configured, supply the mapping key.
  *
  * Every exit is 0, failures included, because Claude Code reads some non-zero hook exits as control signals rather
- * than as failures: a `Stop` hook exiting 2 blocks the agent from stopping. A relay that exited non-zero on a bad
- * payload would wedge the session rather than merely lose an event.
+ * than as failures: A `Stop` hook exiting 2 blocks the agent from stopping. A relay that exited non-zero on a bad
+ * payload would block the session rather than merely lose an event.
  *
- * `--sentinel` is accepted and ignored here: it marks the configured hook entries for the config tools that wrote them.
+ * `--sentinel` is accepted and ignored here: It marks the configured hook entries for the config tools that wrote them.
  */
 import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -41,10 +41,10 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'sentinel', takesValue: true },
 ];
 
-/** The payload key each harness reports the session's id under. */
+/** The payload key under which each harness reports the session's id. */
 const SESSION_KEY = 'session_id';
 
-/** The payload key each harness reports the session's working directory under. */
+/** The payload key under which each harness reports the session's working directory. */
 const CWD_KEY = 'cwd';
 
 /** Executes the relay from `process.argv` and stdin, writing the JSON result to stdout. Always exits 0. */
@@ -59,8 +59,8 @@ async function main(): Promise<void> {
       now: new Date(),
     });
   } catch (error) {
-    // `runRelay` converts every failure it anticipates into a structured result, so reaching here means something
-    // unforeseen threw.
+    // `runRelay` converts every failure that it anticipates into a structured result, so reaching here means
+    // something unforeseen threw.
     result = failure('internal-error', describeError(error));
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -73,7 +73,8 @@ if (isEntryPoint()) {
 /**
  * Runs the relay end to end, from the hook's argv and stdin to the appended event.
  *
- * Every failure is recoverable by contract, and each returns `{ ok: false, ... }` having written nothing.
+ * Every failure is recoverable by contract, and for each, `runRelay` returns `{ ok: false, ... }` having written
+ * nothing.
  *
  * @internal - Exported to allow testing.
  */
@@ -104,7 +105,8 @@ export async function runRelay(input: {
   }
 
   // The payload's `cwd` is the session's directory; the relay's own is wherever the harness happened to spawn the hook,
-  // so it stands in only when the payload names none. Attribution resolves against whichever wins.
+  // so it is used only when the payload names none. The relay resolves attribution against whichever of the two it
+  // uses.
   const cwd = payload.value.cwd ?? input.cwd;
   const [repo, branch] = await Promise.all([resolveRepo(cwd), resolveBranch(cwd)]);
   const session = payload.value.session ?? resolveSession(input.env);
@@ -173,13 +175,13 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Reads the fields the relay needs out of the hook's raw stdin payload: the session, the working directory, and the
- * mapping's discriminator keys. The payload must be a JSON object, because a hook that sent anything else is not a
- * hook this relay understands.
+ * Reads the fields that the relay needs out of the hook's raw stdin payload: the session, the working directory, and
+ * the mapping's discriminator keys. The payload must be a JSON object, because a hook that sent anything else is not a
+ * hook that this relay understands.
  *
  * Within a well-formed object every field is optional, and a field present but not a string counts as absent. The
- * harnesses agree on `session_id` and `cwd` today, but a harness that stops supplying one costs that event its
- * attribution, which the envelope already models as an omitted key, and never costs the session its event.
+ * harnesses agree on `session_id` and `cwd` today, but when a harness stops supplying one, that event loses its
+ * attribution, which the envelope already models as an omitted key, and the session never loses its event.
  *
  * @internal - Exported to allow testing.
  */
@@ -228,7 +230,7 @@ function failure(error: RelayErrorCode, message: string): RelayFailure {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. A `realpathSync` failure warns and returns `false`.
+ * symlinked invocation path still matches. On a `realpathSync` failure, it warns and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -246,8 +248,9 @@ function isEntryPoint(): boolean {
 /**
  * Reads the hook's payload from stdin to EOF.
  *
- * A terminal short-circuits to the empty string: with no harness on the other end there is no payload coming, and
- * reading would block until the operator typed EOF. Under a hook, stdin is a pipe the harness closes.
+ * When stdin is a terminal, `readStdin` returns the empty string without reading: With no harness on the other end
+ * there is no payload coming, and reading would block until the operator typed EOF. Under a hook, stdin is a pipe that
+ * the harness closes.
  */
 async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
@@ -265,8 +268,8 @@ function readString(payload: Record<string, unknown>, key: string): string | und
 /**
  * The checked-out branch at `cwd`, or `undefined` when there is none to read: git cannot answer (no repository, no git
  * binary, a working directory that no longer exists) or HEAD is detached, which git reports as an empty branch name.
- * Both warn, because a relay that silently files every event under the no-branch placeholder is indistinguishable from
- * one that is working.
+ * In both cases `resolveBranch` warns, because a relay that silently files every event under the no-branch placeholder
+ * is indistinguishable from one that is working.
  */
 async function resolveBranch(cwd: string): Promise<string | undefined> {
   let branch: string;
@@ -283,7 +286,7 @@ async function resolveBranch(cwd: string): Promise<string | undefined> {
   return branch;
 }
 
-/** Writes one diagnostic line to stderr. Stdout carries the machine-readable result, so it stays clean. */
+/** Writes one diagnostic line to stderr. Stdout contains the machine-readable result, so it stays clean. */
 function warn(message: string): void {
   process.stderr.write(`relay-hook-event: warning: ${message}\n`);
 }
