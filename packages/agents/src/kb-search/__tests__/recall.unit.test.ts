@@ -162,8 +162,6 @@ describe(parseRipgrepOutput, () => {
   });
 
   it('skips a malformed JSON line and still returns valid matches', () => {
-    // A line that is not valid JSON must be dropped silently, so that a single corrupted event does not lose the
-    // surrounding valid matches in the same stream.
     const stream = [
       '{"type":"begin","data":{"path":{"text":"./a.md"}}}',
       'not json',
@@ -177,8 +175,7 @@ describe(parseRipgrepOutput, () => {
   });
 
   it('returns one entry per note and caps its snippet at the first match window', () => {
-    // A note matching on several non-adjacent lines emits more than three line events. It must surface once, with a
-    // snippet drawn from the first match and its neighbors only.
+    // A note matching on several non-adjacent lines emits more line events than one match window holds.
     const stream = buildRipgrepOutput([
       ['./multi.md', 'first thunderfish'],
       ['./multi.md', 'neighbor one'],
@@ -193,7 +190,10 @@ describe(parseRipgrepOutput, () => {
   });
 });
 
-/** Builds a child-process error carrying `code`, the shape `execFile` rejects with on a bad exit or a failed spawn. */
+/**
+ * Builds a child-process error carrying `code`, the shape with which `execFile` rejects on a bad exit or a failed
+ * spawn.
+ */
 function buildProcessError(code: number | string): Error & { code: number | string } {
   return Object.assign(new Error(`mock process failure: ${code}`), { code });
 }

@@ -16,7 +16,7 @@ const execFileAsync = promisify(execFile);
  */
 export type ProcessRunner = (command: string, args: readonly string[]) => Promise<{ stdout: string }>;
 
-/** Recalls notes for a query across the in-scope KBs. The seam `searchNotes` injects, so a caller can substitute one. */
+/** Recalls notes for a query across the in-scope KBs. */
 export type RecallFn = (input: { query: string; scopedKbs: ScopedKb[] }) => Promise<RecallResult>;
 
 /** Output cap for one ripgrep invocation, sized well past the match set of a large vault. */
@@ -25,7 +25,6 @@ const RIPGREP_MAX_BUFFER = 32 * 1_024 * 1_024;
 /** Number of context lines captured on each side of a ripgrep match for the snippet. */
 const SNIPPET_CONTEXT_LINES = 1;
 
-/** The recall outcome: the raw hits plus the in-scope KBs that were skipped because their path did not exist. */
 export interface RecallResult {
   /** The raw ripgrep hits across every searched KB. */
   hits: RawHit[];
@@ -34,18 +33,17 @@ export interface RecallResult {
 }
 
 /**
- * Runs ripgrep over the note bodies and frontmatter of every in-scope KB and return the raw hits.
+ * Runs ripgrep over the note bodies and frontmatter of every in-scope KB and returns the raw hits.
  *
- * The query is tokenized on whitespace; each term is also expanded through the KB's `tag-aliases.yaml` so that a query
- * term that is a known alias additionally matches notes carrying its canonical tag. Terms are combined disjunctively:
- * A note matching any term is a hit. Each note appears at most once per KB; its snippet is drawn from the first
- * matching line and its immediate neighbors.
+ * Tokenizes the query on whitespace and expands each term through the KB's `tag-aliases.yaml`, so that a term that is
+ * a known alias also matches the notes carrying its canonical tag. Combines the terms disjunctively. Reports each note
+ * at most once per KB, with a snippet drawn from the first matching line and its immediate neighbors.
  *
- * An in-scope KB whose path is absent (`ENOENT` / `ENOTDIR`) is skipped and reported in `missingKbs` so that callers
- * can surface the dead path; a permission error (`EACCES` / `EPERM`) on a path that does exist still throws.
+ * Skips an in-scope KB whose path is absent, reporting it in `missingKbs`; a permission error on a path that does
+ * exist still throws.
  *
- * ripgrep is required on `PATH`; an absent binary throws with a remediation hint. `runner` overrides how the process is
- * reached, defaulting to a real `rg` invocation.
+ * Requires ripgrep on `PATH`; an absent binary throws with a remediation hint. `runner` replaces the real `rg`
+ * invocation.
  */
 export async function recallNotes(input: {
   query: string;
@@ -75,15 +73,12 @@ export async function recallNotes(input: {
 
 // region | Helpers
 
-/** Escape regex metacharacters so query terms are matched literally inside ripgrep's alternation. */
+/** Escapes regex metacharacters, so that ripgrep matches each query term literally inside its alternation. */
 function escapeRegExp(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
-/**
- * Expands each base term with its canonical tag form. When a term is a known alias, the canonical tag is added as an
- * extra search term; notes carry canonical tags only, so this lets an alias query match them.
- */
+/** Adds the canonical tag of every base term that is a known alias. */
 function expandTerms(baseTerms: string[], aliases: AliasMap): string[] {
   const expanded = new Set(baseTerms);
   for (const term of baseTerms) {
@@ -135,14 +130,13 @@ async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   try {
     return await loadAliases({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath) } });
   } catch {
-    // A malformed alias file degrades to no expansion rather than failing the whole run.
     return new Map();
   }
 }
 
 /**
  * Extracts the note path and line text from one ripgrep `--json` event line; `null` for any line that is not a `match`
- * or `context` event (`begin`/`end`/`summary` events and unparseable lines are skipped).
+ * or `context` event.
  */
 function parseRipgrepEvent(line: string): { path: string; content: string } | null {
   let event: unknown;
@@ -161,12 +155,10 @@ function parseRipgrepEvent(line: string): { path: string; content: string } | nu
  * Parses ripgrep `--json` output into one entry per note, with a snippet built from the matching line and its
  * captured context neighbors.
  *
- * ripgrep `--json` emits one JSON event object per output line (`begin`, `match`, `context`, `end`,
- * `summary`). The `match` and `context` events carry the note path and line text in structured fields,
- * so the path is unambiguous regardless of date-patterned directory or filename segments. Non-event
- * lines and other event types are skipped.
+ * The path comes from the event's structured field, so a date-patterned directory or filename segment cannot be read
+ * as a line number.
  *
- * Exported for direct unit testing of edge cases (malformed lines, snippet-line cap).
+ * @internal - Exported to allow testing.
  */
 export function parseRipgrepOutput(stdout: string): Array<{ path: string; snippet: string }> {
   if (stdout.trim() === '') {
@@ -201,7 +193,7 @@ export function parseRipgrepOutput(stdout: string): Array<{ path: string; snippe
   }));
 }
 
-/** Invokes ripgrep over `*.md` files and return its stdout; an empty match set yields an empty string. */
+/** Invokes ripgrep over `*.md` files and returns its stdout; an empty match set yields an empty string. */
 async function runRipgrep(input: { pattern: string; searchDir: string; runner: ProcessRunner }): Promise<string> {
   try {
     const { stdout } = await input.runner('rg', [
@@ -218,7 +210,7 @@ async function runRipgrep(input: { pattern: string; searchDir: string; runner: P
     ]);
     return stdout;
   } catch (error) {
-    // ripgrep exits 1 when no matches are found — that is an empty result, not a failure.
+    // ripgrep exits 1 to report that nothing matched.
     if (isExitCode(error, 1)) {
       return '';
     }
@@ -229,7 +221,7 @@ async function runRipgrep(input: { pattern: string; searchDir: string; runner: P
   }
 }
 
-/** The default {@link ProcessRunner}: spawns the real binary, capping its output at {@link RIPGREP_MAX_BUFFER}. */
+/** Spawns the real binary as the default {@link ProcessRunner}, capping its output at {@link RIPGREP_MAX_BUFFER}. */
 async function runRipgrepProcess(command: string, args: readonly string[]): Promise<{ stdout: string }> {
   return execFileAsync(command, [...args], { maxBuffer: RIPGREP_MAX_BUFFER });
 }
@@ -240,8 +232,8 @@ async function searchKb(input: { kb: ScopedKb; terms: string[]; runner: ProcessR
   const stdout = await runRipgrep({ pattern, searchDir: input.kb.path, runner: input.runner });
   const matches = parseRipgrepOutput(stdout);
 
-  // ripgrep exits 1 when nothing matched, which `runRipgrep` maps to an empty string, so output here means it found
-  // something. Parsing none of it therefore means the `--json` event shape no longer matches what this module reads.
+  // `runRipgrep` returns an empty string for an empty match set, so output that parses to nothing means the `--json`
+  // event shape no longer matches what this module reads.
   if (stdout.trim() !== '' && matches.length === 0) {
     throw new Error(
       `ripgrep reported matches in ${input.kb.path} but none of its output could be parsed; its --json event format may have changed`,

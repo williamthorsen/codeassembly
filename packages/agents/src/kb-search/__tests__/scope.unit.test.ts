@@ -64,7 +64,6 @@ describe(resolveScope, () => {
       home: HOME_EMPTY,
     });
 
-    // The malformed `.agents/kb.yaml` yields no registry entries; the discovered `.kb` root still resolves.
     expect(kbs).toEqual([{ name: null, path: MALFORMED_REGISTRY, via: 'discovery' }]);
     expect(registryError).toMatch(/kb\.yaml/);
   });
