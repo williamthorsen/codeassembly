@@ -5,17 +5,17 @@ import { loadKbConfig } from '@williamthorsen/kb/config';
 import { resolveKbDir, TAXONOMY_FILE } from '@williamthorsen/kb/layout';
 import { loadTaxonomy, resolveDomain } from '@williamthorsen/kb/taxonomy';
 
-/** A store's declared taxonomy set against the folders its notes actually occupy. */
+/** A store's declared taxonomy compared with the folders that its notes actually occupy. */
 export interface KbSurvey {
   /** Absolute path of `.kb/taxonomy.yaml`, whether or not the file exists. */
   taxonomyPath: string;
   /** Every declared domain, ordered by path. */
   domains: SurveyedDomain[];
-  /** Every folder holding notes that no domain declares, ordered by path. */
+  /** Every folder containing notes that no domain declares, ordered by path. */
   undeclaredFolders: SurveyedFolder[];
 }
 
-/** A domain the taxonomy declares, with what the store's notes say about it. */
+/** A domain declared by the taxonomy, with the count of the store's notes beneath it. */
 export interface SurveyedDomain {
   /** The domain's assertions-root-relative slash-path. */
   path: string;
@@ -27,7 +27,7 @@ export interface SurveyedDomain {
   noteCount: number;
 }
 
-/** A folder holding notes that no domain declares. */
+/** A folder containing notes that no domain declares. */
 export interface SurveyedFolder {
   /** The folder's assertions-root-relative slash-path. */
   path: string;
@@ -40,9 +40,9 @@ export interface SurveyedFolder {
  *
  * The note set comes from the same enumeration that `kb check` runs, so the survey sees exactly the notes admitted by
  * the store's `targets` and `exclude` and cannot disagree with what a later check reports. A folder is undeclared here
- * on the same terms that `taxonomy.undeclared` uses: the folder in which a note sits directly, matched against the
- * taxonomy exactly. A folder nested under a declared domain therefore still surfaces. The survey stays on for a store
- * declaring nothing: every folder holding notes is then undeclared.
+ * on the same terms that `taxonomy.undeclared` uses: the folder that directly contains a note, matched against the
+ * taxonomy exactly. A folder nested under a declared domain is therefore still reported. The survey still runs for a
+ * store declaring nothing: Every folder containing notes is then undeclared.
  *
  * A malformed `.kb/config.yaml` or `.kb/taxonomy.yaml` throws a `KbLoaderError` from the loader that read it.
  */
@@ -91,7 +91,7 @@ function compareByPath(a: { path: string }, b: { path: string }): number {
   return a.path < b.path ? -1 : 1;
 }
 
-/** Counts the notes sitting at `path` or in any folder beneath it. */
+/** Counts the notes at `path` or in any folder beneath it. */
 function countNotesUnder(path: string, notesByFolder: ReadonlyMap<string, number>): number {
   const prefix = `${path}/`;
   let count = 0;

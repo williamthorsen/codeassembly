@@ -51,7 +51,7 @@ function rewriteLink(input: {
   if (link.store !== undefined) {
     return null;
   }
-  // Only repair stale path prefixes: a bare basename (no `/`) that resolves uniquely is a valid link that the
+  // Only repair stale path prefixes: A bare basename (no `/`) that resolves uniquely is a valid link that the
   // `wikilinks` rule never flags.
   if (!link.target.includes('/')) {
     return null;

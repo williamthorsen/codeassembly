@@ -55,7 +55,7 @@ describe(prepareNote, () => {
     expect(record.lastVerified).toBe(TODAY);
   });
 
-  it('carries the note body onto the record', () => {
+  it('copies the note body onto the record', () => {
     const { record } = prepareNote({ args: baseArgs, aliases: emptyAliases, now: NOW, body: 'The body.\n' });
 
     expect(record.body).toBe('The body.\n');

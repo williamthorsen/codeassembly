@@ -18,7 +18,7 @@ const HOME_READONLY_DEFAULT = join(FIXTURES, 'home-readonly-default');
 const HOME_READONLY_NAMED = join(FIXTURES, 'home-readonly-named');
 const HOME_SINGLE_DEFAULT = join(FIXTURES, 'home-single-default');
 const HOME_UNRESOLVABLE_DEFAULT = join(FIXTURES, 'home-unresolvable-default');
-// A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
+// A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveWritableKb, () => {
@@ -98,7 +98,7 @@ describe(resolveWritableKb, () => {
     expect(result).toEqual({ ok: false, reason: 'no-default' });
   });
 
-  it('refuses a readonly default_kb reached via @default', async () => {
+  it('refuses a readonly default_kb resolved via @default', async () => {
     const result = await resolveWritableKb({ startDir: '/', explicitKb: '@default', home: HOME_READONLY_DEFAULT });
 
     expect(result).toEqual({
@@ -123,9 +123,9 @@ describe(resolveWritableKb, () => {
     });
   });
 
-  it('carries the registry error when @default names an unresolvable default_kb', async () => {
-    // The unresolvable default_kb makes tryLoadKbRegistry surface an error, which resolveWritableKb also logs to
-    // stderr; spy on it so the warning does not pollute test output.
+  it('includes the registry error when @default names an unresolvable default_kb', async () => {
+    // The unresolvable default_kb makes tryLoadKbRegistry report an error, which resolveWritableKb also logs to
+    // stderr; spy on it so that the warning does not appear in test output.
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
       const result = await resolveWritableKb({
@@ -216,7 +216,7 @@ describe(resolveWritableKb, () => {
     }
   });
 
-  it('degrades a malformed user-global registry while still honoring a discovered KB', async () => {
+  it('degrades a malformed user-global registry while still using a discovered KB', async () => {
     const result = await resolveWritableKb({ startDir: DISCOVERED_KB, explicitKb: null, home: HOME_MALFORMED });
 
     expect(result).toEqual({
@@ -225,7 +225,7 @@ describe(resolveWritableKb, () => {
     });
   });
 
-  it('does not reach a readonly registry-default via the null path, refusing with missing-destination', async () => {
+  it('does not resolve a readonly registry-default via the null path, refusing with missing-destination', async () => {
     const result = await resolveWritableKb({ startDir: FIXTURES, explicitKb: null, home: HOME_READONLY_DEFAULT });
 
     expect(result).toEqual({

@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's failure exit code must be returned to the OS, and `main` runs only behind the `isEntryPoint()` guard, never when the module is imported. */
+/* eslint n/no-process-exit: off -- CLI entry point: The helper's failure exit code must be returned to the OS, and `main` runs only behind the `isEntryPoint()` guard, never when the module is imported. */
 /* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the termination mechanism at the process boundary. */
 /**
  * CLI entry for the streamline-guidance helper.
@@ -100,7 +100,7 @@ export async function runCommand(input: {
 }
 
 /**
- * Folds one run's declined cuts into the repository's record and writes it. A failure returns before the write,
+ * Folds one run's declined cuts into the repository's record and writes it. On a failure, it returns before the write,
  * leaving the record unchanged.
  *
  * @internal - Exported to allow testing.
@@ -175,7 +175,10 @@ export async function runResolve(input: {
 
 // region | Helpers
 
-/** Returns true when this module is the process entry point, resolving both sides so a symlinked path still matches. */
+/**
+ * Returns true when this module is the process entry point, resolving both sides so that a symlinked path still
+ * matches.
+ */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
   if (entry === undefined) {
@@ -189,7 +192,7 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Returns a file's content, or undefined where it cannot be read. */
+/** Returns a file's content, or undefined when it cannot be read. */
 function readFileIfPresent(absolutePath: string): string | undefined {
   try {
     return readFileSync(absolutePath, 'utf8');
@@ -210,7 +213,7 @@ function rejectArguments(command: string): HelperFailure {
 /** Reads standard input to its end. */
 async function readStdin(): Promise<string> {
   const chunks: Uint8Array[] = [];
-  // The stream yields `any`, so each chunk is narrowed: A string arrives when an encoding is set.
+  // The stream types each chunk as `any`, so each is narrowed: at runtime a chunk is a string when an encoding is set.
   for await (const chunk of process.stdin) {
     chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
   }

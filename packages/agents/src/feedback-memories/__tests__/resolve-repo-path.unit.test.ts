@@ -4,8 +4,8 @@ import { resolveRepoPath } from '../resolve-repo-path.ts';
 
 const { mockedStat } = vi.hoisted(() => ({ mockedStat: vi.fn() }));
 
-// Replace `stat` so that the default `directoryExists` probe can be driven to a permission error; the injected-probe
-// tests never reach `stat`, so the mock is inert for them.
+// Replace `stat` so that the default `directoryExists` probe can be made to fail with a permission error; the
+// injected-probe tests never call `stat`, so the mock is inert for them.
 vi.mock('node:fs/promises', async (importOriginal) => {
   const original = await importOriginal<typeof import('node:fs/promises')>();
   return { ...original, stat: mockedStat };
@@ -70,8 +70,8 @@ describe(resolveRepoPath, () => {
     expect(resolved).toBeNull();
   });
 
-  it('degrades to null when the default probe hits a non-ENOENT filesystem error', async () => {
-    // Omitting the probe argument runs the real `directoryExists`, which is what reaches the mocked `stat`.
+  it('degrades to null when the default probe encounters a non-ENOENT filesystem error', async () => {
+    // Omitting the probe argument runs the real `directoryExists`, which calls the mocked `stat`.
     const permissionError: NodeJS.ErrnoException = new Error('mock EACCES');
     permissionError.code = 'EACCES';
     mockedStat.mockRejectedValue(permissionError);

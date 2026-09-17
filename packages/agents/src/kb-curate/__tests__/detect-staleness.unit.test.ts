@@ -6,7 +6,7 @@ import { detectStaleness, vaultUsesVerification } from '../detect-staleness.ts';
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
-/** Builds a note whose frontmatter carries the given extra lines. */
+/** Builds a note whose frontmatter contains the given extra lines. */
 function note(extraFrontmatter: string): EnumeratedNote {
   const content = `---\ntitle: A\ntype: howto\ncreated: 2026-01-01\nupdated: 2026-01-01\ntags: [x]\n${extraFrontmatter}---\n\nBody.\n`;
   return enumeratedNote('Note.md', content);
@@ -87,11 +87,11 @@ describe(detectStaleness, () => {
 });
 
 describe(vaultUsesVerification, () => {
-  it('returns false when no note carries a last-verified value', () => {
+  it('returns false when no note has a last-verified value', () => {
     expect(vaultUsesVerification([note(''), note('')], NOW)).toBe(false);
   });
 
-  it('returns true when at least one note carries a parseable last-verified value', () => {
+  it('returns true when at least one note has a parseable last-verified value', () => {
     expect(vaultUsesVerification([note(''), note('last-verified: 2026-05-20\n')], NOW)).toBe(true);
   });
 

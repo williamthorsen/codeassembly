@@ -99,8 +99,9 @@ async function readMemory(input: {
   const content = await readFile(input.path, 'utf8');
   const note = readNoteContent(content);
   if (note.error !== undefined) {
-    // Surface a malformed memory (a fence wrapping unparseable YAML) so an operator can route it by hand. A file with
-    // no fence is not a memory at all, and a feedback memory always has frontmatter, so skipping it never hides one.
+    // Report a malformed memory (a fence wrapping unparseable YAML) so that an operator can route it by hand. A file
+    // with no fence is not a memory at all, and a feedback memory always has frontmatter, so skipping it never hides
+    // one.
     return hasFrontmatterFence(content) ? { kind: 'unreadable', reason: note.error } : { kind: 'other' };
   }
   if (effectiveType(note.fields) !== 'feedback') {
@@ -123,7 +124,9 @@ async function readMemory(input: {
   };
 }
 
-/** True when content opens with a `---` frontmatter fence and carries a closing fence, the shape every memory has. */
+/**
+ * True when content opens with a `---` frontmatter fence and contains a closing fence, the shape that every memory has.
+ */
 function hasFrontmatterFence(content: string): boolean {
   const lines = content.split('\n');
   return lines[0] === '---' && lines.slice(1).includes('---');

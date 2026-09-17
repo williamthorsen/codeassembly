@@ -24,7 +24,7 @@ describe(resolveStoreByName, () => {
     expect(result).toEqual({ ok: false, reason: 'not-registered', requestedName: 'no-such-store' });
   });
 
-  it('surfaces the registry-load error in its not-registered outcome when the registry fails to load', async () => {
+  it('reports the registry-load error in its not-registered outcome when the registry fails to load', async () => {
     // `home-unresolvable-default` declares `real`, but its unresolvable `default_kb` makes the load throw and degrade
     // to an empty registry, so a declared name still resolves to not-registered.
     const result = await resolveStoreByName({ name: 'real', home: HOME_UNRESOLVABLE_DEFAULT });
@@ -43,7 +43,7 @@ describe(resolveStoreByName, () => {
     expect(result).toEqual({ ok: false, reason: 'readonly-store', name: 'readonly-named', path: VAULT_READONLY });
   });
 
-  it('does not rescue an unregistered name from a discoverable project-local .kb/', async () => {
+  it('does not resolve an unregistered name from a discoverable project-local .kb/', async () => {
     // project-kb has a discoverable `.kb/` that an ancestor walk would find.
     const result = await resolveStoreByName({
       name: 'unregistered-name',

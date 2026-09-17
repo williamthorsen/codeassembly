@@ -42,7 +42,7 @@ describe(retag, () => {
   });
 
   it('dedupes after canonicalization in first-occurrence order', () => {
-    // node.js and node both canonicalize to nodejs; the second arrival is dropped.
+    // node.js and node both canonicalize to nodejs; the second occurrence is dropped.
     const result = retag(buildAssertion(), ['node.js', 'react', 'node'], NODE_ALIASES);
 
     expect(result.canonicalTags).toEqual(['nodejs', 'react']);

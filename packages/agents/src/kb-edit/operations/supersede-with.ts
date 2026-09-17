@@ -7,7 +7,7 @@ import { canonicalize } from '@williamthorsen/kb/tags';
 import { dedupeInOrder, formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
- * Prepares the in-memory edits that link two notes into a supersede chain: the old note gains a forward pointer and a
+ * Prepares the in-memory edits that link two notes into a supersede chain: The old note gains a forward pointer and a
  * `deprecated` tag, the new note gains a back pointer, and both gain a bumped `updated`.
  *
  * The pointers are KB-relative, so a vault can be moved without rewriting every chain.

@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -58,7 +58,7 @@ if (isEntryPoint()) {
 // region | Helpers
 
 /**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so that a
+ * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches.
  */
 function isEntryPoint(): boolean {

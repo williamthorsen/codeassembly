@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runCurate } from '../cli.ts';
 
-// Mock `check` with a passthrough to the real implementation so most tests run
+// Mock `check` with a passthrough to the real implementation so that most tests run
 // against real vaults; the error-path tests override it per-call.
 vi.mock('@williamthorsen/kb/check', async () => {
   const actual = await vi.importActual<typeof import('@williamthorsen/kb/check')>('@williamthorsen/kb/check');
@@ -22,9 +22,9 @@ const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\ntype: howto\n---\n\nBody.\n';
 
 /**
- * Stands up a temp vault with a `.kb/` and an empty home so the registry resolves empty. A note path is written under
- * `content/` so the store's default `targets: ['content/**\/*.md']` enumerates it; a path beginning with `.kb/` is
- * written at the store root so config/schema/alias files land where the loaders read them.
+ * Creates a temp vault with a `.kb/` and an empty home so that the registry resolves empty. A note path is written
+ * under `content/` so that the store's default `targets: ['content/**\/*.md']` enumerates it; a path beginning with
+ * `.kb/` is written at the store root so that config/schema/alias files are placed where the loaders read them.
  */
 async function makeVault(files: Record<string, string>): Promise<{ kbPath: string; home: string }> {
   const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
@@ -117,7 +117,8 @@ describe(runCurate, () => {
       'utf8',
     );
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
-    // resolveWritableKb logs the unresolvable-default registry error to stderr; spy so it does not pollute output.
+    // resolveWritableKb logs the unresolvable-default registry error to stderr; spy so that it does not appear in the
+    // test output.
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
       const result = await runCurate({ argv: ['--kb', '@default'], startDir, now: NOW, home });
@@ -218,7 +219,7 @@ describe(runCurate, () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const rules = result.findings.map((finding) => finding.rule);
-    // A check finding (unresolved link) and a curate finding (stale verification) surface together.
+    // A check finding (unresolved link) and a curate finding (stale verification) are reported together.
     expect(rules).toContain('wikilinks.unresolved');
     expect(rules).toContain('verification.stale');
   });

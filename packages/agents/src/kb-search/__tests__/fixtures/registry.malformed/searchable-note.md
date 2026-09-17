@@ -4,4 +4,4 @@ diataxis: reference
 tags: []
 ---
 
-This note mentions zarquon so a query can match it even while the registry is malformed.
+This note mentions zarquon so that a query can match it even while the registry is malformed.

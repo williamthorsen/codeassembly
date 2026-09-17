@@ -18,7 +18,7 @@ export interface ParsedArgs {
 
 /** A per-finding remediation outcome produced under `--apply`. */
 export interface AppliedFix {
-  /** Absolute path of the note the fix targeted. */
+  /** Absolute path of the note targeted by the fix. */
   path: string;
   /** The rule code whose finding the fix addresses. */
   rule: string;
@@ -53,7 +53,7 @@ export interface CurateSuccess {
   applied?: AppliedFix[];
 }
 
-/** Categorical error codes the helper can return without an unexpected throw. */
+/** Categorical error codes that the helper can return without an unexpected throw. */
 export type CurateErrorCode = 'invalid-args' | 'invalid-config' | 'no-kb-resolvable' | 'readonly-kb';
 
 /** The helper's stdout payload on a recoverable failure. */

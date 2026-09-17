@@ -6,4 +6,4 @@ updated: 2026-05-01T08:00:00Z
 tags: [scoped]
 ---
 
-A note about zephyrquux that lives under content/ and must be recalled.
+A note about zephyrquux that is under content/ and must be recalled.

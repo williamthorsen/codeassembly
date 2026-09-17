@@ -10,7 +10,7 @@ const FIXTURES = join(import.meta.dirname, 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
 
 describe(searchNotes, () => {
-  it('returns hits carrying the parsed note, so a command can select by recordType and project its own shape', async () => {
+  it('returns hits containing the parsed note, so that a command can select by recordType and project its own shape', async () => {
     const result = await searchNotes({
       query: 'backpressure',
       allKbs: false,
@@ -76,7 +76,7 @@ describe(searchNotes, () => {
     expect(recall).not.toHaveBeenCalled();
   });
 
-  it('skips an unreadable note and surfaces a warning rather than dropping it silently', async () => {
+  it('skips an unreadable note and reports a warning rather than dropping it silently', async () => {
     vi.resetModules();
     void vi.doMock('../../kb-shared/note-helpers.ts', async (importActual) => {
       const actual = await importActual<typeof import('../../kb-shared/note-helpers.ts')>();

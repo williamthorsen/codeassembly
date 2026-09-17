@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { buildRecallStub } from '../../test-utils/build-recall-stub.ts';
 import { parseArgs, runRetrieve } from '../cli.ts';
 
-// The vault and registry fixtures live with the shared search primitive (kb-search), which owns scope and recall; the
-// retrieve command's integration tests reuse them.
+// The vault and registry fixtures are stored with the shared search primitive (kb-search), which owns scope and recall;
+// the retrieve command's integration tests reuse them.
 const FIXTURES = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
 const MALFORMED_NO_KB = join(FIXTURES, 'no-kb.malformed');
@@ -104,7 +104,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBeUndefined();
   });
 
-  it('excludes an event record from the assertion candidate table, pointing the reader at event recall', async () => {
+  it('excludes an event record from the assertion candidate table, directing the reader to event recall', async () => {
     const result = await runRetrieve({
       argv: ['phantomwidget'],
       startDir: NOTES_VAULT,
@@ -117,7 +117,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toMatch(/kb-retrieve-events/);
   });
 
-  it('surfaces a note with no recordType as a degraded candidate via the transitional tolerance', async () => {
+  it('returns a note with no recordType as a degraded candidate via the transitional tolerance', async () => {
     const result = await runRetrieve({
       argv: ['untypedquux'],
       startDir: NOTES_VAULT,
@@ -308,7 +308,7 @@ describe(runRetrieve, () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('leaves an invalid store schema inert: it no longer affects recall or warns', async () => {
+  it('leaves an invalid store schema inert: It no longer affects recall or warns', async () => {
     const result = await runRetrieve({
       argv: ['brokenschema'],
       startDir: INVALID_SCHEMA_VAULT,
@@ -324,7 +324,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBeUndefined();
   });
 
-  it('surfaces the valid store assertion and excludes non-assertion records in one multi-store search', async () => {
+  it('returns the valid store assertion and excludes non-assertion records in one multi-store search', async () => {
     const result = await runRetrieve({
       argv: ['crossstore', '--all-kbs'],
       startDir: MULTI_SCHEMA_REGISTRY,
@@ -364,7 +364,8 @@ describe(runRetrieve, () => {
   });
 
   it('scopes to content/ under the default config when no config.yaml is present', async () => {
-    // default-scope-vault has no `.kb/config.yaml`, so the default `content/**/*.md` applies: the root README is skipped.
+    // Because default-scope-vault has no `.kb/config.yaml`, the default `content/**/*.md` applies: The root README is
+    // skipped.
     const result = await runRetrieve({
       argv: ['wibblefrazz'],
       startDir: DEFAULT_SCOPE_VAULT,

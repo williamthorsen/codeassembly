@@ -29,7 +29,7 @@ describe(recallNotes, () => {
     ]);
   });
 
-  it('escapes regex metacharacters so a query term matches literally', async () => {
+  it('escapes regex metacharacters so that a query term matches literally', async () => {
     const runner = vi.fn<ProcessRunner>().mockResolvedValue({ stdout: '' });
 
     await recallNotes({ query: 'c++', scopedKbs: notesVaultScope, runner });
@@ -152,7 +152,7 @@ describe(recallNotes, () => {
 
 describe(parseRipgrepOutput, () => {
   it('reads a note path from the structured field rather than from the line text', () => {
-    // The date-patterned segments carry digit runs that resemble ripgrep's line-number field.
+    // The date-patterned segments contain digit runs that resemble ripgrep's line-number field.
     const stream = buildRipgrepOutput([['/vault/2026-06-01/2026-05-01-meeting-notes.md', 'grumbletwist']]);
 
     expect(parseRipgrepOutput(stream)).toEqual([
@@ -174,7 +174,7 @@ describe(parseRipgrepOutput, () => {
   });
 
   it('returns one entry per note and caps its snippet at the first match window', () => {
-    // A note matching on several non-adjacent lines emits more line events than one match window holds.
+    // For a note matching on several non-adjacent lines, ripgrep emits more line events than one match window contains.
     const stream = buildRipgrepOutput([
       ['./multi.md', 'first thunderfish'],
       ['./multi.md', 'neighbor one'],
@@ -190,14 +190,14 @@ describe(parseRipgrepOutput, () => {
 });
 
 /**
- * Builds a child-process error carrying `code`, the shape with which `execFile` rejects on a bad exit or a failed
- * spawn.
+ * Builds a child-process error with the given `code`, the shape with which `execFile` rejects on a bad exit or a
+ * failed spawn.
  */
 function buildProcessError(code: number | string): Error & { code: number | string } {
   return Object.assign(new Error(`mock process failure: ${code}`), { code });
 }
 
-/** Builds ripgrep `--json` stdout carrying one match event per `[notePath, lineText]` pair. */
+/** Builds ripgrep `--json` stdout containing one match event per `[notePath, lineText]` pair. */
 function buildRipgrepOutput(matches: ReadonlyArray<readonly [string, string]>): string {
   return matches
     .map(([path, text]) =>

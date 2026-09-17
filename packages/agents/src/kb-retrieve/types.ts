@@ -41,7 +41,7 @@ export interface RetrieveResult {
   diagnostic?: string;
 }
 
-/** A note's supersession status, surfaced as a raw signal for the agent to route on. */
+/** A note's supersession status, reported as a raw signal for the agent to act on. */
 export interface Supersession {
   /** Whether the originally matched note declares `superseded-by`. */
   superseded: boolean;

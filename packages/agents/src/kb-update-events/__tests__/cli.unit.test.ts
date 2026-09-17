@@ -10,7 +10,7 @@ import { parseArgs, runUpdate } from '../cli.ts';
 
 const EVENT_ID = '01HZCEVENTAAAAAAAAAAAAAAAA';
 
-/** Stands up a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
+/** Creates a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
 async function makeStore(name: string): Promise<{ storePath: string; home: string }> {
   const storePath = await mkdtemp(join(tmpdir(), 'update-events-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
@@ -44,7 +44,7 @@ async function seedEvent(storePath: string, id: string, extraFields: string[] = 
   return path;
 }
 
-/** Re-read a written event file and parse it back to a typed record, asserting it round-trips. */
+/** Re-reads a written event file and parses it back to a typed record, asserting it round-trips. */
 async function readBackEvent(path: string): Promise<ReturnType<typeof parseEvent>> {
   const written = await readFile(path, 'utf8');
   const { fields, body } = readNoteContent(written);

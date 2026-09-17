@@ -10,15 +10,16 @@ export interface ResolvedKb {
   name: string | null;
   /** Absolute path to the KB's root directory. */
   path: string;
-  /** Which selection rule fired. */
+  /** Which selection rule applied. */
   source: 'explicit' | 'discovered' | 'registry-default';
 }
 
 /**
- * The selection outcome: a resolved writable KB, or a categorical failure the caller turns into a structured error.
+ * The selection outcome: a resolved writable KB, or a categorical failure that the caller turns into a structured
+ * error.
  *
- * `missing-destination` and `no-default` carry the registry-load error when one occurred, so that an unusable registry
- * surfaces its cause rather than reading as an absent entry.
+ * `missing-destination` and `no-default` include the registry-load error when one occurred, so that the caller can
+ * report an unusable registry's cause rather than an absent entry.
  */
 export type ResolveKbOutcome =
   | { ok: true; kb: ResolvedKb }
@@ -28,13 +29,14 @@ export type ResolveKbOutcome =
   | { ok: false; reason: 'readonly-kb'; kbName: string; kbPath: string };
 
 /**
- * Resolves the single knowledge base a command operates on, refusing a read-only KB to a caller that intends to write.
+ * Resolves the single knowledge base on which a command operates, refusing a read-only KB to a caller that intends to
+ * write.
  *
- * Precedence: the `--kb @default` sentinel, the only path to the registry's `default_kb`, beats a concrete
- * `--kb <name>`, which beats `.kb/` discovery. With no `--kb` and no discoverable `.kb/`, resolution fails with
- * `missing-destination`; the registry default is never a silent fall-through.
+ * Precedence: The `--kb @default` sentinel, the only way to select the registry's `default_kb`, takes precedence over a
+ * concrete `--kb <name>`, which takes precedence over `.kb/` discovery. With no `--kb` and no discoverable `.kb/`,
+ * resolution fails with `missing-destination`; the registry default is never a silent fall-through.
  *
- * `requireWritable` defaults to `true`, so a caller that says nothing gets the write-safe answer; a report or a survey
+ * `requireWritable` defaults to `true`, so a caller that omits it gets the write-safe answer; a report or a survey
  * passes `false` and reads a store that the registry marks `readonly: true`. A discovered KB with no registry entry
  * has no `readonly` flag to consult and counts as writable.
  *
@@ -97,7 +99,7 @@ export async function resolveWritableKb(input: {
     };
   }
 
-  // Carry the registered KB names and the default's name, so that the caller's error can point to `--kb @default`.
+  // Include the registered KB names and the default's name, so that the caller's error can point to `--kb @default`.
   return {
     ok: false,
     reason: 'missing-destination',
@@ -109,7 +111,7 @@ export async function resolveWritableKb(input: {
 
 // region | Helpers
 
-/** Reports whether a store's `readonly` flag refuses this caller. */
+/** Reports whether to refuse this caller because of a store's `readonly` flag. */
 function refusesAsReadonly(isReadonly: boolean | undefined, requireWritable: boolean): boolean {
   return requireWritable && isReadonly === true;
 }

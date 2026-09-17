@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 // CLI entry point for the update-jira-ticket pre-flight checker.
 //
@@ -33,7 +33,8 @@ if (isEntryPoint()) {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. A `realpathSync` failure warns on stderr and returns `false`.
+ * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
+ * returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

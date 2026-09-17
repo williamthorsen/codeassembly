@@ -11,7 +11,7 @@ const VAULT_B = join(FIXTURES, 'vault-b');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
 const MALFORMED_REGISTRY = join(FIXTURES, 'registry.malformed');
 const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
-// A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
+// A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveScope, () => {
@@ -79,7 +79,7 @@ describe(resolveScope, () => {
     expect(kbs).toEqual([{ name: 'global-vault', path: VAULT_B, via: 'registry-named' }]);
   });
 
-  it('suppresses the cwd-walk so a discoverable project-local .kb/ does not enter scope', async () => {
+  it('suppresses the cwd-walk so that a discoverable project-local .kb/ is not added to scope', async () => {
     const { kbs } = await resolveScope({
       startDir: PROJECT_KB,
       allKbs: false,

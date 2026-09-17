@@ -18,8 +18,8 @@ export interface RenderFailure {
 /**
  * Renders a record to its frontmatter field map and body, then re-parses that output as a round-trip guard.
  *
- * The guard is expected to pass for any record that `parseAssertion` produced and an operation then mutated; it keeps
- * a record that has left the assertion contract from reaching disk.
+ * The guard is expected to pass for any record that `parseAssertion` produced and an operation then mutated; it
+ * prevents a record that no longer satisfies the assertion contract from being written to disk.
  */
 export function renderGuarded(record: KbAssertion): RenderedNote | RenderFailure {
   const { fields, body } = renderAssertion(record);
@@ -36,7 +36,7 @@ export interface WriteBackSuccess {
   content: string;
 }
 
-/** Validation failure: the rendered frontmatter did not re-parse as an assertion. */
+/** Validation failure: The rendered frontmatter did not re-parse as an assertion. */
 export interface WriteBackFailure {
   ok: false;
   reason: 'validation';

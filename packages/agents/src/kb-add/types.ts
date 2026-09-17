@@ -1,8 +1,8 @@
 // Shapes for the kb-add helper: parsed CLI input, the resolved write target, and the JSON result emitted to stdout.
 //
 // A survey reports a store's shape and a write reports a note, so the stdout payload discriminates on `ok` and its
-// successes further on `mode`. A system error (out-of-disk, permission denied) is out of band: it prints to stderr
-// and exits non-zero.
+// successes further on `mode`. A system error (out-of-disk, permission denied) is out of band: The helper prints it to
+// stderr and exits non-zero.
 
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
@@ -16,27 +16,27 @@ export type ParsedArgs = SurveyArgs | WriteArgs;
 /** A `--survey` invocation, which reads the destination's shape and writes nothing. */
 export interface SurveyArgs {
   mode: 'survey';
-  /** Optional explicit KB name; when set, wins over discovery and registry-default. */
+  /** Optional explicit KB name; when set, takes precedence over discovery and registry-default. */
   kb: string | null;
 }
 
 /** A note-writing invocation. */
 export interface WriteArgs {
   mode: 'write';
-  /** Optional explicit KB name; when set, wins over discovery and registry-default. */
+  /** Optional explicit KB name; when set, takes precedence over discovery and registry-default. */
   kb: string | null;
   /** Optional topic subpath beneath the assertions root (`content/assertions/`) under which the note is written; the
    * archetype segment is owned by the tool, not named here. Defaults to `content/assertions/` itself. */
   folder: string | null;
   /** Optional Diátaxis label (e.g. `howto`); written to the note's extra fields, not a top-level field. */
   diataxis: string | null;
-  /** The note title; also doubles as the filename stem. */
+  /** The note title; also used as the filename stem. */
   title: string;
   /** The proposed tag list, in the order the agent supplied them. */
   tags: string[];
-  /** Description for a domain the write declares; `null` declares it bare. */
+  /** Description for a domain that the write declares; with `null`, the write declares it bare. */
   domainDescription: string | null;
-  /** Whether the capture ran unconfirmed, which routes a declared domain to `provisional:`. */
+  /** Whether the capture ran unconfirmed, which puts a declared domain under `provisional:`. */
   auto: boolean;
 }
 
@@ -56,7 +56,7 @@ export interface AddSuccess {
   mode: 'write';
   /** Absolute path of the written note. */
   path: string;
-  /** The KB the note was written to. */
+  /** The KB to which the note was written. */
   kb: ResolvedKb;
   /** The assertion record that was written, post-canonicalization. */
   record: KbAssertion;
@@ -64,7 +64,7 @@ export interface AddSuccess {
   originalTags: string[];
   /** Tag list as written to disk, after alias canonicalization. */
   canonicalTags: string[];
-  /** Where the note landed in the store's taxonomy; absent for a store that has not adopted one. */
+  /** Where the note was placed in the store's taxonomy; absent for a store that has not adopted one. */
   placement?: DomainPlacement;
 }
 
@@ -79,7 +79,7 @@ export interface AddFailure {
   details?: AddErrorDetails;
 }
 
-/** Categorical error codes the helper can return without an unexpected throw. */
+/** Categorical error codes that the helper can return without an unexpected throw. */
 export type AddErrorCode =
   | 'no-kb-resolvable'
   | 'missing-destination'

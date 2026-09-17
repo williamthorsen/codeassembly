@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -67,8 +67,8 @@ if (isEntryPoint()) {
 /**
  * Runs the helper end to end, from the invocation's argv and stdin to the written event.
  *
- * A recoverable failure returns `{ ok: false, error, message }` having written nothing. A system failure (out of disk,
- * permission denied) propagates instead, for `main` to report on stderr before exiting non-zero.
+ * On a recoverable failure, the function returns `{ ok: false, error, message }` having written nothing. A system
+ * failure (out of disk, permission denied) propagates instead, for `main` to report on stderr before exiting non-zero.
  *
  * @internal - Exported to allow testing.
  */
@@ -268,8 +268,8 @@ async function amendEvent(input: {
 }
 
 /**
- * Applies an amend to a parsed event: the invocation supplies `summary` and `body`, and overrides
- * `skill`/`model`/`tags`/`impact` only where it supplies them. Clearing a curatorial field belongs to its own mutator
+ * Applies an amend to a parsed event: The invocation supplies `summary` and `body`, and overrides
+ * `skill`/`model`/`tags`/`impact` only when it supplies them. Clearing a curatorial field belongs to its own mutator
  * in `kb-update-events`, so an omitted flag keeps the existing value.
  */
 function amendRecord(existing: KbEvent, args: ParsedArgs, body: string): KbEvent {

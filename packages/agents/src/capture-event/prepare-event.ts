@@ -13,13 +13,13 @@ export interface PreparedEvent {
   content: string;
 }
 
-/** Successful preparation: the rendered event note. */
+/** Successful preparation: The rendered event note. */
 export interface PrepareSuccess {
   ok: true;
   prepared: PreparedEvent;
 }
 
-/** Validation failure: the human-readable errors that blocked the event. */
+/** Validation failure: The human-readable errors that blocked the event. */
 export interface PrepareFailure {
   ok: false;
   errors: string[];
@@ -31,7 +31,7 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 /**
  * Composes a `KbEvent` from the agent-supplied args and the auto-filled context, and renders it as the note to write.
  *
- * An event carries a single canonical state, edited in place through `capture-event --amend`, so the record has no
+ * An event has a single canonical state, edited in place through `capture-event --amend`, so the record has no
  * `updated` or `last-verified` field. Rendering through the same `renderEvent`/`renderNote` path that an amend uses
  * keeps a fresh capture and its later amendments identical in field order.
  */

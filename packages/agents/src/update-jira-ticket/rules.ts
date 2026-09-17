@@ -145,7 +145,7 @@ export function disallowedElementRule(tokens: readonly Token[], source: string):
   for (const token of tokens) {
     if (token.type !== 'open-tag') continue;
     if (ALLOWED_ELEMENTS.has(token.name)) continue;
-    // Confluence constructs are handled by their own rule; don't double-report under disallowed-element.
+    // Skip Confluence constructs, which their own rule handles; don't double-report under disallowed-element.
     if (token.name.startsWith('ac:') || token.name.startsWith('ri:')) continue;
     findings.push({
       rule: 'disallowed-element',
@@ -157,7 +157,7 @@ export function disallowedElementRule(tokens: readonly Token[], source: string):
   return findings;
 }
 
-/** All rule functions in deterministic order. The order shapes the output ordering when multiple rules fire. */
+/** All rule functions in deterministic order. The order determines the output ordering when multiple rules fire. */
 export const ALL_RULES: ReadonlyArray<(tokens: readonly Token[], source: string) => Finding[]> = [
   compositionCodeInlineMarkRule,
   namedEntityRule,

@@ -114,17 +114,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   doc-descriptions:
     version: '1'
@@ -241,17 +256,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   em-dash:
     version: '1'
@@ -368,17 +398,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   inline-comments:
     version: '1'
@@ -495,145 +540,53 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   plain-speech:
-    version: '6'
+    version: '7'
     swept-at: 2026-09-16
     detected: false
     roots:
-      - packages/agents/.meta
-      - packages/agents/.prettierignore
-      - packages/agents/.readyup
-      - packages/agents/.shellspec
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/__tests__
-      - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/schemas
-      - packages/agents/scripts
-      - packages/agents/spec
-      - packages/agents/src/__tests__
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/describe-change
-      - packages/agents/src/lede-corpus
-      - packages/agents/src/lib
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
-      - packages/agents/src/shared
-      - packages/agents/src/test-utils
-      - packages/agents/tsconfig.json
+      - packages/agents/src/capture-event
+      - packages/agents/src/derive-session-context
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
+      - packages/agents/src/relay-hook-event
+      - packages/agents/src/streamline-guidance
+      - packages/agents/src/update-jira-ticket
   reduced-object-relative:
     version: '1'
     swept-at: 2026-09-16
@@ -749,17 +702,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   second-person:
     version: '1'
@@ -876,17 +844,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   sentence-case:
     version: '1'
@@ -1003,17 +986,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   so:
     version: '1'
@@ -1130,17 +1128,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
   where:
     version: '1'
@@ -1257,17 +1270,32 @@ rules:
       - packages/agents/scripts
       - packages/agents/spec
       - packages/agents/src/__tests__
+      - packages/agents/src/capture-event
       - packages/agents/src/capture-lede-decision
       - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
+      - packages/agents/src/derive-session-context
       - packages/agents/src/describe-change
+      - packages/agents/src/emit-event
+      - packages/agents/src/feedback-memories
+      - packages/agents/src/kb-add
+      - packages/agents/src/kb-curate
+      - packages/agents/src/kb-edit
+      - packages/agents/src/kb-retrieve
+      - packages/agents/src/kb-retrieve-events
+      - packages/agents/src/kb-search
+      - packages/agents/src/kb-shared
+      - packages/agents/src/kb-update-events
       - packages/agents/src/lede-corpus
       - packages/agents/src/lib
+      - packages/agents/src/relay-hook-event
       - packages/agents/src/revise-prose
       - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
+      - packages/agents/src/streamline-guidance
       - packages/agents/src/test-utils
+      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
 rejections:
   - rule: capitalization-after-colon
@@ -1340,6 +1368,16 @@ rejections:
     file: packages/agents/src/revise-prose/__tests__/detect-so.unit.test.ts
     phrase: The cache is cold — so the first request is slow.
     ground: detector fixture or the expectation literal paired with one
+  - rule: em-dash
+    rule-version: '1'
+    file: packages/agents/src/update-jira-ticket/__tests__/check.unit.test.ts
+    phrase: <p>An em-dash — here, an ellipsis … there, a nbsp gap.</p>
+    ground: 'not prose: the literal em-dash is the input of a test that accepts literal Unicode characters'
+  - rule: em-dash
+    rule-version: '1'
+    file: packages/agents/src/update-jira-ticket/rules.ts
+    phrase: — for &mdash;
+    ground: 'not punctuation: the fix message shows the character as the literal replacement for &mdash;'
   - rule: plain-speech
     rule-version: '6'
     file: packages/agents/.readyup/lib/guidance-constraints.ts
@@ -1446,6 +1484,31 @@ rejections:
     phrase: lets one feat speak for a branch
     ground: 'settled corpus vocabulary: `change-grammar/consolidate.ts` defines the consolidated record as the type that speaks for the branch'
   - rule: plain-speech
+    rule-version: '7'
+    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
+    phrase: would beg the question
+    ground: 'the developer kept the phrase: it is used in its technical sense from logic'
+  - rule: plain-speech
+    rule-version: '7'
+    file: packages/agents/src/kb-retrieve/__tests__/fixtures/normalize/custom-record.md
+    phrase: A custom insight surfaced during review
+    ground: 'not prose: a fixture frontmatter data value'
+  - rule: plain-speech
+    rule-version: '7'
+    file: packages/agents/src/kb-search/__tests__/fixtures/events/event-impact-bad.md
+    phrase: An event carrying an out-of-range impact value
+    ground: 'not prose: a frontmatter data value on which a test asserts verbatim'
+  - rule: plain-speech
+    rule-version: '7'
+    file: packages/agents/src/kb-search/__tests__/fixtures/events/event-typed-a.md
+    phrase: A typed event carrying a Diataxis label
+    ground: 'not prose: a fixture frontmatter data value'
+  - rule: plain-speech
+    rule-version: '7'
+    file: packages/agents/src/kb-search/__tests__/fixtures/notes-vault/content/events/01HZCEVENTAAAAAAAAAAAAAAAA.md
+    phrase: The phantomwidget glitch only surfaced after the content/events relocation.
+    ground: 'not prose: fixture content that simulates a captured event body'
+  - rule: plain-speech
     rule-version: '6'
     file: packages/agents/src/lib/__tests__/shared-guidance-policy.unit.test.ts
     phrase: conventions travel through the skill chain
@@ -1500,6 +1563,11 @@ rejections:
     file: packages/agents/src/lib/work-types.ts
     phrase: instead of standing up an install layout
     ground: a common technical idiom rather than a figure built for the sentence
+  - rule: plain-speech
+    rule-version: '7'
+    file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
+    phrase: would beg the question
+    ground: 'the developer kept the phrase: it is used in its technical sense from logic'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/__tests__/scratch-directory-conventions.unit.test.ts
@@ -3417,6 +3485,21 @@ rejections:
     ground: 'outside the rule: `the way ...` is an adjunct relative whose gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/agents/src/capture-event/__tests__/cli.tool.test.ts
+    phrase: keep their existing values
+    ground: "not the construction: the span is the sentence's own verb phrase, and its relative clause has a relativizer"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-event/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/capture-event/types.ts
+    phrase: order the agent supplied
+    ground: 'outside the rule: an adjunct relative ("the order in which ..."); the gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/src/capture-lede-decision/__tests__/prepare-decision.unit.test.ts
     phrase: whenever the two texts differ
     ground: 'not the construction: `whenever` heads an adverbial clause'
@@ -3682,6 +3765,41 @@ rejections:
     ground: "not the construction: the detector's head and subject were parts of a gerund phrase; the sentence was separately recast under plain speech"
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/agents/src/derive-session-context/__tests__/cli.tool.test.ts
+    phrase: path this would still
+    ground: 'not the construction: `this` is the main-clause subject after a fronted prepositional phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/derive-session-context/__tests__/compose-manifest.unit.test.ts
+    phrase: ISO 8601 UTC string trimmed
+    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/derive-session-context/cli.ts
+    phrase: clear one stored
+    ground: 'not the construction: `stored` is a participle modifying "URL field", and `clear` is a verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/derive-session-context/cli.ts
+    phrase: earlier steps produced
+    ground: 'outside the rule: the head is the fused relative "whatever", which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/derive-session-context/cli.ts
+    phrase: one the last session happened
+    ground: 'outside the rule: "whichever one" is a fused relative head and admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/derive-session-context/compose-manifest.ts
+    phrase: ISO 8601 UTC string trimmed
+    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/derive-session-context/types.ts
+    phrase: optional fields stay
+    ground: "not the construction: `stay` is the sentence's own verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/src/describe-change/__tests__/change-record-block.unit.test.ts
     phrase: back the block rendered
     ground: "not the construction: `rendered for $name` is a passive participle, the rule's own first-choice repair form"
@@ -3735,6 +3853,151 @@ rejections:
     file: packages/agents/src/describe-change/types.ts
     phrase: The surface names widened to strings
     ground: 'not the construction: `widened` is a participle modifying the noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
+    phrase: back every envelope appended
+    ground: 'not the construction: `appended` is a passive participle, and `back` is a particle, not a head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/emit-event/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/__tests__/report.unit.test.ts
+    phrase: feedback memories found
+    ground: "not the construction: `found` is a passive participle, in the program's output string"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/__tests__/report.unit.test.ts
+    phrase: feedback memories found
+    ground: "not the construction: `found` is a passive participle, in the program's output string"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/cli.ts
+    phrase: memory paths piped
+    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/report.ts
+    phrase: feedback memories found
+    ground: "not the construction: `found` is a passive participle, in the program's output string"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/resolve-repo-path.ts
+    phrase: is reassembled only where the filesystem requires it
+    ground: 'outside the rule: `where` names a place, the position in the segment sequence'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-add/cli.ts
+    phrase: alongside it comes
+    ground: 'not the construction: `comes` is the sentence''s own verb, and "alongside it" is a prepositional phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-add/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-add/survey.ts
+    phrase: exactly the notes admitted
+    ground: 'not the construction: "admitted by" is already a passive participle with its by-phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-add/survey.ts
+    phrase: not the file exists
+    ground: 'not the construction: "whether or not the file exists" is a subordinate clause with no head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-add/types.ts
+    phrase: order the agent supplied
+    ground: 'outside the rule: an adjunct relative ("the order in which ..."); the gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-add/write-note.ts
+    phrase: collision it returns
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-curate/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-curate/types.ts
+    phrase: plus the curated safe fixes
+    ground: 'not the construction: `fixes` is a plural noun, and `plus` is no head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-edit/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-edit/cli.ts
+    phrase: supply this function's input only return failures
+    ground: "not the construction: `return` is the sentence's own verb, and the relative clause has a relativizer"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-edit/commit-supersede.ts
+    phrase: case the function returns
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-edit/commit-supersede.ts
+    phrase: old note's captured
+    ground: 'not the construction: `captured` is a participle modifying "original bytes"'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-edit/types.ts
+    phrase: order the target paths
+    ground: 'outside the rule: an adjunct relative ("the order in which ..."); the gap fills no argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-retrieve-events/__tests__/normalize.unit.test.ts
+    phrase: alongside its recurrence signals
+    ground: 'not the construction: `alongside` is a preposition, and `signals` is a noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-retrieve/normalize.ts
+    phrase: chain it stops
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-retrieve/normalize.ts
+    phrase: search primitive's parsed
+    ground: 'not the construction: a possessive noun phrase with an attributive participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-search/__tests__/recall.unit.test.ts
+    phrase: date-patterned segments contain
+    ground: "not the construction: `contain` is the sentence's own verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-search/scope.ts
+    phrase: plus the registry's resolved
+    ground: 'not the construction: `resolved` is a participle modifying the code span, and `plus` is no head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-search/types.ts
+    phrase: knowledge bases actually searched
+    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-search/types.ts
+    phrase: mechanical filters applied
+    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/kb-shared/resolve-capture-target.ts
+    phrase: let the caller name the alternatives
+    ground: "not the construction: `let` is the sentence's own verb, and `name` is its bare-infinitive complement"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lede-corpus/__tests__/lede-sections.unit.test.ts
@@ -4035,6 +4298,26 @@ rejections:
     file: packages/agents/src/lib/support-deploy.ts
     phrase: holds something a source claims
     ground: 'outside the rule: an indefinite-pronoun head'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
+    phrase: back every envelope appended
+    ground: 'not the construction: `appended` is a passive participle, and `back` is a particle, not a head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/relay-hook-event/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/relay-hook-event/cli.ts
+    phrase: not a string counts
+    ground: "not the construction: `counts` is the sentence's own verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/relay-hook-event/types.ts
+    phrase: payload keys copied
+    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/revise-prose/__tests__/cli.tool.test.ts
@@ -4845,6 +5128,26 @@ rejections:
     file: packages/agents/src/shared/resolve-session.ts
     phrase: current session's id
     ground: 'not the construction: a possessive noun phrase, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/streamline-guidance/record.ts
+    phrase: cut stays declined
+    ground: "not the construction: `stays` is the sentence's own verb, and `declined` is its predicate participle"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/streamline-guidance/resolve.ts
+    phrase: token names separately loaded
+    ground: "not the construction: `names` is the clause's own verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/streamline-guidance/resolve.ts
+    phrase: transitive files reached
+    ground: 'not the construction: "reached from the targets" is a passive participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/update-jira-ticket/cli.ts
+    phrase: failure the function emits
+    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
   - rule: second-person
     rule-version: '1'
     file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
@@ -5564,6 +5867,11 @@ rejections:
     ground: states a direct result, with no clause-joining `so` before it in the file
   - rule: so
     rule-version: '1'
+    file: packages/agents/src/capture-event/cli.ts
+    phrase: Both sides are resolved through `realpathSync`, so a symlinked invocation path still matches.
+    ground: 'outside the rule: a lone `so` stating a direct result; the merged entry points keep the same sentence'
+  - rule: so
+    rule-version: '1'
     file: packages/agents/src/capture-lede-decision/__tests__/cli.tool.test.ts
     phrase: which carries no `.agents/kb.yaml`, so a store resolves to `not-registered` deterministically
     ground: a lone `so` stating a direct result of the missing file; the only earlier `so` is the bare candidate on the line above, repaired to `so that`
@@ -5707,6 +6015,26 @@ rejections:
     file: packages/agents/src/describe-change/read-commits.ts
     phrase: so reporting it as unmatched would train a reader to skim the list that exists to be read
     ground: 'no longer a repeat: the neighbouring uses were repaired, leaving three sentences of clearance'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/emit-event/cli.ts
+    phrase: Both sides are resolved through `realpathSync`, so a symlinked invocation path still matches.
+    ground: 'outside the rule: a lone `so` stating a direct result; the merged entry points keep the same sentence'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/enumerate.ts
+    phrase: so skipping it never hides one
+    ground: 'outside the rule: a lone `so` stating a direct result, once the earlier purpose clause reads "so that"'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/resolve-repo-path.ts
+    phrase: so a multi-segment directory name
+    ground: 'outside the rule: a lone `so` stating a direct result, once the earlier purpose clause reads "so that"'
+  - rule: so
+    rule-version: '1'
+    file: packages/agents/src/kb-add/write-note.ts
+    phrase: so the lexical check is sufficient
+    ground: 'outside the rule: a lone `so` stating a direct result, once the earlier purpose clause reads "so that"'
   - rule: so
     rule-version: '1'
     file: packages/agents/src/lede-corpus/lede-quality.ts
@@ -6711,6 +7039,11 @@ rejections:
     ground: 'outside the rule: `where` names a place, the deployed path of the link target'
   - rule: where
     rule-version: '1'
+    file: packages/agents/src/derive-session-context/types.ts
+    phrase: on platforms where one can't be reconstructed
+    ground: 'outside the rule: `where` names a place, the platform on which the URL cannot be reconstructed'
+  - rule: where
+    rule-version: '1'
     file: packages/agents/src/describe-change/__tests__/cli.tool.test.ts
     phrase: where <subcommand> is one of ${SUBCOMMAND_NAMES.join(', ')}
     ground: "outside the rule: it defines the placeholder `<subcommand>` in the usage expression before it, and the string is asserted verbatim against the helper's own error message"
@@ -6719,6 +7052,46 @@ rejections:
     file: packages/agents/src/describe-change/cli.ts
     phrase: 'usage: ${PROGRAM} <subcommand> [flags], where <subcommand> is one of'
     ground: 'outside the rule: the `where` follows an expression and defines the placeholder `<subcommand>` in it'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
+    phrase: reports where it was written
+    ground: 'outside the rule: `where` names a place, the path of the log'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
+    phrase: Write a regular file where the events root needs a directory
+    ground: 'outside the rule: `where` names a place, a filesystem location'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/feedback-memories/resolve-repo-path.ts
+    phrase: is reassembled only where the filesystem requires it
+    ground: 'outside the rule: `where` names a place, the position in the segment sequence'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/kb-add/declare-domain.ts
+    phrase: Returns where the note is and what the declaration added
+    ground: "outside the rule: `where` names a place, the note's position in the taxonomy"
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/kb-add/declare-domain.ts
+    phrase: Where a written note is in the store's taxonomy
+    ground: "outside the rule: `where` names a place, the note's position in the taxonomy"
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/kb-add/types.ts
+    phrase: Where the note was placed in the store's taxonomy
+    ground: "outside the rule: `where` names a place, the note's position in the taxonomy"
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/kb-curate/__tests__/cli.unit.test.ts
+    phrase: are placed where the loaders read them
+    ground: 'outside the rule: `where` names a place, the store-root location from which the loaders read'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/kb-edit/cli.ts
+    phrase: depends on where the note is rather than on where the helper was invoked
+    ground: 'outside the rule: `where` names a place, a directory, in both uses'
   - rule: where
     rule-version: '1'
     file: packages/agents/src/lib/__tests__/codeassembly-schema.unit.test.ts
@@ -6874,6 +7247,11 @@ rejections:
     file: packages/agents/src/lib/running-package.ts
     phrase: which is where the walk has run out of ancestors
     ground: '`where` names a place: the filesystem root, the antecedent of `which`'
+  - rule: where
+    rule-version: '1'
+    file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
+    phrase: Write a regular file where the events root needs a directory
+    ground: 'outside the rule: `where` names a place, a filesystem location'
   - rule: where
     rule-version: '1'
     file: packages/agents/src/revise-prose/__tests__/detect-object-relative.unit.test.ts

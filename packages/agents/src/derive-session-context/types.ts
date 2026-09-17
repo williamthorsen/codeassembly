@@ -1,6 +1,6 @@
 /** Shared types for the session-context deriver. */
 
-/** A narrow projection of `schemas/preferences.json` covering the fields the deriver consumes. */
+/** A narrow projection of `schemas/preferences.json` covering the fields that the deriver consumes. */
 export interface ResolvedPreferences {
   /** The VCS host. */
   readonly scm?: 'github' | 'bitbucket';
@@ -28,7 +28,7 @@ export interface ResolvedPreferences {
 
 /** Result of reading and merging the project and global preferences files. */
 export interface PreferencesReadResult {
-  /** The merged preferences, projected to the fields the deriver consumes. */
+  /** The merged preferences, projected to the fields that the deriver consumes. */
   readonly preferences: ResolvedPreferences;
   /** The source-file paths present and read. */
   readonly sources: {
@@ -57,16 +57,16 @@ export interface BranchManifest {
   readonly artifact_base_dir: string;
   readonly artifact_paths: Readonly<Record<string, string>>;
   readonly created_at: string;
-  /** The resolved ticket URL, stored so consumers can prefer it over reconstructing one from `ticket_id`. */
+  /** The resolved ticket URL, stored so that consumers can prefer it over reconstructing one from `ticket_id`. */
   readonly ticket_url?: string | null;
   /**
-   * The org-stable base URL a bare ticket id is appended to, mirroring the `ticket.base_url` preference. Lets skills
-   * expand a bare reference to a full URL on platforms where one can't be reconstructed (e.g. Jira).
+   * The org-stable base URL to which a bare ticket id is appended, copied from the `ticket.base_url` preference. Lets
+   * skills expand a bare reference to a full URL on platforms where one can't be reconstructed (e.g. Jira).
    */
   readonly ticket_base_url?: string | null;
   /**
-   * The resolved pull-request URL, stored so PR-aware skills can reuse it across sessions. A fresh compose seeds it
-   * from a `PR-<n>` branch identity, or `null` otherwise.
+   * The resolved pull-request URL, stored so that PR-aware skills can reuse it across sessions. A fresh compose
+   * initializes it from a `PR-<n>` branch identity, or to `null` otherwise.
    */
   readonly pr_url?: string | null;
 }

@@ -9,9 +9,9 @@ export interface ResolvedStore {
 }
 
 /**
- * The resolution outcome: a resolved store, or a categorical failure the caller turns into a structured error.
+ * The resolution outcome: a resolved store, or a categorical failure that the caller turns into a structured error.
  *
- * `not-registered` carries `registryError` when the registry failed to load, leaving no entries to match, so that the
+ * `not-registered` includes `registryError` when the registry failed to load, leaving no entries to match, so that the
  * caller can attribute the miss to the load failure rather than to a genuinely absent name.
  */
 export type ResolveStoreOutcome =
@@ -21,7 +21,7 @@ export type ResolveStoreOutcome =
 
 /**
  * Resolves a knowledge base by registry name alone, matching `name` against the merged `kb.yaml` registry. The
- * resolver runs no `.kb/` discovery and no ancestor walk: a capture lands in the named store or nowhere.
+ * resolver runs no `.kb/` discovery and no ancestor walk: A capture is written to the named store or nowhere.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.

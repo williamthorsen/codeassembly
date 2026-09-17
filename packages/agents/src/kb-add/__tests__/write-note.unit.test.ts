@@ -63,7 +63,7 @@ describe(composeFilename, () => {
 describe(writeNote, () => {
   let kbPath: string;
 
-  // No cleanup: a failed test's temp directory stays in `tmpdir` for inspection.
+  // No cleanup: A failed test's temp directory stays in `tmpdir` for inspection.
   beforeEach(async () => {
     kbPath = await mkdtemp(join(tmpdir(), 'kb-add-write-'));
   });

@@ -1,7 +1,7 @@
 // Shapes for the kb-edit helper: parsed CLI input and the JSON result emitted to stdout.
 //
 // A recoverable failure returns `{ ok: false, error, details? }` on stdout. A system error (out of disk, permission
-// denied) is out of band: the helper prints it to stderr and exits non-zero.
+// denied) is out of band: The helper prints it to stderr and exits non-zero.
 
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
@@ -27,7 +27,7 @@ export interface EditSingleSuccess {
   operation: Exclude<OperationName, 'add-addressed-by' | 'supersede-with'>;
   /** Absolute path of the edited note. */
   path: string;
-  /** The KB the note belongs to. */
+  /** The KB to which the note belongs. */
   kb: ResolvedKb;
   /** The assertion record that was written, post-canonicalization. */
   record: KbAssertion;
@@ -45,7 +45,7 @@ export interface EditSupersedeSuccess {
   oldPath: string;
   /** Absolute path of the new (superseding) note. */
   newPath: string;
-  /** The KB both notes belong to. */
+  /** The KB to which both notes belong. */
   kb: ResolvedKb;
   /** The old note's record as written, including `supersededBy` and the `deprecated` tag. */
   oldRecord: KbAssertion;
@@ -60,7 +60,7 @@ export type AddAddressedByResult =
 
 /**
  * The helper's stdout payload for the multi-target `add-addressed-by` operation. `ok: true` signals the batch ran
- * without a usage or system error; per-record success or failure is carried in `results`, in the order the target
+ * without a usage or system error; per-record success or failure is reported in `results`, in the order the target
  * paths were supplied.
  */
 export interface EditBatchSuccess {
@@ -80,7 +80,7 @@ export interface EditFailure {
   details?: EditErrorDetails;
 }
 
-/** Categorical error codes the helper can return without an unexpected throw. */
+/** Categorical error codes that the helper can return without an unexpected throw. */
 export type EditErrorCode =
   | 'invalid-args'
   | 'no-kb-resolvable'
@@ -111,5 +111,5 @@ export interface EditErrorDetails {
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type EditResult = EditSuccess | EditFailure;
 
-// Re-export so kb-edit consumers don't need to learn the kb-shared path.
+// Re-export so that kb-edit consumers don't need to learn the kb-shared path.
 export type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

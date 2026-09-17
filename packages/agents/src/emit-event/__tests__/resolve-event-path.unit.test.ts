@@ -45,7 +45,7 @@ describe(resolveEventPath, () => {
     );
   });
 
-  it('flattens path separators in the session so it cannot redirect the write', () => {
+  it('flattens path separators in the session so that it cannot redirect the write', () => {
     // A relaying harness supplies `--session` verbatim.
     const resolved = resolveEventPath({ home: HOME, repo: 'owner/name', branch: 'main', session: '../../escape' });
 

@@ -6,7 +6,7 @@ import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 /**
  * Reports verification-staleness findings for one note, both at `warning` severity:
  *
- * - `verification.unmarked`: the note carries no parseable `last-verified` date. Emitted only when
+ * - `verification.unmarked`: The note has no parseable `last-verified` date. Emitted only when
  *   `vaultUsesVerification` is true.
  * - `verification.stale`: `last-verified` is older than `staleAfterDays` whole days before `now`. Emitted regardless
  *   of `vaultUsesVerification`.
@@ -52,7 +52,7 @@ export function detectStaleness(input: {
 }
 
 /**
- * Reports whether a vault has adopted verification stamps: true when at least one note carries a parseable
+ * Reports whether a vault has adopted verification stamps: true when at least one note has a parseable
  * `last-verified` value.
  */
 export function vaultUsesVerification(notes: readonly EnumeratedNote[], now: Date): boolean {

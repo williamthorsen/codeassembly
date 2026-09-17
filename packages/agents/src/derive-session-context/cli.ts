@@ -1,15 +1,15 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isMain()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isMain()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 /**
  * CLI entry for the session-context deriver.
  *
- * Every diagnostic goes to stderr, so stdout carries the JSON manifest alone. An error that escapes the derivation
- * exits 1.
+ * The CLI writes every diagnostic to stderr, so stdout contains the JSON manifest alone. When the derivation throws an
+ * error, the CLI exits 1.
  *
- * - Default-branch invariant: a manifest whose branch is the default branch carries no `ticket_url`
- *   and no `pr_url`. The default branch is derived from no ticket and belongs to no pull request, so
- *   a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. It is the one
- *   thing that makes a no-mutation cache hit write: an already-stored value is cleared, once.
+ * - Default-branch invariant: A manifest whose branch is the default branch has no `ticket_url`
+ *   and no `pr_url`. Because the default branch is derived from no ticket and belongs to no pull request,
+ *   a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. Only this invariant
+ *   causes a write on a no-mutation cache hit: An already-stored value is cleared, once.
  */
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -44,7 +44,7 @@ const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
   'created_at',
 ];
 
-/** The manifest fields the mutation flags write, and the ones the default-branch invariant governs. */
+/** The manifest fields written by the mutation flags, and the ones that the default-branch invariant governs. */
 const STORED_URL_FIELDS = ['ticket_url', 'pr_url'] as const;
 
 type StoredUrlField = (typeof STORED_URL_FIELDS)[number];
@@ -98,7 +98,7 @@ export async function deriveSessionContext(input: {
   mutations?: readonly ManifestMutation[];
 }): Promise<BranchManifest> {
   if (input.branch === '' || input.branch === 'HEAD') {
-    throw new Error('Detached HEAD: this script requires an active branch. Create or check out a branch first.');
+    throw new Error('Detached HEAD: This script requires an active branch. Create or check out a branch first.');
   }
 
   const home = input.home ?? homedir();
@@ -119,8 +119,8 @@ export async function deriveSessionContext(input: {
   const mutated = mutations.length === 0 ? base.manifest : applyMutations(base.manifest, mutations);
   const final = enforceDefaultBranchInvariant(mutated, mutations);
 
-  // A refused mutation returns a new object holding the values already stored, so comparing object identity would
-  // report a change that did not happen.
+  // For a refused mutation, the result is a new object containing the values already stored, so comparing object
+  // identity would report a change that did not happen.
   if (base.needsWrite || !hasSameStoredUrls(base.manifest, final)) {
     await writeManifest(newPath, final);
   }
@@ -162,12 +162,12 @@ function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMu
 }
 
 /**
- * Enforces the default-branch invariant: on the default branch, `ticket_url` and `pr_url` are null.
+ * Enforces the default-branch invariant: On the default branch, `ticket_url` and `pr_url` are null.
  * That branch is derived from no ticket and belongs to no pull request, so a value there is not the
  * branch's association but whichever one the last session happened to resolve, and a later session
  * auto-resolving from it would proceed against an arbitrary ticket or PR.
  *
- * A field holding no value is left exactly as found, absent or null alike. Both a refused `--set-*` and the repair of
+ * A field with no value is left exactly as found, absent or null alike. Both a refused `--set-*` and the repair of
  * a value already stored are reported, since a silently vanishing URL is the harder of the two to explain.
  */
 function enforceDefaultBranchInvariant(
@@ -196,9 +196,9 @@ function enforceDefaultBranchInvariant(
 
 /**
  * True when the manifest's branch is the repository's default branch. `default_branch` is
- * remote-qualified (`origin/main`) where `branch_name` is bare, so the remote is stripped before the
- * comparison. Only the first segment goes: a remote name carries no slash, and a branch name may
- * (`origin/release/2.x` yields `release/2.x`).
+ * remote-qualified (`origin/main`) whereas `branch_name` is bare, so the remote is stripped before the
+ * comparison. Only the first segment is stripped: A remote name contains no slash, and a branch name may
+ * contain one (`origin/release/2.x` yields `release/2.x`).
  */
 function isOnDefaultBranch(manifest: BranchManifest): boolean {
   const { default_branch: defaultBranch, branch_name: branchName } = manifest;
@@ -207,14 +207,15 @@ function isOnDefaultBranch(manifest: BranchManifest): boolean {
   return defaultBranchName === branchName;
 }
 
-/** True when both manifests hold the same value in every stored-URL field. */
+/** True when both manifests have the same value in every stored-URL field. */
 function hasSameStoredUrls(a: BranchManifest, b: BranchManifest): boolean {
   return STORED_URL_FIELDS.every((field) => a[field] === b[field]);
 }
 
 /**
  * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly composed one. The
- * prior file is read at the raw-JSON level, so a required-field bump that leaves it stale still yields its stored URLs.
+ * prior file is read at the raw-JSON level, so it still yields its stored URLs when a change to the
+ * required-field set has made it stale.
  */
 async function carryForwardStoredUrls(composed: BranchManifest, priorPath: string): Promise<BranchManifest> {
   let text: string;
@@ -248,7 +249,7 @@ async function carryForwardStoredUrls(composed: BranchManifest, priorPath: strin
 
 /**
  * Result of obtaining the manifest before any mutation: the manifest itself and whether the read-or-compose path that
- * produced it still needs to be written to disk.
+ * produced it requires a write to disk.
  */
 interface BaseManifestResult {
   readonly manifest: BranchManifest;
@@ -278,7 +279,7 @@ async function resolveBaseManifest(input: {
   }
 
   const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
-  // Resolve the git remote only on this path, so that a cache hit does not pay for it.
+  // Resolve the git remote only on this path, so that a cache hit runs no git command.
   const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
   const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
   const composed = composeManifest({
@@ -294,9 +295,9 @@ async function resolveBaseManifest(input: {
 }
 
 /**
- * Writes `manifest` to `targetPath` atomically: serialize to a sibling temp file, then `rename()`
- * over the target so a concurrent reader never observes a half-written file. The temp file shares
- * the target's directory so the rename stays within one filesystem.
+ * Writes `manifest` to `targetPath` atomically: serializes to a sibling temp file, then renames it over the target
+ * with `rename()` so that a concurrent reader never observes a half-written file. The temp file shares
+ * the target's directory so that the rename stays within one filesystem.
  */
 async function writeManifest(targetPath: string, manifest: BranchManifest): Promise<void> {
   const dir = path.dirname(targetPath);
@@ -314,7 +315,8 @@ async function writeManifest(targetPath: string, manifest: BranchManifest): Prom
 
 /**
  * True when `value` is an object containing every required manifest field with the right type. A field dereferenced by
- * a consumer belongs in the checks below, so a corrupt value recomposes rather than throwing.
+ * a consumer belongs in the checks below, so that a corrupt value makes the deriver recompose the manifest instead of
+ * making the consumer throw.
  */
 function isCurrentSchema(value: unknown): value is BranchManifest {
   if (!isRecord(value)) {

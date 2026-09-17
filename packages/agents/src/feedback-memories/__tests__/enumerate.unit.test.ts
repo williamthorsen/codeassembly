@@ -8,7 +8,7 @@ import { enumerateFeedbackMemories } from '../enumerate.ts';
 
 const MACHINE = 'test-host';
 
-/** A feedback memory in the current nested schema, carrying `metadata.type` and `metadata.originSessionId`. */
+/** A feedback memory in the current nested schema, containing `metadata.type` and `metadata.originSessionId`. */
 const NESTED_FEEDBACK = `---
 name: feedback-nested-example
 description: "A nested-schema feedback memory"
@@ -209,7 +209,7 @@ describe(enumerateFeedbackMemories, () => {
     expect(result.memories.map((memory) => memory.memoryStore)).toEqual(['-store-b']);
   });
 
-  it('scopes enumeration to a store named by the label list displays', async () => {
+  it('scopes enumeration to a store named by the label that list displays', async () => {
     const root = await makeProjectsRoot();
     const repoPath = join(await mkdtemp(join(tmpdir(), 'fm-repo-')), 'labelled-app');
     await mkdir(repoPath, { recursive: true });

@@ -15,7 +15,7 @@ export async function resolveRepoPath(
   slug: string,
   isDirectory: (path: string) => Promise<boolean> = directoryExists,
 ): Promise<string | null> {
-  // A leading `-` encodes the root `/`; drop the empty segment that it produces so the search starts from `/`.
+  // A leading `-` encodes the root `/`; drop the empty segment that it produces so that the search starts from `/`.
   const segments = slug.split('-');
   const start = segments[0] === '' ? 1 : 0;
   return searchSegments({ isDirectory, segments, prefix: '/', index: start });
@@ -52,8 +52,8 @@ async function searchSegments(input: {
 }
 
 /**
- * True when `path` resolves to a directory. Any `stat` failure yields `false`, so a probe error degrades slug
- * resolution to `null`: grounding is best-effort, and no filesystem error on a probe blocks it.
+ * True when `path` resolves to a directory. Because any `stat` failure yields `false`, a probe error degrades slug
+ * resolution to `null`: Grounding is best-effort, and no filesystem error on a probe blocks it.
  */
 async function directoryExists(path: string): Promise<boolean> {
   try {

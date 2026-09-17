@@ -12,7 +12,7 @@ const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
 const HOME_DEFAULT_NAMED = join(FIXTURES, 'home-default-named');
 const HOME_READONLY_DEFAULT = join(FIXTURES, 'home-readonly-default');
 const HOME_UNRESOLVABLE_DEFAULT = join(FIXTURES, 'home-unresolvable-default');
-// A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
+// A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveCaptureTarget, () => {
@@ -46,7 +46,7 @@ describe(resolveCaptureTarget, () => {
     expect(result).toEqual({ ok: true, store: { name: 'other-vault', path: VAULT_B } });
   });
 
-  it('refuses a readonly default_kb reached via @default', async () => {
+  it('refuses a readonly default_kb resolved via @default', async () => {
     const result = await resolveCaptureTarget({ explicitName: '@default', home: HOME_READONLY_DEFAULT });
 
     expect(result).toEqual({ ok: false, reason: 'readonly-store', name: 'readonly-default', path: VAULT_READONLY });
@@ -58,7 +58,7 @@ describe(resolveCaptureTarget, () => {
     expect(result).toEqual({ ok: false, reason: 'no-default' });
   });
 
-  it('carries the registry error when @default names an unresolvable default_kb', async () => {
+  it('includes the registry error when @default names an unresolvable default_kb', async () => {
     const result = await resolveCaptureTarget({ explicitName: '@default', home: HOME_UNRESOLVABLE_DEFAULT });
 
     expect(result).toEqual({
@@ -85,7 +85,7 @@ describe(resolveCaptureTarget, () => {
     expect(result).toEqual({ ok: false, reason: 'missing-store', registeredStores: [] });
   });
 
-  it('carries the registry error in missing-store when the registry is unresolvable', async () => {
+  it('includes the registry error in missing-store when the registry is unresolvable', async () => {
     const result = await resolveCaptureTarget({ explicitName: null, home: HOME_UNRESOLVABLE_DEFAULT });
 
     expect(result).toEqual({

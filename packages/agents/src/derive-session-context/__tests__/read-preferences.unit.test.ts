@@ -47,7 +47,7 @@ describe(readPreferences, () => {
     expect(result.sources.project).toBeUndefined();
   });
 
-  it('merges with project values winning over global at the top-level key', async () => {
+  it('merges with project values taking precedence over global at the top-level key', async () => {
     // The project file replaces the entire `project:` section. Top-level keys not set at the
     // project level (like `scm:`) come from the global file.
     await writeGlobalYaml(homeDir, 'scm: github\nproject:\n  slug: global-default\n');

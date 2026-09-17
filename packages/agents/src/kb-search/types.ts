@@ -6,9 +6,9 @@ import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 export interface RawHit {
   /** Absolute path to the matched note file. */
   path: string;
-  /** Name of the KB the note belongs to, or `null` for a registry-less discovered KB. */
+  /** Name of the KB to which the note belongs, or `null` for a registry-less discovered KB. */
   kbName: string | null;
-  /** Absolute path to the KB root the note belongs to. */
+  /** Absolute path to the KB root to which the note belongs. */
   kbPath: string;
   /** A context snippet drawn from the matching line and its neighbors. */
   snippet: string;
@@ -16,11 +16,11 @@ export interface RawHit {
 
 /** The mechanical filters applied to recalled hits, each parsed from the flag of the same name. */
 export interface RecallFilters {
-  /** Restrict to notes whose Diátaxis facet (the `diataxis` extra field) matches, case-insensitively. */
+  /** Restricts to notes whose Diátaxis facet (the `diataxis` extra field) matches, case-insensitively. */
   diataxis?: string;
-  /** Restrict to notes carrying this tag (canonical or alias), case-insensitively. */
+  /** Restricts to notes that have this tag (canonical or alias), case-insensitively. */
   tag?: string;
-  /** Restrict to notes whose path contains this folder segment, case-insensitively. */
+  /** Restricts to notes whose path contains this folder segment, case-insensitively. */
   folder?: string;
 }
 
@@ -30,11 +30,11 @@ export interface ScopedKb {
   name: string | null;
   /** Absolute path to the KB's root directory. */
   path: string;
-  /** How the KB entered scope. */
+  /** How the KB was added to scope. */
   via: 'discovery' | 'registry-default' | 'registry-all' | 'registry-named';
 }
 
-/** A recalled note that survived note-set scoping and the mechanical filters. */
+/** A recalled note that passed note-set scoping and the mechanical filters. */
 export interface SearchHit {
   hit: RawHit;
   /** The parsed note; its `frontmatter` is `null` when the block is missing or malformed. */
@@ -47,8 +47,8 @@ export interface SearchResult {
   scopedKbs: ScopedKb[];
   /** Operator-facing health problems, in deterministic order; always present, possibly empty. */
   warnings: string[];
-  /** Note-set-scoped hits before the mechanical filters ran, so a command can tell "nothing matched" from "all filtered out". */
+  /** Note-set-scoped hits before the mechanical filters ran, so that a command can tell "nothing matched" from "all filtered out". */
   recalledCount: number;
-  /** Set only when scope resolved empty; the command surfaces it as the run diagnostic. */
+  /** Set only when the resolved scope is empty; the command reports it as the run diagnostic. */
   emptyScopeDiagnostic?: string;
 }

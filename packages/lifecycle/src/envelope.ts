@@ -55,7 +55,7 @@ export interface EventEnvelope {
   branch?: string;
   /** The emitting session; omitted when neither `--session` nor the harness's session variable supplies one. */
   session?: string;
-  /** Absolute working directory the emission ran from. */
+  /** Absolute working directory from which the emission ran. */
   cwd: string;
   /** The agent platform (`claude`, `rovo`), injected into the invocation template at install time. */
   harness?: string;

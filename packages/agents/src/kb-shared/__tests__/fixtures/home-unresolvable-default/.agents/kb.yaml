@@ -1,4 +1,4 @@
-# Registry fixture whose `default_kb` names no registered entry, so resolution surfaces a load error.
+# Registry fixture whose `default_kb` names no registered entry, so resolution reports a load error.
 default_kb: ghost
 kbs:
   real:

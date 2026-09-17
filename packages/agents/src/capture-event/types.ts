@@ -9,7 +9,7 @@ export interface ParsedArgs {
   store: string | null;
   /** The human-readable one-line summary; becomes the record's display label on recall. */
   summary: string;
-  /** Optional skill the event relates to. */
+  /** Optional skill to which the event relates. */
   skill: string | null;
   model: string | null;
   /** Optional harness (agent runtime) identifier, injected from the installed invocation template. */
@@ -21,11 +21,11 @@ export interface ParsedArgs {
   amend: string | null;
 }
 
-/** The auto-filled context an event carries beyond the agent-supplied fields. */
+/** The auto-filled context that an event includes beyond the agent-supplied fields. */
 export interface CaptureContext {
   /** Session identifier read from `CLAUDE_CODE_SESSION_ID`; omitted when the harness exposes none. */
   session?: string;
-  /** Absolute working directory the capture ran from. */
+  /** Absolute working directory from which the capture ran. */
   cwd: string;
   /** `owner/name` git remote at `cwd`, best-effort; omitted when unresolvable. */
   repo?: string;
@@ -54,7 +54,7 @@ export interface CaptureFailure {
   errors?: string[];
 }
 
-/** Categorical error codes the helper can return without an unexpected throw. */
+/** Categorical error codes that the helper can return without an unexpected throw. */
 export type CaptureErrorCode =
   | 'invalid-args'
   | 'missing-store'

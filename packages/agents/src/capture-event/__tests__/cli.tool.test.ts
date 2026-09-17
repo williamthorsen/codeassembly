@@ -11,7 +11,7 @@ import { parseArgs, runCapture } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
 
-/** Initializes a throwaway git repo with a single named remote, so `resolveRepo` can derive an `owner/name`. */
+/** Initializes a throwaway git repo with a single named remote so that `resolveRepo` can derive an `owner/name`. */
 async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Promise<string> {
   const repo = await mkdtemp(join(tmpdir(), 'capture-cli-repo-'));
   await execFileAsync('git', ['-C', repo, 'init', '--quiet']);
@@ -34,7 +34,7 @@ function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
-/** Creates a temp event store directory carrying a default `.kb/config.yaml`, returning its path. */
+/** Creates a temp event store directory containing a default `.kb/config.yaml`, returning its path. */
 async function makeStoreDir(): Promise<string> {
   const storePath = await mkdtemp(join(tmpdir(), 'capture-cli-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
@@ -42,7 +42,7 @@ async function makeStoreDir(): Promise<string> {
   return storePath;
 }
 
-/** Stands up a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
+/** Creates a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
 async function makeStore(name: string): Promise<{ storePath: string; home: string }> {
   const storePath = await makeStoreDir();
 
@@ -328,7 +328,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('writes to the registered store, not a .kb in cwd, when capturing from a directory holding one', async () => {
+  it('writes to the registered store, not a .kb in cwd, when capturing from a directory containing one', async () => {
     const { storePath, home } = await makeStore('codeassembly');
     const cwdWithKb = await mkdtemp(join(tmpdir(), 'capture-cli-cwdkb-'));
     await mkdir(join(cwdWithKb, '.kb'), { recursive: true });
@@ -528,7 +528,7 @@ describe(runCapture, () => {
       expect(written).toContain(`cwd: ${repo}`);
       expect(written).toContain('repo: williamthorsen/codeassembly');
 
-      // Curatorial fields the amend did not restate keep their existing values.
+      // Curatorial fields that the amend did not restate keep their existing values.
       expect(written).toMatch(/^tags: \[one\]$/m);
       expect(written).toMatch(/^impact: high$/m);
     }

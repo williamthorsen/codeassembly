@@ -11,8 +11,8 @@ interface Call {
 /**
  * Builds a mock IO that records every call and lets the test register per-call failure modes:
  *
- * - `renameFailures`: zero-based indexes of `rename` calls that should reject with the given error.
- * - `writeFileFailures`: same shape for `writeFile`.
+ * - `renameFailures`: Zero-based indexes of `rename` calls that should reject with the given error.
+ * - `writeFileFailures`: Same shape for `writeFile`.
  *
  * `unlink` calls always succeed (production code best-effort-unlinks failed temps anyway).
  */
@@ -26,7 +26,7 @@ function makeIo(
   let renameIndex = 0;
   let writeFileIndex = 0;
 
-  // Production code passes string paths and string contents; coerce here so the recorded `Call` is always
+  // Production code passes string paths and string contents; coerce here so that the recorded `Call` is always
   // ergonomic to assert against without re-narrowing PathLike on every assertion.
   const asString = (value: unknown): string => (typeof value === 'string' ? value : JSON.stringify(value));
 
@@ -105,7 +105,7 @@ describe(commitSupersede, () => {
     //   unlink newTmp, writeFile rollbackTmp, rename rollbackTmp->oldPath.
     const fns = calls.map((c) => c.fn);
     expect(fns).toEqual(['writeFile', 'writeFile', 'rename', 'rename', 'unlink', 'writeFile', 'rename']);
-    // The rollback writeFile must carry the captured original bytes, not the mutated content.
+    // The rollback writeFile must write the captured original bytes, not the mutated content.
     const rollbackWrite = calls[5];
     expect(rollbackWrite?.content).toBe(INPUT.oldOriginalContent);
   });

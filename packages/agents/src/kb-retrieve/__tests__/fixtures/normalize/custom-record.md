@@ -9,5 +9,5 @@ summary: A custom insight surfaced during review
 tags: [custom]
 ---
 
-A custom record type carrying both a capture timestamp and a last-verified date,
-so a single fixture can exercise either recall policy.
+A custom record type with both a capture timestamp and a last-verified date,
+so that a single fixture can exercise either recall policy.

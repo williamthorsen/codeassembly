@@ -1,7 +1,8 @@
 /**
  * Removes a memory's entry from `MEMORY.md` content, matching the list item by its link target's file basename, since
- * how an entry is titled varies from store to store. When the removal empties the entry's section, the orphaned `##`
- * header and its blank lines go too. A basename with no matching line is a no-op that reports `removed: false`.
+ * how an entry is titled varies from store to store. When the removal empties the entry's section, the function also
+ * removes the orphaned `##` header and its blank lines. A basename with no matching line is a no-op that reports
+ * `removed: false`.
  */
 export function removeMemoryIndexEntry(content: string, fileBasename: string): { content: string; removed: boolean } {
   const target = `](${fileBasename})`;

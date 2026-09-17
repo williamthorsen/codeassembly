@@ -10,7 +10,7 @@ import { detectCurateFindings, sortFindings } from '../detect.ts';
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
-/** Stands up a temp vault, writing each file under `content/` so the default targets enumerate it. */
+/** Creates a temp vault, writing each file under `content/` so that the default targets enumerate it. */
 async function makeVault(files: Record<string, string>): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'kb-curate-detect-'));
   await mkdir(join(root, '.kb'), { recursive: true });
