@@ -234,11 +234,11 @@ describe(deriveSessionContext, () => {
     expect(migrated).toEqual(seeded);
   });
 
-  it('rejects with a write error when `.agents/` is not writable', async () => {
+  it('rejects with a write error when `.agents/` is not writable', async ({ skip }) => {
     // Pre-create `.agents/` as read-only so the deriver's `writeFile` step fails.
     // Skipped on root, where chmod restrictions are bypassed and the write would succeed.
     if (process.getuid?.() === 0) {
-      return;
+      skip();
     }
     const agentsDir = path.join(workDir, '.agents');
     await mkdir(agentsDir, { recursive: true });
@@ -255,7 +255,7 @@ describe(deriveSessionContext, () => {
       }
       if (isWritable) {
         await rm(probe, { force: true });
-        return;
+        skip();
       }
 
       await expect(deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir })).rejects.toThrow();
