@@ -25,6 +25,7 @@ const DOCTRINE_RULES: ReadonlyArray<string> = [
   '**1. The stranger test',
   '**2. The deletion test',
   '**3. The one-location test',
+  '**4. The derivation test',
   '_future readers should note_',
   'never as it was, as it might have been, or as it is not',
 ];

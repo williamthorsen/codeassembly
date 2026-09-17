@@ -14,9 +14,9 @@ The description of a class or component describes what it **is**.
 
 Add descriptions of constants only if the description helps a reader understand the code. Constants on which the code's correctness depends are good candidates for description. Most other constants are not; rely on good variable names instead. Do not describe an interface or type unless its purpose is nonobvious. 
 
-### Three tests
+### Four tests
 
-Apply all three to every comment that you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Each one must justify its place.
+Apply all four to every comment that you write or keep. A comment that fails one is cut or rewritten, not softened. Comments are code: read, maintained, and trusted. Each one must justify its place.
 
 **1. The stranger test: Would this interest only someone who watched the change happen?** Then cut it.
 
@@ -31,6 +31,12 @@ A comment tells the reader nothing if it paraphrases the line below it, restates
 **3. The one-location test: Is this fact already documented where it belongs?** Then cut it.
 
 The library's behavior belongs in the library's docs. A helper's contract belongs on the helper. A consumer's name belongs nowhere near the shared code that it consumes. An invariant belongs in a type or an assertion, not in prose about a case that cannot happen.
+
+**4. The derivation test: Do the listed cases follow from one rule?** Then state the rule.
+
+A comment that enumerates the cases below it copies each case's own description, and the copy drifts: The enumeration keeps a name that the code has since renamed, or it places one case on both sides of a distinction. State the invariant that generates the cases, and let each case's own description carry its specifics. An exception is worth naming once, beside the rule.
+
+Tells: The same name appearing in two of the comment's lists, a run of backticked member names already documented at their own declarations below, and a list whose length tracks the number of members or branches below it.
 
 ### Carve-outs
 

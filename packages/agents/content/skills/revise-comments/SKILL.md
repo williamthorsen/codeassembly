@@ -26,7 +26,7 @@ If the `revise-prose` sweep is wanted on the same files, run this skill first: I
    git diff --name-only "{default_branch}...HEAD"
    ```
 
-2. **Apply the audit per file.** Read each target file. Put every comment through the three tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
+2. **Apply the audit per file.** Read each target file. Put every comment through the tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
 
 3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing that it replaced. Such a file is outside the resolved target set, so the hard gate in [Target file set](#target-file-set) applies and the hit is reported to the user alongside the summary rather than repaired. Because `--dry-run` applies no edits, the step is skipped under that flag.
 
@@ -42,7 +42,7 @@ If the `revise-prose` sweep is wanted on the same files, run this skill first: I
 
 The carve-outs above apply to comments. Two file-level rules decide which lines this skill may touch at all:
 
-- **Test files.** Path contains `__tests__/` or filename matches `*.spec.*` / `*.test.*`. The test-comment carve-out applies inside them; the three tests still apply to everything else in the file.
+- **Test files.** Path contains `__tests__/` or filename matches `*.spec.*` / `*.test.*`. The test-comment carve-out applies inside them; the tests still apply to everything else in the file.
 - **`eslint-disable` lines.** Lines beginning with `eslint-disable`, `eslint-disable-next-line`, `eslint-disable-line`, or the block forms `/* eslint-disable */` and `/* eslint-enable */`. Keep the rationale, tightened to name only why the rule is suppressed at that line. Strip surrounding context, ticket references, and design discussion.
 
 ## When to pause and ask
