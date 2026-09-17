@@ -2,7 +2,7 @@
  * CLI entry for the lifecycle-event emitter. Composes one lifecycle event from the flags, the environment, and git at
  * `cwd`, then appends it to the session's JSONL log.
  *
- * Every exit is 0, failures included, because a lost event must not derail the skill that emitted it.
+ * Every exit is 0, failures included, because a lost event must not stop the skill that emitted it.
  */
 import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -57,7 +57,8 @@ if (isEntryPoint()) {
  * Runs the helper end to end, from the invocation's argv to the appended event. The helper warns on an undeclared
  * `--type` and appends the event regardless, so that the v0 vocabulary never blocks an emission.
  *
- * Every failure is recoverable by contract, and each returns `{ ok: false, ... }` having written nothing.
+ * Every failure is recoverable by contract, and for each the function returns `{ ok: false, ... }` having written
+ * nothing.
  *
  * @internal - Exported to allow testing.
  */
@@ -144,8 +145,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /** Resolves the envelope's auto-filled context from git at `cwd`, the environment, and the flags. */
 async function resolveContext(input: { args: ParsedArgs; cwd: string; env: NodeJS.ProcessEnv }): Promise<EmitContext> {
   // The repo and branch reads are independent, and the repo read is itself two chained git invocations. Overlapping
-  // them keeps the emission's git cost to the longer chain rather than the sum, on a helper the agent blocks on at
-  // every lifecycle boundary.
+  // them keeps the emission's time in git to that of the longer chain rather than the sum, on a helper that the agent
+  // blocks on at every lifecycle boundary.
   const [repo, branch] = await Promise.all([resolveRepo(input.cwd), resolveBranch(input.cwd)]);
   const session = input.args.session ?? resolveSession(input.env);
 
@@ -159,9 +160,10 @@ async function resolveContext(input: { args: ParsedArgs; cwd: string; env: NodeJ
 }
 
 /**
- * The checked-out branch at `cwd`, or `undefined` when there is none to read: git cannot answer (no repository, no git
- * binary) or HEAD is detached, which git reports as an empty branch name. Both warn, because an emitter that silently
- * files every event under the no-branch placeholder is indistinguishable from one that is working.
+ * The checked-out branch at `cwd`, or `undefined` when there is none to read: The git call fails (no repository, no
+ * git binary) or HEAD is detached, which git reports as an empty branch name. The function warns in both cases,
+ * because an emitter that silently files every event under the no-branch placeholder is indistinguishable from one
+ * that is working.
  */
 async function resolveBranch(cwd: string): Promise<string | undefined> {
   let branch: string;
@@ -210,14 +212,14 @@ function failure(error: EmitErrorCode, message: string): EmitFailure {
   return { ok: false, error, message };
 }
 
-/** Writes one diagnostic line to stderr. Stdout carries the machine-readable result, so it stays clean. */
+/** Writes one diagnostic line to stderr. Stdout is reserved for the machine-readable result, so it stays clean. */
 function warn(message: string): void {
   process.stderr.write(`emit-event: warning: ${message}\n`);
 }
 
 /**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. A `realpathSync` failure warns and returns `false`.
+ * Returns true when this module is the process entry point. Because both sides are resolved through `realpathSync`, a
+ * symlinked invocation path still matches. On a `realpathSync` failure the function warns and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

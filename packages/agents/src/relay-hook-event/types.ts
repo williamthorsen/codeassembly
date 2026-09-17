@@ -3,25 +3,25 @@ import type { EventType } from 'codeassembly-lifecycle';
 import type { HarnessId } from '../lib/types.ts';
 
 /**
- * One relayed hook: the event type it becomes, and the payload keys carried through into the event body.
+ * One relayed hook: the event type that it becomes, and the payload keys copied into the event body.
  *
  * Discriminators are copied verbatim, in each harness's own shape: Claude at the payload's top level, Rovo nested
  * under `attributes`. Only the harness knows what its keys mean, and no harness publishes a mapping between them.
  */
 export interface HookMapping {
-  /** The event type the hook relays as. */
+  /** The event type that the hook is relayed as. */
   type: EventType;
   /** Payload keys copied verbatim into the event body when the hook supplies them. */
   discriminators: readonly string[];
 }
 
-/** The fields the relay reads out of a hook's stdin payload. */
+/** The fields that the relay reads out of a hook's stdin payload. */
 export interface HookPayload {
-  /** The harness's id for the session the hook fired in. */
+  /** The harness's id for the session in which the hook fired. */
   session?: string;
-  /** The directory the session runs in; what repo and branch attribution resolve against. */
+  /** The directory in which the session runs; what repo and branch attribution resolve against. */
   cwd?: string;
-  /** The mapping's discriminator keys that were present, copied verbatim. `{}` when the hook carries none. */
+  /** The mapping's discriminator keys that were present, copied verbatim. `{}` when the hook supplies none. */
   discriminators: Record<string, unknown>;
 }
 
@@ -31,7 +31,7 @@ export interface ParsedArgs {
   harness: HarnessId;
   /** The harness's own name for the hook, injected alongside `harness`. */
   hook: string;
-  /** Events-root override, so a test can point the write at a fixture instead of the real home directory. */
+  /** Events-root override, so that a test can point the write at a fixture instead of the real home directory. */
   home: string | null;
 }
 
@@ -40,7 +40,7 @@ export interface RelaySuccess {
   ok: true;
   /** The generated ULID, matching the appended envelope's `id`. */
   id: string;
-  /** Absolute path of the JSONL file the envelope was appended to. */
+  /** Absolute path of the JSONL file to which the envelope was appended. */
   path: string;
 }
 
@@ -53,10 +53,11 @@ export interface RelayFailure {
 }
 
 /**
- * Categorical error codes the relay can return.
+ * Categorical error codes that the relay can return.
  *
- * `unknown-hook` is the one that is not a defect: a config can name a hook this relay's table does not know yet — the
- * config outlives any single version of the mapping — so an unrecognized name declines to emit rather than guessing.
+ * `unknown-hook` is the one that is not a defect: A config can name a hook that this relay's table does not know yet
+ * (the config outlives any single version of the mapping), so the relay declines to emit for an unrecognized name
+ * rather than guessing.
  */
 export type RelayErrorCode = 'invalid-args' | 'invalid-payload' | 'unknown-hook' | 'write-failed' | 'internal-error';
 

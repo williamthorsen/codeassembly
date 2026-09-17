@@ -18,7 +18,7 @@ const REMOTE_URL = 'git@github.com:williamthorsen/codeassembly.git';
 
 const ULID_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
-/** An environment supplying a session id, as a Claude session exposes to a hook it spawns. */
+/** An environment supplying a session id, as a Claude session exposes to a hook that it spawns. */
 const ENV_WITH_SESSION: NodeJS.ProcessEnv = { CLAUDE_CODE_SESSION_ID: 'env-session' };
 
 describe(parseArgs, () => {
@@ -38,7 +38,7 @@ describe(parseArgs, () => {
     });
   });
 
-  it('accepts and ignores the ownership sentinel a configured entry carries', () => {
+  it('accepts and ignores the ownership sentinel that a configured entry includes', () => {
     expect(parseArgs(['--harness', 'claude', '--hook', 'Stop', '--sentinel', 'codeassembly-agents'])).toEqual({
       harness: 'claude',
       hook: 'Stop',
@@ -54,7 +54,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--harness', 'claude'])).toThrow(/--hook is required/);
   });
 
-  it('throws on a harness the relay does not serve', () => {
+  it('throws on a harness that the relay does not serve', () => {
     expect(() => parseArgs(['--harness', 'codex', '--hook', 'Stop'])).toThrow(/--harness must be one of/);
   });
 
@@ -74,7 +74,7 @@ describe(parseArgs, () => {
 describe(parseHookPayload, () => {
   const mapping = { type: 'session.started', discriminators: ['source'] } as const;
 
-  it('reads the session and working directory both harnesses report', () => {
+  it('reads the session and working directory that both harnesses report', () => {
     const stdin = JSON.stringify({ session_id: 'abc', cwd: '/repos/thing', hook_event_name: 'SessionStart' });
 
     expect(parseHookPayload({ stdin, mapping })).toEqual({
@@ -83,8 +83,8 @@ describe(parseHookPayload, () => {
     });
   });
 
-  it('carries through the mapping’s discriminator keys and nothing else', () => {
-    // `user_input` is the field the relay must not carry: the turn boundary is the signal, not what was said.
+  it('copies the mapping’s discriminator keys and nothing else', () => {
+    // `user_input` is the field that the relay must not copy: The turn boundary is the signal, not what was said.
     const stdin = JSON.stringify({ session_id: 'abc', source: 'resume', user_input: 'secret', reason: 'clear' });
 
     expect(parseHookPayload({ stdin, mapping })).toMatchObject({
@@ -101,7 +101,7 @@ describe(parseHookPayload, () => {
     ).toMatchObject({ ok: true, value: { discriminators: { attributes: { reason: 'switch', forked: true } } } });
   });
 
-  it('omits a session and cwd the payload does not carry', () => {
+  it('omits a session and cwd that the payload does not contain', () => {
     expect(parseHookPayload({ stdin: '{}', mapping })).toEqual({ ok: true, value: { discriminators: {} } });
   });
 
@@ -169,7 +169,7 @@ describe(runRelay, () => {
     expect(envelope).toMatchObject({ type, harness });
   });
 
-  it('appends a full envelope attributed to the session and repo the payload names', async () => {
+  it('appends a full envelope attributed to the session and repo that the payload names', async () => {
     const cwd = await makeRepo({ branch: 'MAC-42/feat/thing', remote: REMOTE_URL });
 
     const result = await runRelay({
@@ -200,7 +200,7 @@ describe(runRelay, () => {
     ]);
   });
 
-  it('carries a session-end discriminator through into the event payload', async () => {
+  it('copies a session-end discriminator into the event payload', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
     const result = await runRelay({
@@ -215,7 +215,7 @@ describe(runRelay, () => {
     expect(envelope?.payload).toEqual({ reason: 'prompt_input_exit' });
   });
 
-  it('carries Rovo’s nested attributes through on a session end', async () => {
+  it('copies Rovo’s nested attributes on a session end', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
     const result = await runRelay({
@@ -245,7 +245,7 @@ describe(runRelay, () => {
     expect(envelope?.payload).toEqual({});
   });
 
-  it('attributes the event to the payload’s cwd, not the directory the hook was spawned in', async () => {
+  it('attributes the event to the payload’s cwd, not the directory in which the hook was spawned', async () => {
     const session = await makeRepo({ branch: 'session-branch', remote: REMOTE_URL });
     const spawned = await makeRepo({ branch: 'spawn-branch', remote: REMOTE_URL });
 
@@ -281,7 +281,7 @@ describe(runRelay, () => {
     expect(envelope).toMatchObject({ cwd, branch: 'main' });
   });
 
-  it('falls back to the environment session when the payload carries none', async () => {
+  it('falls back to the environment session when the payload contains none', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
     const result = await runRelay({
@@ -326,7 +326,7 @@ describe(runRelay, () => {
     await rm(cwd, { recursive: true, force: true });
   });
 
-  it('relays nothing for a hook the mapping does not know', async () => {
+  it('relays nothing for a hook that the mapping does not know', async () => {
     const result = await runRelay({
       argv: ['--harness', 'claude', '--hook', 'PreToolUse', '--home', home],
       stdin: JSON.stringify({ session_id: 's1', cwd: '/repos/thing' }),
@@ -382,7 +382,7 @@ describe(runRelay, () => {
 
   it('reports a failed write rather than throwing', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
-    // A regular file where the events root needs a directory, so the recursive `mkdir` cannot succeed.
+    // Write a regular file where the events root needs a directory, so that the recursive `mkdir` cannot succeed.
     const blockedHome = path.join(home, 'blocked');
     await writeFile(blockedHome, 'not a directory', 'utf8');
 
@@ -401,12 +401,14 @@ describe(runRelay, () => {
 
 // region | Helpers
 
-/** Builds the path the relay should write to, under the test's isolated `home`. */
+/** Builds the path to which the relay should write, under the test's isolated `home`. */
 function eventPath(home: string, owner: string, name: string, branch: string, session: string): string {
   return path.join(home, '.codeassembly', 'events', owner, name, branch, `${session}.jsonl`);
 }
 
-/** Lists the events root under `home`, treating an absent root as empty — the state a declined relay leaves it in. */
+/**
+ * Lists the events root under `home`, treating an absent root as empty, the state in which a declined relay leaves it.
+ */
 async function listEventsRoot(home: string): Promise<string[]> {
   try {
     return await readdir(path.join(home, '.codeassembly'));
@@ -415,7 +417,7 @@ async function listEventsRoot(home: string): Promise<string[]> {
   }
 }
 
-/** Stands up a throwaway git repo on `branch`, optionally with an `origin` remote. */
+/** Creates a throwaway git repo on `branch`, optionally with an `origin` remote. */
 async function makeRepo(input: { branch: string; remote?: string }): Promise<string> {
   const repo = await mkdtemp(path.join(tmpdir(), 'relay-hook-repo-'));
   await execFileAsync('git', ['-C', repo, 'init', '--quiet', `--initial-branch=${input.branch}`]);
@@ -426,9 +428,10 @@ async function makeRepo(input: { branch: string; remote?: string }): Promise<str
 }
 
 /**
- * Reads back every envelope appended to the log the result names, as raw records. Throws when the relay did not
- * succeed. The envelopes stay `unknown`-valued rather than typed as `EventEnvelope`: these assertions exist to prove
- * what actually reached the file, so re-imposing the producer's type on the bytes it wrote would beg the question.
+ * Reads back every envelope appended to the log that the result names, as raw records. Throws when the relay did not
+ * succeed. The envelopes stay `unknown`-valued rather than typed as `EventEnvelope`: These assertions exist to prove
+ * what was actually written to the file, so re-imposing the producer's type on the bytes that it wrote would beg the
+ * question.
  */
 async function readEvents(result: RelayResult): Promise<Record<string, unknown>[]> {
   if (!result.ok) {

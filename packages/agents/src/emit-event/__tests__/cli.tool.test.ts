@@ -96,7 +96,7 @@ describe(runEmit, () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  it('appends a full envelope and reports where it landed', async () => {
+  it('appends a full envelope and reports where it was written', async () => {
     const cwd = await makeRepo({ branch: 'MAC-42/feat/thing', remote: REMOTE_URL });
 
     const result = await runEmit({
@@ -287,8 +287,8 @@ describe(runEmit, () => {
 
   it('reports a failed write rather than throwing', async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
-    // A regular file where the events root needs a directory: the recursive `mkdir` cannot succeed, which is the
-    // cheapest reproduction of an unwritable events root.
+    // Write a regular file where the events root needs a directory: The recursive `mkdir` cannot succeed, which is the
+    // simplest reproduction of an unwritable events root.
     const blockedHome = path.join(home, 'blocked');
     await writeFile(blockedHome, 'not a directory', 'utf8');
 
@@ -301,12 +301,15 @@ describe(runEmit, () => {
 
 // region | Helpers
 
-/** Builds the path the helper should write to, under the test's isolated `home`. */
+/** Builds the path to which the helper should write, under the test's isolated `home`. */
 function eventPath(home: string, owner: string, name: string, branch: string, session: string): string {
   return path.join(home, '.codeassembly', 'events', owner, name, branch, `${session}.jsonl`);
 }
 
-/** Lists the events root under `home`, treating an absent root as empty — the state a refused emission leaves it in. */
+/**
+ * Lists the events root under `home`, treating an absent root as empty, the state in which a refused emission leaves
+ * it.
+ */
 async function listEventsRoot(home: string): Promise<string[]> {
   try {
     return await readdir(path.join(home, '.codeassembly'));
@@ -316,8 +319,8 @@ async function listEventsRoot(home: string): Promise<string[]> {
 }
 
 /**
- * Stands up a throwaway git repo on `branch`, optionally with an `origin` remote and a detached HEAD. Detaching needs a
- * commit to detach onto, so that variant seeds an empty one.
+ * Creates a throwaway git repo on `branch`, optionally with an `origin` remote and a detached HEAD. Because detaching
+ * needs a commit to detach onto, that variant creates an empty one.
  */
 async function makeRepo(input: { branch: string; remote?: string; detach?: boolean }): Promise<string> {
   const repo = await mkdtemp(path.join(tmpdir(), 'emit-event-repo-'));
@@ -345,9 +348,10 @@ async function makeRepo(input: { branch: string; remote?: string; detach?: boole
 }
 
 /**
- * Reads back every envelope appended to the log the result names, as raw records. Throws when the emission did not
- * succeed. The envelopes stay `unknown`-valued rather than typed as `EventEnvelope`: these assertions exist to prove
- * what actually reached the file, so re-imposing the producer's type on the bytes it wrote would beg the question.
+ * Reads back every envelope appended to the log that the result names, as raw records. Throws when the emission did
+ * not succeed. The envelopes stay `unknown`-valued rather than typed as `EventEnvelope`: These assertions exist to
+ * prove what was actually written to the file, so re-imposing the producer's type on the bytes that it wrote would beg
+ * the question.
  */
 async function readEvents(result: EmitResult): Promise<Record<string, unknown>[]> {
   if (!result.ok) {

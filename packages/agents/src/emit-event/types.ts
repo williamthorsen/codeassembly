@@ -1,6 +1,6 @@
 // Writer-side shapes for the emit-event helper.
 
-/** The auto-filled context an envelope carries beyond the agent-supplied `type` and `payload`. */
+/** The auto-filled context that an envelope contains beyond the agent-supplied `type` and `payload`. */
 export interface EmitContext {
   /** `owner/name` git remote at `cwd`, best-effort. */
   repo?: string;
@@ -8,7 +8,7 @@ export interface EmitContext {
   branch?: string;
   /** `--session`, else the harness's session environment variable. */
   session?: string;
-  /** Absolute working directory the emission ran from. */
+  /** Absolute working directory from which the emission ran. */
   cwd: string;
   /** The install-injected agent platform. */
   harness?: string;
@@ -24,7 +24,7 @@ export interface ParsedArgs {
   session: string | null;
   /** The agent platform, injected from the installed invocation template. */
   harness: string | null;
-  /** Events-root override, so a test can point the write at a fixture instead of the real home directory. */
+  /** Events-root override, so that a test can point the write at a fixture instead of the real home directory. */
   home: string | null;
 }
 
@@ -33,7 +33,7 @@ export interface EmitSuccess {
   ok: true;
   /** The generated ULID, matching the appended envelope's `id`. */
   id: string;
-  /** Absolute path of the JSONL file the envelope was appended to. */
+  /** Absolute path of the JSONL file to which the envelope was appended. */
   path: string;
 }
 
@@ -45,7 +45,7 @@ export interface EmitFailure {
   message: string;
 }
 
-/** Categorical error codes the helper can return. */
+/** Categorical error codes that the helper can return. */
 export type EmitErrorCode = 'invalid-args' | 'invalid-payload' | 'write-failed' | 'internal-error';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
