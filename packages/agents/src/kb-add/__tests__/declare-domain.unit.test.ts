@@ -118,7 +118,7 @@ describe(declareDomain, () => {
 
 // region | Helpers
 
-/** Stands up a temp store with an initialized `.kb/` and the given store-root-relative files; returns its path. */
+/** Creates a temp store with an initialized `.kb/` and the given store-root-relative files; returns its path. */
 async function makeStore(files: Record<string, string>): Promise<string> {
   const kbPath = await mkdtemp(join(tmpdir(), 'kb-add-declare-'));
   await mkdir(join(kbPath, '.kb'), { recursive: true });
