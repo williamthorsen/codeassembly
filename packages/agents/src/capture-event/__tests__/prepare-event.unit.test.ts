@@ -54,7 +54,7 @@ describe(prepareEvent, () => {
     }
   });
 
-  it('writes an event carrying the auto-derived id and capturedAt', () => {
+  it('writes an event containing the auto-derived id and capturedAt', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: CONTEXT,

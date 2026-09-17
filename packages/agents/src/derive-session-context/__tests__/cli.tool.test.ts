@@ -15,7 +15,7 @@ const NOW = new Date('2026-05-26T02:07:41Z');
 
 /**
  * A branch that is not the default one, so a stored URL is allowed on it. Its name encodes no
- * ticket, the case the default-branch invariant must leave alone.
+ * ticket, the case that the default-branch invariant must leave alone.
  */
 const WORKING_BRANCH = 'add-cache';
 
@@ -228,15 +228,15 @@ describe(deriveSessionContext, () => {
     });
     expect(result.project_slug).toBe('old-format');
 
-    // Migration: after a successful old-format read, the new-format file is also written so
+    // Migration: After a successful old-format read, the new-format file is also written so that
     // subsequent calls hit the fast path. Without this, every call re-invokes the deriver.
     const migrated = JSON.parse(await readFile(newPath, 'utf8'));
     expect(migrated).toEqual(seeded);
   });
 
   it('rejects with a write error when `.agents/` is not writable', async ({ skip }) => {
-    // Pre-create `.agents/` as read-only so the deriver's `writeFile` step fails.
-    // Skipped on root, where chmod restrictions are bypassed and the write would succeed.
+    // Pre-create `.agents/` as read-only so that the deriver's `writeFile` step fails.
+    // Skip on root, because root bypasses chmod restrictions and the write would succeed.
     if (process.getuid?.() === 0) {
       skip();
     }
@@ -244,8 +244,8 @@ describe(deriveSessionContext, () => {
     await mkdir(agentsDir, { recursive: true });
     try {
       await chmod(agentsDir, 0o555);
-      // Some filesystems and CI runners ignore chmod on a directory the test user owns. Probe with a real write, and
-      // skip the assertion when the directory turns out to be writable after all.
+      // Some filesystems and CI runners ignore chmod on a directory owned by the test user. Probe with a real write,
+      // and skip the assertion when the directory turns out to be writable after all.
       const probe = path.join(agentsDir, '.write-probe');
       let isWritable = true;
       try {
@@ -260,7 +260,7 @@ describe(deriveSessionContext, () => {
 
       await expect(deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir })).rejects.toThrow();
     } finally {
-      // Restore permissions so afterEach cleanup can remove the directory tree.
+      // Restore permissions so that afterEach cleanup can remove the directory tree.
       await chmod(agentsDir, 0o755);
     }
   });
@@ -329,9 +329,9 @@ describe(deriveSessionContext, () => {
     const ticketUrl = 'https://github.com/owner/repo/issues/783';
     const prUrl = 'https://github.com/owner/repo/pull/42';
 
-    // Seed a stale manifest (missing the required `scm` field) that nonetheless carries stored
+    // Seed a stale manifest (missing the required `scm` field) that nonetheless contains stored
     // URLs. The next derive recomposes because the manifest fails the schema check; carry-forward
-    // must rescue the URLs from the prior file.
+    // must preserve the URLs from the prior file.
     const manifestPath = path.join(workDir, '.agents', `${WORKING_BRANCH}.branch-manifest.json`);
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -359,7 +359,7 @@ describe(deriveSessionContext, () => {
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     // A corrupt prior file fails the schema read (forcing a recompose) and then fails carry-forward's
     // own parse. The deriver must fall back to a fresh manifest with null URLs and emit the
-    // carry-forward diagnostic so a vanished `ticket_url`/`pr_url` is explainable, not silent.
+    // carry-forward diagnostic so that a vanished `ticket_url`/`pr_url` is explainable, not silent.
     await writeFile(manifestPath, '{ not valid json', 'utf8');
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
@@ -409,11 +409,11 @@ describe(deriveSessionContext, () => {
     expect(result.project_slug).toBe('seeded');
     expect(result.ticket_url).toBeUndefined();
 
-    // No spurious recompose: the on-disk file is byte-identical to what was seeded.
+    // No spurious recompose: The on-disk file is byte-identical to what was seeded.
     expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual(seeded);
   });
 
-  it('surfaces ticket_base_url and constructs ticket_url from preferences', async () => {
+  it('returns ticket_base_url and constructs ticket_url from preferences', async () => {
     await writeProjectPrefs(
       workDir,
       'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
@@ -429,8 +429,8 @@ describe(deriveSessionContext, () => {
       'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
     );
     const stored = 'https://org.atlassian.net/browse/OTHER-1';
-    // Seed a stale manifest (missing the required `scm`) that carries a stored ticket_url. The
-    // recompose would construct .../MAC-130 from the base and branch id; carry-forward must win.
+    // Seed a stale manifest (missing the required `scm`) that contains a stored ticket_url. The
+    // recompose would construct .../MAC-130 from the base and branch id; carry-forward must take precedence.
     const manifestPath = path.join(workDir, '.agents', 'MAC-130.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -492,8 +492,8 @@ describe(deriveSessionContext, () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     await initGitRepo(workDir, 'git@github.com:owner/repo.git');
     const stored = 'https://github.com/owner/repo/pull/999';
-    // Seed a stale manifest (missing the required `scm`) that carries a stored pr_url. The recompose
-    // would seed .../pull/950 from the remote and the PR-950 identity; carry-forward must win.
+    // Seed a stale manifest (missing the required `scm`) that contains a stored pr_url. The recompose
+    // would seed .../pull/950 from the remote and the PR-950 identity; carry-forward must take precedence.
     const manifestPath = path.join(workDir, '.agents', 'PR-950.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -584,7 +584,7 @@ describe('default-branch invariant', () => {
     expect(cleared[field]).toBeNull();
   });
 
-  it('repairs a default-branch manifest that already holds stored URLs, in the file', async () => {
+  it('repairs a default-branch manifest that already contains stored URLs, in the file', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
@@ -617,7 +617,7 @@ describe('default-branch invariant', () => {
     expect(result.ticket_url).toBeNull();
     expect(result.pr_url).toBeNull();
 
-    // The repair is durable, not a mask over the emitted JSON: the file no longer holds the values.
+    // The repair is durable, not a mask over the emitted JSON: The file no longer contains the values.
     const onDisk: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
     expect(onDisk).toMatchObject({ ticket_url: null, pr_url: null });
   });
@@ -652,7 +652,7 @@ describe('default-branch invariant', () => {
   it('drops stored URLs on the default branch rather than carrying them forward', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     // Stale (missing the required `scm`), so the read fails the schema check and forces a recompose.
-    // Carry-forward would rescue the URLs on any other branch; the invariant outranks it here.
+    // Carry-forward would preserve the URLs on any other branch; the invariant takes precedence over it here.
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -719,7 +719,7 @@ describe('default-branch invariant', () => {
 
 // region | Helpers
 
-/** Returns the first line a stderr spy captured containing `needle`, or undefined when none does. */
+/** Returns the first line that a stderr spy captured and that contains `needle`, or undefined when none does. */
 function findStderrLine(spy: MockInstance<typeof process.stderr.write>, needle: string): string | undefined {
   return spy.mock.calls
     .map((call) => call[0])
