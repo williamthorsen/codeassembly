@@ -180,7 +180,7 @@ async function main(): Promise<void> {
   const dryRun = args.includes('--dry-run');
   const globIdx = args.indexOf('--glob');
   const explicit = globIdx !== -1 ? args[globIdx + 1] : undefined;
-  const patterns = explicit ? [explicit] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts', 'scripts/**/*.ts'];
+  const patterns = explicit ? [explicit] : ['packages/**/*.{ts,tsx,js,jsx}', '.config/**/*.ts', 'scripts/**/*.ts'];
 
   const files = await glob(patterns, {
     ignore: ['**/node_modules/**', '**/dist/**'],
