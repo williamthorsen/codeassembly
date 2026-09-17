@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Directories skipped by the staleness scan (must match the compile command's ignore list). */
-const IGNORED_DIRS = new Set(['__tests__']);
+const IGNORED_DIRS = new Set(['__fixtures__', '__mocks__', '__tests__', 'test-utils']);
 
 /** Reports whether an error is a Node.js ENOENT (file not found). */
 function isEnoent(err: unknown): boolean {

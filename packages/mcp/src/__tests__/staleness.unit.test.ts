@@ -113,24 +113,27 @@ describe('isBuildStale', () => {
     expect(await isBuildStale(compiledFileUrl)).toBe(true);
   });
 
-  it('ignores test files in __tests__/ directories', async () => {
-    const now = Date.now();
-    const compiledFileUrl = await createFakePackage({
-      srcMtimeMs: now - 10_000,
-      distMtimeMs: now,
-      srcFiles: ['index.ts', '__tests__/index.test.ts'],
-    });
+  it.each(['__fixtures__/sample.ts', '__mocks__/client.ts', '__tests__/index.test.ts', 'test-utils/records.ts'])(
+    'ignores %s, which the compile command does not build',
+    async (ignoredFile) => {
+      const now = Date.now();
+      const compiledFileUrl = await createFakePackage({
+        srcMtimeMs: now - 10_000,
+        distMtimeMs: now,
+        srcFiles: ['index.ts', ignoredFile],
+      });
 
-    // Manually set the test file to be much newer than dist
-    const base = new URL(compiledFileUrl);
-    const distEsm = new URL('.', base);
-    const packageRoot = new URL('../..', distEsm);
-    const testFilePath = join(new URL('.', packageRoot).pathname, 'src', '__tests__', 'index.test.ts');
-    const newerDate = new Date(now + 10_000);
-    await utimes(testFilePath, newerDate, newerDate);
+      // Manually set the ignored file to be much newer than dist
+      const base = new URL(compiledFileUrl);
+      const distEsm = new URL('.', base);
+      const packageRoot = new URL('../..', distEsm);
+      const ignoredFilePath = join(new URL('.', packageRoot).pathname, 'src', ignoredFile);
+      const newerDate = new Date(now + 10_000);
+      await utimes(ignoredFilePath, newerDate, newerDate);
 
-    expect(await isBuildStale(compiledFileUrl)).toBe(false);
-  });
+      expect(await isBuildStale(compiledFileUrl)).toBe(false);
+    },
+  );
 
   it('ignores non-.ts files in src/', async () => {
     const now = Date.now();
