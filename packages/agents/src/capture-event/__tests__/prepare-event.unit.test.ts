@@ -94,7 +94,6 @@ describe(prepareEvent, () => {
       body: '',
     });
 
-    // `repo` is best-effort: a missing remote omits the field and still passes validation.
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.prepared.content).not.toMatch(/^repo:/m);
@@ -183,8 +182,7 @@ describe(prepareEvent, () => {
     if (result.ok) {
       const lines = result.prepared.content.split('\n');
       const lineOf = (field: string): number => lines.findIndex((line) => line.startsWith(`${field}:`));
-      // renderEvent emits the typed spine (summary, tags, impact) before the untyped extra fields
-      // (repo, skill, model, harness); pinning that order keeps a fresh capture identical to its later amendment.
+      // Pinning the order keeps a fresh capture identical in field order to its later amendment.
       const lastTyped = Math.max(lineOf('summary'), lineOf('tags'), lineOf('impact'));
       const firstExtra = Math.min(lineOf('repo'), lineOf('skill'), lineOf('model'), lineOf('harness'));
       expect(lastTyped).toBeLessThan(firstExtra);

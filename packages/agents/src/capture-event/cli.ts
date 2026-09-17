@@ -31,7 +31,6 @@ import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
 
-/** The value-bearing flags this helper accepts; the body comes from stdin, so the layout is flag-only. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'store', takesValue: true },
   { name: 'summary', takesValue: true },
@@ -66,16 +65,10 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end: parses args, reads the event body from stdin, and resolves the target store (a concrete
- * `--store` by name, or the registry's `default_kb` via the `@default` sentinel; an omitted `--store` is refused). A
- * fresh capture fills in the auto-derived context (ULID `id`, `captured-at`, `cwd`, and a best-effort `session` and
- * `repo`), validates the event record's required spine, and writes `content/events/{id}.md` without
- * overwriting an existing id. With `--amend <id>`, it instead rewrites that existing event in place; see
- * {@link amendEvent}.
+ * Runs the helper end to end, from the invocation's argv and stdin to the written event.
  *
- * Recoverable failures (invalid args, an omitted `--store`, an unregistered/readonly store, no configured default,
- * schema validation, and the amend-specific not-found/parse cases) become structured `{ ok: false, ... }`
- * results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
+ * A recoverable failure returns `{ ok: false, error, message }` having written nothing. A system failure (out of disk,
+ * permission denied) propagates instead, for `main` to report on stderr before exiting non-zero.
  *
  * @internal - Exported to allow testing.
  */
@@ -170,11 +163,8 @@ export async function runCapture(input: {
 }
 
 /**
- * Parses the helper's argv. Each value-bearing flag accepts both `--flag value` and `--flag=value`; `--tags` accepts a
- * comma-separated list, and `--impact` accepts one declared impact level. Unknown
- * flags, an unexpected positional, an empty value for any value-bearing flag, a missing `--summary`, an out-of-enum
- * `--impact`, or an `--amend` id that is not a bare filename stem throw with a usage-style message. The body comes from
- * stdin rather than the command line, so the layout is flag-only.
+ * Parses the helper's argv, throwing on any defect in it. The caller turns the throw into an `invalid-args` result.
+ * The event body comes from stdin rather than the command line, so the layout is flag-only.
  *
  * @internal - Exported to allow testing.
  */
@@ -223,11 +213,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 // region | Helpers
 
 /**
- * Amends an existing event in place. It rewrites `summary` and the body from the invocation and overrides
- * `skill`/`model`/`tags`/`impact` only when they are supplied, preserving everything else: provenance (`id`,
- * `captured-at`, `session`, `cwd`, `repo`, `harness`), `addressed-by`, and any curatorial field the caller did not
- * restate. The filename id is authoritative, so a corrupted frontmatter id cannot redirect the write. A missing or
- * unparseable target becomes a structured `amend-not-found`/`amend-parse` result.
+ * Amends an existing event in place. The filename id is authoritative, so a corrupted frontmatter id cannot redirect
+ * the write.
  */
 async function amendEvent(input: {
   args: ParsedArgs;
@@ -281,10 +268,9 @@ async function amendEvent(input: {
 }
 
 /**
- * Applies an amend to a parsed event: `summary` and `body` come from the invocation; `skill`/`model` (stored in
- * `extra`) and `tags`/`impact` are overridden only when supplied; provenance and `addressed-by` are preserved. Clearing
- * a curatorial field is a job for its own mutator in `kb-update-events`, not for an amend, so an omitted flag keeps the
- * existing value rather than dropping it.
+ * Applies an amend to a parsed event: the invocation supplies `summary` and `body`, and overrides
+ * `skill`/`model`/`tags`/`impact` only where it supplies them. Clearing a curatorial field belongs to its own mutator
+ * in `kb-update-events`, so an omitted flag keeps the existing value.
  */
 function amendRecord(existing: KbEvent, args: ParsedArgs, body: string): KbEvent {
   const extra = { ...existing.extra };
