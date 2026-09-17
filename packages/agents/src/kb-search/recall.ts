@@ -11,8 +11,9 @@ import type { RawHit, ScopedKb } from './types.ts';
 const execFileAsync = promisify(execFile);
 
 /**
- * Runs a process and resolves its captured stdout, rejecting with an error carrying `code` on a non-zero exit or a
- * failed spawn. The only path by which recall reaches ripgrep, so a caller can substitute one and spawn nothing.
+ * Runs a process and resolves its captured stdout, rejecting with an error that has a `code` on a non-zero exit or a
+ * failed spawn. Recall invokes ripgrep only through a `ProcessRunner`, so a caller can substitute one and spawn
+ * nothing.
  */
 export type ProcessRunner = (command: string, args: readonly string[]) => Promise<{ stdout: string }>;
 
@@ -36,14 +37,14 @@ export interface RecallResult {
  * Runs ripgrep over the note bodies and frontmatter of every in-scope KB and returns the raw hits.
  *
  * Tokenizes the query on whitespace and expands each term through the KB's `tag-aliases.yaml`, so that a term that is
- * a known alias also matches the notes carrying its canonical tag. Combines the terms disjunctively. Reports each note
- * at most once per KB, with a snippet drawn from the first matching line and its immediate neighbors.
+ * a known alias also matches the notes that have its canonical tag. Combines the terms disjunctively. Reports each
+ * note at most once per KB, with a snippet drawn from the first matching line and its immediate neighbors.
  *
- * Skips an in-scope KB whose path is absent, reporting it in `missingKbs`; a permission error on a path that does
- * exist still throws.
+ * Skips an in-scope KB whose path is absent, reporting it in `missingKbs`; still throws a permission error on a path
+ * that does exist.
  *
- * Requires ripgrep on `PATH`; an absent binary throws with a remediation hint. `runner` replaces the real `rg`
- * invocation.
+ * Requires ripgrep on `PATH`; throws with a remediation hint when the binary is absent. `runner` replaces the real
+ * `rg` invocation.
  */
 export async function recallNotes(input: {
   query: string;
@@ -100,7 +101,7 @@ function isMissingBinary(error: unknown): boolean {
   return isErrorCode(error, 'ENOENT');
 }
 
-/** Shape of a ripgrep `--json` `match` or `context` event, narrowed to the fields this parser reads. */
+/** Shape of a ripgrep `--json` `match` or `context` event, narrowed to the fields that this parser reads. */
 interface RipgrepLineEvent {
   data: { path: { text: string }; lines: { text: string } };
 }

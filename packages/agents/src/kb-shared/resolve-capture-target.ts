@@ -12,7 +12,7 @@ import { resolveStoreByName, type ResolveStoreOutcome } from './resolve-store-by
  *   alternatives in its error.
  * - `no-default`: `--store @default` was given but the registry declares no usable `default_kb`.
  *
- * Both carry the registry-load error when one occurred, so that an unusable registry surfaces its cause.
+ * Both include the registry-load error when one occurred, so that the caller can report an unusable registry's cause.
  */
 export type ResolveCaptureTargetOutcome =
   | ResolveStoreOutcome
@@ -20,9 +20,9 @@ export type ResolveCaptureTargetOutcome =
   | { ok: false; reason: 'no-default'; registryError?: string };
 
 /**
- * Resolves the store a capture writes into, from `--store` alone: a registry name, or the reserved `@default` sentinel
- * for the registry's `default_kb`. An omitted `--store` is refused with `missing-store`, never resolved to a silent
- * default. A readonly default is refused like any other readonly store.
+ * Resolves the store into which a capture writes, from `--store` alone: a registry name, or the reserved `@default`
+ * sentinel for the registry's `default_kb`. An omitted `--store` is refused with `missing-store`, never resolved to a
+ * silent default. A readonly default is refused like any other readonly store.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.

@@ -15,7 +15,7 @@ describe(formatUtcTimestamp, () => {
     expect(formatUtcTimestamp(new Date('2026-05-24T14:35:09.987Z'))).toBe('2026-05-24T14:35:09Z');
   });
 
-  it('anchors to UTC when the local timezone would yield a different day', () => {
+  it('uses UTC when the local timezone would yield a different day', () => {
     expect(formatUtcTimestamp(new Date('2026-05-24T23:30:00Z'))).toBe('2026-05-24T23:30:00Z');
   });
 });

@@ -14,8 +14,8 @@ export function formatUtcTimestamp(date: Date): string {
  * Computes whole days between a stored date value and `now`. A `YYYY-MM-DDTHH:MM:SSZ` timestamp is read as its
  * instant and a bare legacy `YYYY-MM-DD` date as UTC midnight, both truncated to whole-day resolution.
  *
- * An absent value returns `null`, as does a value in any other form: a non-`Z` or locale-dependent string would be
- * silently misread as local time.
+ * Returns `null` for an absent value, as it does for a value in any other form: A non-`Z` or locale-dependent string
+ * would be silently misread as local time.
  */
 export function computeAgeDays(dateValue: string | null, now: Date): number | null {
   if (dateValue === null || !ACCEPTED_DATE.test(dateValue)) {
@@ -56,7 +56,7 @@ export function isSafeEventId(id: string): boolean {
 
 /**
  * Reads a string-list field from a frontmatter `extra` map, yielding its non-empty, trimmed string items. A lone
- * string is read as a one-element list, so that a mis-authored scalar still surfaces.
+ * string is read as a one-element list, so that a mis-authored scalar still appears in the result.
  */
 export function readStringList(extra: Record<string, unknown> | undefined, key: string): string[] {
   const value = extra?.[key];

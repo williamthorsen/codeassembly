@@ -35,7 +35,7 @@ describe('recallNotes permission handling', () => {
   });
 });
 
-/** Builds a Node filesystem error carrying the given `code`. */
+/** Builds a Node filesystem error with the given `code`. */
 function fsError(code: string): NodeJS.ErrnoException {
   const error: NodeJS.ErrnoException = new Error(`mock ${code}`);
   error.code = code;

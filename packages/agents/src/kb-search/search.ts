@@ -20,7 +20,7 @@ import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from '.
  * note set and applying the mechanical filters.
  *
  * Returns no hits and an `emptyScopeDiagnostic` for an empty scope. Skips a note whose file cannot be read, reporting
- * it in `warnings`. Keeps a note that parses but carries no frontmatter as a degraded hit.
+ * it in `warnings`. Keeps a note that parses but has no frontmatter as a degraded hit.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read, and `recall` replaces the default
  * ripgrep recall; both exist so that a test can run against fixtures without spawning a process.
@@ -94,7 +94,7 @@ export function recordTypeOf(hit: SearchHit): string {
 
 // region | Helpers
 
-/** Returns true when a hit's path falls inside its KB's configured note set; a KB with no matcher keeps all hits. */
+/** Returns true when a hit's path is inside its KB's configured note set, and for every hit of a KB with no matcher. */
 function isNoteHit(hit: RawHit, matchers: Map<string, NoteScopeMatcher>): boolean {
   const matcher = matchers.get(hit.kbPath);
   return matcher === undefined || matcher.isNote(toRelativePath(hit.kbPath, hit.path));
@@ -106,9 +106,9 @@ function toRelativePath(kbPath: string, notePath: string): string {
 }
 
 /**
- * Builds a note-scope matcher for every KB that produced a hit, keyed by KB root path. A KB whose `.kb/config.yaml` is
- * malformed degrades to {@link defaultKbConfig} and contributes a config-health warning, so one bad config never fails
- * a multi-store search.
+ * Builds a note-scope matcher for every KB that produced a hit, keyed by KB root path. Uses {@link defaultKbConfig} for
+ * a KB whose `.kb/config.yaml` is malformed and adds a config-health warning, so one bad config never fails a
+ * multi-store search.
  */
 async function loadMatchersForHits(input: {
   hits: RawHit[];
@@ -168,7 +168,7 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
 
 /**
  * Phrases the operator-facing registry-health warnings in deterministic order: the malformed-registry warning first,
- * then one dead-path warning per missing KB. A missing KB carrying no registry name is only reachable under a race
+ * then one dead-path warning per missing KB. A missing KB that has no registry name can occur only in a race
  * between discovery and the existence check.
  */
 function composeWarnings(input: { registryError: string | undefined; missingKbs: ScopedKb[] }): string[] {

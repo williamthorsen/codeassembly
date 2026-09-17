@@ -1,6 +1,6 @@
 # User-global registry fixture for readonly enforcement.
-# The default KB is also readonly so resolveWritableKb must refuse to fall back to it.
-# A second non-default writable entry exists so the registry is non-empty.
+# The default KB is also readonly so that resolveWritableKb must refuse to fall back to it.
+# A second non-default writable entry exists so that the registry is non-empty.
 # Paths are relative to this file's directory (`home-readonly-default/.claude/`).
 default_kb: readonly-default
 kbs:
