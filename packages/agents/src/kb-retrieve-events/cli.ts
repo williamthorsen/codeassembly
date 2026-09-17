@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';

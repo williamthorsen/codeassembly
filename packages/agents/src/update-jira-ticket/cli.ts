@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 // CLI entry point for the update-jira-ticket pre-flight checker.
 //
 // Reads the HTML payload from stdin, runs `check()`, and writes the discriminated-union result to stdout as
