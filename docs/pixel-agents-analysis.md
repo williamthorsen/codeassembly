@@ -1,4 +1,4 @@
-# Pixel Agents: architectural analysis for Factory
+# Pixel Agents: Architectural analysis for Factory
 
 > Analysis of [pablodelucca/pixel-agents](https://github.com/pablodelucca/pixel-agents), a VS Code extension that visualizes Claude Code agents as lo-fi arcade characters in a pixel-art office. Findings are organized by concern and sorted by relevance to Factory's development.
 
@@ -6,7 +6,7 @@
 
 ### 🎨 Pixel-perfect Canvas 2D rendering
 
-Pixel Agents renders everything through the Canvas 2D API with `imageSmoothingEnabled = false`, achieving crisp pixel art at any zoom level. Sprites are stored as 2D arrays of hex color strings (`string[][]`), where each cell is either a hex color or empty string for transparency. This is fundamentally different from Factory's approach—Excalibur handles sprite rendering, texture management, and scaling natively.
+Pixel Agents renders everything through the Canvas 2D API with `imageSmoothingEnabled = false`, achieving crisp pixel art at any zoom level. Sprites are stored as 2D arrays of hex color strings (`string[][]`), where each cell is either a hex color or empty string for transparency. This is fundamentally different from Factory's approach: Excalibur handles sprite rendering, texture management, and scaling natively.
 
 **Takeaway:** Factory benefits from Excalibur's built-in sprite system and doesn't need to reimplement low-level rendering. However, Pixel Agents' approach of storing sprite data as simple 2D color arrays is worth noting as a lightweight serialization format for any custom sprites or overlays.
 
@@ -34,13 +34,13 @@ Depth sorting (`zY` values) is computed once when the layout changes, not per fr
 
 Characters have three states (`IDLE`, `WALK`, `TYPE`) and four directions (`DOWN`, `LEFT`, `RIGHT`, `UP`). Each state has its own frame duration: walking cycles at 0.15s/frame, typing at 0.3s/frame. The animation state machine is a simple switch statement in the per-frame update, with frame timers tracking elapsed time.
 
-**Takeaway:** Factory's agent actors already have movement and status-driven animation (CODY-7). Pixel Agents confirms that a simple enum-based state machine with per-state frame durations is sufficient — no need for a heavier animation framework.
+**Takeaway:** Factory's agent actors already have movement and status-driven animation (CODY-7). Pixel Agents confirms that a simple enum-based state machine with per-state frame durations is sufficient: no need for a heavier animation framework.
 
 ### ✨ Matrix effect for spawn/despawn
 
 Agents appear and disappear with a column-sweep "Matrix rain" effect: green pixels cascade down each column with staggered timing, using per-column random seeds stored on the character for deterministic playback. Duration is 0.3 seconds.
 
-**Takeaway:** This is a polished spawn/despawn transition that could translate well to Factory. Excalibur's particle system or custom `onPreDraw` logic could achieve something similar. Currently Factory agents appear/disappear abruptly — a spawn effect would significantly improve perceived quality.
+**Takeaway:** This is a polished spawn/despawn transition that could translate well to Factory. Excalibur's particle system or custom `onPreDraw` logic could achieve something similar. Currently Factory agents appear/disappear abruptly; a spawn effect would significantly improve perceived quality.
 
 ### 💬 Speech bubbles for status indicators
 
@@ -58,21 +58,21 @@ Walking characters interpolate pixel positions between tiles using `moveProgress
 
 ### 🏢 Centralized mutable game state class
 
-`OfficeState` is a single class holding all game state: layout, tile map, seats, blocked tiles, furniture instances, characters, selection state, and sub-agent mappings. State mutations happen directly on the class properties, with a `rebuildFromLayout()` method that recomputes derived state (tile map, seats, blocked tiles) while preserving character positions.
+`OfficeState` is a single class containing all game state: layout, tile map, seats, blocked tiles, furniture instances, characters, selection state, and sub-agent mappings. State mutations happen directly on the class properties, with a `rebuildFromLayout()` method that recomputes derived state (tile map, seats, blocked tiles) while preserving character positions.
 
-**Takeaway:** Factory distributes state between React (UI state), Excalibur (scene/actor state), and the API layer. Pixel Agents' approach of a single game state object avoids synchronization bugs at the cost of making React integration harder. Factory's separation is more appropriate for its architecture, but the `rebuildFromLayout()` pattern — bulk-recomputing derived state while preserving live entities — could be useful if Factory adds editable layouts.
+**Takeaway:** Factory distributes state between React (UI state), Excalibur (scene/actor state), and the API layer. Pixel Agents' approach of a single game state object avoids synchronization bugs but makes React integration harder. Factory's separation is more appropriate for its architecture, but the `rebuildFromLayout()` pattern (bulk-recomputing derived state while preserving live entities) could be useful if Factory adds editable layouts.
 
 ### 🪑 Seat assignment with persistence
 
 Chairs become "Seats" with inferred facing direction (based on adjacent desk position). Seat assignments are persisted in VS Code workspace state and restored on reload. The assignment algorithm preserves existing assignments, then auto-assigns new agents to free seats.
 
-**Takeaway:** Factory positions agents at stations. The seat assignment pattern — persist assignments, restore on reload, auto-assign newcomers to free slots — is directly applicable if Factory needs to remember where agents were across sessions.
+**Takeaway:** Factory positions agents at stations. The seat assignment pattern (persist assignments, restore on reload, auto-assign newcomers to free slots) is directly applicable if Factory needs to remember where agents were across sessions.
 
 ### 🔄 Character state machine
 
 Each character tracks: `state` (IDLE/WALK/TYPE), `dir` (facing direction), pixel position, tile position, path queue, move progress, current tool, animation frame, frame timer, wander timer, bubble state, and matrix effect state. The update function is a ~200-line switch on `state` that handles transitions.
 
-**Takeaway:** This confirms that agent visualization requires richer state than just "position + sprite." Factory should ensure each agent actor carries enough state for smooth animation transitions and visual indicators (current tool, waiting status, activity type).
+**Takeaway:** This confirms that agent visualization requires richer state than just "position + sprite." Factory should ensure each agent actor stores enough state for smooth animation transitions and visual indicators (current tool, waiting status, activity type).
 
 ## Streaming and real-time updates
 
@@ -154,11 +154,11 @@ Pixel Agents is entirely non-invasive: it watches Claude Code's JSONL transcript
 
 The game loop (`requestAnimationFrame` → update → render) runs independently of React's render cycle. React handles UI overlays (toolbar, settings modal, status text) while the game engine owns the canvas. State flows from the game engine to React via callbacks, not shared state.
 
-**Takeaway:** Factory already uses this pattern — Excalibur manages the game canvas while React handles the surrounding UI. Pixel Agents validates that this separation is the right approach for hybrid game-UI applications. The key insight is that the game engine should be the source of truth for visual state, with React reading (not writing) game state.
+**Takeaway:** Factory already uses this pattern: Excalibur manages the game canvas while React handles the surrounding UI. Pixel Agents validates that this separation is the right approach for hybrid game-UI applications. The key insight is that the game engine should be the source of truth for visual state, with React reading (not writing) game state.
 
 ### 🔊 Audio feedback via Web Audio API
 
-Completion notifications use a two-note chime (E5 → E6, 659 Hz → 1319 Hz) generated via the Web Audio API with `OscillatorNode` and `GainNode`. The sound is toggleable in settings. No audio files are used — everything is synthesized.
+Completion notifications use a two-note chime (E5 → E6, 659 Hz → 1319 Hz) generated via the Web Audio API with `OscillatorNode` and `GainNode`. The sound is toggleable in settings. No audio files are used; everything is synthesized.
 
 **Takeaway:** If Factory adds audio feedback for run completion or errors, synthesized tones via Web Audio API are simpler to maintain than audio file assets. Two-note sequences (low → high for success, high → low for failure) provide intuitive feedback.
 

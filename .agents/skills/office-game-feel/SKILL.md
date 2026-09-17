@@ -1,12 +1,12 @@
 ---
 name: office-game-feel
-description: Animation, movement, and interaction design for the office visualization — making it feel alive
+description: Animation, movement, and interaction design for the office visualization: making it feel alive
 user-invocable: false
 ---
 
 # Office game feel
 
-Principles for animation and interaction design in the CodeAssembly office visualization. This skill is about making the office feel alive — movement, timing, attention, and the rhythm of work.
+Principles for animation and interaction design in the CodeAssembly office visualization. This skill is about making the office feel alive: movement, timing, attention, and the rhythm of work.
 
 The visualization is built with [Excalibur.js](https://excaliburjs.com/). The adapter pipeline (`CanonicalRunStatus → LogicalSceneState → OfficeSceneConfig → ResolvedPositions → OfficeDiff → TransitionPlan`) already generates transition plans with waypoints and timing. The scene currently discards them and teleports entities. This skill guides the work of consuming those plans to produce engaging animation.
 
@@ -14,7 +14,7 @@ The visualization is built with [Excalibur.js](https://excaliburjs.com/). The ad
 
 The single most important animation in the visualization. Everything else is secondary.
 
-The orchestrator lives in the governor's office. They walk up to the prep area or workshop to dispatch work, collect results, and update the whiteboard. Every errand starts and ends at the governor's desk. This rhythm of departures and returns is the visualization's **heartbeat** — the user watches their agent leave, sees them interact in the workshop, and watches them return with results.
+The orchestrator lives in the governor's office. They walk up to the prep area or workshop to dispatch work, collect results, and update the whiteboard. Every errand starts and ends at the governor's desk. This rhythm of departures and returns is the visualization's **heartbeat**: The user watches their agent leave, sees them interact in the workshop, and watches them return with results.
 
 Get this right first. If the orchestrator moves convincingly between zones, the visualization feels alive even if nothing else animates.
 
@@ -26,16 +26,16 @@ governor's desk → (walk through doorway) → destination zone
   → (walk back through doorway) → governor's desk
 ```
 
-Each errand should take 2-4 seconds total. Faster feels rushed; slower feels laggy. The pause at the destination (500-800ms) is essential — it communicates "something happened here" before the return trip.
+Each errand should take 2-4 seconds total. Faster feels rushed; slower feels laggy. The pause at the destination (500-800ms) is essential: It communicates "something happened here" before the return trip.
 
 ## Settled decisions
 
 These are not open for re-evaluation:
 
-- **Thought bubbles are the primary glance-level information channel.** They carry the most important status information. Cycling content, staggered timing, freeze-on-hover, red border for alerts.
+- **Thought bubbles are the primary glance-level information channel.** They display the most important status information. Cycling content, staggered timing, freeze-on-hover, red border for alerts.
 - **Time-on-task must be visible without hovering.** Color-coded indicators: green (healthy) → amber (slow) → red (stalled).
 - **Notification-driven attention.** The visualization draws the eye to problems; healthy progress stays calm. Don't animate everything equally.
-- **Three HUD modes.** Ambient (minimal — status pips, alert-only bubbles), Standard (names, times, all bubbles), Detailed (full filenames, console, action buttons). Toggle with H key.
+- **Three HUD modes.** Ambient (minimal: status pips, alert-only bubbles), Standard (names, times, all bubbles), Detailed (full filenames, console, action buttons). Toggle with H key.
 - **Progressive disclosure.** Glance → hover → click. Each level reveals more detail without cluttering the default view.
 
 ## Agent state machines
@@ -126,18 +126,18 @@ Corridor waypoints route through doorways. The layout provides `corridorPath(fro
 
 ### Facing direction
 
-- Walking: face the direction of movement (left/right/up/down sprite)
-- At workstation: face the equipment (typically direction 3 = up, toward wall-mounted displays)
-- Orchestrator at desk: face the camera (direction 0 = down)
-- After arriving: brief pause (200ms) before changing facing direction
+- Walking: Face the direction of movement (left/right/up/down sprite)
+- At workstation: Face the equipment (typically direction 3 = up, toward wall-mounted displays)
+- Orchestrator at desk: Face the camera (direction 0 = down)
+- After arriving: Brief pause (200ms) before changing facing direction
 
 ## Thought bubbles
 
-The primary information channel. They do heavy lifting — don't make them an afterthought.
+The primary information channel. They do much of the work; don't make them an afterthought.
 
 ### Cycling
 
-Active agents cycle through 2-3 thought bubble messages. Each message displays for 3-4 seconds before crossfading to the next. Stagger the cycling across agents so bubbles don't all change at once.
+Active agents cycle through 2-3 thought bubble messages. Each message displays for 3-4 seconds before crossfading to the next. Stagger the cycling across agents so that bubbles don't all change at once.
 
 ### Freeze-on-hover
 
@@ -145,9 +145,9 @@ When the user hovers over an agent or their bubble, freeze the cycle and keep th
 
 ### Severity signaling
 
-- Normal content: white background, dark border
-- Warning content: amber left border
-- Error/alert content: red left border, subtle pulse animation
+- Normal content: White background, dark border
+- Warning content: Amber left border
+- Error/alert content: Red left border, subtle pulse animation
 
 ### Positioning
 
@@ -161,13 +161,13 @@ Elapsed time per phase must be visible at a glance without hovering.
 
 Define per-phase expected durations. Show elapsed time as:
 
-- **Green** (0-100% of expected): healthy pace
-- **Amber** (100-200% of expected): slower than usual
-- **Red** (200%+ of expected): stalled or problematic
+- **Green** (0-100% of expected): Healthy pace
+- **Amber** (100-200% of expected): Slower than usual
+- **Red** (200%+ of expected): Stalled or problematic
 
 ### Visual form
 
-A small colored pip or ring near the agent's station. Size: 6-8 pixels. Don't use large progress bars — they compete with the office aesthetic. The pip should feel like a subtle dashboard indicator, not a UI widget.
+A small colored pip or ring near the agent's station. Size: 6-8 pixels. Don't use large progress bars: They compete with the office aesthetic. The pip should feel like a subtle dashboard indicator, not a UI widget.
 
 ## Attention guidance
 
@@ -177,14 +177,14 @@ The visualization must guide the user's eye to what matters without being noisy.
 
 When everything is healthy, the office should feel like a busy but orderly workplace. Agents work at their stations, the orchestrator makes rounds, thought bubbles cycle quietly. No flashing, no urgency.
 
-### Problems surface themselves
+### The visualization reveals problems
 
 When something goes wrong, the visualization should draw attention through:
 
-1. **Thought bubble severity** — red border, pulse
-2. **Time indicator turning red** — a stalled phase is immediately visible
-3. **Agent posture change** — blocked or concerned state
-4. **Orchestrator behavior** — returns to governor's office without the expected artifact, or makes an extra trip
+1. **Thought bubble severity**: Red border, pulse
+2. **Time indicator turning red**: A stalled phase is immediately visible
+3. **Agent posture change**: Blocked or concerned state
+4. **Orchestrator behavior**: Returns to governor's office without the expected artifact, or makes an extra trip
 
 Don't add gratuitous attention effects (screen shake, flash, sound) for normal events. Reserve strong visual signals for actual problems.
 
@@ -207,7 +207,7 @@ Three display modes, cycled with the H key:
 | **Standard** | Agent names, elapsed times, all thought bubbles | Active monitoring, the default                 |
 | **Detailed** | Full filenames, console overlay, action buttons | Debugging, investigating a specific issue      |
 
-Transition between modes with a quick fade (200ms). Don't snap — the user should feel the information density change smoothly.
+Transition between modes with a quick fade (200ms). Don't snap: The user should feel the information density change smoothly.
 
 ## Idle behaviors
 
@@ -215,8 +215,8 @@ Small ambient animations that make the office feel alive when agents are between
 
 ### Essential (implement first)
 
-- Orchestrator idle: occasional look-around animation at desk
-- Working agents: subtle head bob or typing motion (if sprite supports it)
+- Orchestrator idle: Occasional look-around animation at desk
+- Working agents: Subtle head bob or typing motion (if sprite supports it)
 - Thought bubble cycling (already described above)
 
 ### Nice-to-have (implement later)
@@ -225,7 +225,7 @@ Small ambient animations that make the office feel alive when agents are between
 - Occasional stretch or coffee-break animation
 - Animated objects from the tileset (clock, spinning fan, blinking monitor)
 
-Keep idle behaviors subtle. They're seasoning, not the main dish. If an idle animation draws more attention than a state change, it's too prominent.
+Keep idle behaviors subtle. They're secondary, not the focus. If an idle animation draws more attention than a state change, it's too prominent.
 
 ## Excalibur patterns
 
@@ -280,19 +280,19 @@ Each `executeTransition` dispatches to a handler based on `transition.type` (wal
 
 ## Reference games
 
-Draw inspiration from these — specifically their sense of life and activity, not their mechanics:
+Draw inspiration from these, specifically their sense of life and activity, not their mechanics:
 
-- **The Sims** — character pathfinding between rooms, interaction animations at objects, "needs" indicators as subtle UI
-- **Two Point Hospital** — staff walking purposefully between rooms, clear room purposes visible from room contents, queue/wait indicators
-- **Overcooked** — clear task states (raw → cooking → done → burned), timer urgency, parallel activity
-- **Game Dev Tycoon** — development phase progression, team members at desks with visible work states, progress indicators
-- **Stardew Valley** — ambient life (NPCs walking routes, seasonal changes), warm pixel art quality
+- **The Sims**: Character pathfinding between rooms, interaction animations at objects, "needs" indicators as subtle UI
+- **Two Point Hospital**: Staff walking purposefully between rooms, clear room purposes visible from room contents, queue/wait indicators
+- **Overcooked**: Clear task states (raw → cooking → done → burned), timer urgency, parallel activity
+- **Game Dev Tycoon**: Development phase progression, team members at desks with visible work states, progress indicators
+- **Stardew Valley**: Ambient life (NPCs walking routes, seasonal changes), warm pixel art quality
 
 ## What NOT to do
 
 - Don't animate everything at the same intensity. Healthy progress should be calm.
 - Don't add screen shake, flash effects, or sound for normal events.
 - Don't make agents wander randomly. All movement is purposeful and driven by the pipeline state.
-- Don't prioritize animation polish over readability. A clear static scene beats a confusing animated one.
+- Don't prioritize animation polish over readability. A clear static scene is better than a confusing animated one.
 - Don't implement complex pathfinding. All paths are pre-computed waypoint sequences.
-- Don't fight the adapter pipeline. It already produces the right data — consume `TransitionPlan`, don't re-derive transitions from raw state.
+- Don't work against the adapter pipeline. It already produces the right data: Consume `TransitionPlan`; don't re-derive transitions from raw state.

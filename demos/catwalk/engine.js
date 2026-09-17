@@ -42,7 +42,7 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
-// § ENGINE FACTORY — closes over state and playback
+// § ENGINE FACTORY: Closes over state and playback
 
 // Creates the engine that plays a scenario by mutating `state`, paced by `playback`.
 export function createEngine(state, playback) {
@@ -381,7 +381,7 @@ export function createEngine(state, playback) {
     await wait(WORK_DURATION);
     state.orch.working = false;
 
-    // Drop summary — code stays on the orchestrator for final prominence
+    // Drop the summary; the code stays on the orchestrator for final prominence
     await chuteDescend(stationX(stationIndex), 'summary', ARTIFACT_COLORS.summary);
     state.stationRecords[stationIndex].push({ label: 'summary', color: ARTIFACT_COLORS.summary });
 

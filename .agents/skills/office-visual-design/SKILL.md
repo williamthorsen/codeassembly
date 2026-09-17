@@ -1,12 +1,12 @@
 ---
 name: office-visual-design
-description: Visual design principles for the office visualization — palette, tile selection, composition, and spatial quality
+description: Visual design principles for the office visualization: palette, tile selection, composition, and spatial quality
 user-invocable: false
 ---
 
 # Office visual design
 
-Principles for visual design work on the CodeAssembly office visualization. This skill encodes taste, not mechanics — it helps agents make judgment calls about color, composition, texture, and placement.
+Principles for visual design work on the CodeAssembly office visualization. This skill encodes taste, not mechanics: It helps agents make judgment calls about color, composition, texture, and placement.
 
 ## Settled decisions
 
@@ -15,7 +15,7 @@ These are not open for re-evaluation:
 - **The visualization is a place, not a diagram.** Rooms, walls, corridors, furnished interiors. The building exists before any data populates it.
 - **Warm, light office aesthetic.** Inspired by The Sims, Stardew Valley, Habbo Hotel. No dark mode. No cyberpunk. No near-black backgrounds. Comfortable for extended viewing.
 - **Three-zone layout.** Prep area (top-left), workshop (top-right), governor's office (bottom-right). Info panel occupies bottom-left.
-- **Decorative items at the periphery.** Plants in corners, bookshelves against walls. Workstations hold functional items only — desks, monitors, boards. No mid-room decoration.
+- **Decorative items at the periphery.** Plants in corners, bookshelves against walls. Workstations contain functional items only: desks, monitors, boards. No mid-room decoration.
 - **LimeZu tilesets are the art source.** Modern Office Revamped + Modern Interiors. No mixing with other tileset families.
 
 ## Palette
@@ -38,9 +38,9 @@ The palette is warm, muted, and professional. Avoid saturated primaries and cool
 
 | Role                 | Color                   | Used for                                       |
 | -------------------- | ----------------------- | ---------------------------------------------- |
-| Analyst phases       | `#4488cc`               | Architecture, planning — blue                  |
-| Author phases        | `#b8960a`               | Implementation — amber                         |
-| Reviewer phases      | `#cc4444`               | Code review, silent failure, test review — red |
+| Analyst phases       | `#4488cc`               | Architecture, planning (blue)                  |
+| Author phases        | `#b8960a`               | Implementation (amber)                         |
+| Reviewer phases      | `#cc4444`               | Code review, silent failure, test review (red) |
 | Orchestrator/summary | `#4a9` or similar green | Consolidated findings, final summary           |
 
 ### UI text
@@ -63,20 +63,20 @@ Office-specific furniture. The primary source for desks, monitors, whiteboards, 
 
 - **Singles** (individual furniture items, 64x96 PNG each): `4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_{NNN}.png`
 - Key singles used in prototypes: 100 (plant), 130 (monitor), 133 (review monitor), 170 (whiteboard), 172 (analysis board), 174 (data dashboard), 180 (desk), 200 (bookshelf), 227 (coder PC)
-- Browse the full catalog (152+ items) to find the right piece. Don't default to the items above — they were chosen quickly. Better options may exist.
+- Browse the full catalog (152+ items) to find the right piece. Don't default to the items above: They were chosen quickly. Better options may exist.
 
 ### Modern Interiors
 
 Broader interiors: rooms, characters, animated objects, UI elements.
 
 - **Room builder subfiles** (32x32 tile sheets): `1_Interiors/32x32/Room_Bulder_subfiles_32x32/`
-  - `Room_Builder_Floors_32x32.png` — floor tiles
-  - `Room_Builder_Walls_32x32.png` — wall tiles
-  - `Room_Builder_Floor_Shadows_32x32.png` — shadows below north walls
+  - `Room_Builder_Floors_32x32.png`: Floor tiles
+  - `Room_Builder_Walls_32x32.png`: Wall tiles
+  - `Room_Builder_Floor_Shadows_32x32.png`: Shadows below north walls
 - **Characters** (idle sprites, 32x64): `2_Characters/Old/Single_Characters_Legacy/32x32/{Name}_idle_32x32.png`
-  - Direction: column 0 = down (facing camera), 1 = left, 2 = right, 3 = up
+  - Direction: Column 0 = down (facing camera), 1 = left, 2 = right, 3 = up
   - Current cast: Adam (orchestrator), Alex (architect), Amelia (planner), Bob (code reviewer), Ash (silent failure reviewer), Dan (coder), Rob (test reviewer)
-- **Animated objects** (317 items): `3_Animated_Objects/` — potential source for ambient life
+- **Animated objects** (317 items): `3_Animated_Objects/`, a potential source for ambient life
 
 ### Tile picker tool
 
@@ -94,9 +94,9 @@ A browsable tile picker is available at the artifact path for ticket #293. Use i
 
 North walls are two tiles tall:
 
-1. Upper wall tile at row `y` — sheet coords (32, 256)
-2. Baseboard tile at row `y+1` — sheet coords (32, 288)
-3. Floor shadow at row `y+2` — sheet coords (0, 0) on the shadow sheet
+1. Upper wall tile at row `y`: sheet coords (32, 256)
+2. Baseboard tile at row `y+1`: sheet coords (32, 288)
+3. Floor shadow at row `y+2`: sheet coords (0, 0) on the shadow sheet
 
 South walls (bottom of upper rooms) are a single baseboard row.
 
@@ -121,13 +121,13 @@ Draw in this order:
 
 ### Place, not diagram
 
-Every room should look like somewhere people work. Test: if you removed the labels and data overlays, would a viewer recognize this as an office? If it looks like a grid of colored rectangles, it's a diagram.
+Every room should look like somewhere people work. Test: If you removed the labels and data overlays, would a viewer recognize this as an office? If it looks like a grid of colored rectangles, it's a diagram.
 
 ### Spatial rhythm
 
 - Alternate dense areas (workstations, furniture clusters) with breathing room (open floor, corridors).
 - A room that's all furniture feels like a warehouse. A room that's all floor feels empty.
-- Group related items: desk + monitor + character form a workstation unit. Don't scatter them.
+- Group related items: Desk + monitor + character form a workstation unit. Don't scatter them.
 
 ### Workstation composition
 
@@ -135,7 +135,7 @@ A workstation is a tight cluster: wall-mounted display (on the north wall) → d
 
 ### Furniture as storytelling
 
-Each piece of furniture should earn its place. Ask: what does this object tell the viewer about this room's purpose?
+Each piece of furniture should serve a purpose. Ask: What does this object tell the viewer about this room's purpose?
 
 - Analysis board + whiteboard → this room is for planning
 - Multiple review monitors → this room is for parallel evaluation
@@ -163,7 +163,7 @@ Use these criteria to evaluate visual output. Ordered by importance.
 | **Readability**       | Can you identify each room, agent, and furniture item at a glance?   | Visual clutter, overlapping sprites, text over busy backgrounds     |
 | **Place quality**     | Does this look like a real office, or a technical diagram?           | Grid-snapped rectangles, no wall depth, uniform floor               |
 | **Palette coherence** | Do the colors feel unified and warm?                                 | Jarring accent colors, cool-dominant tones, saturated primaries     |
-| **Composition**       | Is there visual rhythm — dense clusters alternating with open space? | Uniform density, furniture scattered randomly, no breathing room    |
+| **Composition**       | Is there visual rhythm (dense clusters alternating with open space)? | Uniform density, furniture scattered randomly, no breathing room    |
 | **Periphery rule**    | Are decorative items at room edges, not between workstations?        | Plants between desks, lamps in walkways, bookshelves blocking paths |
 | **Storytelling**      | Does the furniture tell you what happens in each room?               | Generic desks everywhere, no room differentiation                   |
 
@@ -181,7 +181,7 @@ Output to the artifact directory for the relevant ticket. Name build scripts `bu
 
 Draw inspiration from these, not their mechanics but their visual quality:
 
-- **The Sims** — room composition, object interaction proximity, warm interior lighting
-- **Stardew Valley** — pixel art warmth, natural placement, seasonal color palettes
-- **Habbo Hotel** — isometric room design, furniture density, avatar placement in spaces
-- **Two Point Hospital** — room-based organization, clear room purposes, staff at stations
+- **The Sims**: Room composition, object interaction proximity, warm interior lighting
+- **Stardew Valley**: Pixel art warmth, natural placement, seasonal color palettes
+- **Habbo Hotel**: Isometric room design, furniture density, avatar placement in spaces
+- **Two Point Hospital**: Room-based organization, clear room purposes, staff at stations
