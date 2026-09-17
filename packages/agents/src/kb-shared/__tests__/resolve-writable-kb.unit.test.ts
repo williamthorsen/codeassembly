@@ -32,8 +32,7 @@ describe(resolveWritableKb, () => {
   });
 
   it('annotates a discovered KB with its registry name when its path matches a registered entry', async () => {
-    // VAULT_A is registered in HOME_WITH_DEFAULT as `named-vault-a`. Discovery from VAULT_A returns VAULT_A,
-    // whose absolute path then matches the registry entry, so `name` is populated rather than null.
+    // VAULT_A is registered in HOME_WITH_DEFAULT as `named-vault-a`, and discovery from VAULT_A returns VAULT_A.
     const result = await resolveWritableKb({ startDir: VAULT_A, explicitKb: null, home: HOME_WITH_DEFAULT });
 
     expect(result).toEqual({
@@ -43,8 +42,7 @@ describe(resolveWritableKb, () => {
   });
 
   it('returns name: null for a discovered KB whose path is not in the registry', async () => {
-    // DISCOVERED_KB is not registered in HOME_WITH_DEFAULT, so the discovered match has no registry entry
-    // and the name falls back to null.
+    // DISCOVERED_KB is not registered in HOME_WITH_DEFAULT.
     const result = await resolveWritableKb({ startDir: DISCOVERED_KB, explicitKb: null, home: HOME_WITH_DEFAULT });
 
     expect(result).toEqual({
@@ -63,8 +61,7 @@ describe(resolveWritableKb, () => {
   });
 
   it('resolves @default to the registry default, overriding a discovered .kb/', async () => {
-    // DISCOVERED_KB has a `.kb/` marker, but the explicit sentinel beats discovery just as a concrete --kb name does,
-    // so the registry default is selected rather than the discovered KB.
+    // DISCOVERED_KB has a `.kb/` marker, so discovery alone would select it.
     const result = await resolveWritableKb({
       startDir: DISCOVERED_KB,
       explicitKb: '@default',
@@ -198,9 +195,7 @@ describe(resolveWritableKb, () => {
   });
 
   it('degrades a malformed user-global registry to an empty config rather than throwing', async () => {
-    // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`. The helper must swallow the parse
-    // error and surface a structured result — here, the no-kb-resolvable failure for a startDir with no `.kb/`
-    // marker — rather than letting the throw escape `resolveWritableKb`.
+    // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`, and `/` has no `.kb/` marker.
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
       const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
@@ -222,7 +217,6 @@ describe(resolveWritableKb, () => {
   });
 
   it('degrades a malformed user-global registry while still honoring a discovered KB', async () => {
-    // Even with a malformed registry, discovery should still succeed and the result should not throw.
     const result = await resolveWritableKb({ startDir: DISCOVERED_KB, explicitKb: null, home: HOME_MALFORMED });
 
     expect(result).toEqual({
@@ -232,8 +226,6 @@ describe(resolveWritableKb, () => {
   });
 
   it('does not reach a readonly registry-default via the null path, refusing with missing-destination', async () => {
-    // Without `--kb @default` the registry default is never selected, so a readonly default is not even reached: the
-    // null path refuses outright rather than surfacing readonly-kb.
     const result = await resolveWritableKb({ startDir: FIXTURES, explicitKb: null, home: HOME_READONLY_DEFAULT });
 
     expect(result).toEqual({
@@ -274,8 +266,7 @@ describe(resolveWritableKb, () => {
   });
 
   it('refuses a discovered KB whose path matches a readonly registry entry with readonly-kb', async () => {
-    // VAULT_READONLY is registered as `readonly-named` (readonly: true) in HOME_READONLY_NAMED. Discovery from
-    // VAULT_READONLY returns its own path, which then matches the readonly registry entry.
+    // VAULT_READONLY is registered as `readonly-named` (readonly: true) in HOME_READONLY_NAMED.
     const result = await resolveWritableKb({
       startDir: VAULT_READONLY,
       explicitKb: null,

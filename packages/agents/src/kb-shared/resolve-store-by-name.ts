@@ -11,10 +11,8 @@ export interface ResolvedStore {
 /**
  * The resolution outcome: a resolved store, or a categorical failure the caller turns into a structured error.
  *
- * - `not-registered`: no `kb.yaml` entry matches the requested name. Carries `registryError` when the registry failed
- *   to load (which leaves no entries to match), so the caller can attribute the miss to the load failure rather than
- *   to a genuinely absent name.
- * - `readonly-store`: the matched entry is marked `readonly: true`; writes are refused.
+ * `not-registered` carries `registryError` when the registry failed to load, leaving no entries to match, so that the
+ * caller can attribute the miss to the load failure rather than to a genuinely absent name.
  */
 export type ResolveStoreOutcome =
   | { ok: true; store: ResolvedStore }
@@ -22,11 +20,8 @@ export type ResolveStoreOutcome =
   | { ok: false; reason: 'readonly-store'; name: string; path: string };
 
 /**
- * Resolves a knowledge base by registry name only.
- *
- * Unlike `resolveWritableKb`, this performs no `.kb/` discovery and no ancestor walk: a store is found purely by
- * matching `--store <name>` against the merged `kb.yaml` registry. That deliberate omission is the anti-defect for
- * auto-memory fragmentation — a capture must never silently land in a project-local `.kb/` it happened to walk into.
+ * Resolves a knowledge base by registry name alone, matching `name` against the merged `kb.yaml` registry. The
+ * resolver runs no `.kb/` discovery and no ancestor walk: a capture lands in the named store or nowhere.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.

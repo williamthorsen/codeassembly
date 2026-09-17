@@ -1,10 +1,8 @@
 import { type ParsedNote, parseNote } from '@williamthorsen/kb/frontmatter';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-/** Whole-day divisor for converting a date delta in milliseconds to an age in days. */
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 
-/** Matches the two accepted stored-date forms: bare `YYYY-MM-DD` or second-precision UTC `YYYY-MM-DDTHH:MM:SSZ`. */
 const ACCEPTED_DATE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$/;
 
 /** Formats a `Date` as a second-precision UTC `YYYY-MM-DDTHH:MM:SSZ` timestamp for note frontmatter date fields. */
@@ -13,10 +11,11 @@ export function formatUtcTimestamp(date: Date): string {
 }
 
 /**
- * Computes whole days between a stored date value and `now`; `null` for an absent value or one not in an accepted form.
- * A `YYYY-MM-DDTHH:MM:SSZ` timestamp is read as its instant and a bare legacy `YYYY-MM-DD` date as UTC midnight, both
- * truncated to whole-day resolution. Values outside the two accepted forms return `null` rather than a `Date.parse`
- * best-effort age, since a non-`Z` or locale-dependent string would otherwise be silently misread as local time.
+ * Computes whole days between a stored date value and `now`. A `YYYY-MM-DDTHH:MM:SSZ` timestamp is read as its
+ * instant and a bare legacy `YYYY-MM-DD` date as UTC midnight, both truncated to whole-day resolution.
+ *
+ * An absent value returns `null`, as does a value in any other form: a non-`Z` or locale-dependent string would be
+ * silently misread as local time.
  */
 export function computeAgeDays(dateValue: string | null, now: Date): number | null {
   if (dateValue === null || !ACCEPTED_DATE.test(dateValue)) {
@@ -50,15 +49,14 @@ export function dedupeInOrder<T>(values: readonly T[]): T[] {
   return result;
 }
 
-/** Reports whether an id is a bare filename stem, rejecting path separators and traversal segments so it cannot escape `content/events/`. */
+/** Reports whether an id is a bare filename stem, so that a lookup cannot escape `content/events/`. */
 export function isSafeEventId(id: string): boolean {
   return id.length > 0 && !id.includes('/') && !id.includes('\\') && !id.includes('..') && !id.includes('\0');
 }
 
 /**
- * Reads a string-list field from a frontmatter `extra` map: a sequence yields its non-empty, trimmed string items; a
- * lone non-empty string is coerced to a one-element list so a mis-authored scalar still surfaces; anything else yields
- * an empty list.
+ * Reads a string-list field from a frontmatter `extra` map, yielding its non-empty, trimmed string items. A lone
+ * string is read as a one-element list, so that a mis-authored scalar still surfaces.
  */
 export function readStringList(extra: Record<string, unknown> | undefined, key: string): string[] {
   const value = extra?.[key];
@@ -78,7 +76,6 @@ export function splitCommaList(value: string): string[] {
     .filter((item) => item.length > 0);
 }
 
-/** The outcome of a guarded note parse: the parsed note, or a `null` note paired with the read/parse error message. */
 export type SafeParseOutcome = { note: ParsedNote } | { note: null; error: string };
 
 /** Parses a note from disk, returning a `null` note plus the error message when the file cannot be read. */

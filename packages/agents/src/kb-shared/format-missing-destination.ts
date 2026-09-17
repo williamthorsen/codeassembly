@@ -1,8 +1,6 @@
 /**
- * Builds the agent-facing error message for an undeterminable knowledge-base destination (no `--kb` given and no
- * discoverable `.kb/`), naming the registered knowledge bases and, when configured, the registry default reachable
- * as `--kb @default`. Shared by `kb-add` and `kb-curate` so the two tools' refusals stay parallel and surface the
- * registered-KB names the resolver already computed.
+ * Builds the agent-facing error message for a knowledge-base destination that could not be determined: no `--kb` was
+ * given and no `.kb/` was discoverable.
  */
 export function formatMissingDestinationMessage(resolved: {
   registeredKbs: string[];
