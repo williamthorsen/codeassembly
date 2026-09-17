@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { SearchHit } from '../../kb-search/types.ts';
 import { normalizeHits } from '../normalize.ts';
 
-// The vault fixtures live with the shared search primitive; the normalize-specific notes stay local.
+// The vault fixtures are stored with the shared search primitive; the normalize-specific notes stay local.
 const SEARCH_FIXTURES = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures');
 const NOTES_VAULT = join(SEARCH_FIXTURES, 'notes-vault');
 const NORMALIZE = join(import.meta.dirname, 'fixtures', 'normalize');

@@ -16,7 +16,7 @@ export function formatMissingDestinationMessage(resolved: {
   const kbs = resolved.registeredKbs.join(', ');
   const defaultHint =
     resolved.defaultName !== undefined
-      ? `the registry default is "${resolved.defaultName}", reachable as --kb @default`
+      ? `the registry default is "${resolved.defaultName}", available as --kb @default`
       : 'no default_kb is configured';
   return `no .kb/ was discovered and no --kb was given. Registered knowledge bases: ${kbs}. Pass --kb <name> to choose one; ${defaultHint}.`;
 }

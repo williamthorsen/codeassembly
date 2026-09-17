@@ -18,7 +18,7 @@ export function formatMissingStoreMessage(resolved: {
   const stores = resolved.registeredStores.join(', ');
   const defaultHint =
     resolved.defaultName !== undefined
-      ? `the registry default is "${resolved.defaultName}", reachable as --store @default`
+      ? `the registry default is "${resolved.defaultName}", available as --store @default`
       : 'no default_kb is configured';
   return `--store is required. Registered stores: ${stores}. Pass --store <name> to choose one; ${defaultHint}.`;
 }

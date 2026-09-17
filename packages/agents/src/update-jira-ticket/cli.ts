@@ -33,7 +33,8 @@ if (isEntryPoint()) {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. When `realpathSync` fails, the function warns on stderr and returns `false`.
+ * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
+ * returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

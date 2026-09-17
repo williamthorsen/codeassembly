@@ -291,7 +291,7 @@ function amendRecord(existing: KbEvent, args: ParsedArgs, body: string): KbEvent
 }
 
 /**
- * Returns true when this module is the process entry point. Because both sides are resolved through `realpathSync`, a
+ * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
  * `false`.
  */

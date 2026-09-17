@@ -212,14 +212,15 @@ function failure(error: EmitErrorCode, message: string): EmitFailure {
   return { ok: false, error, message };
 }
 
-/** Writes one diagnostic line to stderr. Stdout is reserved for the machine-readable result, so it stays clean. */
+/** Writes one diagnostic line to stderr. Stdout contains the machine-readable result, so it stays clean. */
 function warn(message: string): void {
   process.stderr.write(`emit-event: warning: ${message}\n`);
 }
 
 /**
- * Returns true when this module is the process entry point. Because both sides are resolved through `realpathSync`, a
- * symlinked invocation path still matches. On a `realpathSync` failure the function warns and returns `false`.
+ * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
+ * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
+ * `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

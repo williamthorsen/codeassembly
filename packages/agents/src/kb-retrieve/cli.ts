@@ -58,7 +58,7 @@ if (isEntryPoint()) {
 // region | Helpers
 
 /**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so that a
+ * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches.
  */
 function isEntryPoint(): boolean {

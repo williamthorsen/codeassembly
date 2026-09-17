@@ -58,7 +58,7 @@ export async function writeNote(input: {
     return {
       ok: false,
       reason: 'invalid-folder',
-      message: `folder "${input.folder ?? ''}" must not begin with "${ASSERTIONS_SEGMENT}/"; kb-add writes under ${ASSERTIONS_DIR}/ automatically — pass the topic subpath only`,
+      message: `folder "${input.folder ?? ''}" must not begin with "${ASSERTIONS_SEGMENT}/"; kb-add writes under ${ASSERTIONS_DIR}/ automatically. Pass the topic subpath only`,
     };
   }
 

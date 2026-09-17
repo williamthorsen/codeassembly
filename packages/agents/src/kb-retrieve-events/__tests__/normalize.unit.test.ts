@@ -6,17 +6,17 @@ import { describe, expect, it } from 'vitest';
 import type { SearchHit } from '../../kb-search/types.ts';
 import { normalizeEvents } from '../normalize.ts';
 
-// The event fixtures live with the shared search primitive.
+// The event fixtures are stored with the shared search primitive.
 const EVENTS = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures', 'events');
 
 describe(normalizeEvents, () => {
-  it('surfaces an event summary as the candidate display field', async () => {
+  it('returns an event summary as the candidate display field', async () => {
     const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-a.md'))] });
 
     expect(candidates[0]?.summary).toBe('Noticed a flaky retry under fake timers');
   });
 
-  it('carries captured-at and repo onto an event candidate', async () => {
+  it('copies captured-at and repo onto an event candidate', async () => {
     const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-a.md'))] });
 
     expect(candidates[0]?.capturedAt).toBe('2026-05-20T10:00:00.000Z');
@@ -56,7 +56,7 @@ describe(normalizeEvents, () => {
     expect(bySummary.get('Another observation captured outside a git remote')).toBe(2);
   });
 
-  it("carries an event's addressed-by list alongside its recurrence signals", async () => {
+  it("copies an event's addressed-by list alongside its recurrence signals", async () => {
     const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-addressed.md'))] });
 
     expect(candidates[0]).toMatchObject({
@@ -66,7 +66,7 @@ describe(normalizeEvents, () => {
     });
   });
 
-  it('carries a declared impact level onto an event candidate', async () => {
+  it('copies a declared impact level onto an event candidate', async () => {
     const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-impact-high.md'))] });
 
     expect(candidates[0]?.impact).toBe('high');

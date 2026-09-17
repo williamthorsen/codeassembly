@@ -417,7 +417,7 @@ function resolveRealPath(candidate: string): string {
   return existsSync(candidate) ? realpathSync(candidate) : candidate;
 }
 
-/** Projects the record's declined cuts that are still live against the files in this run. */
+/** Selects the record's declined cuts that are still live in this run's files. */
 function selectLiveDeclined(record: DeclineRecord, files: ReadonlySet<string>, root: string): DeclinedPhrase[] {
   return record.declined
     .filter((entry) => files.has(entry.file) && isLive(entry, readFileSync(path.join(root, entry.file), 'utf8')))

@@ -139,7 +139,7 @@ describe(reportSummary, () => {
     expect(output).toContain('/app/memory/feedback-bad.md');
   });
 
-  it('surfaces skipped files even when no readable memories remain', () => {
+  it('reports skipped files even when no readable memories remain', () => {
     const output = reportSummary(
       summary({ skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }] }),
       {},

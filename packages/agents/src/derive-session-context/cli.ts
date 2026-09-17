@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: The helper's resolved exit code must reach the OS, and `main` runs only behind the `isMain()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isMain()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 /**
  * CLI entry for the session-context deriver.
@@ -98,7 +98,7 @@ export async function deriveSessionContext(input: {
   mutations?: readonly ManifestMutation[];
 }): Promise<BranchManifest> {
   if (input.branch === '' || input.branch === 'HEAD') {
-    throw new Error('Detached HEAD: this script requires an active branch. Create or check out a branch first.');
+    throw new Error('Detached HEAD: This script requires an active branch. Create or check out a branch first.');
   }
 
   const home = input.home ?? homedir();
