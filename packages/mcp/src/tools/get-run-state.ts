@@ -15,17 +15,18 @@ export interface GetRunStateInput {
 }
 
 /**
- * Read run-index.json and run-log.jsonl, parse events, fold them into a
- * `CanonicalRunStatus`, and return the result.
+ * Reads run-index.json and run-log.jsonl, parses the events, and folds them
+ * into a `CanonicalRunStatus`. Throws when run-index.json is not a valid v3
+ * index.
  *
- * Follows the same parsing pattern as `run-data-parser.ts` in run-core:
- * - JSON parse errors are logged to `console.error` (file corruption)
- * - Schema validation errors are logged to `console.warn` (forward-compat)
+ * A log line that fails to parse is skipped. A line that is not valid JSON is
+ * logged to `console.error` as file corruption; a line that fails schema
+ * validation is logged to `console.warn`, so that an event type written by a
+ * newer emitter does not fail the read.
  */
 export async function getRunState(input: GetRunStateInput): Promise<CanonicalRunStatus> {
   const { runDir } = input;
 
-  // Read and parse run-index.json
   const indexPath = join(runDir, 'run-index.json');
   const indexContent = await readFile(indexPath, 'utf8');
   const rawIndex: unknown = JSON.parse(indexContent);
@@ -37,7 +38,6 @@ export async function getRunState(input: GetRunStateInput): Promise<CanonicalRun
 
   const v3Data = v3Result.data;
 
-  // Construct RunHeader from parsed data (same logic as run-data-parser.ts)
   const header: RunHeader = {
     runId: v3Data.context.runId,
     projectSlug: v3Data.context.projectSlug,
@@ -57,7 +57,6 @@ export async function getRunState(input: GetRunStateInput): Promise<CanonicalRun
     model: v3Data.config.model,
   };
 
-  // Read and parse run-log.jsonl
   const logPath = join(runDir, 'run-log.jsonl');
   const logContent = await readFile(logPath, 'utf8');
 

@@ -24,11 +24,9 @@ describe('stdio transport smoke test', () => {
     try {
       await client.connect(transport);
 
-      // Verify tool discovery
       const tools = await client.listTools();
       expect(tools.tools).toHaveLength(5);
 
-      // Call init_run
       const tmpDir = await mkdtemp(join(tmpdir(), 'mcp-stdio-smoke-'));
       const result = await client.callTool({
         name: 'init_run',
@@ -41,10 +39,8 @@ describe('stdio transport smoke test', () => {
         },
       });
 
-      // Verify no error
       expect(isErrorResult(result)).toBe(false);
 
-      // Parse and verify runId and runDir path structure using shared helpers
       const runId = parseAndGetString(result, 'runId');
       expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
       const resultRunDir = parseAndGetString(result, 'runDir');

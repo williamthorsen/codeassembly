@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { emitEvent } from '../emit-event.ts';
 
 describe('emitEvent', () => {
+  /** Creates a run directory holding an empty log. */
   async function createRunDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'mcp-test-emit-'));
     await writeFile(join(dir, 'run-log.jsonl'), '');

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { completeRun } from '../complete-run.ts';
 
 describe('completeRun', () => {
+  /** Creates a run directory holding a valid run index and an empty log. */
   async function createRunDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'mcp-test-complete-'));
     const runIndex = {

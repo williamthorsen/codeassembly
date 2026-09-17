@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { initRun, sanitizeTicketId } from '../init-run.ts';
 
 describe('initRun', () => {
+  /** Creates a temp directory to serve as a project root and artifact base. */
   async function createTmpDir(): Promise<string> {
     return mkdtemp(join(tmpdir(), 'mcp-test-init-'));
   }
@@ -179,11 +180,9 @@ describe('initRun', () => {
         task: 'test cascade wiring',
       });
 
-      // Verify resolveBaseDir was called with projectRoot and undefined baseDir
       expect(spy).toHaveBeenCalledOnce();
       expect(spy).toHaveBeenCalledWith(projectRoot, undefined);
 
-      // Verify the run directory was created under the mocked base directory
       const expectedPrefix = join(fakeBase, 'projects', 'test-project', 'tickets');
       expect(result.runDir).toContain(expectedPrefix);
     } finally {

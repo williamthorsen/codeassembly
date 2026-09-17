@@ -25,7 +25,7 @@ export interface InitRunResult {
   timestamp: string;
 }
 
-/** Generate a run ID in the format `{yyyymmdd}-{hhmmss}Z`. */
+/** Generates a run ID in the format `{yyyymmdd}-{hhmmss}Z`. */
 function generateRunId(): string {
   const iso = new Date().toISOString();
   const date = iso.slice(0, 10).replace(/-/g, '');
@@ -33,7 +33,7 @@ function generateRunId(): string {
   return `${date}-${time}Z`;
 }
 
-/** Generate a ticket ID in the format `{YYYYMMDD}-{4 random hex}`. */
+/** Generates a ticket ID in the format `{YYYYMMDD}-{4 random hex}`. */
 function generateTicketId(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const suffix = randomBytes(2).toString('hex');
@@ -41,7 +41,7 @@ function generateTicketId(): string {
 }
 
 /**
- * Sanitize a caller-supplied ticket ID for use in file paths.
+ * Sanitizes a caller-supplied ticket ID for use in file paths.
  * Strips leading `#` characters (a display convention, not part of the identifier).
  * Throws if the result is empty.
  */
@@ -54,14 +54,14 @@ export function sanitizeTicketId(ticketId: string): string {
 }
 
 /**
- * Initialize a new run: create the run directory, write run-index.json, create
- * an empty run-log.jsonl, and emit a `run_started` event.
+ * Initializes a new run: creates the run directory, writes run-index.json,
+ * creates an empty run-log.jsonl, and emits a `run_started` event.
  *
- * The artifact base directory is resolved from preferences (defaulting to `~/.ai`)
- * with an optional `baseDir` override. Runs are stored at
+ * The artifact base directory comes from `resolveBaseDir`, which takes
+ * `baseDir` as an override. Runs are stored at
  * `{artifactBase}/projects/{projectSlug}/tickets/{ticketId}/{runId}/`.
- * When no ticket ID is provided, one is auto-generated with a timestamp-based format.
- * Caller-supplied ticket IDs are sanitized (leading `#` stripped) before use.
+ * When no ticket ID is provided, one is generated from the date and a random
+ * suffix. A caller-supplied ticket ID is sanitized before use.
  */
 export async function initRun(input: InitRunInput): Promise<InitRunResult> {
   const { ticketId, projectSlug, projectRoot, branch, task, pipeline, models, config, baseDir } = input;
@@ -95,7 +95,6 @@ export async function initRun(input: InitRunInput): Promise<InitRunResult> {
   await writeFile(join(runDir, 'run-index.json'), JSON.stringify(runIndex, null, 2) + '\n');
   await writeFile(join(runDir, 'run-log.jsonl'), '');
 
-  // Emit a run_started event
   const emitResult = await emitEvent({
     runDir,
     event: { event: 'run_started' },
