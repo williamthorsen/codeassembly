@@ -2,8 +2,8 @@
 export type BreakingPolicy = 'forbidden' | 'optional' | 'required';
 
 /**
- * The values a surface template renders from, and the values a parse returns. Every field is optional: a template
- * names only the tokens its convention carries, and a field the record omits resolves to empty.
+ * The values from which a surface template renders, and the values that a parse returns. Every field is optional: A
+ * template names only the tokens that its convention includes, and a field omitted by the record resolves to empty.
  */
 export interface ChangeRecord {
   breaking?: boolean;
@@ -15,7 +15,7 @@ export interface ChangeRecord {
 }
 
 /**
- * The work-type taxonomy the engine is given rather than reads. `tiers` and the order of `types` together rank the
+ * The work-type taxonomy that the engine is given rather than reads. `tiers` and the order of `types` together rank the
  * entries, so a caller supplying the taxonomy also supplies the ranking.
  */
 export interface Taxonomy {

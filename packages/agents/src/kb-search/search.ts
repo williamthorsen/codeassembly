@@ -18,19 +18,19 @@ import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from '.
 /**
  * Runs the shared, type-blind recall pipeline both retrieve commands call: resolves which knowledge bases to search,
  * recalls candidate notes with ripgrep, scopes the hits to each KB's configured note set, parses each surviving note,
- * and applies the mechanical `--diataxis`/`--tag`/`--folder` filters. Returns the parsed hits plus the run-level signals
- * — searched KBs, ordered health warnings, the pre-filter hit count, and an empty-scope diagnostic — that each command
- * composes its own candidate table and diagnostics from. Each command selects the hits it owns by the parsed note's
- * `recordType`.
+ * and applies the mechanical `--diataxis`/`--tag`/`--folder` filters. Returns the parsed hits plus the run-level
+ * signals — searched KBs, ordered health warnings, the pre-filter hit count, and an empty-scope diagnostic — that each
+ * command composes its own candidate table and diagnostics from. Each command selects the hits it owns by the parsed
+ * note's `recordType`.
  *
  * An empty scope (no KB discovered or configured, an unknown `--store`, or a malformed registry) returns no hits and an
  * `emptyScopeDiagnostic`; a no-match run returns no hits with `recalledCount` 0. A note whose file cannot be read at
  * parse time is skipped and reported in `warnings` rather than dropped silently. A note that parses but carries no
  * frontmatter still becomes a hit (a degraded one), so a broken note is not hidden from the projecting command.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it exists so tests can isolate registry
- * resolution from the developer's environment. `recall` overrides how candidate notes are recalled, defaulting to
- * ripgrep; it exists so a test of scoping, filtering, or projection never spawns a process.
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it exists so that tests can isolate
+ * registry resolution from the developer's environment. `recall` overrides how candidate notes are recalled, defaulting
+ * to ripgrep; it exists so that a test of scoping, filtering, or projection never spawns a process.
  */
 export async function searchNotes(input: {
   query: string;

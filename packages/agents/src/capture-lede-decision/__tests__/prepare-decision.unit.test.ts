@@ -17,7 +17,7 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^recordType: event$/m);
   });
 
-  it('carries the group, the namespaced work type, the verdict, and the namespaced rating as tags', () => {
+  it('writes the group, the namespaced work type, the verdict, and the namespaced rating as tags', () => {
     const content = expectContent(prepareDecision(decisionFor({ differ: true, quality: 'strong' })));
 
     expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
@@ -42,13 +42,13 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
   });
 
-  it('carries the rating in frontmatter, where the exemplar selector reads a record', () => {
+  it('writes the rating in frontmatter, where the exemplar selector reads a record', () => {
     const content = expectContent(prepareDecision(decisionFor({ quality: 'exemplary' })));
 
     expect(content).toMatch(/^quality: exemplary$/m);
   });
 
-  it('carries the change identity and the doctrine fingerprint in frontmatter', () => {
+  it('writes the change identity and the doctrine fingerprint in frontmatter', () => {
     const content = expectContent(prepareDecision(decisionFor({})));
 
     expect(content).toMatch(/^type: feat$/m);
@@ -59,7 +59,7 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^doctrine-hash: sha256:abc$/m);
   });
 
-  it('summarizes the decision so recall names the verdict, the change, and the rating', () => {
+  it('summarizes the decision so that recall names the verdict, the change, and the rating', () => {
     const content = expectContent(prepareDecision(decisionFor({ differ: true, quality: 'good' })));
 
     expect(content).toMatch(/^summary: 'Lede revised for agents #1124, rated good'$/m);
@@ -115,7 +115,7 @@ describe(prepareDecision, () => {
     expect(content).toContain('## Comment\n\nCut the setup clause.');
   });
 
-  it('omits every optional field the episode and context did not carry', () => {
+  it('omits every optional field the episode and context did not supply', () => {
     const content = expectContent(prepareDecision(decisionFor({})));
 
     expect(content).not.toMatch(/^ticket:/m);
@@ -125,7 +125,7 @@ describe(prepareDecision, () => {
     expect(content).not.toMatch(/^session:/m);
   });
 
-  it('carries the optional fields the episode and context did supply', () => {
+  it('writes the optional fields the episode and context did supply', () => {
     const content = expectContent(
       prepareDecision({
         ...decisionFor({}),
@@ -154,7 +154,7 @@ const IDENTITY = {
   mergeCommit: '35aa58d7',
 } as const;
 
-/** Builds a decision input over a minimal episode, applying the overrides a test cares about. */
+/** Builds a decision input over a minimal episode, applying the overrides that a test cares about. */
 function decisionFor(overrides: {
   quality?: LedeQuality;
   differ?: boolean;
@@ -171,7 +171,7 @@ function decisionFor(overrides: {
   };
 }
 
-/** Builds a minimal resolved episode carrying no optional field unless a test supplies one. */
+/** Builds a minimal resolved episode with no optional field unless a test supplies one. */
 function episodeFor(overrides: { differ?: boolean }): LedeEpisode {
   return {
     agentLede: AGENT_LEDE,

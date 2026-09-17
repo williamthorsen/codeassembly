@@ -1,8 +1,8 @@
-// Shapes for the select-lede-exemplars helper: the exemplars it emits, how far it reached to find them, and the
-// stdout payload carrying both.
+// Shapes for the select-lede-exemplars helper: the exemplars that it emits, how far it reached to find them, and the
+// stdout payload that contains both.
 //
-// The payload is a discriminated union on `ok`. An exhausted corpus is a success carrying a diagnostic rather than a
-// failure: a drafter degrades to no exemplars, and is never blocked by their absence.
+// The payload is a discriminated union on `ok`. An exhausted corpus is a success with a diagnostic rather than a
+// failure: A drafter degrades to no exemplars, and is never blocked by their absence.
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
 import type { WorkType } from '../lib/work-types.ts';
@@ -15,22 +15,22 @@ import type { WorkType } from '../lib/work-types.ts';
 export type ExemplarRequest =
   { readonly kind: 'type'; readonly workType: WorkType } | { readonly kind: 'tier'; readonly tier: string };
 
-/** One author-approved lede, with the change identity a drafter calibrates a new lede against. */
+/** One author-approved lede, with the change identity against which a drafter calibrates a new lede. */
 export interface LedeExemplar {
-  /** The approved text: the record's merged lede when it carries one, its agent lede otherwise. */
+  /** The approved text: the record's merged lede when it has one, its agent lede otherwise. */
   lede: string;
-  /** The agent's own lede. Present only where the request asked for the decision pair. */
+  /** The agent's own lede. Present only when the request asked for the decision pair. */
   agentLede?: string;
-  /** The lede the author merged. Absent where they left the agent's alone, and where no pair was asked for. */
+  /** The lede that the author merged. Absent when they left the agent's alone, and when no pair was asked for. */
   mergedLede?: string;
-  /** The author's critique of the agent's lede. Absent where none was given, and where no pair was asked for. */
+  /** The author's critique of the agent's lede. Absent when none was given, and when no pair was asked for. */
   comment?: string;
-  /** Canonical work-type key, so a record filed under an alias and one filed under the key read alike. */
+  /** Canonical work-type key, so that a record filed under an alias and one filed under the key read alike. */
   type: string;
   tier: string;
   /** Scope the change belongs to; absent for a change that names none. */
   scope?: string;
-  /** Number of the pull request the lede shipped with. */
+  /** Number of the pull request in which the lede was merged. */
   pr: string;
   capturedAt: string;
 }
@@ -42,7 +42,10 @@ export interface LedeExemplar {
  */
 export type Widening = 'none' | 'tier' | 'any';
 
-/** The selection core's outcome: the exemplars newest first, the widening that ran, and the records it could not read. */
+/**
+ * The selection core's outcome: the exemplars newest first, the widening that ran, and the records that it could not
+ * read.
+ */
 export interface ExemplarSelection {
   exemplars: LedeExemplar[];
   widening: Widening;
@@ -50,7 +53,7 @@ export interface ExemplarSelection {
   warnings: string[];
 }
 
-/** The stdout payload's report of the floor a request applied. */
+/** The stdout payload's report of the floor applied by a request. */
 export type AppliedFloor = LedeQuality | 'none';
 
 /** Every categorical reason a request fails without an unexpected throw. */
@@ -63,13 +66,13 @@ export interface SelectSuccess {
   type?: string;
   tier: string;
   widening: Widening;
-  /** The rating floor the request applied; `none` when it named none and read every record. */
+  /** The rating floor that the request applied; `none` when it named none and read every record. */
   minQuality: AppliedFloor;
   exemplars: LedeExemplar[];
   /** Registry name of the corpus that was read. */
   store: string;
   warnings: string[];
-  /** Set when the corpus yielded no exemplars, so a caller can tell an empty corpus from an empty request. */
+  /** Set when the corpus yielded no exemplars, so that a caller can tell an empty corpus from an empty request. */
   diagnostic?: string;
 }
 

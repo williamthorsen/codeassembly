@@ -2,14 +2,14 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-/** The lede the fixture's pull-request artifact carries. */
+/** The lede that the fixture's pull-request artifact contains. */
 export const FIXTURE_AGENT_LEDE = 'Rulebooks can now address a file by linking to it.';
 
-/** The lede the fixture's merge artifact carries, a revision of {@link FIXTURE_AGENT_LEDE}. */
+/** The lede that the fixture's merge artifact contains, a revision of {@link FIXTURE_AGENT_LEDE}. */
 export const FIXTURE_MERGED_LEDE =
   'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
-/** Filenames of the subagent bodies the fixture's doctrine directory carries. */
+/** Filenames of the subagent bodies in the fixture's doctrine directory. */
 export const FIXTURE_DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
 
 /**
@@ -22,14 +22,14 @@ export interface LedeFixture {
   artifactDir: string;
   dataDir: string;
   subagentsDir: string;
-  /** Path the fixture would write a provenance stamp to; absent unless a test writes one. */
+  /** Path to which the fixture would write a provenance stamp; absent unless a test writes one. */
   provenancePath: string;
 }
 
 /**
- * Builds a temporary ticket directory carrying a pull-request, merge, and change-summary artifact, plus a `_data`
- * directory holding a minimal work-type taxonomy and a subagents directory holding the bodies the doctrine digest
- * covers.
+ * Builds a temporary ticket directory containing a pull-request, merge, and change-summary artifact, plus a `_data`
+ * directory holding a minimal work-type taxonomy and a subagents directory holding the bodies covered by the doctrine
+ * digest.
  *
  * The change summary declares a work type and scope that differ from what a caller would normally pass as flags, so a
  * test can tell a supplied flag from its artifact fallback.

@@ -99,7 +99,7 @@ function detectInFile(spans: readonly ProseSpan[]): SoCandidate[] {
   return candidates;
 }
 
-/** Reports whether a site is bare, given its sentence's text before it: a word precedes it, and no result marker does. */
+/** Reports whether a site is bare, given its sentence's text before it: A word precedes it, and no result marker does. */
 function isBareSite(textBefore: string): boolean {
   return /[\p{L}\p{N}]/u.test(textBefore) && !RESULT_MARKER.test(textBefore);
 }

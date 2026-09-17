@@ -7,11 +7,11 @@ import { isRecord } from '../lib/type-guards.ts';
 
 /**
  * Reads the last `change-record` block in a pull-request body back into what it records, as the inverse of
- * `renderChangeRecordBlock`: the body carries no block, carries one that cannot be read, or carries one that reads.
+ * `renderChangeRecordBlock`: the body contains no block, contains one that cannot be read, or contains one that reads.
  *
  * A block without a `title` does not read. `consolidated_record` and `overrides` normalize as the renderer normalizes
- * them, so a scope override of `*` is kept. A key the grammar does not declare is ignored, so a later addition to the
- * block does not break this reader, and a declared key whose value is null reads as absent.
+ * them, so a scope override of `*` is kept. Because a key that the grammar does not declare is ignored, a later
+ * addition to the block does not break this reader. A declared key whose value is null reads as absent.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const lines = splitLines(body);
@@ -34,16 +34,16 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
 }
 
 /**
- * Renders the fenced `change-record` block that a pull-request body carries as its final block: the title, the
- * consolidated record of the branch, and any override the author applied.
+ * Renders the fenced `change-record` block that a pull-request body contains as its final block: the title, the
+ * consolidated record of the branch, and any override applied by the author.
  *
  * The payload is YAML rather than a surface template, because `consolidated_record` and `overrides` nest and a template
  * renders one flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip
- * verification of the kind the title grammar requires.
+ * verification of the kind required by the title grammar.
  *
- * The consolidated record and the overrides are normalized as the engine normalizes any record, so a field that the
+ * The consolidated record and the overrides are normalized as the engine normalizes any record. A field that the
  * branch did not determine is absent rather than empty, a marker spelled on a type splits into the type and `breaking`,
- * and `breaking` appears only where it is true. Each group is omitted where it is empty.
+ * and `breaking` appears only when it is true. Each group is omitted when it is empty.
  */
 export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
   const consolidatedRecord = normalizeConsolidatedRecord(block.consolidatedRecord ?? {});
@@ -78,13 +78,13 @@ export interface ChangeRecordBlock {
   title: string;
 }
 
-/** What a body's last `change-record` block reads as: absent, malformed with the defect named, or the block it records. */
+/** What a body's last `change-record` block reads as: absent, malformed with the defect named, or the block that it records. */
 export type ChangeRecordBlockReading =
   { kind: 'absent' } | { defect: string; kind: 'malformed' } | { block: ChangeRecordBlock; kind: 'read' };
 
 /**
  * The overrides that a block records, named as the flags that set them are. A `scope` of `*` sets no scope. `breaking`
- * is only ever `true`: a block's override can add the marker to a record but not remove it.
+ * is only ever `true`: A block's override can add the marker to a record but not remove it.
  */
 export interface RecordOverrides extends Overrides {
   breaking?: true;
@@ -184,7 +184,7 @@ function readGroup(
   return { record };
 }
 
-/** Reads a parsed payload into the block it records, reporting the first key whose value the grammar does not allow. */
+/** Reads a parsed payload into the block that it records, reporting the first key whose value the grammar does not allow. */
 function readPayload(payload: unknown): ChangeRecordBlockReading {
   if (!isRecord(payload)) {
     return { defect: 'the payload is not a mapping', kind: 'malformed' };
@@ -231,7 +231,7 @@ function splitLines(text: string): string[] {
   return text.split(/\r?\n/);
 }
 
-/** The declared string fields of each group that the block holds. */
+/** The declared string fields of each group that the block contains. */
 const STRING_FIELDS = ['scope', 'type'] as const;
 
 // endregion | Helpers

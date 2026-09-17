@@ -12,7 +12,7 @@ import { detectSoUses } from './detect-so.ts';
 import { detectWhereUses } from './detect-where.ts';
 import type { Candidate, ProseSpan, RuleId } from './types.ts';
 
-/** Every rule the helper detects, mapped to the detector that reports its sites. */
+/** Every rule detected by the helper, mapped to the detector that reports its sites. */
 export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[]) => Candidate[]>> = {
   'em-dash': detectEmDashes,
   'reduced-object-relative': detectObjectRelatives,
@@ -21,7 +21,7 @@ export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[
   where: detectWhereUses,
 };
 
-/** Every rule the helper detects, for the messages that name the known set. A test holds it to the registry. */
+/** Every rule detected by the helper, for the messages that name the known set. A test holds it to the registry. */
 export const RULE_IDS: ReadonlyArray<RuleId> = ['em-dash', 'reduced-object-relative', 'second-person', 'so', 'where'];
 
 /**
@@ -39,7 +39,7 @@ export function detectRules(spans: readonly ProseSpan[], rules: readonly RuleId[
   return candidates.toSorted((a, b) => (fileOrder.get(a.file) ?? 0) - (fileOrder.get(b.file) ?? 0) || a.line - b.line);
 }
 
-/** Reports whether a name is a rule the helper holds a detector for. */
+/** Reports whether a name is a rule for which the helper holds a detector. */
 export function isRuleId(name: string): name is RuleId {
   return Object.hasOwn(RULE_DETECTORS, name);
 }

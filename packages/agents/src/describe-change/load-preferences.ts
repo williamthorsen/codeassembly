@@ -14,11 +14,11 @@ import { type Surface, SURFACES } from './types.ts';
  * string. Resolution is per key rather than per section, so a project file that names `commit.title_format` alone
  * still inherits the other three from the global file.
  *
- * A key the project file names wins even where its value is empty, which is how a repository opts one surface out of a
- * template the global file configures.
+ * A key that the project file names wins even when its value is empty, which is how a repository opts one surface out
+ * of a template configured by the global file.
  *
- * Throws where a preferences file exists but its YAML is malformed, naming the file. A silent fall-through would
- * render bare titles from a file the author believes is in force.
+ * Throws when a preferences file exists but its YAML is malformed, naming the file. A silent fall-through would
+ * render bare titles from a file that the author believes is in force.
  */
 export async function loadPreferences(input: { home: string; projectRoot: string }): Promise<LoadedPreferences> {
   const warnings: string[] = [];
@@ -35,9 +35,9 @@ export async function loadPreferences(input: { home: string; projectRoot: string
 }
 
 /**
- * Resolves the directory the `.agents/` lookup is anchored at: the repository root, so the templates a run reads do
- * not depend on which subdirectory the caller invoked it from. Falls back to `cwd` outside a repository, reporting
- * git's own diagnostic so that a misanchored run is debuggable rather than silent.
+ * Resolves the directory at which the `.agents/` lookup is anchored: the repository root, so the templates that a run
+ * reads do not depend on which subdirectory the caller invoked it from. Falls back to `cwd` outside a repository,
+ * reporting git's own diagnostic so that a misanchored run is debuggable rather than silent.
  */
 export async function resolveProjectRoot(cwd: string): Promise<{ projectRoot: string; warning?: string }> {
   try {
@@ -63,7 +63,7 @@ export interface LoadedPreferences {
 const execFileAsync = promisify(execFile);
 
 /**
- * Reads one preferences file into the `title_format` value each surface declares, absent where the file omits the key.
+ * Reads one preferences file into the `title_format` value declared by each surface, absent when the file omits the key.
  * A missing file contributes nothing; a key present with no value reads as the empty string, which is the explicit way
  * to opt a surface out.
  */

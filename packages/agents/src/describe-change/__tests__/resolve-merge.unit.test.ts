@@ -32,7 +32,7 @@ const HEAD_COMMIT = 'e5029924aa11bb22cc33dd44ee55ff6677889900';
 const BODY = '## What\n\n- Adds foo.\n';
 
 describe(resolveMerge, () => {
-  describe('where the block and the commits agree', () => {
+  describe('when the block and the commits agree', () => {
     it('merges the block’s record, attributes it to the block, and shows nothing', () => {
       const report = resolveMerge(
         buildInput({
@@ -74,7 +74,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('when the title carries the same typed prefix, merges it once', () => {
+    it('when the title includes the same typed prefix, merges it once', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), prTitle: '#466 agents|feat: Add foo' }),
       );
@@ -93,7 +93,7 @@ describe(resolveMerge, () => {
     });
   });
 
-  describe('where the block and the commits disagree', () => {
+  describe('when the block and the commits disagree', () => {
     it('uses the commits, attributes every field to them, and names the fields that differ', () => {
       const report = resolveMerge(
         buildInput({
@@ -123,7 +123,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('compares commits that hold no entry like any other record', () => {
+    it('compares commits that contain no entry like any other record', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), commits: { kind: 'read' } }),
       );
@@ -150,7 +150,7 @@ describe(resolveMerge, () => {
     });
   });
 
-  describe('where the commits are unavailable', () => {
+  describe('when the commits are unavailable', () => {
     it('lets the block’s record stand and says why', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), commits: unavailable('not fetched') }),
@@ -298,7 +298,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('are attributed to the flags where they set the value that the record already holds', () => {
+    it('are attributed to the flags when they set the value that the record already has', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), overrides: { type: 'feat' } }),
       );
@@ -329,13 +329,13 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({ effective_record: { breaking: false }, effective_sources: { breaking: 'flags' } });
     });
 
-    it('add a marker to a record that carries none', () => {
+    it('add a marker to a record that has none', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), overrides: { breaking: true } }));
 
       expect(report.merge_title).toBe('#466 feat!: Add foo (#470)');
     });
 
-    it('keep the resolved marker where only the type is overridden', () => {
+    it('keep the resolved marker when only the type is overridden', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ breaking: true, type: 'feat' }), overrides: { type: 'sec' } }),
       );
@@ -376,7 +376,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('report a block that holds no consolidated record with a null record', () => {
+    it('report a block that names no consolidated record with a null record', () => {
       const block: ChangeRecordBlockReading = { block: { title: 'Add foo' }, kind: 'read' };
 
       const report = resolveMerge(buildInput({ block }));
@@ -404,7 +404,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('reads the typed prefix through the pull-request template where that template names {type}', () => {
+    it('reads the typed prefix through the pull-request template when that template names {type}', () => {
       const templates = { ...TEMPLATES, pr: '[{ticket_ref} ][[{scope}|]{type}: ]{title}' };
 
       const report = resolveMerge(
@@ -447,7 +447,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('where the title does not invert, uses the block’s title and says so', () => {
+    it('when the title does not invert, uses the block’s title and says so', () => {
       const templates = { ...TEMPLATES, pr: '{ticket_ref} {title}' };
 
       const report = resolveMerge(
@@ -462,7 +462,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('where the title does not invert and no block is readable, uses the pull-request title verbatim', () => {
+    it('when the title does not invert and no block is readable, uses the pull-request title verbatim', () => {
       const templates = { ...TEMPLATES, pr: '{ticket_ref} {title}' };
 
       const report = resolveMerge(buildInput({ prTitle: 'Add foo', templates }));
@@ -484,7 +484,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('takes the flag’s ticket reference where the title carries none', () => {
+    it('takes the flag’s ticket reference when the title names none', () => {
       const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), prTitle: 'Add foo' }));
 
       expect(report).toMatchObject({
@@ -493,7 +493,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('where no ticket reference is known, renders the merge title without one', () => {
+    it('when no ticket reference is known, renders the merge title without one', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ type: 'feat' }), prTitle: 'Add foo', ticketRef: null }),
       );
@@ -505,7 +505,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('where the merge template is empty, uses the bare title', () => {
+    it('when the merge template is empty, uses the bare title', () => {
       const templates = { ...TEMPLATES, merge: '' };
 
       const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), templates }));
@@ -515,7 +515,7 @@ describe(resolveMerge, () => {
   });
 
   describe('the body', () => {
-    it('where ## What is the last heading, excludes the closing line and the block', () => {
+    it('when ## What is the last heading, excludes the closing line and the block', () => {
       const block = renderChangeRecordBlock({ consolidatedRecord: { type: 'feat' }, title: 'Add foo' });
 
       const report = resolveMerge(
@@ -525,7 +525,7 @@ describe(resolveMerge, () => {
       expect(report.body).toBe('- Adds foo.\n- Adds bar.');
     });
 
-    it('takes ## What alone where another section follows it', () => {
+    it('takes ## What alone when another section follows it', () => {
       const report = resolveMerge(
         buildInput({ prBody: '## What\n\n- Adds foo.\n\n## Why\n\nBecause.\n\nCloses #466\n' }),
       );
@@ -547,7 +547,7 @@ describe(resolveMerge, () => {
       expect(report.body).toBe('- Fixes #12 by guarding the parser.');
     });
 
-    it('yields an empty body where the pull request has no ## What', () => {
+    it('yields an empty body when the pull request has no ## What', () => {
       const report = resolveMerge(buildInput({ prBody: 'Adds foo.\n' }));
 
       expect(report.body).toBe('');
@@ -560,7 +560,7 @@ describe(resolveMerge, () => {
 /**
  * Builds a merge input from the house templates and a taxonomy of one type per policy. A `commitsRecord` stands for
  * commits that were read and consolidate to it; without one, the commits agree with the block's consolidated record, or
- * hold no entry where no block is readable. A `ticketRef` of null leaves the flag's reference out.
+ * contain no entry when no block is readable. A `ticketRef` of null leaves the flag's reference out.
  */
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {
@@ -592,8 +592,8 @@ function buildInput(
 }
 
 /**
- * Builds a block reading holding the consolidated record given, with the author's overrides where any are given, and a
- * title that defaults to the pull request's.
+ * Builds a block reading that contains the consolidated record given, with the author's overrides if any are given,
+ * and a title that defaults to the pull request's.
  */
 function readBlock(
   consolidatedRecord: ChangeRecord,

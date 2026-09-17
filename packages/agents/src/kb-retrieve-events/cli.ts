@@ -110,8 +110,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  * projects the event candidate table, and returns the structured result. A no-query, no-KB, or no-match outcome yields
  * an empty candidate list with a `diagnostic` field rather than throwing.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it exists so tests can isolate registry
- * resolution from the developer's environment.
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it exists so that tests can isolate
+ * registry resolution from the developer's environment.
  *
  * @internal - Exported to allow testing.
  */

@@ -5,14 +5,14 @@ import type { ChangeRecord } from './types.ts';
 /**
  * Renders compiled template nodes against a record, producing the surface string.
  *
- * A group drops, literals included, when a token directly inside it resolves empty. A nested group decides its own
- * fate, so `[[{scope}|]{type}: ]` keeps the type prefix for a change that names no scope. `{breaking}` never decides a
- * group, since a non-breaking change would otherwise drop the prefix that carries it.
+ * A group drops, literals included, when a token directly inside it resolves empty. Each nested group drops or renders
+ * on its own, so `[[{scope}|]{type}: ]` keeps the type prefix for a change that names no scope. `{breaking}` never
+ * decides a group, since a non-breaking change would otherwise drop the prefix that contains it.
  *
- * Where the template names no `{breaking}`, `{type}` carries the marker itself and renders `feat!`, which is how a
+ * When the template names no `{breaking}`, `{type}` appends the marker itself and renders `feat!`, which is how a
  * convention that places the marker on the type stays renderable.
  *
- * Output is exactly what the nodes describe: no whitespace pass runs, so `parse` inverts what `render` produced.
+ * Output is exactly what the nodes describe: Because no whitespace pass runs, `parse` inverts what `render` produced.
  */
 export function render(nodes: readonly TemplateNode[], record: ChangeRecord): string {
   const normalized = normalizeChangeRecord(record);
@@ -54,7 +54,7 @@ function renderNodes(nodes: readonly TemplateNode[], record: ChangeRecord, marks
   return rendered;
 }
 
-/** Resolves one token against the record, empty where the record omits the field it names. */
+/** Resolves one token against the record, empty when the record omits the field that it names. */
 function resolveToken(record: ChangeRecord, name: TokenName, marksBreaking: boolean): string {
   switch (name) {
     case 'breaking':
@@ -72,7 +72,7 @@ function resolveToken(record: ChangeRecord, name: TokenName, marksBreaking: bool
   }
 }
 
-/** Resolves `{type}`, appending the marker where the template names no `{breaking}` to carry it. */
+/** Resolves `{type}`, appending the marker when the template names no `{breaking}` to render it. */
 function resolveTypeToken(record: ChangeRecord, marksBreaking: boolean): string {
   if (record.type === undefined) {
     return '';

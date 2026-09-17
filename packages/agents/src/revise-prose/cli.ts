@@ -1,18 +1,18 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and this module runs `main` only behind the `isEntryPoint()` guard, never when imported as a library; throwing-to-set-exitCode would lose the explicit failure-exit contract. */
+/* eslint n/no-process-exit: off -- CLI entry point: The helper's resolved exit code must reach the OS, and this module runs `main` only behind the `isEntryPoint()` guard, never when imported as a library; throwing-to-set-exitCode would lose the explicit failure-exit contract. */
 /* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
 /**
  * CLI entry for the prose sweep.
  *
  * Two commands. `detect` (the default) sweeps, batches, and reports; `record` folds one run's outcome into the
- * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files they
- * name or contain; with none, the sweep covers the whole repository.
+ * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files that
+ * they name or contain; with none, the sweep covers the whole repository.
  *
  * With no unit declared, `detect` runs the reduced-object-relative detector alone and does not read the record, which
  * keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule
  * declares no unit unless it names one on its own. Coverage and rejections are keyed on each rule's sweep version; a
  * unit's version is read only to convert a record written before rules were versioned.
  *
- * JSON on stdout is the only output: the human-readable report is the agent's, composed once each candidate has been
+ * JSON on stdout is the only output: The human-readable report is the agent's, composed once each candidate has been
  * adjudicated. The helper revises no prose. The agent applies repairs with its own editing tool, which keeps one write
  * path and leaves the harness its file tracking.
  */
@@ -61,7 +61,7 @@ import type {
   VersionedRule,
 } from './types.ts';
 
-/** The flags the sweep recognizes. Each of `rule` and `unit` may repeat; the scanner reports them in argv order. */
+/** The flags recognized by the sweep. Each of `rule` and `unit` may repeat; the scanner reports them in argv order. */
 const FLAG_SPECS: ReadonlyArray<FlagSpec<'batch-budget' | 'rule' | 'unit'>> = [
   { name: 'batch-budget', takesValue: true },
   { name: 'rule', takesValue: true },
@@ -96,7 +96,7 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units the caller holds.
+ * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units that the caller holds.
  *
  * `--rule <name>@<version>=<unit>` names a rule, its sweep version, and the unit owning it, whether or not the helper
  * has a detector for it; `--rule <name>=<unit>` names a rule that declares no sweep version, which is swept but never
@@ -174,7 +174,7 @@ export async function runDetect(input: {
   const versions = buildArgVersions(args);
   const ruleVersions = selectRuleVersions(versions);
 
-  // Read only where a unit is declared: with none, no version exists to compare coverage or a rejection against, and
+  // Read only when a unit is declared: With none, no version exists to compare coverage or a rejection against, and
   // a malformed record would otherwise fail an invocation that never consults it.
   let record: ProseRecord = EMPTY_RECORD;
   if (args.units.size > 0) {
@@ -196,7 +196,7 @@ export async function runDetect(input: {
     const detected = detectRules(spans, rules);
     const applied = args.units.size === 0 ? detected : applyRejections(detected, record, ruleVersions);
 
-    // Plan from every candidate: a recurring sentence links its files before coverage decides which rules they need.
+    // Plan from every candidate: A recurring sentence links its files before coverage decides which rules they need.
     const planned = planBatches({ files: scannedFiles, candidates: applied, budget: args.budget });
     const batches: ReportedBatch[] = planned
       .map((batch) => ({ ...batch, unswept: listBatchUnsweptRules(record, ruleVersions, batch.files) }))
@@ -274,7 +274,7 @@ function buildArgVersions(args: ParsedArgs): SweepVersions {
 }
 
 /**
- * Builds the predicate that decides whether a site belongs to a reported batch: its file is in one, and that batch
+ * Builds the predicate that decides whether a site belongs to a reported batch: Its file is in one, and that batch
  * applies its rule, which is either unswept there or not versioned by the run.
  */
 function buildBatchScope(
@@ -351,7 +351,7 @@ function readRecordFile(root: string, versions: SweepVersions): ProseRecord {
   return parseRecord(content, versions);
 }
 
-/** Reads one repository file's content and extracted prose, or returns undefined where the file cannot be read. */
+/** Reads one repository file's content and extracted prose, or returns undefined if the file cannot be read. */
 function readSiteText(root: string, file: string): SiteText | undefined {
   let content: string;
   try {
@@ -369,7 +369,7 @@ function readSiteText(root: string, file: string): SiteText | undefined {
 /** Reads standard input to EOF, which is how the `record` command receives the run's fold. */
 async function readStdin(): Promise<string> {
   const chunks: Uint8Array[] = [];
-  // The stream yields `any`, so each chunk is narrowed rather than asserted: a string arrives where an encoding is set.
+  // The stream yields `any`, so each chunk is narrowed rather than asserted: A string arrives when an encoding is set.
   for await (const chunk of process.stdin) {
     chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
   }
@@ -415,7 +415,7 @@ function stripCommand(argv: readonly string[]): readonly string[] {
  * Counts a candidate set by file, by rule, and by shape, alongside how many files the sweep read, how many it
  * excluded, and how many batches the record let it skip. A whole-repository sweep can return more candidates than one
  * adjudication pass affords, and these counts are what a caller reads to narrow the next run before paying for it.
- * The skip counts keep an exclusion visible: a file never opened by the sweep would otherwise leave the report looking
+ * The skip counts keep an exclusion visible: A file never opened by the sweep would otherwise leave the report looking
  * clean.
  */
 function summarize(input: {
@@ -426,7 +426,7 @@ function summarize(input: {
   planned: readonly Batch[];
 }): CandidateSummary {
   const counts = new Map<string, number>();
-  // Keyed in the order the rulebook ranks the shapes, so a shape carried by no candidate still reads as zero.
+  // Keyed in the order the rulebook ranks the shapes, so a shape with no candidates still reads as zero.
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
   const byRule: Record<RuleId, number> = {
     'em-dash': 0,

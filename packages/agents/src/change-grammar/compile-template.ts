@@ -2,7 +2,7 @@ import { isTokenName, type TokenName } from './tokens.ts';
 
 /**
  * Compiles a template string into the node tree that `render` and `parse` both walk. One tree serving both directions
- * is what makes them inverses of each other rather than two implementations kept in step by hand.
+ * makes them inverses of each other rather than two implementations kept in step by hand.
  *
  * `[` opens an optional group and `]` closes it; groups nest. A backslash escapes `[`, `]`, or another backslash into
  * literal text. A `{...}` run naming a declared token compiles to a token node; any other `{...}` run stays literal, so
@@ -18,7 +18,7 @@ export function compileTemplate(template: string): TemplateNode[] {
   return nodes;
 }
 
-/** An optional group: it renders only when every token directly inside it resolves non-empty. */
+/** An optional group: It renders only when every token directly inside it resolves non-empty. */
 export interface GroupNode {
   children: TemplateNode[];
   kind: 'group';
@@ -33,7 +33,7 @@ export interface LiteralNode {
 /** One node of a compiled template. */
 export type TemplateNode = GroupNode | LiteralNode | TokenNode;
 
-/** A reference to a declared token, replaced by the record value it names. */
+/** A reference to a declared token, replaced by the record value that it names. */
 export interface TokenNode {
   kind: 'token';
   name: TokenName;
@@ -102,12 +102,12 @@ function compileNodes(template: string, start: number, insideGroup: boolean): Co
   return { index, nodes };
 }
 
-/** The characters a backslash turns into literal text. */
+/** The characters that a backslash turns into literal text. */
 const ESCAPABLE_CHARACTERS = new Set(['[', ']', '\\']);
 
 /**
  * Reads a token reference beginning at `index`, reporting the name and the index just past the closing brace. Yields
- * nothing where the run is not a `{...}` naming a declared token.
+ * nothing when the run is not a `{...}` naming a declared token.
  */
 function readTokenAt(template: string, index: number): { index: number; name: TokenName } | undefined {
   if (template[index] !== '{') {
@@ -121,7 +121,7 @@ function readTokenAt(template: string, index: number): { index: number; name: To
   return isTokenName(name) ? { index: close + 1, name } : undefined;
 }
 
-/** The nodes one `compileNodes` pass produced, and the index at which it stopped. */
+/** The nodes produced by one `compileNodes` pass, and the index at which it stopped. */
 interface CompiledRun {
   index: number;
   nodes: TemplateNode[];

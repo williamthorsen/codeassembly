@@ -214,7 +214,7 @@ function rejectArguments(command: string): HelperFailure {
 /** Reads standard input to its end. */
 async function readStdin(): Promise<string> {
   const chunks: Uint8Array[] = [];
-  // The stream yields `any`, so each chunk is narrowed rather than asserted: a string arrives where an encoding is set.
+  // The stream yields `any`, so each chunk is narrowed rather than asserted: A string arrives when an encoding is set.
   for await (const chunk of process.stdin) {
     chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
   }

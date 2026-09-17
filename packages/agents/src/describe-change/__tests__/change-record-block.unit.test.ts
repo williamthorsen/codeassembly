@@ -55,7 +55,7 @@ describe(readChangeRecordBlock, () => {
     expect(readChangeRecordBlock(body)).toStrictEqual({ block: expected, kind: 'read' });
   });
 
-  it('reports a body carrying no block as absent', () => {
+  it('reports a body containing no block as absent', () => {
     expect(readChangeRecordBlock('## What\n\n- Adds the parser\n')).toStrictEqual({ kind: 'absent' });
   });
 
@@ -76,7 +76,7 @@ describe(readChangeRecordBlock, () => {
     expect(readChangeRecordBlock(body)).toStrictEqual({ block, kind: 'read' });
   });
 
-  it('ignores a key the grammar does not declare, and reads a null field as absent', () => {
+  it('ignores a key that the grammar does not declare, and reads a null field as absent', () => {
     const body = [
       '```change-record',
       'grammar: 2',
@@ -229,7 +229,7 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered).consolidated_record).toStrictEqual({ type: 'feat' });
   });
 
-  it('quotes a title carrying the colon that would otherwise open a mapping', () => {
+  it('quotes a title containing the colon that would otherwise open a mapping', () => {
     const title = 'Add a parser: the reader, the writer, and the verifier';
     const rendered = renderChangeRecordBlock({ title });
 
@@ -253,7 +253,7 @@ describe(stripChangeRecordBlocks, () => {
 
 // region | Helpers
 
-/** Reads a rendered block back through a YAML parse, which is the inverse the renderer is written against. */
+/** Reads a rendered block back through a YAML parse, which is the inverse against which the renderer is written. */
 function readBlock(rendered: string): Record<string, unknown> {
   const lines = rendered.split('\n');
   const parsed: unknown = parseYaml(lines.slice(1, -1).join('\n'));

@@ -15,7 +15,7 @@ import { loadWorkTypes, resolveWorkType, type WorkType } from '../lib/work-types
 import { selectExemplars } from './select-exemplars.ts';
 import type { ExemplarRequest, SelectErrorCode, SelectResult } from './types.ts';
 
-/** The flags this helper accepts; it reads nothing from stdin. */
+/** The flags that this helper accepts; it reads nothing from stdin. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'count', takesValue: true },
   { name: 'data-dir', takesValue: true },
@@ -27,8 +27,8 @@ const FLAGS: readonly FlagSpec[] = [
 ];
 
 /**
- * The event store this helper reads when `--store` names none. The corpus is cross-repo: one store holds every lede
- * decision, whichever repository the pull request merged in.
+ * The event store that this helper reads when `--store` names none. The corpus is cross-repo: One store contains every
+ * lede decision, whichever repository the pull request merged in.
  */
 const LEDE_DECISION_STORE = 'codeassembly';
 
@@ -45,11 +45,11 @@ export type RequestArgs = { kind: 'type'; type: string } | { kind: 'tier'; tier:
 export interface ParsedArgs {
   request: RequestArgs;
   count: number;
-  /** Lowest rating a record may carry and still be selected; `null` reads every record, rated or not. */
+  /** Lowest rating that a record may have and still be selected; `null` reads every record, rated or not. */
   minQuality: LedeQuality | null;
-  /** The corpus to read; falls back to the one this helper serves when `--store` names none. */
+  /** The corpus to read; falls back to the one that this helper serves when `--store` names none. */
   store: string;
-  /** Directory holding `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
+  /** Directory containing `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
   dataDir: string | null;
   /** Whether each exemplar also reports the agent lede, the merged lede, and the author's comment. */
   withPair: boolean;
@@ -72,13 +72,13 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: the exemplars a drafter needs are the
- * ones its own work type was written under, and `--tier` serves a caller whose dispatch resolved no type, so that the
- * fallback is a narrower request rather than an invented type. `--with-pair` widens what each exemplar reports to the
- * agent lede, the merged lede, and the author's comment, for a caller calibrating an edit rather than a draft; it
+ * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: The exemplars that a drafter needs are
+ * the ones written under its own work type, and `--tier` serves a caller whose dispatch resolved no type, so that
+ * the fallback is a narrower request rather than an invented type. `--with-pair` widens what each exemplar reports to
+ * the agent lede, the merged lede, and the author's comment, for a caller calibrating an edit rather than a draft; it
  * changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir`
  * each fall back to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
- * sparse is not filtered down to nothing. The `@default` sentinel is refused: it names whichever store a machine
+ * sparse is not filtered down to nothing. The `@default` sentinel is refused: It names whichever store a machine
  * defaults to rather than this corpus, and reading the wrong corpus yields plausible exemplars drawn from nothing
  * relevant.
  *
@@ -97,7 +97,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   }
   if (raw.store === DEFAULT_KB_SENTINEL) {
     throw new Error(
-      `--store ${DEFAULT_KB_SENTINEL} is not accepted: lede exemplars come from the ${LEDE_DECISION_STORE} corpus, ` +
+      `--store ${DEFAULT_KB_SENTINEL} is not accepted: Lede exemplars come from the ${LEDE_DECISION_STORE} corpus, ` +
         'not from whichever store kb.yaml names as its default. Omit --store, or name the corpus.',
     );
   }
@@ -120,8 +120,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  * unreachable corpus returns `ok: false`. System failures (permission denied, unreadable store) propagate to the
  * caller's try/catch.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it exists so tests can isolate registry
- * resolution from the developer's environment.
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it exists so that tests can isolate
+ * registry resolution from the developer's environment.
  *
  * @internal - Exported to allow testing.
  */
@@ -179,7 +179,7 @@ export async function runSelect(input: {
 // region | Helpers
 
 /**
- * Describes why a selection came back empty, naming the floor the request applied when it named one. The exemplars
+ * Describes why a selection came back empty, naming the floor that the request applied when it named one. The exemplars
  * alone do not say whether a floor was in force.
  */
 function describeEmptyResult(storeName: string, minQuality: LedeQuality | null): string {
@@ -249,9 +249,9 @@ function parseRequest(raw: { type: string | undefined; tier: string | undefined 
 }
 
 /**
- * Resolves the corpus by registry name alone: no `.kb/` discovery and no ancestor walk, so a project-local store the
- * invocation happened to sit inside cannot stand in for the corpus. A store marked `readonly` resolves like any other,
- * since that marker refuses writes and nothing here writes.
+ * Resolves the corpus by registry name alone: no `.kb/` discovery and no ancestor walk, so a project-local store
+ * that the invocation happened to run inside cannot stand in for the corpus. A store marked `readonly` resolves like
+ * any other, since that marker refuses writes and nothing here writes.
  */
 async function resolveCorpus(input: {
   name: string;
@@ -274,14 +274,14 @@ async function resolveCorpus(input: {
   return { ok: true, store: { name: match.name, path: match.path } };
 }
 
-/** Resolves the `_data` directory shipped beside the installed helper, holding the work-type taxonomy. */
+/** Resolves the `_data` directory installed beside the helper, which contains the work-type taxonomy. */
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');
 }
 
 /**
- * Resolves a parsed request against the taxonomy. A tier is checked against the tiers the taxonomy declares, so a
+ * Resolves a parsed request against the taxonomy. A tier is checked against the tiers declared by the taxonomy, so a
  * misspelt one is refused rather than returning an empty list that reads as an exhausted corpus.
  */
 function resolveRequest(

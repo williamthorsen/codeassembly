@@ -7,7 +7,7 @@ import type { EmDashCandidate, ProseSpan } from '../types.ts';
 const EM_DASH = '\u{2014}';
 
 describe(detectEmDashes, () => {
-  it('reports a sentence holding an em-dash, with the sentence as the phrase', () => {
+  it('reports a sentence containing an em-dash, with the sentence as the phrase', () => {
     const candidates = detect(`The cache is cold${EM_DASH}so the transport reconnects.`);
 
     expect(candidates).toHaveLength(1);
@@ -20,7 +20,7 @@ describe(detectEmDashes, () => {
     });
   });
 
-  it('passes over a double hyphen, which is the form the rule asks for', () => {
+  it('passes over a double hyphen, which is the form that the rule asks for', () => {
     expect(detect('The cache is cold--so the transport reconnects.')).toStrictEqual([]);
   });
 
@@ -28,7 +28,7 @@ describe(detectEmDashes, () => {
     expect(detect('The range is 3\u{2013}5 seconds.')).toStrictEqual([]);
   });
 
-  it('reports one candidate for a sentence holding two em-dashes', () => {
+  it('reports one candidate for a sentence containing two em-dashes', () => {
     const candidates = detect(`One${EM_DASH}two${EM_DASH}three is a sentence.`);
 
     expect(candidates).toHaveLength(1);
@@ -47,17 +47,17 @@ describe(detectEmDashes, () => {
     expect(detect(`Write \`a${EM_DASH}b\` in the config.`)).toStrictEqual([]);
   });
 
-  it('passes over an em-dash inside a doubled-backtick span, which may hold a backtick of its own', () => {
+  it('passes over an em-dash inside a doubled-backtick span, which may contain a backtick of its own', () => {
     expect(detect(`Write \`\`a\`${EM_DASH}b\`\` in the config.`)).toStrictEqual([]);
   });
 
-  it('reports an em-dash outside a code span on a line that also holds one', () => {
+  it('reports an em-dash outside a code span on a line that also contains one', () => {
     const candidates = detect(`Use \`--force\` here${EM_DASH}never elsewhere.`);
 
     expect(candidates).toHaveLength(1);
   });
 
-  it('reports an em-dash where an unclosed backtick run delimits no span', () => {
+  it('reports an em-dash when an unclosed backtick run delimits no span', () => {
     const candidates = detect(`A stray \` backtick${EM_DASH}then a dash.`);
 
     expect(candidates).toHaveLength(1);
@@ -85,7 +85,7 @@ describe(detectEmDashes, () => {
 });
 
 describe('the rule registry', () => {
-  it('names every rule it holds a detector for', () => {
+  it('names every rule for which it has a detector', () => {
     expect(RULE_IDS.toSorted()).toStrictEqual(Object.keys(RULE_DETECTORS).toSorted());
   });
 

@@ -24,7 +24,7 @@ describe(readLabelMap, () => {
     });
   });
 
-  it('reads a section the map does not declare as empty', async () => {
+  it('reads a section that the map does not declare as empty', async () => {
     const labelMapPath = await writeLabelMap({ types: { feat: 'feature' } });
 
     expect(await readLabelMap(labelMapPath)).toStrictEqual({ scopes: {}, types: { feat: 'feature' } });
@@ -56,18 +56,18 @@ describe(resolveLabelKey, () => {
   it.each([
     { section: 'types', labels: ['scope:agents'] },
     { section: 'scopes', labels: ['feature'] },
-  ] as const)('yields nothing where the labels name no $section key', ({ section, labels }) => {
+  ] as const)('yields nothing when the labels name no $section key', ({ section, labels }) => {
     expect(resolveLabelKey(MAP[section], labels)).toBeUndefined();
   });
 
   it.each([
     { section: 'types', labels: ['feature', 'fix'] },
     { section: 'scopes', labels: ['scope:agents', 'scope:kb'] },
-  ] as const)('yields nothing where the labels name two $section keys', ({ section, labels }) => {
+  ] as const)('yields nothing when the labels name two $section keys', ({ section, labels }) => {
     expect(resolveLabelKey(MAP[section], labels)).toBeUndefined();
   });
 
-  it('yields nothing where one label names two keys', () => {
+  it('yields nothing when one label names two keys', () => {
     expect(resolveLabelKey({ drop: 'removal', feat: 'removal' }, ['removal'])).toBeUndefined();
   });
 
@@ -89,7 +89,7 @@ describe(resolveLabeledRecord, () => {
     expect(resolveLabeledRecord(MAP, ['feature'])).toStrictEqual({ breaking: false, type: 'feat' });
   });
 
-  it('reads the breaking label as breaking where no type resolves', () => {
+  it('reads the breaking label as breaking when no type resolves', () => {
     expect(resolveLabeledRecord(MAP, ['breaking', 'scope:kb'])).toStrictEqual({ breaking: true, scope: 'kb' });
   });
 

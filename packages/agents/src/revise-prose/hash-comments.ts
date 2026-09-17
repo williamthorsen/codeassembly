@@ -5,7 +5,7 @@
  * string. What differs is the region over which the scan runs, which each extractor decides for itself.
  */
 
-/** Returns the index of the `#` opening a comment, or -1 where the line carries none outside a quoted string. */
+/** Returns the index of the `#` opening a comment, or -1 if the line contains none outside a quoted string. */
 export function findHashCommentStart(line: string): number {
   let quote: string | undefined;
   for (let index = 0; index < line.length; index += 1) {

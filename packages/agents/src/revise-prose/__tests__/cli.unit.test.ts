@@ -17,7 +17,7 @@ describe(parseArgs, () => {
     });
   });
 
-  it('refuses a flag the helper does not recognize', () => {
+  it('refuses a flag that the helper does not recognize', () => {
     expect(() => parseArgs(['--apply'])).toThrow(/unknown flag/i);
   });
 
@@ -55,7 +55,7 @@ describe(parseArgs, () => {
     expect(args.rules.map((named) => named.rule)).toStrictEqual(['em-dash', 'reduced-object-relative']);
   });
 
-  it('reads a rule for which the helper holds no detector', () => {
+  it('reads a rule for which the helper has no detector', () => {
     const args = parseArgs(['--unit', 'writing=2', '--rule', 'sentence-case@1=writing']);
 
     expect(args.rules).toStrictEqual([{ rule: 'sentence-case', unit: 'writing', version: '1' }]);
@@ -65,11 +65,11 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'Sentence_Case=writing'])).toThrow(/kebab-case/);
   });
 
-  it('refuses a rule naming a unit no flag declares', () => {
+  it('refuses a rule naming a unit that no flag declares', () => {
     expect(() => parseArgs(['--rule', 'em-dash=writing'])).toThrow(/which no --unit declares/);
   });
 
-  it('refuses one rule named twice, a rule having one unit', () => {
+  it('refuses one rule named twice, since a rule has one unit', () => {
     expect(() =>
       parseArgs([
         '--unit',
@@ -88,7 +88,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--unit', 'writing'])).toThrow(/takes <name>=<value>/);
   });
 
-  it('refuses a batch budget no batch could satisfy', () => {
+  it('refuses a batch budget that no batch could satisfy', () => {
     expect(() => parseArgs(['--batch-budget', '0'])).toThrow(/positive integer/);
   });
 

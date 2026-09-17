@@ -49,7 +49,7 @@ const OVERRIDE_FLAGS: readonly FlagSpec[] = [
   { name: 'override-type', takesValue: true },
 ];
 
-/** The name this helper reports itself under on stderr. */
+/** The name under which this helper reports itself on stderr. */
 const PROGRAM = 'describe-change';
 
 /** The flags that set a record's title, scope, type, and breaking marker. */
@@ -61,7 +61,7 @@ const RECORD_FLAGS: readonly FlagSpec[] = [
 ];
 
 /**
- * Each subcommand's flags, and the reader of its scanned arguments, in the order the usage error lists them.
+ * Each subcommand's flags, and the reader of its scanned arguments, in the order that the usage error lists them.
  *
  * @internal - Exported to allow testing.
  */
@@ -120,7 +120,7 @@ if (isEntryPoint()) {
  * scanned against that subcommand's flags alone, so a flag that only another subcommand takes is refused as unknown.
  *
  * `render-titles`, `resolve-effective-record`, and `render-block` accept `--type feat!`, which the engine splits into the
- * bare type and the breaking marker. An `--override-type` carrying the marker is refused, since the breaking overrides
+ * bare type and the breaking marker. An `--override-type` spelled with the marker is refused, since the breaking overrides
  * set it.
  *
  * @internal - Exported to allow testing.
@@ -135,13 +135,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, then runs the subcommand they name, loading only what that subcommand reads.
- * A subcommand that loads the title templates refuses any template the engine cannot round-trip, so a defective template
- * refuses none of `render-block`, `resolve-effective-record`, and `resolve-ticket-type`, which load none.
+ * Runs the helper end to end: parses the arguments, then dispatches to the subcommand that they name.
  *
- * A subcommand that reads the repository warns outside one and anchors its lookups at `cwd` rather than failing, since a
- * title still renders from the global templates. An unreadable taxonomy warns under `render-titles`, which renders
- * without one, and refuses `resolve-effective-record` and every other subcommand that loads templates.
+ * A subcommand loads its own inputs and nothing else, so a defect affects only the subcommands that read it. The
+ * runners below state their own inputs; three of those inputs can fail, and each failure has one policy:
+ *
+ * - A subcommand that loads the title templates refuses any template that cannot round-trip, naming the surface and
+ *   the defect. Verification needs the taxonomy. `render-titles` runs without one and renders from unverified
+ *   templates.
+ * - A subcommand that loads the taxonomy refuses when `dataDir` contains no readable one. `render-titles` is again the
+ *   exception: It warns and renders anyway.
+ * - A subcommand that resolves the project root never refuses when git finds no repository. It warns, reads `cwd` as
+ *   the root, and continues: the preferences under `home` still supply the templates, and a missing label map maps
+ *   no label.
  *
  * @internal - Exported to allow testing.
  */
@@ -165,7 +171,7 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
   }
 }
 
-/** What a run reads: its argv, the directory it was invoked from, the taxonomy's directory, and the home directory. */
+/** What a run reads: its argv, the directory from which it was invoked, the taxonomy's directory, and the home directory. */
 export interface DescribeInput {
   argv: readonly string[];
   cwd: string;
@@ -188,7 +194,7 @@ export interface DescribeResult {
 
 // region | Helpers
 
-/** The project root, the templates it resolves to, the taxonomy where one is readable, and what loading reported. */
+/** The project root, the templates to which it resolves, the taxonomy if one is readable, and what loading reported. */
 interface LoadedTemplates {
   projectRoot: string;
   taxonomy: Taxonomy | null;
@@ -202,7 +208,7 @@ interface SubcommandSpec {
   read: (scan: ScanResult) => ParsedArgs;
 }
 
-/** Builds the usage error for a missing or unknown subcommand, listing every subcommand the helper takes. */
+/** Builds the usage error for a missing or unknown subcommand, listing every subcommand that the helper takes. */
 function buildUsageMessage(subcommand: string | undefined): string {
   const usage = `usage: ${PROGRAM} <subcommand> [flags], where <subcommand> is one of ${Object.keys(SUBCOMMANDS).join(', ')}`;
   return subcommand === undefined ? `a subcommand is required; ${usage}` : `unknown subcommand ${subcommand}; ${usage}`;
@@ -261,8 +267,8 @@ function isSubcommand(value: string): value is Subcommand {
 }
 
 /**
- * Resolves the project root and the templates its preferences files configure, then refuses any configured template
- * the engine cannot round-trip, where a taxonomy is readable to verify against.
+ * Resolves the project root and the templates configured by its preferences files, then refuses any configured
+ * template that the engine cannot round-trip, when a taxonomy is readable to verify against.
  */
 async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
   const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
@@ -300,7 +306,7 @@ function readConsolidateBranchArgs({ flags, positionals }: ScanResult): ParsedAr
   };
 }
 
-/** Reads `--override-type`, refusing a type that carries the breaking marker. */
+/** Reads `--override-type`, refusing a type spelled with the breaking marker. */
 function readOverrideType(values: Record<string, string>): string | undefined {
   const type = values['override-type']?.trim();
   if (type?.endsWith(BREAKING_MARKER) === true) {
@@ -364,14 +370,14 @@ function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
 
 /**
  * Reads the `render-titles` invocation into a record. Every flag is optional, and a flag left off resolves its token to
- * empty, so an invocation carrying no flags renders each template against an empty record.
+ * empty, so an invocation with no flags renders each template against an empty record.
  */
 function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   return { record: readRecordFlags(flags), subcommand: 'render-titles' };
 }
 
-/** Collects every value of a repeatable flag, in the order the invocation passes them. */
+/** Collects every value of a repeatable flag, in the order that the invocation passes them. */
 function readRepeatedValues(flags: readonly MatchedFlag[], name: string): string[] {
   return flags.flatMap((flag) => (flag.name === name && flag.value !== null ? [flag.value] : []));
 }
@@ -436,13 +442,13 @@ function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   return { merge, subcommand: 'resolve-merge' };
 }
 
-/** Reads the `resolve-ticket-type` invocation: every label the ticket carries. */
+/** Reads the `resolve-ticket-type` invocation: every label on the ticket. */
 function readResolveTicketTypeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   return { subcommand: 'resolve-ticket-type', ticketLabels: readRepeatedValues(flags, 'ticket-label') };
 }
 
-/** Reads a subject back through one surface's template, reporting each field the record carries. */
+/** Reads a subject back through one surface's template, reporting each field that the record names. */
 function readSubject(surface: Surface, template: string, subject: string, taxonomy: Taxonomy): ParseTitleOutcome {
   if (template === '') {
     throw new Error(`${surface}.title_format is empty, so a ${surface} subject cannot be read back`);
@@ -469,7 +475,7 @@ function refusePositionals(positionals: readonly string[]): void {
   }
 }
 
-/** Refuses every configured template the engine cannot round-trip, naming the surface, the template, and the defect. */
+/** Refuses every configured template that the engine cannot round-trip, naming the surface, the template, and the defect. */
 function refuseUnverifiableTemplates(templates: Record<Surface, string>, taxonomy: Taxonomy): void {
   const defects: string[] = [];
   for (const surface of SURFACES) {
@@ -488,15 +494,15 @@ function renderTemplate(template: string, record: ChangeRecord): string {
   return template === '' ? '' : render(compileTemplate(template), record);
 }
 
-/** Resolves the `_data` directory shipped beside the installed helper, holding the work-type taxonomy. */
+/** Resolves the `_data` directory shipped beside the installed helper, containing the work-type taxonomy. */
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');
 }
 
 /**
- * Reads a range's commits and consolidates them, in the shape the JSON output names. Each entry is rendered back through
- * the template that read it, so its `change` is canonical whatever the subject it came from.
+ * Reads a range's commits and consolidates them, in the shape named by the JSON output. Each entry is rendered back
+ * through the template that read it, so its `change` is canonical whatever subject it came from.
  */
 async function runConsolidateBranch(baseRef: string, input: DescribeInput): Promise<DescribeResult> {
   const { projectRoot, taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
@@ -543,7 +549,7 @@ async function runParseTitle(surface: Surface, subject: string, input: DescribeI
   return { output: readSubject(surface, templates[surface], subject, taxonomy), warnings };
 }
 
-/** Renders every surface's title from the record, warning rather than refusing where no taxonomy verifies the templates. */
+/** Renders every surface's title from the record, warning rather than refusing when no taxonomy verifies the templates. */
 async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {

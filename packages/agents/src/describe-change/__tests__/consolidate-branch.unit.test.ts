@@ -19,7 +19,7 @@ const TAXONOMY: Taxonomy = {
 const NODES = compileTemplate('[[{scope}|]{type}: ]{title}');
 
 describe(consolidateBranch, () => {
-  it('lets one feat speak for a branch carrying three fixes', () => {
+  it('lets one feat represent a branch containing three fixes', () => {
     const result = consolidateBranch(
       buildCommits([
         'agents|fix: Correct the guard',
@@ -35,7 +35,7 @@ describe(consolidateBranch, () => {
     expect(result.entries).toHaveLength(4);
   });
 
-  it('carries the breaking marker onto the consolidated record', () => {
+  it('sets the breaking marker on the consolidated record', () => {
     const result = consolidateBranch(
       buildCommits(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']),
       NODES,
@@ -45,7 +45,7 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ breaking: true, scope: 'agents', type: 'sec' });
   });
 
-  it('names no scope where the entries disagree on one', () => {
+  it('names no scope when the entries disagree on one', () => {
     const result = consolidateBranch(
       buildCommits(['agents|feat: Add the parser', 'kb|feat: Add the reader']),
       NODES,
@@ -55,7 +55,7 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ type: 'feat' });
   });
 
-  it('reports a refactor that carries the marker its policy forbids, leaving the entry as written', () => {
+  it('reports a refactor that spells the marker forbidden by its policy, leaving the entry as written', () => {
     const result = consolidateBranch(buildCommits(['agents|refactor!: Restructure the guard']), NODES, TAXONOMY);
 
     expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'forbidden', type: 'refactor' }]);
@@ -67,13 +67,13 @@ describe(consolidateBranch, () => {
     });
   });
 
-  it('reports a drop that omits the marker its policy requires', () => {
+  it('reports a drop that omits the marker required by its policy', () => {
     const result = consolidateBranch(buildCommits(['agents|drop: Remove the legacy reader']), NODES, TAXONOMY);
 
     expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'required', type: 'drop' }]);
   });
 
-  it('lists a subject no template matched and keeps it out of the entries', () => {
+  it('lists a subject matched by no template and keeps it out of the entries', () => {
     const result = consolidateBranch(buildCommits(['agents|feat: Add the parser', 'wip']), NODES, TAXONOMY);
 
     expect(result.unmatched).toStrictEqual([{ commit: 'commit1', subject: 'wip' }]);
@@ -123,7 +123,7 @@ describe(consolidateBranch, () => {
 
 // region | Helpers
 
-/** Builds one trailerless commit per subject, hashed by position so a report names which subject it came from. */
+/** Builds one trailerless commit per subject, hashed by position so that a report names which subject it came from. */
 function buildCommits(subjects: readonly string[]): RawCommit[] {
   return subjects.map((subject, index) => ({ hash: `commit${index}`, subject, trailers: [] }));
 }

@@ -27,8 +27,8 @@ export interface ScopeResult {
  * A malformed or unreadable registry degrades to no registry entries; its captured message is returned as
  * `registryError` for the caller to surface, never formatted or printed here.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it defaults to the real `$HOME`
- * and exists so tests can isolate registry resolution from the developer's environment.
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
+ * and exists so that tests can isolate registry resolution from the developer's environment.
  */
 export async function resolveScope(input: {
   startDir: string;

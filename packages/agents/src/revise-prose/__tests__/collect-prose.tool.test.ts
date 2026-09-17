@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { collectProse, NotARepositoryError, type ProseCollection } from '../collect-prose.ts';
 
-/** The fixture tree, written into a throwaway repository so no sweep runs against the working checkout. */
+/** The fixture tree, written into a throwaway repository so that no sweep runs against the working checkout. */
 const FIXTURE_FILES: Readonly<Record<string, string>> = {
   '.agents/revise-prose.yaml': 'units: {}\nrejections:\n  - ground: Recorded prose the sweep may not edit.\n',
   '.claude/skills/deployed/SKILL.md': 'Deployed prose the sweep may not edit.\n',
@@ -82,13 +82,13 @@ describe(collectProse, () => {
     expect(joinText(collection)).not.toContain('Deployed prose');
   });
 
-  it('yields nothing from a marker-bearing file', async () => {
+  it('yields nothing from a file containing a marker', async () => {
     const collection = await sweep();
 
     expect(joinText(collection)).not.toContain('Copied prose');
   });
 
-  it('yields nothing from a file a generator annotated, wherever the annotation sits', async () => {
+  it('yields nothing from a file annotated by a generator, wherever the annotation appears', async () => {
     const text = joinText(await sweep());
 
     expect(text).not.toContain('Generated prose');
@@ -135,7 +135,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('leaves a YAML file carrying only data out of the scanned set, so it reaches no batch', async () => {
+  it('leaves a YAML file containing only data out of the scanned set, so no batch includes it', async () => {
     const collection = await sweep();
 
     expect(collection.files).toContain('data.yaml');
@@ -163,14 +163,14 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('counts an extensionless file carrying no shebang as ineligible', async () => {
+  it('counts an extensionless file with no shebang as ineligible', async () => {
     const collection = await sweep(['NOTICE']);
 
     expect(collection.skipped.ineligible).toBe(1);
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('counts nothing ineligible where every path that it is given is read', async () => {
+  it('counts nothing ineligible when every path that it is given is read', async () => {
     expect((await sweep(['docs/guide.md'])).skipped.ineligible).toBe(0);
   });
 
@@ -196,13 +196,13 @@ describe(collectProse, () => {
     expect(joinText(await sweep())).toContain('Bounded prose the sweep reads.');
   });
 
-  it('names the files it read, so a silent exclusion cannot read as a clean sweep', async () => {
+  it('names the files that it read, so a silent exclusion cannot read as a clean sweep', async () => {
     const collection = await sweep();
 
     expect(collection.scannedFiles).toHaveLength(12);
   });
 
-  it('reports each scanned file with the byte length a batch budget is measured against', async () => {
+  it('reports each scanned file with the byte length against which a batch budget is measured', async () => {
     const collection = await sweep();
     const guide = collection.scannedFiles.find((scanned) => scanned.file === 'docs/guide.md');
 
@@ -216,13 +216,13 @@ describe(collectProse, () => {
     expect(joinText(collection)).not.toContain('Ignored prose');
   });
 
-  it('narrows the sweep to the paths it is given', async () => {
+  it('narrows the sweep to the paths that it is given', async () => {
     const collection = await sweep(['src']);
 
     expect(collection.files).toStrictEqual(['src/helper.ts']);
   });
 
-  it('refuses a directory git does not track', async () => {
+  it('refuses a directory that git does not track', async () => {
     const outside = await mkdtemp(path.join(tmpdir(), 'revise-prose-bare-'));
     try {
       await expect(collectProse({ root: outside, home: outside })).rejects.toThrow(NotARepositoryError);
@@ -233,7 +233,7 @@ describe(collectProse, () => {
 
   // region | Helpers
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so no real preferences reach the run. */
+  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so the run reads no real preferences. */
   async function sweep(paths: readonly string[] = []): Promise<ProseCollection> {
     return collectProse({ root: scratch, paths, home: scratch });
   }
@@ -243,7 +243,7 @@ describe(collectProse, () => {
 
 // region | Helpers
 
-/** Joins every span's text, for the assertions that ask what the whole sweep did and did not carry. */
+/** Joins every span's text, for the assertions that ask what the whole sweep did and did not collect. */
 function joinText(collection: ProseCollection): string {
   return collection.spans.map((span) => span.text).join('\n');
 }

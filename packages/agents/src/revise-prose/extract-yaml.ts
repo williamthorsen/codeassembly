@@ -1,6 +1,6 @@
 /**
  * Prose extraction for YAML, whose prose is delimited three ways: a `#` comment, a block scalar, and a scalar value
- * carrying enough words to read as prose rather than as data.
+ * containing enough words to read as prose rather than as data.
  *
  * The file is parsed once. The parse yields every scalar's bounds, which is what tells a `#` inside a block scalar
  * from one that opens a comment, and the comments themselves are found by a line pass over what the scalars leave,
@@ -12,12 +12,12 @@ import { findHashCommentStart } from './hash-comments.ts';
 import { isProseLiteral } from './span-text.ts';
 import type { ProseSpan } from './types.ts';
 
-/** Raised where YAML cannot be parsed, no scalar's bounds being trustworthy once the parser reports an error. */
+/** Raised when YAML cannot be parsed, no scalar's bounds being trustworthy once the parser reports an error. */
 export class UnparsableYamlError extends Error {}
 
 /**
  * Extracts every block of prose from one YAML document stream: its comments, its block scalars, and every scalar value
- * that reads as prose. Spans come back in source order. Throws {@link UnparsableYamlError} where the parse fails.
+ * that reads as prose. Returns the spans in source order. Throws {@link UnparsableYamlError} when the parse fails.
  */
 export function extractYamlProse(input: { file: string; content: string }): ProseSpan[] {
   const lineCounter = new LineCounter();
@@ -28,8 +28,8 @@ export function extractYamlProse(input: { file: string; content: string }): Pros
   if (failure !== undefined) throw new UnparsableYamlError(failure.message);
 
   const spans: ProseSpan[] = [];
-  // Every line onto which a scalar continues, which the comment pass skips: a `#` there is content that the scalar
-  // carries.
+  // Every line onto which a scalar continues, which the comment pass skips: A `#` there is part of the scalar's
+  // content.
   const continued = new Set<number>();
 
   for (const document of documents) {
@@ -53,7 +53,7 @@ export function extractYamlProse(input: { file: string; content: string }): Pros
 /**
  * Builds one span from a scalar, recording the lines onto which it continues whether or not it yields prose. A scalar
  * on one source line contributes its parsed value; one spanning several contributes its source slice, whose newlines
- * are the source's own and so keep the span's line mapping true where a folded scalar's parsed value would not.
+ * are the source's own and so keep the span's line mapping true, whereas a folded scalar's parsed value would not.
  */
 function buildScalarSpan(input: {
   file: string;
@@ -78,14 +78,14 @@ function buildScalarSpan(input: {
   if (startLine === endLine) return { file: input.file, line: startLine, text: node.value.replaceAll('\n', ' ') };
 
   if (node.type === Scalar.BLOCK_LITERAL || node.type === Scalar.BLOCK_FOLDED) {
-    // The header line carries the indicator rather than prose, so the span opens on the line after it.
+    // The header line contains the indicator rather than prose, so the span opens on the line after it.
     const body = source.slice(source.indexOf('\n') + 1);
     return { file: input.file, line: startLine + 1, text: stripCommonIndent(body) };
   }
   return { file: input.file, line: startLine, text: stripContinuationIndent(stripQuotes(source)) };
 }
 
-/** Extracts the `#` comments outside every scalar, consecutive lines joining so a wrapped sentence survives. */
+/** Extracts the `#` comments outside every scalar, consecutive lines joining so that a wrapped sentence survives. */
 function extractComments(input: { file: string; content: string }, continued: ReadonlySet<number>): ProseSpan[] {
   const spans: ProseSpan[] = [];
   let block: { line: number; texts: string[] } | undefined;

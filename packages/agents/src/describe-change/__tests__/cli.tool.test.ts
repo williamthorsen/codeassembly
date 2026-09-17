@@ -21,7 +21,7 @@ const CLI_PATH = fileURLToPath(new URL('../cli.ts', import.meta.url));
 /** The `consolidate-branch` invocation that reads the range from the fixture repository's `base` tag. */
 const CONSOLIDATE_BASE = ['consolidate-branch', '--base', 'base'];
 
-/** The taxonomy the installed helper reads, so the suite verifies against the types the repository actually declares. */
+/** The taxonomy read by the installed helper, so the suite verifies against the types that the repository actually declares. */
 const DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
 
 /** A commit template that the engine cannot round-trip, since nothing separates the scope from the type. */
@@ -109,7 +109,7 @@ describe('render-titles', () => {
     });
   });
 
-  it('carries a marker spelled on the type through to the record', () => {
+  it('passes a marker spelled on the type through to the record', () => {
     expect(parseArgs(['render-titles', '--type', 'feat!'])).toEqual({
       record: { type: 'feat!' },
       subcommand: 'render-titles',
@@ -314,7 +314,7 @@ describe('parse-title', () => {
     });
   });
 
-  it('reports a subject the template does not match as unmatched', async () => {
+  it('reports a subject as unmatched when the template does not match it', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -369,7 +369,7 @@ describe('consolidate-branch', () => {
     );
   });
 
-  it('lets one feat speak for a branch carrying three fixes', async () => {
+  it('lets one feat represent a branch containing three fixes', async () => {
     const { cwd, home } = await makeCommittedRepo([
       'agents|fix: Correct the guard',
       'agents|feat: Add the parser',
@@ -382,7 +382,7 @@ describe('consolidate-branch', () => {
     expect(output).toMatchObject({ consolidated_record: { breaking: false, scope: 'agents', type: 'feat' } });
   });
 
-  it('carries the breaking marker onto the consolidated record', async () => {
+  it('sets the breaking marker on the consolidated record', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|sec!: Patch the parser', 'agents|fix: Correct the guard']);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -401,7 +401,7 @@ describe('consolidate-branch', () => {
     });
   });
 
-  it('reports a refactor carrying the marker its policy forbids', async () => {
+  it('reports a refactor that spells the marker forbidden by its policy', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|refactor!: Restructure the guard']);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -409,7 +409,7 @@ describe('consolidate-branch', () => {
     expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'refactor' }] });
   });
 
-  it('yields a consolidated record whose fields are all null for a range holding no commits', async () => {
+  it('yields a consolidated record whose fields are all null for a range with no commits', async () => {
     const { cwd, home } = await makeCommittedRepo([]);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -440,7 +440,7 @@ describe('consolidate-branch', () => {
     });
   });
 
-  it('when a subject carries a ticket reference, renders its change without it', async () => {
+  it('when a subject names a ticket reference, renders its change without it', async () => {
     const { cwd, home } = await makeCommittedRepo(['#466 agents|feat!: Add the parser']);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -481,7 +481,7 @@ describe('resolve-ticket-type', () => {
     });
   });
 
-  it('reads an invocation carrying no ticket label', () => {
+  it('reads an invocation with no ticket label', () => {
     expect(parseArgs(['resolve-ticket-type'])).toEqual({ subcommand: 'resolve-ticket-type', ticketLabels: [] });
   });
 
@@ -512,7 +512,7 @@ describe('resolve-ticket-type', () => {
     expect(output).toStrictEqual({ ticket_type: 'feat' });
   });
 
-  it('yields a null ticket type where the repository configures no label map', async () => {
+  it('yields a null ticket type when the repository configures no label map', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const argv = ['resolve-ticket-type', '--ticket-label', 'feature'];
@@ -521,7 +521,7 @@ describe('resolve-ticket-type', () => {
     expect(output).toStrictEqual({ ticket_type: null });
   });
 
-  it('succeeds where a configured title template is defective', async () => {
+  it('succeeds when a configured title template is defective', async () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
     await writeLabelMap(cwd, { types: { feat: 'feature' } });
 
@@ -557,7 +557,7 @@ describe('resolve-effective-record', () => {
     });
   });
 
-  it('reads an invocation carrying no flags', () => {
+  it('reads an invocation with no flags', () => {
     expect(parseArgs(['resolve-effective-record'])).toEqual({
       overrides: {},
       record: {},
@@ -620,7 +620,7 @@ describe('resolve-effective-record', () => {
     expect(warnings).toStrictEqual([]);
   });
 
-  it('keeps a marker spelled on the type where only the type is overridden, and clears the scope for *', async () => {
+  it('keeps a marker spelled on the type when only the type is overridden, and clears the scope for *', async () => {
     const argv = ['resolve-effective-record', '--scope', 'agents', '--type', 'feat!', '--override-scope', '*'];
 
     const { output } = await runDescribe({
@@ -643,7 +643,7 @@ describe('resolve-effective-record', () => {
     {
       argv: ['--type', 'refactor', '--override-breaking'],
       defects: [{ kind: 'policy-violation', policy: 'forbidden', type: 'refactor' }],
-      name: 'carries a marker that its type forbids',
+      name: 'sets a marker that its type forbids',
     },
   ])('reports the defect of an effective record that $name', async ({ argv, defects }) => {
     const { output } = await runDescribe({
@@ -656,7 +656,7 @@ describe('resolve-effective-record', () => {
     expect(output).toMatchObject({ defects });
   });
 
-  it('succeeds where a configured title template is defective', async () => {
+  it('succeeds when a configured title template is defective', async () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -718,7 +718,7 @@ describe('render-block', () => {
     },
   );
 
-  it('reads an invocation carrying only the title', () => {
+  it('reads an invocation with only the title', () => {
     expect(parseArgs(['render-block', '--title', 'Add foo'])).toEqual({
       block: { consolidatedRecord: {}, overrides: {}, title: 'Add foo' },
       subcommand: 'render-block',
@@ -764,7 +764,7 @@ describe('render-block', () => {
     });
   });
 
-  it('succeeds where a configured title template is defective', async () => {
+  it('succeeds when a configured title template is defective', async () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -931,7 +931,7 @@ describe('resolve-merge', () => {
     });
   });
 
-  it('where the head commit is absent from the repository, resolves without the commits and says so', async () => {
+  it('when the head commit is absent from the repository, resolves without the commits and says so', async () => {
     const { cwd, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const absent = '0123456789abcdef0123456789abcdef01234567';
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
@@ -946,7 +946,7 @@ describe('resolve-merge', () => {
     expect(output).toMatchObject({ notices: [{ kind: 'commits-unavailable' }], sources: { commits: null } });
   });
 
-  it('where commit.title_format is empty, resolves without the commits rather than refusing', async () => {
+  it('when commit.title_format is empty, resolves without the commits rather than refusing', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     await writeAgentsPreferences(
       cwd,
@@ -1008,13 +1008,13 @@ interface CliResult {
   stdout: string;
 }
 
-/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing a fixture cannot supply. */
+/** Stages everything in `cwd` and records it under `message`, bypassing the hooks and signing that a fixture cannot supply. */
 async function commitAll(cwd: string, message: string): Promise<void> {
   await execFileAsync('git', ['-C', cwd, 'add', '--all']);
   await execFileAsync('git', ['-C', cwd, 'commit', '--message', message, '--no-gpg-sign', '--no-verify', '--quiet']);
 }
 
-/** Consolidates a throwaway repository holding one commit per message, returning the `consolidate-branch` output. */
+/** Consolidates a throwaway repository with one commit per message, returning the `consolidate-branch` output. */
 async function consolidateMessages(messages: readonly string[]): Promise<ConsolidateBranchOutcome> {
   const { cwd, home } = await makeCommittedRepo(messages);
   const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -1024,7 +1024,7 @@ async function consolidateMessages(messages: readonly string[]): Promise<Consoli
   return output;
 }
 
-/** Reports whether a thrown value is a failed child process carrying its output and exit code. */
+/** Reports whether a thrown value is a failed child process with its output and exit code. */
 function isExecError(error: unknown): error is { code: number; stderr: string; stdout: string } {
   return (
     isRecord(error) &&
@@ -1035,7 +1035,7 @@ function isExecError(error: unknown): error is { code: number; stderr: string; s
 }
 
 /**
- * Creates a throwaway repository carrying the house templates, one commit per message, and a `base` tag before the
+ * Creates a throwaway repository containing the house templates, one commit per message, and a `base` tag before the
  * first of them, so `consolidate-branch --base base` reads exactly the messages given.
  */
 async function makeCommittedRepo(messages: readonly string[]): Promise<{ cwd: string; home: string }> {
@@ -1054,7 +1054,7 @@ async function makeCommittedRepo(messages: readonly string[]): Promise<{ cwd: st
   return { cwd, home };
 }
 
-/** Creates a temp home directory holding `.agents/preferences.yaml` with `content`. */
+/** Creates a temp home directory containing `.agents/preferences.yaml` with `content`. */
 async function makeHome(content: string): Promise<string> {
   const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
   await writeAgentsPreferences(home, content);
@@ -1062,8 +1062,8 @@ async function makeHome(content: string): Promise<string> {
 }
 
 /**
- * Creates a throwaway repository whose pull-request branch holds one commit per message on top of `base`, and returns
- * to the default branch, so the branch's head commit is not the checkout's `HEAD`.
+ * Creates a throwaway repository whose pull-request branch contains one commit per message on top of `base`, and
+ * returns to the default branch, so that the branch's head commit is not the checkout's `HEAD`.
  */
 async function makePullRequestRepo(
   messages: readonly string[],
@@ -1079,7 +1079,7 @@ async function makePullRequestRepo(
   return { cwd, headCommit: stdout.trim(), home };
 }
 
-/** Creates a throwaway repository carrying `content` as its project preferences, plus an empty global home. */
+/** Creates a throwaway repository with `content` as its project preferences, plus an empty global home. */
 async function makeRepo(content: string): Promise<{ cwd: string; home: string }> {
   const cwd = await mkdtemp(join(tmpdir(), 'describe-change-repo-'));
   await execFileAsync('git', ['-C', cwd, 'init', '--quiet']);
@@ -1088,7 +1088,7 @@ async function makeRepo(content: string): Promise<{ cwd: string; home: string }>
   return { cwd, home };
 }
 
-/** Drops the commit hash from an entry, which differs between two repositories holding the same entries. */
+/** Drops the commit hash from an entry, which differs between two repositories with the same entries. */
 function omitCommit(entry: EntryOutcome): Omit<EntryOutcome, 'commit'> {
   const { commit: _commit, ...rest } = entry;
   return rest;

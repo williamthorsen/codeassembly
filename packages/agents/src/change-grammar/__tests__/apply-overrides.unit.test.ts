@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { applyOverrides } from '../apply-overrides.ts';
 
 describe(applyOverrides, () => {
-  it('leaves the record unchanged where no override is set', () => {
+  it('leaves the record unchanged when no override is set', () => {
     const record = { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' };
 
     expect(applyOverrides(record, {})).toStrictEqual(record);
@@ -19,25 +19,25 @@ describe(applyOverrides, () => {
     expect(applyOverrides({ scope: 'agents', type: 'feat' }, { scope: '*' })).toStrictEqual({ type: 'feat' });
   });
 
-  it('keeps the marker where only the type is overridden', () => {
+  it('keeps the marker when only the type is overridden', () => {
     expect(applyOverrides({ breaking: true, type: 'feat' }, { type: 'sec' })).toStrictEqual({
       breaking: true,
       type: 'sec',
     });
   });
 
-  describe('where the overrides can only add the marker', () => {
-    it('adds the marker to a record that carries none', () => {
+  describe('when the overrides can only add the marker', () => {
+    it('adds the marker to a record that has none', () => {
       expect(applyOverrides({ type: 'feat' }, { breaking: true })).toStrictEqual({ breaking: true, type: 'feat' });
     });
 
-    it('keeps a marker that the record carries', () => {
+    it('keeps a marker that the record has', () => {
       expect(applyOverrides({ breaking: true, type: 'feat' }, { scope: 'kb' }).breaking).toBe(true);
     });
   });
 
-  describe('where the overrides set the marker in either direction', () => {
-    it('removes a marker that the record carries', () => {
+  describe('when the overrides set the marker in either direction', () => {
+    it('removes a marker that the record has', () => {
       expect(applyOverrides({ breaking: true, type: 'feat' }, { breaking: false })).toStrictEqual({ type: 'feat' });
     });
 

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD, maskCodeSpans } from '../mask-code-spans.ts';
 
-/** The placeholder with the spacing the masker writes around it, so an expectation reads as the output does. */
+/**
+ * The placeholder with the spacing that the masker writes around it, so that an expectation reads as the output does.
+ */
 const MASK = ` ${CODE_SPAN_PLACEHOLDER} `;
 
 describe(maskCodeSpans, () => {
-  it('returns text holding no code span unchanged', () => {
+  it('returns text containing no code span unchanged', () => {
     expect(maskCodeSpans('The source that it names.')).toBe('The source that it names.');
   });
 
@@ -14,7 +16,7 @@ describe(maskCodeSpans, () => {
     expect(maskCodeSpans('The root `tsconfig.json` names it.')).toBe(`The root ${MASK} names it.`);
   });
 
-  it('replaces a multi-backtick span, which may hold a backtick of its own', () => {
+  it('replaces a multi-backtick span, which may contain a backtick of its own', () => {
     expect(maskCodeSpans('The form ``a `b` pair`` reads oddly.')).toBe(`The form ${MASK} reads oddly.`);
   });
 
@@ -30,7 +32,7 @@ describe(maskCodeSpans, () => {
     expect(maskCodeSpans('A stray `` then `a span` after it.')).toBe(`A stray \`\` then ${MASK} after it.`);
   });
 
-  it('re-emits the newlines a wrapped span covered, so a later offset keeps its source line', () => {
+  it('re-emits the newlines covered by a wrapped span, so that a later offset keeps its source line', () => {
     const masked = maskCodeSpans('Before `a span\nthat wraps` after.');
 
     expect(masked).toBe(`Before ${MASK}\n after.`);
@@ -42,7 +44,7 @@ describe(maskCodeSpans, () => {
 });
 
 describe('CODE_SPAN_PLACEHOLDER_WORD', () => {
-  it('is the placeholder with its delimiters stripped, which is the form a tokenizer reads', () => {
+  it('is the placeholder with its delimiters stripped, which is the form that a tokenizer reads', () => {
     expect(CODE_SPAN_PLACEHOLDER_WORD).toBe('codespan');
     expect(CODE_SPAN_PLACEHOLDER).toContain(CODE_SPAN_PLACEHOLDER_WORD);
   });

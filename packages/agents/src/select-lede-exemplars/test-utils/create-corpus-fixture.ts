@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-/** The work types the fixture taxonomy declares, spanning all three tiers so widening has somewhere to go. */
+/** The work types declared by the fixture taxonomy, spanning all three tiers so that widening has somewhere to go. */
 export const FIXTURE_WORK_TYPES = [
   { key: 'feat', tier: 'public', aliases: ['feature'] },
   { key: 'fix', tier: 'public', aliases: [] },
@@ -18,38 +18,41 @@ export interface DecisionSpec {
   /** Work type as the record's frontmatter spells it, whether a canonical key or a declared alias. */
   type: string;
   capturedAt: string;
-  /** Merged lede, written to the section a revised decision carries; absent leaves the record with the agent lede alone. */
+  /**
+   * Merged lede, written to the section that a revised decision contains; absent leaves the record with the agent lede
+   * alone.
+   */
   mergedLede?: string;
-  /** Author's critique, written to the section a commented decision carries; absent leaves the record without one. */
+  /** Author's critique, written to the section that a commented decision contains; absent leaves the record without one. */
   comment?: string;
   /** Scope as the record's frontmatter spells it; `null` leaves the record naming none. */
   scope?: string | null;
   pr?: string;
-  /** Tier as the record recorded it; defaults to the tier the fixture taxonomy declares for `type`. */
+  /** Tier as the record recorded it; defaults to the tier that the fixture taxonomy declares for `type`. */
   tier?: string;
   /** Rating as the record's frontmatter spells it; absent leaves the record unrated, as one captured earlier is. */
   quality?: string;
   tags?: readonly string[];
 }
 
-/** A temporary corpus: the event store, the `_data` directory holding the taxonomy, and a home registering the store. */
+/** A temporary corpus: the event store, the `_data` directory containing the taxonomy, and a home registering the store. */
 export interface CorpusFixture {
   storePath: string;
   dataDir: string;
-  /** Isolated home carrying a `kb.yaml` that registers the store, so no test reads the developer's own registry. */
+  /** Isolated home containing a `kb.yaml` that registers the store, so that no test reads the developer's own registry. */
   home: string;
 }
 
-/** The agent lede a planted record carries, distinct per record so a test can tell which was selected. */
+/** The agent lede that a planted record contains, distinct per record so that a test can tell which was selected. */
 export function agentLedeFor(id: string): string {
   return `Agent lede of ${id}.`;
 }
 
 /**
- * Stands up a temporary event store holding one record per decision spec, plus a `_data` directory carrying the
+ * Stands up a temporary event store with one record per decision spec, plus a `_data` directory containing the
  * fixture taxonomy and an isolated home registering the store. `files` plants raw content under `content/events/`, for
  * a record whose own shape is the subject of the test; `storeName` registers the store under something other than the
- * name the helper serves, which is how a test tells a resolved default from an unregistered one.
+ * name that the helper serves, which is how a test tells a resolved default from an unregistered one.
  */
 export async function createCorpusFixture(
   input: {
@@ -88,7 +91,7 @@ export async function createCorpusFixture(
   return { storePath, dataDir, home };
 }
 
-/** Renders a decision record in the shape `capture-lede-decision` writes. */
+/** Renders a decision record in the shape written by `capture-lede-decision`. */
 export function renderDecision(spec: DecisionSpec): string {
   const tier = spec.tier ?? FIXTURE_WORK_TYPES.find((entry) => entry.key === spec.type)?.tier ?? 'public';
   const tags = spec.tags ?? [

@@ -12,17 +12,17 @@ import { isMissingFile } from '../lib/type-guards.ts';
 import type { WorkType } from '../lib/work-types.ts';
 import type { ExemplarRequest, ExemplarSelection, LedeExemplar, Widening } from './types.ts';
 
-/** An exemplar paired with the taxonomy entry its recorded work type resolves to; `null` for an undeclared type. */
+/** An exemplar paired with the taxonomy entry to which its recorded work type resolves; `null` for an undeclared type. */
 interface Candidate {
   exemplar: LedeExemplar;
   resolved: WorkType | null;
-  /** The record's rating; `null` for a record carrying none, which fails every floor. */
+  /** The record's rating; `null` for an unrated record, which fails every floor. */
   quality: LedeQuality | null;
 }
 
 /**
  * What reading one event file yielded: a candidate, the reason the record was unreadable, or nothing to report. A
- * candidate carries its own warnings, for a record selectable despite a field that could not be read as written.
+ * candidate includes its own warnings, for a record selectable despite a field that could not be read as written.
  */
 type RecordOutcome =
   | { kind: 'candidate'; candidate: Candidate; warnings: readonly string[] }
@@ -30,24 +30,24 @@ type RecordOutcome =
   | { kind: 'skip' };
 
 /**
- * Selects author-approved ledes matching a request from a store's event records, widening to make up a shortfall: a
+ * Selects author-approved ledes matching a request from a store's event records, widening to make up a shortfall: A
  * type request widens to the type's tier-mates and then to any type, and a tier request, having no type to widen away
  * from, widens straight to any tier.
  *
  * The scan runs over `content/events/` in descending filename order. Filenames are ULID stems, so that order is
  * newest-first without reading a byte, and the scan stops as soon as the request's own matches have filled the count:
- * only a request too scarce to fill it pays for a full pass. The assembled result is then ordered by each record's own
+ * Only a request too scarce to fill it pays for a full pass. The assembled result is then ordered by each record's own
  * `captured-at`, so a stem that is not a ULID cannot silently reorder what is emitted.
  *
- * Each of the three buckets is capped at `count`, and the fill takes the exact matches first, so widening only ever
- * makes up a shortfall and never displaces an exact match with a newer tier-mate.
+ * Each of the three buckets is capped at `count`, and the fill takes the exact matches first. Widening only ever makes
+ * up a shortfall and never displaces an exact match with a newer tier-mate.
  *
- * A `minQuality` floor filters candidates before they reach a bucket, so a request left short by the floor widens
- * exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while qualifying
- * tier-mates went untaken.
+ * Because a `minQuality` floor filters candidates before the scan buckets them, a request left short by the floor
+ * widens exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while
+ * qualifying tier-mates went untaken.
  *
- * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: a
- * record is admitted on its rating and its type alone, so the same request returns the same records either way.
+ * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: A
+ * record is admitted on its rating and its type alone. The same request returns the same records either way.
  */
 export async function selectExemplars(input: {
   storePath: string;
@@ -146,9 +146,9 @@ function compareDescending(left: string, right: string): number {
 }
 
 /**
- * Reads one event file as an exemplar candidate. A record that parses and carries no `lede-decision` tag belongs to
+ * Reads one event file as an exemplar candidate. A record that parses and has no `lede-decision` tag belongs to
  * another capture path and is passed over in silence. Everything else that cannot be read as an exemplar is reported
- * so the run goes on without it, unparseable frontmatter included: a record whose tags cannot be read might be a
+ * so that the run goes on without it, unparseable frontmatter included: A record whose tags cannot be read might be a
  * decision.
  */
 async function readDecision(input: {
@@ -175,7 +175,7 @@ async function readDecision(input: {
 
   const lede = extractApprovedLede(parsed.record.body);
   if (lede === null) {
-    return { kind: 'warning', warning: `${basename}: carries neither a merged nor an agent lede` };
+    return { kind: 'warning', warning: `${basename}: contains neither a merged nor an agent lede` };
   }
 
   const { extra } = parsed.record;
@@ -183,31 +183,34 @@ async function readDecision(input: {
   const scope = extractString(extra, 'scope');
   const pr = extractString(extra, 'pr');
   if (type === null || pr === null) {
-    return { kind: 'warning', warning: `${basename}: does not name the change it describes (type, pr)` };
+    return { kind: 'warning', warning: `${basename}: does not name the change that it describes (type, pr)` };
   }
 
   // The taxonomy decides a candidate's type and tier, so a request and a candidate are matched through one reading of
-  // it. A type the taxonomy no longer declares keeps the tier its record carries, which is what the taxonomy said when
-  // the change merged.
+  // it. A type no longer declared by the taxonomy keeps the tier that its record names, which is what the taxonomy
+  // said when the change merged.
   const resolved = input.workTypes.get(type) ?? null;
   const tier = resolved?.tier ?? extractString(extra, 'tier');
   if (tier === null) {
-    return { kind: 'warning', warning: `${basename}: names work type "${type}", which no taxonomy or record tiers` };
+    return {
+      kind: 'warning',
+      warning: `${basename}: names work type "${type}", to which neither the taxonomy nor the record gives a tier`,
+    };
   }
 
-  // A record carrying no rating is the ordinary case for one captured before ratings existed, so only a value outside
-  // the scale is worth reporting. Either way the candidate stays selectable by a request that names no floor.
+  // Because an unrated record is the ordinary case for one captured before ratings existed, only a value
+  // outside the scale is worth reporting. Either way the candidate stays selectable by a request that names no floor.
   const rawQuality = extractString(extra, 'quality');
   const quality = isLedeQuality(rawQuality) ? rawQuality : null;
   const warnings =
     rawQuality !== null && quality === null
-      ? [`${basename}: carries quality "${rawQuality}", which the scale does not declare`]
+      ? [`${basename}: names quality "${rawQuality}", which the scale does not declare`]
       : [];
 
-  // A decision `capture-lede-decision` wrote always carries an agent lede, so a body without one was edited by hand.
+  // A decision written by `capture-lede-decision` always includes an agent lede. A body without one was edited by hand.
   const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
   if (input.withPair && pair === null) {
-    warnings.push(`${basename}: carries no agent lede, so its decision pair cannot be read`);
+    warnings.push(`${basename}: contains no agent lede, so its decision pair cannot be read`);
   }
 
   return {

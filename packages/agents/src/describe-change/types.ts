@@ -8,7 +8,7 @@ export function isSurface(value: string): value is Surface {
   return SURFACE_NAMES.includes(value);
 }
 
-/** What a branch of commits consolidated to, in the shape the JSON output names. */
+/** What a branch of commits consolidated to, in the shape that the JSON output names. */
 export interface ConsolidateBranchOutcome {
   entries: EntryOutcome[];
   consolidated_record: ConsolidatedRecordOutcome;
@@ -17,8 +17,8 @@ export interface ConsolidateBranchOutcome {
 }
 
 /**
- * A consolidated record, in the shape the JSON output names: the scope, type, and breaking marker of a branch, each
- * `null` where the branch has no entries to determine it.
+ * A consolidated record, in the shape that the JSON output names: the scope, type, and breaking marker of a branch,
+ * each `null` when the branch has no entries to determine it.
  */
 export interface ConsolidatedRecordOutcome {
   breaking: boolean | null;
@@ -26,7 +26,7 @@ export interface ConsolidatedRecordOutcome {
   type: string | null;
 }
 
-/** An effective record, in the shape the JSON output names: every field of a record, each `null` where nothing sets it. */
+/** An effective record, in the shape that the JSON output names: every field of a record, each `null` when nothing sets it. */
 export interface EffectiveRecordOutcome {
   breaking: boolean;
   pr_number: string | null;
@@ -38,7 +38,7 @@ export interface EffectiveRecordOutcome {
 
 /**
  * One entry of a branch, flattened onto the commit that declared it. `change` is the entry rendered back through
- * `commit.title_format`, the form a `Change:` trailer takes.
+ * `commit.title_format`, the form that a `Change:` trailer takes.
  */
 export interface EntryOutcome {
   breaking: boolean;
@@ -49,7 +49,7 @@ export interface EntryOutcome {
   type: string | null;
 }
 
-/** What the invocation asks for: the subcommand it names, and what that subcommand reads from its arguments. */
+/** What the invocation asks for: the subcommand that it names, and what that subcommand reads from its arguments. */
 export type ParsedArgs =
   | { baseRef: string; subcommand: 'consolidate-branch' }
   | { block: ChangeRecordBlock; subcommand: 'render-block' }
@@ -72,15 +72,15 @@ export type ParseTitleOutcome =
       type: string | null;
     };
 
-/** The fenced `change-record` block, under the key the JSON output names. */
+/** The fenced `change-record` block, under the key that the JSON output names. */
 export interface RenderBlockOutcome {
   block: string;
 }
 
-/** The rendered title for each surface, under the `<surface>_title` key the JSON output names. */
+/** The rendered title for each surface, under the `<surface>_title` key that the JSON output names. */
 export type RenderedTitles = Record<`${Surface}_title`, string>;
 
-/** The effective record and the defects that block its approval, under the keys the JSON output names. */
+/** The effective record and the defects that block its approval, under the keys that the JSON output names. */
 export interface ResolveEffectiveRecordOutcome {
   effective_record: EffectiveRecordOutcome;
   defects: RecordDefect[];
@@ -102,13 +102,13 @@ export interface ResolveMergeArgs {
 /** One subcommand of the helper. */
 export type Subcommand = ParsedArgs['subcommand'];
 
-/** One surface a title template is configured for. */
+/** One surface for which a title template is configured. */
 export type Surface = (typeof SURFACES)[number];
 
-/** The surfaces a title is configured for, in the order the rendered output names them. */
+/** The surfaces for which a title is configured, in the order the rendered output names them. */
 export const SURFACES = ['commit', 'ticket', 'pr', 'merge'] as const;
 
-/** The work type that a ticket's labels name, under the key the JSON output names. */
+/** The work type that a ticket's labels name, under the key that the JSON output names. */
 export interface TicketTypeOutcome {
   ticket_type: string | null;
 }

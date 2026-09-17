@@ -1,14 +1,14 @@
 import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
- * Derives the consolidated record of a branch's entries: the type that speaks for the branch, whether the branch is
- * breaking, and the scope where the entries agree on one.
+ * Derives the consolidated record of a branch's entries: the type that represents the branch, whether the branch is
+ * breaking, and the scope if the entries agree on one.
  *
  * The type is the highest-ranked entry, never the most frequent one: breaking outranks non-breaking, then the tier's
  * position in the taxonomy, then the type's listing order within it. Ranking by frequency would let three routine
- * fixes speak over the one feature the branch exists for.
+ * fixes outrank the one feature that the branch exists for.
  *
- * Exactly one distinct scope survives; a branch carrying two names none, since no scope describes it.
+ * Exactly one distinct scope survives; a branch with two scopes names none, since no scope describes it.
  */
 export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy): ChangeRecord {
   const consolidated: ChangeRecord = {};
@@ -55,8 +55,8 @@ function outranks(rank: Rank, incumbent: Rank): boolean {
 }
 
 /**
- * Ranks one entry against the taxonomy, lower being stronger, and reports the canonical key it named. Yields nothing
- * for a type the taxonomy omits, which no rank can place.
+ * Ranks one entry against the taxonomy, lower being stronger, and reports the canonical key that it named. Yields
+ * nothing for a type omitted by the taxonomy, which no rank can place.
  */
 function rankEntry(entry: ChangeRecord, taxonomy: Taxonomy): { key: string; rank: Rank } | undefined {
   const listing = taxonomy.types.findIndex((candidate) => candidate.key === entry.type);

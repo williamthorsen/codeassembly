@@ -69,7 +69,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { type: 'feature' })).identity.type).toBe('feat');
   });
 
-  it('resolves a work type carrying the breaking marker and reports the marker', async () => {
+  it('resolves a work type spelled with the breaking marker and reports the marker', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveFor(fixture, { type: 'feat!' })).identity).toMatchObject({
@@ -85,7 +85,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { type: 'feat' })).identity.breaking).toBe(false);
   });
 
-  it('falls back to the change summary for a type and scope the caller did not pass', async () => {
+  it('falls back to the change summary for a type and scope that the caller did not pass', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveWithoutIdentity(fixture)).identity).toMatchObject({
@@ -147,7 +147,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { breaking: true })).identity).toMatchObject({ type: 'feat', breaking: true });
   });
 
-  it('where the flags name the identity, records no scope even though the change summary names one', async () => {
+  it('when the flags name the identity, records no scope even though the change summary names one', async () => {
     const fixture = await createLedeFixture();
 
     const episode = await resolveFor(fixture, { scope: null });
@@ -159,7 +159,7 @@ describe(resolveEpisode, () => {
   it.each([
     ['--scope', { scope: 'agents', type: null }],
     ['--breaking', { breaking: true, scope: null, type: null }],
-  ] as const)('where %s is passed without --type, reports that --type is required', async (_flag, overrides) => {
+  ] as const)('when %s is passed without --type, reports that --type is required', async (_flag, overrides) => {
     const fixture = await createLedeFixture();
 
     const outcome = await resolveEpisode(inputFor(fixture, overrides));
@@ -212,7 +212,7 @@ describe(resolveEpisode, () => {
   });
 
   // Written by `recordHomeProvenance` rather than as a literal, so a change to the stamp's shape fails here instead of
-  // leaving the read against a shape nothing writes.
+  // leaving the read against a shape that nothing writes.
   it('reads the agents version from the home-provenance stamp', async () => {
     const fixture = await createLedeFixture();
     const home = join(fixture.root, 'home');
@@ -255,7 +255,7 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome).error).toBe('no-agent-lede');
   });
 
-  it('reports a merge artifact carrying no body section', async () => {
+  it('reports a merge artifact containing no body section', async () => {
     const fixture = await createLedeFixture({ mergedLede: '' });
 
     const outcome = await resolveEpisode(inputFor(fixture));
@@ -285,7 +285,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).doctrineHash).not.toBe(before);
   });
 
-  it('reports a work type the taxonomy does not declare', async () => {
+  it('reports a work type that the taxonomy does not declare', async () => {
     const fixture = await createLedeFixture();
 
     const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented' }));
@@ -293,7 +293,7 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome).error).toBe('unresolved-identity');
   });
 
-  it('reports an undeclared work type carrying the marker, which declares nothing on its own', async () => {
+  it('reports an undeclared work type spelled with the marker, which declares nothing on its own', async () => {
     const fixture = await createLedeFixture();
 
     const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented!' }));
@@ -329,8 +329,8 @@ function expectFailure(outcome: ResolveEpisodeOutcome): { error: string; message
 }
 
 /**
- * Builds resolver input over a fixture, supplying the flags a merge caller would pass. A `null` type or scope leaves
- * that flag out.
+ * Builds resolver input over a fixture, supplying the flags that a merge caller would pass. A `null` type or scope
+ * leaves that flag out.
  */
 function inputFor(fixture: LedeFixture, overrides: IdentityFlags = {}): Parameters<typeof resolveEpisode>[0] {
   const type = overrides.type === undefined ? 'feat' : overrides.type;
@@ -348,7 +348,7 @@ function inputFor(fixture: LedeFixture, overrides: IdentityFlags = {}): Paramete
   };
 }
 
-/** The identity flags a test passes, where `null` leaves a flag out that `inputFor` would otherwise supply. */
+/** The identity flags passed by a test, where `null` leaves a flag out that `inputFor` would otherwise supply. */
 interface IdentityFlags {
   breaking?: boolean;
   scope?: string | null;
@@ -360,13 +360,13 @@ async function resolveFor(fixture: LedeFixture, overrides: IdentityFlags = {}): 
   return expectEpisode(await resolveEpisode(inputFor(fixture, overrides)));
 }
 
-/** Resolves an episode passing neither `--type` nor `--scope`, so both come from the change summary. */
+/** Resolves an episode passing neither `--type` nor `--scope`, leaving both to the change summary. */
 async function resolveWithoutIdentity(fixture: LedeFixture): Promise<LedeEpisode> {
   const { type: _type, scope: _scope, ...withoutIdentity } = inputFor(fixture);
   return expectEpisode(await resolveEpisode(withoutIdentity));
 }
 
-/** Writes a change summary newer than the fixture's own, carrying `fields` as its frontmatter. */
+/** Writes a change summary newer than the fixture's own, with `fields` as its frontmatter. */
 async function writeChangeSummary(fixture: LedeFixture, fields: string): Promise<void> {
   await writeArtifact(
     fixture.artifactDir,

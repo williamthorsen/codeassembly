@@ -48,8 +48,8 @@ export type ResolveKbOutcome =
  * operation — a report, a survey — passes `false` and reaches a store the registry marks `readonly: true`, which it
  * has every right to read.
  *
- * `home` overrides the directory the user-global `kb.yaml` is read from; it defaults to the real `$HOME`
- * and exists so tests can isolate registry resolution from the developer's environment.
+ * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
+ * and exists so that tests can isolate registry resolution from the developer's environment.
  */
 export async function resolveWritableKb(input: {
   startDir: string;

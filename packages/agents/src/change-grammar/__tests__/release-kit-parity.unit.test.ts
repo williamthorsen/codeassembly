@@ -21,7 +21,7 @@ const TAXONOMY: Taxonomy = {
   ],
 };
 
-/** Piped-scope subjects both readers are expected to agree on. */
+/** Piped-scope subjects on which both readers are expected to agree. */
 const SUBJECTS = [
   'agents|feat: Add foo',
   'feat: Add foo',
@@ -89,7 +89,7 @@ async function loadReleaseKitParser(): Promise<ParseCommitMessage> {
   if (typeof exported !== 'function') {
     throw new TypeError(`parseCommitMessage at ${modulePath} is not a function.`);
   }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- typing the installed build precisely would obscure the fixtures this suite is about.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- typing the installed build precisely would obscure the fixtures that this suite is about.
   return exported as ParseCommitMessage;
 }
 

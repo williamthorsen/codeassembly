@@ -6,9 +6,9 @@ export function isTokenName(name: string): name is TokenName {
 }
 
 /**
- * Brings a record to the form the rest of the engine assumes: string values trimmed, the `*` scope and every empty
- * value dropped, and a type spelled with the breaking marker split into its bare key and the flag. Idempotent, so a
- * caller may normalize at its own boundary and still pass the result to `render`.
+ * Brings a record to the form that the rest of the engine assumes: string values trimmed, the `*` scope and every
+ * empty value dropped, and a type spelled with the breaking marker split into its bare key and the flag. Idempotent, so
+ * a caller may normalize at its own boundary and still pass the result to `render`.
  */
 export function normalizeChangeRecord(record: ChangeRecord): ChangeRecord {
   const normalized: ChangeRecord = {};
@@ -42,16 +42,16 @@ export function normalizeChangeRecord(record: ChangeRecord): ChangeRecord {
   return normalized;
 }
 
-/** The marker a breaking change carries, whether as its own token or as the tail of a rendered type. */
+/** The marker of a breaking change, whether as its own token or as the tail of a rendered type. */
 export const BREAKING_MARKER = '!';
 
-/** The scope standing for a change that spans every workspace. It normalizes to empty and never reaches output. */
+/** The scope standing for a change that spans every workspace. It normalizes to empty and never appears in output. */
 export const SCOPE_WILDCARD = '*';
 
-/** The token names a template may reference; any other `{...}` run is literal text. */
+/** The token names that a template may reference; any other `{...}` run is literal text. */
 export const TOKEN_NAMES = ['breaking', 'pr_number', 'scope', 'ticket_ref', 'title', 'type'] as const;
 
-/** A token name a template may reference. */
+/** A token name that a template may reference. */
 export type TokenName = (typeof TOKEN_NAMES)[number];
 
 // region | Helpers

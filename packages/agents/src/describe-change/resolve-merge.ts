@@ -17,10 +17,10 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  * Resolves what a pull request merges as: the effective record and the source of each of its fields, the merge title and
  * body, what each source names, the defects that block approval, and the notices that the approval gate shows.
  *
- * With a readable block, the block's consolidated record and the commits' are compared before any override. Where they
- * agree, or where the commits are unavailable, the block's stands. Where they disagree, the commits' wins as the fresher
+ * With a readable block, the block's consolidated record and the commits' are compared before any override. When they
+ * agree, or when the commits are unavailable, the block's stands. When they disagree, the commits' wins as the fresher
  * of the two, and the divergence is shown.
- * Without a readable block, the type and its breaking marker come together from the labels where a type label resolved
+ * Without a readable block, the type and its breaking marker come together from the labels when a type label resolved
  * and otherwise from the commits, and the scope resolves on its own the same way; a disagreement with the commits is
  * shown.
  *
@@ -29,7 +29,7 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  *
  * The title comes from the caller's override, then from the pull-request title inverted through `pr.title_format`, then
  * from the block, then from the pull-request title as given. A scope and type read from the pull-request title, through
- * that template where it names `{type}` and otherwise through `commit.title_format`, never stay in the title; where they
+ * that template when it names `{type}` and otherwise through `commit.title_format`, never stay in the title; when they
  * differ from the effective record, the divergence is shown.
  */
 export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
@@ -89,7 +89,7 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   };
 }
 
-/** The block as read, in the shape the JSON output names: `consolidated_record` is `null` where the block holds none. */
+/** The block as read, in the shape that the JSON output names: `consolidated_record` is `null` when the block has none. */
 export interface BlockOutcome {
   consolidated_record: { breaking: boolean; scope: string | null; type: string | null } | null;
   overrides: RecordOverrides;
@@ -103,7 +103,7 @@ export type ComparedField = 'breaking' | 'scope' | 'type';
 export type EffectiveSource =
   'block' | 'block_overrides' | 'commits' | 'flags' | 'labels' | 'pr_title' | 'pr_title_verbatim';
 
-/** The source of each field of the effective record, each `null` where nothing supplied it. */
+/** The source of each field of the effective record, each `null` when nothing supplied it. */
 export interface EffectiveSourcesOutcome {
   breaking: EffectiveSource | null;
   scope: EffectiveSource | null;
@@ -117,7 +117,7 @@ export interface MergeInput {
   /** The pull-request body's last `change-record` block, as read. */
   block: ChangeRecordBlockReading;
   /**
-   * The record to which the pull request's commits consolidate, absent where they hold no entry, or the reason that the
+   * The record to which the pull request's commits consolidate, absent when they have no entry, or the reason that the
    * commits could not be read.
    */
   commits: { consolidatedRecord?: ChangeRecord; kind: 'read' } | { kind: 'unavailable'; reason: string };
@@ -144,7 +144,7 @@ export interface MergeOverrides extends Overrides {
   title?: string;
 }
 
-/** What each source names, whether or not the resolution used it, each `null` where the source was not read. */
+/** What each source names, whether or not the resolution used it, each `null` when the source was not read. */
 export interface MergeSourcesOutcome {
   block: BlockOutcome | null;
   commits: ConsolidatedRecordOutcome | null;
@@ -152,7 +152,7 @@ export interface MergeSourcesOutcome {
   pr_title: PullRequestTitleOutcome | null;
 }
 
-/** The record that the pull-request title carries, in the shape the JSON output names. */
+/** The record that the pull-request title contains, in the shape that the JSON output names. */
 export interface PullRequestTitleOutcome {
   breaking: boolean | null;
   scope: string | null;
@@ -161,7 +161,7 @@ export interface PullRequestTitleOutcome {
   type: string | null;
 }
 
-/** The resolved merge, in the shape the JSON output names. */
+/** The resolved merge, in the shape that the JSON output names. */
 export interface ResolveMergeOutcome {
   body: string;
   defects: RecordDefect[];
@@ -173,8 +173,8 @@ export interface ResolveMergeOutcome {
 }
 
 /**
- * The scope, type, and breaking marker that a source names, in the shape the JSON output names, each `null` where the
- * source does not determine it.
+ * The scope, type, and breaking marker that a source names, in the shape that the JSON output names, each `null` when
+ * the source does not determine it.
  */
 export interface SourceRecordOutcome {
   breaking: boolean | null;
@@ -208,8 +208,8 @@ interface AttributedRecord {
 
 /**
  * Chooses between the block's consolidated record and the commits', reporting the fields on which they disagree. The
- * commits' wins wherever they were read, as the fresher of two consolidations of the same branch; the block's stands
- * only where they agree or where the commits could not be read.
+ * commits' wins whenever they were read, as the fresher of two consolidations of the same branch; the block's stands
+ * only when they agree or when the commits could not be read.
  */
 function chooseFromBlock(input: {
   block: ChangeRecordBlock;
@@ -226,8 +226,8 @@ function chooseFromBlock(input: {
 }
 
 /**
- * Chooses the record without a readable block: the type and its marker from the labels where a type label resolved,
- * otherwise from the commits, and the scope from its label where one resolved, otherwise from the commits.
+ * Chooses the record without a readable block: the type and its marker from the labels when a type label resolved,
+ * otherwise from the commits, and the scope from its label when one resolved, otherwise from the commits.
  */
 function chooseFromLabels(input: {
   commits: ChangeRecord | undefined;
@@ -267,7 +267,7 @@ const COMPARED_FIELDS: readonly ComparedField[] = ['scope', 'type', 'breaking'];
 
 /**
  * Composes the merge body from the pull request's `## What` section, with every `change-record` block removed and the
- * trailing lines that only close a ticket dropped, so neither reaches the merge commit.
+ * trailing lines that only close a ticket dropped, so neither appears in the merge commit.
  */
 function composeBody(body: string): string {
   const section = extractSection({ heading: 'What', text: body.replaceAll('\r\n', '\n') }) ?? '';
@@ -321,7 +321,7 @@ function isDroppedTrailingLine(line: string): boolean {
   );
 }
 
-/** The record that the pull-request title carries, which always names a bare title. */
+/** The record that the pull-request title contains, which always names a bare title. */
 type PullRequestTitleRecord = ChangeRecord & { title: string };
 
 /** Reads the commits' consolidated record, whose marker a branch with entries always determines. */
@@ -422,7 +422,7 @@ interface SourcedValue {
 /** Matches a ticket reference: `#123`, `owner/repo#123`, `ABC-123`, or a URL. */
 const TICKET_REFERENCE = /^(?:(?:[\w.-]+\/[\w.-]+)?#\d+|[A-Z][A-Z\d]*-\d+|https?:\/\/\S+)$/;
 
-/** Renders the block in the shape the JSON output names, reading an absent marker within its record as not breaking. */
+/** Renders the block in the shape that the JSON output names, reading an absent marker within its record as not breaking. */
 function toBlockOutcome(block: ChangeRecordBlock): BlockOutcome {
   const { consolidatedRecord } = block;
   return {
@@ -448,7 +448,7 @@ function toComparedFields(record: ChangeRecord): ChangeRecord {
   };
 }
 
-/** Renders the pull-request title's record in the shape the JSON output names. */
+/** Renders the pull-request title's record in the shape that the JSON output names. */
 function toPullRequestTitleOutcome(record: PullRequestTitleRecord): PullRequestTitleOutcome {
   return {
     title: record.title,
@@ -459,7 +459,7 @@ function toPullRequestTitleOutcome(record: PullRequestTitleRecord): PullRequestT
   };
 }
 
-/** Renders a source's record in the shape the JSON output names, where a marker that the source leaves unset is `null`. */
+/** Renders a source's record in the shape that the JSON output names; a marker that the source leaves unset becomes `null`. */
 function toSourceRecordOutcome(record: ChangeRecord): SourceRecordOutcome {
   return { scope: record.scope ?? null, type: record.type ?? null, breaking: record.breaking ?? null };
 }

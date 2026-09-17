@@ -85,7 +85,7 @@ describe(extractProse, () => {
       expect(text).not.toContain('name: fixture');
     });
 
-    it('yields body prose where the frontmatter cannot be parsed', () => {
+    it('yields body prose when the frontmatter cannot be parsed', () => {
       const spans = extract('---\naliases:\n  git: [vcs, version-control\n---\n\nBody prose survives.\n', 'markdown');
 
       expect(joinText(spans)).toContain('Body prose survives.');
@@ -143,7 +143,7 @@ describe(extractProse, () => {
       });
     });
 
-    it('yields a multi-word literal, which is what reaches a reader as help text', () => {
+    it('yields a multi-word literal, which is what a reader sees as help text', () => {
       const text = joinText(extract(SCRIPT, 'script'));
 
       expect(text).toContain('Print the ID of the ticket a branch name encodes.');
@@ -238,7 +238,7 @@ describe(extractProse, () => {
       ]);
     });
 
-    it('flattens an escaped newline, which its one source line does not carry', () => {
+    it('flattens an escaped newline, which its one source line does not contain', () => {
       const spans = extract(String.raw`text: "First sentence here.\nA second one the reader reads."`, 'yaml');
 
       expect(spans).toStrictEqual([
@@ -297,12 +297,12 @@ describe(extractProse, () => {
 
 // region | Helpers
 
-/** Extracts prose from a fixture body under one kind, holding the file name constant so assertions read cleanly. */
+/** Extracts prose from a fixture body under one kind, holding the file name constant so that assertions read cleanly. */
 function extract(content: string, kind: ProseKind) {
   return extractProse({ file: 'fixture.md', content, kind });
 }
 
-/** Joins every span's text, for the assertions that ask what the whole extraction did and did not carry. */
+/** Joins every span's text, for the assertions that ask what the whole extraction did and did not yield. */
 function joinText(spans: ReturnType<typeof extractProse>): string {
   return spans.map((span) => span.text).join('\n');
 }
