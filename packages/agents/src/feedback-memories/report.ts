@@ -6,10 +6,8 @@ const GAP = '  ';
 const INDENT = ' '.repeat(3);
 
 /**
- * Renders a feedback-memory summary as human-readable text. The bare form is a three-column table (project, memory
- * count, newest modification time) under a header, closed by a total line; `verbose` instead lists each project with its
- * memories, one per line, each description truncated to the available width. Does no data work — grouping, counting, and
- * sorting all happen upstream in `summarizeFeedbackMemories`; this only lays the summary out.
+ * Renders a feedback-memory summary as human-readable text: a three-column table by default, or, under `verbose`, each
+ * project followed by its memories. Grouping, counting, and sorting belong to `summarizeFeedbackMemories`.
  */
 export function reportSummary(summary: FeedbackMemorySummary, options: { verbose?: boolean; width?: number }): string {
   const verbose = options.verbose ?? false;

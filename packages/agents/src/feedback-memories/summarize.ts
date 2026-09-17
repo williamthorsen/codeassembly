@@ -5,10 +5,8 @@ import { enumerateFeedbackMemories } from './enumerate.ts';
 import type { FeedbackMemory, ProjectSummary, SummarizeResult } from './types.ts';
 
 /**
- * Rolls the flat feedback-memory enumeration up into a per-project summary: one entry per memory store carrying its
- * memory count, the newest memory file's modification time, and each memory's slug and description. Projects are sorted
- * alphabetically by label (case-insensitive). An enumeration failure — an absent projects root, or a scoped memory store
- * that names nothing — is propagated unchanged, so a caller distinguishes it the same way it would from `enumerate`.
+ * Rolls the flat feedback-memory enumeration up into one `ProjectSummary` per memory store, sorted alphabetically by
+ * label (case-insensitive). An enumeration failure is propagated unchanged.
  */
 export async function summarizeFeedbackMemories(input: {
   projectsRoot: string;
@@ -49,10 +47,7 @@ export async function summarizeFeedbackMemories(input: {
 
 // region | Helpers
 
-/**
- * Groups enumerated memories by memory-store slug, preserving enumeration's per-store ordering; every group is
- * non-empty.
- */
+/** Groups enumerated memories by memory-store slug, preserving enumeration's per-store ordering. */
 function groupByMemoryStore(memories: readonly FeedbackMemory[]): Map<string, FeedbackMemory[]> {
   const groups = new Map<string, FeedbackMemory[]>();
   for (const memory of memories) {

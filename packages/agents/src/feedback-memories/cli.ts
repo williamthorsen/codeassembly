@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
@@ -24,14 +24,11 @@ async function main(): Promise<void> {
       argv: process.argv.slice(2),
       stdin: process.stdin,
       env: process.env,
-      // `columns` is typed as `number` but is `undefined` when stdout is not a TTY (e.g. piped); the reporter falls
-      // back to a default width in that case.
+      // `columns` is typed as `number` but is `undefined` when stdout is not a TTY (e.g. piped).
       columns: process.stdout.columns,
     });
     const rendered = result.render === 'text' ? result.value : JSON.stringify(result.value, null, 2);
     process.stdout.write(`${rendered}\n`);
-    // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures. Unexpected
-    // throws (permission denied, out-of-disk) take the catch arm below.
   } catch (error) {
     const message = describeError(error);
     process.stderr.write(`feedback-memories: ${message}\n`);
@@ -44,12 +41,9 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end, dispatching on the subcommand. `list` (read-only) renders a per-project summary of
- * feedback-memory counts and recency for humans; `enumerate` (read-only) lists every feedback memory as JSON with
- * provenance. Both accept `--memory-store <name>` to scope to one memory store, and `list` also accepts `--verbose`.
- * `delete` reads newline-separated memory paths from stdin, removes each file, and reconciles the affected `MEMORY.md`
- * indexes. `--help` prints usage. A missing or unknown subcommand, or an unexpected argument, is a recoverable
- * `invalid-args` result. System failures propagate to the caller's try/catch.
+ * Runs the helper end to end, dispatching on the subcommand and returning the result that `main` renders. Every
+ * argument defect, a missing or unknown subcommand included, is a recoverable `invalid-args` result; a system failure
+ * propagates to the caller.
  *
  * @internal - Exported to allow testing.
  */
@@ -142,9 +136,8 @@ function projectsRootFor(input: { home?: string; env?: NodeJS.ProcessEnv }): str
 /**
  * Matches a `--memory-store` flag at `rest[index]` in either the `--memory-store <name>` or `--memory-store=<name>`
  * form, returning the name and how many argv items it consumed, a parse error, or null when the argument is not a
- * `--memory-store` form. A value that opens with `--` is treated as missing, so a dangling `--memory-store` before
- * another flag fails rather than swallowing it — memory-store slugs begin with a single `-`, so a real name is never
- * mistaken for a flag.
+ * `--memory-store` form. A value opening with `--` counts as missing: a memory-store slug begins with a single `-`, so
+ * a real name is never mistaken for a flag.
  */
 function matchMemoryStoreFlag(
   rest: readonly string[],
@@ -218,9 +211,9 @@ function parseListArgs(
 }
 
 /**
- * Builds the rejection message for an argument the subcommand does not accept. A `--store` form is answered by naming
- * the distinction rather than by the generic message: `--store` selects a KB store for the `capture-event` and `kb-*`
- * skills, and reaching for it here is exactly the confusion `--memory-store` is named to prevent.
+ * Builds the rejection message for an argument that the subcommand does not accept. A `--store` form gets a message of
+ * its own: `--store` selects a KB store for the `capture-event` and `kb-*` skills, and reaching for it here is the
+ * confusion that `--memory-store` is named to prevent.
  */
 function rejectArg(accepted: string, arg: string | undefined): string {
   if (arg === '--store' || (arg !== undefined && arg.startsWith('--store='))) {
@@ -270,8 +263,7 @@ function usage(): string {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns `false`,
- * matching the degrade-with-warning pattern used by `kb-add` and `capture-event`.
+ * symlinked invocation path still matches. A `realpathSync` failure warns and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

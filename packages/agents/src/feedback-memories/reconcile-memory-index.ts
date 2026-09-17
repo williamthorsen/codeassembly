@@ -1,8 +1,7 @@
 /**
- * Removes a memory's entry from `MEMORY.md` content, matching the list item by its link target's file basename rather
- * than by title. Matching on the basename is what makes reconciliation robust across the store-to-store variance in how
- * entries are titled and filenamed. When removing the entry empties its section, the now-orphaned `##` header (and its
- * blank lines) is dropped too. A basename with no matching line is a no-op that reports `removed: false`.
+ * Removes a memory's entry from `MEMORY.md` content, matching the list item by its link target's file basename, since
+ * how an entry is titled varies from store to store. When the removal empties the entry's section, the orphaned `##`
+ * header and its blank lines go too. A basename with no matching line is a no-op that reports `removed: false`.
  */
 export function removeMemoryIndexEntry(content: string, fileBasename: string): { content: string; removed: boolean } {
   const target = `](${fileBasename})`;
@@ -32,9 +31,8 @@ function isListItem(line: string): boolean {
 }
 
 /**
- * Drops any `##` section whose body — the lines between its header and the next `#`/`##` header or end of file — is
- * entirely blank, along with that blank body. A section carrying prose or a surviving list item is left untouched, so
- * only a section genuinely emptied by an entry removal is collapsed.
+ * Drops any `##` section whose body, the lines between its header and the next `#` or `##` header or end of file, is
+ * entirely blank, along with that blank body.
  */
 function dropEmptySections(lines: readonly string[]): string[] {
   const out: string[] = [];
