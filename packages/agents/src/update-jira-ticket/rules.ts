@@ -1,11 +1,7 @@
-// One exported function per rule class. Each takes the tokenized payload (and the original source for line
-// derivation) and returns zero or more findings. The rule IDs are stable across versions — the skill body and
-// tests both reference them by string.
-
 import { lineOf, type Token, walkTokens } from './parser.ts';
 import type { Finding } from './types.ts';
 
-/** Allowlisted element names. Mirrors the SKILL.md allowlist exactly; this is the canonical source of truth. */
+/** Allowlisted element names. SKILL.md documents the same allowlist, and the two must agree. */
 export const ALLOWED_ELEMENTS = new Set([
   'h1',
   'h2',
@@ -35,14 +31,10 @@ export const ALLOWED_ELEMENTS = new Set([
 /** Inline-mark elements that may not nest with `<code>` in either direction. */
 const INLINE_MARK_ELEMENTS = new Set(['strong', 'em', 'a', 'strike', 'u', 'sub', 'sup']);
 
-/** Universally-safe HTML entities. Anything else in text content is flagged by {@link namedEntityRule}. */
+/** Universally-safe HTML entities. */
 const SAFE_TEXT_ENTITIES = new Set(['amp', 'lt', 'gt']);
 
-/**
- * Flag any `<code>` whose direct or transitive open ancestor is an inline-mark element, and vice versa.
- * Both nesting directions are caught because each tag is visited as it opens and its parent stack is
- * inspected.
- */
+/** Flags any `<code>` whose direct or transitive open ancestor is an inline-mark element, and vice versa. */
 export function compositionCodeInlineMarkRule(tokens: readonly Token[], source: string): Finding[] {
   const findings: Finding[] = [];
   walkTokens(tokens, (token, parents) => {
@@ -72,9 +64,8 @@ export function compositionCodeInlineMarkRule(tokens: readonly Token[], source: 
 }
 
 /**
- * Flag named HTML entities other than `&amp;`, `&lt;`, `&gt;` that appear in text content.
- * Attribute values are not scanned, because that's where `&quot;` and `&apos;` legitimately live —
- * the tokenizer separates text from attribute values so this rule never sees them.
+ * Flags named HTML entities in text content, except those in {@link SAFE_TEXT_ENTITIES}. The scan skips attribute
+ * values, because `&quot;` and `&apos;` legitimately appear in them.
  */
 export function namedEntityRule(tokens: readonly Token[], source: string): Finding[] {
   const findings: Finding[] = [];
@@ -113,10 +104,7 @@ export function confluenceConstructRule(tokens: readonly Token[], source: string
   return findings;
 }
 
-/**
- * Flag any `<pre>` element whose contents (until its matching close tag) contain a newline. Inline `<code>`
- * with the same text is not flagged, because the trigger is the `<pre>` wrapper, not the newline alone.
- */
+/** Flags any `<pre>` element whose contents, up to the matching close tag, contain a newline. */
 export function preMultilineRule(tokens: readonly Token[], source: string): Finding[] {
   const findings: Finding[] = [];
   for (const [i, token] of tokens.entries()) {
@@ -133,7 +121,7 @@ export function preMultilineRule(tokens: readonly Token[], source: string): Find
   return findings;
 }
 
-/** Scan from the `<pre>` open tag at `tokens[startIndex]` until its matching close, returning true on a newline. */
+/** Scans from the `<pre>` open tag at `tokens[startIndex]` until its matching close, returning true on a newline. */
 function hasNewlineInPre(tokens: readonly Token[], startIndex: number): boolean {
   let depth = 1;
   for (let j = startIndex + 1; j < tokens.length; j += 1) {

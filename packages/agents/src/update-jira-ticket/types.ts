@@ -1,14 +1,8 @@
-// Shapes for the update-jira-ticket pre-flight checker.
-//
-// The checker's stdout payload is a discriminated union on `ok`. Clean payloads return `{ ok: true }`;
-// payloads with detectable problems return `{ ok: false, findings: [...] }`. Both exit 0 — only invocation
-// errors (unreadable stdin, unknown flag) exit non-zero with a stderr message.
-
-/** Stable identifier for a rule class. The skill body, tests, and stdout payload all reference these. */
+/** Stable identifier for a rule class. The skill body matches on these strings, so renaming one breaks the skill. */
 export type RuleId =
   'composition-code-inline-mark' | 'named-entity' | 'confluence-construct' | 'pre-multiline' | 'disallowed-element';
 
-/** A single rule violation. `line` is best-effort (1-based, from the offset of the offending construct). */
+/** A single rule violation. `line` is 1-based. */
 export interface Finding {
   rule: RuleId;
   snippet: string;
@@ -16,5 +10,5 @@ export interface Finding {
   fix: string;
 }
 
-/** Payload emitted to stdout. Clean payloads have no `findings` field. */
+/** Payload emitted to stdout. */
 export type CheckResult = { ok: true } | { ok: false; findings: Finding[] };
