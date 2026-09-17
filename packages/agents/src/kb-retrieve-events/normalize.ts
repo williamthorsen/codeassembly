@@ -45,7 +45,7 @@ function toEventCandidate(searchHit: SearchHit): EventCandidate {
 
 /**
  * Stamps each candidate with the size of its `repo` recurrence group. The group key collapses a missing `repo` to an
- * empty string so events lacking that signal still group together consistently.
+ * empty string so that events lacking that signal still group together consistently.
  */
 function stampOccurrences(candidates: EventCandidate[]): void {
   const groupSizes = new Map<string, number>();

@@ -6,7 +6,7 @@ import { dedupeInOrder } from '../../kb-shared/note-helpers.ts';
 
 /**
  * Replaces the tag list, canonicalizing each entry through the supplied alias map and deduplicating in
- * first-occurrence order. An empty list is a valid result. Does **not** bump `updated`: retagging reorganizes how a
+ * first-occurrence order. An empty list is a valid result. Does **not** bump `updated`: Retagging reorganizes how a
  * record is found, not what it asserts.
  *
  * Canonicalization can collapse distinct inputs onto the same canonical, so dedupe runs after canonicalize.

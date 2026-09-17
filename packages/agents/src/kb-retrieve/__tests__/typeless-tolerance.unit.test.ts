@@ -10,7 +10,7 @@ const NORMALIZE = join(import.meta.dirname, 'fixtures', 'normalize');
 const NOW = new Date('2026-05-01T00:00:00Z');
 
 describe(collectTypelessCandidates, () => {
-  it('surfaces a note that parses but declares no recordType, keeping its fields and marking it degraded', async () => {
+  it('returns a note that parses but declares no recordType, keeping its fields and marking it degraded', async () => {
     const candidates = await collectTypelessCandidates({
       hits: [await hitFor(join(NORMALIZE, 'no-record-type.md'))],
       now: NOW,

@@ -10,11 +10,11 @@ import { normalizeHits } from '../normalize.ts';
 const SEARCH_FIXTURES = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures');
 const NOTES_VAULT = join(SEARCH_FIXTURES, 'notes-vault');
 const NORMALIZE = join(import.meta.dirname, 'fixtures', 'normalize');
-// A fixed clock so freshness ages are deterministic across test runs.
+// A fixed clock so that freshness ages are deterministic across test runs.
 const NOW = new Date('2026-05-01T00:00:00Z');
 
 describe(normalizeHits, () => {
-  it('projects a well-formed note onto a candidate carrying its frontmatter fields', async () => {
+  it('projects a well-formed note onto a candidate with its frontmatter fields', async () => {
     const candidates = await normalizeHits({ hits: [await hitFor(join(NOTES_VAULT, 'new-guide.md'))], now: NOW });
 
     expect(candidates).toHaveLength(1);
@@ -83,7 +83,7 @@ describe(normalizeHits, () => {
   });
 });
 
-describe('normalizeHits addressed-by surfacing', () => {
+describe('normalizeHits addressed-by reporting', () => {
   it('omits addressedBy when the note declares no addressed-by', async () => {
     const candidates = await normalizeHits({ hits: [await hitFor(join(NOTES_VAULT, 'new-guide.md'))], now: NOW });
 

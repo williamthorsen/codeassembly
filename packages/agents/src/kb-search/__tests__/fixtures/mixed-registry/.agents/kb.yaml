@@ -1,5 +1,5 @@
-# Registry fixture pairing a dead-path entry with a live one, exercised under `--all-kbs` so both enter scope:
-# recall finds hits in `live-vault` while `ghost-vault`'s absent path surfaces as a warning.
+# Registry fixture pairing a dead-path entry with a live one, exercised under `--all-kbs` so that both are in scope:
+# Recall finds hits in `live-vault` while `ghost-vault`'s absent path is reported as a warning.
 kbs:
   ghost-vault:
     path: ./no-such-kb-directory

@@ -9,4 +9,4 @@ diataxis: observation
 summary: A typed event carrying a Diataxis label
 ---
 
-An event that also carries a Diataxis label in its frontmatter.
+An event that also has a Diataxis label in its frontmatter.

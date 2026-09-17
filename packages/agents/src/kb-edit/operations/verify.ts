@@ -3,7 +3,7 @@ import type { KbAssertion } from '@williamthorsen/kb/records';
 import { formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
- * Sets `lastVerified` to `now` (UTC). Does **not** bump `updated`: re-verification is a curatorial event, not a
+ * Sets `lastVerified` to `now` (UTC). Does **not** bump `updated`: Re-verification is a curatorial event, not a
  * content edit.
  */
 export function verify(record: KbAssertion, now: Date): KbAssertion {

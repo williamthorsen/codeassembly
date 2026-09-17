@@ -58,7 +58,7 @@ describe(parseArgs, () => {
 });
 
 describe(runRetrieveEvents, () => {
-  it('returns an event candidate carrying its recurrence signals', async () => {
+  it('returns an event candidate with its recurrence signals', async () => {
     const result = await runRetrieveEvents({
       argv: ['phantomwidget'],
       startDir: NOTES_VAULT,
@@ -75,7 +75,7 @@ describe(runRetrieveEvents, () => {
     });
   });
 
-  it('excludes assertion records, pointing the reader at assertion recall', async () => {
+  it('excludes assertion records, directing the reader to assertion recall', async () => {
     const result = await runRetrieveEvents({
       argv: ['backpressure'],
       startDir: NOTES_VAULT,
@@ -124,7 +124,7 @@ describe(runRetrieveEvents, () => {
     expect(result.diagnostic).toBe('no query provided');
   });
 
-  it('surfaces a declared impact on a candidate and omits it on an unrated one', async () => {
+  it('reports a declared impact on a candidate and omits it on an unrated one', async () => {
     const result = await runRetrieveEvents({
       argv: ['snorkleweft'],
       startDir: NOTES_VAULT,

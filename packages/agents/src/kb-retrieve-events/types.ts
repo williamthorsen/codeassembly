@@ -10,7 +10,7 @@ export interface EventCandidate {
   summary: string;
   /** ISO-8601 capture timestamp (the `captured-at` field); `null` when absent. */
   capturedAt: string | null;
-  /** `owner/name` repository the event was captured in; `undefined` when absent. */
+  /** `owner/name` repository in which the event was captured; `undefined` when absent. */
   repo?: string;
   /** The number of query-matched events sharing this event's `repo` recurrence group; a coarse recurrence signal. */
   occurrences: number;
@@ -19,13 +19,13 @@ export interface EventCandidate {
   /** A context snippet drawn from the ripgrep match. */
   snippet: string;
   /**
-   * References to whatever was done about the problem this event notes (its `addressed-by` list): a KB
+   * References to whatever was done about the problem that this event notes (its `addressed-by` list): a KB
    * wikilink/relative path, commit SHA, PR/issue ref, or URL.
    */
   addressedBy?: string[];
   /**
    * The author's revisable rating of how much addressing this event matters. `undefined` when the event is unrated or
-   * carries a value outside the declared levels.
+   * has a value outside the declared levels.
    */
   impact?: EventImpact;
   /** Name of the source KB, or `null` for a registry-less discovered KB. */

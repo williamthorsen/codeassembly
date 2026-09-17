@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -97,7 +97,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 /**
  * Runs the helper end to end, from the argv to the structured result. Invalid arguments throw; an empty outcome is
- * reported as an empty candidate list carrying a `diagnostic`.
+ * reported as an empty candidate list with a `diagnostic`.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read.
  *

@@ -7,4 +7,4 @@ cwd: /tmp/no-remote
 summary: An observation captured outside a git remote
 ---
 
-An event whose capture resolved no git remote, so it carries no repo field.
+An event whose capture resolved no git remote, so it has no repo field.
