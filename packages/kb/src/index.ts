@@ -1,6 +1,7 @@
 // Root entry point of @williamthorsen/kb. Most of the behavioral surface is exported from the subpath entries, so that
 // a consumer loads only the module that it needs.
 
+// Shared type vocabulary
 export type {
   AliasMap,
   Finding,
@@ -13,4 +14,5 @@ export type {
   ParsedNote,
 } from './types.ts';
 
+// Vault-integrity index
 export { buildVaultIndex, type VaultIndex } from './vault-integrity/build-vault-index.ts';
