@@ -52,6 +52,7 @@ interface BranchLocation {
 export function createEventStore(input: { eventsDir: string; retentionMs: number; onChange?: () => void }): EventStore {
   const lanes = new Map<string, LaneEntry>();
 
+  /** Folds the session files of every resident or recently changed branch, then evicts lanes idle past retention. */
   function scanAndFold(nowMs: number): void {
     const cutoff = nowMs - input.retentionMs;
     let changed = false;

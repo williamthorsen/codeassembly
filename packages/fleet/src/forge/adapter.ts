@@ -1,7 +1,3 @@
-// The forge-agnostic contract the poller depends on. A forge adapter maps a repo's branches to their pull-request facts
-// and a repo's ticket ids to their ticket facts in one batched, per-repo call. GitHub (via `gh`) is the first
-// implementation; a Bitbucket one for the work machine can satisfy this same interface without touching any consumer.
-//
 // Absence follows lifecycle's convention here: an unknown or not-applicable value is `undefined`, and the wire layer
 // spells it `null` at snapshot derivation. A branch with no pull request is simply absent from `branchPrs` rather than
 // a present-but-null entry — `noUncheckedIndexedAccess` surfaces that as `undefined` on lookup.
@@ -9,10 +5,8 @@
 /** Whether a pull request is open, merged, or closed unmerged. */
 export type PrState = 'open' | 'merged' | 'closed';
 
-/** The rolled-up CI verdict for a pull request. */
 export type CheckState = 'passing' | 'failing' | 'pending';
 
-/** The review decision for a pull request. */
 export type ReviewState = 'approved' | 'changes-requested' | 'review-required';
 
 /** Normalized pull-request facts for one branch. */
