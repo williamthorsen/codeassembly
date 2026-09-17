@@ -1,11 +1,11 @@
 // Shapes for the feedback-memories helper.
 //
-// Each subcommand prints a discriminated union on `ok`. A recoverable failure returns `{ ok: false, error, message }`
-// and a success returns `{ ok: true, ... }`. A system error (permission denied, out-of-disk) prints to stderr and exits
-// non-zero.
+// Each subcommand prints a discriminated union on `ok`: `{ ok: false, error, message }` on a recoverable failure and
+// `{ ok: true, ... }` on a success. On a system error (permission denied, out-of-disk), the helper prints to stderr
+// and exits non-zero.
 
 /**
- * A single feedback memory discovered during enumeration, carrying the provenance that a caller needs to route it.
+ * A single feedback memory discovered during enumeration, with the provenance that a caller needs to route it.
  */
 export interface FeedbackMemory {
   /** Absolute path to the memory file. */
@@ -44,7 +44,7 @@ export interface SkippedMemory {
 /** The `enumerate` subcommand's stdout payload on success. */
 export interface EnumerateSuccess {
   ok: true;
-  /** Machine hostname the enumeration ran on. */
+  /** Hostname of the machine on which the enumeration ran. */
   machine: string;
   /** Absolute path of the projects root that was walked. */
   projectsRoot: string;
@@ -63,7 +63,7 @@ export interface EnumerateFailure {
 
 export type EnumerateResult = EnumerateSuccess | EnumerateFailure;
 
-/** A single memory's identity within a project summary, carried for verbose rendering. */
+/** A single memory's identity within a project summary, included for verbose rendering. */
 export interface MemorySummary {
   /** Filename stem, without the `.md` extension. */
   slug: string;
@@ -90,7 +90,7 @@ export interface ProjectSummary {
 /** The per-project rollup returned by `summarizeFeedbackMemories`. */
 export interface FeedbackMemorySummary {
   ok: true;
-  /** Machine hostname the summary was computed on. */
+  /** Hostname of the machine on which the summary was computed. */
   machine: string;
   /** Absolute path of the projects root that was walked. */
   projectsRoot: string;
@@ -134,7 +134,7 @@ export type DeleteResult = DeleteSuccess | FeedbackMemoriesFailure;
 export type FeedbackMemoriesResult = EnumerateResult | DeleteResult;
 
 /**
- * What `runFeedbackMemories` hands the process entry point: a JSON-serializable result, or text already rendered for a
- * human reader.
+ * What `runFeedbackMemories` returns to the process entry point: a JSON-serializable result, or text already rendered
+ * for a human reader.
  */
 export type RenderedResult = { render: 'json'; value: FeedbackMemoriesResult } | { render: 'text'; value: string };

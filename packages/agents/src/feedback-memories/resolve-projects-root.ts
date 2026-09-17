@@ -8,7 +8,7 @@ import { join } from 'node:path';
  */
 export function resolveProjectsRoot(input: { home?: string; env?: NodeJS.ProcessEnv }): string {
   const configDir = input.env?.CLAUDE_CONFIG_DIR;
-  // Treat an empty CLAUDE_CONFIG_DIR as unset: an exported-but-empty shell variable should not resolve to a bogus
+  // Treat an empty CLAUDE_CONFIG_DIR as unset: An exported-but-empty shell variable should not resolve to a bogus
   // relative `projects` path, and a caller can neutralize an ambient value by passing an empty string.
   const base = configDir !== undefined && configDir !== '' ? configDir : join(input.home ?? homedir(), '.claude');
   return join(base, 'projects');

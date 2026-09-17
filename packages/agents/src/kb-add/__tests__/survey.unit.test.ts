@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { surveyKb } from '../survey.ts';
 
-/** Every path `readFile` was called with, so the survey can be shown to open no note. */
+/** Every path with which `readFile` was called, so that the survey can be shown to open no note. */
 const readFilePaths: string[] = [];
 
 vi.mock('node:fs/promises', async (importOriginal) => {
@@ -45,7 +45,7 @@ describe(surveyKb, () => {
     ]);
   });
 
-  it('counts a domain as holding every note beneath it, so a grouping domain reads as populated', async () => {
+  it('counts a domain as holding every note beneath it, so a grouping domain is reported as populated', async () => {
     const kbPath = await makeStore({
       '.kb/taxonomy.yaml': 'domains:\n  engineering: Practice\n  engineering/tooling: Build and test tooling\n',
       'content/assertions/engineering/tooling/Vite.md': NOTE,
@@ -98,7 +98,7 @@ describe(surveyKb, () => {
     ]);
   });
 
-  it('counts no folder for a note sitting at the assertions root', async () => {
+  it('counts no folder for a note at the assertions root', async () => {
     const kbPath = await makeStore({ 'content/assertions/Loose.md': NOTE });
 
     const survey = await surveyKb({ kbPath });
@@ -106,7 +106,7 @@ describe(surveyKb, () => {
     expect(survey.undeclaredFolders).toEqual([]);
   });
 
-  it('sees only the notes the store config admits', async () => {
+  it('sees only the notes admitted by the store config', async () => {
     const kbPath = await makeStore({
       '.kb/config.yaml': "targets:\n  - 'content/**/*.md'\nexclude:\n  - '**/drafts/**'\n",
       'content/assertions/engineering/Tooling.md': NOTE,

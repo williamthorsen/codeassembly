@@ -4,10 +4,10 @@ import type { EnumerateFailure } from './types.ts';
 
 /**
  * Resolves a requested memory store to the store directory holding it, accepting either the store's directory name or
- * the label that `list` displays. A directory-name match wins outright; only an unmatched value falls back to deriving
- * every store's label, which probes the filesystem once per store. Two stores can share a label, the same repo
- * basename under different parents, so a label matching more than one fails as `ambiguous-memory-store` naming the
- * candidates.
+ * the label that `list` displays. A directory-name match takes precedence; only an unmatched value falls back to
+ * deriving every store's label, which probes the filesystem once per store. Two stores can share a label, the same
+ * repo basename under different parents, so a label matching more than one fails as `ambiguous-memory-store` naming
+ * the candidates.
  *
  * `resolveRepo` is injected so that label resolution can be exercised without a repo tree on disk.
  */

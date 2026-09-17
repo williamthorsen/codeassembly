@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -136,7 +136,7 @@ function projectsRootFor(input: { home?: string; env?: NodeJS.ProcessEnv }): str
 /**
  * Matches a `--memory-store` flag at `rest[index]` in either the `--memory-store <name>` or `--memory-store=<name>`
  * form, returning the name and how many argv items it consumed, a parse error, or null when the argument is not a
- * `--memory-store` form. A value opening with `--` counts as missing: a memory-store slug begins with a single `-`, so
+ * `--memory-store` form. A value opening with `--` counts as missing: A memory-store slug begins with a single `-`, so
  * a real name is never mistaken for a flag.
  */
 function matchMemoryStoreFlag(
@@ -212,7 +212,7 @@ function parseListArgs(
 
 /**
  * Builds the rejection message for an argument that the subcommand does not accept. A `--store` form gets a message of
- * its own: `--store` selects a KB store for the `capture-event` and `kb-*` skills, and reaching for it here is the
+ * its own: `--store` selects a KB store for the `capture-event` and `kb-*` skills, and passing it here is the
  * confusion that `--memory-store` is named to prevent.
  */
 function rejectArg(accepted: string, arg: string | undefined): string {
@@ -238,7 +238,7 @@ function invalidArgs(message: string): FeedbackMemoriesFailure {
 /** Returns the command's usage text. */
 function usage(): string {
   return [
-    "feedback-memories — inspect this machine's feedback memories",
+    "feedback-memories: Inspect this machine's feedback memories",
     '',
     'Usage:',
     '  feedback-memories list [--memory-store <name>] [--verbose]',
@@ -263,7 +263,7 @@ function usage(): string {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. A `realpathSync` failure warns and returns `false`.
+ * symlinked invocation path still matches. On a `realpathSync` failure, the function warns and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];

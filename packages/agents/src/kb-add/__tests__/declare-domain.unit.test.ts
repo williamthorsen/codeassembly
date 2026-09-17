@@ -53,7 +53,7 @@ describe(declareDomain, () => {
     expect(await readTaxonomy(kbPath)).toContain('provisional:\n  languages:\n');
   });
 
-  it('routes a described domain to provisional under --auto', async () => {
+  it('declares a described domain as provisional under --auto', async () => {
     const kbPath = await makeStore({ '.kb/taxonomy.yaml': 'domains:\n' });
     const notePath = await writeNoteAt(kbPath, 'languages/Types.md');
 
@@ -73,7 +73,7 @@ describe(declareDomain, () => {
     await expect(readTaxonomy(kbPath)).rejects.toThrow();
   });
 
-  it('grows the first domain of a store whose taxonomy file declares nothing', async () => {
+  it('declares the first domain of a store whose taxonomy file declares nothing', async () => {
     const kbPath = await makeStore({ '.kb/taxonomy.yaml': '' });
     const notePath = await writeNoteAt(kbPath, 'languages/Types.md');
 
@@ -83,7 +83,7 @@ describe(declareDomain, () => {
     expect(await readTaxonomy(kbPath)).toBe('domains:\n  languages: Programming languages\n');
   });
 
-  it('reports a note at the assertions root as sitting under no domain', async () => {
+  it('reports a note at the assertions root as being under no domain', async () => {
     const kbPath = await makeStore({ '.kb/taxonomy.yaml': 'domains:\n  languages: Programming languages\n' });
     const notePath = await writeNoteAt(kbPath, 'Loose.md');
 

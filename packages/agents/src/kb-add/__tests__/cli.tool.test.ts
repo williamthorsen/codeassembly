@@ -69,7 +69,7 @@ describe(parseArgs, () => {
     expect(parsed.diataxis).toBeNull();
   });
 
-  it('parses --survey as a survey invocation carrying only the KB', () => {
+  it('parses --survey as a survey invocation containing only the KB', () => {
     expect(parseArgs(['--survey', '--kb', 'coding'])).toEqual({ mode: 'survey', kb: 'coding' });
   });
 
@@ -212,7 +212,7 @@ describe(runAdd, () => {
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Floating'],
       stdin: bodyStream(''),
-      // startDir avoids the KB so discovery does not supply a destination.
+      // startDir avoids the KB so that discovery does not supply a destination.
       startDir: homeDir,
       now: NOW,
       home: homeDir,
@@ -328,7 +328,7 @@ describe(runAdd, () => {
 
   it('returns readonly-kb when the explicit --kb names a readonly registry entry', async () => {
     // Isolate HOME, so that the registry's only writable target is the readonly entry.
-    // runAdd resolves through resolveWritableKb, so the refusal surfaces as a top-level readonly-kb error
+    // runAdd resolves through resolveWritableKb, so it reports the refusal as a top-level readonly-kb error
     // without ever touching disk inside the KB.
     const kbPath = await makeKb();
     const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-readonly-'));
@@ -342,7 +342,7 @@ describe(runAdd, () => {
     const result = await runAdd({
       argv: ['--kb', 'locked', '--diataxis', 'howto', '--title', 'Refused'],
       stdin: bodyStream(''),
-      // startDir avoids the KB so discovery does not produce a writable fallback.
+      // startDir avoids the KB so that discovery does not produce a writable fallback.
       startDir: homeDir,
       now: NOW,
       home: homeDir,
@@ -475,7 +475,7 @@ describe(runAdd, () => {
     expect(taxonomy).toContain('languages/typescript: The TypeScript language');
   });
 
-  it('routes the declared domain to provisional under --auto', async () => {
+  it('declares the domain as provisional under --auto', async () => {
     const kbPath = await makeKb();
     await writeFile(join(kbPath, '.kb', 'taxonomy.yaml'), 'domains:\n', 'utf8');
 
@@ -559,7 +559,7 @@ describe(runAdd, () => {
     }
   });
 
-  it('surveys a KB the registry marks readonly, which refuses only writes', async () => {
+  it('surveys a KB that the registry marks readonly, which refuses only writes', async () => {
     const kbPath = await makeKb();
     const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-survey-readonly-'));
     await mkdir(join(homeDir, '.agents'), { recursive: true });
@@ -586,7 +586,7 @@ describe(runAdd, () => {
 
   it('returns a survey without consuming stdin', async () => {
     const kbPath = await makeKb();
-    // A stream that never emits and never ends: reading it to EOF would hang, so completing proves it went untouched.
+    // A stream that never emits and never ends: Reading it to EOF would hang, so completing proves it went untouched.
     const unendingStdin = new Readable({ read() {} });
 
     const result = await runAdd({
