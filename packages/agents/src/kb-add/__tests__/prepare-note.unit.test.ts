@@ -65,16 +65,12 @@ describe(prepareNote, () => {
     const args: WriteArgs = { ...baseArgs, tags: ['node.js', 'streams', 'node'] };
     const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
-    // Original tag list is preserved verbatim for the audit trail, including aliases that collapse onto the same
-    // canonical. The written tag list deduplicates in first-occurrence order so the note does not ship
-    // semantically duplicate tags like `['nodejs', 'streams', 'nodejs']`.
     expect(result.originalTags).toEqual(['node.js', 'streams', 'node']);
     expect(result.canonicalTags).toEqual(['nodejs', 'streams']);
     expect(result.record.tags).toEqual(['nodejs', 'streams']);
   });
 
   it('deduplicates exact-repeat canonical tags in first-occurrence order', () => {
-    // Same canonical input twice should resolve to one tag, not two.
     const args: WriteArgs = { ...baseArgs, tags: ['streams', 'streams', 'nodejs'] };
     const result = prepareNote({ args, aliases, now: NOW, body: '' });
 

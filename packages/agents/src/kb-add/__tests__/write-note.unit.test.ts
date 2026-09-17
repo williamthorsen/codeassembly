@@ -63,8 +63,7 @@ describe(composeFilename, () => {
 describe(writeNote, () => {
   let kbPath: string;
 
-  // Each test gets a fresh temp directory; we intentionally leave artifacts in `tmpdir` so a failed test's state
-  // is available for inspection.
+  // No cleanup: a failed test's temp directory stays in `tmpdir` for inspection.
   beforeEach(async () => {
     kbPath = await mkdtemp(join(tmpdir(), 'kb-add-write-'));
   });

@@ -1,9 +1,8 @@
 // Shapes for the kb-add helper: parsed CLI input, the resolved write target, and the JSON result emitted to stdout.
 //
-// The helper's stdout payload is a discriminated union on `ok`, and its successes are further discriminated on `mode`,
-// since a survey reports a store's shape where a write reports a note. Recoverable failures (collision, no resolvable
-// KB, invalid title) return `{ ok: false, error, details? }`; successes return `{ ok: true, mode, ... }`. System errors
-// (out-of-disk, permission denied) are out of band: They print to stderr and exit non-zero.
+// A survey reports a store's shape and a write reports a note, so the stdout payload discriminates on `ok` and its
+// successes further on `mode`. A system error (out-of-disk, permission denied) is out of band: it prints to stderr
+// and exits non-zero.
 
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
@@ -117,5 +116,4 @@ export interface SurveySuccess extends KbSurvey {
 /** The helper's full stdout payload for a `--survey` invocation; failures are shared with the write path. */
 export type SurveyResult = SurveySuccess | AddFailure;
 
-// Re-export so existing kb-add consumers don't need to learn the kb-shared path.
 export type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

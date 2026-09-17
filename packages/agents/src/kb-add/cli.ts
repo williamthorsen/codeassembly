@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
@@ -21,7 +21,6 @@ import { surveyKb } from './survey.ts';
 import type { AddFailure, AddResult, ParsedArgs, SurveyResult, WriteArgs } from './types.ts';
 import { writeNote } from './write-note.ts';
 
-/** Flag names that take a value. */
 const VALUE_FLAGS = ['kb', 'folder', 'diataxis', 'title', 'tags', 'domain-description'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
 
@@ -35,8 +34,6 @@ async function main(): Promise<void> {
       now: new Date(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
-    // System failures (unexpected throws) take the catch arm below.
   } catch (error) {
     const message = describeError(error);
     process.stderr.write(`kb-add: ${message}\n`);
@@ -44,20 +41,17 @@ async function main(): Promise<void> {
   }
 }
 
-// Run as a script, but not when imported by tests.
 if (isEntryPoint()) {
   await main();
 }
 
 /**
- * Parses the helper's argv into a survey or a write invocation. Each value-bearing flag accepts both `--flag value`
- * and `--flag=value`. `--tags` accepts a comma-separated list. Unknown flags or missing required values throw with a
- * usage-style message. The arg layout is flag-only (no positional arguments), reflecting that the note body comes from
- * stdin rather than the command line.
+ * Parses the helper's argv into a survey or a write invocation, throwing on an unknown flag or a missing required
+ * value. The caller turns the throw into an `invalid-args` result.
  *
- * `--survey` selects the read-only survey, which takes `--kb` alone: a note-describing flag alongside it is a caller
- * that meant to write, and is rejected rather than dropped, since dropping it would report a survey for an invocation
- * that expected a note on disk.
+ * `--survey` selects the read-only survey, which takes `--kb` alone. A note-describing flag alongside it comes from a
+ * caller that meant to write, so the parse fails: a survey reported for that invocation would leave the caller
+ * expecting a note that nothing wrote.
  *
  * @internal - Exported to allow testing.
  */
@@ -112,13 +106,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end. `--survey` takes the read-only path, which reports the destination's shape and returns
- * without touching stdin — the write path reads stdin to EOF, so a survey falling through to it would hang on an
- * interactive invocation. Otherwise: resolve a single KB, load its tag aliases, read the note body from stdin, compose
- * a born-verified assertion record, write the note, and record where it landed in the store's taxonomy.
+ * Runs the helper end to end, from argv and stdin to a written note or a survey of the destination.
  *
- * Recoverable failures (no resolvable KB, collision, invalid title or args, a malformed store config) become
- * structured `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the caller's
+ * `--survey` takes the read-only path and returns without touching stdin: the write path reads stdin to EOF, so a
+ * survey falling through to it would hang on an interactive invocation.
+ *
+ * Every recoverable failure becomes a structured `{ ok: false, ... }` result. A system failure propagates to the
  * try/catch in `main`.
  *
  * @internal - Exported to allow testing.
@@ -183,7 +176,6 @@ export async function runAdd(input: {
       case 'invalid-title':
         return { ok: false, error: 'invalid-title', message: write.message };
       default: {
-        // Exhaustiveness check: a new WriteFailure reason will surface here at compile time.
         const _exhaustive: never = write;
         throw new Error(`unhandled WriteFailure: ${JSON.stringify(_exhaustive)}`);
       }
@@ -237,9 +229,7 @@ function buildWriteArgs(input: { raw: Partial<Record<ValueFlag, string>>; auto: 
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure (broken symlink, permission denied) the
- * function emits a warning to stderr and returns `false`, matching the degrade-with-warning pattern used by
- * `loadAliasesWithWarning` and `resolveWritableKb` so that silent skips do not hide environment problems.
+ * symlinked invocation path still matches. A `realpathSync` failure warns on stderr and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -257,8 +247,7 @@ function isEntryPoint(): boolean {
 
 /**
  * Loads tag aliases, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map and emitting a warning
- * to stderr so the operator can see why canonicalization was skipped. Without the warning, an aliases-load failure
- * looked indistinguishable from "no aliases defined" and silently shipped uncanonicalized tags.
+ * to stderr so that the operator sees why canonicalization was skipped.
  */
 async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasMap> {
   try {
@@ -344,7 +333,6 @@ async function resolveKb(input: {
         },
       };
     default: {
-      // Exhaustiveness check: a new ResolveKbOutcome variant will surface here at compile time.
       const _exhaustive: never = resolved;
       throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
     }
@@ -352,9 +340,8 @@ async function resolveKb(input: {
 }
 
 /**
- * Runs the read-only survey: resolve the store, then report its declared domains and the folders its notes occupy. A
- * malformed `.kb/config.yaml` or `.kb/taxonomy.yaml` is a defect the operator can fix, so it returns as a structured
- * `invalid-config` rather than taking `main`'s exit-1 arm; any other throw is a real system failure and propagates.
+ * Runs the read-only survey. A malformed `.kb/config.yaml` or `.kb/taxonomy.yaml` is a defect that the operator can
+ * fix, so it returns as a structured `invalid-config`; any other throw is a system failure and propagates.
  */
 async function runSurvey(input: { startDir: string; explicitKb: string | null; home?: string }): Promise<SurveyResult> {
   const resolved = await resolveKb({ ...input, requireWritable: false });

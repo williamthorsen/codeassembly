@@ -23,20 +23,12 @@ export type WriteOutcome = WriteSuccess | WriteFailure;
 
 /**
  * Writes a prepared assertion to disk under the KB's assertions root (`content/assertions/`), choosing the path from
- * that root + folder + (title-verbatim + `.md`). `folder` is the topic subpath beneath the archetype root, not the
- * archetype itself: `kb-add` owns the `assertions/` segment, mirroring the hardcoded `recordType: assertion`.
+ * that root + folder + (title-verbatim + `.md`). `folder` is the topic subpath beneath the archetype root: `kb-add`
+ * owns the `assertions/` segment.
  *
- * Title-as-filename is intentional. Titles containing path separators, null bytes, or newlines are rejected explicitly
- * rather than silently sanitized so the agent can decide whether to re-title or abort. Leading and trailing whitespace
- * is trimmed first; an empty result after trimming is also rejected.
- *
- * Two structured refusals keep a malformed `folder` from misplacing a note rather than silently succeeding: a `folder`
- * that climbs out of the assertions root (`invalid-folder`), and a `folder` that re-names the `assertions/` archetype
- * segment (`invalid-folder`).
- *
- * The target folder is created with `mkdir -p` semantics when absent. On filename collision the function returns a
- * structured error without modifying anything on disk. Otherwise the note is rendered and written atomically via a
- * same-directory temp file plus `rename`, so a process kill mid-write cannot leave a partial file at the destination.
+ * A title that cannot serve as a filename is refused, never repaired, so that the agent decides whether to re-title or
+ * abort. A `folder` that would misplace the note returns `invalid-folder`, and a collision returns a structured error
+ * having written nothing.
  *
  * The collision check is not atomic with the subsequent rename: a second invocation that completes between the
  * `pathExists` probe and the final rename will be silently overwritten. Single-user CLI use is safe; concurrent
@@ -87,7 +79,7 @@ export async function writeNote(input: {
 /**
  * Composes a filename from a title, returning a structured failure on a title that cannot be used as a path segment.
  *
- * Exported for direct unit testing of the title-rejection edge cases.
+ * @internal - Exported to allow testing.
  */
 export function composeFilename(
   title: string,
