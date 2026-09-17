@@ -3,15 +3,15 @@
 // Not a conformant HTML5 parser. The checker finds known-bad patterns rather than validating that the HTML is
 // well-formed, so the tokenizer favors progress over strictness on malformed input.
 //
-// Known limitations (intentional; documented here so future contributors don't quietly "fix" them):
+// Known limitations (intentional; documented here so that future contributors don't quietly "fix" them):
 //   - HTML comments (`<!-- ... -->`), CDATA sections (`<![CDATA[ ... ]]>`), and `<!DOCTYPE ...>` declarations are
-//     not recognized; their `<!` prefix falls through `isTagStartChar`, so the surrounding text is scanned as
+//     not recognized; because `isTagStartChar` rejects their `<!` prefix, the surrounding text is scanned as
 //     usual and any tag-shaped content inside them WILL be tokenized as real tags. Jira-bound HTML in this
-//     codebase does not carry these constructs, so the false-positive surface is theoretical.
-//   - `walkTokens` only pops the ancestor stack on a matching close tag. An unclosed `<code>` followed by a
-//     sibling `<strong>` will register the `<strong>` as nested under the `<code>` and fire a composition
-//     finding. This is fail-loud by design: an imbalanced payload almost certainly indicates a generation
-//     bug, and surfacing it as a finding is preferable to silently auto-balancing.
+//     codebase does not contain these constructs. The false-positive surface is theoretical.
+//   - `walkTokens` only pops the ancestor stack on a matching close tag. When a sibling `<strong>` follows an
+//     unclosed `<code>`, `walkTokens` treats the `<strong>` as nested under the `<code>`, and the composition rule
+//     reports a finding. This is fail-loud by design: An imbalanced payload almost certainly indicates a
+//     generation bug, and reporting it as a finding is preferable to silently auto-balancing.
 
 /** A single open-tag token. */
 export interface OpenTagToken {
@@ -50,7 +50,7 @@ export interface Attribute {
   value: string | null;
 }
 
-/** Self-closing element names per HTML — used to treat `<br>` and `<hr>` as self-closing without `/`. */
+/** Self-closing element names per HTML, used to treat `<br>` and `<hr>` as self-closing without `/`. */
 const VOID_ELEMENTS = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source']);
 
 /** Tokenizes `html` into a flat stream. Always returns; never throws on malformed input. */
@@ -142,7 +142,7 @@ function parseAttributes(html: string, startIndex: number): { attrs: Attribute[]
     const attrNameStart = index;
     index = readWhile(html, index, isAttrNameChar);
     if (index === attrNameStart) {
-      // Defensive: unrecognized char inside a tag — skip one to make progress.
+      // Defensive: Skip one unrecognized char inside a tag to make progress.
       index += 1;
       continue;
     }
