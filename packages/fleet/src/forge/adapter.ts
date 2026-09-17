@@ -1,6 +1,6 @@
-// Absence follows lifecycle's convention here: an unknown or not-applicable value is `undefined`, and the wire layer
-// spells it `null` at snapshot derivation. A branch with no pull request is simply absent from `branchPrs` rather than
-// a present-but-null entry — `noUncheckedIndexedAccess` surfaces that as `undefined` on lookup.
+// Absence follows lifecycle's convention here: An unknown or not-applicable value is `undefined`, and the wire layer
+// writes it as `null` at snapshot derivation. A branch with no pull request is simply absent from `branchPrs` rather
+// than a present-but-null entry; `noUncheckedIndexedAccess` reports that as `undefined` on lookup.
 
 /** Whether a pull request is open, merged, or closed unmerged. */
 export type PrState = 'open' | 'merged' | 'closed';
@@ -25,7 +25,7 @@ export interface PrFacts {
 /** The minimal forge-portable ticket core: enough to attribute and label a lane, with no forge-specific fields. */
 export interface TicketFacts {
   title: string;
-  /** The forge's own state vocabulary, lowercased — `open`/`closed` on GitHub, potentially richer elsewhere. */
+  /** The forge's own state vocabulary, lowercased: `open`/`closed` on GitHub, potentially richer elsewhere. */
   state: string;
   url: string;
   /** ISO-8601 creation timestamp. */
@@ -40,13 +40,13 @@ export interface RepoStateRequest {
   ticketIds: readonly string[];
 }
 
-/** The facts one repo fetch resolves: pull requests keyed by branch, tickets keyed by id. An absent key carries no facts. */
+/** The facts one repo fetch resolves: pull requests keyed by branch, tickets keyed by id. An absent key has no facts. */
 export interface RepoState {
   branchPrs: Record<string, PrFacts>;
   tickets: Record<string, TicketFacts>;
 }
 
-/** A forge behind a batched, per-repo fetch — the sole seam between the poller and a concrete forge (GitHub, Bitbucket). */
+/** A forge behind a batched, per-repo fetch: the sole seam between the poller and a concrete forge (GitHub, Bitbucket). */
 export interface ForgeAdapter {
   /** Resolves the requested branches' pull requests and ticket ids' facts for `repo`. Throws on repo-level failure. */
   fetchRepoState(request: RepoStateRequest): Promise<RepoState>;

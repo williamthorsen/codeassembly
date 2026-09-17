@@ -49,7 +49,7 @@ export async function startFleetServer(input: {
     });
   }
 
-  /** The worktree of every lane that names one — what the git adapter polls. */
+  /** The worktree of every lane that names one: what the git adapter polls. */
   function listGitTargets(): GitTarget[] {
     return store.listLanes().flatMap((lane) => {
       const cwd = resolveLaneCwd(lane);
@@ -57,7 +57,7 @@ export async function startFleetServer(input: {
     });
   }
 
-  /** Folds pending events, then broadcasts — only when the snapshot actually changed. */
+  /** Folds pending events, then broadcasts only if the snapshot actually changed. */
   function tick(): void {
     store.scanAndFold(Date.now());
     const snapshot = buildCurrentSnapshot();
@@ -91,7 +91,7 @@ export async function startFleetServer(input: {
     ...(input.gitProbe !== undefined && { probe: input.gitProbe }),
   });
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());
-  // Kick an initial round so forge facts populate promptly rather than after the first interval.
+  // Run an initial round so that forge facts are fetched promptly rather than after the first interval.
   void poller.tick();
 
   const watcher = startWatcher({
@@ -126,7 +126,7 @@ export async function startFleetServer(input: {
       watcher.stop();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error === undefined ? resolve() : reject(error)));
-        // Open SSE connections would otherwise hold `close` forever.
+        // Open SSE connections would otherwise block `close` forever.
         if ('closeAllConnections' in server) {
           server.closeAllConnections();
         }

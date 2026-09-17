@@ -5,7 +5,7 @@ import { mergeConfig } from 'vite';
 
 import baseConfig from '../../vite.config.ts';
 
-// The proxy owns Fleet's address so client code uses relative `/api` URLs and never learns the port.
+// The proxy owns Fleet's address so that client code uses relative `/api` URLs and never needs the port.
 const fleetPort = process.env.FLEET_PORT ?? '4178';
 
 export default mergeConfig(baseConfig, {

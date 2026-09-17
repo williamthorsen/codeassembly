@@ -16,7 +16,7 @@ interface SessionRowProps {
 
 /**
  * One session's status line: short id, harness badge, phase narration with the pending ask, and freshness age.
- * A waiting session carries the accent treatment; a stale or ended one dims.
+ * A waiting session shows the accent treatment; a stale or ended one dims.
  */
 export function SessionRow({ nowMs, session }: SessionRowProps): ReactElement {
   const ended = session.phase === 'ended';

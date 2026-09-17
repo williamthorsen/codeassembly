@@ -1,9 +1,9 @@
 // The in-memory fold of the events tree: lifecycle `LaneState` per lane, accumulated incrementally via per-session byte
-// offsets. The whole store is a rebuildable cache — restarting the server re-folds from disk — so it is never a writer
+// offsets. The whole store is a rebuildable cache (restarting the server re-folds from disk), so it is never a writer
 // concern. Derivation to wire shapes lives in the snapshot layer, not here.
 //
-// Resident state and per-scan filesystem work are bounded by a retention window: a lane idle past `retentionMs` is
-// evicted, and the scan does not walk or stat a non-resident branch unless its directory changed within the window —
+// Resident state and per-scan filesystem work are bounded by a retention window: A lane idle past `retentionMs` is
+// evicted, and the scan does not walk or stat a non-resident branch unless its directory changed within the window,
 // the cheap signal that a new session appeared. A resumed branch (a new session file) is rediscovered and reappears.
 
 import { type Dirent, readdirSync, statSync } from 'node:fs';
@@ -46,8 +46,8 @@ interface BranchLocation {
 
 /**
  * Creates a store folding the session files under `eventsDir`, retaining a lane while its newest event is within
- * `retentionMs` of the scan time. `onChange` fires after a scan that changed the fold — lines applied, a truncated file
- * re-folded, or a lane evicted — and stays quiet on no-op scans. A missing root is an empty fleet, not an error.
+ * `retentionMs` of the scan time. `onChange` fires after a scan that changed the fold (lines applied, a truncated file
+ * re-folded, or a lane evicted) and stays quiet on no-op scans. A missing root is an empty fleet, not an error.
  */
 export function createEventStore(input: { eventsDir: string; retentionMs: number; onChange?: () => void }): EventStore {
   const lanes = new Map<string, LaneEntry>();
@@ -98,7 +98,7 @@ export function createEventStore(input: { eventsDir: string; retentionMs: number
 
     let result = readAppendedLines({ filePath, offset: entry.offsets.get(session) ?? 0 });
     if (result.kind === 'truncated') {
-      // Append-only files should not shrink; when one does, the accumulated state is stale — discard the session's
+      // Append-only files should not shrink; when one does, the accumulated state is stale: Discard the session's
       // fold and re-read from the start.
       resetSessionFold(entry, session);
       entry.offsets.set(session, 0);
@@ -192,7 +192,7 @@ function readEntries(dir: string): Dirent[] {
   }
 }
 
-/** Drops a session's accumulated state from its entry so the next fold starts fresh. */
+/** Drops a session's accumulated state from its entry so that the next fold starts fresh. */
 function resetSessionFold(entry: LaneEntry, session: string): void {
   const { [session]: _dropped, ...remaining } = entry.state.sessions;
   entry.state = { ...entry.state, sessions: remaining };

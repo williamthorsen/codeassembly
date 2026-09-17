@@ -12,7 +12,7 @@ class FakeEventSource {
   readonly url: string;
   private readonly listeners = new Map<string, Set<(event: MessageEvent<string>) => void>>();
 
-  /** Records the instance in `instances`, so that a test can reach the source that the hook opened. */
+  /** Records the instance in `instances`, so that a test can retrieve the source that the hook opened. */
   constructor(url: string) {
     this.url = url;
     FakeEventSource.instances.push(this);
@@ -49,7 +49,7 @@ class FakeEventSource {
   }
 }
 
-/** Builds a one-lane snapshot. Each test passes a distinct `branch` to recognize which snapshot the hook holds. */
+/** Builds a one-lane snapshot. Each test passes a distinct `branch` to recognize which snapshot the hook stores. */
 function buildSnapshot(branch: string): FleetSnapshot {
   return {
     lanes: [
@@ -68,7 +68,7 @@ function buildSnapshot(branch: string): FleetSnapshot {
   };
 }
 
-/** The single EventSource the rendered hook opened. */
+/** The single EventSource opened by the rendered hook. */
 function getOpenedSource(): FakeEventSource {
   const source = FakeEventSource.instances[0];
   if (source === undefined) {
@@ -123,7 +123,7 @@ describe('useFleetSnapshot', () => {
     });
     await act(async () => {
       resolveFetch(Response.json(buildSnapshot('fetched')));
-      // A macrotask hop: the fetch-then-json chain has fully settled by the time this resolves.
+      // A macrotask hop: The fetch-then-json chain has fully settled by the time this resolves.
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 

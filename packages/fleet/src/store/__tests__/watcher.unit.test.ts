@@ -30,7 +30,7 @@ describe('startWatcher', () => {
 
   it('collapses a burst of watch events into one onDirty', async () => {
     const fake = createFakeWatch();
-    // The rescan interval fires the same callback, so it is pushed past this test's lifetime to leave the count
+    // Because the rescan interval fires the same callback, it is set past this test's lifetime to leave the count
     // attributable to the burst alone.
     const { onDirty } = startTestWatcher({ rescanMs: 60_000, startWatch: fake.startWatch });
 
@@ -101,7 +101,7 @@ describe('startWatcher', () => {
 
 // region | Helpers
 
-/** A `WatchStarter` that records how it was driven, so tests exercise the watch contract without an OS watch. */
+/** A `WatchStarter` that records how it was driven, so that tests exercise the watch contract without an OS watch. */
 function createFakeWatch(): {
   emitError: (error: Error) => void;
   fireEvent: () => void;

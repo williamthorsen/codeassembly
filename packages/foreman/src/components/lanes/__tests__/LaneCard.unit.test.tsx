@@ -52,7 +52,7 @@ describe('LaneCard', () => {
     expect(screen.getByText('1037')).toBeInTheDocument();
   });
 
-  it('shows the ticket chip when the branch carries ticket attribution', () => {
+  it('shows the ticket chip when the branch has ticket attribution', () => {
     renderCard(buildLane({ ticketRef: { ticketId: '984', revisit: null } }));
     expect(screen.getByText('#984')).toBeInTheDocument();
   });

@@ -177,8 +177,8 @@ describe('createEventStore', () => {
     store.scanAndFold(NOW + RETENTION_MS + 1);
     expect(store.listLanes()).toEqual([]);
 
-    // Append to the retired session and age the branch directory before it: the append bumps only the file's mtime,
-    // so the directory stays outside the window and the scan skips it — the append is never tailed.
+    // Append to the retired session and age the branch directory before it: The append bumps only the file's mtime,
+    // so the directory stays outside the window and the scan skips it; the append is never tailed.
     appendFileSync(filePath, composeLine('turn.completed', { ts: '2026-07-19T05:01:00.000Z' }));
     utimesSync(join(eventsDir, 'acme', 'app', '101'), new Date(NOW), new Date(NOW));
     store.scanAndFold(NOW + RETENTION_MS + 1);

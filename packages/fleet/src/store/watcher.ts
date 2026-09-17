@@ -1,6 +1,6 @@
-// Dirty-signal source for the store: a recursive `fs.watch` for low latency, debounced so a burst signals once, with
-// an always-on rescan interval as the correctness backstop. Watching is best-effort — recursive support varies by
-// platform, and a watch can fail mid-run — so degradation to rescan-only is announced, never silent, and never fatal.
+// Dirty-signal source for the store: a recursive `fs.watch` for low latency, debounced so that a burst signals once,
+// with an always-on rescan interval as the correctness backstop. Watching is best-effort (recursive support varies by
+// platform, and a watch can fail mid-run), so degradation to rescan-only is announced, never silent, and never fatal.
 
 import { statSync, watch } from 'node:fs';
 
@@ -11,7 +11,7 @@ export interface Watcher {
   stop(): void;
 }
 
-/** The subset of a watch handle this module uses: stopping it, and learning that it failed. */
+/** The subset of a watch handle used by this module: stopping it, and learning that it failed. */
 export interface WatchHandle {
   close(): void;
   on(event: 'error', listener: (error: Error) => void): unknown;
@@ -22,7 +22,7 @@ export type WatchStarter = (dir: string, onEvent: () => void) => WatchHandle;
 
 /**
  * Starts watching `dir`, invoking `onDirty` on debounced watch events and on every rescan tick. `log` receives one
- * startup line naming the active mode — recursive watch or rescan-only, with the reason — and a line on any later
+ * startup line naming the active mode (recursive watch or rescan-only, with the reason) and a line on any later
  * downgrade. `startWatch` is injectable for tests and defaults to {@link startRecursiveWatch}.
  */
 export function startWatcher(input: {
@@ -54,7 +54,7 @@ export function startWatcher(input: {
     statSync(input.dir);
     watcher = startWatch(input.dir, handleWatchEvent);
     watcher.on('error', (error) => {
-      // A mid-run watch error — the tree removed, an OS watch limit — must not crash the server; the rescan
+      // A mid-run watch error (the tree removed, an OS watch limit) must not crash the server; the rescan
       // interval keeps state current.
       input.log(`watch error (${error.message}); downgrading to rescan-only every ${input.rescanMs}ms`);
       watcher?.close();

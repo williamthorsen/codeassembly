@@ -1,10 +1,10 @@
 // The forge poller: an interval loop that reads resident lanes, batches each repo's branches and forge ticket ids into
-// one adapter call, and folds the results into a per-lane cache the snapshot layer overlays. The cache is a rebuildable
-// server concern, never a writer's — a restart simply re-polls.
+// one adapter call, and folds the results into a per-lane cache that the snapshot layer overlays. The cache is a
+// rebuildable server concern, never a writer's: A restart simply re-polls.
 //
-// Staleness is attempt-based, not age-based: a lane reads stale exactly when the most recent poll of its repo failed,
-// and its last-known facts keep being served until a poll succeeds. Rounds never overlap — a tick fired while one is in
-// flight is skipped rather than queued — and with no adapter (`FLEET_FORGE=none`) the loop is inert.
+// Staleness is attempt-based, not age-based: A lane is stale exactly when the most recent poll of its repo failed, and
+// its last-known facts keep being served until a poll succeeds. Rounds never overlap: A tick fired while one is in
+// flight is skipped rather than queued. With no adapter (`FLEET_FORGE=none`) the loop is inert.
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import type { LaneState } from 'codeassembly-lifecycle';
@@ -17,12 +17,12 @@ import type { ForgeAdapter, PrFacts, TicketFacts } from './adapter.ts';
 export interface ForgeLaneFacts {
   pr: PrFacts | undefined;
   ticket: TicketFacts | undefined;
-  /** ISO-8601 time of the successful fetch these facts came from, or of the failed attempt when never fetched. */
+  /** ISO-8601 time of the successful fetch from which these facts came, or of the failed attempt when never fetched. */
   fetchedAt: string;
   stale: boolean;
 }
 
-/** A running forge poller: the cache accessor the snapshot layer reads, a manual tick, and a stop. */
+/** A running forge poller: the cache accessor that the snapshot layer reads, a manual tick, and a stop. */
 export interface ForgePoller {
   /** The lane's folded forge facts, or `undefined` before its repo's first completed poll. */
   getFacts(repo: string, branch: string): ForgeLaneFacts | undefined;
@@ -33,9 +33,9 @@ export interface ForgePoller {
 }
 
 /**
- * Starts the forge poller. With `adapter` undefined the loop is inert — `tick` is a no-op and `getFacts` stays empty —
- * so a disabled forge costs nothing. `onUpdate` fires after every completed round; the caller's diff gate suppresses
- * no-op broadcasts. `now` and `intervalMs` are injected so tests drive time.
+ * Starts the forge poller. With `adapter` undefined the loop is inert (`tick` is a no-op and `getFacts` stays empty),
+ * so a disabled forge does no work. `onUpdate` fires after every completed round; the caller's diff gate suppresses
+ * no-op broadcasts. `now` and `intervalMs` are injected so that tests drive time.
  */
 export function startForgePoller(input: {
   adapter: ForgeAdapter | undefined;
@@ -89,7 +89,7 @@ interface RepoGroup {
   ticketIds: Set<string>;
 }
 
-/** The lane's forge ticket id — its bare-numeric ticket ref — or `undefined` for a Jira-style or absent ref. */
+/** The lane's forge ticket id (its bare-numeric ticket ref), or `undefined` for a Jira-style or absent ref. */
 function forgeTicketId(lane: LaneState): string | undefined {
   const id = lane.ticketRef?.ticketId;
   return id !== undefined && /^[0-9]+$/.test(id) ? id : undefined;
@@ -110,8 +110,8 @@ function groupLanesByRepo(lanes: readonly LaneState[]): Map<string, RepoGroup> {
 }
 
 /**
- * Polls one repo and folds its facts into the cache. Success writes fresh facts with `stale: false`; a repo-level
- * failure retains each lane's last-known facts and flips `stale: true`, logging one notice.
+ * Polls one repo and folds its facts into the cache. On success, it writes fresh facts with `stale: false`; on a
+ * repo-level failure, it retains each lane's last-known facts and sets `stale: true`, logging one notice.
  */
 async function pollRepo(
   adapter: ForgeAdapter,
