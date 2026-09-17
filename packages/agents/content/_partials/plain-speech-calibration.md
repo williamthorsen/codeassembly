@@ -1,4 +1,4 @@
-<!-- unit-version: plain-speech 6 -->
+<!-- unit-version: plain-speech 7 -->
 
 ## Plain-speech sweep calibration
 
@@ -9,13 +9,13 @@ How one sweep applies the rule above, so that two sweepers give the same verdict
 1. **A figurative verb when a plain one exists.** "detail taxes the reader" becomes "detail wastes the reader's attention". "the lede writes itself" becomes "the lede follows".
 2. **A verb that does not fit its subject.** "the file carries a section" becomes "the file contains a section". "the block governs" becomes "the block takes precedence".
 3. **A subject that does not perform the action, or a missing actor that the reader needs.** Rewrite when the sentence gives an action to something that does not perform it, or omits an actor that the reader must know and cannot recover from context. "Findings arrive as warnings" becomes "The function reports warnings": Findings arrive nowhere, and the original drops the function that produced them. In a skill body, "the parent rides the creation call" becomes "Set the parent in the creation call", because the agent sets it. "Refinement happens later, in bulk" becomes "A later pass refines them in bulk", because the point is which pass does it.
-4. **A constructed figure when a literal phrase exists.** The rule's mannered-prose test, applied to a site. `gate`, `sweep`, `tier`, `lede`, `drift`, and `live` are settled vocabulary and stay, whatever their figurative origin.
+4. **A constructed figure when a literal phrase exists.** The rule's mannered-prose test, applied to a site. Only a figure is a candidate under this case, so plain technical vocabulary ("renders as a subsection", "inlines the partial", "the test fails") is not one. `gate`, `sweep`, `tier`, `lede`, `drift`, and `live` are figures on which this corpus has settled, and they stay.
 
 Passive voice is not a defect on its own, and case 3 is no license to convert it. Keep the passive when the actor is obvious or beside the point, when the patient is the paragraph's topic, or when it puts a long phrase at the end of the sentence.
 
 ### Leave these
 
-- Domain terms on which this corpus has settled: "renders as a subsection", "inlines the partial", "the test fails". A settled term is vocabulary, no matter how a sweeper might paraphrase it. Entrenchment alone does not settle a term: A figure merely repeated by the corpus is still a figure.
+- A term on the settled list in case 4 above. That list is closed: A term absent from it is a candidate. Neither its frequency, nor a neighboring file, nor its survival of an earlier sweep settles a term, and a sweeper citing one is reporting what the corpus does rather than what the rule requires. Extending the list is the author's decision, taken in this calibration, never a sweeper's.
 - Any rewrite that would change what the text directs. When the plain wording would resolve an ambiguity that the original left open, leave the text and report the site as questionable.
 
 ### Worked example

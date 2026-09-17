@@ -16,11 +16,11 @@ const CALIBRATION = '_partials/plain-speech-calibration.md';
 const RULE = '_partials/plain-speech.md';
 
 /** The calibration text that this suite pins. */
-const PINNED_CALIBRATION_HASH = '4f66e790cbbfb8855bdc6be5fb4f4c845a5b37712d8aa5c634a5c7e5e1e2d965';
+const PINNED_CALIBRATION_HASH = 'a51e048e3cc5114c61cd86f2c9771ef94bc4b605a83c06a281592a67dc1699a6';
 
 /** The version declared by the calibration, and the rule text against which that version was calibrated. */
-const PINNED_RULE_HASH = '0f6f3f0dd79d1720b8d7dc803a6482d357ea7835203247525d6898b5288838a7';
-const PINNED_VERSION = '6';
+const PINNED_RULE_HASH = '0357262331311e6138c0f1ea49adff37a44c2e3ee57b063b56040feb18b3232e';
+const PINNED_VERSION = '7';
 
 /** Matches the calibration's opening version marker, whose captured group is the version. */
 const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*plain-speech\s+(\S+)\s*-->$/m;
