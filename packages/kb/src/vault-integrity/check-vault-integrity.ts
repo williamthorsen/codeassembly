@@ -13,8 +13,7 @@ import { countNewlines, lookupKey, type ScannedWikilink, scanWikilinks } from '.
  * notes share) is not flagged per-link — the vault-wide basename warning subsumes it.
  *
  * A `[[store:Target]]` resolves against `options.foreignStores` instead, and never joins this store's own basename
- * index, so the basename warning stays store-scoped. Without `options`, a qualified target is treated as a bare one,
- * which is the behavior every caller had before cross-store resolution existed.
+ * index, so the basename warning stays store-scoped. Without `options`, a qualified target is treated as a bare one.
  */
 export function checkVaultIntegrity(notes: readonly VaultIntegrityNote[], options?: VaultIntegrityOptions): Finding[] {
   const vaultIndex = buildVaultIndex(notes);
@@ -32,7 +31,7 @@ export type ForeignStore =
   /** The store was read; `index` holds its basenames. */
   | { status: 'resolved'; index: VaultIndex };
 
-/** A note reduced to what vault integrity inspects: its path, its body, and the file line the body begins on. */
+/** A note reduced to what vault integrity inspects. */
 export interface VaultIntegrityNote {
   /** Path or label the note was read from; used as the index value and the finding path. */
   path: string;
@@ -130,11 +129,7 @@ function joinTarget(link: ScannedWikilink): string {
   return link.store === undefined ? link.target : `${link.store}:${link.target}`;
 }
 
-/**
- * Flags every `[[Target]]` that resolves to no note, reported at its file-absolute line. The body is masked for fenced
- * and inline code before scanning so wikilink-shaped text inside code is not flagged; backslash-escaped links,
- * intra-doc anchors, and non-Markdown embeds are skipped.
- */
+/** Flags every link yielded by {@link scanWikilinks} that fails to resolve, reported at its file-absolute line. */
 function linkFindings(
   notes: readonly VaultIntegrityNote[],
   vaultIndex: VaultIndex,

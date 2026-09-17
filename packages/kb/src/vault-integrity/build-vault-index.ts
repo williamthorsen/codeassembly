@@ -2,8 +2,7 @@ import { basename } from 'node:path';
 
 /**
  * A vault-wide lookup from a note basename (without the `.md` extension) to the set of note paths that share it. A
- * single-path entry resolves a wikilink unambiguously; a multi-path entry is a basename collision. Consumed by the
- * vault-integrity checks and by curate's wikilink rewriter.
+ * single-path entry resolves a wikilink unambiguously; a multi-path entry is a basename collision.
  */
 export type VaultIndex = ReadonlyMap<string, ReadonlySet<string>>;
 

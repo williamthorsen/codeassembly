@@ -1,5 +1,3 @@
-// Slash-separated glob-segment helpers shared by note enumeration and CLI targeting.
-
 /** Reports whether a path segment contains a glob metacharacter, making it non-literal. */
 export function isGlobSegment(segment: string): boolean {
   return /[*?[\]{}()!+@]/.test(segment);

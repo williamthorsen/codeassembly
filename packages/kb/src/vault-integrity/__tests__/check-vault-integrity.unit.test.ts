@@ -55,7 +55,6 @@ describe(checkVaultIntegrity, () => {
   it('resolves a link into a collision and does not add a per-link ambiguous finding', () => {
     const notes = [note('engineering/Foo.md'), note('tools/Foo.md'), note('c/Guide.md', 'See [[Foo]] for details.')];
     const findings = checkVaultIntegrity(notes);
-    // Only the vault-wide basename warning; the ambiguous link itself is not flagged.
     expect(findings.map((finding) => finding.rule)).toEqual(['wikilinks.basename']);
   });
 
@@ -149,6 +148,7 @@ describe(checkVaultIntegrity, () => {
 
 // region | Helpers
 
+/** Builds a vault-integrity note, defaulting to a link-free body that begins on line 1. */
 function note(path: string, body = '# body', bodyStartLine = 1): VaultIntegrityNote {
   return { path, body, bodyStartLine };
 }

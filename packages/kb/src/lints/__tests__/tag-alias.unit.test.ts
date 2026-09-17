@@ -60,6 +60,7 @@ describe(tagAliasFindings, () => {
 
 // region | Helpers
 
+/** Builds an alias map from `[alias, canonical]` pairs. */
 function aliasesOf(entries: Array<[string, string]>): AliasMap {
   return new Map(entries);
 }

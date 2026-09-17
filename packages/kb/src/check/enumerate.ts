@@ -10,10 +10,7 @@ import { listGitScope } from '../git/list-git-scope.ts';
 import { readNoteContent } from '../note-io/read-note.ts';
 import { isGlobSegment } from './glob-segments.ts';
 
-/**
- * A note reduced to the fields the check pipeline and curate consume: its paths, its frontmatter field map, its body
- * and body-start line (for file-absolute link lines), its full content (for the paths lint), and any parse error.
- */
+/** A note read and parsed once, so that every check in a run shares the result. */
 export interface EnumeratedNote {
   /** Absolute path the note was read from. */
   path: string;
@@ -59,8 +56,7 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  *
  * Notes with malformed or absent frontmatter are kept — `readNoteContent` records the parse error in `error` and
  * returns an empty field map rather than throwing, so they remain valid wikilink targets. A note that cannot be read,
- * or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk. Each
- * note's `path` is absolute; `relativePath` is the slash-separated path from the KB root.
+ * or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk.
  */
 export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }): Promise<EnumeratedNote[]> {
   const locations = await collectNoteLocations(input);
@@ -132,6 +128,7 @@ interface NoteLocation {
   relativePath: string;
 }
 
+/** Appends to `out` every note under `dir` that the matcher admits, skipping an unlistable directory with a warning. */
 async function walk(input: {
   root: string;
   dir: string;
