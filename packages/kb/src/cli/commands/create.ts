@@ -9,7 +9,6 @@ import type { SelectKbPrompt } from '../select-kb-prompt.ts';
 import type { CommandOutput } from './check.ts';
 import { runSetDefault } from './set-default.ts';
 
-/** Usage text for `kb create`. */
 export const CREATE_HELP = `Usage: kb create [options]
 
 Scaffold a new knowledge base in the current directory and register it in the user-global kb.yaml registry.
@@ -95,15 +94,12 @@ export async function runCreate(input: {
   return { exitCode: 0, stdout: summary + selection.stdout, stderr: selection.stderr };
 }
 
-/** Parsed `kb create` options. */
 interface CreateOptions {
   /** Description from `--description`, or `null` to write the entry without one. */
   description: string | null;
   /** Explicit registry name from `--name`, or `null` to default to the directory name. */
   name: string | null;
-  /** Whether `--no-register` was supplied. */
   noRegister: boolean;
-  /** Whether `--help`/`-h` was supplied. */
   help: boolean;
 }
 
@@ -161,7 +157,6 @@ export function parseCreateArgs(argv: readonly string[]): CreateOptions {
 
 // region | Helpers
 
-// Guidance shown when a created store leaves the registry with multiple KBs and no default, with no picker available.
 const UNSET_DEFAULT_HINT =
   'Multiple knowledge bases are registered and no default is set. Run `kb set-default` to choose one.\n';
 
@@ -170,7 +165,7 @@ function buildUsageError(error: unknown): CommandOutput {
   return { exitCode: 2, stdout: '', stderr: `kb create: ${describeError(error)}\n${CREATE_HELP}` };
 }
 
-/** Builds a human summary of a created store. If the new store became the default, reports that in the message. */
+/** Builds a human summary of a created store. */
 function formatCreated(created: CreatedStore, registryPath: string): string {
   const lines = [`Created knowledge base "${created.name}" at ${created.storePath}`];
   for (const path of created.created) {

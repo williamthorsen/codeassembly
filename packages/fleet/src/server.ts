@@ -1,6 +1,6 @@
-// The composed server: config → store → watcher → app, plus the publish pipeline. Every trigger — a watch signal or
-// a rescan tick — folds and then publishes through one JSON-diff gate, so a staleness threshold crossing broadcasts
-// with no new event on disk, and a no-op scan broadcasts nothing.
+// The composed server: config → store → forge poller → git adapter → watcher → app, plus the publish pipeline. Every
+// trigger calls `tick`, which folds and then publishes through one JSON-diff gate, so a staleness threshold crossing
+// broadcasts with no new event on disk, and a no-op scan broadcasts nothing.
 
 import { serve } from '@hono/node-server';
 import { resolveLaneCwd } from 'codeassembly-lifecycle';
@@ -22,8 +22,8 @@ export interface RunningFleetServer {
 }
 
 /**
- * Starts Fleet on `config`, resolving once the port is bound. `log` receives the startup lines — events root, URL,
- * and watch mode — and any later watcher degradation notices.
+ * Starts Fleet on `config`, resolving once the port is bound. `log` receives the startup lines, then every notice that
+ * the watcher or the forge poller reports.
  */
 export async function startFleetServer(input: {
   config: FleetConfig;
@@ -38,6 +38,7 @@ export async function startFleetServer(input: {
   const subscribers = new Set<(snapshot: FleetSnapshot) => void>();
   let lastPublishedJson: string;
 
+  /** Derives the snapshot of the store's lanes as of now, with the latest git and forge facts overlaid. */
   function buildCurrentSnapshot(): FleetSnapshot {
     return buildSnapshot(store.listLanes(), {
       closeAfterMs: config.closeAfterMs,
@@ -86,7 +87,7 @@ export async function startFleetServer(input: {
     listTargets: listGitTargets,
     onChange: tick,
     pollMs: config.gitPollMs,
-    // Omit rather than pass undefined, so createGitAdapter applies its probeWorktree default on the production path.
+    // Under `exactOptionalPropertyTypes`, `probe` does not accept `undefined`, so the spread omits an absent override.
     ...(input.gitProbe !== undefined && { probe: input.gitProbe }),
   });
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());

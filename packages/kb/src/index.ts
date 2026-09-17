@@ -1,7 +1,5 @@
-// Root barrel for @williamthorsen/kb.
-//
-// Re-exports the types and constants used most widely across consumers. The behavioral surface lives behind the
-// subpath entries so consumers tree-shake to only the module they need.
+// Root entry point of @williamthorsen/kb. Most of the behavioral surface is exported from the subpath entries, so that
+// a consumer loads only the module that it needs.
 
 // Shared type vocabulary
 export type {

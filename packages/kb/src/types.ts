@@ -1,8 +1,5 @@
-// Shared type vocabulary for @williamthorsen/kb.
-//
-// This file is the documented exception to the "types live with their provider" convention:
-// The modules below all consume the same shapes, so co-locating them keeps the contract single-sourced.
-// It is types-only and produces no runtime emissions.
+// Shapes that several modules of this package provide or consume. A type with a single provider lives with that
+// provider.
 
 /** A knowledge-base root: the directory holding a `.kb/`, and that `.kb/` itself. */
 export interface KbRoot {
@@ -18,9 +15,7 @@ export interface KbRegistryEntry {
   name: string;
   /** Absolute path to the KB's root directory (tilde expanded, relative resolved). */
   path: string;
-  /** Optional human-readable description. */
   description?: string;
-  /** Whether the KB is read-only. */
   readonly?: boolean;
   /** Which registry the entry came from. */
   source: 'user' | 'project';
@@ -81,7 +76,6 @@ export interface ParsedNote {
   bodyStartLine: number;
 }
 
-/** Severity of a validation finding. */
 export type FindingSeverity = 'error' | 'warning';
 
 /** A single validation finding produced by a rule. */
@@ -96,7 +90,7 @@ export interface Finding {
   scope?: 'note' | 'vault';
   /** 1-based source line number, when known. */
   line?: number;
-  /** Rule code, e.g. `frontmatter.required`. */
+  /** Rule code, e.g. `wikilinks.basename`. */
   rule: string;
   severity: FindingSeverity;
   message: string;

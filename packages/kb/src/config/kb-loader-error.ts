@@ -1,13 +1,13 @@
 /**
- * The typed error thrown by the KB loaders (`loadKbConfig`, `loadAliases`) on a structural defect: malformed YAML or
- * wrong types. The `kind` discriminant lets a caller distinguish a recoverable config or alias defect from any other
+ * The typed error thrown by the loaders and writers of a KB's YAML files on a structural defect, such as malformed YAML
+ * or wrong types. The `kind` discriminant lets a caller distinguish a recoverable defect in such a file from any other
  * throw (an enumeration or detection crash) without matching on message text or relying on `instanceof` surviving a
  * bundle boundary.
  */
 export class KbLoaderError extends Error {
-  /** Discriminant for narrow catch boundaries; survives serialization and bundling unlike `instanceof`. */
   readonly kind = 'KbLoaderError' as const;
 
+  /** Names the error after its class. */
   constructor(message: string, options?: ErrorOptions) {
     super(message, options);
     this.name = 'KbLoaderError';

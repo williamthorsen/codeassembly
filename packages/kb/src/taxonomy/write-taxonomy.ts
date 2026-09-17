@@ -14,7 +14,6 @@ import { describeKeyDefect } from './taxonomy-schema.ts';
 /** The blocks a taxonomy declares domains under. */
 const BLOCKS: ReadonlySet<string> = new Set(['domains', 'provisional']);
 
-/** A domain to declare. */
 export interface TaxonomyDeclaration {
   /** The domain's assertions-root-relative slash-path. */
   path: string;

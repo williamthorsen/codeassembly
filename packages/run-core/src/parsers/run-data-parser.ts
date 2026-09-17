@@ -10,7 +10,7 @@ import { isEnoent } from '../type-guards.ts';
 import type { ArtifactEntry, CanonicalRunStatus, PhaseDecision, Phases, RunStatus } from '../types/canonical.ts';
 import type { RunEvent, RunHeader } from '../types/run-log.ts';
 
-/** Read and parse a v3 run's raw header + events without folding into a final snapshot. */
+/** Reads and parses a v3 run's raw header + events without folding into a final snapshot. */
 export async function parseRunRawData(runPath: string): Promise<{ header: RunHeader; events: RunEvent[] }> {
   const indexPath = join(runPath, 'run-index.json');
   let indexContent: string;
@@ -57,7 +57,10 @@ export async function parseRunRawData(runPath: string): Promise<{ header: RunHea
   return { header, events };
 }
 
-/** Try v3 (header + log) first, then v2 (run-index.json), fall back to v1 (status.json). */
+/**
+ * Parses a run directory into a canonical status. Reads `run-index.json` as v3 (header plus `run-log.jsonl`) and then
+ * as v2. Reads the v1 `status.json` only when `run-index.json` is missing.
+ */
 export async function parseRunData(runPath: string): Promise<CanonicalRunStatus> {
   const indexPath = join(runPath, 'run-index.json');
   let indexContent: string;
@@ -68,7 +71,6 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
     if (!isEnoent(error)) {
       throw error;
     }
-    // run-index.json missing — fall back to v1
     const v1Path = join(runPath, 'status.json');
     return parseStatusFile(v1Path);
   }
@@ -82,7 +84,6 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
     throw new RunDataParseError(message, 'corrupt_json', indexPath);
   }
 
-  // Try v3 first
   const v3Result = v3RunIndexSchema.safeParse(raw);
   if (v3Result.success) {
     const logPath = join(runPath, 'run-log.jsonl');
@@ -103,11 +104,11 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
     return foldEvents(header, events);
   }
 
-  // Try v2
   assertValidRunIndex(raw, indexPath);
   return normalizeV2(raw);
 }
 
+/** Parses a v1 `status.json` file into a canonical status. */
 export async function parseStatusFile(filePath: string): Promise<CanonicalRunStatus> {
   const content = await readFile(filePath, 'utf8');
   let raw: unknown;
@@ -142,6 +143,10 @@ interface V1StatusObject {
   phaseDecision: Record<string, PhaseDecision> | undefined;
 }
 
+/**
+ * Maps a v1 status object to the canonical shape: renames `phaseDecision` to `phaseDecisions` and sets the fields that
+ * v1 lacks to `undefined`.
+ */
 function normalizeV1(raw: V1StatusObject): CanonicalRunStatus {
   const { phaseDecision, completedAt, ...rest } = raw;
   return {
@@ -196,6 +201,7 @@ interface V2Config {
   model: string | undefined;
 }
 
+/** Flattens the `context` and `config` blocks of a v2 run index into the canonical shape. */
 function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
   const { context, config } = raw;
 
@@ -253,7 +259,7 @@ interface V3ParsedData {
   };
 }
 
-/** Extract a `RunHeader` from parsed v3 run-index.json data. */
+/** Extracts a `RunHeader` from parsed v3 run-index.json data. */
 function extractHeader(v3Data: V3ParsedData): RunHeader {
   return {
     runId: v3Data.context.runId,
@@ -275,7 +281,7 @@ function extractHeader(v3Data: V3ParsedData): RunHeader {
   };
 }
 
-/** Parse JSONL content into run events, skipping corrupt or unrecognized lines. */
+/** Parses JSONL content into run events, skipping corrupt or unrecognized lines. */
 function parseLogLines(logContent: string, logPath: string): RunEvent[] {
   const events: RunEvent[] = [];
   const lines = logContent.split('\n').filter((line) => line.trim() !== '');
@@ -300,6 +306,7 @@ function parseLogLines(logContent: string, logPath: string): RunEvent[] {
 
 // -- validation via Zod schemas with issue capture --
 
+/** Asserts that `raw` is a v2 run index, throwing an `invalid_schema` error that contains the Zod issues. */
 function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2RunIndex {
   const result = v2RunIndexSchema.safeParse(raw);
   if (!result.success) {
@@ -308,6 +315,7 @@ function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2R
   }
 }
 
+/** Asserts that `raw` is a v1 status object, throwing an `invalid_schema` error that contains the Zod issues. */
 function assertValidStatusObject(raw: unknown, filePath: string): asserts raw is V1StatusObject {
   const result = v1StatusSchema.safeParse(raw);
   if (!result.success) {

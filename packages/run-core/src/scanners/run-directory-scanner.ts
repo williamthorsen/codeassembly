@@ -44,6 +44,7 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
   return entries;
 }
 
+/** Scans a project's `tickets/` directory, treating each subdirectory as a ticket. */
 async function scanTicketsDir(ticketsPath: string, slug: string): Promise<RunDirectoryEntry[]> {
   const entries: RunDirectoryEntry[] = [];
   const ticketDirs = await readdirSafe(ticketsPath);
@@ -58,6 +59,7 @@ async function scanTicketsDir(ticketsPath: string, slug: string): Promise<RunDir
   return entries;
 }
 
+/** Scans a project that has no `tickets/` directory, treating each of the project's subdirectories as a ticket. */
 async function scanDirectEntries(
   projectEntries: string[],
   projectPath: string,
@@ -75,6 +77,7 @@ async function scanDirectEntries(
   return entries;
 }
 
+/** Lists the run directories of a ticket, skipping hidden directories and those whose names end in `-interactive`. */
 async function scanRunsInTicket(ticketPath: string, slug: string, ticketId: string): Promise<RunDirectoryEntry[]> {
   const entries: RunDirectoryEntry[] = [];
   const runDirs = await readdirSafe(ticketPath);

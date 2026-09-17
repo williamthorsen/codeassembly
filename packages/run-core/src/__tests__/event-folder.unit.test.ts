@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { foldEvents } from '../event-folder.ts';
 import type { RunEvent, RunHeader } from '../types/run-log.ts';
 
+/** Builds a minimal run header; tests override fields as needed. */
 function createHeader(overrides: Partial<RunHeader> = {}): RunHeader {
   return {
     runId: 'test-run',
@@ -380,7 +381,6 @@ describe('foldEvents', () => {
       coderFixCycleRan: false,
       reviewers: {},
     });
-    // But the iteration should have the completedAt timestamp
     expect(result.phases.parallelReview?.iterations?.[0]?.coderFixCompletedAt).toBe('2026-01-01T00:04:00Z');
   });
 
@@ -404,8 +404,6 @@ describe('foldEvents', () => {
       criticality: 'none',
     });
   });
-
-  // -- Phase startedAt/completedAt timestamps (S1) --
 
   it('sets startedAt on phase_started for architecture', () => {
     const header = createHeader();
@@ -463,8 +461,6 @@ describe('foldEvents', () => {
     expect(result.phases.holisticReview?.startedAt).toBe('2026-01-01T00:09:00Z');
     expect(result.phases.holisticReview?.completedAt).toBe('2026-01-01T00:10:00Z');
   });
-
-  // -- ReviewIteration tracking (S2) --
 
   it('builds review iteration from dispatched and completed events', () => {
     const header = createHeader();
@@ -545,8 +541,6 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Implementation phase folding (F2) --
-
   it('sets implementation to in_progress on phase_started', () => {
     const header = createHeader();
     const events: RunEvent[] = [{ t: '2026-01-01T00:05:00Z', event: 'phase_started', phase: 'implementation' }];
@@ -602,8 +596,6 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Planning phase folding (F2) --
-
   it('sets planning to in_progress on phase_started', () => {
     const header = createHeader();
     const events: RunEvent[] = [{ t: '2026-01-01T00:02:00Z', event: 'phase_started', phase: 'planning' }];
@@ -639,8 +631,6 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Review phase_completed merge (W2) --
-
   it('merges aggregatedCriticality and reviewRoundsUsed on review phase_completed', () => {
     const header = createHeader();
     const events: RunEvent[] = [
@@ -662,8 +652,6 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview?.reviewRoundsUsed).toBe(2);
   });
 
-  // -- Unknown reviewer in re_review_completed (S1) --
-
   it('silently ignores unknown reviewers in re_review_completed without error', () => {
     const header = createHeader();
     const events: RunEvent[] = [
@@ -678,13 +666,9 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    // Known reviewer is updated
     expect(result.phases.parallelReview?.reviewers?.['code-reviewer']?.reReviewCriticality).toBe('low');
-    // Unknown reviewer is not added to the reviewers map
     expect(result.phases.parallelReview?.reviewers?.['unknown-reviewer']).toBeUndefined();
   });
-
-  // -- Usage metrics folding --
 
   it('folds usage metrics from reviewer_completed into ReviewerInfo', () => {
     const header = createHeader();
@@ -798,8 +782,6 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Full event sequence integration test (F1) --
-
   it('produces correct CanonicalRunStatus from a full event sequence', () => {
     const header = createHeader({
       runId: 'full-run',
@@ -812,7 +794,6 @@ describe('foldEvents', () => {
     });
 
     const events: RunEvent[] = [
-      // run_started
       { t: '2026-01-01T00:00:00Z', event: 'run_started' },
 
       // Phase decisions
@@ -927,7 +908,6 @@ describe('foldEvents', () => {
         data: { criticality: 'none', coderFixCycleRan: false, reviewRoundsUsed: 1 },
       },
 
-      // Run completed
       { t: '2026-01-01T01:00:00Z', event: 'run_completed', status: 'completed' },
     ];
 
@@ -942,41 +922,34 @@ describe('foldEvents', () => {
     expect(result.externalPlan).toBe(true);
     expect(result.maxReviewRounds).toBe(3);
 
-    // Run status
     expect(result.status).toBe('completed');
     expect(result.completedAt).toBe('2026-01-01T01:00:00Z');
 
-    // Phase decisions
     expect(result.phaseDecisions).toEqual({
       architecture: { run: true, reason: 'Complex' },
       planning: { run: true, reason: 'Multi-step' },
     });
 
-    // Artifacts
     expect(result.artifacts).toHaveLength(2);
     expect(result.artifacts?.[0]?.filename).toBe('architecture.md');
     expect(result.artifacts?.[1]?.filename).toBe('plan.md');
 
-    // Architecture phase
     expect(result.phases.architecture).toMatchObject({
       status: 'completed',
       impactLevel: 'high',
     });
 
-    // Planning phase
     expect(result.phases.planning).toMatchObject({
       status: 'completed',
       stepCount: 7,
       artifacts: ['plan.md', 'plan.json'],
     });
 
-    // Implementation phase
     expect(result.phases.implementation).toMatchObject({
       status: 'completed',
       qualityGates: { typecheck: 'pass', lint: 'pass', tests: 'pass' },
     });
 
-    // Review phase
     expect(result.phases.parallelReview?.status).toBe('completed');
     expect(result.phases.parallelReview?.aggregatedCriticality).toBe('none');
     expect(result.phases.parallelReview?.reviewRoundsUsed).toBe(2);
@@ -999,7 +972,6 @@ describe('foldEvents', () => {
       additionalFixCycleRan: false,
     });
 
-    // Simplifier phase
     expect(result.phases.codeSimplifier).toMatchObject({
       status: 'completed',
       ran: true,
@@ -1007,7 +979,6 @@ describe('foldEvents', () => {
       coderFixCycleRan: false,
     });
 
-    // Holistic phase
     expect(result.phases.holisticReview).toMatchObject({
       status: 'completed',
       criticality: 'none',

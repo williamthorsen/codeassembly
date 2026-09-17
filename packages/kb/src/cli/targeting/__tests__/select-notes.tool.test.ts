@@ -11,7 +11,6 @@ const DECOMPOSED_NAME = 'Cafe\u{301}.md';
 const NOTE =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** A store whose `content/` holds three notes plus dirs and files that are not validatable notes. */
 const FILES: Record<string, string> = {
   'content/assertions/Alpha.md': NOTE,
   'content/assertions/Beta.md': NOTE,

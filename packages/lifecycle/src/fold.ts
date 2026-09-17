@@ -26,7 +26,6 @@ export interface SessionState {
   currentSkill: string | undefined;
   /** The pending ask's payload, set by `input.requested` and cleared when the next turn starts. */
   ask: Record<string, unknown> | undefined;
-  /** Timestamp of the last applied event. */
   lastEventTs: string | undefined;
 }
 
@@ -60,7 +59,6 @@ export interface LaneProbes {
   worktreeExists?: boolean;
 }
 
-/** Why a closed lane closed. */
 export type LaneClosureReason = 'worktree-gone' | 'all-sessions-ended' | 'stale';
 
 /** Display state derived from a lane: whether it is still open, and its most recent activity. */

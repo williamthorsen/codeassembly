@@ -5,10 +5,8 @@ import { phaseDecisionMapSchema, phasesSchema, runStatusSchema } from './run-ind
 export { criticalitySchema, phaseStatusSchema, runStatusSchema } from './run-index-schema.ts';
 
 /**
- * V1 status.json schema. Flat structure with `phaseDecision` (singular)
- * instead of the V2 `phaseDecisions` (plural). The singular name is the
- * historical V1 convention; `normalizeV1()` in run-data-parser.ts maps it
- * to the canonical plural form. No `mode`, `model`, or `artifacts` fields.
+ * V1 status.json schema: a flat structure. The phase-decision map is named `phaseDecision`, in the singular, where v2
+ * and the canonical model name it `phaseDecisions`.
  */
 export const v1StatusSchema = z.object({
   runId: z.string(),

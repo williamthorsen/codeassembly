@@ -7,6 +7,7 @@ import { LaneCard } from '../LaneCard.tsx';
 
 const NOW_MS = Date.parse('2026-07-19T12:00:00.000Z');
 
+/** Builds an open lane with no ticket attribution and no sessions; tests override fields as needed. */
 function buildLane(overrides: Partial<LaneSnapshot> = {}): LaneSnapshot {
   return {
     repo: 'owner/repo',
@@ -22,6 +23,7 @@ function buildLane(overrides: Partial<LaneSnapshot> = {}): LaneSnapshot {
   };
 }
 
+/** Builds a working session with the given id. */
 function buildSession(session: string): SessionSnapshot {
   return {
     session,
@@ -34,6 +36,7 @@ function buildSession(session: string): SessionSnapshot {
   };
 }
 
+/** Renders the card inside the Mantine provider that its components require. */
 function renderCard(lane: LaneSnapshot): void {
   render(
     <MantineProvider>

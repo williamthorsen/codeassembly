@@ -37,8 +37,7 @@ export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> 
 /**
  * Parses a tag-aliases registry from a string into an `AliasMap`.
  * Aliases are lowercased on insertion so callers can look up case-insensitively.
- * Throws on any structural defect — non-object top level, missing `aliases` key, non-string entries, self-aliases,
- * or cross-canonical collisions — with `contextLabel` prefixed onto every message.
+ * Throws on malformed YAML and on any structural defect, with `contextLabel` prefixed onto every message.
  */
 export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasMap {
   let parsed: unknown;

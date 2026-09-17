@@ -1,8 +1,6 @@
-// The canonical lifecycle-event vocabulary and envelope.
-
 /**
- * The v0 session-lifecycle vocabulary, ordered by the sequence a session emits rather than alphabetically, so the list
- * doubles as the shape of a session: session boundaries enclose turns, which enclose the skills a turn runs.
+ * The v0 session-lifecycle vocabulary, ordered by the sequence in which a session emits the types, so the list doubles
+ * as the shape of a session: session boundaries enclose turns, which enclose the skills a turn runs.
  * Membership is convention, not a gate: an undeclared type is still a valid event, so an emitter can use a new type
  * before the vocabulary catches up.
  *
@@ -23,7 +21,6 @@ export const EVENT_TYPES = [
   'session.ended',
 ] as const;
 
-/** One of the declared v0 event types. */
 export type EventType = (typeof EVENT_TYPES)[number];
 
 /** Membership index over the vocabulary, widened to `string` so an arbitrary type can be tested against it. */
@@ -35,12 +32,11 @@ export function isEventType(value: string): value is EventType {
 }
 
 /**
- * One appended event. `type` is a bare `string` rather than an `EventType` because an undeclared type is emitted rather
- * than refused; a consumer reading the log must therefore be prepared for a type outside {@link EVENT_TYPES}.
+ * One appended event.
  *
- * `repo`, `branch`, `session`, and `harness` are absent when unresolvable. They are deliberately omitted rather than
- * set to the placeholder that stands in for them in the file path: the placeholder exists so an event still lands
- * somewhere, while an absent key is what tells a consumer the field could not be resolved.
+ * An optional field is absent when its value is unknown. For `repo`, `branch`, and `session`, the file path
+ * substitutes a placeholder so that the event still lands somewhere; the absent key is what tells a consumer that the
+ * field was not resolved.
  */
 export interface EventEnvelope {
   /** ULID, unique per event and monotonic within a millisecond. */

@@ -12,11 +12,8 @@ export interface StoreRef {
 export interface CheckSummary {
   /** Notes enumerated and checked. */
   notes: number;
-  /** Total findings. */
   total: number;
-  /** Findings with `severity: 'error'`. */
   errors: number;
-  /** Findings with `severity: 'warning'`. */
   warnings: number;
 }
 
@@ -24,10 +21,11 @@ export interface CheckSummary {
 export type CheckScope = 'vault' | 'patterns' | 'vs';
 
 /**
- * Renders the default human output. Findings are grouped by file in path order, each line reading
- * `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints `✓ no findings (N notes
- * checked)`; a run that checked nothing prints a zero-match line worded for its `scope` (naming the config targets for
- * a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since no check ran.
+ * Renders the default human output. Findings are grouped by file, in the order in which each file first appears, each
+ * line reading `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints
+ * `✓ no findings (N notes checked)`; a run that checked nothing prints a zero-match line worded for its `scope` (naming
+ * the config targets for a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since no
+ * check ran.
  *
  * A run can check no notes and still carry vault-scoped findings, which describe the store rather than any note. The
  * zero-match line then heads the report instead of replacing it: it explains why no note was checked, and the findings

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { registerArtifact } from '../register-artifact.ts';
 
 describe('registerArtifact', () => {
+  /** Creates a run directory holding an empty log. */
   async function createRunDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'mcp-test-artifact-'));
     await writeFile(join(dir, 'run-log.jsonl'), '');

@@ -12,29 +12,35 @@ class FakeEventSource {
   readonly url: string;
   private readonly listeners = new Map<string, Set<(event: MessageEvent<string>) => void>>();
 
+  /** Records the instance in `instances`, so that a test can reach the source that the hook opened. */
   constructor(url: string) {
     this.url = url;
     FakeEventSource.instances.push(this);
   }
 
+  /** Registers `listener` for events of `type`. */
   addEventListener(type: string, listener: (event: MessageEvent<string>) => void): void {
     const registered = this.listeners.get(type) ?? new Set();
     registered.add(listener);
     this.listeners.set(type, registered);
   }
 
+  /** Marks the source closed, so that a test can assert on the hook's cleanup. */
   close(): void {
     this.closed = true;
   }
 
+  /** Delivers a connection event to its listeners, as the browser does when the stream opens or fails. */
   emit(type: 'error' | 'open'): void {
     this.dispatch(type, new MessageEvent(type));
   }
 
+  /** Delivers one stream frame whose payload is `data`. */
   emitMessage(data: string): void {
     this.dispatch('message', new MessageEvent('message', { data }));
   }
 
+  /** Calls every listener registered for `type` with `event`. */
   private dispatch(type: string, event: MessageEvent<string>): void {
     const listeners = this.listeners.get(type) ?? [];
     for (const listener of listeners) {
@@ -43,6 +49,7 @@ class FakeEventSource {
   }
 }
 
+/** Builds a one-lane snapshot. Each test passes a distinct `branch` to recognize which snapshot the hook holds. */
 function buildSnapshot(branch: string): FleetSnapshot {
   return {
     lanes: [
@@ -70,6 +77,7 @@ function getOpenedSource(): FakeEventSource {
   return source;
 }
 
+/** Stubs the global `fetch` to resolve with `snapshot` as its JSON body. */
 function stubFetchResolving(snapshot: FleetSnapshot): void {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(snapshot)));
 }

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { getRunState } from '../get-run-state.ts';
 
 describe('getRunState', () => {
+  /** Builds a minimal valid v3 run index. */
   function makeRunIndex() {
     return {
       version: 3,
@@ -22,6 +23,7 @@ describe('getRunState', () => {
     };
   }
 
+  /** Creates a run directory holding a valid run index and a log of the given events. */
   async function createRunDir(events: unknown[] = []): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'mcp-test-getstate-'));
     await writeFile(join(dir, 'run-index.json'), JSON.stringify(makeRunIndex(), null, 2));

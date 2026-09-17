@@ -23,6 +23,7 @@ export function useFleetSnapshot(): FleetSnapshotState {
   useEffect(() => {
     let sawStreamFrame = false;
 
+    /** Fetches the snapshot once and applies it unless a stream frame has already landed. */
     async function applyInitialSnapshot(): Promise<void> {
       try {
         const response = await fleetClient.api.lanes.$get();

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { Client } from '@modelcontextprotocol/sdk/client';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { v3RunIndexSchema } from 'codeassembly-run-core';
+import { runEventSchema, v3RunIndexSchema } from 'codeassembly-run-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createServer } from '../server.ts';
@@ -20,6 +20,7 @@ interface ConnectedClient {
   cleanup: () => Promise<void>;
 }
 
+/** Connects a client to a fresh server over an in-memory transport and creates a temp directory for its runs. */
 async function createConnectedClient(): Promise<ConnectedClient> {
   const server = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -40,8 +41,6 @@ async function createConnectedClient(): Promise<ConnectedClient> {
 }
 
 // endregion | Helpers
-
-// -- Tests --
 
 const cleanups: Array<() => Promise<void>> = [];
 
@@ -78,7 +77,6 @@ describe('full lifecycle via protocol', () => {
     const { client, runDir, cleanup } = await createConnectedClient();
     cleanups.push(cleanup);
 
-    // 1. init_run
     const initResult = await client.callTool({
       name: 'init_run',
       arguments: {
@@ -98,7 +96,6 @@ describe('full lifecycle via protocol', () => {
     expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
     expect(resultRunDir).toContain('projects/protocol-test/tickets/PROTO-1/');
 
-    // 2. emit phase_started(architecture)
     const phaseStartResult = await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -108,7 +105,6 @@ describe('full lifecycle via protocol', () => {
     });
     expect(isErrorResult(phaseStartResult)).toBe(false);
 
-    // 3. emit phase_completed(architecture, completed, { impactLevel: 'low' })
     const phaseCompleteResult = await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -123,7 +119,6 @@ describe('full lifecycle via protocol', () => {
     });
     expect(isErrorResult(phaseCompleteResult)).toBe(false);
 
-    // 4. register_artifact
     const artifactResult = await client.callTool({
       name: 'register_artifact',
       arguments: {
@@ -138,14 +133,12 @@ describe('full lifecycle via protocol', () => {
     });
     expect(isErrorResult(artifactResult)).toBe(false);
 
-    // 5. complete_run
     const completeResult = await client.callTool({
       name: 'complete_run',
       arguments: { runDir: resultRunDir, status: 'completed' },
     });
     expect(isErrorResult(completeResult)).toBe(false);
 
-    // 6. get_run_state
     const stateResult = await client.callTool({
       name: 'get_run_state',
       arguments: { runDir: resultRunDir },
@@ -168,7 +161,6 @@ describe('full lifecycle via protocol', () => {
     const { client, runDir, cleanup } = await createConnectedClient();
     cleanups.push(cleanup);
 
-    // init_run to create the run
     const initResult = await client.callTool({
       name: 'init_run',
       arguments: {
@@ -184,7 +176,6 @@ describe('full lifecycle via protocol', () => {
 
     const resultRunDir = parseAndGetString(initResult, 'runDir');
 
-    // Read and validate run-index.json
     const indexContent = await readFile(join(resultRunDir, 'run-index.json'), 'utf8');
     const rawIndex: unknown = JSON.parse(indexContent);
 
@@ -193,7 +184,6 @@ describe('full lifecycle via protocol', () => {
 
     expect(parsed.data.version).toBe(3);
 
-    // Verify context fields are present
     expect(parsed.data.context.runId).toBeTruthy();
     expect(parsed.data.context.projectSlug).toBe('protocol-test');
     expect(parsed.data.context.ticketId).toBe('PROTO-2');
@@ -228,7 +218,6 @@ describe('full lifecycle via protocol', () => {
 
     const resultRunDir = parseAndGetString(initResult, 'runDir');
 
-    // Emit additional events
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -244,7 +233,6 @@ describe('full lifecycle via protocol', () => {
       },
     });
 
-    // Read and parse run-log.jsonl
     const logContent = await readFile(join(resultRunDir, 'run-log.jsonl'), 'utf8');
     const lines = logContent.trim().split('\n');
     expect(lines.length).toBeGreaterThanOrEqual(3);
@@ -261,19 +249,18 @@ describe('full lifecycle via protocol', () => {
       }
     }
 
-    // Verify expected event order
     expect(eventNames[0]).toBe('run_started');
     expect(eventNames[1]).toBe('phase_started');
     expect(eventNames[2]).toBe('phase_completed');
   });
 });
 
-describe('review cycle events - all 13 event types', () => {
+describe('review cycle events - every run event type', () => {
   it('emits and reconstructs a full review cycle', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
     cleanups.push(cleanup);
 
-    // 1. init_run (emits run_started)
+    // init_run emits run_started.
     const initResult = await client.callTool({
       name: 'init_run',
       arguments: {
@@ -288,7 +275,6 @@ describe('review cycle events - all 13 event types', () => {
     expect(isErrorResult(initResult)).toBe(false);
     const mainRunDir = parseAndGetString(initResult, 'runDir');
 
-    // 2. phase_decision(architecture, run: true)
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -297,7 +283,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 3. phase_started(architecture)
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -306,7 +291,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 4. phase_completed(architecture, completed)
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -315,7 +299,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 5. phase_started(review)
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -324,7 +307,22 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 6-8. reviewer_dispatched x3
+    await client.callTool({
+      name: 'emit_event',
+      arguments: {
+        runDir: mainRunDir,
+        event: { event: 'waiting_for_input', reason: 'permission_prompt' },
+      },
+    });
+
+    await client.callTool({
+      name: 'emit_event',
+      arguments: {
+        runDir: mainRunDir,
+        event: { event: 'input_received' },
+      },
+    });
+
     for (const reviewer of ['aspect-code-reviewer', 'aspect-silent-failure-reviewer', 'aspect-test-reviewer']) {
       await client.callTool({
         name: 'emit_event',
@@ -335,7 +333,6 @@ describe('review cycle events - all 13 event types', () => {
       });
     }
 
-    // 9-11. reviewer_completed x3
     const reviewerCompletions: Array<{ reviewer: string; criticality: string }> = [
       { reviewer: 'aspect-code-reviewer', criticality: 'low' },
       { reviewer: 'aspect-silent-failure-reviewer', criticality: 'none' },
@@ -351,7 +348,6 @@ describe('review cycle events - all 13 event types', () => {
       });
     }
 
-    // 12. coder_fix_started(iteration: 1)
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -360,7 +356,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 13. coder_fix_completed(iteration: 1)
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -369,7 +364,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 14. re_review_dispatched
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -381,7 +375,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 15. re_review_completed
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -396,7 +389,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 16. phase_completed(review, completed, { aggregatedCriticality: 'none', reviewRoundsUsed: 2 })
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -410,7 +402,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 17-18. simplifier phase
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -426,7 +417,6 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 19-20. holistic phase
     await client.callTool({
       name: 'emit_event',
       arguments: {
@@ -447,7 +437,7 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 21. register_artifact (emits artifact_written)
+    // register_artifact emits artifact_written.
     await client.callTool({
       name: 'register_artifact',
       arguments: {
@@ -461,7 +451,7 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 22. run_failed on a SEPARATE run (run_completed and run_failed are exclusive)
+    // Emit run_failed on a separate run, because run_completed and run_failed are exclusive.
     const failedRunDir = await mkdtemp(join(tmpdir(), 'mcp-proto-fail-'));
     const failInitResult = await client.callTool({
       name: 'init_run',
@@ -484,7 +474,7 @@ describe('review cycle events - all 13 event types', () => {
       },
     });
 
-    // 23. complete_run on main run (emits run_completed)
+    // complete_run emits run_completed.
     const completeResult = await client.callTool({
       name: 'complete_run',
       arguments: { runDir: mainRunDir, status: 'completed' },
@@ -493,14 +483,12 @@ describe('review cycle events - all 13 event types', () => {
 
     // -- Assertions --
 
-    // Read run-log.jsonl from main run and collect all event names
     const mainLogContent = await readFile(join(mainRunDir, 'run-log.jsonl'), 'utf8');
     const mainEventNames = mainLogContent
       .trim()
       .split('\n')
       .map((line) => getStringField(parseJsonlLine(line), 'event'));
 
-    // Read run-log.jsonl from failed run to collect run_failed
     const failLogContent = await readFile(join(failRunDir, 'run-log.jsonl'), 'utf8');
     const failEventNames = failLogContent
       .trim()
@@ -509,27 +497,11 @@ describe('review cycle events - all 13 event types', () => {
 
     const allEventNames = [...mainEventNames, ...failEventNames];
 
-    // Assert all 13 event types appear
-    const expected13 = [
-      'run_started',
-      'run_completed',
-      'run_failed',
-      'phase_decision',
-      'phase_started',
-      'phase_completed',
-      'reviewer_dispatched',
-      'reviewer_completed',
-      'coder_fix_started',
-      'coder_fix_completed',
-      're_review_dispatched',
-      're_review_completed',
-      'artifact_written',
-    ];
-    for (const eventType of expected13) {
+    const declaredEventTypes = runEventSchema.options.map((option) => option.shape.event.value);
+    for (const eventType of declaredEventTypes) {
       expect(allEventNames).toContain(eventType);
     }
 
-    // Verify get_run_state for main run
     const stateResult = await client.callTool({
       name: 'get_run_state',
       arguments: { runDir: mainRunDir },
@@ -759,7 +731,6 @@ describe('error propagation', () => {
     const { client, cleanup } = await createConnectedClient();
     cleanups.push(cleanup);
 
-    // Call init_run without the required projectSlug field.
     // The MCP SDK validates the Zod inputSchema before the handler is invoked.
     const result = await client.callTool({
       name: 'init_run',
@@ -797,7 +768,6 @@ describe('error propagation', () => {
     });
     expect(isErrorResult(completeResult)).toBe(false);
 
-    // Verify state reflects the failed status
     const stateResult = await client.callTool({
       name: 'get_run_state',
       arguments: { runDir: resultRunDir },

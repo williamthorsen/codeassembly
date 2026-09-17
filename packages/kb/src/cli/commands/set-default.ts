@@ -9,7 +9,6 @@ import type { KbRegistryEntry } from '../../types.ts';
 import type { SelectKbPrompt } from '../select-kb-prompt.ts';
 import type { CommandOutput } from './check.ts';
 
-/** Usage text for `kb set-default`. */
 export const SET_DEFAULT_HELP = `Usage: kb set-default [name] [options]
 
 Set, clear, or interactively choose the user-global default knowledge base —
@@ -106,13 +105,10 @@ export async function runSetDefault(input: {
   return { exitCode: 0, stdout: buildSetConfirmation(chosen.name), stderr: '' };
 }
 
-/** Parsed `kb set-default` options. */
 interface SetDefaultOptions {
   /** The positional KB name, or `null` when none was supplied (interactive form). */
   name: string | null;
-  /** Whether `--none` was supplied. */
   none: boolean;
-  /** Whether `--help`/`-h` was supplied. */
   help: boolean;
 }
 

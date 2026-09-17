@@ -49,6 +49,7 @@ export function startForgePoller(input: {
   const cache = new Map<string, ForgeLaneFacts>();
   let inFlight = false;
 
+  /** Polls every repo that has a resident lane, then notifies the caller. */
   async function tick(): Promise<void> {
     if (adapter === undefined || inFlight) {
       return;

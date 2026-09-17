@@ -14,7 +14,6 @@ import { checkVaultIntegrity, type ForeignStore } from '../vault-integrity/check
 import { type EnumeratedNote, enumerateNotes } from './enumerate.ts';
 import { collectStorePrefixes, resolveForeignStores } from './resolve-foreign-stores.ts';
 
-/** The result of a check run: the effective config, every enumerated note, and every finding the checks produced. */
 export interface CheckResult {
   /** The effective `KbConfig` the run used — loaded from `.kb/config.yaml`, or `defaultKbConfig` when absent. */
   config: KbConfig;
@@ -23,10 +22,6 @@ export interface CheckResult {
    * in walk order.
    */
   notes: readonly EnumeratedNote[];
-  /**
-   * Findings from whole-vault integrity (unresolved links, basename collisions), taxonomy drift, and the tag-alias and
-   * paths lints.
-   */
   findings: readonly Finding[];
 }
 
@@ -36,17 +31,14 @@ export interface CheckResult {
  * the type-blind per-note lints across them. Frontmatter validity is owned by the record types at write time, so no
  * frontmatter re-validation runs here.
  *
- * Inside a git working tree the enumeration also drops the notes that the repository ignores, so such a note is
- * neither checked nor available as a wikilink target; see {@link enumerateNotes} for the rule.
- *
  * A `[[store:Target]]` link resolves against the store named by its prefix rather than this one. Those stores are looked
  * up in the merged `kb.yaml` registry, which is read from `~/.agents/kb.yaml` and from `cwd`'s project-local registry;
  * `cwd` defaults to the store root, so a caller that supplies none still resolves against the user-global registry.
  * Only the stores this store's own links name are consulted.
  *
- * Returns the effective config alongside the enumerated notes and findings, so a consumer (e.g. `kb-curate`) can layer
- * its own detectors over the same enumeration without walking the tree twice, and can read the resolved
- * `targets`/`exclude` without re-loading `.kb/config.yaml`.
+ * Returns the effective config alongside the enumerated notes and findings, so a consumer can layer its own detectors
+ * over the same enumeration without walking the tree twice, and can read the resolved `targets`/`exclude` without
+ * re-loading `.kb/config.yaml`.
  *
  * A structural defect in any loaded file throws a `KbLoaderError` (the loaders' own contract); the caller decides how
  * to surface it. Any other error from enumeration or the checks propagates unchanged — it is never relabeled as a

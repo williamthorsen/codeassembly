@@ -14,14 +14,14 @@ const USER_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 
 /**
- * Load and merge the user-global (`~/.agents/kb.yaml`) and project-local
+ * Loads and merges the user-global (`~/.agents/kb.yaml`) and project-local
  * (`.agents/kb.yaml`) KB registries into a normalized `KbRegistry`.
  *
  * Project entries replace user entries by name on collision and append new names. The top-level `default_kb`
  * pointer resolves by name against the merged entries (the project's value overriding the user's); the resolved
  * entry is exposed as `defaultKb`.
- * Within a single file, relative `path` values resolve against that file's directory and a leading `~/` expands
- * against `$HOME`. Both files are optional; when neither exists the result has no entries.
+ * Within a single file, relative `path` values resolve against that file's directory and a leading `~` or `~/`
+ * expands against `$HOME`. Both files are optional; when neither exists the result has no entries.
  * Malformed YAML, a structural defect, or a `default_kb` that names no registered KB throw.
  */
 export async function loadKbRegistry(
@@ -38,7 +38,6 @@ export async function loadKbRegistry(
 
   const merged = mergeEntries(userFile?.entries ?? [], projectFile?.entries ?? []);
 
-  // The project's `default_kb` wins over the user's; the winning name resolves against the merged entries.
   let defaultKbName: string | undefined;
   let defaultKbSource = userConfigPath;
   if (projectFile?.defaultKb !== undefined) {
@@ -67,13 +66,11 @@ export interface KbRegistryLoadResult {
 }
 
 /**
- * Load the merged `kb.yaml` registry without throwing, capturing any failure message instead of presenting it.
+ * Loads the merged `kb.yaml` registry without throwing, capturing any failure message instead of presenting it.
  *
- * On success — including the legitimate "no registry files present" case, which `loadKbRegistry` already returns as an
- * empty config — `error` is absent. On a malformed file, a schema violation, an unresolvable `default_kb`, or a
- * non-ENOENT read failure, the result degrades to an empty config and carries the thrown message in `error`. Each
- * caller decides whether and how to surface that message; this wrapper neither writes to stderr nor builds a
- * diagnostic.
+ * When `loadKbRegistry` throws, the result degrades to an empty config and contains the thrown message in `error`; the
+ * caller decides whether and how to surface that message. Absent registry files are a success, which `loadKbRegistry`
+ * returns as an empty config.
  */
 export async function tryLoadKbRegistry(
   input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
@@ -87,7 +84,7 @@ export async function tryLoadKbRegistry(
 
 // region | Helpers
 
-/** Expand a leading `~` or `~/` against the home directory; throws when `HOME` is unset. */
+/** Expands a leading `~` or `~/` against the home directory; throws when `HOME` is unset. */
 function expandTilde(value: string, home: string): string {
   if (value !== '~' && !value.startsWith('~/')) {
     return value;
@@ -99,7 +96,7 @@ function expandTilde(value: string, home: string): string {
 }
 
 /**
- * Read and validate one registry file, returning its entries and raw `default_kb` (if any). Returns `undefined`
+ * Reads and validates one registry file, returning its entries and raw `default_kb` (if any). Returns `undefined`
  * when the file is absent; throws on malformed YAML or a structural defect.
  */
 async function loadRegistryFile(
@@ -149,7 +146,7 @@ async function loadRegistryFile(
   return { entries, ...(result.data.default_kb !== undefined && { defaultKb: result.data.default_kb }) };
 }
 
-/** Merge user entries with project entries: project replaces by name and appends new names. */
+/** Merges user entries with project entries: project replaces by name and appends new names. */
 function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistryEntry[]): KbRegistryEntry[] {
   const byName = new Map<string, KbRegistryEntry>();
   for (const entry of userEntries) {
@@ -162,7 +159,7 @@ function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistry
 }
 
 /**
- * Resolve the effective `default_kb` name to its merged entry. Returns `undefined` when no `default_kb` is set;
+ * Resolves the effective `default_kb` name to its merged entry. Returns `undefined` when no `default_kb` is set;
  * throws naming the source file when the name matches no registered KB.
  */
 function resolveDefaultKb(
@@ -180,7 +177,7 @@ function resolveDefaultKb(
   return match;
 }
 
-/** Resolve a `path` value: expand a leading tilde, then resolve relative paths against the config dir. */
+/** Resolves a `path` value: expands a leading tilde, then resolves a relative path against the config dir. */
 function resolvePath(value: string, configDir: string, home: string): string {
   const expanded = expandTilde(value, home);
   return isAbsolute(expanded) ? expanded : resolve(configDir, expanded);

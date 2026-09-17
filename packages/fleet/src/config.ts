@@ -4,19 +4,15 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-/** Lane-wide quiet after which a lane derives as closed. */
 export const CLOSE_AFTER_MS = 1_800_000;
 
-/** Quiet window after a burst of watch events before the store folds and broadcasts once. */
 export const DEBOUNCE_MS = 100;
 
-/** Default interval between forge poll rounds. */
 export const FORGE_POLL_MS = 60_000;
 
-/** Interval between SSE comment heartbeats that keep idle connections alive through proxies and browsers. */
 export const HEARTBEAT_MS = 15_000;
 
-/** Window of lane-wide quiet (3 days) after which an idle lane is evicted from the store and drops from the fleet. */
+/** Three days. */
 export const RETENTION_MS = 259_200_000;
 
 /** Which forge backend Fleet polls for enrichment; `none` disables polling entirely. */
@@ -30,13 +26,12 @@ export interface FleetConfig {
   debounceMs: number;
   /** Root of the append-only lifecycle-event tree. */
   eventsDir: string;
-  /** The forge backend to poll for PR, CI, and ticket enrichment, or `none` to disable polling. */
   forge: ForgeKind;
   /** Milliseconds between forge poll rounds. */
   forgePollMs: number;
   /** Milliseconds between git-adapter poll passes over the resident lanes' worktrees. */
   gitPollMs: number;
-  /** Milliseconds between SSE comment heartbeats. */
+  /** Milliseconds between SSE comment heartbeats, which keep idle connections alive through proxies and browsers. */
   heartbeatMs: number;
   port: number;
   /** Milliseconds between full rescans of the events tree — the correctness backstop when watching degrades. */

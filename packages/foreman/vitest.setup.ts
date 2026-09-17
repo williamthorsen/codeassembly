@@ -11,6 +11,7 @@ afterEach(() => {
   cleanup();
 });
 
+/** Returns a media-query list that matches nothing and ignores its listeners. */
 const matchMediaStub: typeof globalThis.matchMedia = (query) => ({
   matches: false,
   media: query,
@@ -24,6 +25,7 @@ const matchMediaStub: typeof globalThis.matchMedia = (query) => ({
   },
 });
 
+/** A `ResizeObserver` that observes nothing. */
 const resizeObserverStub: typeof globalThis.ResizeObserver = class {
   observe(): void {}
   unobserve(): void {}

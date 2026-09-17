@@ -16,8 +16,8 @@ import { describeKeyDefect, type Taxonomy, type TaxonomyEntry, taxonomyFileShape
  * nothing. The two on-disk blocks are a file-format concern: a consumer looks a domain up once and reads `provisional`
  * off the entry it finds.
  *
- * Mirrors {@link loadKbConfig}: structural defects (malformed YAML, a wrong type, a malformed key, a path declared in
- * both blocks) throw a {@link KbLoaderError} naming the file. I/O errors other than a missing file propagate.
+ * Structural defects (malformed YAML, a wrong type, a malformed key, a path declared in both blocks) throw a
+ * {@link KbLoaderError} naming the file. I/O errors other than a missing file propagate.
  */
 export async function loadTaxonomy(input: { kbRoot: KbRoot }): Promise<Taxonomy> {
   const path = join(input.kbRoot.path, TAXONOMY_FILE);
@@ -56,7 +56,7 @@ export async function loadTaxonomy(input: { kbRoot: KbRoot }): Promise<Taxonomy>
 
 /**
  * Adds one on-disk block's declarations to the accumulating map, rejecting a malformed key and a path the other block
- * already declared. Called for `domains` first, so a collision always names a path `provisional` redeclares.
+ * already declared.
  */
 function collectBlock(input: {
   entries: Map<string, TaxonomyEntry>;

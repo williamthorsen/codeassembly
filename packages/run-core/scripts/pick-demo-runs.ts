@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI script: `--help` and an argument error each exit with a status of their own. */
+/* eslint unicorn/no-process-exit: off -- CLI script: `--help` and an argument error each exit with a status of their own. */
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
@@ -34,7 +34,7 @@ interface RankedRun {
   startedAt: string;
 }
 
-/** Entry point: parse args, walk the archive, score runs, print top N. */
+/** Ranks the runs in the artifact archive by demo-worthiness and prints the top N. */
 async function main(): Promise<void> {
   const opts = parseArgs(process.argv.slice(2));
 
@@ -60,6 +60,9 @@ async function main(): Promise<void> {
   process.stdout.write(opts.json ? renderJson(topN) : renderMarkdown(topN));
 }
 
+/**
+ * Scores each run that parses and passes the `--since` filter, then sorts by score, newest first among equal scores.
+ */
 async function rankEntries(entries: RunDirectoryEntry[], opts: Options): Promise<RankedRun[]> {
   const ranked: RankedRun[] = [];
   const now = new Date();
@@ -84,12 +87,11 @@ async function rankEntries(entries: RunDirectoryEntry[], opts: Options): Promise
     });
   }
 
-  // Sort by score desc, then by startedAt desc (newer wins ties).
   ranked.sort((a, b) => b.score - a.score || b.startedAt.localeCompare(a.startedAt));
   return ranked;
 }
 
-/** Parse a run directory, logging and skipping on any parse error. */
+/** Parses a run directory, logging and skipping on any parse error. */
 async function safeParse(
   entry: RunDirectoryEntry,
 ): Promise<{ status: CanonicalRunStatus; events: RunEvent[] } | undefined> {
@@ -106,6 +108,7 @@ async function safeParse(
   }
 }
 
+/** Returns true when the run started on or after `since`. An unparseable start time fails the filter. */
 function passesSinceFilter(startedAt: string, since: Date): boolean {
   const started = new Date(startedAt).getTime();
   if (Number.isNaN(started)) return false;
@@ -114,6 +117,7 @@ function passesSinceFilter(startedAt: string, since: Date): boolean {
 
 // -- Rendering --
 
+/** Renders the rows as a Markdown table with padded columns. */
 function renderMarkdown(rows: ReadonlyArray<RankedRun>): string {
   const paths = rows.map((r) => `${r.projectSlug}/${r.ticketId}/${r.runId}`);
   const pathWidth = Math.max(4, ...paths.map((p) => p.length));
@@ -130,6 +134,7 @@ function renderMarkdown(rows: ReadonlyArray<RankedRun>): string {
   return [header, separator, ...lines, ''].join('\n');
 }
 
+/** Renders the rows as JSON, omitting `startedAt`. */
 function renderJson(rows: ReadonlyArray<RankedRun>): string {
   const payload = rows.map(({ startedAt: _startedAt, ...rest }) => rest);
   return `${JSON.stringify(payload, null, 2)}\n`;
@@ -137,6 +142,7 @@ function renderJson(rows: ReadonlyArray<RankedRun>): string {
 
 // -- Argument parsing --
 
+/** Parses the command-line arguments, exiting with an error on an unknown option or an invalid value. */
 function parseArgs(args: ReadonlyArray<string>): Options {
   let top = DEFAULT_TOP;
   let project: string | undefined;
@@ -176,6 +182,7 @@ function parseArgs(args: ReadonlyArray<string>): Options {
   return { top, project, since, json, help };
 }
 
+/** Returns the value that follows a flag, exiting when the value is missing or is another flag. */
 function requireValue(args: ReadonlyArray<string>, index: number, flag: string): string {
   const value = args[index + 1];
   if (!value || value.startsWith('--')) {
@@ -184,6 +191,7 @@ function requireValue(args: ReadonlyArray<string>, index: number, flag: string):
   return value;
 }
 
+/** Parses the `--top` value as a positive integer, exiting on any other input. */
 function parseTopValue(raw: string): number {
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 1) {
@@ -192,6 +200,7 @@ function parseTopValue(raw: string): number {
   return parsed;
 }
 
+/** Parses the `--since` value as a date, exiting when the date is invalid. */
 function parseSinceValue(raw: string): Date {
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) {
@@ -200,11 +209,13 @@ function parseSinceValue(raw: string): Date {
   return date;
 }
 
+/** Writes the error to stderr and exits with status 1. */
 function fail(message: string): never {
   process.stderr.write(`Error: ${message}\n`);
   process.exit(1);
 }
 
+/** Prints the usage text to stdout. */
 function printUsage(): void {
   process.stdout.write(`Usage: pnpm exec tsx packages/run-core/scripts/pick-demo-runs.ts [options]
 

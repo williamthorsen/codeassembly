@@ -31,7 +31,6 @@ export type ProcessRunner = (command: string, args: readonly string[]) => Promis
 /** The `--json` field set requested for every pull-request query, shared so `pr list` and `pr view` parse alike. */
 const PR_JSON_FIELDS = 'number,title,url,state,isDraft,headRefName,statusCheckRollup,reviewDecision';
 
-/** The `--json` field set requested for every ticket query. */
 const ISSUE_JSON_FIELDS = 'title,state,url,createdAt,labels';
 
 /**
@@ -57,6 +56,10 @@ export function createGithubAdapter(input: { runProcess?: ProcessRunner } = {}):
   const absentBranchesByRepo = new Map<string, Set<string>>();
   const pollCountByRepo = new Map<string, number>();
 
+  /**
+   * Resolves each requested branch from the open-pull-request list, then from the caches, and views a branch on its own
+   * only when neither answers. Views every requested ticket.
+   */
   async function fetchRepoState(request: RepoStateRequest): Promise<RepoState> {
     const { repo } = request;
     const requestedBranches = new Set(request.branches);
@@ -331,7 +334,7 @@ function retainMembers<T>(set: Set<T>, keep: ReadonlySet<T>): void {
   }
 }
 
-/** The default runner: `gh` via `execFile`, with a generous output cap for large check rollups. */
+/** Runs the command through `execFile` and resolves its captured output. */
 const runProcessDefault: ProcessRunner = async (command, args) => {
   const { stdout, stderr } = await promisify(execFile)(command, [...args], { maxBuffer: MAX_OUTPUT_BYTES });
   return { stdout, stderr };

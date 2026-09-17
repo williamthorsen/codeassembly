@@ -278,16 +278,15 @@ describe('parseRunLogLine', () => {
       event: 'run_started',
       futureField: 'will-be-stripped',
     });
-    // Should not throw — unknown fields are silently stripped by Zod's default behavior
     const result = parseRunLogLine(line);
     expect(result.event).toBe('run_started');
-    // Extra fields are stripped (not preserved) since schemas don't use .loose()
     const resultObj: Record<string, unknown> = { ...result };
     expect(resultObj.futureField).toBeUndefined();
   });
 });
 
 describe('v3RunIndexSchema', () => {
+  /** Builds the smallest v3 run index that the schema accepts. */
   function minimalV3(): Record<string, unknown> {
     return {
       version: 3,

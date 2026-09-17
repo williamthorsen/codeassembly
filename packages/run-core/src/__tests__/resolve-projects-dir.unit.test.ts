@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveProjectsDir } from '../resolve-projects-dir.ts';
 
 describe('resolveProjectsDir', () => {
+  /** Creates a temporary directory whose name starts with `prefix`. */
   async function createTmpDir(prefix = 'run-core-test-projects-'): Promise<string> {
     return mkdtemp(join(tmpdir(), prefix));
   }

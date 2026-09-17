@@ -3,15 +3,15 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Directories skipped by the staleness scan (must match the compile command's ignore list). */
-const IGNORED_DIRS = new Set(['__tests__']);
+const IGNORED_DIRS = new Set(['__fixtures__', '__mocks__', '__tests__', 'test-utils']);
 
-/** Type guard: checks whether an error is a Node.js ENOENT (file not found). */
+/** Reports whether an error is a Node.js ENOENT (file not found). */
 function isEnoent(err: unknown): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && err.code === 'ENOENT';
 }
 
 /**
- * Recursively walk `dir` looking for any `.ts` file with `mtimeMs > referenceMs`.
+ * Recursively walks `dir` looking for any `.ts` file with `mtimeMs > referenceMs`.
  * Skips directories listed in {@link IGNORED_DIRS} to match the compile command's source scope.
  * Short-circuits on first match.
  */
@@ -35,15 +35,14 @@ async function hasNewerFile(dir: string, referenceMs: number): Promise<boolean> 
 }
 
 /**
- * Check whether source files are newer than compiled output.
+ * Checks whether source files are newer than compiled output.
  *
  * Resolves the package root from the compiled file location (`dist/esm/`),
  * then compares `src/**\/*.ts` mtimes against `dist/esm/cli.js`.
  *
- * Returns `false` (not stale) when:
- * - `src/` doesn't exist (published package, not dev)
- * - `cli.js` can't be stat'd
- * - Any error occurs (fail-safe)
+ * Returns `false` (not stale) when `src/` does not exist, which marks a
+ * published package, and on any error, so that detection never blocks tool
+ * execution.
  *
  * When loaded from the source tree (e.g. via `tsx` in dev/test mode),
  * `import.meta.url` points to `src/staleness.ts`. The two-level `../..`
@@ -51,8 +50,8 @@ async function hasNewerFile(dir: string, referenceMs: number): Promise<boolean> 
  * and the function correctly returns `false` -- `tsx` always serves fresh
  * compiled output, so there is no stale build to warn about.
  *
- * @param compiledFileUrl - URL of a file inside `dist/esm/`. Defaults to `import.meta.url`.
- *   The optional parameter makes this testable without mocking `import.meta.url`.
+ * `compiledFileUrl` must name a file inside `dist/esm/`. It defaults to
+ * `import.meta.url`; a test passes the URL of a fake package in its place.
  */
 export async function isBuildStale(compiledFileUrl?: string): Promise<boolean> {
   try {
@@ -60,9 +59,6 @@ export async function isBuildStale(compiledFileUrl?: string): Promise<boolean> {
     const packageRoot = resolve(dirname(compiledFilePath), '../..');
     const srcDir = join(packageRoot, 'src');
 
-    // If src/ doesn't exist, this is a published package -- not stale.
-    // Only ENOENT is expected; other errors (e.g. EACCES) are rethrown
-    // so the outer catch can handle them with its fail-safe.
     try {
       await stat(srcDir);
     } catch (error: unknown) {
@@ -70,7 +66,6 @@ export async function isBuildStale(compiledFileUrl?: string): Promise<boolean> {
       throw error;
     }
 
-    // Get the reference mtime from the sentinel file
     const sentinelPath = join(packageRoot, 'dist', 'esm', 'cli.js');
     const sentinelStat = await stat(sentinelPath);
     const referenceMs = sentinelStat.mtimeMs;

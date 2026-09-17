@@ -22,12 +22,12 @@ interface Replacement {
   style: CommentStyle;
 }
 
-/** Return true when a separator label signals a supporting/collapsible section that should become a region fold. */
+/** Returns true when a separator label signals a supporting/collapsible section that should become a region fold. */
 export function isFoldable(label: string): boolean {
   return FOLDABLE_RE.test(label);
 }
 
-/** Rewrite every recognized separator in the source to its canonical inline-heading or region-fold form. */
+/** Rewrites every recognized separator in the source to its canonical inline-heading or region-fold form. */
 export function transformFile(source: string): string {
   if (source.includes(OPT_OUT_MARKER)) return source;
 
@@ -39,7 +39,7 @@ export function transformFile(source: string): string {
   return emitOutput(lines, replacements, regionEnds);
 }
 
-/** Scan the source lines for every separator form and return a positional record of each match. */
+/** Scans the source lines for every separator form and returns a positional record of each match. */
 function findReplacements(lines: string[]): Replacement[] {
   const out: Replacement[] = [];
   let i = 0;
@@ -55,7 +55,7 @@ function findReplacements(lines: string[]): Replacement[] {
   return out;
 }
 
-/** Match the 3-line `//` dash/equals box pattern at position `i`. */
+/** Matches the 3-line `//` dash/equals box pattern at position `i`. */
 function matchLineBox(lines: string[], i: number): Replacement | null {
   if (i + 2 >= lines.length) return null;
   const topMatch = (lines[i] ?? '').match(BOX_LINE_RE);
@@ -70,7 +70,7 @@ function matchLineBox(lines: string[], i: number): Replacement | null {
   return { startLine: i, endLine: i + 2, indent, label, kind: classify(label), style: 'line' };
 }
 
-/** Match the 3-line `/* …` block-comment box pattern at position `i`. */
+/** Matches the 3-line `/* …` block-comment box pattern at position `i`. */
 function matchBlockBox(lines: string[], i: number): Replacement | null {
   if (i + 2 >= lines.length) return null;
   const topMatch = (lines[i] ?? '').match(BLOCK_BOX_TOP_RE);
@@ -85,7 +85,7 @@ function matchBlockBox(lines: string[], i: number): Replacement | null {
   return { startLine: i, endLine: i + 2, indent, label, kind: classify(label), style: 'block' };
 }
 
-/** Match either single-line separator form (symmetric dashes or asymmetric rulered) on one line. */
+/** Matches either single-line separator form (symmetric dashes or asymmetric rulered) on one line. */
 function matchSingleLine(line: string, i: number): Replacement | null {
   const match = line.match(SYMMETRIC_RE) ?? line.match(ASYMMETRIC_RE);
   if (!match) return null;
@@ -93,12 +93,12 @@ function matchSingleLine(line: string, i: number): Replacement | null {
   return { startLine: i, endLine: i, indent: match[1] ?? '', label, kind: classify(label), style: 'line' };
 }
 
-/** Decide whether a separator label should become a region fold or an inline heading. */
+/** Decides whether a separator label should become a region fold or an inline heading. */
 function classify(label: string): Replacement['kind'] {
   return isFoldable(label) ? 'region' : 'heading';
 }
 
-/** For each region replacement, determine the line before which its endregion marker should be inserted. */
+/** Determines, for each region replacement, the line before which its endregion marker is inserted. */
 function resolveRegionEnds(replacements: Replacement[], totalLines: number): Map<number, number> {
   const ends = new Map<number, number>();
   for (let idx = 0; idx < replacements.length; idx += 1) {
@@ -117,7 +117,7 @@ function resolveRegionEnds(replacements: Replacement[], totalLines: number): Map
   return ends;
 }
 
-/** Produce the rewritten source by walking the original lines, swapping separator blocks for canonical output, and inserting endregion markers. */
+/** Produces the rewritten source, swapping each separator block for its canonical line and inserting the endregion markers. */
 function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Map<number, number>): string {
   const byStart = new Map(replacements.map((r) => [r.startLine, r]));
   const endregionInsertions = new Map<number, string>();
@@ -154,7 +154,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
   return out.join('\n');
 }
 
-/** Render a replacement as its canonical single line, respecting the line-vs-block comment style. */
+/** Renders a replacement as its canonical single line, respecting the line-vs-block comment style. */
 function formatReplacement(r: Replacement): string {
   if (r.kind === 'region') {
     return r.style === 'block' ? `${r.indent}/* region | ${r.label} */` : `${r.indent}// region | ${r.label}`;
@@ -162,25 +162,25 @@ function formatReplacement(r: Replacement): string {
   return r.style === 'block' ? `${r.indent}/* -- ${r.label} -- */` : `${r.indent}// -- ${r.label} --`;
 }
 
-/** Render the endregion marker that matches a given region replacement. */
+/** Renders the endregion marker that matches a given region replacement. */
 function formatEndRegion(r: Replacement): string {
   return r.style === 'block' ? `${r.indent}/* endregion | ${r.label} */` : `${r.indent}// endregion | ${r.label}`;
 }
 
-/** Remove any blank strings from the tail of the array in place. */
+/** Removes any blank strings from the tail of the array in place. */
 function trimTrailingBlankLines(arr: string[]): void {
   while (arr.length > 0 && arr.at(-1) === '') arr.pop();
 }
 
 // region | Helpers for CLI
 
-/** CLI entry point: sweep the matching files, writing (or printing a diff of) the canonical-form result for each changed file. */
+/** Sweeps the matching files, writing the canonical-form result for each changed file, or printing its diff under `--dry-run`. */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const globIdx = args.indexOf('--glob');
   const explicit = globIdx !== -1 ? args[globIdx + 1] : undefined;
-  const patterns = explicit ? [explicit] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts', 'scripts/**/*.ts'];
+  const patterns = explicit ? [explicit] : ['packages/**/*.{ts,tsx,js,jsx}', '.config/**/*.ts', 'scripts/**/*.ts'];
 
   const files = await glob(patterns, {
     ignore: ['**/node_modules/**', '**/dist/**'],
@@ -203,7 +203,7 @@ async function main(): Promise<void> {
   console.info(`${dryRun ? 'would change' : 'changed'} ${changedCount} file(s)`);
 }
 
-/** Print a minimal positional unified diff between two source strings to stdout. */
+/** Prints each line position at which the two sources differ, as a `-` line and a `+` line. */
 function printDiff(before: string, after: string): void {
   const beforeLines = before.split('\n');
   const afterLines = after.split('\n');

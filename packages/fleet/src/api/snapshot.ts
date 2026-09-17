@@ -37,8 +37,8 @@ export interface LaneSnapshot {
 }
 
 /**
- * A lane's worktree state on the wire. Deliberately carries no probe timestamp: a per-poll field would change the
- * snapshot JSON every pass and defeat the publish diff gate — the poll interval itself bounds staleness.
+ * A lane's worktree state on the wire. It has no probe timestamp: A per-poll field would change the snapshot JSON on
+ * every pass and defeat the publish diff gate. The poll interval bounds staleness.
  */
 export interface LaneGitSnapshot {
   /** The checked-out branch; `null` when detached or unreadable. */
@@ -53,7 +53,6 @@ export interface LaneGitSnapshot {
   baseBranch: string | null;
 }
 
-/** Forge enrichment on the wire for one lane. */
 export interface ForgeLaneSnapshot {
   pr: PrSnapshot | null;
   ticket: TicketSnapshot | null;
@@ -61,7 +60,6 @@ export interface ForgeLaneSnapshot {
   stale: boolean;
 }
 
-/** Pull-request facts on the wire. */
 export interface PrSnapshot {
   number: number;
   title: string;
@@ -72,7 +70,6 @@ export interface PrSnapshot {
   review: ReviewState | null;
 }
 
-/** Ticket facts on the wire — the minimal forge-portable core. */
 export interface TicketSnapshot {
   title: string;
   state: string;
@@ -84,7 +81,6 @@ export interface TicketSnapshot {
 /** Looks a lane's forge facts up by repo and branch; `undefined` when the lane has no fetched facts. */
 export type ForgeFactsLookup = (repo: string, branch: string) => ForgeLaneFacts | undefined;
 
-/** One session's wire state. */
 export interface SessionSnapshot {
   session: string;
   harness: string | null;
@@ -95,7 +91,6 @@ export interface SessionSnapshot {
   lastEventTs: string | null;
 }
 
-/** Ticket attribution on the wire. */
 export interface TicketRefSnapshot {
   ticketId: string;
   revisit: number | null;
@@ -216,8 +211,8 @@ function buildTicketSnapshot(ticket: TicketFacts): TicketSnapshot {
 }
 
 /**
- * Derives a lane's ticket attribution. A branch-name-parsed ref wins; only when none was parsed and the lane's branch
- * carries a pull request does the D3 overlay mint the synthetic `PR-<number>` ref. Absent both, the ref is `null`.
+ * Derives a lane's ticket attribution. A ref parsed from the branch name wins. Without one, a lane whose branch has a
+ * pull request gets the synthetic `PR-<number>` ref, and any other lane gets `null`.
  */
 function deriveTicketRef(lane: LaneState, forgeFacts: ForgeLaneFacts | undefined): TicketRefSnapshot | null {
   if (lane.ticketRef !== undefined) {

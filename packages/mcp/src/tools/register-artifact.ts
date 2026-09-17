@@ -12,9 +12,7 @@ export interface RegisterArtifactInput {
   note?: string | undefined;
 }
 
-/**
- * Register an artifact by emitting an `artifact_written` event to the run log.
- */
+/** Registers an artifact by emitting an `artifact_written` event to the run log. */
 export async function registerArtifact(input: RegisterArtifactInput): Promise<EmitEventResult> {
   const { runDir, filename, role, roleType, agent, type, phase, iteration, note } = input;
 

@@ -146,10 +146,7 @@ export function renderEvent(record: KbEvent): { fields: Record<string, unknown>;
 
 // region | Helpers
 
-/**
- * Reads the optional `impact` field: an absent value yields `undefined`, a declared level yields it typed, and any other
- * value records an error and yields `undefined`.
- */
+/** Reads the optional `impact` field, recording an error for a present value that is not a declared level. */
 function readImpactField(value: unknown, errors: string[]): EventImpact | undefined {
   if (value === undefined) {
     return undefined;
@@ -162,8 +159,8 @@ function readImpactField(value: unknown, errors: string[]): EventImpact | undefi
 }
 
 /**
- * Reads an optional string-list field: an absent value coerces to an empty list, a list-shaped value yields its string
- * members, and a present-but-not-list value records an error and returns `undefined`.
+ * Reads an optional string-list field through {@link asStringList}, recording an error for a present value that is not
+ * a list.
  */
 function readListField(value: unknown, field: string, errors: string[]): string[] | undefined {
   const list = asStringList(value);

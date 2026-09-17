@@ -24,7 +24,6 @@ export interface CreatedStore {
   storePath: string;
   /** The description written into the registry entry; absent when none was supplied. */
   description?: string;
-  /** Whether the store was registered in the kb.yaml registry. */
   registered: boolean;
   /** Store-relative paths created by the scaffold. */
   created: readonly string[];
@@ -48,8 +47,9 @@ export type CreateOutcome =
 /**
  * Scaffolds a new knowledge-base store in `targetDir` and, unless `register` is false, registers it in the kb.yaml
  * registry. Both preconditions — an existing `.kb/`, and (when registering) an already-registered name — are checked
- * before anything is written, so a precondition failure leaves the filesystem untouched. Genuine I/O failures
- * propagate.
+ * before anything is written, so a precondition failure leaves the filesystem untouched. A name collision that the
+ * registry writer detects only at write time also returns `name-registered`, after the scaffold is written. Genuine
+ * I/O failures propagate.
  */
 export async function create(input: CreateInput): Promise<CreateOutcome> {
   const storePath = resolve(input.targetDir);
@@ -86,10 +86,8 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
 // region | Helpers
 
 /**
- * Decides — and, for the sole-KB case, applies — what happens to `default_kb` for a freshly-registered store, given
- * the registry state captured before registering. Sets the new store as the default only when no default exists and
- * it is the only registered KB; an existing default is never overwritten, and an ambiguous case is deferred to the
- * caller for an interactive choice.
+ * Decides what happens to `default_kb` for a freshly registered store, given the registry state captured before
+ * registering, and sets the pointer in the one case that calls for it. See {@link DefaultKbOutcome} for the cases.
  */
 async function ensureDefaultKb(input: {
   registryPath: string;

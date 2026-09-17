@@ -1,5 +1,4 @@
-// Leaf validators shared by the per-type record modules. They operate on raw field values from a parsed note's
-// frontmatter map and carry no record-type knowledge.
+// Leaf validators over raw field values from a parsed note's frontmatter map. They carry no record-type knowledge.
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;

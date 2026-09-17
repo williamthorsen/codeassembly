@@ -15,14 +15,13 @@ import { getStringField, toRecord } from '../test-utils/records.ts';
 interface FakePackageOptions {
   srcMtimeMs: number;
   distMtimeMs: number;
-  /** Extra source files to create (relative to src/). Default: ['index.ts'] */
+  /** Source files to create, relative to `src/`. Defaults to `['index.ts']`. */
   srcFiles?: string[];
-  /** If true, skip creating the src/ directory entirely. */
   omitSrc?: boolean;
-  /** If true, skip creating dist/esm/cli.js. */
   omitCliJs?: boolean;
 }
 
+/** Creates a fake package with the given source and dist mtimes, and returns the URL of its `dist/esm/staleness.js`. */
 async function createFakePackage(opts: FakePackageOptions): Promise<string> {
   const base = await mkdtemp(join(tmpdir(), 'mcp-staleness-test-'));
 
@@ -51,13 +50,10 @@ async function createFakePackage(opts: FakePackageOptions): Promise<string> {
     }
   }
 
-  // Return the file:// URL for the fake "staleness.js" in dist/esm/
   return pathToFileURL(join(distEsm, 'staleness.js')).href;
 }
 
 // endregion | Test helper: create a fake package directory mirroring packages/mcp layout
-
-// -- isBuildStale() unit tests --
 
 describe('isBuildStale', () => {
   it('returns true when source is newer than dist', async () => {
@@ -117,28 +113,30 @@ describe('isBuildStale', () => {
     expect(await isBuildStale(compiledFileUrl)).toBe(true);
   });
 
-  it('ignores test files in __tests__/ directories', async () => {
-    const now = Date.now();
-    const compiledFileUrl = await createFakePackage({
-      srcMtimeMs: now - 10_000,
-      distMtimeMs: now,
-      srcFiles: ['index.ts', '__tests__/index.test.ts'],
-    });
+  it.each(['__fixtures__/sample.ts', '__mocks__/client.ts', '__tests__/index.test.ts', 'test-utils/records.ts'])(
+    'ignores %s, which the compile command does not build',
+    async (ignoredFile) => {
+      const now = Date.now();
+      const compiledFileUrl = await createFakePackage({
+        srcMtimeMs: now - 10_000,
+        distMtimeMs: now,
+        srcFiles: ['index.ts', ignoredFile],
+      });
 
-    // Manually set the test file to be much newer than dist
-    const base = new URL(compiledFileUrl);
-    const distEsm = new URL('.', base);
-    const packageRoot = new URL('../..', distEsm);
-    const testFilePath = join(new URL('.', packageRoot).pathname, 'src', '__tests__', 'index.test.ts');
-    const newerDate = new Date(now + 10_000);
-    await utimes(testFilePath, newerDate, newerDate);
+      // Manually set the ignored file to be much newer than dist
+      const base = new URL(compiledFileUrl);
+      const distEsm = new URL('.', base);
+      const packageRoot = new URL('../..', distEsm);
+      const ignoredFilePath = join(new URL('.', packageRoot).pathname, 'src', ignoredFile);
+      const newerDate = new Date(now + 10_000);
+      await utimes(ignoredFilePath, newerDate, newerDate);
 
-    expect(await isBuildStale(compiledFileUrl)).toBe(false);
-  });
+      expect(await isBuildStale(compiledFileUrl)).toBe(false);
+    },
+  );
 
   it('ignores non-.ts files in src/', async () => {
     const now = Date.now();
-    // Create package with only old .ts files and a newer non-.ts file
     const compiledFileUrl = await createFakePackage({
       srcMtimeMs: now - 10_000,
       distMtimeMs: now,
@@ -158,8 +156,6 @@ describe('isBuildStale', () => {
   });
 });
 
-// -- Warning delivery tests (protocol-level, mocked isBuildStale) --
-
 describe('stale build warning delivery', () => {
   // Use vi.doMock to control isBuildStale for these tests.
   // Reset modules so the dynamic import below picks up the mock rather than a cached module.
@@ -174,6 +170,7 @@ describe('stale build warning delivery', () => {
     vi.restoreAllMocks();
   });
 
+  /** Connects a client to a server that imports the mocked `isBuildStale`. */
   async function createClientWithMockedStaleness(): Promise<{
     client: Client;
     cleanup: () => Promise<void>;
@@ -199,6 +196,7 @@ describe('stale build warning delivery', () => {
     };
   }
 
+  /** Narrows a `callTool` result's content array to records. */
   function getContentItems(result: Awaited<ReturnType<Client['callTool']>>): Array<Record<string, unknown>> {
     const record = toRecord(result, 'tool result');
     const content = record.content;
@@ -206,6 +204,7 @@ describe('stale build warning delivery', () => {
     return content.map((item: unknown, i: number) => toRecord(item, `content item ${i.toString()}`));
   }
 
+  /** Returns the content item at `index`, throwing when there is none. */
   function itemAt(items: Array<Record<string, unknown>>, index: number): Record<string, unknown> {
     const item = items[index];
     if (item === undefined) throw new Error(`Expected content item at index ${index.toString()}`);
@@ -236,7 +235,6 @@ describe('stale build warning delivery', () => {
     const { client, cleanup } = await createClientWithMockedStaleness();
 
     try {
-      // First call - should have warning as separate content item
       const result1 = await client.callTool({
         name: 'get_run_state',
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
@@ -245,7 +243,6 @@ describe('stale build warning delivery', () => {
       expect(items1.length).toBeGreaterThanOrEqual(2);
       expect(getStringField(itemAt(items1, 0), 'text')).toMatch(/^\u{26A0}\u{FE0F} MCP server build is stale/u);
 
-      // Second call - should NOT have warning (single content item)
       const result2 = await client.callTool({
         name: 'get_run_state',
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
@@ -269,7 +266,6 @@ describe('stale build warning delivery', () => {
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
       });
 
-      // Verify the result is an error with warning as separate content item
       const record = toRecord(result, 'tool result');
       expect(record.isError).toBe(true);
 

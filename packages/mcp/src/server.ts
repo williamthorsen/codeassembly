@@ -9,11 +9,9 @@ import { initRun } from './tools/init-run.ts';
 import { registerArtifact } from './tools/register-artifact.ts';
 
 const STALE_BUILD_WARNING =
-  '\u{26A0}\u{FE0F} MCP server build is stale \u{2014} source files are newer than compiled output. Run `pnpm run ws compile` in packages/mcp/ to rebuild.\n\n';
+  '\u{26A0}\u{FE0F} MCP server build is stale \u{2014} source files are newer than compiled output. Run `nmr -F codeassembly-mcp build` to rebuild.\n\n';
 
-/**
- * Create and configure an MCP server with run-data management tools.
- */
+/** Creates and configures an MCP server with run-data management tools. */
 export function createServer(): McpServer {
   const server = new McpServer({ name: 'codeassembly', version: '0.1.0' }, { capabilities: { tools: {} } });
   const getStaleWarningContent = createStaleWarningGate();

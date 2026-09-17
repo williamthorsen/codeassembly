@@ -65,6 +65,7 @@ export function createGitAdapter(input: {
   let passInFlight = false;
   let stopped = false;
 
+  /** Runs one poll pass over the current targets, unless a pass is already running. */
   async function runPass(): Promise<void> {
     if (passInFlight) {
       return;

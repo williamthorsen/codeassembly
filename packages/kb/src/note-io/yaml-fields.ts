@@ -36,7 +36,7 @@ export function renderFrontmatterFields(fields: Record<string, unknown>): string
 
 // region | Helpers
 
-/** Renders one field entry, delegating non-string scalars, string arrays, and structured values to the serializer. */
+/** Renders one field entry as its frontmatter lines. A structured value may span several. */
 function renderEntry(key: string, value: unknown): string[] {
   if (typeof value === 'string') {
     return [`${key}: ${renderScalar(value)}`];

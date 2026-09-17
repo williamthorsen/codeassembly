@@ -20,14 +20,17 @@ import type { EventPhaseName, RunEvent, RunHeader } from './types/run-log.ts';
 
 const CRITICALITY_VALUES: ReadonlySet<string> = new Set(['none', 'low', 'medium', 'high']);
 
+/** Narrows `value` to one of the `Criticality` levels. */
 function isCriticality(value: unknown): value is Criticality {
   return typeof value === 'string' && CRITICALITY_VALUES.has(value);
 }
 
+/** Narrows `value` to an array whose every item is a string. */
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
+/** Narrows `value` to a `QualityGates` record, in which each gate is absent or a string. */
 function isQualityGatesRecord(value: Record<string, unknown>): value is QualityGates & Record<string, unknown> {
   return (
     (value.typecheck === undefined || typeof value.typecheck === 'string') &&
@@ -36,7 +39,7 @@ function isQualityGatesRecord(value: Record<string, unknown>): value is QualityG
   );
 }
 
-/** Build a UsageMetrics object from an event's optional usage fields, or return undefined if none are present. */
+/** Builds a UsageMetrics object from an event's optional usage fields, or returns undefined if none are present. */
 function extractUsage(event: {
   tokens?: number | undefined;
   toolUses?: number | undefined;
@@ -51,7 +54,7 @@ function extractUsage(event: {
   return usage;
 }
 
-/** Extract qualityGates from data, falling back to existing value. */
+/** Extracts qualityGates from data, falling back to existing value. */
 function extractQualityGates(
   data: Record<string, unknown> | undefined,
   existing: string | QualityGates | undefined,
@@ -66,10 +69,7 @@ function extractQualityGates(
 
 // endregion | Type guard helpers
 
-/**
- * Reconstruct a CanonicalRunStatus from a RunHeader and a sequence of RunEvents.
- * This is a pure function: same inputs always produce the same output.
- */
+/** Reconstructs a CanonicalRunStatus from a RunHeader and a sequence of RunEvents. Pure. */
 export function foldEvents(header: RunHeader, events: ReadonlyArray<RunEvent>): CanonicalRunStatus {
   const state: CanonicalRunStatus = {
     runId: header.runId,
@@ -112,6 +112,7 @@ export function foldEvents(header: RunHeader, events: ReadonlyArray<RunEvent>): 
   return state;
 }
 
+/** Applies one event to `state` in place. */
 function applyEvent(state: CanonicalRunStatus, event: RunEvent): void {
   switch (event.event) {
     case 'run_started':
@@ -180,7 +181,7 @@ type ReviewEvent = Extract<
   }
 >;
 
-/** Ensure the iterations array has an entry at the given zero-based index and return it. */
+/** Ensures the iterations array has an entry at the given zero-based index and returns it. */
 function ensureIteration(review: { iterations?: ReviewIteration[] }, index: number): ReviewIteration {
   review.iterations ??= [];
   let iteration = review.iterations[index];
@@ -191,6 +192,7 @@ function ensureIteration(review: { iterations?: ReviewIteration[] }, index: numb
   return iteration;
 }
 
+/** Registers the reviewer on the review phase and adds it to the first iteration. */
 function applyReviewerDispatched(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 'reviewer_dispatched' }>,
@@ -211,6 +213,7 @@ function applyReviewerDispatched(
   iter0.dispatchedAt ??= event.t;
 }
 
+/** Records a reviewer's result and stamps the first iteration's reviews as completed. */
 function applyReviewerCompleted(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 'reviewer_completed' }>,
@@ -228,6 +231,7 @@ function applyReviewerCompleted(
   firstIter.reviewsCompletedAt = event.t;
 }
 
+/** Records the re-review dispatch as a new iteration after the existing ones. Index 0 belongs to the initial review. */
 function applyReReviewDispatched(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 're_review_dispatched' }>,
@@ -244,6 +248,7 @@ function applyReReviewDispatched(
   reIter.dispatchedAt = event.t;
 }
 
+/** Records each known reviewer's re-review criticality and completes the last iteration. */
 function applyReReviewCompleted(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 're_review_completed' }>,
@@ -264,6 +269,7 @@ function applyReReviewCompleted(
   }
 }
 
+/** Applies a review event to the parallel-review phase, or drops the event when that phase has not started. */
 function applyReviewEvent(state: CanonicalRunStatus, event: ReviewEvent): void {
   const review = state.phases.parallelReview;
   if (!review) return;
@@ -297,6 +303,7 @@ function applyReviewEvent(state: CanonicalRunStatus, event: ReviewEvent): void {
   }
 }
 
+/** Initializes the phase's entry as in progress, replacing any existing entry. */
 function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName, timestamp: string): void {
   switch (phase) {
     case 'architecture':
@@ -359,6 +366,7 @@ function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName, tim
   }
 }
 
+/** Completes the parallel-review phase, taking the well-typed fields of `data`. */
 function applyReviewPhaseCompleted(
   review: ParallelReviewPhase,
   status: PhaseStatus,
@@ -379,6 +387,10 @@ function applyReviewPhaseCompleted(
   }
 }
 
+/**
+ * Completes a phase by merging the event's data into the phase's entry. Creates the entry when no `phase_started`
+ * event preceded this one, except for the review phase, which stays absent.
+ */
 function applyPhaseCompleted(state: CanonicalRunStatus, event: Extract<RunEvent, { event: 'phase_completed' }>): void {
   const { phase, status, data, t: timestamp } = event;
   const usage = extractUsage(event);
@@ -440,6 +452,7 @@ function applyPhaseCompleted(state: CanonicalRunStatus, event: Extract<RunEvent,
   }
 }
 
+/** Merges the well-typed fields of `data` into an architecture phase. */
 function mergeArchitecture(
   existing: ArchitecturePhase,
   status: PhaseStatus,
@@ -453,6 +466,7 @@ function mergeArchitecture(
   };
 }
 
+/** Merges the well-typed fields of `data` into a planning phase. */
 function mergePlanning(
   existing: PlanningPhase,
   status: PhaseStatus,
@@ -466,6 +480,7 @@ function mergePlanning(
   };
 }
 
+/** Merges the well-typed fields of `data` into an implementation phase. */
 function mergeImplementation(
   existing: ImplementationPhase,
   status: PhaseStatus,
@@ -479,6 +494,7 @@ function mergeImplementation(
   };
 }
 
+/** Merges the well-typed fields of `data` into a code-simplifier phase. */
 function mergeCodeSimplifier(
   existing: CodeSimplifierPhase,
   status: PhaseStatus,
@@ -495,6 +511,7 @@ function mergeCodeSimplifier(
   };
 }
 
+/** Merges the well-typed fields of `data` into a holistic-review phase. */
 function mergeHolisticReview(
   existing: HolisticReviewPhase,
   status: PhaseStatus,
@@ -513,6 +530,7 @@ function mergeHolisticReview(
   };
 }
 
+/** Appends the written artifact to the run's artifact list. */
 function applyArtifactWritten(
   state: CanonicalRunStatus,
   event: Extract<RunEvent, { event: 'artifact_written' }>,

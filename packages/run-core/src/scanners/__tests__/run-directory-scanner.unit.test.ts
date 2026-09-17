@@ -14,10 +14,12 @@ vi.mock('node:fs/promises', () => ({
   stat: mockedStat,
 }));
 
+/** Queues the entry names that the next `readdir` call resolves with. */
 function mockReaddirResult(names: string[]): void {
   mockedReaddir.mockResolvedValueOnce(names);
 }
 
+/** Queues the result of the next `stat` call: a directory, or a non-directory when `isDir` is false. */
 function mockStatDirectory(isDir = true): void {
   mockedStat.mockResolvedValueOnce({ isDirectory: () => isDir });
 }
@@ -53,9 +55,9 @@ describe('discoverRunDirectories', () => {
   });
 
   it('discovers run directories using Pattern 2 (no tickets/ directory)', async () => {
-    mockReaddirResult(['rad-app']);
+    mockReaddirResult(['storefront']);
     mockStatDirectory();
-    mockReaddirResult(['RAD-1']);
+    mockReaddirResult(['ACME-1']);
     mockStatDirectory();
     mockReaddirResult(['run-1']);
     mockStatDirectory();
@@ -64,10 +66,10 @@ describe('discoverRunDirectories', () => {
 
     expect(result).toEqual([
       {
-        projectSlug: 'rad-app',
-        ticketId: 'RAD-1',
+        projectSlug: 'storefront',
+        ticketId: 'ACME-1',
         runId: 'run-1',
-        runPath: '/base/rad-app/RAD-1/run-1',
+        runPath: '/base/storefront/ACME-1/run-1',
       },
     ]);
   });

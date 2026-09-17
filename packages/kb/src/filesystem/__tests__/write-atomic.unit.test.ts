@@ -7,8 +7,8 @@ import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
 import { pathExists } from '../exists.ts';
 import { writeAtomic } from '../write-atomic.ts';
 
-// Mock the write path with a passthrough to the real implementations, so most calls hit disk normally; the
-// failure-cleanup tests override `rename` and `unlink` per-call.
+// Mock the write path with a passthrough to the real implementations, so most calls hit disk normally; a test that
+// needs a failure overrides one call.
 vi.mock('node:fs/promises', async () => {
   const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
   return {

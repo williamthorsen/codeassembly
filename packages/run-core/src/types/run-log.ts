@@ -134,7 +134,6 @@ export interface InputReceivedEvent {
   event: 'input_received';
 }
 
-/** Discriminated union of all 15 run-log event types. */
 export type RunEvent =
   | RunStartedEvent
   | RunCompletedEvent

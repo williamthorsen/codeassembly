@@ -238,7 +238,6 @@ describe(transformFile, () => {
       '// ================================================================',
       'const x = 1;',
     ].join('\n');
-    // The top dash line does not pair with an equals bottom; leave untouched.
     const output = transformFile(input);
     expect(output).toBe(input);
   });

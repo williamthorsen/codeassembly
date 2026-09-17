@@ -42,5 +42,5 @@ export function createApp(input: {
     );
 }
 
-/** The route map consumed by `hc` typed clients; kept end-to-end typed by the chained registrations above. */
+/** The route map consumed by `hc` typed clients. */
 export type AppType = ReturnType<typeof createApp>;

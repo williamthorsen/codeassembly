@@ -7,7 +7,7 @@ import { isEnoent } from '../type-guards.ts';
 /**
  * Reads and parses a `kb.yaml` registry as a `yaml` Document, returning a fresh empty document when the file is absent
  * or empty. Parsing through `parseDocument` preserves comments and formatting so registry writers can mutate in place
- * without discarding them. Shared by every registry writer (`registerStore`, `setDefaultKb`, `clearDefaultKb`).
+ * without discarding them.
  */
 export async function loadRegistryDocument(path: string): Promise<Document> {
   let text: string;

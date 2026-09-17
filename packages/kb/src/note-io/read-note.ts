@@ -4,7 +4,7 @@ import { parseFrontmatterFields } from './yaml-fields.ts';
 
 const FENCE = '---';
 
-/** The outcome of splitting a note: its frontmatter field map, its body, the body's start line, and any parse error. */
+/** A note split into its frontmatter field map and its body. */
 export interface ReadNote {
   fields: Record<string, unknown>;
   body: string;

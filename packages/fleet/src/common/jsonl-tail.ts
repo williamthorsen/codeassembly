@@ -1,7 +1,3 @@
-// Incremental reader for append-only JSONL files. Knows nothing about lifecycle events: it turns "bytes past an
-// offset" into complete lines, and reports the anomalies a concurrently written file can present — a torn trailing
-// line, truncation, a vanished file — as data rather than exceptions, leaving the policy to the caller.
-
 import { closeSync, openSync, readSync, statSync } from 'node:fs';
 
 import { isMissingFileError } from './fs-errors.ts';

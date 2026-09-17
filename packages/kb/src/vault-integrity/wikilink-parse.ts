@@ -1,5 +1,5 @@
 /**
- * Match `[[Target]]` and `![[Target]]` (embeds). A backslash-escaped `\[[…]]` is excluded. Scan the body so that
+ * Matches `[[Target]]` and `![[Target]]` (embeds). A backslash-escaped `\[[…]]` is excluded. Scan the body so that
  * frontmatter wikilink-looking text (e.g. inside a description) is not flagged.
  */
 const WIKILINK = /(?<!\\)!?\[\[([^\]\n]+?)\]\]/g;
@@ -22,7 +22,7 @@ const NON_MD_EXTENSIONS = new Set([
   '.wav',
 ]);
 
-/** Counts the newlines in `text` before byte offset `upTo`, used to locate a match's source line. */
+/** Counts the newlines in `text` before string index `upTo`, used to locate a match's source line. */
 export function countNewlines(text: string, upTo: number): number {
   let count = 0;
   for (let index = 0; index < upTo && index < text.length; index += 1) {
@@ -103,8 +103,8 @@ export function* scanWikilinks(body: string): Generator<ScannedWikilink> {
 /**
  * Separates a leading `store:` qualifier from a wikilink target, so `fde:Note title` names the note `Note title` in
  * the store `fde`. A qualifier is recognized only when the text before the first colon is non-empty and carries no
- * whitespace and no `/`, and something follows the colon; every other target passes through store-local, which leaves
- * a title that happens to contain a colon resolving as it always has.
+ * whitespace and no `/`, and something follows the colon; every other target passes through store-local, so a title
+ * such as `Release notes: v2` resolves within this store.
  *
  * Call it on the output of {@link extractTarget}, which has already stripped any alias and anchor.
  */

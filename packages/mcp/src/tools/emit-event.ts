@@ -7,9 +7,10 @@ import { runEventSchema } from 'codeassembly-run-core';
 export interface EmitEventInput {
   runDir: string;
   event: unknown;
-  /** Optional server-side timestamp override. When provided, this value is
-   *  used instead of generating a new `Date`. Useful for coordinating a single
-   *  timestamp across multiple writes (e.g. event log + index header). */
+  /**
+   * Overrides the generated server-side timestamp, so that a caller can stamp several writes, such as the event log
+   * and the index header, with one value.
+   */
   timestamp?: string;
 }
 
@@ -19,7 +20,7 @@ export interface EmitEventResult {
 }
 
 /**
- * Validate and append a run event to the JSONL log.
+ * Validates and appends a run event to the JSONL log.
  *
  * Injects a server-side timestamp (`t`) before validation to ensure
  * monotonicity and avoid client-provided timestamps.
@@ -27,7 +28,6 @@ export interface EmitEventResult {
 export async function emitEvent(input: EmitEventInput): Promise<EmitEventResult> {
   const { runDir, event, timestamp } = input;
 
-  // Inject server-side timestamp, using the provided override or generating one
   const t = timestamp ?? new Date().toISOString();
   const timestamped = typeof event === 'object' && event !== null ? { ...event, t } : event;
 

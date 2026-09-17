@@ -32,7 +32,7 @@ export interface ScoreResult {
   summary: string;
 }
 
-/** Compute demo-worthiness signals and a weighted score for a single run. Pure. */
+/** Computes demo-worthiness signals and a weighted score for a single run. Pure. */
 export function scoreRun(status: CanonicalRunStatus, events: ReadonlyArray<RunEvent>, now: Date): ScoreResult {
   const signals = extractSignals(status, events, now);
   const score = computeScore(signals);
@@ -40,6 +40,7 @@ export function scoreRun(status: CanonicalRunStatus, events: ReadonlyArray<RunEv
   return { score, signals, summary };
 }
 
+/** Derives each demo-worthiness signal from the run's status and events. */
 function extractSignals(status: CanonicalRunStatus, events: ReadonlyArray<RunEvent>, now: Date): SignalBreakdown {
   const review = status.phases.parallelReview;
   const reviewerCount = review?.reviewers ? Object.keys(review.reviewers).length : 0;
@@ -56,6 +57,7 @@ function extractSignals(status: CanonicalRunStatus, events: ReadonlyArray<RunEve
   };
 }
 
+/** Sums the weights of the signals that are set. */
 function computeScore(signals: SignalBreakdown): number {
   let score = 0;
   if (signals.completed) score += WEIGHTS.completed;
@@ -68,6 +70,7 @@ function computeScore(signals: SignalBreakdown): number {
   return score;
 }
 
+/** Joins the labels of the set signals and the event count into a comma-separated summary. */
 function buildSummary(signals: SignalBreakdown, eventCount: number): string {
   const parts: string[] = [];
   if (signals.completed) parts.push('completed');
@@ -80,10 +83,12 @@ function buildSummary(signals: SignalBreakdown, eventCount: number): string {
   return parts.join(', ');
 }
 
+/** Returns true when the event contains any usage field. */
 function hasUsageFields(event: RunEvent): boolean {
   return 'tokens' in event || 'toolUses' in event || 'durationMs' in event;
 }
 
+/** Returns true when the run started within the recency window. An unparseable start time is not recent. */
 function isRecent(startedAt: string, now: Date): boolean {
   const started = new Date(startedAt).getTime();
   if (Number.isNaN(started)) return false;

@@ -37,6 +37,7 @@ export function startWatcher(input: {
   let debounce: ReturnType<typeof setTimeout> | undefined;
   let watcher: WatchHandle | undefined;
 
+  /** Schedules one `onDirty` call for the burst in progress; a later event in the same burst schedules nothing. */
   function handleWatchEvent(): void {
     if (debounce !== undefined) {
       return;

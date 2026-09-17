@@ -4,8 +4,7 @@ import { join } from 'node:path';
 //
 // Every constant here is a store-relative posix path. That single representation serves both filesystem callers and
 // git callers: `join` rewrites forward slashes to the platform separator, while a git object spec
-// (`<rev>:<path>`) requires posix separators on every platform. Holding the segments in an array instead would force
-// each caller to re-derive its own string, which is how these paths came to be duplicated in the first place.
+// (`<rev>:<path>`) requires posix separators on every platform.
 
 /** The store's metadata directory. Its presence marks a directory as a KB root. */
 export const KB_DIR = '.kb';
@@ -16,10 +15,8 @@ export const CONTENT_DIR = 'content';
 /** The `content/` subdirectory holding assertion records. Named on its own because a caller may need to recognize the segment, not just the path. */
 export const ASSERTIONS_SEGMENT = 'assertions';
 
-/** The tag-alias map. */
 export const ALIASES_FILE = `${KB_DIR}/tag-aliases.yaml`;
 
-/** The directory holding the store's assertion records. */
 export const ASSERTIONS_DIR = `${CONTENT_DIR}/${ASSERTIONS_SEGMENT}`;
 
 /** The check configuration. */
@@ -28,7 +25,6 @@ export const CONFIG_FILE = `${KB_DIR}/config.yaml`;
 /** The editor and formatter settings. Sits at the store root, where every tool that reads it looks. */
 export const EDITORCONFIG_FILE = '.editorconfig';
 
-/** The directory holding the store's event records. */
 export const EVENTS_DIR = `${CONTENT_DIR}/events`;
 
 /** The formatting configuration. Sits at the store root rather than under `.kb/`, because Prettier discovers it there. */

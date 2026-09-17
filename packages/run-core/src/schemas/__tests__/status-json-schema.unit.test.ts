@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { v1StatusSchema } from '../status-json-schema.ts';
 
-// -- fixtures --
-
+/** Builds the smallest v1 status object that the schema accepts. */
 function minimalValid(): Record<string, unknown> {
   return {
     runId: 'test-run',
@@ -16,8 +15,6 @@ function minimalValid(): Record<string, unknown> {
     phases: {},
   };
 }
-
-// -- valid inputs --
 
 describe('v1StatusSchema', () => {
   describe('valid inputs', () => {
@@ -84,8 +81,6 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- run status validation --
-
   describe('run status validation', () => {
     it.each(['in_progress', 'completed', 'failed', 'needs_manual_review'])('accepts valid status "%s"', (status) => {
       expect(v1StatusSchema.safeParse({ ...minimalValid(), status }).success).toBe(true);
@@ -102,8 +97,6 @@ describe('v1StatusSchema', () => {
       expect(v1StatusSchema.safeParse({ ...minimalValid(), status: 42 }).success).toBe(false);
     });
   });
-
-  // -- optional field type validation --
 
   describe('optional field type validation', () => {
     it('rejects non-string ticketId', () => {
@@ -130,8 +123,6 @@ describe('v1StatusSchema', () => {
       expect(v1StatusSchema.safeParse({ ...minimalValid(), maxReviewRounds: '3' }).success).toBe(false);
     });
   });
-
-  // -- phases validation --
 
   describe('phases validation', () => {
     it('rejects null phases', () => {
@@ -182,8 +173,6 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- phase decisions validation --
-
   describe('phaseDecision validation', () => {
     it('accepts undefined phaseDecision', () => {
       expect(v1StatusSchema.safeParse(minimalValid()).success).toBe(true);
@@ -218,8 +207,6 @@ describe('v1StatusSchema', () => {
       expect(v1StatusSchema.safeParse(data).success).toBe(false);
     });
   });
-
-  // -- error handling --
 
   describe('error handling', () => {
     it('rejects non-object input', () => {
