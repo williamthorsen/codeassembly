@@ -12,34 +12,34 @@ import {
 } from '@williamthorsen/kb/taxonomy';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-/** A domain a write added to the taxonomy. */
+/** A domain that a write added to the taxonomy. */
 export interface AddedDomain {
   /** The domain's assertions-root-relative slash-path. */
   path: string;
-  /** Whether it landed under `provisional:` rather than `domains:`, and so awaits review. */
+  /** Whether it was declared under `provisional:` rather than `domains:`, and so awaits review. */
   provisional: boolean;
 }
 
 /**
  * Records a written note's folder in `.kb/taxonomy.yaml`, declaring it and every undeclared ancestor when no domain
- * declares it. Returns where the note sits and what the declaration added, or `undefined` for a store that has not
+ * declares it. Returns where the note is and what the declaration added, or `undefined` for a store that has not
  * adopted a taxonomy, which this leaves untouched.
  *
- * Adoption is the file's presence, not what it declares, so a store whose taxonomy is empty grows its first domain
- * from its first capture.
+ * Because adoption is the file's presence, not what it declares, the first capture into a store whose taxonomy is
+ * empty declares that store's first domain.
  *
- * The declaration fires on the note's exact folder, aligning with `taxonomy.undeclared` — a folder nested under a
+ * The declaration is decided on the note's exact folder, aligning with `taxonomy.undeclared`: A folder nested under a
  * declared domain is itself undeclared. It then covers every undeclared ancestor, because `taxonomy.orphan` warns on a
- * declared domain whose parent is not, and a leaf-only append would have routine nested captures minting lint warnings
- * on the next `kb check`. A folder some domain already declares is left alone, ancestors included: that is
- * pre-existing drift the lints own.
+ * declared domain whose parent is not, and a leaf-only append would make routine nested captures produce lint warnings
+ * on the next `kb check`. A folder that some domain already declares is left alone, ancestors included: That is
+ * pre-existing drift that the lints own.
  *
- * The note's domain comes from its written path through the same mapping the drift rules use, so this cannot disagree
- * with what a later `kb check` observes.
+ * The note's domain comes from its written path through the same mapping that the drift rules use, so this cannot
+ * disagree with what a later `kb check` observes.
  *
  * A declaration failure never fails the capture. The note is already on disk, and propagating the failure would exit
- * non-zero and read as a capture that never happened; instead the result carries a warning naming what went
- * undeclared, and `taxonomy.undeclared` surfaces the folder on the next `kb check`.
+ * non-zero and read as a capture that never happened; instead the result contains a warning naming what went
+ * undeclared, and `taxonomy.undeclared` reports the folder on the next `kb check`.
  */
 export async function declareDomain(input: {
   kbPath: string;
@@ -47,7 +47,7 @@ export async function declareDomain(input: {
   notePath: string;
   /** The leaf domain's description, or `null` when none was supplied. */
   description: string | null;
-  /** Whether the capture ran unconfirmed, which routes the leaf to `provisional:` however it was described. */
+  /** Whether the capture ran unconfirmed, which puts the leaf under `provisional:` however it was described. */
   auto: boolean;
 }): Promise<DomainPlacement | undefined> {
   const relativePath = relative(input.kbPath, input.notePath).split(sep).join('/');
@@ -57,7 +57,7 @@ export async function declareDomain(input: {
     if (!(await pathExists(join(input.kbPath, TAXONOMY_FILE)))) {
       return undefined;
     }
-    // A note at the assertions root sits in no folder, so there is no domain to declare and no lint that can see it.
+    // A note at the assertions root is in no folder, so there is no domain to declare and no lint that can see it.
     if (domain === null) {
       return { domain, added: [] };
     }
@@ -89,11 +89,11 @@ export async function declareDomain(input: {
   }
 }
 
-/** Where a written note sits in the store's taxonomy, and what recording it there added. */
+/** Where a written note is in the store's taxonomy, and what recording it there added. */
 export interface DomainPlacement {
-  /** The domain the note sits in, or `null` when it sits at the assertions root and so under none. */
+  /** The domain that contains the note, or `null` when the note is at the assertions root and so under none. */
   domain: string | null;
-  /** The domains this write added to the taxonomy, in root-to-leaf order. */
+  /** The domains that this write added to the taxonomy, in root-to-leaf order. */
   added: AddedDomain[];
   /** What went undeclared, when the taxonomy could not be read or appended to. */
   warning?: string;
@@ -102,9 +102,9 @@ export interface DomainPlacement {
 // region | Helpers
 
 /**
- * Builds the batch declaring `domain` and every undeclared ancestor, in root-to-leaf order. The leaf lands in
- * `domains:` only when a confirmed capture supplied a description; every other append is provisional, so it can be
- * reviewed later. Ancestors are always provisional and always bare: nothing names what a grouping folder is for.
+ * Builds the batch declaring `domain` and every undeclared ancestor, in root-to-leaf order. The leaf is declared under
+ * `domains:` only when a confirmed capture supplied a description; every other append is provisional, so that it can
+ * be reviewed later. Ancestors are always provisional and always bare: Nothing names what a grouping folder is for.
  */
 function buildDeclarations(input: {
   domain: string;

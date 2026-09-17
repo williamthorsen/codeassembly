@@ -14,7 +14,7 @@ const CANONICALIZED_FRONTMATTER =
   '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [todo]\n---\n';
 const TARGET = '---\ntitle: Foo\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** Stands up a temp vault with a `.kb/`, writing each note under `content/` so the default targets enumerate it. */
+/** Creates a temp vault with a `.kb/`, writing each note under `content/` so that the default targets enumerate it. */
 async function makeVault(files: Record<string, string>): Promise<string> {
   const kbPath = await mkdtemp(join(tmpdir(), 'kb-curate-apply-'));
   await mkdir(join(kbPath, '.kb'), { recursive: true });
@@ -32,7 +32,7 @@ async function enumerate(kbPath: string) {
 }
 
 describe(applyFixes, () => {
-  // The inline wikilink writer must operate on current on-disk state, not the enumeration snapshot: a tag
+  // The inline wikilink writer must operate on current on-disk state, not the enumeration snapshot: A tag
   // canonicalization that ran first rewrites the frontmatter on disk, and writing the body rewrite from the stale
   // snapshot would silently revert that frontmatter and still report ok:true.
   it('preserves an on-disk frontmatter change made after enumeration when rewriting the body', async () => {
@@ -49,7 +49,7 @@ describe(applyFixes, () => {
     const onDisk = await readFile(linkerPath, 'utf8');
     expect(onDisk).toContain('tags: [todo]');
     expect(onDisk).not.toContain('tags: [todo-item]');
-    expect(onDisk).toContain('[[content/tools/Foo]]'); // the body rewrite landed against the content-scoped path
+    expect(onDisk).toContain('[[content/tools/Foo]]'); // the body rewrite used the content-scoped path
     const rewrite = fixes.find((fix) => fix.operation === 'rewrite-wikilink');
     expect(rewrite).toMatchObject({ ok: true });
   });
@@ -59,7 +59,7 @@ describe(applyFixes, () => {
     const kbPath = await makeVault({ 'Linker.md': linker, 'tools/Foo.md': TARGET });
     const notes = await enumerate(kbPath);
 
-    // Replace the body on disk so the snapshot's body no longer anchors in the current content.
+    // Replace the body on disk so that the snapshot's body no longer anchors in the current content.
     const linkerPath = join(kbPath, 'content', 'Linker.md');
     await writeFile(linkerPath, `${ORIGINAL_FRONTMATTER}\nEntirely different body.\n`, 'utf8');
 
@@ -68,6 +68,6 @@ describe(applyFixes, () => {
     const rewrite = fixes.find((fix) => fix.operation === 'rewrite-wikilink');
     expect(rewrite).toMatchObject({ ok: false });
     const onDisk = await readFile(linkerPath, 'utf8');
-    expect(onDisk).toContain('Entirely different body.'); // untouched — no frontmatter-stripped write
+    expect(onDisk).toContain('Entirely different body.'); // untouched, with no frontmatter-stripped write
   });
 });

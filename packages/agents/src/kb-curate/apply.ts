@@ -52,7 +52,7 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
   for (const entry of input.notes) {
     const result = rewriteWikilinks({ body: entry.body, vaultIndex });
     if (!result.changed) continue;
-    // Re-read the current on-disk content: a tag fix earlier in this run rewrote the frontmatter, and a write built
+    // Re-read the current on-disk content: A tag fix earlier in this run rewrote the frontmatter, and a write built
     // from the enumeration snapshot would revert it. The tag fix leaves the body alone, so the snapshot's body still
     // anchors the replacement.
     let currentContent: string;
@@ -102,9 +102,9 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
 }
 
 /**
- * Rebuilds a note's full content with a rewritten body. `content` is the current on-disk content and the body is its
- * suffix after the frontmatter block, so replacing the final occurrence preserves the on-disk frontmatter verbatim.
- * Returns `null` when `oldBody` is absent from `content`, leaving no safe splice point.
+ * Rebuilds a note's full content with a rewritten body. Because `content` is the current on-disk content and the body
+ * is its suffix after the frontmatter block, replacing the final occurrence preserves the on-disk frontmatter
+ * verbatim. Returns `null` when `oldBody` is absent from `content`, leaving no safe splice point.
  */
 function replaceBody(content: string, oldBody: string, newBody: string): string | null {
   const bodyStart = content.lastIndexOf(oldBody);

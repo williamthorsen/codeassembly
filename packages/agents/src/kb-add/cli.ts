@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The helper's resolved exit code must be passed to the OS, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -50,14 +50,14 @@ if (isEntryPoint()) {
  * value. The caller turns the throw into an `invalid-args` result.
  *
  * `--survey` selects the read-only survey, which takes `--kb` alone. A note-describing flag alongside it comes from a
- * caller that meant to write, so the parse fails: a survey reported for that invocation would leave the caller
+ * caller that meant to write, so the parse fails: A survey reported for that invocation would leave the caller
  * expecting a note that nothing wrote.
  *
  * @internal - Exported to allow testing.
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
   const raw: Partial<Record<ValueFlag, string>> = {};
-  // Every flag a survey does not accept, collected as seen, so a stray one can be named back to the caller.
+  // Every flag that a survey does not accept, collected as seen, so that a stray one can be named back to the caller.
   const writeOnly = new Set<string>();
   let auto = false;
   let survey = false;
@@ -108,8 +108,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Runs the helper end to end, from argv and stdin to a written note or a survey of the destination.
  *
- * `--survey` takes the read-only path and returns without touching stdin: the write path reads stdin to EOF, so a
- * survey falling through to it would hang on an interactive invocation.
+ * A `--survey` invocation takes the read-only path and returns without reading stdin: The write path reads stdin to
+ * EOF, so a survey falling through to it would hang on an interactive invocation.
  *
  * Every recoverable failure becomes a structured `{ ok: false, ... }` result. A system failure propagates to the
  * try/catch in `main`.
@@ -182,9 +182,9 @@ export async function runAdd(input: {
     }
   }
 
-  // Declare after the note lands, never before: a failure between the two leaves a real note in an undeclared folder,
-  // which `taxonomy.undeclared` reports. The reverse order leaves a declared shelf holding nothing, reported as
-  // `taxonomy.unused` and indistinguishable from a shelf someone put up on purpose.
+  // Declare after the note is written, never before: A failure between the two leaves a real note in an undeclared
+  // folder, which `taxonomy.undeclared` reports. The reverse order leaves a declared domain containing no notes,
+  // reported as `taxonomy.unused` and indistinguishable from a domain that someone declared on purpose.
   const placement = await declareDomain({
     kbPath: kb.path,
     notePath: write.path,
@@ -229,7 +229,7 @@ function buildWriteArgs(input: { raw: Partial<Record<ValueFlag, string>>; auto: 
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. A `realpathSync` failure warns on stderr and returns `false`.
+ * symlinked invocation path still matches. On a `realpathSync` failure, warns on stderr and returns `false`.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -273,8 +273,8 @@ function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | nu
 }
 
 /**
- * Resolves the KB the invocation addresses and maps a resolution failure to the helper's structured error shape. Both
- * paths route through here, so the survey reaches its store on exactly the rules the write path uses; only
+ * Resolves the KB addressed by the invocation and maps a resolution failure to the helper's structured error shape.
+ * Both paths call this function, so the survey resolves its store by exactly the rules that the write path uses; only
  * `requireWritable` differs, since a survey of a `readonly: true` store is legitimate and a write into one is not.
  */
 async function resolveKb(input: {
@@ -341,7 +341,7 @@ async function resolveKb(input: {
 
 /**
  * Runs the read-only survey. A malformed `.kb/config.yaml` or `.kb/taxonomy.yaml` is a defect that the operator can
- * fix, so it returns as a structured `invalid-config`; any other throw is a system failure and propagates.
+ * fix, so it is returned as a structured `invalid-config`; any other throw is a system failure and propagates.
  */
 async function runSurvey(input: { startDir: string; explicitKb: string | null; home?: string }): Promise<SurveyResult> {
   const resolved = await resolveKb({ ...input, requireWritable: false });

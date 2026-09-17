@@ -14,8 +14,8 @@ export function prepareNote(input: { args: WriteArgs; aliases: AliasMap; now: Da
 
   const originalTags = [...args.tags];
   // Canonicalization can collapse distinct inputs (`node.js`, `node`) onto the same canonical (`nodejs`). Keep the
-  // original list intact for the audit trail and deduplicate the written tag list in first-occurrence order so the
-  // note doesn't ship `['nodejs', 'nodejs']`.
+  // original list intact for the audit trail and deduplicate the written tag list in first-occurrence order so that
+  // the note doesn't contain `['nodejs', 'nodejs']`.
   const canonicalTags = dedupeInOrder(originalTags.map((tag) => canonicalize(tag, aliases)));
   const today = formatUtcTimestamp(now);
 
