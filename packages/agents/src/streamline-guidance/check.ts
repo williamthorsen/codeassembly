@@ -1,7 +1,6 @@
 /**
- * Evidence against candidate cuts: the commits that changed a phrase in its file, and the test string literals that a
- * phrase contains. The helper reports both; whether a commit corrected a failure, and whether a test depends on the
- * text, is the agent's judgment.
+ * Evidence against candidate cuts. The helper gathers the evidence; whether a commit corrected a failure, and whether
+ * a test depends on the text, is the agent's judgment.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -53,7 +52,7 @@ const CheckInputSchema = z.object({
 /** Separates one commit's fields in the log format. */
 const FIELD_SEPARATOR = '\u{1F}';
 
-/** Output cap for one git invocation, sized past a long history or a large listing. */
+/** Output cap for one git invocation, sized past a long history. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
 /** The most commits reported for one phrase. */
@@ -71,7 +70,6 @@ const STRING_LITERAL_REGEX = /'((?:\\.|[^'\\\n])*)'|"((?:\\.|[^"\\\n])*)"|`((?:\
 /** Matches a template literal's interpolation, whose text is code rather than a literal. */
 const TEMPLATE_INTERPOLATION_REGEX = /\$\{[^}]*\}/;
 
-/** Extensions of the script files whose literals a test asserts with. */
 const TEST_SCRIPT_EXTENSIONS: ReadonlySet<string> = new Set([
   '.cjs',
   '.cts',
@@ -113,7 +111,7 @@ function findPhraseHistory(root: string, cut: CheckInput): PhraseCommit[] {
     });
 }
 
-/** Reports whether a repository-relative path is a test script: beneath `__tests__/`, or named `*.test.*` or `*.spec.*`. */
+/** Reports whether a repository-relative path names a test script. */
 function isTestScript(file: string): boolean {
   if (!TEST_SCRIPT_EXTENSIONS.has(path.extname(file))) {
     return false;
@@ -121,7 +119,7 @@ function isTestScript(file: string): boolean {
   return file.split('/').includes('__tests__') || /\.(?:spec|test)\.[^.]+$/.test(file);
 }
 
-/** Lists every string literal of at least the minimum length in the test scripts that git tracks or would track. */
+/** Lists every string literal of at least the minimum length in the repository's test scripts. */
 function listTestLiterals(root: string): TestAssertion[] {
   const files = listWorkingTreeFiles(root).filter((file) => isTestScript(file));
 

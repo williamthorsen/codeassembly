@@ -45,9 +45,8 @@ export function findRepositoryRoot(cwd: string): string {
 }
 
 /**
- * Resolves the named paths into targets and transitive files, with their sizes, their state in git, their generated
- * regions, and the record's live declined cuts against them. A path that cannot be a target, including one whose
- * includes do not resolve, is reported rather than failing the run.
+ * Resolves the named paths into targets and transitive files, with the record's live declined cuts against them. A
+ * path that cannot be a target, including one whose includes do not resolve, is reported rather than failing the run.
  */
 export async function resolveGuidance(input: {
   cwd: string;
@@ -131,7 +130,7 @@ interface ResolutionContext {
   root: string;
 }
 
-/** A file accepted as a target: its repository-relative path and the path by which it was named. */
+/** A file accepted as a target, identified by its repository-relative path. */
 interface AcceptedFile {
   file: string;
   namedPath: string;
@@ -226,7 +225,7 @@ async function collectTransitiveEdges(
   return { edges, unresolved };
 }
 
-/** Describes one repository-relative file: its size, its state in git, and its generated regions. */
+/** Describes one repository-relative file. */
 function describeFile(file: string, context: ResolutionContext, dirty: ReadonlySet<string>): GuidanceFile {
   const absolutePath = path.join(context.root, file);
   return {
@@ -301,7 +300,7 @@ function isInside(child: string, parent: string): boolean {
   return !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-/** Lists the absolute directories of every content root in the repository, tracked or not yet tracked. */
+/** Lists the absolute directories of every content root in the repository. */
 function listContentRoots(root: string): string[] {
   return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
     .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
@@ -358,17 +357,14 @@ function listLinkedPaths(
   );
 }
 
-/** Lists the Markdown files in the working tree that git tracks or would track beneath a repository-relative directory. */
+/** Lists the Markdown files in the working tree beneath a repository-relative directory. */
 function listMarkdownFilesUnder(root: string, directory: string): string[] {
   return listWorkingTreeFiles(root, [directory === '' ? '.' : directory]).filter(
     (file) => path.extname(file).toLowerCase() === '.md',
   );
 }
 
-/**
- * Resolves a Markdown link target to an absolute path, or undefined for a target naming no local file: a URL, an
- * anchor, or a template variable other than `{harness_home_dir}`.
- */
+/** Resolves a Markdown link target to an absolute path, or undefined for a target naming no local file. */
 function resolveLinkTarget(
   rawTarget: string,
   input: { contentRoot: string | undefined; home: string; hostDir: string },

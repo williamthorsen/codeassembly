@@ -2,8 +2,7 @@
  * The per-repository record of declined cuts, `.agents/streamline-guidance.yaml`.
  *
  * A declined cut stays declined while its file still contains its phrase. A later run proposes no cut that removes or
- * rewords a live declined phrase, which is what lets a run at a small level move on to the next candidates rather than
- * propose the same declined ones on every run.
+ * rewords a live declined phrase, which is what lets a run at a small level move on to the next candidates.
  *
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record, and the helper's `record` command is its one
  * write path.

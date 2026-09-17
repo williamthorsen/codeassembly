@@ -44,9 +44,8 @@ export function findDeployedSource(
 }
 
 /**
- * Reports whether a file is a deployed copy: it contains a provenance headline or an ownership marker, or it lies in a
- * harness's deployed tree. A generated region such as an ambient block does not make a file a copy, since the rest of
- * such a file is authored.
+ * Reports whether a file is a deployed copy. A generated region such as an ambient block does not make a file a copy,
+ * since the rest of such a file is authored.
  */
 export function isDeployedCopy(absolutePath: string, content: string): boolean {
   return (

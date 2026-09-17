@@ -3,9 +3,8 @@
 /**
  * CLI entry for the streamline-guidance helper.
  *
- * `resolve <path>...` reports the files that a run may cut, `check` reports the evidence against the candidate cuts that
- * it reads on standard input, and `record` folds the cuts that the user declined into the repository's record. JSON on
- * stdout is the only output, and the helper edits no guidance: cuts are applied through the agent's own editing tool.
+ * Each command writes its JSON result on stdout, and the helper edits no guidance: The agent applies every cut through
+ * its own editing tool.
  */
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -45,8 +44,7 @@ if (isEntryPoint()) {
 }
 
 /**
- * Reports the history and test assertions of each candidate cut read from `inputJson`. Malformed input and a working
- * directory outside git are structured failures.
+ * Reports the history and test assertions of each candidate cut read from `inputJson`.
  *
  * @internal - Exported to allow testing.
  */
@@ -70,8 +68,7 @@ export function runCheck(input: { cwd: string; inputJson: string }): CheckSucces
 }
 
 /**
- * Dispatches one invocation to its command. An unknown or missing command, and an argument that the command does not
- * take, are structured failures.
+ * Dispatches one invocation to its command.
  *
  * @internal - Exported to allow testing.
  */
@@ -103,8 +100,8 @@ export async function runCommand(input: {
 }
 
 /**
- * Folds one run's declined cuts into the repository's record and writes it, dropping every entry that is no longer
- * live. A malformed fold, a malformed record, and a working directory outside git are structured failures.
+ * Folds one run's declined cuts into the repository's record and writes it. A failure returns before the write,
+ * leaving the record unchanged.
  *
  * @internal - Exported to allow testing.
  */
@@ -139,8 +136,7 @@ export function runRecord(input: { cwd: string; foldJson: string }): HelperFailu
 }
 
 /**
- * Resolves the named paths into targets and transitive files. A path that cannot be a target is reported in the
- * result; a missing path argument, a working directory outside git, and a malformed record are structured failures.
+ * Resolves the named paths into targets and transitive files.
  *
  * @internal - Exported to allow testing.
  */
@@ -214,7 +210,7 @@ function rejectArguments(command: string): HelperFailure {
 /** Reads standard input to its end. */
 async function readStdin(): Promise<string> {
   const chunks: Uint8Array[] = [];
-  // The stream yields `any`, so each chunk is narrowed rather than asserted: A string arrives when an encoding is set.
+  // The stream yields `any`, so each chunk is narrowed: A string arrives when an encoding is set.
   for await (const chunk of process.stdin) {
     chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
   }
