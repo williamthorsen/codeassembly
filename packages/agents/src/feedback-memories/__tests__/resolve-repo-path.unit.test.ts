@@ -47,7 +47,6 @@ describe(resolveRepoPath, () => {
   });
 
   it('backtracks past a shorter directory that exists but cannot resolve the remainder', async () => {
-    // `/repos/node` exists but leads nowhere; the real repo is the dashed `/repos/node-tools`.
     const isDirectory = makeDirectoryProbe(['/repos', '/repos/node', '/repos/node-tools']);
 
     const resolved = await resolveRepoPath('-repos-node-tools', isDirectory);

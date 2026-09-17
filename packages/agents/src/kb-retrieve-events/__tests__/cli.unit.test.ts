@@ -83,7 +83,6 @@ describe(runRetrieveEvents, () => {
       recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')] }),
     });
 
-    // The only recalled note is an assertion, so the event table is empty and the diagnostic routes to assertion recall.
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toMatch(/kb-retrieve/);
   });

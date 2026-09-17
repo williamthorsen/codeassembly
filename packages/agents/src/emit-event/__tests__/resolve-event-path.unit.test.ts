@@ -46,8 +46,7 @@ describe(resolveEventPath, () => {
   });
 
   it('flattens path separators in the session so it cannot redirect the write', () => {
-    // A relaying harness supplies `--session` verbatim; a value carrying separators must stay one filename inside the
-    // session directory rather than climbing out of the events root.
+    // A relaying harness supplies `--session` verbatim.
     const resolved = resolveEventPath({ home: HOME, repo: 'owner/name', branch: 'main', session: '../../escape' });
 
     expect(resolved).toBe(path.join(ROOT, 'owner', 'name', 'main', '..-..-escape.jsonl'));

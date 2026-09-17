@@ -46,8 +46,7 @@ describe(recallNotes, () => {
   });
 
   it('expands an alias query term to its canonical tag', async () => {
-    // "node" is an alias for the canonical tag "nodejs"; notes carry canonical tags only, so the alias alone
-    // would never match one.
+    // "node" is an alias for the canonical tag "nodejs".
     const runner = vi.fn<ProcessRunner>().mockResolvedValue({ stdout: '' });
 
     await recallNotes({ query: 'node', scopedKbs: notesVaultScope, runner });

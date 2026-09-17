@@ -302,7 +302,7 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(CUSTOM_SCHEMA_VAULT, 'insight-note.md')] }),
     });
 
-    // insight-note declares recordType: insight — neither an assertion nor an event — so no retrieve command claims it.
+    // `insight-note` declares `recordType: insight`.
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toMatch(/none are assertions/);
     expect(result.warnings).toEqual([]);

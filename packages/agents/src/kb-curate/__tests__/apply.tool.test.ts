@@ -32,10 +32,9 @@ async function enumerate(kbPath: string) {
 }
 
 describe(applyFixes, () => {
-  // Regression: the inline wikilink writer must operate on current on-disk state, not the enumeration snapshot.
-  // A tag canonicalization that ran first rewrites the frontmatter on disk; writing the body rewrite from the stale
-  // snapshot would silently revert that frontmatter and still report ok:true. This simulates the prior frontmatter
-  // write by mutating the file on disk after enumeration, then asserts the wikilink rewrite preserves it.
+  // The inline wikilink writer must operate on current on-disk state, not the enumeration snapshot: a tag
+  // canonicalization that ran first rewrites the frontmatter on disk, and writing the body rewrite from the stale
+  // snapshot would silently revert that frontmatter and still report ok:true.
   it('preserves an on-disk frontmatter change made after enumeration when rewriting the body', async () => {
     const linker = `${ORIGINAL_FRONTMATTER}\nSee [[old/Foo]].\n`;
     const kbPath = await makeVault({ 'Linker.md': linker, 'tools/Foo.md': TARGET });
@@ -48,7 +47,7 @@ describe(applyFixes, () => {
     const fixes = await applyFixes({ kbPath, notes, findings: [] });
 
     const onDisk = await readFile(linkerPath, 'utf8');
-    expect(onDisk).toContain('tags: [todo]'); // the on-disk frontmatter change is preserved, not clobbered
+    expect(onDisk).toContain('tags: [todo]');
     expect(onDisk).not.toContain('tags: [todo-item]');
     expect(onDisk).toContain('[[content/tools/Foo]]'); // the body rewrite landed against the content-scoped path
     const rewrite = fixes.find((fix) => fix.operation === 'rewrite-wikilink');

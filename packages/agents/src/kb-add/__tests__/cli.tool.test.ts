@@ -327,7 +327,7 @@ describe(runAdd, () => {
   });
 
   it('returns readonly-kb when the explicit --kb names a readonly registry entry', async () => {
-    // Stand up an isolated HOME with a `.agents/kb.yaml` declaring the only writable target as readonly.
+    // Isolate HOME, so that the registry's only writable target is the readonly entry.
     // runAdd resolves through resolveWritableKb, so the refusal surfaces as a top-level readonly-kb error
     // without ever touching disk inside the KB.
     const kbPath = await makeKb();
