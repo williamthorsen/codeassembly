@@ -174,7 +174,7 @@ function parseAttributeValue(html: string, startIndex: number): { value: string 
   return { value: html.slice(valueStart, valueEnd), next: valueEnd };
 }
 
-/** Advance `index` while the predicate holds for the current char. Returns the index of the first char that fails. */
+/** Advances `index` while the predicate holds for the current char. Returns the index of the first char that fails. */
 function readWhile(html: string, startIndex: number, predicate: (char: string) => boolean): number {
   const length = html.length;
   let index = startIndex;
@@ -186,7 +186,7 @@ function readWhile(html: string, startIndex: number, predicate: (char: string) =
   return index;
 }
 
-/** Advance until the target char is found. Returns its index, or `html.length` if not found. */
+/** Advances until the target char is found. Returns its index, or `html.length` if not found. */
 function readUntilChar(html: string, startIndex: number, target: string): number {
   const length = html.length;
   let index = startIndex;
@@ -239,7 +239,7 @@ export function lineOf(source: string, offset: number): number {
 /** Visitor signature for {@link walkTokens}. */
 export type Visitor = (token: OpenTagToken, parents: readonly OpenTagToken[]) => void;
 
-/** Walks `tokens` and call `visit` for each open tag, exposing the chain of currently-open ancestors. */
+/** Walks `tokens` and calls `visit` for each open tag, exposing the chain of currently-open ancestors. */
 export function walkTokens(tokens: readonly Token[], visit: Visitor): void {
   const stack: OpenTagToken[] = [];
   for (const token of tokens) {

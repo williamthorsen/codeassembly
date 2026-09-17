@@ -87,7 +87,7 @@ export function namedEntityRule(tokens: readonly Token[], source: string): Findi
   return findings;
 }
 
-/** Flag any `<ac:*>` or `<ri:*>` element (Confluence storage-format constructs). */
+/** Flags any `<ac:*>` or `<ri:*>` element (Confluence storage-format constructs). */
 export function confluenceConstructRule(tokens: readonly Token[], source: string): Finding[] {
   const findings: Finding[] = [];
   for (const token of tokens) {
@@ -139,7 +139,7 @@ function hasNewlineInPre(tokens: readonly Token[], startIndex: number): boolean 
   return false;
 }
 
-/** Flag any open tag whose name is not in {@link ALLOWED_ELEMENTS} and not a `<ac:*>`/`<ri:*>` construct. */
+/** Flags any open tag whose name is not in {@link ALLOWED_ELEMENTS} and not a `<ac:*>`/`<ri:*>` construct. */
 export function disallowedElementRule(tokens: readonly Token[], source: string): Finding[] {
   const findings: Finding[] = [];
   for (const token of tokens) {
