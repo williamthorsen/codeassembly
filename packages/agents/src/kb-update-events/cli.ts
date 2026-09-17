@@ -22,7 +22,6 @@ import { retag } from './operations/retag.ts';
 import { setImpact } from './operations/set-impact.ts';
 import type { EventResult, ParsedArgs, UpdateFailure, UpdateResult } from './types.ts';
 
-/** The value-bearing flags this helper accepts; positionals are the event ids the operation applies to. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'store', takesValue: true },
   { name: 'add-addressed-by', takesValue: true },
@@ -47,15 +46,11 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end: parses args, resolves the target store by registry name (or the `@default` sentinel), and
- * applies the chosen operation to each event id independently. Each id resolves to `{store}/content/events/{id}.md`;
- * the event is read, parsed to a typed `KbEvent`, mutated, re-rendered through the per-type renderer, and written back
- * atomically. The per-type renderer emits only event fields, so an edit never injects the assertion-only `title`,
- * `created`, or `updated` onto an event. A recoverable per-event failure (invalid id, not found, unparseable) is
- * captured in that id's result and never aborts the others.
+ * Runs the helper end to end, from argv to the edited events.
  *
- * Invocation-level failures (invalid args, an unresolvable or readonly store) become structured `{ ok: false, ... }`
- * results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
+ * The operation applies to each id independently, so a recoverable per-event failure becomes that id's result and never
+ * aborts the others. An invocation-level failure returns `{ ok: false, ... }` having written nothing; a system failure
+ * propagates to the caller.
  *
  * @internal - Exported to allow testing.
  */
@@ -76,7 +71,7 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
   }
   const store = resolved.store;
 
-  // Aliases are only consulted by `retag`; `add-addressed-by` stores references verbatim, so skip the load for it.
+  // Only `retag` canonicalizes through the alias map, so the other operations skip the load.
   const aliases: AliasMap =
     args.operation === 'retag' ? await loadAliasesForStore(store.path) : new Map<string, string>();
 
@@ -89,11 +84,7 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
 }
 
 /**
- * Parses the helper's argv. Layout: a required `--store`, exactly one operation flag (`--add-addressed-by`, `--retag`,
- * or `--set-impact`), and one or more positional event ids. Each value-bearing flag accepts both `--flag value` and
- * `--flag=value`; `--add-addressed-by` and `--retag` take a comma-separated list and `--set-impact` takes one declared
- * impact level. An unknown flag, more than one operation flag, none, no ids, an out-of-enum `--set-impact`, or a missing
- * required value throws with a usage-style message.
+ * Parses the helper's argv, throwing on any defect in it. The caller turns the throw into an `invalid-args` result.
  *
  * @internal - Exported to allow testing.
  */
@@ -141,7 +132,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 // region | Helpers
 
-/** Applies the parsed operation to an event, returning the mutated record. Exhaustive over the operation union. */
+/**
+ * Applies the parsed operation to an event, returning the mutated record.
+ *
+ * Every operation here is a curatorial annotation and stamps no timestamp. A substantive content edit goes through
+ * `capture-event --amend` instead.
+ */
 function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): KbEvent {
   switch (args.operation) {
     case 'add-addressed-by':
@@ -158,10 +154,8 @@ function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): K
 }
 
 /**
- * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. Reads through
- * the note-io layer and parses to a typed `KbEvent`; a missing file, a frontmatter parse error, or a record that is not
- * a valid event each become a structured failure rather than a throw. The rendered output is re-parsed as a defensive
- * round-trip guard before the atomic write.
+ * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. Re-parsing the
+ * rendered output before the write keeps a render that would produce an invalid event from overwriting the file.
  */
 async function editOne(input: {
   storePath: string;

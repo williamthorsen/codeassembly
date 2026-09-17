@@ -10,7 +10,7 @@ import { parseArgs, runUpdate } from '../cli.ts';
 
 const EVENT_ID = '01HZCEVENTAAAAAAAAAAAAAAAA';
 
-/** Stand up a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
+/** Stands up a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
 async function makeStore(name: string): Promise<{ storePath: string; home: string }> {
   const storePath = await mkdtemp(join(tmpdir(), 'update-events-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
@@ -26,7 +26,7 @@ async function makeStore(name: string): Promise<{ storePath: string; home: strin
   return { storePath, home };
 }
 
-/** Write an event record under `content/events/{id}.md`, with optional extra frontmatter lines, returning its path. */
+/** Writes an event record under `content/events/{id}.md`, with optional extra frontmatter lines, returning its path. */
 async function seedEvent(storePath: string, id: string, extraFields: string[] = []): Promise<string> {
   const dir = join(storePath, 'content', 'events');
   await mkdir(dir, { recursive: true });
