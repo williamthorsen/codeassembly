@@ -20,7 +20,7 @@ const POPULATED = {
 };
 
 describe('kb taxonomy init', () => {
-  it('declares every folder holding notes and each of its ancestors', async () => {
+  it('declares every folder containing notes and each of its ancestors', async () => {
     const store = await makeStore(POPULATED);
 
     const result = await run({ argv: ['taxonomy', 'init'], cwd: store });
@@ -40,7 +40,7 @@ describe('kb taxonomy init', () => {
     expect(findings.filter((finding) => finding.rule.startsWith('taxonomy.'))).toEqual([]);
   });
 
-  it('reports the domain count it declared', async () => {
+  it('reports the domain count that it declared', async () => {
     const store = await makeStore(POPULATED);
 
     const result = await run({ argv: ['taxonomy', 'init'], cwd: store });
@@ -95,7 +95,7 @@ describe('kb taxonomy init', () => {
     );
   });
 
-  it('refuses a store the registry marks readonly', async () => {
+  it('refuses a store marked readonly by the registry', async () => {
     const store = await makeStore(POPULATED);
     const home = await makeReadonlyHome(store);
 
@@ -117,7 +117,7 @@ describe('kb taxonomy init', () => {
     await expect(readTaxonomy(store)).rejects.toThrow(/ENOENT/);
   });
 
-  it('writes to a discovered store the registry does not mark readonly', async () => {
+  it('writes to a discovered store that the registry does not mark readonly', async () => {
     const store = await makeStore(POPULATED);
     const home = await makeTempDir('kb-taxonomy-home-');
     await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${store}\n`);
@@ -127,7 +127,7 @@ describe('kb taxonomy init', () => {
     expect(result.exitCode).toBe(0);
   });
 
-  it('writes nothing for a store whose assertion folders hold no notes', async () => {
+  it('writes nothing for a store whose assertion folders contain no notes', async () => {
     const store = await makeStore({ 'content/assertions/Loose.md': VALID });
 
     const result = await run({ argv: ['taxonomy', 'init'], cwd: store });
@@ -198,14 +198,14 @@ describe('kb taxonomy init', () => {
 
 // region | Helpers
 
-/** Stands up an isolated home registering `storePath` as a readonly KB named `mirror`; returns the home dir. */
+/** Creates an isolated home registering `storePath` as a readonly KB named `mirror`; returns the home dir. */
 async function makeReadonlyHome(storePath: string): Promise<string> {
   const home = await makeTempDir('kb-taxonomy-home-');
   await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${storePath}\n    readonly: true\n`);
   return home;
 }
 
-/** Reads the store's taxonomy file as raw text, so a test can assert on formatting rather than parsed content. */
+/** Reads the store's taxonomy file as raw text, so that a test can assert on formatting rather than parsed content. */
 function readTaxonomy(storePath: string): Promise<string> {
   return readFile(join(storePath, TAXONOMY_FILE), 'utf8');
 }

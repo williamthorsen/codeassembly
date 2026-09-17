@@ -8,16 +8,16 @@ import { loadRegistryDocument } from './registry-document.ts';
 
 /**
  * Removes the top-level `default_kb` pointer from a `kb.yaml` registry, preserving existing comments and formatting. A
- * no-op when no default is set (or the file is absent): the file is left untouched rather than rewritten, so clearing is
- * idempotent and never reformats. Validates an existing registry against its schema first, so a corrupt file throws
- * rather than being rewritten.
+ * no-op when no default is set (or the file is absent): The file is left untouched rather than rewritten, so clearing is
+ * idempotent and never reformats. Validates an existing registry against its schema first, so that a corrupt file
+ * throws rather than being rewritten.
  */
 export async function clearDefaultKb(input: { registryPath: string }): Promise<void> {
   const doc = await loadRegistryDocument(input.registryPath);
 
   const existing = kbRegistryFileSchema.safeParse(doc.toJS() ?? {});
   if (!existing.success) {
-    throw new Error(`${input.registryPath}: invalid kb.yaml — ${existing.error.issues[0]?.message ?? 'unknown error'}`);
+    throw new Error(`${input.registryPath}: invalid kb.yaml: ${existing.error.issues[0]?.message ?? 'unknown error'}`);
   }
 
   if (!doc.has('default_kb')) {
@@ -31,15 +31,15 @@ export async function clearDefaultKb(input: { registryPath: string }): Promise<v
 /**
  * Sets the top-level `default_kb` pointer in a `kb.yaml` registry to `name`, creating the file and its parent directory
  * when absent and preserving existing comments and formatting. Validates the registry against its schema before mutating
- * (so an already-corrupt file throws rather than being rewritten) and asserts `name` is registered under `kbs` in the
- * file (a `default_kb` naming no registered KB would fail every subsequent load), then re-validates the result.
+ * (so that an already-corrupt file throws rather than being rewritten) and asserts `name` is registered under `kbs` in
+ * the file (a `default_kb` naming no registered KB would fail every subsequent load), then re-validates the result.
  */
 export async function setDefaultKb(input: { registryPath: string; name: string }): Promise<void> {
   const doc = await loadRegistryDocument(input.registryPath);
 
   const existing = kbRegistryFileSchema.safeParse(doc.toJS() ?? {});
   if (!existing.success) {
-    throw new Error(`${input.registryPath}: invalid kb.yaml — ${existing.error.issues[0]?.message ?? 'unknown error'}`);
+    throw new Error(`${input.registryPath}: invalid kb.yaml: ${existing.error.issues[0]?.message ?? 'unknown error'}`);
   }
 
   if (!doc.hasIn(['kbs', input.name])) {
@@ -51,7 +51,7 @@ export async function setDefaultKb(input: { registryPath: string; name: string }
   const result = kbRegistryFileSchema.safeParse(doc.toJS());
   if (!result.success) {
     throw new Error(
-      `${input.registryPath}: cannot set default_kb — ${result.error.issues[0]?.message ?? 'invalid registry'}`,
+      `${input.registryPath}: cannot set default_kb: ${result.error.issues[0]?.message ?? 'invalid registry'}`,
     );
   }
 
@@ -62,9 +62,10 @@ export async function setDefaultKb(input: { registryPath: string; name: string }
 // region | Helpers
 
 /**
- * Deletes the `default_kb` pair, carrying any comment that preceded it onto the following key. A comment above
- * `default_kb` when it is the first key (e.g. a file header) belongs to whatever leads the file next, so it must not
- * vanish with the deleted pair; a comment above a trailing `default_kb` annotates it and is removed with it.
+ * Deletes the `default_kb` pair, moving any comment that preceded it onto the following key. A comment above
+ * `default_kb` when it is the first key (e.g. a file header) belongs to whichever key comes first after the deletion,
+ * so it must not be removed with the deleted pair; a comment above a trailing `default_kb` annotates it and is removed
+ * with it.
  */
 function deleteDefaultKb(doc: Document): void {
   const map = doc.contents;
