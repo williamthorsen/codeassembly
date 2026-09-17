@@ -5,7 +5,7 @@ import { ASSERTIONS_DIR, ASSERTIONS_SEGMENT, CONTENT_DIR } from '../layout/index
 /**
  * Describes why a domain key cannot be used, or returns `undefined` when the key is well-formed. Keys are relative to
  * the assertions root, so a restated `content/assertions/` prefix would declare the domain a level deeper than the
- * author meant; `kb-add` refuses the same mistake on the note-write path.
+ * author meant.
  */
 export function describeKeyDefect(key: string): string | undefined {
   if (key === '') {
@@ -34,7 +34,6 @@ export function describeKeyDefect(key: string): string | undefined {
 /** A knowledge base's declared assertion structure, keyed by assertions-root-relative slash-path. */
 export type Taxonomy = ReadonlyMap<string, TaxonomyEntry>;
 
-/** A single declared domain. */
 export interface TaxonomyEntry {
   /** The domain's one-line description; empty when it was declared without one. */
   description: string;

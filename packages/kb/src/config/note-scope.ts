@@ -13,13 +13,11 @@ export interface NoteScopeMatcher {
 }
 
 /**
- * Builds the note-membership predicates for a KB config — the single definition of "a note" shared by
- * `enumerateNotes` (which `kb check`/`kb-curate` drive) and `kb-retrieve`. Both axes match with `picomatch`'s
- * `dot:false`, so dot-directories (`.kb`, `.git`, `.agents`) are excluded implicitly without naming them in `exclude`.
+ * Builds the note-membership predicates for a KB config, the single definition of "a note". Both axes match with
+ * `picomatch`'s `dot:false`, so dot-directories (`.kb`, `.git`, `.agents`) are excluded implicitly without naming them
+ * in `exclude`.
  *
- * The `.md` extension gate is deliberately left to the caller: `enumerateNotes` applies its own `.endsWith('.md')`
- * during the walk, and `kb-retrieve` constrains ripgrep with `--glob '*.md'`. Keeping it out of `isNote` lets this
- * matcher govern `targets`/`exclude` alone, the one place the two tools previously disagreed.
+ * The matcher governs `targets` and `exclude` alone: Each caller applies its own `.md` extension gate.
  */
 export function createNoteScopeMatcher(config: KbConfig): NoteScopeMatcher {
   const isTarget = picomatch([...config.targets], { dot: false });

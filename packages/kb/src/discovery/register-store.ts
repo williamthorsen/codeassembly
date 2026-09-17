@@ -6,7 +6,6 @@ import { type Document, isMap, isScalar } from 'yaml';
 import { kbRegistryFileSchema } from './kb-registry-schema.ts';
 import { loadRegistryDocument } from './registry-document.ts';
 
-/** The outcome of a registry write. */
 export interface RegisterStoreResult {
   /** `added` when a new entry was written; `already-present` when an entry of the same name already existed. */
   status: 'added' | 'already-present';
