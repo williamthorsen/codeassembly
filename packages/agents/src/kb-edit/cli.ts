@@ -192,8 +192,8 @@ async function resolveKbForPath(input: {
     return { ok: true, kb: resolved.kb };
   }
   switch (resolved.reason) {
-    // kb-edit never passes --kb, so the only reason that can arise here is `missing-destination`. The other two are
-    // mapped alongside it, which keeps the switch total against the shared resolver's outcome union.
+    // kb-edit never passes --kb, so of the three reasons grouped here only `missing-destination` can arise. The other
+    // two are mapped alongside it, which keeps the switch total against the shared resolver's outcome union.
     case 'missing-destination':
     case 'no-kb-resolvable':
     case 'no-default':
