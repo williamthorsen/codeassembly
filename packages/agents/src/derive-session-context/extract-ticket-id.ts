@@ -1,5 +1,5 @@
 /**
- * Extract a ticket ID from a branch name per the contract in `_data/ticket-id-extraction.md`.
+ * Extracts a ticket ID from a branch name per the contract in `_data/ticket-id-extraction.md`.
  *
  * The revisit ordinal `parseTicketRef` captures is dropped: session context attributes to the parent ticket.
  */

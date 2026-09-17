@@ -43,7 +43,7 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
 // region | Helpers
 
 /**
- * Read a YAML file. Returns `null` when the file does not exist (ENOENT). Throws with a
+ * Reads a YAML file. Returns `null` when the file does not exist (ENOENT). Throws with a
  * file-anchored message when the YAML is malformed.
  */
 async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | null> {
