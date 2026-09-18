@@ -7,7 +7,7 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up an isolated home containing one nested-schema feedback memory under a memory store, then returns a
+ * Creates an isolated home containing one nested-schema feedback memory under a memory store, then returns a
  * `SmokeTestInvocation` that runs `enumerate` against it. `HOME` points the projects-root walk at the fixture and an
  * empty `CLAUDE_CONFIG_DIR` neutralizes any ambient value, so the enumeration never touches the developer's real
  * `~/.claude`. Exercises the full projects-root resolution → store walk → frontmatter parse → feedback filter pipeline.

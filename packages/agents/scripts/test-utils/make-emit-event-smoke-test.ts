@@ -7,7 +7,7 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
+ * Creates a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
  * `SmokeTestInvocation` that emits one event against them. Exercises the full context-autofill → envelope → append
  * pipeline: The git-derived `repo` and `branch`, the relayed `--session`, and the single-line append are only wired
  * together in the built bundle.

@@ -49,7 +49,7 @@ export function agentLedeFor(id: string): string {
 }
 
 /**
- * Stands up a temporary event store with one record per decision spec, plus a `_data` directory containing the
+ * Creates a temporary event store with one record per decision spec, plus a `_data` directory containing the
  * fixture taxonomy and an isolated home registering the store. `files` plants raw content under `content/events/`, for
  * a record whose own shape is the subject of the test; `storeName` registers the store under something other than the
  * name that the helper serves, which is how a test tells a resolved default from an unregistered one.

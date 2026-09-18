@@ -9,7 +9,7 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up an event store containing a seed event plus an isolated home registering it as `default_kb`, then returns a
+ * Creates an event store containing a seed event plus an isolated home registering it as `default_kb`, then returns a
  * `SmokeTestInvocation` that marks the event `addressed-by` a reference with `--store @default`. Exercises the full
  * `@default` resolution → read → parse → mutate → atomic write pipeline, the only path that wires the bundled resolver,
  * the per-type record layer, and the note-io writer together. The assertion confirms that the reference was written and that no

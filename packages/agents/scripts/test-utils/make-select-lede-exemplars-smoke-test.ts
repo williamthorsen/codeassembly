@@ -16,7 +16,7 @@ const FIXTURE_DECISIONS = [
 ];
 
 /**
- * Stands up a lede-decision corpus plus an isolated home registering it, then returns a `SmokeTestInvocation` that
+ * Creates a lede-decision corpus plus an isolated home registering it, then returns a `SmokeTestInvocation` that
  * selects two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
  * without putting ripgrep on the build's critical path.
  *
