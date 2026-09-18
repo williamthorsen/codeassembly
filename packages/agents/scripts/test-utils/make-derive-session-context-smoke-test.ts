@@ -6,11 +6,9 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Builds a fixture directory containing a minimal preferences file and returns a `SmokeTestInvocation`
- * that drives the deriver against it with a known branch name. The deriver's output depends on the
- * surrounding cwd and the current git branch, so the smoke test cannot use the ambient environment.
- * `mkdtempSync` runs when the smoke-test runner loads and the directory is process-lifetime: Short-lived
- * OS temp directories are reclaimed without explicit cleanup.
+ * Builds a fixture directory containing a minimal preferences file and returns an invocation that drives the
+ * deriver against it with a known branch name. The deriver's output depends on the surrounding cwd and the
+ * current git branch, so the smoke test cannot use the ambient environment.
  */
 export function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'derive-session-context-smoke-'));

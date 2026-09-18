@@ -7,12 +7,11 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
- * `SmokeTestInvocation` that pipes a Claude `SessionStart` payload at the relay exactly as the harness would.
+ * Builds a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then
+ * returns an invocation that pipes a Claude `SessionStart` payload at the relay exactly as the harness would.
  *
- * The bundle is the only place the relay's stdin read is exercised against a real pipe: The unit suite hands `runRelay`
- * a string, so a regression in the stream read -- the one thing standing between a hook firing and an event existing --
- * would pass unit tests and fail silently in every installed harness.
+ * The unit suite hands `runRelay` a string, so this is the only place the relay's stdin read runs against a
+ * real pipe.
  */
 export function makeRelayHookEventSmokeTest(): SmokeTestInvocation {
   const home = mkdtempSync(path.join(tmpdir(), 'relay-hook-event-home-'));

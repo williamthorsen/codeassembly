@@ -1,4 +1,9 @@
-/** How the smoke test should invoke a bundle. Stdin is piped only when `stdin` is provided. */
+/**
+ * How the smoke test should invoke a bundle. Stdin is piped only when `stdin` is provided.
+ *
+ * A builder's fixtures are process-lifetime: `mkdtempSync` runs when the smoke-test runner loads, and the OS
+ * reclaims short-lived temp directories without explicit cleanup.
+ */
 export interface SmokeTestInvocation {
   /** Argv to pass to the bundled `.mjs`. Defaults to no args. */
   args?: readonly string[];

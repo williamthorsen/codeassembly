@@ -8,10 +8,10 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a repository whose preferences configure a commit template, plus an empty home, then returns a
- * `SmokeTestInvocation` that reads a commit subject back through `parse-title`. The subcommand refuses without the
- * work-type taxonomy, which the run resolves through the `_data` directory of the `skills` sibling, so a bundle that
- * resolved it wrongly fails here.
+ * Builds a repository whose preferences configure a commit template, plus an empty home, then returns an
+ * invocation that reads a commit subject back through `parse-title`. The subcommand refuses without the
+ * work-type taxonomy, which the run resolves through the `_data` directory of the `skills` sibling, so a
+ * bundle that resolved it wrongly fails here.
  */
 export function makeDescribeChangeSmokeTest(): SmokeTestInvocation {
   const repo = mkdtempSync(path.join(tmpdir(), 'describe-change-smoke-repo-'));

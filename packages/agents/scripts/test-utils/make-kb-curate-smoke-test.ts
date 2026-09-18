@@ -9,9 +9,8 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle read-only
- * over it. Exercises the resolve → enumerate → detect pipeline end to end. `HOME` is overridden to the fixture dir
- * so that the dev's real registry does not pollute KB resolution.
+ * Builds a fixture KB with a single seed note and returns an invocation that runs the bundle read-only over
+ * it. Exercises the resolve → enumerate → detect pipeline.
  */
 export function makeKbCurateSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-curate-smoke-'));

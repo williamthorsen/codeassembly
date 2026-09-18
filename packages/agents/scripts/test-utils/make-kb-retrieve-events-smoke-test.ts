@@ -9,11 +9,12 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up an event store plus an isolated home registering it, then returns a `SmokeTestInvocation` that scopes to a
- * store name that the registry does not list. Exercises the bundled resolver from home discovery through registry parse
- * to the scope verdict and the JSON result shape, stopping short of recall.
+ * Builds an event store and an isolated home registering it, then returns an invocation that scopes to a
+ * store name that the registry does not list. Exercises the bundled resolver from home discovery through
+ * registry parse to the scope verdict and the JSON result shape, stopping short of recall.
  *
- * Keep the invocation off the recall path: Recalling here would put ripgrep on the critical path of every build.
+ * Keep the invocation off the recall path: Recalling here would put ripgrep on the critical path of every
+ * build.
  */
 export function makeKbRetrieveEventsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-store-'));

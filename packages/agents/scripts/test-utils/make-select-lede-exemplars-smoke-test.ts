@@ -16,12 +16,12 @@ const FIXTURE_DECISIONS = [
 ];
 
 /**
- * Stands up a lede-decision corpus plus an isolated home registering it, then returns a `SmokeTestInvocation` that
- * selects two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
+ * Builds a lede-decision corpus and an isolated home registering it, then returns an invocation that selects
+ * two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
  * without putting ripgrep on the build's critical path.
  *
- * Because the invocation passes no `--data-dir`, the run resolves the work-type taxonomy the way an installed helper
- * does (through the `_data` directory of the `skills` sibling), and a bundle that resolved it wrongly fails here.
+ * The invocation passes no `--data-dir`, so the run resolves the work-type taxonomy the way an installed
+ * helper does, through the `_data` directory of the `skills` sibling.
  */
 export function makeSelectLedeExemplarsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'select-lede-exemplars-store-'));
