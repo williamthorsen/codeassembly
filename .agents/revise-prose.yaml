@@ -2338,11 +2338,6 @@ rejections:
     file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
     phrase: would beg the question
     ground: 'the developer kept the phrase: it is used in its technical sense from logic'
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/kb/src/cli/__tests__/check.tool.test.ts
-    phrase: folder "engineering" holds notes but no domain declares it
-    ground: "not prose: a fixture message mirroring the taxonomy rule's own wording"
   - rule: reduced-object-relative
     rule-version: '1'
     file: .agents/skills/office-game-feel/SKILL.md
@@ -6050,11 +6045,6 @@ rejections:
     ground: 'not the construction: `changed` is a participle with no object gap'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/kb/src/cli/commands/create.ts
-    phrase: set it later
-    ground: 'not the construction: an imperative inside a parenthetical, no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/kb/src/cli/commands/set-default.ts
     phrase: knowledge bases registered
     ground: 'not the construction: `registered` is a participle with no embedded subject'
@@ -7435,7 +7425,7 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/kb/src/check/resolve-foreign-stores.ts
-    phrase: It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a store-shaped prefix inside a code sample pulls in no store and the two cannot disagree on what counts as a qualified link.
+    phrase: It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a store-shaped prefix inside a code sample selects no store and the two cannot disagree on what counts as a qualified link.
     ground: a lone `so` whose second clause states a direct result
   - rule: so
     rule-version: '1'
