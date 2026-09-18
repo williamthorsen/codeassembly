@@ -1,5 +1,5 @@
-// The wire shapes that the API serves and the pure derivation from folded lane state into them. Absent values are `null`
-// rather than optional `undefined`: JSON drops `undefined`-valued keys, so with `exactOptionalPropertyTypes` a
+// The wire shapes that the API serves and the pure derivation from folded lane state into them. Absent values are
+// `null` rather than optional `undefined`: JSON drops `undefined`-valued keys, so with `exactOptionalPropertyTypes` a
 // round-tripped type only matches what the client receives when absence is spelled `null`.
 
 import {
@@ -211,8 +211,8 @@ function buildTicketSnapshot(ticket: TicketFacts): TicketSnapshot {
 }
 
 /**
- * Derives a lane's ticket attribution. A ref parsed from the branch name takes precedence. Without one, a lane whose branch has a
- * pull request gets the synthetic `PR-<number>` ref, and any other lane gets `null`.
+ * Derives a lane's ticket attribution. A ref parsed from the branch name takes precedence. Without one, a lane whose
+ * branch has a pull request gets the synthetic `PR-<number>` ref, and any other lane gets `null`.
  */
 function deriveTicketRef(lane: LaneState, forgeFacts: ForgeLaneFacts | undefined): TicketRefSnapshot | null {
   if (lane.ticketRef !== undefined) {

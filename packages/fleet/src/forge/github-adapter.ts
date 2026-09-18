@@ -35,8 +35,8 @@ const ISSUE_JSON_FIELDS = 'title,state,url,createdAt,labels';
 
 /**
  * Open pull requests fetched per repo in one `pr list`. `gh` defaults to 30; this ceiling is sized well past any
- * realistic open-PR count so that every resident lane stays covered by the single batched list rather than degrading to a
- * recurring per-branch `pr view`.
+ * realistic open-PR count so that every resident lane stays covered by the single batched list rather than degrading
+ * to a recurring per-branch `pr view`.
  */
 const OPEN_PR_LIST_LIMIT = 500;
 
