@@ -89,6 +89,7 @@ interface OpenFrame {
   readonly slotLines: Array<string>;
 }
 
+/** Expands one file's directives, tracking `visited` so that an include cycle throws rather than recursing. */
 async function expandFile(filePath: string, contentDir: string, visited: Set<string>): Promise<string> {
   if (visited.has(filePath)) {
     const cyclePath = [...visited, filePath].join(' -> ');

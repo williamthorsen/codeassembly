@@ -152,6 +152,7 @@ describe(deploySkill, () => {
 
   // region | Helpers
 
+  /** Builds a deploy context targeting the Claude harness. */
   function context(): SkillDeployContext {
     return {
       anchor: homeAnchor('.claude/skills'),

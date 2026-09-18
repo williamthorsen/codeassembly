@@ -62,7 +62,7 @@ describe('library invocation edges', () => {
 
   it('resolves the entire content library without a cycle or missing artifact', async () => {
     // The whole-catalog resolution exercises every self-token (dropped, so no self-cycle) and every cross-reference
-    // edge (resolves to a real artifact) at once: the strongest end-to-end check on the reference reclassification.
+    // edge (resolves to a real artifact) at once.
     const catalog = await enumerateCatalogSlugs(contentDir);
 
     await expect(resolveClosure(catalog, libraryResolver(contentDir))).resolves.toBeDefined();

@@ -46,6 +46,7 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
   // The ancestors on the current DFS path; a node that reappears here closes a cycle.
   const onPath = new Set<string>();
 
+  /** Walks one artifact's edges depth-first, recording it as reached and throwing on a cycle. */
   async function visit(type: ArtifactType, slug: string, trail: ReadonlyArray<string>): Promise<void> {
     const id = `${type}:${slug}`;
     if (onPath.has(id)) {

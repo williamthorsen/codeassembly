@@ -106,7 +106,6 @@ describe('mergeFrontmatter', () => {
 
     const result = mergeFrontmatter(source, overlay);
     expect(result).toContain('permissionMode: bypassPermissions');
-    // permissionMode is new, so it should be appended
     const lines = result.split('\n');
     const fmEndIdx = lines.indexOf('---', 1);
     const lastFmLine = lines[fmEndIdx - 1];
@@ -122,7 +121,6 @@ describe('mergeFrontmatter', () => {
 
     const result = mergeFrontmatter(source, overlay);
     const lines = result.split('\n');
-    // tools should be in the same position (line index 2, between name and maxTurns)
     expect(lines[2]).toBe('tools: [bash, grep]');
     expect(lines[3]).toBe('maxTurns: 30');
   });
@@ -141,10 +139,8 @@ describe('mergeFrontmatter', () => {
 
     const result = mergeFrontmatter(source, overlay);
     const lines = result.split('\n');
-    // Existing keys stay in place, new keys appended sorted
     expect(lines[1]).toBe('name: test-agent');
     expect(lines[2]).toBe('tools: [Read, Write]');
-    // New keys sorted: memory, model, permissionMode
     expect(lines[3]).toBe('memory: user');
     expect(lines[4]).toBe('model: sonnet');
     expect(lines[5]).toBe('permissionMode: bypassPermissions');

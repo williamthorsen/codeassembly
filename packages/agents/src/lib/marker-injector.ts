@@ -77,10 +77,12 @@ export async function injectMarkerInFile(filePath: string, sourceUrl: string): P
   }
 }
 
+/** True when the content opens with a YAML frontmatter delimiter. */
 function hasYamlFrontmatter(content: string): boolean {
   return content.startsWith(`${FRONTMATTER_OPEN}\n`);
 }
 
+/** Writes the marker as YAML comment lines immediately after the frontmatter's opening delimiter. */
 function injectYamlMarker(content: string, sourceUrl: string): string {
   const lines = content.split('\n');
   const afterOpen = stripExistingYamlMarkerLines(lines.slice(1));
@@ -92,6 +94,7 @@ function injectYamlMarker(content: string, sourceUrl: string): string {
   return [FRONTMATTER_OPEN, ...markerLines, ...afterOpen].join('\n');
 }
 
+/** Drops an existing YAML marker from the lines following the frontmatter's opening delimiter. */
 function stripExistingYamlMarkerLines(rest: ReadonlyArray<string>): ReadonlyArray<string> {
   // An existing marker is three consecutive YAML comment lines opening with "# GENERATED FILE", whichever `Source:`
   // URL it names.
@@ -101,6 +104,7 @@ function stripExistingYamlMarkerLines(rest: ReadonlyArray<string>): ReadonlyArra
   return rest;
 }
 
+/** Writes the marker as HTML comment lines at the top of the content, followed by a blank line. */
 function injectHtmlMarker(content: string, sourceUrl: string): string {
   const body = stripExistingHtmlMarkerBlock(content);
   const marker = [
@@ -116,6 +120,7 @@ function injectHtmlMarker(content: string, sourceUrl: string): string {
   return `${marker}\n${body}`;
 }
 
+/** Drops an existing HTML marker block, along with the blank line separating it from the body. */
 function stripExistingHtmlMarkerBlock(content: string): string {
   const existingFirstLine = `${HTML_MARKER_OPEN}${LINE_1_TEXT}${HTML_MARKER_CLOSE}`;
   if (!content.startsWith(`${existingFirstLine}\n`)) {
@@ -129,6 +134,7 @@ function stripExistingHtmlMarkerBlock(content: string): string {
   return lines.slice(dropCount).join('\n');
 }
 
+/** Walks `currentDir`, injecting each `.md` file's marker from the URL that `resolveSourceUrl` gives for it. */
 async function walkAndInject(
   currentDir: string,
   rootDir: string,

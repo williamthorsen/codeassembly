@@ -47,6 +47,7 @@ describe(deploySubagent, () => {
     await writeFile(path.join(librarySubagentsDir, `${slug}.md`), content, 'utf8');
   }
 
+  /** Builds a deploy context targeting the Claude harness. */
   function claudeContext(): SubagentDeployContext {
     return {
       overlayYaml: CLAUDE_OVERLAY,

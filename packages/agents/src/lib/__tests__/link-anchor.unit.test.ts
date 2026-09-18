@@ -6,6 +6,7 @@ import { createContentRootLinkAnchor, createSkillLinkAnchor, type LinkAnchorCont
 const PROJECT_BASE = '/repo/project';
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
+/** Builds a link-anchor context, with `overrides` applied over its defaults. */
 function buildContext(overrides: Partial<LinkAnchorContext> = {}): LinkAnchorContext {
   return {
     deployedSkillDirs: new Set(['commit', 'orchestrate']),
@@ -43,8 +44,8 @@ describe(createSkillLinkAnchor, () => {
   });
 
   describe('home domain', () => {
-    // The invariant on which the whole change rests: With the domain base at `~`, both destinations render the same
-    // string, so no home-domain output can shift however the deployed set is populated.
+    // With the domain base at `~`, both destinations render the same string, so no home-domain output shifts however
+    // the deployed set is populated.
     it.each([
       ['a deployed skill', 'commit/SKILL.md', '~/.claude/skills/commit/SKILL.md'],
       ['a support entry', '_data/concision.md', '~/.claude/skills/_data/concision.md'],
@@ -61,8 +62,8 @@ describe(createSkillLinkAnchor, () => {
       expect(anchor('_data/house-style.md')).toBe('/repo/project/.claude/skills/_sources/org/_data/house-style.md');
     });
 
-    // Unlike the library case, this destination applies in the home domain too: The source's support entries deploy
-    // into the namespace there as well, which is the address that they had nowhere else.
+    // Unlike the library case, this destination applies in the home domain too: A source's support entries deploy
+    // into the namespace there as well.
     it('anchors a support entry in the namespace in the home domain', () => {
       const anchor = createSkillLinkAnchor(buildContext({ supportNamespace: 'org' }));
       expect(anchor('_data/house-style.md')).toBe('~/.claude/skills/_sources/org/_data/house-style.md');

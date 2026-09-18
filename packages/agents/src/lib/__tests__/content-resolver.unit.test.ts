@@ -19,9 +19,8 @@ describe('resolveContentDir', () => {
   });
 
   it('includes `skills/_data/work-types.json` so that the install sweep ships it', async () => {
-    // The install command copies the resolved content directory wholesale; no install-code change
-    // is needed for new `_data/` files. This test anchors that guarantee for `work-types.json`,
-    // which downstream changelog/release-notes tooling relies on.
+    // The install command copies the resolved content directory wholesale, so a new `_data/` file needs no
+    // install-code change.
     const { existsSync } = await import('node:fs');
     const contentDir = resolveContentDir();
 
