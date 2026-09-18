@@ -54,9 +54,6 @@ export async function loadTaxonomy(dataDir: string): Promise<Taxonomy | null> {
  * Loads the work-type taxonomy from `work-types.json` under `dataDir`, indexed by canonical key and by every declared
  * alias, so that `feature` and `feat` resolve to one entry. Yields `null` when the file is absent, unparseable, or
  * declares no `types` list.
- *
- * The directory is a parameter rather than derived here: Each helper defaults it to its own installed `_data` sibling,
- * and a test supplies a fixture directory instead of standing up an install layout.
  */
 export async function loadWorkTypes(dataDir: string): Promise<ReadonlyMap<string, WorkType> | null> {
   const parsed = await readTaxonomyFile(dataDir);
@@ -89,9 +86,6 @@ export async function loadWorkTypes(dataDir: string): Promise<ReadonlyMap<string
  * Resolves a work type as spelled in a commit or pull-request title, reporting both the entry that it names and
  * whether it included the breaking marker. The taxonomy declares bare keys and models the marker separately under
  * `markers`, so `feat!` names the `feat` entry. Yields `null` for a type declared by no entry, marker or not.
- *
- * The marker is reported rather than discarded because a caller recording the change needs both halves of the parse,
- * and re-deriving one from a stripped string would put the same rule in two places.
  */
 export function resolveWorkType(type: string, workTypes: ReadonlyMap<string, WorkType>): ResolvedWorkType | null {
   const breaking = type.endsWith('!');
@@ -116,8 +110,7 @@ function readAliases(value: unknown): string[] {
 
 /**
  * Reads and parses `work-types.json` under `dataDir`, yielding `null` when the file is absent, unparseable, or
- * declares no `types` list. Both loaders build from the same read, so a change to what counts as a usable file is
- * made in one place.
+ * declares no `types` list.
  */
 async function readTaxonomyFile(dataDir: string): Promise<{ tiers: unknown; types: unknown[] } | null> {
   let content: string;

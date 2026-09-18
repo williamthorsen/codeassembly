@@ -4,9 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { isRecord } from './type-guards.ts';
 
-/**
- * Reads the running package's declared version, so that a record of what a command wrote names the build that wrote it.
- */
+/** Reads the running package's declared version, so that a record of what a command wrote names the build that wrote it. */
 export function readRunningPackageVersion(): string {
   const manifestPath = path.join(resolveRunningPackageRoot(), 'package.json');
   const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));

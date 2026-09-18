@@ -77,7 +77,7 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
  * escaping the content root, or one rooted outside `LINKABLE_ROOTS`. Every offending target is reported together, so
  * that an author fixing a rulebook sees the whole list rather than one target per run.
  *
- * Existence is deliberately not checked here. A target resolves against the deployed tree, which unions library
+ * Existence is not checked here. A target resolves against the deployed tree, which unions library
  * content with each declared source's content. Testing it against the one content root that this rulebook came from
  * would reject a project or machine-local rulebook's link to library content.
  */

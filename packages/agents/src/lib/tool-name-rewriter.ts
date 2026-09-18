@@ -2,12 +2,11 @@ import { HARNESSES } from './harness.ts';
 import type { HarnessId } from './types.ts';
 
 /**
- * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder naming no canonical tool. Caught by the install
- * pipeline and reported as a fatal install error.
+ * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder naming no canonical tool.
  *
  * The message names no harness, because every harness maps the same closed set of canonical names: A name unmapped
- * for one is unmapped for all. Keeping it out also lets `validate` fold the defect to a single line rather than
- * repeating it per harness. The harness stays on the instance for a caller that needs to know which render raised it.
+ * for one is unmapped for all, so a caller collecting defects folds it to a single line. The harness stays on the
+ * instance for a caller that needs to know which render raised it.
  */
 export class ToolNameRewriteError extends Error {
   override readonly name = 'ToolNameRewriteError';
@@ -52,6 +51,7 @@ export function rewriteToolNames(content: string, harnessId: HarnessId, contextL
 
 // region | Helpers
 
+/** Reports the 1-based line number of `offset` within `content`. */
 function computeLine(content: string, offset: number): number {
   let line = 1;
   for (let i = 0; i < offset; i++) {

@@ -1,10 +1,6 @@
 import path from 'node:path';
 
-/**
- * The artifact-type axis, shared by the declaration parser, the dependency resolver, and `library list`. This is the
- * single source of truth: The type union and the per-type metadata (its plural declaration key and its library
- * subdirectory) live here, so no consumer hardcodes the spelling or the path.
- */
+/** The kinds of artifact that the library holds. */
 export type ArtifactType = 'rulebook' | 'skill' | 'subagent' | 'collection';
 
 /** Per-type metadata: its own `type`, the plural `key` used as a YAML/declaration key, and its library `contentPath`. */
@@ -22,12 +18,10 @@ export const ARTIFACT_TYPES: Record<ArtifactType, ArtifactTypeMeta> = {
   collection: { type: 'collection', key: 'collections', contentPath: 'collections' },
 };
 
-/** Every artifact type, for typed iteration over the axis. */
 export const ARTIFACT_TYPE_VALUES: ReadonlyArray<ArtifactType> = Object.values(ARTIFACT_TYPES).map((meta) => meta.type);
 
 /** The path, relative to the content dir, of the file containing a `(type, slug)` artifact's frontmatter. */
 export function artifactFrontmatterPath(type: ArtifactType, slug: string): string {
   const { contentPath } = ARTIFACT_TYPES[type];
-  // Skills are directory-based (`<slug>/SKILL.md`); every other type is a flat `<slug>.md`.
   return type === 'skill' ? path.join(contentPath, slug, 'SKILL.md') : path.join(contentPath, `${slug}.md`);
 }

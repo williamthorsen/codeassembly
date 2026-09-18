@@ -66,8 +66,7 @@ export function removeRulebook(content: string, slug: string): string {
 
 /**
  * Renders the canonical block for a slug: open marker, the version line when the rulebook declares one, trimmed
- * body, close marker. Exported so that every surface attributing inlined content to the rulebook from which it came
- * writes the one grammar, whether it manages a host document or splices a guidance-hook fill.
+ * body, close marker.
  */
 export function renderRulebookBlock(slug: string, body: string, version?: string): string {
   return [openMarker(slug), ...renderRulebookVersionLines(version), body.trim(), closeMarker(slug)].join('\n');
@@ -90,10 +89,12 @@ function escapeRegExp(value: string): string {
 
 // region | Helpers
 
+/** Closing marker of a rulebook's sentinel block. */
 function closeMarker(slug: string): string {
   return `<!-- /rulebook:${slug} -->`;
 }
 
+/** Opening marker of a rulebook's sentinel block. */
 function openMarker(slug: string): string {
   return `<!-- rulebook:${slug} -->`;
 }

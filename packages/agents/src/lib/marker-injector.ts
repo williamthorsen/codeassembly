@@ -3,10 +3,7 @@ import path from 'node:path';
 
 import type { ContentRootRef } from './content-root-manifest.ts';
 
-/**
- * Git ref used in Source: URLs of provenance markers. Hardcoded until
- * version-pinning is added (tracked in williamthorsen/codeassembly#444).
- */
+/** Git ref used in the `Source:` URLs of provenance markers. */
 export const SOURCE_REF = 'main';
 
 const REPO_BLOB_BASE = `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content`;
@@ -71,9 +68,7 @@ export async function injectMarkersInDirectory(
   await walkAndInject(rootDir, rootDir, resolveSourceUrl);
 }
 
-/**
- * Applies `injectProvenanceMarker` in place to a single file.
- */
+/** Applies `injectProvenanceMarker` in place to a single file. */
 export async function injectMarkerInFile(filePath: string, sourceUrl: string): Promise<void> {
   const content = await readFile(filePath, 'utf8');
   const updated = injectProvenanceMarker(content, sourceUrl);
@@ -88,7 +83,6 @@ function hasYamlFrontmatter(content: string): boolean {
 
 function injectYamlMarker(content: string, sourceUrl: string): string {
   const lines = content.split('\n');
-  // lines[0] is `---`. Strip any pre-existing marker lines immediately after it.
   const afterOpen = stripExistingYamlMarkerLines(lines.slice(1));
   const markerLines = [
     `${YAML_MARKER_PREFIX}${LINE_1_TEXT}`,
@@ -99,9 +93,8 @@ function injectYamlMarker(content: string, sourceUrl: string): string {
 }
 
 function stripExistingYamlMarkerLines(rest: ReadonlyArray<string>): ReadonlyArray<string> {
-  // An existing marker, if present, is three consecutive YAML comment lines whose first line
-  // begins with "# GENERATED FILE". Remove them to write fresh marker lines. This also
-  // handles the migration case of a different Source: URL.
+  // An existing marker is three consecutive YAML comment lines opening with "# GENERATED FILE", whichever `Source:`
+  // URL it names.
   if (rest.length >= 3 && rest[0] === `${YAML_MARKER_PREFIX}${LINE_1_TEXT}`) {
     return rest.slice(3);
   }
@@ -129,7 +122,6 @@ function stripExistingHtmlMarkerBlock(content: string): string {
     return content;
   }
   const lines = content.split('\n');
-  // Drop the three marker lines plus the single blank separator line, if present.
   let dropCount = 3;
   if (lines[dropCount] === '') {
     dropCount++;

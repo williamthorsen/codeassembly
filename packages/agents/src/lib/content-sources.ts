@@ -15,9 +15,7 @@ export interface ResolvedArtifactSource {
 
 /**
  * Resolves a `(type, slug)` artifact over an ordered search of declared sources (highest precedence first) then the
- * built-in library, by existence of its frontmatter file. `libraryDir` and `sources` are plain accessors that callers
- * reach for directly: `libraryDir` for the library-only surfaces (e.g. `@library` collection expansion), `sources` for
- * the not-found error that enumerates every location searched.
+ * built-in library, by existence of its frontmatter file.
  */
 export interface SourceResolver {
   readonly libraryDir: string;
@@ -52,7 +50,7 @@ export function createSourceResolver(
   };
 }
 
-/** A resolver over the built-in library alone: the behavior-identical legacy path for non-source callers. */
+/** A resolver over the built-in library alone. */
 export function libraryResolver(libraryDir: string): SourceResolver {
   return createSourceResolver([], libraryDir);
 }

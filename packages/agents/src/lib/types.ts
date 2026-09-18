@@ -11,8 +11,8 @@ export type CanonicalToolName = 'AskUserQuestion' | 'Bash' | 'Edit' | 'Glob' | '
 export interface AgentsManifest {
   readonly schemaVersion: number;
   /**
-   * The retired `~/.agents/` tier, present only in a manifest written by a previous version. `install` and `uninstall`
-   * read it to retire what was deployed there and write the manifest without it; nothing produces it.
+   * The retired `~/.agents/` tier. Nothing produces it; the retirement pass reads it to remove what was deployed
+   * there and writes the manifest without it.
    */
   readonly shared?: SharedManifest | undefined;
   readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
@@ -68,9 +68,8 @@ export interface HarnessManifest {
 
 /**
  * A home-domain-writing command governed by the designated-writer guard and provenance stamp, spelled as the user
- * invokes it. These are the two commands that deploy catalog content into the home domain (`~/.agents/`, `~/.claude/`,
- * `~/.rovo/`); `uninstall` and `configure-hooks` also write home files but deploy none, so they are outside the
- * guard's scope, and bare `sync` writes project trees and refuses to run from the home directory.
+ * invokes it: the commands that deploy catalog content into the home domain (`~/.agents/`, `~/.claude/`, `~/.rovo/`).
+ * A command that writes a home file without deploying into it is outside the guard's scope.
  */
 export type HomeWriteCommand = 'install' | 'sync --global';
 

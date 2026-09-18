@@ -58,8 +58,8 @@ export function createContentRootLinkAnchor(context: LinkAnchorContext): Resolve
  * harness home: The library's support entries resolve there because `install` puts them there in either domain, and a
  * skill that this run does not deploy is addressable there or nowhere.
  *
- * In the home domain the domain-rooted destinations coincide with the harness home, so home-domain output changes only
- * when a source namespace applies -- which is content that reached no address at all before.
+ * In the home domain the domain-rooted destinations coincide with the harness home, so only a source namespace
+ * distinguishes them there.
  */
 export function createSkillLinkAnchor(context: LinkAnchorContext): ResolveLinkAnchor {
   const { deployedSkillDirs, domainBase, homeDir, skillsDirName, supportNamespace } = context;

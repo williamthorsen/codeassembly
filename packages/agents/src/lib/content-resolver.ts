@@ -14,15 +14,11 @@ export function resolveContentDir(): string {
   const thisFile = fileURLToPath(import.meta.url);
   const thisDir = dirname(thisFile);
 
-  // Works for both dev (src/lib/) and built (dist/esm/lib/):
-  // Two levels up reaches the package root (dev) or dist/ (built),
-  // both of which contain a content/ subdirectory.
   const primaryPath = path.resolve(thisDir, '../../content');
   if (existsSync(primaryPath)) {
     return primaryPath;
   }
 
-  // Fallback for unexpected nesting
   const fallbackPath = path.resolve(thisDir, '../../../content');
   if (existsSync(fallbackPath)) {
     return fallbackPath;

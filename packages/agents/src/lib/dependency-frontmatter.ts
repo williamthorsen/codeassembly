@@ -76,7 +76,7 @@ export function readInjectedSkills(content: string, sourceLabel?: string): Reado
  * Reads a collection's `members:` frontmatter -- its constituents, which resolution follows transitively. The value
  * is either the computed token `'@library'` (every deployable artifact, expanded by the resolver) or an explicit
  * per-type mapping in the same shape that `dependencies:` uses. Absent or null members is an empty collection, not an
- * error. A `dependencies:` key is rejected here (membership moved to `members:`); an unrecognized token or a value
+ * error. A `dependencies:` key is rejected here; an unrecognized token or a value
  * that is neither a token nor a mapping also throws. Every error names `sourceLabel` when provided.
  */
 export function readMembers(content: string, sourceLabel?: string): MembersResult {
@@ -87,7 +87,7 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
   }
 
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
-  // A collection's constituents live under `members:`; a `dependencies:` key is the pre-migration spelling, not an edge.
+  // A collection's constituents live under `members:`; a `dependencies:` key there is a misplaced key, not an edge.
   if (parsed.dependencies !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: a collection declares its constituents via "members:", not "dependencies:".`,

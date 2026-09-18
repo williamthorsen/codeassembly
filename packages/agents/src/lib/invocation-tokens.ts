@@ -1,15 +1,14 @@
 /**
  * Matches `{rulebook:<slug>}`, `{skill:<slug>}`, and `{subagent:<slug>}` invocation tokens, each in a required form and
  * an optional one marked `?` before the colon. The slug is kebab-case and letter-led (`[a-z][a-z0-9-]*`). The pattern
- * only captures well-formed tokens; a slug naming no library artifact is caught downstream by the resolver's existing
- * missing-artifact check, so the grammar deliberately does not police existence.
+ * only captures well-formed tokens; a slug naming no library artifact is caught downstream by the resolver's
+ * missing-artifact check, so the grammar does not police existence.
  *
  * Because `{rulebook?:<slug>}` matches although no body may contain one, `rewriteInvocationTokens` rejects it by name.
  * A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
  *
- * One shared constant serves both the render surface (`rewriteInvocationTokens`) and the edge surface
- * (`extractInvocationEdges`) so that the two can never diverge on what a token is. Sharing it is safe: `String.replace`
- * resets `lastIndex` and `String.matchAll` clones the regex, so neither call leaks match state to the other.
+ * The constant is global and shared: `String.replace` resets `lastIndex` and `String.matchAll` clones the regex, so
+ * neither call leaks match state to the other.
  */
 const INVOCATION_TOKEN_RE = /\{(rulebook|skill|subagent)(\?)?:([a-z][a-z0-9-]*)\}/g;
 
@@ -143,10 +142,7 @@ export function locateInvocationTokens(content: string): ReadonlyArray<Invocatio
 }
 
 /**
- * Resolves a `{rulebook:<slug>}` token to the skill name that it renders, or to the reason it cannot render. One
- * resolution serves both surfaces that need it -- the rewriter, which throws on the first rejection, and the rulebook
- * validator, which collects every rejection into one error -- so neither can report a rejection that the other would
- * not.
+ * Resolves a `{rulebook:<slug>}` token to the skill name that it renders, or to the reason it cannot render.
  */
 export function resolveRulebookToken(
   slug: string,

@@ -121,9 +121,9 @@ function assertPackageName(name: string): void {
 
 /**
  * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory that
- * Node's resolver would search. Probing the filesystem rather than resolving a package subpath is deliberate: A
- * modern `exports` map does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only
- * package has no importable entry to resolve instead.
+ * Node's resolver would search. Probes the filesystem rather than resolving a package subpath: A modern `exports` map
+ * does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only package has no
+ * importable entry to resolve instead.
  */
 async function findInstalledPackage(
   name: string,

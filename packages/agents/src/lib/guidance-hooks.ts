@@ -127,8 +127,7 @@ export function assertFilledAnchorsResolve(result: FilledBody, sourceLabel: stri
  * Resolves every guidance hook that `body` declares: A hook that `fills` names is replaced by its bound guidance, and
  * one that it does not is removed, the same way `stripGuidanceHooks` removes it. Throws whatever `listGuidanceHooks` rejects, and
  * rejects a directive inside the leading frontmatter block that a binding would fill, where a splice would break the
- * YAML rather than add guidance to the body. Such a directive still strips when nothing is bound, so a body that
- * deployed before this had a fill to splice deploys the same way still.
+ * YAML rather than add guidance to the body. Such a directive still strips when nothing is bound.
  *
  * Because a bound body arrives already rendered, the splice point is free: Link and token resolution vary with
  * position, and both are settled before the body gets here. Headings are demoted one level as they splice, which
@@ -173,11 +172,7 @@ export function fillGuidanceHooks(body: string, fills: GuidanceHookFills | undef
   return { content: contentLines.join('\n'), stripped: strippedLines.join('\n'), filled };
 }
 
-/**
- * Reports whether `value` satisfies the grammar that a guidance-hook name must take. Exported so that a declaration
- * binding to a hook is held to the grammar already enforced by the directive declaring it, without a second copy of
- * the pattern.
- */
+/** Reports whether `value` satisfies the grammar that a guidance-hook name must take. */
 export function isGuidanceHookName(value: string): boolean {
   return HOOK_NAME_REGEX.test(value);
 }
@@ -237,8 +232,7 @@ export function listGuidanceHooks(body: string, sourceLabel: string): ReadonlyAr
  * semantics that `<!-- children -->` already uses, so an author spaces a directive the way they space an include.
  * Throws whatever `listGuidanceHooks` rejects, which puts the grammar's gate on every render path.
  *
- * This is the seam that can never fill: a rulebook body, a support entry, or anything `install` renders. Defined as
- * the fill with nothing bound so that the two removals cannot drift apart.
+ * Serves the seams that can never fill: a rulebook body, a support entry, and everything `install` renders.
  */
 export function stripGuidanceHooks(body: string, sourceLabel: string): string {
   return fillGuidanceHooks(body, undefined, sourceLabel).stripped;

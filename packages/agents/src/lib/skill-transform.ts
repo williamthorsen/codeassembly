@@ -52,8 +52,7 @@ export type RenderedSupportEntry =
 
 /**
  * Whether a directory entry's name is one that the skill walk passes over at every depth: a `_partials/` directory, a
- * test directory, or a dotfile. Exported so that a pass asking what a skill deploys answers it from the same rule that
- * the deploy itself applies.
+ * test directory, or a dotfile.
  */
 export function isSkippedSkillEntry(name: string): boolean {
   return name === '_partials' || isTestDirectory(name) || name.startsWith('.');
@@ -98,9 +97,6 @@ export async function renderSkillDirectory(
  * pass a gate that the ship then fails. Dropping both here rather than at each call site keeps the three routes
  * agreeing on what a support entry is.
  *
- * Shared by the installer, which writes what comes back, and by `validate`, which discards it. A defect surfaces
- * during rendering, so the pass that checks a support entry and the pass that ships it run the same one.
- *
  * `destName` is the entry's deployed name, which anchors link rewriting: the directory that contains a directory
  * entry's files, and the file's own name for a Markdown file entry.
  */
@@ -124,8 +120,8 @@ export async function renderSupportEntry(
 
 /**
  * Recursively walks `dir`, skipping `_partials/`, test directories, and dotfiles, accumulating rendered entries keyed
- * by relative path. This is the walk that every install and sync path runs, so it collects exactly what is deployed to
- * a harness home; a skill's own tests are not part of what it ships.
+ * by relative path. It collects exactly what is deployed to a harness home; a skill's own tests are not part of what
+ * it ships.
  */
 async function collectEntries(
   dir: string,

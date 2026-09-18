@@ -33,7 +33,7 @@ export function describeHarnessTargeting(targets: ResolvedHarnessTargets): strin
  * installer while a repository has no reason to hold one. A declaration is honored even when it resolves to an empty
  * set: A run that deploys nowhere on purpose is distinct from one that never declared a target.
  *
- * @param options.cwd The domain's base: the project root for a repo sync, the home directory for a global one or for
+ * `options.cwd` is the domain's base: the project root for a repo sync, the home directory for a global one or for
  * `install`.
  */
 export async function resolveTargetHarnesses(options: {
