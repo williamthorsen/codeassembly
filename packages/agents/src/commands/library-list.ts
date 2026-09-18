@@ -45,14 +45,13 @@ const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
 /** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
 
-/** Delivery cell for an artifact with no delivery mode: collections, skills, and subagents. Only rulebooks declare delivery modes (`ambient`/`hook`/`skill`). */
+/** Delivery cell for an artifact type that declares no delivery mode. */
 const NO_DELIVERY_MODE = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
 
-/** Width assumed for piped output, for which no terminal width is available; keeps such output deterministic. */
+/** Width assumed for piped output, for which no terminal width is available. */
 const DEFAULT_WIDTH = 100;
-/** Spaces between adjacent columns. */
 const COLUMN_GAP = 2;
 /** Display cells occupied by a type emoji. All chosen emoji are East-Asian wide (two cells). */
 const EMOJI_DISPLAY_WIDTH = 2;
@@ -61,7 +60,6 @@ const MIN_DESCRIPTION_WIDTH = 20;
 
 /**
  * Enumerates the content library's rulebooks, skills, and subagents and prints them as an aligned table.
- * `contentDir` defaults to the resolved package content directory; tests inject a fixture tree.
  */
 export async function libraryListCommand(contentDir: string = resolveContentDir()): Promise<void> {
   const rows: Array<LibraryRow> = [];
@@ -132,7 +130,7 @@ export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: numbe
 
 // region | Helpers
 
-/** Runs `build` to produce an artifact entry, warning to stderr and skipping (returning `undefined`) if it throws. */
+/** Runs `build` to produce an artifact entry, warning to stderr and skipping it if it throws. */
 function buildEntryOrSkip(type: ArtifactType, source: string, build: () => ArtifactEntry): ArtifactEntry | undefined {
   try {
     return build();

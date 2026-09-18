@@ -138,12 +138,10 @@ async function deployHomeDomain(
     console.info(`\nInstalling for harness: ${harnessId}`);
     const paths = resolveHarnessPaths(harnessId, baseDir);
 
-    // Safety check: Ensure target directories are not symlinks
     checkSymlinkSafety(paths.skillsDir);
     checkSymlinkSafety(paths.subagentsDir);
     checkSymlinkSafety(paths.scriptsDir);
 
-    // Build lookup of previously installed entries for drift detection
     const existingEntries = manifest.harnesses[harnessId]?.entries ?? [];
     const existingByPath = new Map(existingEntries.map((e) => [e.relativePath, e]));
 
@@ -156,7 +154,6 @@ async function deployHomeDomain(
       homeDir: harnessConfig.homeDir,
     };
 
-    // Install skill support directories (e.g. `_data`). Skills themselves deploy per-declaration via `sync`.
     const skillsPrefix = resolveSkillsPathPrefix(harnessConfig);
     const supportEntries = await installSupportDirectories(
       contentDir,
@@ -171,7 +168,6 @@ async function deployHomeDomain(
     );
     entries.push(...supportEntries);
 
-    // Install scripts
     const scriptEntries = await installScripts(
       roots,
       paths.scriptsDir,
@@ -197,7 +193,6 @@ async function deployHomeDomain(
       }
     }
 
-    // Install harness-specific guidance file
     const guidanceEntries = await installHarnessGuidance(roots, paths, harnessId, existingByPath, options);
     entries.push(...guidanceEntries);
 
@@ -240,8 +235,7 @@ async function deployHomeDomain(
  * `content/skills/<slug>/` holding a `SKILL.md`) deploy per-declaration via `sync`, not here, so this pass installs
  * only the non-skill support entries; `_partials` (an install-time include target) and dotfiles are excluded.
  *
- * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
- * mirroring the uninstall command's drift-checking behavior.
+ * If a previously installed item has been modified by the user, it is skipped unless `--force` is set.
  */
 async function installSupportDirectories(
   contentDir: string,
@@ -299,8 +293,7 @@ async function installSupportDirectories(
 
 /**
  * Installs a single skill entry (directory or file) from source to destination.
- * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time;
- * subagents follow the same pattern for frontmatter merging.
+ * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time.
  */
 async function installSkillEntry(
   srcPath: string,
@@ -341,7 +334,6 @@ async function installSkillEntry(
     return { relativePath, contentHash: 'dry-run', linked: false };
   }
 
-  // Check for user modifications before overwriting
   const existingEntry = existingByPath.get(relativePath);
   if (existingEntry && !options.force) {
     const drift = await detectDrift(existingEntry, harnessHome);
@@ -361,9 +353,8 @@ async function installSkillEntry(
     await writeRenderedSkillDir(destPath, rendered.entries);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
   } else if (rendered.kind === 'markdown') {
-    // Single-file `.md` skill entries: Write the previously expanded content directly.
-    // Skipping the verbatim copy avoids the expand-copy-expand-overwrite redundancy
-    // and ensures the validated content is the content written to disk (no second read).
+    // Single-file `.md` skill entries: Write the expanded content directly, so that what was validated is what
+    // reaches disk.
     await mkdir(path.dirname(destPath), { recursive: true });
     await writeFile(destPath, rendered.content, 'utf8');
     await injectMarkerInFile(destPath, buildSourceUrl(sourceRelativeRoot));
@@ -425,7 +416,6 @@ async function installScripts(
       continue;
     }
 
-    // Check for user modifications before overwriting
     const existingEntry = existingByPath.get(relativePath);
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, harnessHome);
@@ -438,7 +428,6 @@ async function installScripts(
 
     await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
 
-    // Ensure copied scripts are executable
     if (!options.link) {
       await chmod(destPath, 0o755);
     }
@@ -513,7 +502,6 @@ async function installHarnessGuidance(
       continue;
     }
 
-    // Check for user modifications before overwriting
     const existingEntry = existingByPath.get(entry);
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, harnessPaths.harnessHome);
@@ -602,14 +590,12 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
         continue;
       }
 
-      // Skip non-script files (e.g. README.md); only helper scripts ship to harness homes.
       if (SCRIPT_EXTENSIONS.every((extension) => !entry.endsWith(extension))) {
         continue;
       }
 
       const srcPath = path.join(scriptsSrcDir, entry);
 
-      // Skip directories (e.g. __tests__)
       if (!(await stat(srcPath)).isFile()) {
         continue;
       }

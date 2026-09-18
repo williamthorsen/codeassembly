@@ -20,9 +20,9 @@ export interface HarnessRetractionResult {
  * and unwires that harness's session-lifecycle hook entries. Returns the harness map that the caller writes to the
  * manifest.
  *
- * Retraction follows the declaration alone. Under `flag`, `--harness claude` names the run's target rather than
- * declaring rovo unwanted; under `detection`, a harness missed by detection has no home directory holding stale files.
- * Under either origin, the pass returns the manifest's harness map untouched.
+ * Retraction follows the declaration alone. A `flag` origin names the run's target without declaring any harness
+ * unwanted, and a harness missed by `detection` has no home directory holding stale files; under either, the pass
+ * returns the manifest's harness map untouched.
  *
  * Each dropped harness runs through the same orphan prune that the per-harness install pass runs, with an empty
  * desired set, so a user-modified file survives without `--force` and `--dry-run` previews the removals. A harness for

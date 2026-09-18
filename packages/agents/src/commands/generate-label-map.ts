@@ -65,7 +65,6 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
     }
   }
 
-  // Include root scope only when at least one package subdirectory exists (monorepo).
   if (Object.keys(scopes).length > 0) {
     scopes.root = 'scope:root';
   }
@@ -105,7 +104,7 @@ export async function readReleaseKitVersion(): Promise<string> {
   }
 }
 
-/** Type guard: `value` is release-kit's `package.json` (matches name and has a string `version`). */
+/** Reports whether `value` is release-kit's `package.json`. */
 function isReleaseKitPackageJson(value: unknown): value is { readonly name: string; readonly version: string } {
   return isRecord(value) && value.name === RELEASE_KIT_PACKAGE_NAME && typeof value.version === 'string';
 }
@@ -119,7 +118,6 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
   const outputDir = path.join(cwd, '.meta');
   const outputPath = path.join(outputDir, 'label-map.json');
 
-  // Check for existing file.
   if (!options.force) {
     try {
       await stat(outputPath);

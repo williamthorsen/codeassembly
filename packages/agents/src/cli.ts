@@ -20,18 +20,13 @@ import { emitReport } from './lib/emit-report.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
-/** Every accepted `--harness` value: the known harness ids plus the `all` sentinel. */
 const HARNESS_ARG_VALUES: ReadonlyArray<string> = [...ALL_HARNESS_IDS, 'all'];
 
-/**
- * Membership set for `isValidHarness`, widened to `string` so that an arbitrary value tests without a type assertion.
- */
+/** Widened to `string` so that an arbitrary value tests without a type assertion. */
 const VALID_HARNESS_IDS: ReadonlySet<string> = new Set(HARNESS_ARG_VALUES);
 
-/** The accepted `--harness` values, rendered for the help and error text that must list them. */
 const HARNESS_ARG_LIST = HARNESS_ARG_VALUES.join(', ');
 
-/** What a failed sync leaves behind, stated on both failure paths so that neither reads as a partial write. */
 const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidance remains in effect.';
 
 /**
@@ -65,8 +60,8 @@ async function main(): Promise<void> {
       case 'status':
         await statusCommand({ harness: options.harness });
         break;
-      // Exit here rather than through the `catch` below: A defect report is a multi-line list of findings, which that
-      // handler would prefix with `Error:` as though it were one failure.
+      // Exits here because a defect report is a multi-line list of findings, which the `catch` below would prefix
+      // with `Error:` as though it were one failure.
       case 'validate':
         if (!(await validateCommand({ content, harness: options.harness }))) {
           process.exit(1);
@@ -315,8 +310,7 @@ async function runLibrary(subcommand: string): Promise<void> {
  * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
  * the posture that a package-manager lifecycle hook needs, because aborting the install costs far more than stale
  * guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
- * command. Both paths report here rather than through the top-level handler, which prefixes `Error:` and would apply
- * it to a finding list.
+ * command.
  */
 async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {
   try {

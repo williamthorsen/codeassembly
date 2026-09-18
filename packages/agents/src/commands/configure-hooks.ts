@@ -1,8 +1,6 @@
 /**
  * Configures the session-lifecycle hook entries in each harness's config file: the wiring that turns the installed
- * relay script into a running event source. `install` invokes the same per-harness functions by default and
- * `uninstall` reverses them; running the command alone (re)applies just the hook wiring. `--print` emits the entries
- * as copyable snippets instead of writing, for configs managed elsewhere.
+ * relay script into a running event source.
  *
  * All writes go through the sentinel-scoped config utilities, so only CodeAssembly-owned entries are ever created,
  * replaced, or removed; the rest of the user's config is untouched.

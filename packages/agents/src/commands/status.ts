@@ -6,7 +6,6 @@ import { detectDrift, getManifestPath, readManifest } from '../lib/manifest.ts';
 import type { HarnessId, InstallOptions } from '../lib/types.ts';
 import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
 
-/** Divisor turning a timestamp delta into whole days, for the deployed guidance's reported age. */
 const MILLISECONDS_PER_DAY = 86_400_000;
 
 /**
