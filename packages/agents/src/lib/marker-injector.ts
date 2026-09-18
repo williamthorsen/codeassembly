@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import type { ContentRootRef } from './content-root-manifest.ts';
 
-/** Git ref used in the `Source:` URLs of provenance markers. */
+/** Git ref used in the `Source:` URLs of provenance markers. Hardcoded until that URL is version-pinned. */
 export const SOURCE_REF = 'main';
 
 const REPO_BLOB_BASE = `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content`;

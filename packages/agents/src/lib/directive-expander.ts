@@ -213,6 +213,9 @@ function resolveTarget(filePath: string, contentDir: string, target: string, lin
  * caller's slot content (recursively expanded). Returns the expanded partial as an array
  * of lines (no trailing-newline normalization). Throws `slot-without-children` when the
  * caller provided slot content but the partial has no placeholder.
+ *
+ * `visited` is the caller's cycle-detection set, threaded through to `expandFile` so that a cycle reached through the
+ * slot path throws.
  */
 async function expandPartialWithSlot(
   partialPath: string,
