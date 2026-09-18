@@ -138,8 +138,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  * Runs the helper end to end: parses the arguments, then dispatches to the subcommand that they name.
  *
  * A subcommand loads its own inputs and nothing else, so a defect affects only the subcommands that read it. A
- * loadable input refuses on failure. Two exceptions warn and continue instead: the project-root resolution, which
- * reads `cwd`, and `render-titles`, which renders without a taxonomy and from unverified templates.
+ * subcommand refuses when an input that it loads fails. Two exceptions warn and continue instead: the project-root
+ * resolution, which reads `cwd`, and `render-titles`, which renders without a taxonomy and from unverified templates.
  *
  * @internal - Exported to allow testing.
  */
