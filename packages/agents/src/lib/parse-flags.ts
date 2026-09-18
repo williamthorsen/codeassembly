@@ -1,10 +1,3 @@
-// Shared argv scanner for the kb command-line helpers.
-//
-// Every kb helper hand-rolled the same value-flag scan: match `--flag` / `--flag=value`, then resolve the value either
-// inline or from the next token. This module is the single owner of that mechanic. It deliberately stops at matching and
-// value resolution. Each helper composes the per-command rules from the scan result: which flags are required, how often
-// one may appear, whether two are mutually exclusive, and whether an empty value is meaningful.
-
 // `Name` is the union of canonical flag names. It defaults to `string`, but a command that types its specs with a
 // literal-name union (e.g. an operation-name union) gets matched flags reported under that union, so it can switch on
 // the name exhaustively without a cast.
@@ -96,9 +89,8 @@ export function scanFlags<Name extends string = string>(
 
 /**
  * Reduces matched flags to a last-wins map of value-bearing flags, keyed by canonical name; boolean flags are dropped.
- * A command that allows a flag at most once reads each key directly, and a repeated flag keeps its last occurrence,
- * the same last-wins behavior that the hand-rolled scanners had. A command that must reject duplicates inspects
- * {@link ScanResult.flags} directly instead.
+ * A command that allows a flag at most once reads each key directly. A command that must reject duplicates inspects
+ * `ScanResult.flags` instead.
  */
 export function valueFlagMap(flags: readonly MatchedFlag[]): Record<string, string> {
   const map: Record<string, string> = {};

@@ -3,9 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
-// `BASIC` is only exported from `/experimental` in version 1.17.6. It is used only on the diagnostic
-// failure path below, never as part of an assertion. The stable per-dialect API is used for all
-// pass/fail assertions.
+// `BASIC` is exported only from `/experimental`. It serves the diagnostic failure path below, never an assertion.
 import { BASIC } from '@hyperjump/json-schema/experimental';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
@@ -45,10 +43,7 @@ interface WorkTypesDocument {
   version: string;
 }
 
-/**
- * The test file lives at `packages/agents/src/lib/__tests__/work-types-schema.unit.test.ts`.
- * Three levels up reaches the package root (`packages/agents/`).
- */
+/** Three levels up from this file reaches the package root (`packages/agents/`). */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(thisDir, '../../..');
 
@@ -98,9 +93,7 @@ describe('work-types.schema.json', () => {
     expect(output.valid, diagnosticMessage).toBe(true);
   });
 
-  // Each rejection case is a minimal valid document with one targeted mutation. Descriptions
-  // identify which schema constraint is being exercised; comments at each row document the
-  // specific schema rule.
+  // Each rejection case is a minimal valid document with one targeted mutation.
   it.each([
     {
       description: 'rejects an unknown top-level key',
@@ -174,8 +167,7 @@ describe('work-types.schema.json', () => {
     },
     {
       description: 'rejects a `version` value that is not a bare semver',
-      // Guards `version.pattern: ^\d+\.\d+\.\d+$`. The leading `v` is the canonical mistake to
-      // catch; if the constraint were widened, this rejection test would fail loudly.
+      // Guards `version.pattern: ^\d+\.\d+\.\d+$`. The leading `v` is the canonical mistake to catch.
       input: buildMinimalDoc({ version: 'v1.0.0' }),
     },
     {
@@ -248,8 +240,8 @@ describe('work-types.schema.json', () => {
   });
 
   it('orders `types[]` keys in canonical render order', () => {
-    // Render order is load-bearing for downstream changelog/release-notes tooling. Schema cannot
-    // express a fixed-length sequence of keyed objects without verbose `prefixItems`; assert in-test.
+    // Render order is load-bearing for downstream changelog/release-notes tooling, and the schema cannot express a
+    // fixed-length sequence of keyed objects without verbose `prefixItems`.
     const canonicalOrder = [
       'feat',
       'drop',
@@ -272,16 +264,15 @@ describe('work-types.schema.json', () => {
   });
 
   it('orders top-level `tiers` in canonical precedence order', () => {
-    // Sanity check on top of the schema-level `prefixItems` constraint. Deliberate redundancy: If
-    // the schema is ever weakened, this assertion still catches a misordered live file.
+    // Redundant with the schema-level `prefixItems` constraint: If the schema is ever weakened, this assertion still
+    // catches a misordered live file.
     expect(liveData.tiers).toEqual(['public', 'internal', 'process']);
   });
 
   it('exposes `markers.breaking` with the canonical glyph and label', () => {
-    // The `summarize-change` skill template prefixes breaking-change entries with
-    // `{emoji} **{label}:**` (e.g., `🚨 **Breaking:**`) using these values directly.
-    // A silent rename of either field would still pass schema validation but break the
-    // downstream consumer; assert the values explicitly.
+    // The `summarize-change` skill template prefixes breaking-change entries with `{emoji} **{label}:**` (e.g.
+    // `🚨 **Breaking:**`) using these values directly, so a rename of either field passes schema validation and
+    // breaks that consumer.
     expect(liveData.markers.breaking.emoji).toBe('🚨');
     expect(liveData.markers.breaking.label).toBe('Breaking');
   });

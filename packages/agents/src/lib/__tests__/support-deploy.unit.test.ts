@@ -237,6 +237,7 @@ describe('source support delivery', () => {
 
   // region | Helpers
 
+  /** Builds a deploy context targeting the Claude harness. */
   function context(): SkillDeployContext {
     return {
       anchor: createSkillLinkAnchor({

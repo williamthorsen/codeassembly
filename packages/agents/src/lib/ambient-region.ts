@@ -3,13 +3,8 @@
  * `~/.claude/CLAUDE.md`). The region is delimited by `<!-- codeassembly-ambient:start -->` /
  * `<!-- codeassembly-ambient:end -->` markers. Its location is `install`'s authority (the guidance templates contain
  * an empty region); its content is `sync`'s (regenerated wholesale from the resolved ambient rulebooks on each run).
- * Every function is a pure string transform with no filesystem access.
- *
- * A host contains at most one region, and every transform here depends on it. `REGION_PATTERN` is anchored and lazy,
- * so on content holding a stray marker above a well-formed region it matches from the stray marker through the
- * region's close marker: Replacing that match discards every line between them. `classifyAmbientRegion` is the one
- * place that invariant is checked, and `hasAmbientRegion` is defined in terms of it so that no transform can run on
- * content that violates it.
+ * Every function is a pure string transform with no filesystem access, and every one depends on the host holding at
+ * most one region.
  */
 
 export const AMBIENT_OPEN_MARKER = '<!-- codeassembly-ambient:start -->';
@@ -18,6 +13,11 @@ export const AMBIENT_CLOSE_MARKER = '<!-- codeassembly-ambient:end -->';
 /** How a host's ambient region stands: no markers at all, exactly one well-formed region, or anything else. */
 export type AmbientRegionState = 'absent' | 'complete' | 'malformed';
 
+/**
+ * The span of one well-formed region. Anchored and lazy, so on content holding a stray marker above a well-formed
+ * region it matches from the stray marker through the region's close marker: Replacing that match discards every line
+ * between them.
+ */
 const REGION_PATTERN = /^<!-- codeassembly-ambient:start -->\n([\s\S]*?)^<!-- codeassembly-ambient:end -->[ \t]*$/m;
 
 // Anchored like `REGION_PATTERN`, so that a marker matched by these is one that could take part in a region match,
@@ -88,9 +88,8 @@ export function injectAmbientRegion(content: string, body: string): string {
 
 /**
  * Removes the ambient region along with its markers, closing the gap that it leaves: Text on either side is rejoined
- * by a single blank line, and content holding nothing but the region yields the empty string. This is the
- * project-local host's case, in which `sync` owns the region's placement as well as its content and a host with no
- * content stays absent. Content without a complete region is returned unchanged, matching `stripAmbientRegionContent`.
+ * by a single blank line, and content holding nothing but the region yields the empty string. Content without a
+ * complete region is returned unchanged.
  */
 export function removeAmbientRegion(content: string): string {
   const match = hasAmbientRegion(content) ? REGION_PATTERN.exec(content) : null;

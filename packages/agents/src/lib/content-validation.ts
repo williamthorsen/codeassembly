@@ -357,6 +357,7 @@ async function renderForHarness(
   };
 
   const raised: Array<HarnessDefect> = [];
+  /** Records a render failure against the file that raised it, attributed to this harness. */
   function record(file: string, error: unknown): void {
     raised.push({ harnessId, defect: { file, kind: 'render', detail: describeError(error) } });
   }
@@ -438,6 +439,7 @@ async function resolveArtifacts(closure: ResolvedClosure, resolver: SourceResolv
   const skills: Array<ResolvedSkill> = [];
   const subagents: Array<ResolvedSubagent> = [];
 
+  /** Records a resolution failure against the artifact that raised it, ignoring one owned by the library. */
   async function record(type: ArtifactType, slug: string, error: unknown): Promise<void> {
     if ((await resolver.resolve(type, slug))?.source === undefined) {
       return;

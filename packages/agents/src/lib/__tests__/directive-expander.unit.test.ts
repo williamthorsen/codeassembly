@@ -18,6 +18,7 @@ describe(expandIncludes, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
+  /** Writes a fixture file under the content root, creating its parent directories, and returns its path. */
   async function writeSource(relPath: string, content: string): Promise<string> {
     const fullPath = path.join(contentDir, relPath);
     await mkdir(path.dirname(fullPath), { recursive: true });
@@ -111,10 +112,7 @@ describe(expandIncludes, () => {
     });
 
     it('treats inline-prose mention of <!-- /include --> as plain content, not as a close directive', async () => {
-      // The CLOSE_REGEX is line-anchored. A line with non-whitespace text preceding
-      // `<!-- /include -->` must not trigger orphan-close handling: Authors writing
-      // documentation about the directive grammar inside partials must be able to
-      // include close-tag examples in prose.
+      // Authors documenting the directive grammar inside a partial include close-tag examples in prose.
       const host = await writeSource(
         'host.md',
         ['Authors close open directives with `<!-- /include -->` on its own line.', ''].join('\n'),
@@ -222,9 +220,8 @@ describe(expandIncludes, () => {
     });
 
     it('routes slot content correctly when an open directive is nested inside another open directive', async () => {
-      // Outer open/close pair contains an inner open/close pair as slot content. The
-      // inner frame's expanded output must be treated as slot content for the outer
-      // frame, then substituted into the outer partial's <!-- children --> placeholder.
+      // The inner frame's expanded output becomes slot content for the outer frame, substituted into the outer
+      // partial's `<!-- children -->` placeholder.
       const host = await writeSource(
         'host.md',
         [
@@ -258,9 +255,8 @@ describe(expandIncludes, () => {
     });
 
     it('returns to top-level output between two sequential non-nested open/close blocks', async () => {
-      // Two open/close pairs at top level. Between them, the stack must be empty so that
-      // intervening prose flows to the output buffer rather than being captured by a
-      // stale frame.
+      // Between the two pairs the stack is empty, so intervening prose flows to the output buffer rather than being
+      // captured by a stale frame.
       const host = await writeSource(
         'host.md',
         [
@@ -335,9 +331,6 @@ describe(expandIncludes, () => {
     });
 
     it('throws cycle when slot content of an open/close pair includes the host file', async () => {
-      // Cycle introduced through the open/close slot path: host opens partial.md and
-      // partial.md self-close-includes host.md. The visited set must be threaded
-      // through `expandPartialWithSlot -> expandFile` to detect this.
       const host = await writeSource(
         'host.md',
         ['<!-- include: partial.md -->', 'slot body', '<!-- /include -->', ''].join('\n'),
@@ -418,6 +411,7 @@ describe(listIncludeTargets, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
+  /** Writes a fixture file under the content root, creating its parent directories, and returns its path. */
   async function writeSource(relPath: string, content: string): Promise<string> {
     const fullPath = path.join(contentDir, relPath);
     await mkdir(path.dirname(fullPath), { recursive: true });

@@ -83,6 +83,7 @@ function detectIndent(body: string): string | number {
   return !isEmptyDocument && !body.includes('\n') ? 0 : DEFAULT_FORMAT.indent;
 }
 
+/** Reads the indent unit and trailing-newline habit from a settings file's text. */
 function detectJsonFormat(text: string): JsonFormat {
   const trailingNewline = text.endsWith('\n');
   return { indent: detectIndent(trailingNewline ? text.slice(0, -1) : text), trailingNewline };
@@ -118,6 +119,7 @@ async function readSettingsText(filePath: string): Promise<string | undefined> {
   }
 }
 
+/** Serializes the settings in the detected formatting. */
 function renderSettings(settings: Record<string, unknown>, format: JsonFormat): string {
   return JSON.stringify(settings, undefined, format.indent) + (format.trailingNewline ? '\n' : '');
 }

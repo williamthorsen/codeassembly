@@ -2,33 +2,19 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-/**
- * Matches a self-closing include directive on its own line: `<!-- include: path / -->`.
- * The captured group is the path target. Self-close must be tested before the open
- * pattern to prevent a path-with-trailing-slash from being misread as an open directive.
- */
+/** Matches a self-closing include directive on its own line: `<!-- include: path / -->`, capturing the path target. */
 const SELF_CLOSE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+?)[ \t]*\/[ \t]*-->[ \t]*$/;
 
-/**
- * Matches a closing include directive on its own line: `<!-- /include -->`.
- */
+/** Matches a closing include directive on its own line: `<!-- /include -->`. */
 const CLOSE_REGEX = /^[ \t]*<!--[ \t]*\/include[ \t]*-->[ \t]*$/;
 
-/**
- * Matches an opening include directive on its own line: `<!-- include: path -->`.
- * The captured group is the path target. Tested after self-close to disambiguate.
- */
+/** Matches an opening include directive on its own line: `<!-- include: path -->`, capturing the path target. */
 const OPEN_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+)[ \t]*-->[ \t]*$/;
 
-/**
- * Matches the children-slot placeholder line inside a partial: `<!-- children -->`.
- */
+/** Matches the children-slot placeholder line inside a partial: `<!-- children -->`. */
 const CHILDREN_PLACEHOLDER_REGEX = /^[ \t]*<!--[ \t]*children[ \t]*-->[ \t]*$/;
 
-/**
- * Matches a directive that uses `include:` syntax but does not match any recognized shape
- * (self-close, open, close). Used to reject unrecognized parameters with a structured error.
- */
+/** Matches a directive using `include:` syntax in none of the recognized shapes (self-close, open, close). */
 const ANY_INCLUDE_LIKE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*.*-->[ \t]*$/;
 
 /** Reason an include directive failed to resolve, reported in error messages. */
@@ -41,9 +27,7 @@ type FailureReason =
   | 'unclosed-open'
   | 'unrecognized-parameter';
 
-/**
- * Error thrown when an include directive cannot be resolved at install time.
- */
+/** Error thrown when an include directive cannot be resolved at install time. */
 export class DirectiveExpansionError extends Error {
   readonly reason: FailureReason;
 
@@ -105,6 +89,7 @@ interface OpenFrame {
   readonly slotLines: Array<string>;
 }
 
+/** Expands one file's directives, tracking `visited` so that an include cycle throws rather than recursing. */
 async function expandFile(filePath: string, contentDir: string, visited: Set<string>): Promise<string> {
   if (visited.has(filePath)) {
     const cyclePath = [...visited, filePath].join(' -> ');
@@ -162,21 +147,16 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
         continue;
       }
 
-      // If the line looks like an include directive but matched none of the recognized
-      // shapes, reject it as an unrecognized parameter. This catches typos like
-      // `<!-- include: path foo -->` or `<!-- include: path /bar -->`.
+      // Catches typos such as `<!-- include: path foo -->` and `<!-- include: path /bar -->`.
       if (ANY_INCLUDE_LIKE_REGEX.test(line)) {
         throw buildUnrecognizedParameterError(filePath, lineNumber, line);
       }
 
-      // Plain content line. If we're inside an open directive, accumulate it into the slot;
-      // otherwise emit it directly.
       appendLines(stack, out, [line], filePath);
     }
 
     if (stack.length > 0) {
-      // `stack.length > 0` guarantees a frame exists; assert-style guard keeps the
-      // invariant explicit for future readers without producing a silently swallowed branch.
+      // The stack is non-empty here; the guard states that invariant rather than swallowing the branch.
       const frame = stack.at(-1);
       if (frame === undefined) {
         throw new Error(`Invariant violation: stack.length > 0 but stack[-1] is undefined in ${filePath}`);
@@ -208,8 +188,8 @@ function buildUnrecognizedParameterError(filePath: string, lineNumber: number, l
 function resolveTarget(filePath: string, contentDir: string, target: string, lineNumber: number): string {
   const resolved = path.resolve(path.dirname(filePath), target);
 
-  // Lexical containment check. Symlinks under contentDir that point outside are not realpath'd
-  // -- source trees are not expected to contain symlinks; widen this guard if that changes.
+  // Containment is lexical: a symlink under `contentDir` pointing outside is not realpath'd, since a source tree holds
+  // no symlinks. Widen this guard if that changes.
   const relative = path.relative(contentDir, resolved);
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new DirectiveExpansionError(
@@ -233,6 +213,9 @@ function resolveTarget(filePath: string, contentDir: string, target: string, lin
  * caller's slot content (recursively expanded). Returns the expanded partial as an array
  * of lines (no trailing-newline normalization). Throws `slot-without-children` when the
  * caller provided slot content but the partial has no placeholder.
+ *
+ * `visited` is the caller's cycle-detection set, threaded through to `expandFile` so that a cycle reached through the
+ * slot path throws.
  */
 async function expandPartialWithSlot(
   partialPath: string,
@@ -242,12 +225,10 @@ async function expandPartialWithSlot(
   callerPath: string,
   callerLineNumber: number,
 ): Promise<Array<string>> {
-  // Recursively expand the partial body; this resolves nested includes within the partial.
   const partialBody = await expandFile(partialPath, contentDir, visited);
   const partialLines = partialBody.split('\n');
 
-  // Locate the `<!-- children -->` placeholder. There may be at most one; multiple
-  // are not currently used and would substitute identically -- we substitute the first.
+  // Only the first `<!-- children -->` placeholder is substituted.
   let placeholderIndex = -1;
   for (const [idx, line] of partialLines.entries()) {
     if (CHILDREN_PLACEHOLDER_REGEX.test(line)) {
@@ -263,14 +244,9 @@ async function expandPartialWithSlot(
         'slot-without-children',
       );
     }
-    // No placeholder, no slot content -- trim a single trailing blank line from the
-    // partial's split result so that an included file ending in a newline does not
-    // introduce a stray blank line at the host's expansion site.
     return trimTrailingEmptyLine(partialLines);
   }
 
-  // Substitute: Remove the placeholder line and insert the (possibly empty) slot lines
-  // verbatim in its place.
   const result: Array<string> = [
     ...partialLines.slice(0, placeholderIndex),
     ...slotLines,
@@ -294,8 +270,7 @@ function appendLines(
     out.push(...linesToAppend);
     return;
   }
-  // `stack.length > 0` guarantees a frame exists; assert-style guard keeps the invariant
-  // explicit for future readers without producing a silently swallowed branch.
+  // The stack is non-empty here; the guard states that invariant rather than swallowing the branch.
   const top = stack.at(-1);
   if (top === undefined) {
     throw new Error(`Invariant violation: stack.length > 0 but stack[-1] is undefined in ${filePath}`);
@@ -304,9 +279,8 @@ function appendLines(
 }
 
 /**
- * Drops a single trailing empty string produced by `split('\n')` on a file ending with
- * a newline. This preserves the previous expander's behavior: An included file with a
- * trailing newline does not introduce a stray blank line at the host's expansion site.
+ * Drops a single trailing empty string produced by `split('\n')` on a file ending with a newline, so an included file
+ * with a trailing newline does not introduce a stray blank line at the host's expansion site.
  */
 function trimTrailingEmptyLine(lines: ReadonlyArray<string>): Array<string> {
   if (lines.length > 0 && lines.at(-1) === '') {

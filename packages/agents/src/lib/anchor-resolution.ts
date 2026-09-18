@@ -36,11 +36,9 @@ interface FenceScan {
  * A fence that nothing closes throws too. Everything below it reads as code. No anchor there can be checked, and a
  * silent pass over an unchecked remainder is indistinguishable from a clean one.
  *
- * `body` is checked before any rewriting, and when the pipeline expands includes, after that expansion. Rewriting
- * leaves anchor-only targets untouched, so the verdict is harness-invariant: one failure per artifact, phrased against
- * the file edited by the author, rather than one per harness. That ordering also settles the case that rewriting would
- * confuse, since a heading containing a `{tool:NAME}` token slugs differently on each harness and can be addressed by
- * no single fragment.
+ * Callers check `body` before any rewriting, and after include expansion where includes are expanded. Rewriting leaves
+ * anchor-only targets untouched, so the verdict holds on every harness, including for a heading carrying a
+ * `{tool:NAME}` token, which slugs differently on each one.
  *
  * Only same-body anchors are checked. Because a fragment on a path target resolves against the deployed tree, which
  * unions library content with each declared source's content, it cannot be settled from the one content root at hand.
@@ -123,9 +121,7 @@ export function findUnterminatedFence(content: string): string | undefined {
 /**
  * Blanks the block-level regions that illustrate rather than declare: a leading frontmatter block and every fenced
  * code block. A fence shows sample output, so a heading inside one offers no anchor and a link inside one requests
- * none; `review-branch` prints a `## Specification consistency` heading inside its output-format fence, which a naive
- * scan would offer as a real target. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned
- * as a body link.
+ * none. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned as a body link.
  *
  * Inline code spans survive here and are blanked on the link-scanning side alone. A span inside a heading is part of
  * that heading's text, and dropping it would change the slug: `### The \`respond-to-review\` path` anchors as

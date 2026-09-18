@@ -95,11 +95,7 @@ export function resolveAmbientHostPath(harnessId: HarnessId, hostKind: AmbientHo
     : path.join(baseDir, config.localGuidanceFileName);
 }
 
-/**
- * Resolves absolute paths for a harness's skill and subagent directories.
- * @param harnessId The harness to resolve paths for.
- * @param baseDir Override for the home directory (defaults to `os.homedir()`).
- */
+/** Resolves absolute paths for a harness's skill and subagent directories, under `baseDir` or the home directory. */
 export function resolveHarnessPaths(
   harnessId: HarnessId,
   baseDir?: string,
@@ -127,10 +123,6 @@ export function resolveHarnessPaths(
 /**
  * The harness-relative prefix under which a deployed skill's `~/`-prefixed link targets are built (e.g.
  * `.claude/skills`).
- *
- * Shared by every pass that renders a skill: install, sync, and validate. The value is a formula rather than a field,
- * so a private copy of it would not fail to compile when the formula changed; it would just start emitting link targets
- * that resolve nowhere, on whichever pass was not updated.
  */
 export function resolveSkillsPathPrefix(config: HarnessConfig): string {
   return `${config.homeDir}/${config.skillsDirName}`;
@@ -138,11 +130,8 @@ export function resolveSkillsPathPrefix(config: HarnessConfig): string {
 
 /**
  * Resolves which harnesses to target from the `--harness` value alone, falling back to what is installed under
- * `homeDir` when the value is the `'all'` sentinel.
- *
- * This serves `uninstall`, `status`, and `configure-hooks`, which must target what is installed rather than what is
- * declared. `install` and `sync` resolve their targets through `resolveTargetHarnesses`, which consults the
- * `harnesses` declaration first.
+ * `homeDir` when the value is the `'all'` sentinel. Targets what is installed rather than what is declared;
+ * `resolveTargetHarnesses` consults the `harnesses` declaration first.
  */
 export function resolveHarnessIds(harness: InstallOptions['harness'], homeDir?: string): ReadonlyArray<HarnessId> {
   if (harness === 'all') {

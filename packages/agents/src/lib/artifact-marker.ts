@@ -4,7 +4,7 @@ export interface ArtifactMarker {
   extractSlug(content: string): string | undefined;
   /**
    * Stamps the ownership marker into `content`, placed on its own line immediately after the frontmatter block.
-   * Idempotent and frontmatter-required; see the closures in `makeArtifactMarker` for the exact contract.
+   * Idempotent; throws when `content` has no frontmatter block.
    */
   injectMarker(content: string, slug: string): string;
 }
@@ -14,8 +14,7 @@ const FRONTMATTER_PATTERN = /^(---\n[\s\S]*?\n---\n)/;
 
 /**
  * Builds the ownership-marker accessors for one artifact `type`, producing `<!-- codeassembly-${type}:${slug} -->`
- * markers. Skills and subagents share this single implementation; each type reads and writes only its own marker, so
- * the two namespaces never claim each other's files.
+ * markers. Each type reads and writes only its own marker, so the two namespaces never claim each other's files.
  */
 export function makeArtifactMarker(type: 'skill' | 'subagent'): ArtifactMarker {
   const markerPattern = new RegExp(`<!-- codeassembly-${type}:([a-z0-9-]+) -->`);

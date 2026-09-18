@@ -8,7 +8,7 @@ import { isMissingFile } from './type-guards.ts';
 
 /**
  * The `skills/` entries that are never support content: `_partials` is an install-time include target inlined into the
- * skills that include it, and `_harnesses` is a retired deploy path whose skills now live in the flat catalog.
+ * skills that include it, and `_harnesses` is a retired deploy path.
  */
 const NON_SUPPORT_ENTRIES: ReadonlySet<string> = new Set(['_harnesses', '_partials']);
 
@@ -18,8 +18,8 @@ const NON_SUPPORT_ENTRIES: ReadonlySet<string> = new Set(['_harnesses', '_partia
  * passes -- the built-in library, or a declared source for a source-scoped collection. Collections are never
  * enumerated -- they are traversal-only nodes and "every collection" would be self-referential. The slugs are
  * filesystem basenames (skill = subdirectory name, rulebook/subagent = filename without `.md`), the form that
- * `artifactFrontmatterPath` maps back to a file; the frontmatter `name` is deliberately not used. The result is the `ArtifactDependencies` edge shape, so the
- * resolver consumes it directly as a collection's expanded members.
+ * `artifactFrontmatterPath` maps back to a file, not the frontmatter `name`. The result is the
+ * `ArtifactDependencies` edge shape, so the resolver consumes it directly as a collection's expanded members.
  */
 export async function enumerateCatalogSlugs(contentDir: string): Promise<ArtifactDependencies> {
   const [rulebook, skill, subagent] = await Promise.all([
@@ -31,10 +31,7 @@ export async function enumerateCatalogSlugs(contentDir: string): Promise<Artifac
 }
 
 /**
- * Reports whether `entryDir` is a skill directory -- one holding a `SKILL.md` file. This is the single definition that
- * every caller shares: the catalog walk that enumerates skills, the installer deciding what to leave to `sync`, and
- * `validate` deciding what is a skill rather than support content. A private copy in any of them is how those three
- * come to disagree, which is a defect that no test of one of them can catch.
+ * Reports whether `entryDir` is a skill directory -- one holding a `SKILL.md` file.
  *
  * `SKILL.md` must be a file. A directory of that name is not a skill, and treating it as one would send the installer
  * to read a body that does not exist. The probe follows symlinks, so a `SKILL.md` symlinked to a real file counts.
@@ -76,9 +73,6 @@ export async function listSkillDirectories(skillsDir: string): Promise<Array<str
  *
  * A `_`-prefixed name is support content rather than hidden, which is why the visibility rule that the catalog walk
  * applies is absent here; `__tests__` shares that prefix without sharing that standing, and is excluded by name.
- *
- * Shared by the installer, which deploys these, and by `validate`, which checks them. The rule decides what ships, so
- * the two must not each have their own copy of it.
  */
 export async function listSupportEntries(skillsDir: string): Promise<Array<string>> {
   const candidates = (await readDirEntries(skillsDir))

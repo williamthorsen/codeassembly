@@ -209,8 +209,8 @@ describe(findUndeclaredGuidancePackages, () => {
 
 /**
  * Installs a fixture package under `baseDir`'s `node_modules` and returns its directory. Fixture names are
- * deliberately distinctive: Resolution searches every ancestor `node_modules`, so a common name could resolve against
- * a real package outside the temp tree.
+ * distinctive: Resolution searches every ancestor `node_modules`, so a common name could resolve against a real
+ * package outside the temp tree.
  */
 async function installPackage(baseDir: string, name: string, manifest: Record<string, unknown>): Promise<string> {
   const dir = path.join(baseDir, 'node_modules', name);

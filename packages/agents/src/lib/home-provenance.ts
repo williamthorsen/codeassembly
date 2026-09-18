@@ -84,7 +84,7 @@ export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenan
 }
 
 /**
- * Reads the provenance stamp at an explicit path, applying the same validation as {@link readHomeProvenance}. Serves a
+ * Reads the provenance stamp at an explicit path, applying the same validation as `readHomeProvenance`. Serves a
  * caller that knows the file's location without deriving it from a home directory.
  */
 export async function readHomeProvenanceAt(provenancePath: string): Promise<HomeProvenance | undefined> {
@@ -200,9 +200,7 @@ function liftWrite(parsed: HomeWrite): HomeWrite {
   };
 }
 
-/**
- * Normalizes a parsed stamp into the current shape, or `undefined` when it contains neither a write nor an attempt.
- */
+/** Normalizes a parsed stamp into the current shape, or `undefined` when it contains neither a write nor an attempt. */
 function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
   if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
     return undefined;

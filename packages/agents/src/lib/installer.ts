@@ -2,10 +2,7 @@ import { existsSync, lstatSync, readdirSync } from 'node:fs';
 import { cp, lstat, mkdir, readlink, rm, symlink } from 'node:fs/promises';
 import path from 'node:path';
 
-/**
- * Checks whether a directory path is a symlink. Throws with a user-readable
- * error if it is, directing the user to resolve it before installing.
- */
+/** Checks whether a directory path is a symlink, throwing a message that names what to resolve before installing. */
 export function checkSymlinkSafety(dirPath: string): void {
   if (!existsSync(dirPath)) {
     return;
@@ -48,11 +45,7 @@ function isDotfile(filePath: string): boolean {
   return path.basename(filePath).startsWith('.');
 }
 
-/**
- * Copies a file or directory recursively, excluding dotfiles (e.g., .DS_Store).
- * @param src Absolute source path.
- * @param dest Absolute destination path.
- */
+/** Copies a file or directory recursively, excluding dotfiles (e.g., .DS_Store). Both paths are absolute. */
 export async function copyItem(src: string, dest: string): Promise<void> {
   await mkdir(path.dirname(dest), { recursive: true });
   await cp(src, dest, {
@@ -61,15 +54,10 @@ export async function copyItem(src: string, dest: string): Promise<void> {
   });
 }
 
-/**
- * Creates a relative symlink from dest pointing to src.
- * @param src Absolute source path.
- * @param dest Absolute destination path.
- */
+/** Creates a relative symlink at `dest` pointing to `src`. Both paths are absolute. */
 export async function linkItem(src: string, dest: string): Promise<void> {
   await mkdir(path.dirname(dest), { recursive: true });
 
-  // Remove existing entry at dest if present
   if (existsSync(dest)) {
     const stats = await lstat(dest);
     if (stats.isSymbolicLink()) {
@@ -87,8 +75,8 @@ export async function linkItem(src: string, dest: string): Promise<void> {
 }
 
 /**
- * Removes an existing symlink at the destination so that subsequent writes create a real file
- * instead of writing through the symlink into an unrelated directory (e.g., a dotfiles repo).
+ * Removes an existing symlink at the destination, so that a later write creates a real file instead of writing
+ * through the link into an unrelated directory (e.g. a dotfiles repo).
  */
 export async function unlinkIfSymlink(destPath: string): Promise<void> {
   if (!existsSync(destPath)) {

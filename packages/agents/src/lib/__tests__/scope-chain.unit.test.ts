@@ -23,7 +23,9 @@ describe(resolveScopeChain, () => {
     await writeFile(path.join(cwd, '.agents', name), 'x', 'utf8');
   }
 
+  /** The absolute path of the project-scope `codeassembly.yaml`. */
   const projectPath = (): string => path.join(cwd, '.agents', 'codeassembly.yaml');
+  /** The absolute path of the project-local `codeassembly.local.yaml`. */
   const localPath = (): string => path.join(cwd, '.agents', 'codeassembly.local.yaml');
 
   it('returns an empty list when no tier file exists', async () => {

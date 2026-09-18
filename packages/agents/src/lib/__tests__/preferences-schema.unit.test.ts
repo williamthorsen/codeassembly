@@ -3,9 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
-// `BASIC` is only exported from `/experimental` in version 1.17.6. It is used only on the diagnostic
-// failure path below, never as part of an assertion. The stable per-dialect API is used for all
-// pass/fail assertions.
+// `BASIC` is exported only from `/experimental`. It serves the diagnostic failure path below, never an assertion.
 import { BASIC } from '@hyperjump/json-schema/experimental';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
@@ -15,10 +13,7 @@ import { parse as parseYaml } from 'yaml';
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
-/**
- * The test file lives at `packages/agents/src/lib/__tests__/preferences-schema.unit.test.ts`.
- * Three levels up reaches the package root (`packages/agents/`); two more levels up reaches the repo root.
- */
+/** Three levels up from this file reaches the package root (`packages/agents/`); two more reach the repo root. */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(thisDir, '../../..');
 const repoRoot = path.resolve(packageRoot, '../..');
@@ -87,8 +82,8 @@ describe('preferences.json schema', () => {
   });
 
   it('accepts the `scm` key and the deprecated `platform` alias', async () => {
-    // The canonical `scm` key and the legacy `platform` alias both validate; the alias is retained
-    // so that an existing `platform`-keyed preferences file stays schema-valid during the migration window.
+    // The canonical `scm` key and the legacy `platform` alias both validate, so an existing `platform`-keyed
+    // preferences file stays schema-valid.
     const scmOutput = await validate(schemaId, { scm: 'bitbucket' }, FLAG);
     expect(scmOutput).toMatchObject({ valid: true });
     const legacyOutput = await validate(schemaId, { platform: 'bitbucket' }, FLAG);
@@ -96,9 +91,8 @@ describe('preferences.json schema', () => {
   });
 
   it('accepts the documented reserved keys under `merge`', async () => {
-    // Guards `merge.strategy` and `merge.delete_branch`, recorded in the schema as reserved
-    // (not yet honored by the `merge-pr` skill family) so that projects can opt to set them in
-    // anticipation of future support without tripping `additionalProperties`-style constraints.
+    // Guards `merge.strategy` and `merge.delete_branch`, recorded in the schema as reserved: The `merge-pr` skill
+    // family does not read them, and declaring them keeps a project that sets them schema-valid.
     const output = await validate(
       schemaId,
       {
@@ -128,9 +122,7 @@ describe('preferences.json schema', () => {
   });
 
   it('rejects a `repository.default_remote` array (old format)', async () => {
-    // Guards the ticket #430 normalization from the old single-element array form to the
-    // singular object form. If `default_remote` were reverted to accepting an array, this
-    // test would fail.
+    // Guards the singular object form of `default_remote`, which the schema accepts in place of an array.
     const output = await validate(
       schemaId,
       { repository: { default_remote: [{ name: 'origin', default_branch: 'main' }] } },
@@ -159,8 +151,8 @@ describe('preferences.json schema', () => {
   });
 
   it('rejects an `integrations.jira` object missing the required `enabled` field', async () => {
-    // Guards the `integrations.properties.jira.required: ["enabled"]` sub-constraint, which carries the
-    // requirement forward now that the named property no longer resolves through `additionalProperties`.
+    // Guards the `integrations.properties.jira.required: ["enabled"]` sub-constraint, which states the requirement
+    // for the named property, since it does not resolve through `additionalProperties`.
     const output = await validate(schemaId, { integrations: { jira: {} } }, FLAG);
     expect(output).toMatchObject({ valid: false });
   });
@@ -188,8 +180,8 @@ describe('preferences.json schema', () => {
   });
 
   it('accepts an undeclared sibling key under `integrations.jira`', async () => {
-    // The `jira` object omits `additionalProperties: false` on purpose: A live preferences file contains an
-    // inert `workspace` key, and declaring the two keys that the skill reads does not make its siblings errors.
+    // The `jira` object omits `additionalProperties: false`: A live preferences file contains an inert `workspace`
+    // key, and declaring the two keys that the skill reads does not make its siblings errors.
     const output = await validate(schemaId, { integrations: { jira: { enabled: true, workspace: 'hello' } } }, FLAG);
     expect(output).toMatchObject({ valid: true });
   });

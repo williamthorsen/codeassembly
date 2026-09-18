@@ -10,12 +10,11 @@ import { isEnoent } from './type-guards.ts';
 
 /**
  * Renders every skill support entry that a source ships, flattened into one tree keyed relative to that source's
- * namespace directory. What counts as a support entry and how one renders both come from the helpers already shared
- * by `install` and `validate`, so the pass that ships these cannot disagree with the passes that check them.
+ * namespace directory.
  *
  * A source shipping no `skills/` directory renders to nothing, which is the ordinary case: most sources ship skills
- * and subagents alone. That is deliberately not an error, unlike the library's own missing `skills/`, whose absence
- * leaves every skill without the reference files that it reads at runtime.
+ * and subagents alone. That is not an error, unlike the library's own missing `skills/`, whose absence leaves every
+ * skill without the reference files that it reads at runtime.
  */
 export async function renderSourceSupport(
   sourceDir: string,

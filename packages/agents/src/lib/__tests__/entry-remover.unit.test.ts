@@ -21,6 +21,7 @@ describe(pruneOrphanedEntries, () => {
     await rm(home, { recursive: true, force: true });
   });
 
+  /** Writes a file under the temp home and returns the manifest entry that tracks it. */
   async function writeTracked(relativePath: string, content: string): Promise<ManifestEntry> {
     const fullPath = path.join(home, relativePath);
     await mkdir(path.dirname(fullPath), { recursive: true });
@@ -28,6 +29,7 @@ describe(pruneOrphanedEntries, () => {
     return { relativePath, contentHash: await computeContentHash(fullPath), linked: false };
   }
 
+  /** Builds prune options, with `overrides` applied over their defaults. */
   function options(overrides: Partial<{ force: boolean; dryRun: boolean }> = {}): { force: boolean; dryRun: boolean } {
     return { force: false, dryRun: false, ...overrides };
   }
@@ -162,6 +164,7 @@ describe(classifyOwnedEntry, () => {
     await rm(home, { recursive: true, force: true });
   });
 
+  /** Writes a file under the temp home and returns the manifest entry that tracks it. */
   async function writeTracked(relativePath: string, content: string): Promise<ManifestEntry> {
     const fullPath = path.join(home, relativePath);
     await mkdir(path.dirname(fullPath), { recursive: true });

@@ -5,8 +5,8 @@
  * parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so foreign items, foreign
  * comments, and unrelated keys survive untouched. File IO belongs to the caller.
  *
- * The schema is the one real configs use, verified against a live config and a hook experiment: `eventHooks.events` is
- * a YAML list of `{name, commands}` items, where `name` is the hook event (several items may share one) and each
+ * The schema is the one that real configs use: `eventHooks.events` is a YAML list of `{name, commands}` items, where
+ * `name` is the hook event (several items may share one) and each
  * `commands` item is a map containing a `command` string. A map keyed by event name (the shape that some documentation
  * describes) makes Rovo Dev treat the whole config as corrupt. This module refuses it rather than modeling it.
  *
@@ -132,7 +132,7 @@ function assertAllOwned(entries: readonly HookEntry[], isOwned: HookSentinelMatc
   }
 }
 
-/** Throws {@link RovoConfigParseError} when the document has parse errors, guarding every mutation and read. */
+/** Throws `RovoConfigParseError` when the document has parse errors, guarding every mutation and read. */
 function assertParsable(doc: Document): void {
   const errorMessages = doc.errors.map((error) => error.message);
   if (errorMessages.length > 0) {
@@ -216,7 +216,7 @@ interface ReadItem {
 }
 
 /**
- * Reads a YAML list item into a {@link ReadItem}, or undefined when it is not a well-formed entry: a map containing a
+ * Reads a YAML list item into a `ReadItem`, or undefined when it is not a well-formed entry: a map containing a
  * string `name` and a `commands` list whose every item is a map with a string `command`. Reading is lenient about
  * extra keys: A foreign item carrying more than this module writes must still be recognizable, or ownership checks
  * would miss it.

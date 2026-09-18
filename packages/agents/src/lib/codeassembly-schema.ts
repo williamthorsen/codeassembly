@@ -25,24 +25,19 @@ const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_
 export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
 
 /**
- * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag, an optional `home-writer`
- * path, an optional `harnesses` block naming which harnesses a sync run targets, an optional `sources` list, an
- * optional `packages` block naming installed packages that ship content, plus one optional block per artifact type
- * (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized key triggers an
- * error); entries are open (unknown keys pass through). Each block resolves to `{ use, drop }` lists; an absent or
+ * Schema for a single grouped `codeassembly.yaml` declaration. The top level is closed (an unrecognized key triggers
+ * an error); entries are open (unknown keys pass through). Each block resolves to `{ use, drop }` lists; an absent or
  * null block is omitted. `packages` and `harnesses` reuse that same block shape, so `use`, `drop`, and `root` apply
  * to a package name and a harness id exactly as they do to an artifact slug.
  *
- * `home-writer` appears beside `root` because it is a scalar setting about the run rather than a block naming
- * artifacts. It takes effect only in the home domain, where the guard on `install` and `sync --global` reads it, and a
- * project-domain file declaring it is rejected by name.
+ * `home-writer` is a scalar setting about the run. It takes effect only in the home domain, where the guard on
+ * `install` and `sync --global` reads it, and a project-domain file declaring it is rejected by name.
  *
- * `harnesses` appears above `sources` because it governs where a run deploys rather than which artifacts it
- * deploys, and it is the one key that resolves across the home and project domains rather than within one of them.
+ * `harnesses` governs where a run deploys rather than which artifacts it deploys, and it is the one key that resolves
+ * across the home and project domains rather than within one of them.
  *
- * `guidance-hooks` appears last because it configures the artifacts that the keys above adopt rather than naming any.
- * It is the one map-valued key: Each hook name owns a `{ use, drop }` block of its own, so a tier binds to one hook
- * without disturbing another.
+ * `guidance-hooks` is the one map-valued key: Each hook name owns a `{ use, drop }` block of its own, so a tier binds
+ * to one hook without disturbing another.
  */
 const CodeAssemblySchema = z
   .object({

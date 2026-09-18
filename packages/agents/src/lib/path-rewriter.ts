@@ -6,16 +6,13 @@ import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import type { HarnessId } from './types.ts';
 
 /**
- * The Markdown link grammar that this module rewrites: `[text](target)`, capturing text then target. Exported because
- * the grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must
- * match on both to see the same set. Safe to share despite the `g` flag: `replace` and `matchAll` each leave
- * `lastIndex` untouched between calls.
+ * The Markdown link grammar that this module rewrites: `[text](target)`, capturing text then target. The grammar and
+ * the passthrough predicate together define what gets rewritten, so a caller inspecting links matches on both. Safe to
+ * share despite the `g` flag: `replace` and `matchAll` each leave `lastIndex` untouched between calls.
  */
 export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 
-/**
- * The per-harness values to which the install-time template variables expand, resolved once per harness by the caller.
- */
+/** The per-harness values to which the install-time template variables expand, resolved once per harness by the caller. */
 export interface TemplateVariables {
   /** Guidance filename that `{harness_guidance_file}` tokens expand to (e.g. `CLAUDE.md`). */
   readonly guidanceFileName: string;
@@ -35,10 +32,7 @@ export interface TemplateVariables {
  */
 export type ResolveLinkAnchor = (normalizedTarget: string) => string;
 
-/**
- * Anchors every target under one harness-relative prefix in the harness home, the single behavior that every caller
- * had before targets could be deployed anywhere else.
- */
+/** Anchors every target under one harness-relative prefix in the harness home. */
 export function homeAnchor(pathPrefix: string): ResolveLinkAnchor {
   return (normalizedTarget) => `~/${pathPrefix}/${normalizedTarget}`;
 }
@@ -47,7 +41,7 @@ export function homeAnchor(pathPrefix: string): ResolveLinkAnchor {
  * Reports whether a Markdown link target is one that this module resolves as a source-tree-relative path. False for the
  * forms that already name their destination or name nothing to resolve: `http(s)` URLs, absolute paths, `~`-prefixed
  * paths, anchor-only links, and targets opening with a `{template_variable}`, which expands to its own absolute path
- * after this pass. Exported so that a caller validating link targets tests exactly the set that gets rewritten.
+ * after this pass.
  */
 export function isRewritableLinkTarget(target: string): boolean {
   return !(
@@ -88,7 +82,6 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
       return `[${text}](${target})`;
     }
 
-    // Split off anchor fragment before resolution
     const hashIndex = target.indexOf('#');
     let pathPart: string;
     let fragment: string;
@@ -100,7 +93,6 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
       fragment = target.slice(hashIndex);
     }
 
-    // Resolve the relative path against the file's directory, then normalize to collapse ../
     const joined = path.posix.join(fileDir, pathPart);
     const normalized = path.posix.normalize(joined);
 

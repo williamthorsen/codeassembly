@@ -3,10 +3,7 @@ import path from 'node:path';
 
 import type { ContentRootRef } from './content-root-manifest.ts';
 
-/**
- * Git ref used in Source: URLs of provenance markers. Hardcoded until
- * version-pinning is added (tracked in williamthorsen/codeassembly#444).
- */
+/** Git ref used in the `Source:` URLs of provenance markers. Hardcoded until that URL is version-pinned. */
 export const SOURCE_REF = 'main';
 
 const REPO_BLOB_BASE = `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content`;
@@ -71,9 +68,7 @@ export async function injectMarkersInDirectory(
   await walkAndInject(rootDir, rootDir, resolveSourceUrl);
 }
 
-/**
- * Applies `injectProvenanceMarker` in place to a single file.
- */
+/** Applies `injectProvenanceMarker` in place to a single file. */
 export async function injectMarkerInFile(filePath: string, sourceUrl: string): Promise<void> {
   const content = await readFile(filePath, 'utf8');
   const updated = injectProvenanceMarker(content, sourceUrl);
@@ -82,13 +77,14 @@ export async function injectMarkerInFile(filePath: string, sourceUrl: string): P
   }
 }
 
+/** True when the content opens with a YAML frontmatter delimiter. */
 function hasYamlFrontmatter(content: string): boolean {
   return content.startsWith(`${FRONTMATTER_OPEN}\n`);
 }
 
+/** Writes the marker as YAML comment lines immediately after the frontmatter's opening delimiter. */
 function injectYamlMarker(content: string, sourceUrl: string): string {
   const lines = content.split('\n');
-  // lines[0] is `---`. Strip any pre-existing marker lines immediately after it.
   const afterOpen = stripExistingYamlMarkerLines(lines.slice(1));
   const markerLines = [
     `${YAML_MARKER_PREFIX}${LINE_1_TEXT}`,
@@ -98,16 +94,17 @@ function injectYamlMarker(content: string, sourceUrl: string): string {
   return [FRONTMATTER_OPEN, ...markerLines, ...afterOpen].join('\n');
 }
 
+/** Drops an existing YAML marker from the lines following the frontmatter's opening delimiter. */
 function stripExistingYamlMarkerLines(rest: ReadonlyArray<string>): ReadonlyArray<string> {
-  // An existing marker, if present, is three consecutive YAML comment lines whose first line
-  // begins with "# GENERATED FILE". Remove them to write fresh marker lines. This also
-  // handles the migration case of a different Source: URL.
+  // An existing marker is three consecutive YAML comment lines opening with "# GENERATED FILE", whichever `Source:`
+  // URL it names.
   if (rest.length >= 3 && rest[0] === `${YAML_MARKER_PREFIX}${LINE_1_TEXT}`) {
     return rest.slice(3);
   }
   return rest;
 }
 
+/** Writes the marker as HTML comment lines at the top of the content, followed by a blank line. */
 function injectHtmlMarker(content: string, sourceUrl: string): string {
   const body = stripExistingHtmlMarkerBlock(content);
   const marker = [
@@ -123,13 +120,13 @@ function injectHtmlMarker(content: string, sourceUrl: string): string {
   return `${marker}\n${body}`;
 }
 
+/** Drops an existing HTML marker block, along with the blank line separating it from the body. */
 function stripExistingHtmlMarkerBlock(content: string): string {
   const existingFirstLine = `${HTML_MARKER_OPEN}${LINE_1_TEXT}${HTML_MARKER_CLOSE}`;
   if (!content.startsWith(`${existingFirstLine}\n`)) {
     return content;
   }
   const lines = content.split('\n');
-  // Drop the three marker lines plus the single blank separator line, if present.
   let dropCount = 3;
   if (lines[dropCount] === '') {
     dropCount++;
@@ -137,6 +134,7 @@ function stripExistingHtmlMarkerBlock(content: string): string {
   return lines.slice(dropCount).join('\n');
 }
 
+/** Walks `currentDir`, injecting each `.md` file's marker from the URL that `resolveSourceUrl` gives for it. */
 async function walkAndInject(
   currentDir: string,
   rootDir: string,

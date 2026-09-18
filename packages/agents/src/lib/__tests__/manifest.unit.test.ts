@@ -161,7 +161,6 @@ describe('manifest', () => {
       await writeFile(filePath, 'original content', 'utf8');
       const hash = await computeContentHash(filePath);
 
-      // Modify the file
       await writeFile(filePath, 'modified content', 'utf8');
 
       const entry: ManifestEntry = {

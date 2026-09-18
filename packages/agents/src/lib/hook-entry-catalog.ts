@@ -1,7 +1,7 @@
 /**
- * The catalog of session-lifecycle hook entries that CodeAssembly installs into each harness's config file. Ensure,
- * remove, print, and status reporting all compose their entries from this one module, so no two of them can disagree
- * about what "the entries" are -- and the printed snippet is by construction the snippet that gets installed.
+ * The catalog of session-lifecycle hook entries that CodeAssembly installs into each harness's config file. Every
+ * path that ensures, removes, prints, or reports these entries composes them here, so the printed snippet is by
+ * construction the one installed.
  *
  * Each entry's command invokes the installed relay with `--harness`/`--hook` baked in, plus the ownership sentinel.
  * The sentinel is a real flag that the relay accepts and ignores, not a shell comment: It survives any execution

@@ -12,27 +12,31 @@ import {
 import { resolveScopeChain } from './scope-chain.ts';
 import { resolveSourcePath } from './source-path.ts';
 
-/**
- * The effective slugs that a project declares per artifact type, after combining the scope chain. `rulebooks`,
- * `skills`, and `subagents` are deployable; `collections` are dependency-only aggregates that the caller expands into
- * the others. `sources` are the declared content sources, each resolved to an absolute directory, in precedence order
- * (highest first). `packages` are the declared package names in that same precedence order, left unresolved: Locating
- * one probes `node_modules`, which is filesystem work that this parser deliberately leaves to its caller.
- * `declinedPackages` are the names that a tier dropped and no higher tier re-adopted, which distinguishes "declined"
- * from "never mentioned". `guidanceHooks` maps each bound hook name to the rulebooks bound to it, in declaration
- * order; a hook dropped by every binding is absent rather than empty, so its presence means something is bound.
- * `declaredIn` maps each slug, per type, to the chain files that declare it, in chain order. A caller reporting an
- * unresolvable slug can therefore name the file to edit.
- */
+/** The effective slugs that a project declares per artifact type, after combining the scope chain. */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
   readonly skills: ReadonlyArray<string>;
   readonly subagents: ReadonlyArray<string>;
+  /** Dependency-only aggregates, which the caller expands into the deployable types. */
   readonly collections: ReadonlyArray<string>;
+  /** The declared content sources, each resolved to an absolute directory, in precedence order (highest first). */
   readonly sources: ReadonlyArray<{ name: string; dir: string }>;
+  /**
+   * The declared package names in precedence order (highest first), left unresolved: Locating one probes
+   * `node_modules`, which is filesystem work that the caller does.
+   */
   readonly packages: ReadonlyArray<string>;
+  /** The names that a tier dropped and no higher tier re-adopted, distinguishing "declined" from "never mentioned". */
   readonly declinedPackages: ReadonlyArray<string>;
+  /**
+   * Each bound hook name mapped to the rulebooks bound to it, in declaration order. A hook dropped by every binding is
+   * absent rather than empty, so its presence means something is bound.
+   */
   readonly guidanceHooks: ReadonlyMap<string, ReadonlyArray<string>>;
+  /**
+   * Each slug, per type, mapped to the chain files that declare it, in chain order, so a caller reporting an
+   * unresolvable slug can name the file to edit.
+   */
   readonly declaredIn: Readonly<Record<ArtifactType, ReadonlyMap<string, ReadonlyArray<string>>>>;
 }
 
@@ -47,8 +51,7 @@ export interface ResolvedDeclaration {
  * `codeassembly.yaml` exists anywhere in the chain: a total no-op for `sync`, distinct from a present-but-empty
  * declaration, which returns empty lists.
  *
- * @param options.cwd The project whose `.agents/` tiers are resolved.
- * @param options.domain Which tier pair the chain belongs to, deciding which keys the files may declare.
+ * `options.domain` names which tier pair the chain belongs to, deciding which keys the files may declare.
  */
 export async function resolveDeclaration(options: {
   cwd: string;

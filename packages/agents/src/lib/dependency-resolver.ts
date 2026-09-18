@@ -46,6 +46,7 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
   // The ancestors on the current DFS path; a node that reappears here closes a cycle.
   const onPath = new Set<string>();
 
+  /** Walks one artifact's edges depth-first, recording it as reached and throwing on a cycle. */
   async function visit(type: ArtifactType, slug: string, trail: ReadonlyArray<string>): Promise<void> {
     const id = `${type}:${slug}`;
     if (onPath.has(id)) {
@@ -155,23 +156,14 @@ async function assertOptionalTargetsResolve(body: string, referrer: string, reso
 /**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
  * every location searched when the artifact resolves from no source or the library, plus the artifact that named it
- * when `trail` contains one. A seed's trail is empty, and naming where a seed came from is its caller's job. Every type
- * resolves from any source: A skill or subagent expands its include-expanded body against that source's own root, and a
- * collection's `'@library'` sentinel enumerates the content root from which it resolved -- the built-in library for a
- * library collection, the owning source for a source collection (a library collection's resolved directory is the
- * library, so one rule covers both). A collection's edges come from `members:` -- that resolved-root catalog when it
- * names `'@library'`, otherwise its explicit members. Every other type's edges come from `dependencies:`. A skill or
- * subagent additionally unions the invocation tokens in its include-expanded body (`{skill:<slug>}` /
- * `{subagent:<slug>}`, the same surface that the render pass rewrites) -- a token inside a shared partial becomes an
- * edge for every artifact that includes it -- and a subagent further unions its top-level `skills:` and
- * `rulebooks:` injection lists. A body token that names the artifact itself is dropped rather than unioned: A
- * self-reference renders per harness but is not a dependency and must not trip the cycle check; a self-dependency
- * written in `dependencies:` is not dropped, so it still errors. A rulebook unions its own body tokens the same way,
- * off its include-expanded body, since its frontmatter file is also its body file. Because a `{rulebook:<slug>}`
- * token is unioned from every body that renders one -- rulebook, skill, and subagent alike -- a rulebook named only
- * inline deploys. Every unioned edge enters the closure without a duplicate `dependencies:` declaration. An optional
- * token contributes no edge: Its target is resolved for existence and then dropped, so neither the target nor its own
- * dependencies enter the closure.
+ * when `trail` contains one. A seed's trail is empty, and naming where a seed came from is its caller's job. Every
+ * type resolves from any source.
+ *
+ * A collection's edges come from `members:`; every other type's come from `dependencies:`, unioned with the invocation
+ * tokens in its include-expanded body and, for a subagent, its top-level `skills:` and `rulebooks:` injection lists.
+ * Because a token is unioned from every body that renders one, a rulebook named only inline deploys, and no unioned
+ * edge needs a duplicate `dependencies:` declaration. An optional token contributes no edge: Its target is resolved
+ * for existence and then dropped, so neither it nor its own dependencies enter the closure.
  */
 async function readArtifactEdges(
   type: ArtifactType,

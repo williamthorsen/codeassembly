@@ -92,9 +92,6 @@ export async function deploySkill(skill: ResolvedSkill, destDir: string, context
  * Reads a skill's `supported-harnesses:` frontmatter field, normalizing a string or list into a harness-id array.
  * Returns `undefined` when the field is absent or empty, meaning the skill targets all harnesses. Throws when a listed
  * value is not a known harness id, naming the slug and the offending value.
- *
- * Exported so that a caller asking whether a skill targets every harness reads the narrowing here rather than
- * modelling it.
  */
 export function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<HarnessId> | undefined {
   const { lines } = parseFrontmatter(skillContent);

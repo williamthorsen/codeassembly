@@ -117,6 +117,7 @@ function isBlockPromptsHeader(line: string): boolean {
   return /^prompts:[ \t]*$/.test(line);
 }
 
+/** True for the region's closing marker line. */
 function isCloseMarker(line: string): boolean {
   return line.trim() === '# codeassembly:managed:end';
 }
@@ -126,6 +127,7 @@ function isEmptyFlowPrompts(line: string): boolean {
   return /^prompts:[ \t]*\[[ \t]*\][ \t]*$/.test(line);
 }
 
+/** True for the region's opening marker line. */
 function isOpenMarker(line: string): boolean {
   return line.trim() === '# codeassembly:managed:start';
 }
