@@ -6,7 +6,8 @@ set -euo pipefail
 # A thin launcher: It resolves the monorepo root from this script's (possibly
 # symlinked) location and runs the toolbox CLI via tsx, forwarding every
 # argument. Running the TypeScript source directly means the command tracks the
-# checkout with no rebuild. All verbs, flags, and the --help text belong to the CLI.
+# checkout with no rebuild. All verbs, flags, and the --help text belong to the
+# CLI; this script forwards everything to it.
 #
 # Usage:
 #   feedback-memories.sh list [--memory-store <name>] [--verbose]
@@ -15,12 +16,14 @@ set -euo pipefail
 readonly PROG="$(basename "$0")"
 
 main() {
+  # Resolve the monorepo root from this script's location, then locate tsx and the toolbox entry point.
   local script_dir repo_root tsx_bin cli_entry
   script_dir="$(resolve_script_dir)"
   repo_root="$(cd "$script_dir/../../.." && pwd)"
   tsx_bin="$repo_root/node_modules/.bin/tsx"
   cli_entry="$repo_root/packages/agents/src/feedback-memories/cli.ts"
 
+  # Check dependencies
   if [[ ! -x "$tsx_bin" ]]; then
     echo "$PROG: tsx not found at $tsx_bin" >&2
     echo "Run 'pnpm install' at the monorepo root first" >&2
@@ -41,7 +44,7 @@ resolve_script_dir() {
   local source="$0"
   [[ "$source" != */* ]] && source="$(command -v "$0")"
 
-  # Portable across macOS and Linux.
+  # Follow symlinks (portable, works on macOS and Linux)
   while [[ -L "$source" ]]; do
     local link_target
     link_target="$(readlink "$source")"

@@ -16,7 +16,7 @@ readonly DEFAULT_PREFIX="/usr/local/bin"
 readonly SCRIPTS=(feedback-memories.sh)
 
 main() {
-  # Manual check: the option loop below recognizes -h alone and rejects --help as unknown.
+  # Show help (manual check: the option loop below recognizes -h alone)
   if [[ "${1:-}" == "--help" ]]; then
     show_usage 0
   fi
@@ -51,15 +51,18 @@ main() {
     show_usage
   fi
 
+  # Resolve the directory containing the source scripts
   local script_dir
   script_dir="$(resolve_script_dir)"
 
+  # Validate the target directory exists
   if [[ ! -d "$prefix" ]]; then
     echo "$PROG: target directory does not exist: $prefix" >&2
     echo "Create it first or choose a different --prefix" >&2
     exit 1
   fi
 
+  # Install each script
   local installed=0 skipped=0 updated=0
   for script in "${SCRIPTS[@]}"; do
     local source="$script_dir/$script"
@@ -77,6 +80,7 @@ main() {
         echo "  ok  $script (already up to date)"
         continue
       fi
+      # Symlink exists but points elsewhere; update it
       ln -sf "$source" "$target"
       echo "  ok  $script (updated symlink)"
       ((updated++)) || true
@@ -113,7 +117,7 @@ resolve_script_dir() {
   local source="$0"
   [[ "$source" != */* ]] && source="$(command -v "$0")"
 
-  # Portable across macOS and Linux.
+  # Follow symlinks (portable, works on macOS and Linux)
   while [[ -L "$source" ]]; do
     local link_target
     link_target="$(readlink "$source")"

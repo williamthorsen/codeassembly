@@ -19,7 +19,7 @@ plugin_cache="$HOME/.claude/plugins/cache/claude-plugins-official"
 output_base="$repo_root/agents/rovo/skills"
 
 main() {
-  # Manual check: getopts cannot parse long options.
+  # Show help (manual check: getopts cannot parse long options)
   if [[ "${1:-}" == "--help" ]]; then
     show_usage 0
   fi
@@ -36,6 +36,7 @@ main() {
   done
   shift $((OPTIND - 1))
 
+  # Validate arguments
   if [[ $# -lt 1 ]]; then
     echo "$PROG: plugin name is required" >&2
     show_usage
@@ -45,6 +46,7 @@ main() {
   shift
   requested_skills=("$@")
 
+  # Find the latest version of the plugin
   plugin_dir="$plugin_cache/$plugin"
   if [[ ! -d "$plugin_dir" ]]; then
     echo "${red}x${normal} $PROG: plugin not found: $plugin" >&2
@@ -67,6 +69,7 @@ main() {
   echo "Extracting from ${plugin} v${latest_version}"
   echo ""
 
+  # Determine which skills to extract
   if [[ ${#requested_skills[@]} -eq 0 ]]; then
     mapfile -t skill_dirs < <(find "$source_dir" -mindepth 1 -maxdepth 1 -type d | sort)
   else

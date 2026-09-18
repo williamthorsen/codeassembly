@@ -2,6 +2,7 @@
 
 # Terminal color definitions for shell scripts.
 #
+# Source this file to use color variables in a script.
 # Uses conditional assignment so that callers can override colors before sourcing.
 #
 # Usage:
