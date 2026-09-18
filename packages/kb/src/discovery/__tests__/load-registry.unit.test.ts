@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { loadKbRegistry, tryLoadKbRegistry } from '../load-registry.ts';
 
-// Mock `readFile` with a passthrough to the real implementation so most tests
+// Mock `readFile` with a passthrough to the real implementation so that most tests
 // hit disk normally; the empty-message test overrides it per-call.
 vi.mock('node:fs/promises', async () => {
   const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
@@ -113,7 +113,7 @@ describe(loadKbRegistry, () => {
   it('throws naming the source file when a registry entry omits its required path', async () => {
     await expect(
       loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') }),
-    ).rejects.toThrow(/bad-structure.*kb\.yaml: invalid kb\.yaml —/s);
+    ).rejects.toThrow(/bad-structure.*kb\.yaml: invalid kb\.yaml:/s);
   });
 });
 
@@ -156,7 +156,7 @@ describe(tryLoadKbRegistry, () => {
   it('captures the error for a schema violation', async () => {
     const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') });
 
-    expect(result.error).toMatch(/invalid kb\.yaml —/);
+    expect(result.error).toMatch(/invalid kb\.yaml:/);
     expect(result.config.entries).toEqual([]);
   });
 

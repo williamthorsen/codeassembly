@@ -69,7 +69,7 @@ export interface KbRegistryLoadResult {
  * Loads the merged `kb.yaml` registry without throwing, capturing any failure message instead of presenting it.
  *
  * When `loadKbRegistry` throws, the result degrades to an empty config and contains the thrown message in `error`; the
- * caller decides whether and how to surface that message. Absent registry files are a success, which `loadKbRegistry`
+ * caller decides whether and how to report that message. Absent registry files are a success, which `loadKbRegistry`
  * returns as an empty config.
  */
 export async function tryLoadKbRegistry(
@@ -126,7 +126,7 @@ async function loadRegistryFile(
 
   const result = kbRegistryFileSchema.safeParse(parsed);
   if (!result.success) {
-    throw new Error(`${path}: invalid kb.yaml — ${result.error.issues[0]?.message ?? 'unknown error'}`);
+    throw new Error(`${path}: invalid kb.yaml: ${result.error.issues[0]?.message ?? 'unknown error'}`);
   }
 
   const configDir = dirname(path);

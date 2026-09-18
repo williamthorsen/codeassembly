@@ -7,8 +7,8 @@ import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
 import { pathExists } from '../exists.ts';
 import { writeAtomic } from '../write-atomic.ts';
 
-// Mock the write path with a passthrough to the real implementations, so most calls hit disk normally; a test that
-// needs a failure overrides one call.
+// Mock the write path with a passthrough to the real implementations, so that most calls hit disk normally; a test
+// that needs a failure overrides one call.
 vi.mock('node:fs/promises', async () => {
   const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
   return {
@@ -76,7 +76,7 @@ describe(writeAtomic, () => {
 
 // region | Helpers
 
-/** Returns the path the mocked `writeFile` was called with, which is the temp file `writeAtomic` staged. */
+/** Returns the path passed to the mocked `writeFile`: the temp file that `writeAtomic` staged. */
 function readStagedTempPath(): string {
   const stagedPath = vi.mocked(writeFile).mock.calls[0]?.[0];
   if (typeof stagedPath !== 'string') {

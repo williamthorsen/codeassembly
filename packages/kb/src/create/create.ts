@@ -10,9 +10,9 @@ import type { KbRegistry } from '../types.ts';
 
 /**
  * What `create` did about the registry's `default_kb` pointer when registering a store:
- * `set` — it was unset and the new store was the only KB, so the store became the default;
- * `unchanged` — a default was already set and left untouched;
- * `needs-selection` — it was unset but other KBs exist, so the caller should prompt for a choice.
+ * - `set`: It was unset and the new store was the only KB, so the store became the default.
+ * - `unchanged`: A default was already set and left untouched.
+ * - `needs-selection`: It was unset but other KBs exist; the caller should prompt for a choice.
  */
 export type DefaultKbOutcome = 'set' | 'unchanged' | 'needs-selection';
 
@@ -32,7 +32,7 @@ export interface CreatedStore {
 }
 
 /**
- * Inputs for {@link create}. `registryPath` and `description` belong to the registering form alone: a description is
+ * Inputs for {@link create}. `registryPath` and `description` belong to the registering form alone: A description is
  * only ever written into a registry entry, so supplying one without registering is a type error rather than a value
  * that would be silently discarded.
  */
@@ -46,8 +46,8 @@ export type CreateOutcome =
 
 /**
  * Scaffolds a new knowledge-base store in `targetDir` and, unless `register` is false, registers it in the kb.yaml
- * registry. Both preconditions — an existing `.kb/`, and (when registering) an already-registered name — are checked
- * before anything is written, so a precondition failure leaves the filesystem untouched. A name collision that the
+ * registry. Both preconditions, an existing `.kb/` and (when registering) an already-registered name, are checked
+ * before anything is written. A precondition failure leaves the filesystem untouched. A name collision that the
  * registry writer detects only at write time also returns `name-registered`, after the scaffold is written. Genuine
  * I/O failures propagate.
  */
@@ -65,7 +65,7 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
   }
 
   const { registryPath } = input;
-  // Capture the pre-register registry: it drives both the name-collision check and the default-KB decision.
+  // Capture the pre-register registry: It is the input to both the name-collision check and the default-KB decision.
   const before = await loadKbRegistry({ userConfigPath: registryPath });
   if (before.entries.some((entry) => entry.name === name)) {
     return { ok: false, reason: 'name-registered', message: nameRegisteredMessage(name, registryPath) };

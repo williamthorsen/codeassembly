@@ -5,7 +5,7 @@ import { defaultKbConfig } from '../../../config/config-schema.ts';
 import { makeTree } from '../../../test-utils/make-tree.ts';
 import { selectNotes } from '../select-notes.ts';
 
-/** `Cafe.md` with a combining acute after the `e`: the decomposed form macOS returns from `readdir`. */
+/** `Cafe.md` with a combining acute after the `e`: the decomposed form that macOS returns from `readdir`. */
 const DECOMPOSED_NAME = 'Cafe\u{301}.md';
 
 const NOTE =
@@ -21,7 +21,7 @@ const FILES: Record<string, string> = {
 };
 
 describe(selectNotes, () => {
-  it('selects exactly the notes a glob matches', async () => {
+  it('selects exactly the notes that a glob matches', async () => {
     const { selected, unmatched } = await select(['content/assertions/**']);
 
     expect(selected.toSorted()).toEqual(['content/assertions/Alpha.md', 'content/assertions/Beta.md']);
@@ -125,7 +125,7 @@ describe(selectNotes, () => {
     expect(result.unmatched).toEqual([]);
   });
 
-  it('selects only the literal note when a decomposed name also carries glob metacharacters', async () => {
+  it('selects only the literal note when a decomposed name also contains glob metacharacters', async () => {
     const root = await makeTree({
       [`content/Draft[v2]${DECOMPOSED_NAME}`]: NOTE,
       [`content/Draft2${DECOMPOSED_NAME}`]: NOTE,

@@ -2,7 +2,9 @@ import picomatch from 'picomatch';
 
 import type { KbConfig } from './config-schema.ts';
 
-/** The note-membership predicates a {@link KbConfig} defines, all matching KB-root-relative, slash-separated paths. */
+/**
+ * The note-membership predicates defined by a {@link KbConfig}, all matching KB-root-relative, slash-separated paths.
+ */
 export interface NoteScopeMatcher {
   /** True when the path matches a `targets` glob. */
   isTarget(relativePath: string): boolean;
@@ -17,7 +19,7 @@ export interface NoteScopeMatcher {
  * `picomatch`'s `dot:false`, so dot-directories (`.kb`, `.git`, `.agents`) are excluded implicitly without naming them
  * in `exclude`.
  *
- * The matcher governs `targets` and `exclude` alone: Each caller applies its own `.md` extension gate.
+ * The matcher applies `targets` and `exclude` alone: Each caller applies its own `.md` extension gate.
  */
 export function createNoteScopeMatcher(config: KbConfig): NoteScopeMatcher {
   const isTarget = picomatch([...config.targets], { dot: false });

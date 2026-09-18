@@ -11,9 +11,9 @@ export type ChangedPathsResult = { ok: true; paths: string[] } | { ok: false; me
  *
  * The change set is `git diff` of the working tree against `merge-base(ref, HEAD)` with `--diff-filter=AMR`, so it
  * follows renames (reporting the destination), includes uncommitted edits to tracked files, and excludes deletions.
- * Git emits toplevel-relative paths and resolves symlinks, so each path is rebased onto the real store root — a no-op
- * when the store is the repository root, correct when it is nested. A git failure (unknown ref, not a repository)
- * returns `{ ok: false }` for the caller to surface as a usage error rather than throwing.
+ * Because git emits toplevel-relative paths and resolves symlinks, the function rebases each path onto the real store
+ * root: a no-op when the store is the repository root, correct when it is nested. A git failure (unknown ref, not a
+ * repository) returns `{ ok: false }` for the caller to report as a usage error rather than throwing.
  */
 export function resolveChangedPaths(input: { storeRoot: string; ref: string }): ChangedPathsResult {
   const { storeRoot, ref } = input;
@@ -28,7 +28,7 @@ export function resolveChangedPaths(input: { storeRoot: string; ref: string }): 
     return { ok: false, message: toplevel.message };
   }
 
-  // `-z` emits NUL-delimited, unquoted paths so names with non-ASCII bytes survive verbatim (git's default
+  // `-z` emits NUL-delimited, unquoted paths so that names with non-ASCII bytes survive verbatim (git's default
   // octal-quoting would otherwise corrupt them); `-- .` limits the diff to the store subtree when the store is
   // nested below the repository root.
   const diff = runGit({
