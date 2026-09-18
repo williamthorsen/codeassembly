@@ -6,7 +6,7 @@ export function isGlobSegment(segment: string): boolean {
 /**
  * Returns the leading run of literal (non-glob) segments of a slash-separated pattern, slash-joined. A pattern whose
  * first segment is a glob yields the empty string; a fully literal pattern yields itself. Locates the deepest concrete
- * path a glob is anchored to, e.g. `content/notes/**` yields `content/notes`.
+ * path to which a glob is anchored, e.g. `content/notes/**` yields `content/notes`.
  */
 export function leadingLiteralPrefix(pattern: string): string {
   const literal: string[] = [];

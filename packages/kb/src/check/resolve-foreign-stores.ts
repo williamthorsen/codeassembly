@@ -12,9 +12,10 @@ import { scanWikilinks } from '../vault-integrity/wikilink-parse.ts';
 import { enumerateNotePaths } from './enumerate.ts';
 
 /**
- * Collects the distinct store names that a note set's wikilinks qualify, so a check run consults only the stores its
- * own links reach. It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a store-shaped
- * prefix inside a code sample pulls in no store and the two cannot disagree on what counts as a qualified link.
+ * Collects the distinct store names that a note set's wikilinks qualify, so that a check run consults only the stores
+ * that its own links name. It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a
+ * store-shaped prefix inside a code sample selects no store and the two cannot disagree on what counts as a qualified
+ * link.
  */
 export function collectStorePrefixes(notes: readonly { body: string }[]): Set<string> {
   const prefixes = new Set<string>();
@@ -27,12 +28,12 @@ export function collectStorePrefixes(notes: readonly { body: string }[]): Set<st
 }
 
 /**
- * Resolves each store name a run's links qualify against the merged registry, reading only note paths and each store's
- * own `.kb/config.yaml`: a foreign store is enumerated under its own `targets`/`exclude` and its own repository's
- * ignore rules, as it would be under its own check run, and no foreign note is opened.
+ * Resolves each store name that a run's links qualify against the merged registry, reading only note paths and each
+ * store's own `.kb/config.yaml`: A foreign store is enumerated under its own `targets`/`exclude` and its own
+ * repository's ignore rules, as it would be under its own check run, and no foreign note is opened.
  *
- * A store that cannot be read — absent from this machine, or carrying a config file that will not load — resolves
- * `unavailable` rather than throwing, so one unrelated store cannot fail the run.
+ * A store that cannot be read (absent from this machine, or with a config file that will not load) resolves
+ * `unavailable` rather than throwing, so that one unrelated store cannot fail the run.
  */
 export async function resolveForeignStores(input: {
   prefixes: Iterable<string>;

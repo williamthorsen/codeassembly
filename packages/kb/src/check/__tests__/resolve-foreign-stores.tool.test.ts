@@ -55,13 +55,13 @@ describe(resolveForeignStores, () => {
     expect((await resolveOne('fde', registry, 'private')).status).toBe('unavailable');
   });
 
-  it('reports a store carrying an unloadable config as unavailable rather than throwing', async () => {
+  it('reports a store with an unloadable config as unavailable rather than throwing', async () => {
     const target = await makeStore({ '.kb/config.yaml': 'visibility: public\n' });
 
     expect((await resolveOne('fde', makeRegistry({ fde: target }), 'private')).status).toBe('unavailable');
   });
 
-  it('reports a less shareable store as disallowed, carrying its visibility', async () => {
+  it('reports a less shareable store as disallowed, with its visibility', async () => {
     const target = await makeStore({ 'content/Secret.md': 'body', '.kb/config.yaml': 'visibility: private\n' });
 
     const store = await resolveOne('journal', makeRegistry({ journal: target }), 'shared');
@@ -93,7 +93,7 @@ function makeRegistry(paths: Record<string, string>): KbRegistry {
   };
 }
 
-/** Resolves a single prefix, returning the entry `resolveForeignStores` recorded for it. */
+/** Resolves a single prefix, returning the entry that `resolveForeignStores` recorded for it. */
 async function resolveOne(
   prefix: string,
   registry: KbRegistry,

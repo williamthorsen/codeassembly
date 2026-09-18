@@ -8,10 +8,10 @@ import { commitAll, initGitRepo } from '../../test-utils/git-repo.ts';
 import { makeTree } from '../../test-utils/make-tree.ts';
 import { enumerateNotePaths, enumerateNotes } from '../enumerate.ts';
 
-/** `Cafe.md` with a combining acute after the `e`: the decomposed form macOS returns from `readdir`. */
+/** `Cafe.md` with a combining acute after the `e`: the decomposed form that macOS returns from `readdir`. */
 const DECOMPOSED_NAME = 'Cafe\u{301}.md';
 
-/** Every path `readFile` was called with, so a paths-only enumeration can be shown to open nothing. */
+/** Every path with which `readFile` was called, so that a paths-only enumeration can be shown to open nothing. */
 const readFilePaths: string[] = [];
 
 /** Directories whose `readdir` should reject; cleared between tests. */
@@ -46,7 +46,7 @@ const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
 describe(enumerateNotePaths, () => {
-  it('returns the same note set enumerateNotes selects, under the same targets and excludes', async () => {
+  it('returns the same note set that enumerateNotes selects, under the same targets and excludes', async () => {
     const root = await makeTree({
       'content/top.md': VALID,
       'content/sub/nested.md': VALID,
@@ -229,7 +229,7 @@ describe(`${enumerateNotePaths.name} under git`, () => {
 
 // region | Helpers
 
-/** Enumerates `root` under a config, inheriting the bundled defaults for every field the caller omits. */
+/** Enumerates `root` under a config, inheriting the bundled defaults for every field that the caller omits. */
 async function enumerateIn(root: string, config: Partial<KbConfig> & Pick<KbConfig, 'targets'>): Promise<string[]> {
   const notes = await enumerateNotes({ kbRoot: root, config: { ...defaultKbConfig, ...config } });
   return notes.map((entry) => entry.relativePath).toSorted();

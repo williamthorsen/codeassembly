@@ -12,7 +12,7 @@ import { isGlobSegment } from './glob-segments.ts';
 
 /** A note read and parsed once, so that every check in a run shares the result. */
 export interface EnumeratedNote {
-  /** Absolute path the note was read from. */
+  /** Absolute path from which the note was read. */
   path: string;
   /** The note's path relative to the KB root, slash-separated. */
   relativePath: string;
@@ -31,9 +31,10 @@ export interface EnumeratedNote {
 /**
  * Walks a KB root and returns the KB-root-relative path of every note {@link enumerateNotes} selects, opening none of
  * them. Scope selection runs through the same matcher and the same pruning, so a caller that needs only the note set's
- * shape — which folders hold notes, and how many — sees exactly what the check pipeline admits.
+ * shape (which folders contain notes, and how many) sees exactly what the check pipeline admits.
  *
- * A note whose content cannot be read still contributes its path here, where `enumerateNotes` drops it with a warning.
+ * A note whose content cannot be read still contributes its path here, whereas `enumerateNotes` drops it with a
+ * warning.
  */
 export async function enumerateNotePaths(input: { kbRoot: string; config: KbConfig }): Promise<string[]> {
   const locations = await collectNoteLocations(input);
@@ -44,19 +45,19 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  * Walks a KB root and parses every note whose KB-root-relative path matches a `config.targets` glob and no
  * `config.exclude` glob into an {@link EnumeratedNote}.
  *
- * Matching uses `picomatch` with `dot:false`, so dot-prefixed directories (`.kb`, `.git`, `.agents`) are excluded
+ * Because matching uses `picomatch` with `dot:false`, dot-prefixed directories (`.kb`, `.git`, `.agents`) are excluded
  * implicitly without naming them in `exclude`. The walk prunes the tree to each target's leading literal segment
  * (`content/**` descends only into `content/`); a target with no leading literal (e.g. `**\/*.md`) falls back to a
- * full walk. Excludes are honored during descent so an excluded subtree is never entered.
+ * full walk. Excludes are honored during descent so that an excluded subtree is never entered.
  *
- * If the store sits in a git working tree, the enumeration keeps only the notes that git tracks and the untracked
+ * If the store is in a git working tree, the enumeration keeps only the notes that git tracks and the untracked
  * notes that no ignore rule covers. A note that the repository ignores is therefore neither enumerated nor available
  * as a wikilink target, so a link pointing at one resolves to nothing. A store outside a working tree, or a machine
- * carrying no git, keeps what the walk alone found.
+ * with no git, keeps what the walk alone found.
  *
- * Notes with malformed or absent frontmatter are kept — `readNoteContent` records the parse error in `error` and
- * returns an empty field map rather than throwing, so they remain valid wikilink targets. A note that cannot be read,
- * or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk.
+ * Notes with malformed or absent frontmatter are kept: `readNoteContent` records the parse error in `error` and
+ * returns an empty field map rather than throwing, so that they remain valid wikilink targets. A note that cannot be
+ * read, or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk.
  */
 export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }): Promise<EnumeratedNote[]> {
   const locations = await collectNoteLocations(input);
@@ -122,7 +123,7 @@ function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string>
 
 /** A note that the walk selected, before its content is read. */
 interface NoteLocation {
-  /** Absolute path the note sits at. */
+  /** Absolute path of the note. */
   path: string;
   /** The note's path relative to the KB root, slash-separated. */
   relativePath: string;
