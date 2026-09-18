@@ -28,8 +28,7 @@ type GitToplevelResult = { readonly root: string } | { readonly failure: string 
  * sends the reader after a repository that is already there.
  *
  * The diagnostic is written to stderr only: Callers such as `derive-session-context` emit machine-readable output on
- * stdout, so a stray stdout write would corrupt it. The branches are ordered so that a future
- * captured-invocation-directory tier can be inserted ahead of the git-root check without disturbing the others.
+ * stdout, so a stray stdout write would corrupt it.
  */
 export function resolveProjectRoot(options: ResolveProjectRootOptions = {}): string {
   const { cwd } = options;

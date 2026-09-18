@@ -21,7 +21,7 @@ const config = defineConfig([
   {
     // The change-grammar engine is written to move to another repository unchanged, so it depends on nothing but
     // itself: no module outside its directory, no package, no Node builtin, and no `process`. The engine takes the
-    // taxonomy as an argument. `src/change-grammar/__tests__/lint-boundary.unit.test.ts` proves the block still fires.
+    // taxonomy as an argument.
     files: ['src/change-grammar/**/*.ts'],
     rules: {
       'import-x/no-nodejs-modules': 'error',
