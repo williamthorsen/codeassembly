@@ -42,7 +42,7 @@ export async function completeRun(input: CompleteRunInput): Promise<CompleteRunR
 
   const validStatus = statusResult.data;
 
-  // Capture timestamp once so the event and the index header are consistent
+  // Capture timestamp once so that the event and the index header are consistent
   const now = new Date().toISOString();
 
   const event =

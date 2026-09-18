@@ -115,7 +115,7 @@ describe('resolveBaseDir', () => {
     expect(result).toBe(join(fakeHome, 'custom-dir'));
   });
 
-  it('handles malformed YAML gracefully — warns on stderr and falls back', async () => {
+  it('handles malformed YAML gracefully: warns on stderr and falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
@@ -137,7 +137,7 @@ describe('resolveBaseDir', () => {
     }
   });
 
-  it('handles a preferences file with no artifacts key — falls back', async () => {
+  it('handles a preferences file with no artifacts key: falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
@@ -148,7 +148,7 @@ describe('resolveBaseDir', () => {
     expect(result).toBe(join(fakeHome, '.ai'));
   });
 
-  it('handles a preferences file where artifacts is not an object — falls back', async () => {
+  it('handles a preferences file whose artifacts key is not an object: falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
@@ -159,7 +159,7 @@ describe('resolveBaseDir', () => {
     expect(result).toBe(join(fakeHome, '.ai'));
   });
 
-  it('handles a preferences file where artifacts.base_dir is not a string — falls back', async () => {
+  it('handles a preferences file whose artifacts.base_dir is not a string: falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
@@ -174,7 +174,7 @@ describe('resolveBaseDir', () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
 
-    // Create preferences.yaml as a directory — reading it throws EISDIR, not ENOENT
+    // Create preferences.yaml as a directory: Reading it throws EISDIR, not ENOENT
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await mkdir(join(agentsDir, 'preferences.yaml'), { recursive: true });
