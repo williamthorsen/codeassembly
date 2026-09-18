@@ -1,7 +1,7 @@
 import { defineConfig } from '@williamthorsen/nmr/taze';
 
 export default defineConfig({
-  // Hold packages that must track a particular version line, so an upgrade pass never jumps them.
+  // Hold packages that must track a particular version line, so that an upgrade pass never moves them off it.
   packageMode: {
     // Disallow major upgrades until the pinned Node.js version is changed; engines is set to >=24.
     '@types/node': 'minor',

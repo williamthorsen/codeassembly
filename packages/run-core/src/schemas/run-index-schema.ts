@@ -12,7 +12,7 @@ export const criticalitySchema = z.enum(['none', 'low', 'medium', 'high']);
  *
  * Fields use `.nullish()` because production data contains explicit `null`
  * values (meaning "phase not yet reached") as distinct from `undefined`
- * (field absent). `.partial()` makes every field optional so keys can be
+ * (field absent). `.partial()` makes every field optional so that keys can be
  * omitted entirely.
  */
 export const phaseEntrySchema = z

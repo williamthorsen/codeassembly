@@ -5,8 +5,8 @@ import { phaseDecisionMapSchema, phasesSchema, runStatusSchema } from './run-ind
 export { criticalitySchema, phaseStatusSchema, runStatusSchema } from './run-index-schema.ts';
 
 /**
- * V1 status.json schema: a flat structure. The phase-decision map is named `phaseDecision`, in the singular, where v2
- * and the canonical model name it `phaseDecisions`.
+ * V1 status.json schema: a flat structure. The phase-decision map is named `phaseDecision`, in the singular, whereas
+ * v2 and the canonical model name it `phaseDecisions`.
  */
 export const v1StatusSchema = z.object({
   runId: z.string(),
