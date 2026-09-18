@@ -2,7 +2,7 @@
 slug: williamthorsen-code-layout-preferences
 description: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order. Consult before creating a file or directory, before placing a test, helper, or fixture, and before ordering declarations in a module.'
 delivery: [hook, skill]
-version: '4'
+version: '5'
 ---
 
 # William Thorsen's code layout preferences
@@ -91,7 +91,7 @@ Do not use multi-line boxed separators or rulered headings. They wrap awkwardly 
 
 ## Naming of identifiers
 
-Identifier naming (no abbreviations, kind-bearing tails, unit-of-measure suffixes, verb-led function names, and when a boolean takes a prefix) is specified in [naming conventions](../../skills/_data/naming-conventions.md).
+Identifier naming (no obscure abbreviations, kind-bearing tails, unit-of-measure suffixes, verb-led function names, and when a boolean takes a prefix) is specified in [naming conventions](../../skills/_data/naming-conventions.md).
 
 ## What binds only through configuration
 
