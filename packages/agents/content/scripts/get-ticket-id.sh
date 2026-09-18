@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Extracts a Jira-style ticket ID from a branch name.
+# Extracts a ticket ID from a branch name.
 #
 # Usage:
 #   get-ticket-id.sh [BRANCH_NAME]
