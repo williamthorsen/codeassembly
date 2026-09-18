@@ -23,7 +23,7 @@ const MARKER_KEY = 'Sealed record';
 // Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A carrier is a site that composes an artifact's opening itself: it writes frontmatter without prepending the
+// A carrier is a site that composes an artifact's opening itself: It writes frontmatter without prepending the
 // script's YAML output, or it writes an artifact with no frontmatter, where the marker opens the file. Every other
 // artifact-writing skill and subagent gets the marker from the script.
 const CARRIERS: ReadonlyArray<string> = [
