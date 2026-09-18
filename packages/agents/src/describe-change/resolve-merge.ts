@@ -17,20 +17,9 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  * Resolves what a pull request merges as: the effective record and the source of each of its fields, the merge title and
  * body, what each source names, the defects that block approval, and the notices that the approval gate shows.
  *
- * With a readable block, the block's consolidated record and the commits' are compared before any override. When they
- * agree, or when the commits are unavailable, the block's stands. When they disagree, the commits' wins as the fresher
- * of the two, and the divergence is shown.
- * Without a readable block, the type and its breaking marker come together from the labels when a type label resolved
- * and otherwise from the commits, and the scope resolves on its own the same way; a disagreement with the commits is
- * shown.
- *
- * The block's overrides then apply, and the caller's apply last, through `applyOverrides`. Each field is attributed to
- * the source that set it last.
- *
- * The title comes from the caller's override, then from the pull-request title inverted through `pr.title_format`, then
- * from the block, then from the pull-request title as given. A scope and type read from the pull-request title, through
- * that template when it names `{type}` and otherwise through `commit.title_format`, never stay in the title; when they
- * differ from the effective record, the divergence is shown.
+ * The base record comes from the block when one is readable and from the labels otherwise. The block's overrides then
+ * apply, and the caller's apply last, through `applyOverrides`, so each field is attributed to the source that set it
+ * last. The title resolves on a precedence of its own.
  */
 export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   const notices: MergeNotice[] = [];

@@ -43,9 +43,6 @@ export function extractApprovedLede(body: string): string | null {
 /**
  * Reads a decision record's body as the pair produced by an author's edit. Yields `null` for a body containing no
  * agent lede, which is the one section that every decision has.
- *
- * Presence decides here too: An absent merged lede marks the edit as null, so a reader tells a lede that the author
- * left alone from one that they rewrote without consulting the verdict.
  */
 export function extractDecisionPair(body: string): LedeDecisionPair | null {
   const agentLede = extractSection({ text: body, heading: AGENT_LEDE_HEADING });

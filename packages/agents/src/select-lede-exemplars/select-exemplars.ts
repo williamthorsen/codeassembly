@@ -47,7 +47,7 @@ type RecordOutcome =
  * qualifying tier-mates went untaken.
  *
  * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: A
- * record is admitted on its rating and its type alone. The same request returns the same records either way.
+ * record is admitted on its rating and its type alone.
  */
 export async function selectExemplars(input: {
   storePath: string;

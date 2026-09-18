@@ -9,8 +9,7 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * result; each message names the template and the defect, so the refusal says what to change.
  *
  * The structural rules run first and hold whatever the values are. Render-and-parse passes over well-formed values then
- * backstop them, because a later grammar extension could otherwise outrun the checker silently: One pass includes every
- * token named by the template, and one more drops each optional group in turn.
+ * backstop them, because a later grammar extension could otherwise outrun the checker silently.
  *
  * Value-dependent ambiguity is not a defect. Under `[{ticket_ref} ]{title}` a title opening with `#466 ` is
  * indistinguishable from a ticket reference, as it is for release-kit, and the template is accepted.
