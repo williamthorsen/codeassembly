@@ -24,7 +24,7 @@ Booleans are the exception: A claim has no kind to name.
 
 ## Unit-of-measure suffixes
 
-Numeric variables must include the unit as a suffix. `Ms`, `Sec`, `Px`, and `Rem` pass the abbreviation test above.
+Numeric variables must include the unit as a suffix. The suffix is the unit's conventional written form: `Ms`, `Sec`, `Px`, `Rem`, `Ns`.
 
 - ✅ `durationMs`, `timeoutMs`, `delaySec`, `CELL_HEIGHT_PX`, `fontSizeRem`
 - ❌ `duration`, `timeout`, `delay`, `CELL_HEIGHT`, `fontSize`
