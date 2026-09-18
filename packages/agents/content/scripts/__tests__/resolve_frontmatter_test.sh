@@ -718,14 +718,14 @@ setup_missing_manifest() {
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
-  # Deliberately do NOT create .agents/main.branch-manifest.json; the deriver should write one.
+  # No `.agents/main.branch-manifest.json` exists, so the deriver must write one.
   # Point the bundle resolver at the on-disk bundle. shellspec sources this script via `Include`,
   # so the script's own `BASH_SOURCE[0]`-based path computation resolves to the shellspec runner
   # rather than the agents content tree.
   export RESOLVE_FRONTMATTER_BUNDLE_PATH="$PROJECT_ROOT/content/skills/derive-session-context/derive-session-context.mjs"
-  # Pass --home pointing at the tmpdir so that the deriver does not read the developer's real
-  # `~/.agents/preferences.yaml` (whose schema-validity is environment-specific). Using a flag
-  # instead of HOME env override avoids breaking PATH-resolution tools (e.g., asdf shims).
+  # `--home` points the deriver at the tmpdir so that it does not read the real
+  # `~/.agents/preferences.yaml`, whose schema-validity is environment-specific. A `HOME` env
+  # override would break PATH-resolution tools such as asdf shims.
   export RESOLVE_FRONTMATTER_BUNDLE_ARGS="--home $tmpdir"
 }
 
@@ -743,15 +743,10 @@ When run main --skill foo --interactive true
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
-# After the deriver runs, the manifest file should exist at the canonical path.
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 End
 
 It "derives the manifest at the repo root when invoked from a nested subdirectory"
-# Regression: `derive_manifest` previously omitted `--cwd`, so the deriver wrote to
-# the caller's working directory while `read_manifest` looked at the repo root. Every
-# call from a subdirectory re-ran the deriver and left manifests in nested `.agents/`
-# folders. The fix anchors the deriver at `git rev-parse --show-toplevel`.
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p packages/nested/deep
 subdir_run() {
@@ -765,7 +760,6 @@ When run subdir_run
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
-# Manifest must appear at the repo root, not the subdirectory.
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.json" should not be exist
 End
@@ -773,7 +767,7 @@ End
 It "recovers when the cached manifest contains corrupt JSON"
 # Seed a corrupt `.branch-manifest.json`; `read_manifest`'s `jq empty` guard treats it
 # as a cache miss and falls through to `derive_manifest`, which recomposes the manifest
-# from preferences + git state. Mirrors the TS-side `tryReadManifest` recovery contract.
+# from preferences + git state.
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p .agents
 printf '{ "ticket_id": "broken' >.agents/main.branch-manifest.json
@@ -782,10 +776,9 @@ The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
 # The deriver emits a stderr diagnostic when it overwrites the corrupt file so that an operator can
-# distinguish a normal cache miss from recurring corruption. Assert that it appears.
+# distinguish a normal cache miss from recurring corruption.
 The stderr should include "manifest"
 The stderr should include "is corrupt"
-# After recovery, the manifest should now be valid JSON readable by jq.
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 End
 End
@@ -902,8 +895,6 @@ The variable result should include "ticket_id: 537"
 End
 
 It "resolves a legacy manifest 'platform' key to 'scm' in json output"
-# The fixture manifest has the legacy 'platform' key; the script's '.scm // .platform'
-# fallback should still emit it under the new 'scm' key.
 When run main --format json
 The status should be success
 The output should include '"scm": "github"'

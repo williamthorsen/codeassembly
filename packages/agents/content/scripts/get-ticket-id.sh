@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 # Extracts a Jira-style ticket ID from a branch name.
 #
-# Tries the Jira-style pattern first (case-insensitive `[A-Za-z]{2,}-[0-9]+`, uppercased on output).
-# Falls back to a bare-numeric match anchored at the start of the branch name, formatted using
-# `project.ticket_ref_prefix` from `.agents/preferences.yaml`.
-#
 # Usage:
 #   get-ticket-id.sh [BRANCH_NAME]
 #
@@ -17,26 +13,23 @@ set -euo pipefail
 
 readonly PROG="$(basename "$0")"
 
-# Matches a Jira-style ticket ID anywhere in the branch name. Returns the first match (uppercased) or empty.
-# Pattern: Two or more letters, hyphen, one or more digits, matched case-insensitively.
-# Deliberately unanchored so that author-prefixed branches (e.g., `wt/COMPPLAN-795`, `wthorsen/MAC-130`) match
-# correctly. The greedy `[0-9]+` boundary stops at the first non-digit, so `.N` sub-ticket suffixes and
-# `-description` suffixes are naturally truncated. See `_data/ticket-id-extraction.md` for the canonical contract.
+# Matches a Jira-style ticket ID anywhere in the branch name, or returns empty.
+# The pattern is unanchored so that author-prefixed branches (`wt/COMPPLAN-795`, `wthorsen/MAC-130`) match.
+# See `_data/ticket-id-extraction.md` for the canonical contract.
 extract_jira_id() {
   local branch_name="$1"
   echo "$branch_name" | grep -oiE '[A-Z]{2,}-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]' || true
 }
 
-# Matches a bare-numeric prefix at the start of the branch name. Anchored
-# deliberately so that digits embedded in slugs (e.g., `feat/foo-2`) do not match.
+# Matches a bare-numeric prefix at the start of the branch name. The anchor keeps digits embedded in slugs
+# (`feat/foo-2`) from matching.
 extract_bare_number() {
   local branch_name="$1"
   echo "$branch_name" | grep -oE '^[0-9]+' | head -1 || true
 }
 
 # Resolves the project preferences file, anchored at the git repo root so that the lookup does not depend on the
-# caller's working directory. Falls back to the current directory when git cannot resolve the root, quoting git's
-# own diagnostic so that a misanchored run is debuggable rather than silent.
+# caller's working directory.
 project_preferences_file() {
   local root
   if ! root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
@@ -47,10 +40,8 @@ project_preferences_file() {
   printf '%s/.agents/preferences.yaml' "$root"
 }
 
-# Reads `project.ticket_ref_prefix` from a preferences YAML file. Defaults to the preferences file at the repo root.
+# Reads `project.ticket_ref_prefix` from a preferences YAML file.
 # Returns empty when the key is absent or the file does not exist.
-# Handles both quoted and unquoted values, and strips trailing inline comments (`# ...`) from unquoted values. A `#`
-# inside single or double quotes is preserved as part of the value.
 read_ticket_ref_prefix() {
   local file="${1:-$(project_preferences_file)}"
   if [[ ! -f "$file" ]]; then
@@ -65,7 +56,6 @@ read_ticket_ref_prefix() {
     return
   fi
 
-  # Strip everything up through `ticket_ref_prefix:` and any leading whitespace.
   line="${line#*ticket_ref_prefix:}"
   line="${line#"${line%%[![:space:]]*}"}"
 
@@ -75,7 +65,7 @@ read_ticket_ref_prefix() {
     return
   fi
 
-  # Quoted value: Capture the contents between the matching quotes. This preserves `#` characters inside the value.
+  # Quoted value: Matching the quotes preserves a `#` inside the value.
   if [[ "$line" =~ ^\'([^\']*)\' ]]; then
     echo "${BASH_REMATCH[1]}"
     return
@@ -92,10 +82,7 @@ read_ticket_ref_prefix() {
 }
 
 # Combines a bare number with the configured prefix to produce a ticket ID.
-# - `#` prefix: Returns the bare number alone (`#` is a GitHub display convention and must not appear in returned
-#   values or file paths).
-# - Other non-empty prefix: Returns `{prefix}{number}` (e.g., `MAC-147`).
-# - Empty prefix: Returns the bare number unchanged.
+# A `#` prefix is dropped: It is a GitHub display convention and must not appear in returned values or file paths.
 format_bare_ticket_id() {
   local bare_number="$1"
   local prefix="$2"
@@ -109,8 +96,7 @@ format_bare_ticket_id() {
   fi
 }
 
-# Resolves a ticket ID for the given branch name. Tries the Jira-style match first;
-# falls back to the bare-numeric prefix when no Jira-style ID is found. Returns empty when neither matches.
+# Resolves a ticket ID for the given branch name, or returns empty when no pattern matches.
 extract_ticket_id() {
   local branch_name="$1"
   local ticket_id
@@ -140,7 +126,6 @@ main() {
   extract_ticket_id "$branch_name"
 }
 
-# Allow sourcing for testing without executing main.
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   main "$@"
 fi
