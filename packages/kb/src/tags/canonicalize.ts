@@ -1,6 +1,6 @@
 import type { AliasMap } from '../types.ts';
 
-// Tag-resolution primitives. Both functions take positional arguments rather than a single options object — a
+// Tag-resolution primitives. Both functions take positional arguments rather than a single options object: a
 // documented exception to the package's object-input convention, because they are called in tight per-tag loops.
 
 /**

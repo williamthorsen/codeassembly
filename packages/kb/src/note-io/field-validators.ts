@@ -1,11 +1,11 @@
-// Leaf validators over raw field values from a parsed note's frontmatter map. They carry no record-type knowledge.
+// Leaf validators over raw field values from a parsed note's frontmatter map. They depend on no record type.
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
 /**
  * Coerces a frontmatter field value to a string list: the array's string members when it is a sequence, an empty list
- * when the value is absent, or `null` when the value is present but not list-shaped (so a parser can flag it).
+ * when the value is absent, or `null` when the value is present but not list-shaped (so that a parser can flag it).
  */
 export function asStringList(value: unknown): string[] | null {
   if (value === undefined || value === null) {

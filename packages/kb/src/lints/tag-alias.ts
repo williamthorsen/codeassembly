@@ -2,7 +2,7 @@ import { asStringList } from '../note-io/field-validators.ts';
 import { findAliasFor } from '../tags/canonicalize.ts';
 import type { AliasMap, Finding } from '../types.ts';
 
-/** The note fields the tag-alias lint reads: its path and its raw frontmatter field map. */
+/** The note fields that the tag-alias lint reads: its path and its raw frontmatter field map. */
 export interface TagAliasNote {
   path: string;
   fields: Record<string, unknown>;
@@ -27,7 +27,7 @@ export function tagAliasFindings(note: TagAliasNote, aliases: AliasMap): Finding
       path: note.path,
       rule: 'tag-alias',
       severity: 'warning',
-      message: `tag "${tag}" is an alias — use canonical form "${canonical}"`,
+      message: `tag "${tag}" is an alias; use canonical form "${canonical}"`,
     });
   }
   return findings;

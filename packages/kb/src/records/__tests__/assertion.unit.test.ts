@@ -148,7 +148,7 @@ describe(renderAssertion, () => {
     ]);
   });
 
-  it('emits only the assertion fields — never a foreign key', () => {
+  it('emits only the assertion fields, never a field of another record type', () => {
     const parsed = parseAssertion(validFields, '');
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;

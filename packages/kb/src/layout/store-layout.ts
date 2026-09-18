@@ -22,12 +22,15 @@ export const ASSERTIONS_DIR = `${CONTENT_DIR}/${ASSERTIONS_SEGMENT}`;
 /** The check configuration. */
 export const CONFIG_FILE = `${KB_DIR}/config.yaml`;
 
-/** The editor and formatter settings. Sits at the store root, where every tool that reads it looks. */
+/** The editor and formatter settings. Located at the store root, where every tool that reads it looks. */
 export const EDITORCONFIG_FILE = '.editorconfig';
 
 export const EVENTS_DIR = `${CONTENT_DIR}/events`;
 
-/** The formatting configuration. Sits at the store root rather than under `.kb/`, because Prettier discovers it there. */
+/**
+ * The formatting configuration. Located at the store root rather than under `.kb/`, because Prettier discovers it
+ * there.
+ */
 export const PRETTIER_CONFIG_FILE = '.prettierrc.yaml';
 
 /** The declared assertion taxonomy. */

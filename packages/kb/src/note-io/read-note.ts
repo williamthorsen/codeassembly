@@ -21,7 +21,7 @@ export async function readNote(path: string): Promise<ReadNote> {
 
 /**
  * Splits note content into a frontmatter field map and body. A missing frontmatter block or a YAML parse error is
- * reported in `error` (never thrown), with the full content returned as the body so callers can still surface it.
+ * reported in `error` (never thrown), with the full content returned as the body so that a caller can still show it.
  */
 export function readNoteContent(content: string): ReadNote {
   const lines = content.split('\n');

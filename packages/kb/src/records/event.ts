@@ -4,7 +4,7 @@ import { asStringList, isValidDate } from '../note-io/field-validators.ts';
 // validated contract; any other frontmatter field (e.g. `repo`) is preserved verbatim in `extra` for faithful
 // round-trip and is promoted to a typed field by the operation that comes to depend on it.
 
-/** The impact levels an event may carry, ordered lowest to highest. */
+/** The impact levels that an event may declare, ordered lowest to highest. */
 export const EVENT_IMPACT_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
 
 /** An event's impact: the author's subjective, revisable rating of how much addressing the event matters. */
@@ -14,7 +14,7 @@ export type EventImpact = (typeof EVENT_IMPACT_LEVELS)[number];
 // to `.includes`, and type assertions are banned, so the set's `.has(string)` is the assertion-free lookup.
 const IMPACT_LEVEL_SET: ReadonlySet<string> = new Set(EVENT_IMPACT_LEVELS);
 
-/** The values an optional field treats as not supplied, the empty string included. */
+/** The values that an optional field treats as not supplied, the empty string included. */
 const NOT_SUPPLIED_VALUES: ReadonlySet<unknown> = new Set([undefined, null, '']);
 
 /** Reports whether a value is one of the declared {@link EVENT_IMPACT_LEVELS}. */
@@ -119,8 +119,8 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
 
 /**
  * Projects an event back to a frontmatter field map (declared fields first, then preserved `extra`) plus its body. An
- * empty `session` is omitted like an absent one, mirroring {@link parseEvent}: the two spellings of "no session" have a
- * single representation on both edges of the module, so no record can reacquire the empty field on a write.
+ * empty `session` is omitted like an absent one, mirroring {@link parseEvent}: The two forms of "no session" have one
+ * representation on both parse and render, so no record can reacquire the empty field on a write.
  */
 export function renderEvent(record: KbEvent): { fields: Record<string, unknown>; body: string } {
   const fields: Record<string, unknown> = {
@@ -172,8 +172,8 @@ function readListField(value: unknown, field: string, errors: string[]): string[
 }
 
 /**
- * Reads an optional string field for which the empty string carries no more meaning than absence: both yield
- * `undefined`, so the record holds one representation of "not supplied". A present non-string value records an error and
+ * Reads an optional string field for which the empty string means the same as absence: Both yield `undefined`, so
+ * the record has one representation of "not supplied". A present non-string value records an error and
  * yields `undefined`.
  */
 function readOptionalNonEmptyString(value: unknown, field: string, errors: string[]): string | undefined {

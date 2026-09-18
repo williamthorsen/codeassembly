@@ -70,7 +70,7 @@ describe(taxonomyFindings, () => {
     expect(findings).toEqual([]);
   });
 
-  it('ignores a note sitting directly in the assertions root', () => {
+  it('ignores a note directly in the assertions root', () => {
     const findings = run({ notes: ['Loose.md'], declared: ['engineering'], extraNotes: ['engineering/note.md'] });
 
     expect(findings).toEqual([]);
@@ -122,7 +122,7 @@ function buildTaxonomy(paths: readonly string[]): Taxonomy {
   return new Map(paths.map((path) => [path, { description: '', provisional: false }]));
 }
 
-/** Reads the message of the single finding carrying `rule`. */
+/** Reads the message of the single finding whose rule is `rule`. */
 function messageFor(findings: readonly { rule: string; message: string }[], rule: string): string | undefined {
   return findings.find((finding) => finding.rule === rule)?.message;
 }
