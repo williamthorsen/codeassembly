@@ -1,11 +1,15 @@
 # Naming conventions
 
-## No abbreviations
+## No obscure abbreviations
 
-Use full words. Abbreviations save keystrokes but make names harder to understand.
+An abbreviation is permitted when it is what practitioners call the thing, aloud and in prose, so that a reader recognizes it without expanding it. One that the reader must expand is banned, and ambiguity is the usual symptom: `res` names a result, a response, or a resource.
 
-- ✅ `position`, `request`, `response`, `configuration`, `message`
-- ❌ `pos`, `req`, `res`, `config`, `msg`
+- ✅ `config`, `dir`, `args`, `spec`, `ref`, `repo`, `env`, `id`
+- ❌ `req`, `res`, `pos`, `msg`, `ctx`, `num`, `str`
+
+When the full word is a reserved word of the language, its accepted abbreviation is permitted: `fn` for `function`.
+
+A permitted abbreviation is not required: Code may spell the word out to stay consistent with its surroundings.
 
 **Exception:** Trivial predicate callbacks in which the variable is used once and the type is obvious: `.map(c => c.trim())`, `.filter(n => n > 0)`.
 
@@ -20,7 +24,7 @@ Booleans are the exception: A claim has no kind to name.
 
 ## Unit-of-measure suffixes
 
-Numeric variables must include the unit as a suffix. Abbreviations are fine when clearly understandable.
+Numeric variables must include the unit as a suffix. The suffix is the unit's conventional written form: `Ms`, `Sec`, `Px`, `Rem`, `Ns`.
 
 - ✅ `durationMs`, `timeoutMs`, `delaySec`, `CELL_HEIGHT_PX`, `fontSizeRem`
 - ❌ `duration`, `timeout`, `delay`, `CELL_HEIGHT`, `fontSize`
