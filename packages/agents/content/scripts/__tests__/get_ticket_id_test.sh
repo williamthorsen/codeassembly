@@ -464,8 +464,8 @@ The output should equal "MAC-147"
 End
 
 It "warns to stderr when a bare number is resolved outside a git repository"
-# Run from a sibling directory that is deliberately not a repo so that the prefix lookup falls back to
-# the working directory and must announce the misanchor on stderr rather than failing silently.
+# Run from a sibling directory that is not a repo, so that the prefix lookup falls back to the working
+# directory and announces the misanchor on stderr.
 run_outside_repo() {
   mkdir -p "$tmpdir/outside"
   cd "$tmpdir/outside"

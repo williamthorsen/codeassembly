@@ -11,8 +11,8 @@ import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers
 
 // `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. Because a
 // subagent runs on its own system prompt and loads no guidance file, a section that its role's work needs reaches it
-// only by being inlined. Both hosts now source the text from one partial, and these assertions are what keep a copy
-// from creeping back into either.
+// only by being inlined. Both hosts source the text from one partial, and these assertions are what keep a copy from
+// creeping back into either.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 // One section per entry in SECTIONS runs the restatement check, and each pass reads every authored Markdown file in
@@ -157,8 +157,8 @@ describe('shared-doctrine reach', () => {
     });
   });
 
-  // The extraction gave these sections a second audience without changing the first. A section pulled into a partial
-  // and wired only to subagents would silently strip doctrine from every interactive session; nothing else catches it.
+  // These sections serve the interactive session as well as the subagent. A section pulled into a partial and wired
+  // only to subagents would silently strip doctrine from every interactive session; nothing else catches it.
   describe.each(HARNESS_GUIDANCE)('%s', (relativePath) => {
     it('renders every shared section once, in source order', async () => {
       const lines = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).split('\n');

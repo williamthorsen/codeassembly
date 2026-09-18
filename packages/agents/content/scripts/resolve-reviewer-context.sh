@@ -8,41 +8,6 @@
 #   2. A static lookup table (markdown with `## <package-name>` sections)
 #      keyed on npm package identifiers that are known to confuse reviewers.
 #
-# Usage:
-#   resolve-reviewer-context.sh \
-#     [--sidecar PATH] \
-#     --changed-files FILE \
-#     --lookup PATH
-#   resolve-reviewer-context.sh --help
-#
-# Output (stdout): Markdown block ready to inline directly under the
-# reviewer prompt's `## Reviewer context` heading. Empty when neither
-# source produces content. The script never emits the `## Reviewer
-# context` heading itself; the orchestrator wraps the output and skips
-# the wrapping when the output is empty.
-#
-# Logic:
-#   - Sidecar (if non-empty file): Print as-is followed by a blank line.
-#   - Lookup: Parse sections by `^## ` headers; for each lookup key, scan
-#     the changed-file list for any matching `import` / `require` of that
-#     package. Emit matched sections in lookup-table declaration order.
-#
-# Match scope: Only files with extensions `.ts`, `.tsx`, `.js`, `.jsx`,
-# `.mts`, `.cts`, `.mjs`, `.cjs` are scanned. Files listed in
-# `--changed-files` that no longer exist in the working tree (e.g.,
-# deleted) are silently skipped.
-#
-# Match patterns (intentionally narrow: static imports/requires only):
-#   - import ... from 'pkg' / "pkg"
-#   - import ... from 'pkg/subpath' / "pkg/subpath"
-#   - require('pkg') / require("pkg")
-#   - require('pkg/subpath') / require("pkg/subpath")
-# Subpath imports (e.g., `pkg/lib`) match the bare-key entry; the gotcha
-# is usually in or near the subpath. Dynamic imports (`await
-# import('pkg')`), rebound names, and re-exports are not matched. v1
-# acceptable: Any single static reference is enough signal that the
-# package is in scope.
-#
 # Exit codes:
 #   0  Normal: Content emitted (or empty stdout when nothing matched).
 #   1  Usage error (missing/unknown flag) or unreadable required input.
@@ -58,7 +23,7 @@ changed_files=""
 lookup=""
 
 # Parses CLI flags into the script-scope globals above. Resets every variable
-# so that repeated invocations under test start from a clean slate.
+# so that a repeated invocation starts from a clean slate.
 parse_args() {
   sidecar=""
   changed_files=""
@@ -123,7 +88,6 @@ USAGE
 }
 
 # Tests whether a file path has a JS/TS extension worth scanning for imports.
-# Acceptable: .ts .tsx .js .jsx .mts .cts .mjs .cjs.
 is_scannable_extension() {
   local path="$1"
   case "$path" in
@@ -137,11 +101,9 @@ is_scannable_extension() {
 }
 
 # Emits lookup-table keys (package names) one per line, in declaration order.
-# Reads from the global `lookup` path. Exits 1 if the file cannot be opened.
 collect_lookup_keys() {
   awk '
     /^## / {
-      # Strip the leading "## " and emit the key.
       print substr($0, 4)
     }
   ' "$lookup"
@@ -149,8 +111,6 @@ collect_lookup_keys() {
 
 # Emits the body of the section whose heading matches `$1`. The body is every
 # line after `## <key>` up to (but not including) the next `## ` line or EOF.
-# Leading and trailing blank lines are stripped so that output composes cleanly
-# with the `## <key>` heading emitted by the caller.
 extract_section_body() {
   local key="$1"
   awk -v target="$key" '
@@ -161,7 +121,7 @@ extract_section_body() {
     }
     in_section { print }
   ' "$lookup" | awk '
-    # Buffer lines so that we can strip leading and trailing blanks.
+    # Buffer lines to strip leading and trailing blanks.
     { lines[NR] = $0 }
     END {
       start = 1
@@ -175,11 +135,8 @@ extract_section_body() {
 
 # Tests whether any scannable file in `--changed-files` imports or requires
 # the package identified by `$1`. Returns 0 on match, 1 otherwise.
-#
-# Matches both bare-package and subpath imports: `from 'pkg'`, `from
-# 'pkg/sub'`, `require('pkg')`, `require('pkg/sub')` (single or double
-# quoted). Uses fixed-string matching (`grep -F`) so that package names
-# containing regex metacharacters like `@` and `/` need no escaping.
+# Fixed-string matching (`grep -F`) spares package names containing regex
+# metacharacters such as `@` and `/` from escaping.
 file_matches_key() {
   local key="$1"
   local file
@@ -200,10 +157,8 @@ file_matches_key() {
       continue
     fi
     if [[ ! -f "$file" ]]; then
-      # File is absent (deleted, moved, or never existed) or unreadable
-      # (permission denied). Silently skip. The downstream `grep` also
-      # suppresses stderr to cover the rare case in which `[[ -f ]]` succeeds
-      # but the file becomes unreadable between the check and the grep.
+      # The downstream `grep` suppresses stderr as well, covering the case in
+      # which the file becomes unreadable between this check and that grep.
       continue
     fi
     if printf '%s\n' "${patterns[@]}" | grep -qFf - "$file" 2>/dev/null; then
@@ -214,13 +169,12 @@ file_matches_key() {
   return 1
 }
 
-# Emits the assembled reviewer-context block. Sidecar content first (when
-# non-empty), then matched lookup sections in lookup-table declaration
-# order. Adjacent blocks are separated by exactly one blank line. Each
-# emitted block (sidecar or lookup section) ends with a single trailing
-# newline; no trailing blank lines on the overall output.
+# Emits the assembled reviewer-context block: sidecar content first (when
+# non-empty), then matched lookup sections in lookup-table declaration order.
+# Exactly one blank line separates adjacent blocks, and the output carries no
+# trailing blank line.
 emit_block() {
-  # Pre-compute matched keys so that we know whether anything follows the sidecar.
+  # Pre-compute matched keys to know whether anything follows the sidecar.
   local matched_keys=()
   local key
   while IFS= read -r key || [[ -n "$key" ]]; do
@@ -233,9 +187,8 @@ emit_block() {
   local need_separator=0
 
   if [[ -n "$sidecar" && -s "$sidecar" ]]; then
-    # `cat` preserves the file's bytes; the file may or may not end with a
-    # newline. Normalize via awk so that the sidecar block always ends with
-    # exactly one newline.
+    # The sidecar may or may not end with a newline; awk normalizes it to
+    # exactly one.
     awk '{ print }' "$sidecar"
     need_separator=1
   fi
@@ -277,11 +230,10 @@ main() {
     exit 1
   fi
 
-  # Structural validity: A lookup file with no `## ` section headings is
-  # malformed. The script can't infer any package keys from it, so the
-  # entire lookup mechanism would silently no-op. Fail loudly instead.
-  # `grep -c` exits 1 on zero matches; suppress that under `set -e` with
-  # `|| true` so that we can branch on the count itself.
+  # A lookup file with no `## ` section headings yields no package keys, which
+  # would make the whole lookup mechanism a silent no-op.
+  # `grep -c` exits 1 on zero matches, so `|| true` keeps `set -e` from ending
+  # the run before the count can be tested.
   local heading_count
   heading_count="$(grep -c '^## ' "$lookup" || true)"
   if [[ "$heading_count" -eq 0 ]]; then

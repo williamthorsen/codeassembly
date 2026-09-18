@@ -8,8 +8,7 @@ import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // The rule applies only when it is already in context at the moment prose is composed, so each carrier inlines it
-// rather than linking to it. Two of the carriers had hand-written variants that drifted apart, which is what the
-// single-statement assertion below exists to prevent from recurring.
+// rather than linking to it. The single-statement assertion below keeps hand-written variants from drifting apart.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the rule; every carrier reaches it through an include. */

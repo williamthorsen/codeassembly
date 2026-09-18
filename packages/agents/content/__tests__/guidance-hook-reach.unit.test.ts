@@ -225,8 +225,7 @@ describe('reviewer-subagent carrier', () => {
 });
 
 // The rows above are hand-listed because they guard a body dropping off, which a discovered population cannot catch.
-// This one guards the opposite failure, a skill being added, which only a discovered population catches: `sync` is
-// what caught `revise-prose`, and only on a machine whose declaration binds the hook.
+// This one guards the opposite failure, a skill being added, which only a discovered population catches.
 describe('ambient-bound hook declarations', () => {
   it('permits no unrecorded skill to declare a hook bound to an ambient rulebook', async () => {
     const declarers = await listAmbientFillDeclarers();

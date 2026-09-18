@@ -11,9 +11,9 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Shared guidance is inlined into every harness guidance file, a route that rewrites no invocation token, so
 // `{skill:<slug>}` is unavailable here and a skill must be named in prose. That leaves the name outside every parse
-// gate through which the tokenized trees pass, which is how the guidance went on naming `git-commit-conventions` for
-// as long as it did after that skill was renamed. A dead pointer is worse than none: An agent that follows one finds
-// nothing, treats the lookup as satisfied, and falls back to its own defaults.
+// gate through which the tokenized trees pass, so a rename leaves the prose naming a skill that no longer exists. A
+// dead pointer is worse than none: An agent that follows one finds nothing, treats the lookup as satisfied, and falls
+// back to its own defaults.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SHARED_GUIDANCE_ROOT = path.join(CONTENT_ROOT, 'guidance', 'shared');
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');

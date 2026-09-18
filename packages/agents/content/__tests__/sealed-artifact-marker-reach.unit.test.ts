@@ -23,9 +23,9 @@ const MARKER_KEY = 'Sealed record';
 // Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A carrier is a site that composes an artifact's opening itself. The first three compose frontmatter without
-// prepending the script's YAML output; the last three write artifacts that carry no frontmatter at all, so for them
-// the marker opens the file. Every other artifact-writing skill and subagent gets the marker from the script.
+// A carrier is a site that composes an artifact's opening itself: It writes frontmatter without prepending the
+// script's YAML output, or it writes an artifact with no frontmatter, where the marker opens the file. Every other
+// artifact-writing skill and subagent gets the marker from the script.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/create-bitbucket-pr/SKILL.md',
   'skills/create-gh-pr/SKILL.md',
@@ -44,8 +44,8 @@ describe('sealed-artifact marker reach', () => {
 
       expect(lines.length, `${relativePath} states no seal marker`).toBeGreaterThanOrEqual(1);
 
-      // A carrier may state the marker more than once: `refine-plan` inlines it from the partial and shows it again
-      // inside two example outputs, which are in list items where an include directive cannot be placed.
+      // A carrier may state the marker more than once, because an example output inside a list item cannot carry an
+      // include directive and shows the marker literally instead.
       const drifted = lines.filter((line) => line.trim() !== marker);
       const message = `every seal marker must match ${PARTIAL} exactly:\n  ${drifted.join('\n  ')}`;
       expect(drifted, message).toEqual([]);
