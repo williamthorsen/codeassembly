@@ -1,4 +1,4 @@
-// Types — canonical domain model
+// Types: Canonical domain model
 export type {
   ArchitecturePhase,
   ArtifactEntry,
@@ -23,7 +23,7 @@ export type {
   WaitingForInputReason,
 } from './types/canonical.ts';
 
-// Types — run-log event model
+// Types: Run-log event model
 export type {
   ArtifactWrittenEvent,
   CoderFixCompletedEvent,
@@ -46,11 +46,11 @@ export type {
   WaitingForInputEvent,
 } from './types/run-log.ts';
 
-// Constants — domain role types and phase names
+// Constants: Domain role types and phase names
 export type { PhaseName, RoleType } from './constants/role-types.ts';
 export { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPES } from './constants/role-types.ts';
 
-// Schemas — run-index (v2)
+// Schemas: run-index (v2)
 export {
   artifactEntrySchema,
   criticalitySchema,
@@ -65,17 +65,17 @@ export {
   v2RunIndexSchema,
 } from './schemas/run-index-schema.ts';
 
-// Schemas — run-log (v3 events + header)
+// Schemas: run-log (v3 events + header)
 export { parseRunLogLine, runEventSchema, v3RunIndexSchema } from './schemas/run-log-schema.ts';
 
-// Schemas — status.json (v1)
+// Schemas: status.json (v1)
 export { v1StatusSchema } from './schemas/status-json-schema.ts';
 
-// Errors — structured parse error class
+// Errors: Structured parse error class
 export type { RunDataParseErrorCategory } from './run-data-parse-error.ts';
 export { RunDataParseError } from './run-data-parse-error.ts';
 
-// Event folder — reconstruct CanonicalRunStatus from header + events
+// Event folder: Reconstruct CanonicalRunStatus from header + events
 export { foldEvents } from './event-folder.ts';
 
 // Type guards

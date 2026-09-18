@@ -93,7 +93,7 @@ describe(registerStore, () => {
     expect(config.entries.map((entry) => entry.name)).toEqual(['apple', 'mango', 'Zebra']);
   });
 
-  it('carries an entry comment along when the entry moves', async () => {
+  it('moves an entry comment together with its entry', async () => {
     const registryPath = await makeRegistryPath();
     await seedRegistry(
       registryPath,
@@ -143,7 +143,7 @@ describe(registerStore, () => {
     await expect(registerStore({ registryPath, name: 'mystore', storePath: '/abs/mystore' })).rejects.toThrow();
   });
 
-  it('throws when the entry it would write is structurally invalid', async () => {
+  it('throws when the entry that it would write is structurally invalid', async () => {
     const registryPath = await makeRegistryPath();
 
     await expect(registerStore({ registryPath, name: 'mystore', storePath: '' })).rejects.toThrow();

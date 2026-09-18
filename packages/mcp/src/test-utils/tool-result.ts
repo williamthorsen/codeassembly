@@ -2,7 +2,7 @@ import type { Client } from '@modelcontextprotocol/sdk/client';
 
 import { getStringField, toRecord } from './records.ts';
 
-/** Reports whether a `callTool` result carries the error flag. */
+/** Reports whether a `callTool` result has its error flag set. */
 export function isErrorResult(result: Awaited<ReturnType<Client['callTool']>>): boolean {
   return 'isError' in result && result.isError === true;
 }
@@ -14,7 +14,7 @@ export function parseAndGetString(result: Awaited<ReturnType<Client['callTool']>
 
 /** Extracts the text content from a `callTool` result and parses it as JSON. */
 export function parseToolResult(result: Awaited<ReturnType<Client['callTool']>>): unknown {
-  // Treat the result as unknown to sidestep the SDK's unresolvable content union type.
+  // Treat the result as unknown to avoid the SDK's unresolvable content union type.
   const raw: unknown = result;
   const record = toRecord(raw, 'tool result');
   const contentArray = record.content;

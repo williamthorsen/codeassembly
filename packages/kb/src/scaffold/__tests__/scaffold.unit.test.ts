@@ -36,7 +36,7 @@ describe(scaffold, () => {
     }
   });
 
-  it('creates the .kb/ directory the seed files live in', async () => {
+  it('creates the .kb/ directory that contains the seed files', async () => {
     const storePath = await makeTempDir('kb-scaffold-');
 
     await scaffold({ storePath });
@@ -107,7 +107,7 @@ describe(scaffold, () => {
 
 // region | Helpers
 
-/** Stands up a temp store holding a `.kb/` directory and the given `.kb/config.yaml` content; returns its path. */
+/** Creates a temp store holding a `.kb/` directory and the given `.kb/config.yaml` content; returns its path. */
 async function makeStoreWithConfig(config: string): Promise<string> {
   const storePath = await makeTempDir('kb-scaffold-');
   await mkdir(resolveKbDir(storePath), { recursive: true });

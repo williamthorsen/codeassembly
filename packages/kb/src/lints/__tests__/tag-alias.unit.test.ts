@@ -40,8 +40,8 @@ describe(tagAliasFindings, () => {
     ]);
     const findings = tagAliasFindings({ path: 'a.md', fields: { tags: ['js', 'rust', 'ts'] } }, aliases);
     expect(findings.map((finding) => finding.message)).toEqual([
-      'tag "js" is an alias — use canonical form "javascript"',
-      'tag "ts" is an alias — use canonical form "typescript"',
+      'tag "js" is an alias; use canonical form "javascript"',
+      'tag "ts" is an alias; use canonical form "typescript"',
     ]);
   });
 

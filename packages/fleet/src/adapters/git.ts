@@ -1,7 +1,7 @@
-// The git adapter: read-only ground truth about each lane's worktree, polled on an interval and held as in-memory
-// observations the snapshot layer merges at derivation time. Nothing here writes to disk or the network — git state is
-// re-probeable, so persisting it would cache what a probe answers — and a failure inside one lane degrades that lane's
-// observation to nulls rather than propagating.
+// The git adapter: read-only ground truth about each lane's worktree, polled on an interval and stored as in-memory
+// observations that the snapshot layer merges at derivation time. Nothing here writes to disk or the network (git
+// state is re-probeable, so persisting it would cache what a probe answers), and a failure inside one lane degrades
+// that lane's observation to nulls rather than propagating.
 
 import { execFile } from 'node:child_process';
 import { stat } from 'node:fs/promises';
@@ -10,10 +10,10 @@ import { promisify } from 'node:util';
 import { isMissingFileError } from '../common/fs-errors.ts';
 import { retainKeys } from '../common/maps.ts';
 
-/** Ceiling on any single git invocation, so a wedged repository cannot stall a poll pass indefinitely. */
+/** Ceiling on any single git invocation; without one, a wedged repository could stall a poll pass indefinitely. */
 const GIT_TIMEOUT_MS = 10_000;
 
-/** Every `rev-parse` answer that means no branch is checked out, including the `null` a failed command returns. */
+/** Every `rev-parse` answer that means no branch is checked out, including the `null` returned by a failed command. */
 const NO_BRANCH_OUTPUTS = new Set([null, '', 'HEAD']);
 
 const execFileAsync = promisify(execFile);
@@ -25,8 +25,8 @@ export interface GitAdapter {
 }
 
 /**
- * What one poll of a worktree found. Git fields are `null` when the probe could not answer — a missing worktree, a
- * non-repository directory, or a failed command — matching the wire convention that absence is `null`.
+ * What one poll of a worktree found. Git fields are `null` when the probe could not answer (a missing worktree, a
+ * non-repository directory, or a failed command), matching the wire convention that absence is `null`.
  */
 export interface GitObservation {
   worktreeExists: boolean;
@@ -42,7 +42,7 @@ export interface GitObservation {
   baseBranch: string | null;
 }
 
-/** One worktree to poll: the lane it reports to and the directory to probe. */
+/** One worktree to poll: the lane to which it reports and the directory to probe. */
 export interface GitTarget {
   laneKey: string;
   cwd: string;
@@ -51,8 +51,8 @@ export interface GitTarget {
 /**
  * Starts polling the targets every `pollMs`, with the first pass scheduled immediately on a microtask, so the call
  * returns before any callback can fire. A pass probes each current target in sequence, drops observations for targets
- * no longer listed, then invokes `onChange`; a tick that fires while a pass is still running is skipped, so passes
- * never overlap. `probe` is injectable for tests and defaults to {@link probeWorktree}.
+ * no longer listed, then invokes `onChange`; passes never overlap, because a tick that fires while a pass is still
+ * running is skipped. `probe` is injectable for tests and defaults to {@link probeWorktree}.
  */
 export function createGitAdapter(input: {
   listTargets: () => GitTarget[];

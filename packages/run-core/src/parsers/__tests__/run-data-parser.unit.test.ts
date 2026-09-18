@@ -129,7 +129,7 @@ const v2Fixture = {
   ],
 };
 
-/** Resolves with the value the operation rejects with. */
+/** Resolves with the value with which the operation rejects. */
 async function captureRejection(operation: () => Promise<unknown>): Promise<unknown> {
   try {
     await operation();

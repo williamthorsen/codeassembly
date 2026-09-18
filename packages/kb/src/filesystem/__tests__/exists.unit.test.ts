@@ -10,7 +10,7 @@ const dir = await mkdtemp(join(tmpdir(), 'kb-exists-'));
 const filePath = join(dir, 'file.txt');
 const subdirPath = join(dir, 'subdir');
 const missingPath = join(dir, 'absent');
-// A path whose parent segment is a regular file — statting it yields ENOTDIR.
+// A path whose parent segment is a regular file: Statting it yields ENOTDIR.
 const throughFilePath = join(filePath, 'child');
 
 beforeAll(async () => {

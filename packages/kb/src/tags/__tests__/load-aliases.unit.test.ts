@@ -8,8 +8,8 @@ import { kbRootAt, makeKbRoot } from '../../test-utils/kb-root.ts';
 import { makeReadFixture } from '../../test-utils/make-read-fixture.ts';
 import { loadAliases, parseAliases } from '../load-aliases.ts';
 
-// Mock `readFile` with a passthrough to the real implementation so most tests
-// hit disk normally; the non-ENOENT propagation test overrides it per-call.
+// Mock `readFile` with a passthrough to the real implementation so that most tests
+// read from disk normally; the non-ENOENT propagation test overrides it per-call.
 vi.mock('node:fs/promises', async () => {
   const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
   return { ...actual, readFile: vi.fn(actual.readFile) };

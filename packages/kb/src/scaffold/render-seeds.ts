@@ -2,7 +2,7 @@ import { stringify } from 'yaml';
 
 import { defaultKbConfig } from '../config/config-schema.ts';
 
-// Renders the textual contents of a store's seed files. A value that kb also holds as a constant is serialized from
+// Renders the textual contents of a store's seed files. A value that kb also defines as a constant is serialized from
 // it, so a generated store can never drift from the bundled default; the explanatory comment prose and the
 // `.editorconfig` body are hand-authored.
 
@@ -19,7 +19,7 @@ const CONFIG_HEADER = `# Check configuration for this knowledge store.
 # Every key is optional and falls back to the default shown below; an absent file uses these defaults too. Uncomment
 # and edit to override. \`targets\` selects which notes \`kb check\` enumerates and \`exclude\` removes matches;
 # patterns are slash-separated and relative to the store root. \`visibility\` declares how widely the store is
-# published, which decides what may link into it: a \`[[store:Note title]]\` link resolves only into a store as
+# published, which decides what may link into it: A \`[[store:Note title]]\` link resolves only into a store as
 # shareable as its own or more so.
 #
 `;
@@ -45,15 +45,15 @@ const PRETTIER_HEADER = `# Formatting configuration for this knowledge store.
 #
 # \`embeddedLanguageFormatting: off\` leaves a note's YAML frontmatter unformatted. Formatted, a long \`tags\` or
 # \`addressed-by\` list breaks across several lines, which the note writer puts back onto one the next time it writes
-# the note, so the formatter and the writer would rewrite each other's output without end.
+# the note. The formatter and the writer would rewrite each other's output without end.
 #
 # Width, indentation, and line endings are set in \`.editorconfig\`, which Prettier reads and every editor reads too.
 #
 `;
 
 /**
- * The formatting option every store carries that `.editorconfig` cannot express. Held here rather than in the seed
- * prose, so that the file that a store receives cannot diverge from the value that kb documents. See
+ * The formatting option that every store sets and that `.editorconfig` cannot express. Defined here rather than in
+ * the seed prose, so that the file that a store receives cannot diverge from the value that kb documents. See
  * {@link renderPrettierSeed}'s header for what it prevents.
  */
 export const canonicalPrettierConfig = {
@@ -70,7 +70,7 @@ export function renderConfigSeed(): string {
   return `${CONFIG_HEADER}${commentBlock(stringify(defaultKbConfig))}\n`;
 }
 
-/** Renders `.editorconfig`: the editor and formatter settings every store shares. */
+/** Renders `.editorconfig`: the editor and formatter settings that every store shares. */
 export function renderEditorconfigSeed(): string {
   return EDITORCONFIG_SEED;
 }

@@ -1,5 +1,5 @@
-// The wire shapes the API serves and the pure derivation from folded lane state into them. Absent values are `null`
-// rather than optional `undefined`: JSON drops `undefined`-valued keys, so with `exactOptionalPropertyTypes` a
+// The wire shapes that the API serves and the pure derivation from folded lane state into them. Absent values are
+// `null` rather than optional `undefined`: JSON drops `undefined`-valued keys, so with `exactOptionalPropertyTypes` a
 // round-tripped type only matches what the client receives when absence is spelled `null`.
 
 import {
@@ -98,7 +98,7 @@ export interface TicketRefSnapshot {
 
 /**
  * Derives the wire snapshot for `lanes` at the moment `nowMs`, sorting lanes and their sessions most-recent-first.
- * `observations` carries the git adapter's per-lane facts (keyed `{repo}/{branch}`) and `input.forge` overlays the
+ * `observations` contains the git adapter's per-lane facts (keyed `{repo}/{branch}`) and `input.forge` overlays the
  * forge adapter's; a lane absent from either derives with unprobed lane probes and a `null` git or `forge` block.
  */
 export function buildSnapshot(
@@ -211,8 +211,8 @@ function buildTicketSnapshot(ticket: TicketFacts): TicketSnapshot {
 }
 
 /**
- * Derives a lane's ticket attribution. A ref parsed from the branch name wins. Without one, a lane whose branch has a
- * pull request gets the synthetic `PR-<number>` ref, and any other lane gets `null`.
+ * Derives a lane's ticket attribution. A ref parsed from the branch name takes precedence. Without one, a lane whose
+ * branch has a pull request gets the synthetic `PR-<number>` ref, and any other lane gets `null`.
  */
 function deriveTicketRef(lane: LaneState, forgeFacts: ForgeLaneFacts | undefined): TicketRefSnapshot | null {
   if (lane.ticketRef !== undefined) {

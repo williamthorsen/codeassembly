@@ -14,7 +14,7 @@ describe(formatKbSelection, () => {
 
     expect(text).toContain('1) coding');
     expect(text).toContain('2) notes');
-    expect(text).toContain('3) (none) — no default');
+    expect(text).toContain('3) (none): no default');
   });
 
   it('marks the current default', () => {
@@ -27,7 +27,7 @@ describe(formatKbSelection, () => {
   it('marks (none) as current when no default is set', () => {
     const text = formatKbSelection(entries, undefined);
 
-    expect(text).toContain('(none) — no default  (current)');
+    expect(text).toContain('(none): no default  (current)');
   });
 });
 

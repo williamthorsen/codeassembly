@@ -12,7 +12,7 @@ import { isEnoent } from '../../type-guards.ts';
 export interface SelectionResult {
   /** Notes matched by at least one pattern, in enumeration order, deduplicated. */
   selected: EnumeratedNote[];
-  /** Patterns that matched no validatable note and are backed by no real on-disk path — likely typos. */
+  /** Patterns that matched no validatable note and are backed by no real on-disk path: likely typos. */
   unmatched: string[];
 }
 
@@ -24,7 +24,7 @@ export interface SelectionResult {
  * `targets`/`exclude` filtering is inherited and a quoted glob behaves the same as a shell-expanded one. A bare
  * directory expands to its subtree. A pattern matching no note is reported in `unmatched` unless a real on-disk path
  * backs it (a non-validatable file such as a README, an excluded subtree, or an empty directory), in which case it is
- * dropped silently — distinguishing a typo from a legitimately out-of-scope target.
+ * dropped silently, which distinguishes a typo from a legitimately out-of-scope target.
  */
 export async function selectNotes(input: {
   notes: readonly EnumeratedNote[];
@@ -39,10 +39,10 @@ export async function selectNotes(input: {
   for (const rawPattern of input.patterns) {
     const pattern = normalizePattern(rawPattern);
 
-    // An exact note-path match wins, so a literal path is matched verbatim — even one carrying glob
+    // Because an exact note-path match wins, a literal path is matched verbatim, even one that contains glob
     // metacharacters (a `--vs` git path or a shell-expanded name like `content/Draft[v2].md`), which
     // as a pattern would over-match its character-class siblings. Both sides compare in composed form,
-    // since git reports a path composed where the walk reports it decomposed.
+    // since git reports a path composed whereas the walk reports it decomposed.
     const exactPath = pathsByComposedForm.get(pattern.normalize('NFC'));
     if (exactPath !== undefined) {
       selectedPaths.add(exactPath);
@@ -71,15 +71,15 @@ function matchPaths(notes: readonly EnumeratedNote[], pattern: string): string[]
   return notes.filter((entry) => isMatch(entry.relativePath)).map((entry) => entry.relativePath);
 }
 
-/** Strips a leading `./` and a single trailing `/` so directory and dot-relative inputs match cleanly. */
+/** Strips a leading `./` and a single trailing `/` so that directory and dot-relative inputs match cleanly. */
 function normalizePattern(pattern: string): string {
   return pattern.replace(/^\.\//, '').replace(/\/$/, '');
 }
 
 /**
  * Resolves a pattern that matched no note. A metachar-free pattern that is a directory on disk is retried as a subtree
- * (its matches are added to `selectedPaths`). Returns `true` when the pattern resolves to something real — subtree
- * matches, an empty directory, a non-note file, or a glob whose literal prefix exists — and `false` only when nothing
+ * (its matches are added to `selectedPaths`). Returns `true` when the pattern resolves to something real (subtree
+ * matches, an empty directory, a non-note file, or a glob whose literal prefix exists) and `false` only when nothing
  * on disk backs it, marking it unmatched.
  */
 async function resolveEmptyPattern(input: {
@@ -96,7 +96,7 @@ async function resolveEmptyPattern(input: {
       for (const path of matchPaths(notes, `${pattern}/**`)) selectedPaths.add(path);
       return true; // A real directory resolves; an empty one simply contributes no matches.
     }
-    return target !== null; // A real non-note file drops silently; a missing path is unmatched.
+    return target !== null; // A real non-note file is dropped silently; a missing path is unmatched.
   }
 
   const prefix = leadingLiteralPrefix(pattern);

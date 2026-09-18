@@ -8,8 +8,8 @@ import { isRecord } from '../type-guards.ts';
 export type GitResult = { ok: true; stdout: string } | { ok: false; message: string };
 
 /**
- * Runs `git -C cwd <args>` and returns its stdout, or a failure carrying git's own stderr. A git that cannot be
- * spawned fails the same way as one that exits non-zero, so both reach the caller as a single "git did not answer".
+ * Runs `git -C cwd <args>` and returns its stdout, or a failure that contains git's own stderr. A git that cannot be
+ * spawned fails the same way as one that exits non-zero, so the caller receives both as one kind of failure.
  */
 export function runGit(input: { cwd: string; args: readonly string[]; maxBuffer?: number }): GitResult {
   try {

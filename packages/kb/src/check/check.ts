@@ -15,7 +15,7 @@ import { type EnumeratedNote, enumerateNotes } from './enumerate.ts';
 import { collectStorePrefixes, resolveForeignStores } from './resolve-foreign-stores.ts';
 
 export interface CheckResult {
-  /** The effective `KbConfig` the run used — loaded from `.kb/config.yaml`, or `defaultKbConfig` when absent. */
+  /** The effective `KbConfig` that the run used: loaded from `.kb/config.yaml`, or `defaultKbConfig` when absent. */
   config: KbConfig;
   /**
    * Every note selected by the store's `config.targets` and, inside a git working tree, not ignored by the repository,
@@ -32,16 +32,16 @@ export interface CheckResult {
  * frontmatter re-validation runs here.
  *
  * A `[[store:Target]]` link resolves against the store named by its prefix rather than this one. Those stores are looked
- * up in the merged `kb.yaml` registry, which is read from `~/.agents/kb.yaml` and from `cwd`'s project-local registry;
- * `cwd` defaults to the store root, so a caller that supplies none still resolves against the user-global registry.
- * Only the stores this store's own links name are consulted.
+ * up in the merged `kb.yaml` registry, which is read from `~/.agents/kb.yaml` and from `cwd`'s project-local registry.
+ * Because `cwd` defaults to the store root, a caller that supplies none still resolves against the user-global
+ * registry. Only the stores that this store's own links name are consulted.
  *
- * Returns the effective config alongside the enumerated notes and findings, so a consumer can layer its own detectors
- * over the same enumeration without walking the tree twice, and can read the resolved `targets`/`exclude` without
- * re-loading `.kb/config.yaml`.
+ * Returns the effective config alongside the enumerated notes and findings, so that a consumer can layer its own
+ * detectors over the same enumeration without walking the tree twice, and can read the resolved `targets`/`exclude`
+ * without re-loading `.kb/config.yaml`.
  *
  * A structural defect in any loaded file throws a `KbLoaderError` (the loaders' own contract); the caller decides how
- * to surface it. Any other error from enumeration or the checks propagates unchanged — it is never relabeled as a
+ * to report it. Any other error from enumeration or the checks propagates unchanged; it is never relabeled as a
  * config defect.
  */
 export async function check(input: { kbRoot: string; cwd?: string; home?: string }): Promise<CheckResult> {
@@ -89,8 +89,8 @@ function registryFindings(error: string | undefined): Finding[] {
 }
 
 /**
- * Looks up the stores a run's links qualify. A run whose links name none reads no registry at all, so a store that
- * makes no cross-store link neither pays for the lookup nor answers for a defect in a registry elsewhere on the
+ * Looks up the stores that a run's links qualify. A run whose links name none reads no registry at all, so a store that
+ * makes no cross-store link neither performs the lookup nor reports a defect in a registry elsewhere on the
  * machine.
  */
 async function resolveQualifiedStores(input: {
@@ -106,7 +106,7 @@ async function resolveQualifiedStores(input: {
     projectDir: input.projectDir,
     ...(input.home !== undefined && { home: input.home }),
   });
-  // A registry that did not load leaves every store unconsulted, which is what the empty map reports. Resolving
+  // A registry that did not load leaves every store unconsulted, which the empty map reports. Resolving
   // against its empty entry list instead would claim each store is unregistered, which the run cannot know.
   if (registry.error !== undefined) return { foreignStores: new Map(), registryError: registry.error };
 

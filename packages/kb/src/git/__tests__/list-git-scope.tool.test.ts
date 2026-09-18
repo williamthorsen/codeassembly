@@ -8,7 +8,7 @@ import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
 import { makeTree } from '../../test-utils/make-tree.ts';
 import { listGitScope } from '../list-git-scope.ts';
 
-/** `Cafe.md` with a combining acute after the `e`: the decomposed form macOS returns from `readdir`. */
+/** `Cafe.md` with a combining acute after the `e`: the decomposed form that macOS returns from `readdir`. */
 const DECOMPOSED_NAME = 'Cafe\u{301}.md';
 
 describe(listGitScope, () => {
@@ -53,7 +53,7 @@ describe(listGitScope, () => {
     expect(scope?.has('content/Draft.local.md')).toBe(true);
   });
 
-  it('normalizes a decomposed name to the composed form the walk is compared against', async () => {
+  it('normalizes a decomposed name to the composed form against which the walk is compared', async () => {
     const root = await makeTree({ [`content/${DECOMPOSED_NAME}`]: 'x\n' });
     initGitRepo(root);
     commitAll(root, 'base');

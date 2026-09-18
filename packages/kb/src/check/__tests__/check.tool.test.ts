@@ -157,7 +157,7 @@ describe(`${check.name} resolving store-qualified links`, () => {
 
     const result = await check({ kbRoot: source, home });
 
-    // The whole list, not a filtered one: a per-link finding here would claim the store is unregistered, which a
+    // The whole list, not a filtered one: A per-link finding here would claim the store is unregistered, which a
     // run that read no registry cannot know.
     expect(result.findings.map((finding) => finding.rule)).toEqual(['wikilinks.registry-unloadable']);
     expect(result.findings[0]?.scope).toBe('vault');
@@ -181,7 +181,7 @@ function linksTo(target: string): string {
   return `---\ntitle: Kept\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nSee [[${target}]].\n`;
 }
 
-/** Stands up a home directory whose user-global registry declares the given `name → store path` entries. */
+/** Creates a home directory whose user-global registry declares the given `name → store path` entries. */
 async function seedHome(stores: Record<string, string>): Promise<string> {
   const home = await makeTempDir('kb-home-');
   const entries = Object.entries(stores)

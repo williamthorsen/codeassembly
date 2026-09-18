@@ -5,8 +5,8 @@ const FENCE = '---';
 
 /**
  * Renders a field map and body to note content: the opening fence, the frontmatter, the closing fence, one blank line,
- * then the body. A single leading newline on the body is dropped so the blank line is not doubled, keeping the output
- * stable across read/write cycles.
+ * then the body. A single leading newline on the body is dropped so that the blank line is not doubled, keeping the
+ * output stable across read/write cycles.
  */
 export function renderNote(fields: Record<string, unknown>, body: string): string {
   const frontmatter = renderFrontmatterFields(fields);

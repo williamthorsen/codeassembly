@@ -1,7 +1,7 @@
 import type { Finding } from '../types.ts';
 import { countNewlines } from '../vault-integrity/wikilink-parse.ts';
 
-/** The note fields the paths lint reads: its path and its full raw content. */
+/** The note fields that the paths lint reads: its path and its full raw content. */
 export interface PathsNote {
   path: string;
   content: string;
@@ -19,7 +19,7 @@ export function pathsFindings(note: PathsNote): Finding[] {
     line: countNewlines(note.content, match.index) + 1,
     rule: 'paths.user-home',
     severity: 'error',
-    message: `hardcoded "${match[0]}" — replace with ~/`,
+    message: `hardcoded "${match[0]}"; replace with ~/`,
   }));
   return findings;
 }

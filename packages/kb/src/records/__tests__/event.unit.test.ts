@@ -133,7 +133,7 @@ describe(renderEvent, () => {
     expect(parseEvent(fields, body)).toEqual(parsed);
   });
 
-  it('omits session when the event carries none', () => {
+  it('omits session when the event has none', () => {
     const { session: _session, ...withoutSession } = validFields;
     const parsed = parseEvent(withoutSession, '');
     expect(parsed.ok).toBe(true);
@@ -174,7 +174,7 @@ describe(renderEvent, () => {
     expect(keys).not.toContain('addressed-by');
   });
 
-  it('emits tags and addressed-by after the spine and before extra', () => {
+  it('emits tags and addressed-by after the leading fields and before extra', () => {
     const parsed = parseEvent({ ...validFields, repo: 'owner/name', tags: ['fix'], 'addressed-by': ['#849'] }, '');
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
@@ -192,7 +192,7 @@ describe(renderEvent, () => {
     ]);
   });
 
-  it('emits only the event fields — never title, created, or updated', () => {
+  it('emits only the event fields, never title, created, or updated', () => {
     const parsed = parseEvent(validFields, '');
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
@@ -227,7 +227,7 @@ describe(renderEvent, () => {
     ]);
   });
 
-  it('round-trips an event carrying impact', () => {
+  it('round-trips an event that declares impact', () => {
     const parsed = parseEvent({ ...validFields, impact: 'high' }, '\nThe body.\n');
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;

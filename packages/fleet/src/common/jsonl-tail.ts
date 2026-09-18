@@ -5,7 +5,7 @@ import { isMissingFileError } from './fs-errors.ts';
 const NEWLINE_BYTE = 0x0a;
 
 /**
- * Outcome of one tail read. `appended` carries the complete non-blank lines past the requested offset and the offset
+ * Outcome of one tail read. `appended` contains the complete non-blank lines past the requested offset and the offset
  * to resume from; a torn trailing line (no newline yet) stays unconsumed, so the next read picks it up whole.
  */
 export type TailResult =
@@ -13,7 +13,7 @@ export type TailResult =
 
 /**
  * Reads the complete lines appended to `filePath` past byte `offset`. Returns `missing` when the file is gone and
- * `truncated` when it shrank below the offset — both normal conditions for a file another process owns.
+ * `truncated` when it shrank below the offset, both normal conditions for a file owned by another process.
  */
 export function readAppendedLines(input: { filePath: string; offset: number }): TailResult {
   let size: number;

@@ -7,8 +7,8 @@ import { makeRegistryPath } from '../../test-utils/registry.ts';
 import { create } from '../create.ts';
 
 // Forces the registry writer to report a name collision detected at write time, a TOCTOU race that the pre-flight
-// check of the registry in `create` cannot catch, so the test can pin how `create` reconciles the two layers guarding
-// the same invariant.
+// check of the registry in `create` cannot catch, so that the test can pin how `create` reconciles the two layers
+// guarding the same invariant.
 vi.mock('../../discovery/register-store.ts', () => ({
   registerStore: vi.fn(() => Promise.resolve({ status: 'already-present' })),
 }));

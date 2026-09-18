@@ -168,7 +168,7 @@ async function makeSeededHome(content: string): Promise<string> {
   return home;
 }
 
-/** A stub picker that returns a fixed choice and records the input it was called with. */
+/** A stub picker that returns a fixed choice and records the input with which it was called. */
 function stubPrompt(choice: SelectKbChoice): { prompt: SelectKbPrompt; calledWith: { currentDefaultName?: string }[] } {
   const calledWith: { currentDefaultName?: string }[] = [];
   const prompt: SelectKbPrompt = (input) => {

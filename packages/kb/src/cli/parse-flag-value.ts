@@ -1,4 +1,4 @@
-// The `kb` CLI's flag-value grammar, shared so every command accepts a value the same way.
+// The `kb` CLI's flag-value grammar, shared so that every command accepts a value the same way.
 //
 // Each value-taking flag supports both the space form (`--kb x`) and the equals form (`--kb=x`). A command's own
 // parser decides which flags exist; these two decide what a value looks like once one is found.

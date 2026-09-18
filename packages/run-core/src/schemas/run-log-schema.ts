@@ -170,7 +170,7 @@ const v3ContextSchema = z.object({
   startedAt: z.string(),
 });
 
-/** V3 config: same as v2 — all fields optional, loose for forward compatibility. */
+/** V3 config: same as v2 (all fields optional, loose for forward compatibility). */
 const v3ConfigSchema = z
   .object({
     externalPlan: z.boolean().optional(),

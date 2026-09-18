@@ -1,12 +1,12 @@
 // The GitHub forge adapter: satisfies `ForgeAdapter` by shelling out to `gh --json` and normalizing its output at this
-// boundary, so nothing downstream sees a `gh`-specific shape. The `gh` process is reached through an injected runner —
-// an `execFile`-shaped seam — so tests drive the adapter with fixture JSON captured from real `gh` output, and CI needs
-// no `gh` binary.
+// boundary, so nothing downstream sees a `gh`-specific shape. The adapter runs `gh` through an injected runner, an
+// `execFile`-shaped seam. Tests drive the adapter with fixture JSON captured from real `gh` output, and CI needs no
+// `gh` binary.
 //
-// Call volume is bounded across polls by two per-repo caches. A merged or closed pull request is terminal: it is cached
+// Call volume is bounded across polls by two per-repo caches. A merged or closed pull request is terminal: It is cached
 // and never re-viewed, so steady state is ~1 `pr list` per repo plus 1 `issue view` per ticket. A branch with no pull
 // request is remembered as a stable absence and skipped, with a periodic re-check that catches a pull request opened and
-// merged entirely between probes — an open one is caught immediately by the next `pr list`.
+// merged entirely between probes; an open one is caught immediately by the next `pr list`.
 
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -25,30 +25,30 @@ import type {
   TicketFacts,
 } from './adapter.ts';
 
-/** Runs a process and resolves its captured output, rejecting with an error carrying its `stderr` on non-zero exit. */
+/** Runs a process and resolves its captured output, rejecting on non-zero exit with an error that includes `stderr`. */
 export type ProcessRunner = (command: string, args: readonly string[]) => Promise<{ stdout: string; stderr: string }>;
 
-/** The `--json` field set requested for every pull-request query, shared so `pr list` and `pr view` parse alike. */
+/** The `--json` fields requested for every pull-request query, shared so that `pr list` and `pr view` parse alike. */
 const PR_JSON_FIELDS = 'number,title,url,state,isDraft,headRefName,statusCheckRollup,reviewDecision';
 
 const ISSUE_JSON_FIELDS = 'title,state,url,createdAt,labels';
 
 /**
  * Open pull requests fetched per repo in one `pr list`. `gh` defaults to 30; this ceiling is sized well past any
- * realistic open-PR count so every resident lane stays covered by the single batched list rather than degrading to a
- * recurring per-branch `pr view`.
+ * realistic open-PR count so that every resident lane stays covered by the single batched list rather than degrading
+ * to a recurring per-branch `pr view`.
  */
 const OPEN_PR_LIST_LIMIT = 500;
 
 /** Polls between re-checks of branches remembered as having no pull request. */
 export const ABSENCE_RECHECK_INTERVAL = 10;
 
-/** Output cap for a single `gh` invocation, generous against large check rollups so a busy repo never truncates. */
+/** Output cap for one `gh` invocation, generous against large check rollups so that a busy repo never truncates. */
 const MAX_OUTPUT_BYTES = 10_000_000;
 
 /**
- * Creates a GitHub-backed forge adapter. `runProcess` overrides the default `gh` runner — the test seam — and
- * production omits it. The adapter holds per-repo caches across calls, so a single instance should serve the whole run.
+ * Creates a GitHub-backed forge adapter. `runProcess` overrides the default `gh` runner (the test seam), and
+ * production omits it. The adapter keeps per-repo caches across calls, so a single instance should serve the whole run.
  */
 export function createGithubAdapter(input: { runProcess?: ProcessRunner } = {}): ForgeAdapter {
   const runProcess = input.runProcess ?? runProcessDefault;
@@ -58,7 +58,7 @@ export function createGithubAdapter(input: { runProcess?: ProcessRunner } = {}):
 
   /**
    * Resolves each requested branch from the open-pull-request list, then from the caches, and views a branch on its own
-   * only when neither answers. Views every requested ticket.
+   * only when neither contains it. Views every requested ticket.
    */
   async function fetchRepoState(request: RepoStateRequest): Promise<RepoState> {
     const { repo } = request;
@@ -66,8 +66,8 @@ export function createGithubAdapter(input: { runProcess?: ProcessRunner } = {}):
     const terminalPrs = getOrCreate(terminalPrsByRepo, repo, () => new Map<string, PrFacts>());
     const absentBranches = getOrCreate(absentBranchesByRepo, repo, () => new Set<string>());
 
-    // Bound the caches to resident lanes, then periodically forget remembered absences so a late-appearing pull request
-    // is re-probed rather than skipped forever.
+    // Bound the caches to resident lanes, then periodically forget remembered absences so that a late-appearing pull
+    // request is re-probed rather than skipped forever.
     retainKeys(terminalPrs, requestedBranches);
     retainMembers(absentBranches, requestedBranches);
     const pollCount = (pollCountByRepo.get(repo) ?? 0) + 1;
@@ -135,7 +135,7 @@ export function createGithubAdapter(input: { runProcess?: ProcessRunner } = {}):
 
 // region | Helpers
 
-/** Thrown when `gh` output cannot be parsed into the expected shape — surfaced to the poller as a repo-level failure. */
+/** Thrown when `gh` output cannot be parsed into the expected shape; the poller receives it as a repo-level failure. */
 class ForgeParseError extends Error {}
 
 /** Classifies one `statusCheckRollup` entry, discriminating a `CheckRun` (`status`) from a `StatusContext` (`state`). */
@@ -172,7 +172,7 @@ function classifyConclusion(conclusion: unknown): CheckState {
   }
 }
 
-/** Maps a `StatusContext` state to a verdict; `PENDING`, `EXPECTED`, and anything unrecognized read as pending. */
+/** Maps a `StatusContext` state to a verdict; `PENDING`, `EXPECTED`, and anything unrecognized map to pending. */
 function classifyStatusState(state: unknown): CheckState {
   switch (state) {
     case 'SUCCESS':
@@ -195,12 +195,12 @@ function isNoPullRequestError(error: unknown): boolean {
   return /no (?:open )?pull requests found/i.test(readErrorText(error));
 }
 
-/** Narrows to a non-array object so field reads over parsed JSON stay type-safe. */
+/** Narrows to a non-array object so that field reads over parsed JSON stay type-safe. */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** Rolls a `statusCheckRollup` array up to one verdict — failing dominates pending dominates passing; empty is none. */
+/** Rolls a `statusCheckRollup` array up to one verdict: failing dominates pending dominates passing; empty is none. */
 function normalizeChecks(rollup: unknown): CheckState | undefined {
   if (!Array.isArray(rollup) || rollup.length === 0) {
     return undefined;
@@ -313,7 +313,7 @@ function parseOpenPrs(stdout: string): Record<string, PrFacts> {
   return byBranch;
 }
 
-/** The human-readable text a thrown value carries, joining any captured `stderr` with the error message for matching. */
+/** The human-readable text of a thrown value, joining any captured `stderr` with the error message for matching. */
 function readErrorText(error: unknown): string {
   const parts: string[] = [];
   if (isRecord(error) && typeof error.stderr === 'string') {

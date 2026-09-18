@@ -10,9 +10,9 @@ import type { CommandOutput } from './check.ts';
 
 export const SCAFFOLD_HELP = `Usage: kb scaffold [options]
 
-Write into an existing knowledge base any canonical file that it lacks, so a store
-created before a given file existed can acquire it. An existing file is left
-untouched unless --force is given.
+Write into an existing knowledge base any canonical file that it lacks, so that
+a store created before a given file existed can acquire it. An existing file is
+left untouched unless --force is given.
 
 Writes:
   .editorconfig          editor and formatter settings (width, indent, line endings)
@@ -22,7 +22,7 @@ Writes:
   content/, content/events/
 
 .kb/taxonomy.yaml is not part of this set: "kb taxonomy init" derives it from
-the notes that the store already holds. Use "kb create" to make a new store.
+the notes that the store already contains. Use "kb create" to make a new store.
 
 Options:
   --force       Replace an existing canonical file with a fresh seed. A
@@ -34,14 +34,15 @@ Options:
 Exit codes:
   0  every canonical file is present, whether it was written or already there
   2  usage error, unresolvable store, a store marked readonly in kb.yaml, or a
-     resolved path holding no ${KB_DIR}/
+     resolved path containing no ${KB_DIR}/
 `;
 
 /**
- * Runs `kb scaffold`: parses options, resolves the store, and writes the canonical files it lacks.
+ * Runs `kb scaffold`: parses options, resolves the store, and writes the canonical files that it lacks.
  *
- * A store that the registry marks `readonly` is refused. A resolved path holding no `.kb/` is refused too: the command
- * back-fills a store rather than creating one, and a registry entry names a path without proving a store is there.
+ * A store that the registry marks `readonly` is refused. A resolved path containing no `.kb/` is refused too: The
+ * command back-fills a store rather than creating one, and a registry entry names a path without proving a store is
+ * there.
  */
 export async function runScaffold(input: {
   argv: readonly string[];

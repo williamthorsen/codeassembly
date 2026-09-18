@@ -17,8 +17,8 @@ export async function parseNote(input: { path: string }): Promise<ParsedNote> {
 }
 
 /**
- * Parses a note from a literal string into a `ParsedNote` carrying typed frontmatter.
- * Parse errors are recorded in `frontmatterRaw.parseError`, never thrown — the rule layer decides how to report them.
+ * Parses a note from a literal string into a `ParsedNote` containing typed frontmatter.
+ * Parse errors are recorded in `frontmatterRaw.parseError`, never thrown; the rule layer decides how to report them.
  * `path` defaults to `<string>` and labels the result for diagnostics.
  */
 export function parseNoteContent(input: { content: string; path?: string }): ParsedNote {
@@ -33,8 +33,8 @@ export function parseNoteContent(input: { content: string; path?: string }): Par
   }
 
   const text = lines.slice(1, endIndex).join('\n');
-  // `schema: 'core'` disables the YAML 1.1 timestamp tag so date fields surface as strings rather than JS `Date`
-  // objects, keeping validator input uniform.
+  // `schema: 'core'` disables the YAML 1.1 timestamp tag so that date fields are parsed as strings rather than JS
+  // `Date` objects, keeping validator input uniform.
   const doc = parseDocument(text, { schema: 'core' });
   const parseError = doc.errors[0]?.message;
   const frontmatterRaw: FrontmatterRaw = {
@@ -89,7 +89,7 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
     return null;
   }
 
-  // `toJS` collapses every node to a plain JS value, so the `extra` map carries
+  // `toJS` collapses every node to a plain JS value, so the `extra` map contains
   // serializable data rather than `yaml` AST nodes with positional metadata.
   const plain: unknown = doc.toJS();
   const plainRecord = isRecord(plain) ? plain : {};

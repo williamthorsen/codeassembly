@@ -12,7 +12,7 @@ import type { AliasMap, KbRoot } from '../types.ts';
 
 /**
  * Loads `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`, returning an empty map when the file is absent.
- * The thin I/O wrapper around {@link parseAliases}; structural defects throw with the file path included.
+ * The thin I/O wrapper around {@link parseAliases}; on a structural defect it throws, naming the file path.
  */
 export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> {
   const path = join(input.kbRoot.path, ALIASES_FILE);
@@ -36,7 +36,7 @@ export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> 
 
 /**
  * Parses a tag-aliases registry from a string into an `AliasMap`.
- * Aliases are lowercased on insertion so callers can look up case-insensitively.
+ * Aliases are lowercased on insertion so that callers can look up case-insensitively.
  * Throws on malformed YAML and on any structural defect, with `contextLabel` prefixed onto every message.
  */
 export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasMap {

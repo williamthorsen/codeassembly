@@ -5,7 +5,7 @@ import type { EventEnvelope } from './envelope.ts';
  * object missing any of the envelope's required `id`, `ts`, `type`, and `cwd` strings. A missing or non-object
  * `payload` becomes `{}`. An undeclared `type` is a valid envelope; the vocabulary is not consulted.
  *
- * Never throws. The store is append-only telemetry written by concurrent emitters, so a reader must survive a torn
+ * Never throws. The store is append-only telemetry written by concurrent emitters, so a reader must tolerate a torn
  * line, a foreign file, or a shape from a newer writer.
  */
 export function parseEventLine(line: string): EventEnvelope | null {

@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
-// Imports only node builtins: A top-level import resolves before the gate below runs, so an
+// Import only node builtins: A top-level import resolves before the gate below runs, so an
 // unresolvable dependency would replace this file's build-first message with ERR_MODULE_NOT_FOUND.
 import { existsSync } from 'node:fs';
 
-// Committed launch path for the stdio server, so `.claude/settings.json` targets a file that
-// exists before `dist/` is built. The real entry point loads at runtime from the build output.
+// Committed launch path for the stdio server, so that `.claude/settings.json` targets a file
+// that exists before `dist/` is built. The real entry point loads at runtime from the build output.
 // See packages/agents/README.md ("Bin wrapper pattern") for details.
 const entryPoint = new URL('../dist/esm/cli.js', import.meta.url);
 
-// Gate on the entry file itself: Node raises ERR_MODULE_NOT_FOUND for any unresolved
-// module in the graph, so keying the build-first message off the error code would also
-// fire when the build is present and one of its imports is missing.
+// Gate on the entry file itself: Because Node raises ERR_MODULE_NOT_FOUND for any unresolved
+// module in the graph, keying the build-first message off the error code would also fire
+// when the build is present and one of its imports is missing.
 if (!existsSync(entryPoint)) {
-  process.stderr.write('codeassembly-mcp: build output not found — run `pnpm run bootstrap` first\n');
+  process.stderr.write('codeassembly-mcp: build output not found; run `pnpm run bootstrap` first\n');
   process.exit(1);
 }
 

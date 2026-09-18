@@ -23,8 +23,8 @@ function resolveValue(value: string, projectRoot: string, home: string): string 
 /**
  * Reads `artifacts.base_dir` from a YAML preferences file.
  * Returns the value if it exists and is a string, or `undefined` otherwise.
- * Missing files (ENOENT) are silently skipped. Any other failure, such as EACCES
- * or malformed YAML, emits a warning to stderr and falls back to `undefined`.
+ * Returns `undefined` without a warning when the file is missing (ENOENT). On any other
+ * failure, such as EACCES or malformed YAML, writes a warning to stderr and returns `undefined`.
  */
 async function readBaseDirFromYaml(filePath: string): Promise<string | undefined> {
   try {

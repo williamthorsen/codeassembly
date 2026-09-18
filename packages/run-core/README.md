@@ -11,7 +11,7 @@ run.status; // 'in_progress' | 'completed' | 'failed' | 'needs_manual_review'
 
 ## Entry points
 
-The root entry imports no Node.js API, so a browser build can use its types, schemas, and `foldEvents()`. Everything that reads the filesystem or the environment sits behind a subpath.
+The root entry imports no Node.js API, so a browser build can use its types, schemas, and `foldEvents()`. Everything that reads the filesystem or the environment is exported from a subpath.
 
 | Entry        | Contents                                                                                  | Environment |
 | ------------ | ----------------------------------------------------------------------------------------- | ----------- |

@@ -213,7 +213,7 @@ function applyReviewerDispatched(
   iter0.dispatchedAt ??= event.t;
 }
 
-/** Records a reviewer's result and stamps the first iteration's reviews as completed. */
+/** Records a reviewer's result and the time at which the first iteration's reviews completed. */
 function applyReviewerCompleted(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 'reviewer_completed' }>,

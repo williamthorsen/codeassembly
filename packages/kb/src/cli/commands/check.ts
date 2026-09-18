@@ -26,7 +26,7 @@ link resolves against the store named by its prefix in the kb.yaml registry.
 
 Targeting (mutually exclusive):
   [paths...]    Check only the notes matching the given glob patterns, files,
-                or directories. Quote globs so kb expands them itself. A
+                or directories. Quote globs so that kb expands them itself. A
                 directory checks every note beneath it. A path that matches no
                 note is a usage error unless it names a real non-note.
   --vs <ref>    Check only the notes changed between the working tree and the
@@ -49,9 +49,9 @@ Exit codes:
 /**
  * Runs `kb check`: parses options, resolves the store, runs the shared `check`, and formats the report.
  *
- * The command writes nothing to the store, so it ignores the registry's `readonly` flag. A structural defect in a
- * store file that `check` loads surfaces as a `KbLoaderError`, which maps to exit 2; any other error from `check`
- * propagates to the caller as a real crash.
+ * The command writes nothing to the store, so it ignores the registry's `readonly` flag. `check` throws a
+ * `KbLoaderError` for a structural defect in a store file that it loads, and the command maps that error to exit 2;
+ * any other error from `check` propagates to the caller as a real crash.
  */
 export async function runCheck(input: { argv: readonly string[]; cwd: string; home?: string }): Promise<CommandOutput> {
   let options: CheckOptions;
@@ -95,7 +95,7 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
   }
 
   const summary = summarize(selection.findings, selection.notes.length);
-  // The whole-vault zero-match line names the store's targets, read from the config `check` already resolved.
+  // The whole-vault zero-match line names the store's targets, read from the config that `check` already resolved.
   const stdout = options.json
     ? formatJson({ store, summary, findings: selection.findings })
     : formatHuman({ summary, findings: selection.findings, targets: result.config.targets, scope: selection.scope });
@@ -183,12 +183,12 @@ type SelectionOutcome =
   | { ok: false; message: string };
 
 /**
- * Narrows a whole-vault `CheckResult` to the notes the run targets. A bare run passes through unchanged; `--vs`
+ * Narrows a whole-vault `CheckResult` to the notes targeted by the run. A bare run passes through unchanged; `--vs`
  * resolves changed paths via git (a bad ref fails for exit 2), and pattern selection drops non-notes while reporting
  * a path that matches nothing real as a usage error. Note-scoped findings are filtered to the selected notes by their
  * absolute path, so cross-references stay resolved against the whole vault while the report and exit code cover only
- * the selection. Vault-scoped findings describe the store rather than any one note, so they bypass the filter and
- * appear under every selection.
+ * the selection. Because vault-scoped findings describe the store rather than any one note, the filter keeps them,
+ * and they appear under every selection.
  */
 async function resolveSelection(input: {
   options: CheckOptions;

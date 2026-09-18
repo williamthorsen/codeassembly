@@ -11,13 +11,13 @@ import { isEnoent, isRecord } from '../type-guards.ts';
 import type { KbRoot } from '../types.ts';
 import { describeKeyDefect } from './taxonomy-schema.ts';
 
-/** The blocks a taxonomy declares domains under. */
+/** The blocks under which a taxonomy declares domains. */
 const BLOCKS: ReadonlySet<string> = new Set(['domains', 'provisional']);
 
 export interface TaxonomyDeclaration {
   /** The domain's assertions-root-relative slash-path. */
   path: string;
-  /** The one-line description; absent or empty writes the key bare, with no description. */
+  /** The one-line description; when absent or empty, `writeTaxonomy` writes the key bare, with no description. */
   description?: string;
   /** Whether to declare under `provisional:` rather than `domains:`. */
   provisional: boolean;
@@ -27,13 +27,13 @@ export interface TaxonomyDeclaration {
  * Declares domains in `.kb/taxonomy.yaml`, creating the file and either block as needed, and returns the paths added.
  *
  * Edits the parsed document rather than re-serializing a plain object, so existing comments, key order, and formatting
- * survive; a plain parse-and-stringify round trip would discard every comment in a hand-curated file. New keys append
- * to the end of their block in path order, and a block header left with nothing under it is filled in place rather
- * than moved.
+ * survive; a plain parse-and-stringify round trip would discard every comment in a hand-curated file. New keys
+ * are appended to the end of their block in path order, and a block header left with nothing under it is filled in
+ * place rather than moved.
  *
- * A path either block already declares is skipped rather than overwritten, so a repeat call adds nothing; when nothing
- * is left to add, the file is not opened for writing at all. The write goes through the shared `writeAtomic` helper,
- * so an interrupted call cannot truncate the taxonomy.
+ * A path already declared by either block is skipped rather than overwritten. A repeat call adds nothing, and when
+ * nothing is left to add, the file is not opened for writing at all. The write goes through the shared `writeAtomic`
+ * helper, so an interrupted call cannot truncate the taxonomy.
  *
  * Throws a {@link KbLoaderError} on a malformed key, or on an existing file that cannot be safely appended to: one
  * that fails to parse, one whose top level is not a mapping, and one whose `domains` or `provisional` block holds
@@ -45,7 +45,7 @@ export async function writeTaxonomy(input: {
 }): Promise<{ added: string[] }> {
   const path = join(input.kbRoot.path, TAXONOMY_FILE);
 
-  // Validate every key before opening the file, so a bad batch cannot write half of itself.
+  // Validate every key before opening the file, so that a bad batch is rejected before any of it is written.
   for (const declaration of input.declarations) {
     const defect = describeKeyDefect(declaration.path);
     if (defect !== undefined) {
@@ -89,9 +89,9 @@ export async function writeTaxonomy(input: {
 // region | Helpers
 
 /**
- * Refuses a block holding a value an append can neither extend nor safely replace. A block is either a mapping of
- * declarations or a header with nothing under it; a scalar or a sequence is content of the wrong type, and rebuilding
- * the block from the entries would discard whatever the author put there.
+ * Refuses a block containing a value that an append can neither extend nor safely replace. A block is either a
+ * mapping of declarations or a header with nothing under it; a scalar or a sequence is content of the wrong type, and
+ * rebuilding the block from the entries would discard whatever the author put there.
  */
 function assertBlocksAppendable(document: Document, path: string): void {
   const contents = document.contents;
@@ -113,7 +113,7 @@ function assertBlocksAppendable(document: Document, path: string): void {
  * Adds a block's entries to the document.
  *
  * A block header left with nothing under it parses to a null value that cannot be descended into, so its value is
- * rebuilt from the entries, keeping the block where it already sits and carrying over any comment attached to the
+ * rebuilt from the entries, leaving the block in its place and carrying over any comment attached to the
  * value being replaced. An absent or already-populated block is appended to instead.
  */
 function declareInBlock(input: {
@@ -131,8 +131,8 @@ function declareInBlock(input: {
     return;
   }
 
-  // The comment moves to the block's key so it stays on the header line; on the map it would render below the first
-  // entry, reading as an annotation of that entry rather than of the block.
+  // Move the comment to the block's key so that it stays on the header line; on the map it would render below the
+  // first entry, reading as an annotation of that entry rather than of the block.
   const comment = isScalar(emptied.value) ? emptied.value.comment : undefined;
   if (typeof comment === 'string' && isScalar(emptied.key)) {
     emptied.key.comment = comment;
@@ -160,9 +160,9 @@ function isEmptyBlockValue(value: unknown): boolean {
 }
 
 /**
- * Reads the taxonomy into an editable document, treating an absent file as an empty one. Refuses a file this cannot
- * safely append to: rewriting a file with a parse error would discard whatever the parser could not read, a
- * non-mapping top level has no block to append to, and a block holding a scalar or a sequence holds content that
+ * Reads the taxonomy into an editable document, treating an absent file as an empty one. Refuses a file to which this
+ * cannot safely append: rewriting a file with a parse error would discard whatever the parser could not read, a
+ * non-mapping top level has no block to append to, and a block containing a scalar or a sequence contains content that
  * appending would destroy.
  */
 async function readDocument(path: string): Promise<Document> {
@@ -187,7 +187,10 @@ async function readDocument(path: string): Promise<Document> {
   return document;
 }
 
-/** Collects the paths both blocks already declare, so an existing declaration is skipped rather than overwritten. */
+/**
+ * Collects the paths that the two blocks already declare, so that an existing declaration is skipped rather than
+ * overwritten.
+ */
 function readDeclaredPaths(document: Document): Set<string> {
   const paths = new Set<string>();
   const contents: unknown = document.toJS();
@@ -206,7 +209,7 @@ function readDeclaredPaths(document: Document): Set<string> {
   return paths;
 }
 
-/** Orders a batch by path, so appended keys read alphabetically rather than in call order. */
+/** Orders a batch by path, so that appended keys read alphabetically rather than in call order. */
 function sortByPath(declarations: readonly TaxonomyDeclaration[]): TaxonomyDeclaration[] {
   return declarations.toSorted((a, b) => {
     if (a.path === b.path) return 0;

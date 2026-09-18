@@ -1,7 +1,7 @@
-// Shapes that several modules of this package provide or consume. A type with a single provider lives with that
-// provider.
+// Shapes that several modules of this package provide or consume. A type with a single provider is declared in that
+// provider's module.
 
-/** A knowledge-base root: the directory holding a `.kb/`, and that `.kb/` itself. */
+/** A knowledge-base root: the directory containing a `.kb/`, and that `.kb/` itself. */
 export interface KbRoot {
   /** Absolute path to the directory containing the `.kb/` folder. */
   path: string;
@@ -11,7 +11,7 @@ export interface KbRoot {
 
 /** A single knowledge base declared in a `kb.yaml` registry, normalized in memory. */
 export interface KbRegistryEntry {
-  /** The KB's name, lifted from the `kbs` map key. */
+  /** The KB's name, taken from the `kbs` map key. */
   name: string;
   /** Absolute path to the KB's root directory (tilde expanded, relative resolved). */
   path: string;
@@ -48,7 +48,7 @@ export interface Frontmatter {
   extra: Record<string, unknown>;
 }
 
-/** The raw frontmatter slice plus parse diagnostics, kept so rules can report at source line numbers. */
+/** The raw frontmatter slice plus parse diagnostics, kept so that rules can report at source line numbers. */
 export interface FrontmatterRaw {
   /** The YAML text between the opening and closing `---` fences. */
   text: string;
@@ -62,7 +62,7 @@ export interface FrontmatterRaw {
 
 /** A note parsed into frontmatter and body. */
 export interface ParsedNote {
-  /** Path or label the note was parsed from. */
+  /** Path or label from which the note was parsed. */
   path: string;
   /** The full original note content. */
   content: string;
@@ -80,7 +80,7 @@ export type FindingSeverity = 'error' | 'warning';
 
 /** A single validation finding produced by a rule. */
 export interface Finding {
-  /** Path or label the finding applies to: a note, or the store file that declares the rule's subject. */
+  /** Path or label to which the finding applies: a note, or the store file that declares the rule's subject. */
   path: string;
   /**
    * What the finding describes, defaulting to `note` when absent. A note-scoped finding is dropped when a run's

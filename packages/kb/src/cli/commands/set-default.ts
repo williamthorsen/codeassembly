@@ -11,7 +11,7 @@ import type { CommandOutput } from './check.ts';
 
 export const SET_DEFAULT_HELP = `Usage: kb set-default [name] [options]
 
-Set, clear, or interactively choose the user-global default knowledge base —
+Set, clear, or interactively choose the user-global default knowledge base:
 the top-level default_kb pointer in ~/.agents/kb.yaml.
 
   kb set-default <name>   Set default_kb to the named registered KB.

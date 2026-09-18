@@ -1,18 +1,18 @@
-// Branch-name ticket parsing per the contract in the agents skills' `_data/ticket-id-extraction.md`: a Jira-style key
-// anywhere in the name wins, then a bare-numeric prefix, each with an optional `.N` revisit suffix. Raw and sanitized
-// branch spellings parse alike: neither pattern depends on `/` vs `-` separators.
+// Branch-name ticket parsing per the contract in the agents skills' `_data/ticket-id-extraction.md`: A Jira-style key
+// anywhere in the name takes precedence, then a bare-numeric prefix, each with an optional `.N` revisit suffix. Raw
+// and sanitized branch spellings parse alike: Neither pattern depends on `/` vs `-` separators.
 
 /** A ticket attribution parsed from a branch name. */
 export interface TicketRef {
   /** The canonical ticket id: an uppercased Jira-style key (`MAC-130`) or a bare number (`984`), as encoded. */
   ticketId: string;
-  /** The revisit ordinal, present when the id carries a `.N` suffix (`984.2`, `NMR-567.2`). */
+  /** The revisit ordinal, present when the id has a `.N` suffix (`984.2`, `NMR-567.2`). */
   revisit?: number;
 }
 
 /**
- * Jira-style key: two or more letters, hyphen, digits. Unanchored so author-prefixed branches (`wt/MAC-130`) match;
- * the digit run ends at the first non-digit.
+ * Jira-style key: two or more letters, hyphen, digits. Unanchored so that author-prefixed branches (`wt/MAC-130`)
+ * match; the digit run ends at the first non-digit.
  */
 const JIRA_STYLE_PATTERN = /(?<ticketId>[A-Za-z]{2,}-[0-9]+)(?:\.(?<revisit>[0-9]+))?/;
 

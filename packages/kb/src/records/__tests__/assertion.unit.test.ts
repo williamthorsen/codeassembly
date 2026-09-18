@@ -119,7 +119,7 @@ describe(renderAssertion, () => {
     expect(keys).not.toContain('superseded-by');
   });
 
-  it('emits the typed fields in order after the spine and before extra', () => {
+  it('emits the typed fields in order after the leading fields and before extra', () => {
     const parsed = parseAssertion(
       {
         ...validFields,
@@ -148,7 +148,7 @@ describe(renderAssertion, () => {
     ]);
   });
 
-  it('emits only the assertion fields — never a foreign key', () => {
+  it('emits only the assertion fields, never a field of another record type', () => {
     const parsed = parseAssertion(validFields, '');
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;

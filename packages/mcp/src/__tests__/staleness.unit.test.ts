@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isBuildStale } from '../staleness.ts';
 import { getStringField, toRecord } from '../test-utils/records.ts';
 
-// region | Test helper: create a fake package directory mirroring packages/mcp layout
+// region | Test helper: Create a fake package directory mirroring packages/mcp layout
 
 interface FakePackageOptions {
   srcMtimeMs: number;
@@ -53,7 +53,7 @@ async function createFakePackage(opts: FakePackageOptions): Promise<string> {
   return pathToFileURL(join(distEsm, 'staleness.js')).href;
 }
 
-// endregion | Test helper: create a fake package directory mirroring packages/mcp layout
+// endregion | Test helper: Create a fake package directory mirroring packages/mcp layout
 
 describe('isBuildStale', () => {
   it('returns true when source is newer than dist', async () => {
@@ -158,7 +158,7 @@ describe('isBuildStale', () => {
 
 describe('stale build warning delivery', () => {
   // Use vi.doMock to control isBuildStale for these tests.
-  // Reset modules so the dynamic import below picks up the mock rather than a cached module.
+  // Reset modules so that the dynamic import below picks up the mock rather than a cached module.
   let mockIsBuildStale: ReturnType<typeof vi.fn<() => Promise<boolean>>>;
 
   beforeEach(() => {
@@ -223,7 +223,7 @@ describe('stale build warning delivery', () => {
       const items = getContentItems(result);
       expect(items.length).toBeGreaterThanOrEqual(2);
       expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u{26A0}\u{FE0F} MCP server build is stale/u);
-      // Data content remains in a separate item — not corrupted by the warning
+      // Data content remains in a separate item, not corrupted by the warning
       expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u{26A0}\u{FE0F}/u);
     } finally {
       await cleanup();

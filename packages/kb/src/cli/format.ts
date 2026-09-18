@@ -1,6 +1,6 @@
 import type { Finding } from '../types.ts';
 
-/** A resolved store's identity, surfaced in both human and JSON output. */
+/** A resolved store's identity, shown in both human and JSON output. */
 export interface StoreRef {
   /** The store's display name, or `null` for a `.kb/`-discovered store with no registry entry. */
   name: string | null;
@@ -27,8 +27,8 @@ export type CheckScope = 'vault' | 'patterns' | 'vs';
  * the config targets for a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since no
  * check ran.
  *
- * A run can check no notes and still carry vault-scoped findings, which describe the store rather than any note. The
- * zero-match line then heads the report instead of replacing it: it explains why no note was checked, and the findings
+ * A run can check no notes and still include vault-scoped findings, which describe the store rather than any note. The
+ * zero-match line then heads the report instead of replacing it: It explains why no note was checked, and the findings
  * follow.
  */
 export function formatHuman(input: {

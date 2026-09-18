@@ -1,5 +1,5 @@
-// Fleet's public surface: the typed route map and the wire shapes it serves, consumed cross-package by typed
-// clients. Server internals stay out — a consumer needs the contract, not the machinery.
+// Fleet's public surface: the typed route map and the wire shapes that it serves, consumed cross-package by typed
+// clients. Server internals stay out: A consumer needs the contract, not the implementation.
 
 export type { AppType } from './api/app.ts';
 export type {

@@ -6,8 +6,8 @@ import { findMonorepoRoot, getWorkspacePackageDirs } from '@williamthorsen/nmr/w
 import { describe, expect, it } from 'vitest';
 
 /**
- * Paths a named package must ship beyond the invariants every publishable package satisfies. A value matches by
- * prefix, so an exact file path names itself and a directory names everything under it.
+ * Paths that a named package must include beyond the invariants satisfied by every publishable package. A value
+ * matches by prefix, so an exact file path names itself and a directory names everything under it.
  */
 const requiredPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
   codeassembly: ['dist/esm/cli.js', 'dist/content/skills/'],
@@ -16,23 +16,23 @@ const requiredPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
 describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, name }) => {
   const packed = readPackedPaths(dir);
 
-  it('ships build output', () => {
+  it('includes build output', () => {
     expect(
       packed.filter((entry) => entry.startsWith('dist/')),
       `${name} packs no build output. Run \`nmr build\` before this suite.`,
     ).not.toHaveLength(0);
   });
 
-  it.each(bins)('ships its declared bin %s', (bin) => {
+  it.each(bins)('includes its declared bin %s', (bin) => {
     expect(packed).toContain(bin);
   });
 
-  it.each(requiredPaths[name] ?? [])('ships %s', (required) => {
+  it.each(requiredPaths[name] ?? [])('includes %s', (required) => {
     expect(packed.filter((entry) => entry.startsWith(required))).not.toHaveLength(0);
   });
 
   it('excludes the TypeScript sources', () => {
-    // A package with no `files` allowlist falls back to `.gitignore`, which ignores `dist/` and ships `src/`.
+    // A package with no `files` allowlist falls back to `.gitignore`, which ignores `dist/` and includes `src/`.
     expect(packed.filter((entry) => entry.startsWith('src/'))).toEqual([]);
   });
 
@@ -44,7 +44,7 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
 
 // region | Helpers
 
-/** One workspace package that publishes, with the bin paths its manifest declares. */
+/** One workspace package that publishes, with the bin paths declared by its manifest. */
 interface PublishablePackage {
   readonly bins: ReadonlyArray<string>;
   readonly dir: string;
@@ -71,7 +71,7 @@ function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
   return packages.toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Reads the bin target paths a manifest declares, tolerating both the string and object forms of the field. */
+/** Reads the bin target paths that a manifest declares, tolerating both the string and object forms of the field. */
 function readBinPaths(manifest: object): ReadonlyArray<string> {
   if (!('bin' in manifest)) {
     return [];
@@ -88,8 +88,8 @@ function readBinPaths(manifest: object): ReadonlyArray<string> {
 }
 
 /**
- * Lists the paths `npm pack` would include for the package at `dir`. The dry run writes no tarball, so a failing
- * assertion cannot strand a `.tgz` in a package root.
+ * Lists the paths that `npm pack` would include for the package at `dir`. The dry run writes no tarball, so a
+ * failing assertion cannot leave a `.tgz` in a package root.
  */
 function readPackedPaths(dir: string): ReadonlyArray<string> {
   const stdout = execFileSync('npm', ['pack', '--dry-run', '--json'], {
@@ -109,20 +109,20 @@ function readReportPaths(stdout: string): ReadonlyArray<string> {
   if (!Array.isArray(parsed) || parsed.length === 0) {
     throw new TypeError('`npm pack --json` returned no report.');
   }
-  // `Array.isArray` narrows an `unknown` to `any[]`, so the explicit annotations here and below are what keep an
-  // implicit `any` from flowing through every access and defeating the validation.
+  // `Array.isArray` narrows an `unknown` to `any[]`, so the explicit annotations here and below keep an implicit
+  // `any` from flowing through every access and defeating the validation.
   const [report]: ReadonlyArray<unknown> = parsed;
   if (typeof report !== 'object' || report === null || !('files' in report)) {
-    throw new TypeError('`npm pack --json` report carries no `files` array.');
+    throw new TypeError('`npm pack --json` report contains no `files` array.');
   }
   const files: unknown = report.files;
   if (!Array.isArray(files)) {
-    throw new TypeError('`npm pack --json` report carries no `files` array.');
+    throw new TypeError('`npm pack --json` report contains no `files` array.');
   }
   const entries: ReadonlyArray<unknown> = files;
   return entries.map((file) => {
     if (typeof file !== 'object' || file === null || !('path' in file) || typeof file.path !== 'string') {
-      throw new TypeError('`npm pack --json` report carries a file entry with no `path`.');
+      throw new TypeError('`npm pack --json` report contains a file entry with no `path`.');
     }
     return file.path;
   });

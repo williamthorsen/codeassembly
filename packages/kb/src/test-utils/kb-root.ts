@@ -10,7 +10,7 @@ export function kbRootAt(path: string): KbRoot {
   return { path, kbDir: resolveKbDir(path) };
 }
 
-/** Stands up a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */
+/** Creates a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */
 export async function makeKbRoot(
   seeds: { aliases?: string; config?: string; taxonomy?: string } = {},
 ): Promise<KbRoot> {

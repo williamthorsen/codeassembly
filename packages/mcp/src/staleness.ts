@@ -46,9 +46,9 @@ async function hasNewerFile(dir: string, referenceMs: number): Promise<boolean> 
  *
  * When loaded from the source tree (e.g. via `tsx` in dev/test mode),
  * `import.meta.url` points to `src/staleness.ts`. The two-level `../..`
- * navigation then resolves above the package root, so `src/` is not found
- * and the function correctly returns `false` -- `tsx` always serves fresh
- * compiled output, so there is no stale build to warn about.
+ * navigation then resolves above the package root, so the function does not
+ * find `src/` and correctly returns `false` -- `tsx` always serves fresh
+ * compiled output, leaving no stale build to warn about.
  *
  * `compiledFileUrl` must name a file inside `dist/esm/`. It defaults to
  * `import.meta.url`; a test passes the URL of a fake package in its place.
@@ -72,7 +72,7 @@ export async function isBuildStale(compiledFileUrl?: string): Promise<boolean> {
 
     return await hasNewerFile(srcDir, referenceMs);
   } catch {
-    // Fail-safe: never block tool execution
+    // Fail-safe: Never block tool execution
     return false;
   }
 }

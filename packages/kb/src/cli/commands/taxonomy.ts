@@ -14,18 +14,19 @@ import type { CommandOutput } from './check.ts';
 
 export const TAXONOMY_HELP = `Usage: kb taxonomy init [options]
 
-Derive a starting taxonomy from the notes a knowledge base already holds, so a
-taxonomy can be introduced to a populated store without every folder reporting
-as undeclared. Every folder holding notes is declared, along with each of its
-ancestors, under "provisional:" with no description: the command cannot invent
-descriptions, and provisional already means "declared, not yet reviewed".
+Derive a starting taxonomy from the notes that a knowledge base already
+contains, so that a taxonomy can be introduced to a populated store without
+every folder reporting as undeclared. Every folder containing notes is
+declared, along with each of its ancestors, under "provisional:" with no
+description: The command cannot invent descriptions, and provisional already
+means "declared, not yet reviewed".
 
 Options:
   --kb <name>   Use the named store from the kb.yaml registry. Without it, the
                 nearest ancestor .kb/ directory is used.
-  --merge       Add only the domains an existing taxonomy does not declare.
-                Without it, a store that already has a taxonomy is left
-                untouched.
+  --merge       Add only the domains that an existing taxonomy does not
+                declare. Without it, a store that already has a taxonomy is
+                left untouched.
   -h, --help    Show this help.
 
 Exit codes:
@@ -35,12 +36,12 @@ Exit codes:
 `;
 
 /**
- * Runs `kb taxonomy`: parses options, resolves the store, derives the domains its notes imply, and declares them.
+ * Runs `kb taxonomy`: parses options, resolves the store, derives the domains implied by its notes, and declares them.
  *
- * The derivation reads the same enumeration `kb check` does, so a store back-filled by this command reports no
- * taxonomy drift. A store that the registry marks `readonly` is refused. A malformed `.kb/config.yaml` or
- * `.kb/taxonomy.yaml` surfaces as a `KbLoaderError` and maps to exit 2; any other error propagates to the caller as a
- * real crash.
+ * The derivation reads the same enumeration as `kb check`, so a store back-filled by this command reports no
+ * taxonomy drift. A store that the registry marks `readonly` is refused. The loaders throw a `KbLoaderError` for a
+ * malformed `.kb/config.yaml` or `.kb/taxonomy.yaml`, and the command maps that error to exit 2; any other error
+ * propagates to the caller as a real crash.
  */
 export async function runTaxonomy(input: {
   argv: readonly string[];
@@ -143,8 +144,8 @@ export function parseTaxonomyArgs(argv: readonly string[]): TaxonomyOptions {
 // region | Helpers
 
 /**
- * Declares every domain the store's notes imply. Refuses a store that already declares domains unless `merge` is set,
- * in which case only the absent ones are added.
+ * Declares every domain implied by the store's notes. Refuses a store that already declares domains unless `merge` is
+ * set, in which case only the absent ones are added.
  */
 async function initTaxonomy(input: { kbRoot: KbRoot; merge: boolean }): Promise<CommandOutput> {
   const { kbRoot, merge } = input;
@@ -160,7 +161,7 @@ async function initTaxonomy(input: { kbRoot: KbRoot; merge: boolean }): Promise<
   const domains = deriveDomains(notes.map((note) => note.relativePath));
 
   if (domains.length === 0) {
-    return { exitCode: 0, stdout: `no assertion folders hold notes; ${TAXONOMY_FILE} not written\n`, stderr: '' };
+    return { exitCode: 0, stdout: `no assertion folders contain notes; ${TAXONOMY_FILE} not written\n`, stderr: '' };
   }
 
   const { added } = await writeTaxonomy({

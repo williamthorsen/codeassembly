@@ -19,11 +19,11 @@ const REGENERATE_FIX = 'Run `codeassembly generate label-map --force` to regener
 /**
  * Default internal rdy kit for the codeassembly monorepo.
  *
- * Diagnostic checks for files this repo owns as the source of truth.
- * Generic monorepo and git checks live in upstream kits — see
+ * Diagnostic checks for files that this repo owns as the source of truth.
+ * Generic monorepo and git checks are in upstream kits; see
  * williamthorsen/templates.node-monorepo and williamthorsen/git-recon.
- * Project-guidance checks live in the kit the `codeassembly` package publishes,
- * reached through the `packages` list in `.config/readyup.config.ts`.
+ * Project-guidance checks are in the kit published by the `codeassembly` package,
+ * which `.config/readyup.config.ts` names in its `packages` list.
  */
 export default defineRdyKit({
   checklists: [
@@ -97,7 +97,7 @@ function listPackageDirNames(): string[] {
     }
     throw error;
   }
-  // stat follows symlinks so symlinked package dirs count, matching the generated map; Dirent would drop them.
+  // stat follows symlinks, so symlinked package dirs count, matching the generated map; Dirent would drop them.
   return entries.filter((entry) => statSync(join('packages', entry)).isDirectory());
 }
 

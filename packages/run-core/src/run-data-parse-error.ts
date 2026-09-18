@@ -6,7 +6,7 @@ export type RunDataParseErrorCategory = 'corrupt_json' | 'invalid_schema' | 'mis
  * Structured error for run-data parsing failures.
  *
  * Distinguishes known parse failures (corrupt JSON, schema mismatches,
- * missing companion files) from unexpected errors, so consumers can
+ * missing companion files) from unexpected errors, so that consumers can
  * downgrade known failures to informative warnings.
  */
 export class RunDataParseError extends Error {

@@ -2,7 +2,7 @@
 
 Foreman is the client app of the fleet-visibility stack: the lane view over Fleet's lanes snapshot and SSE stream. Sessions group into workstream lanes (repo × branch, with ticket attribution), and each session row shows its harness, phase narration, pending ask, and freshness (time since its last event). The header shows the stream's connection state.
 
-Foreman consumes Fleet's route map as an end-to-end typed client via `hc<AppType>`; the SSE stream carries the same `FleetSnapshot` wire type. Nothing here folds events: the server's snapshot is already display-shaped.
+Foreman consumes Fleet's route map as an end-to-end typed client via `hc<AppType>`; the SSE stream uses the same `FleetSnapshot` wire type. Nothing here folds events: The server's snapshot is already display-shaped.
 
 ## Run
 
@@ -18,4 +18,4 @@ The dev server proxies `/api` to Fleet on `localhost:4178`; set `FLEET_PORT` to 
 
 ## Vendor boundary
 
-`src/integrations/mantine/` is the sole importer of `@mantine/*`. A direct vendor import anywhere else fails lint, so vendor churn lands in that one directory.
+`src/integrations/mantine/` is the sole importer of `@mantine/*`. A direct vendor import anywhere else fails lint, so vendor churn stays in that one directory.

@@ -16,7 +16,7 @@ Scaffold a new knowledge base in the current directory and register it in the us
 Registering leaves the registry's entries in alphabetical order, preserving its comments and formatting.
 
 When the registry has no default knowledge base, the new store becomes the default.
-If other knowledge bases are already registered, you are prompted to choose one (or set it later with "kb set-default").
+If other knowledge bases are already registered, the command prompts for a choice (or "kb set-default" sets one later).
 
 Creates:
   .editorconfig          editor and formatter settings (width, indent, line endings)
@@ -38,10 +38,10 @@ Exit codes:
 
 /**
  * Runs `kb create`: parses options, scaffolds a store in `cwd`, and (unless `--no-register`) registers it in the
- * user-global `~/.agents/kb.yaml`. After registering, it ensures a default knowledge base: the new store becomes the
+ * user-global `~/.agents/kb.yaml`. After registering, it ensures a default knowledge base: The new store becomes the
  * default when none is set and it is the only KB; when other KBs already exist with no default, it delegates to
  * `kb set-default`'s picker (or, with no `selectKb` on a non-interactive stdin, points the user there). A precondition
- * failure from `create` — an existing `.kb/` or an already-registered name — maps to exit 2; a genuine I/O error
+ * failure from `create` (an existing `.kb/` or an already-registered name) maps to exit 2; a genuine I/O error
  * propagates to the caller.
  */
 export async function runCreate(input: {
@@ -81,7 +81,7 @@ export async function runCreate(input: {
     return { exitCode: 0, stdout: summary, stderr: '' };
   }
 
-  // No default is set and other KBs already exist: let the user pick one, reusing `kb set-default`'s interactive form.
+  // No default is set and other KBs already exist: Let the user pick one, reusing `kb set-default`'s interactive form.
   if (input.selectKb === undefined) {
     return { exitCode: 0, stdout: summary + UNSET_DEFAULT_HINT, stderr: '' };
   }
@@ -147,7 +147,7 @@ export function parseCreateArgs(argv: readonly string[]): CreateOptions {
     throw new Error(`unknown flag: ${arg}`);
   }
 
-  // A description has nowhere to go without a registry entry, so reject the combination rather than discarding it.
+  // Nothing stores a description without a registry entry, so reject the combination rather than discarding it.
   if (noRegister && description !== null) {
     throw new Error('--description cannot be combined with --no-register');
   }

@@ -108,7 +108,7 @@ describe('emitEvent', () => {
   });
 
   it('returns structured error when appendFile fails', async () => {
-    // Use a non-existent directory so appendFile fails with ENOENT
+    // Use a non-existent directory so that appendFile fails with ENOENT
     const runDir = join(tmpdir(), 'mcp-test-no-such-dir-' + Date.now().toString());
     const result = await emitEvent({
       runDir,

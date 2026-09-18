@@ -19,7 +19,7 @@ import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
 import { run } from '../run.ts';
 
 describe('kb scaffold', () => {
-  it('writes every canonical file a bare store lacks', async () => {
+  it('writes every canonical file that a bare store lacks', async () => {
     const store = await makeStore({});
 
     const result = await run({ argv: ['scaffold'], cwd: store });
@@ -107,7 +107,7 @@ describe('kb scaffold', () => {
     expect(result.stderr).toContain('does not match any registered knowledge base');
   });
 
-  it('exits 2 for a registered path holding no .kb/, writing nothing there', async () => {
+  it('exits 2 for a registered path containing no .kb/, writing nothing there', async () => {
     const bare = await makeTempDir('kb-scaffold-bare-');
     const home = await makeTempDir('kb-scaffold-home-');
     await seedRegistry(getRegistryPathFor(home), `kbs:\n  phantom:\n    path: ${bare}\n`);
@@ -119,7 +119,7 @@ describe('kb scaffold', () => {
     expect(await pathExists(join(bare, CONFIG_FILE))).toBe(false);
   });
 
-  it('refuses a store the registry marks readonly', async () => {
+  it('refuses a store marked readonly by the registry', async () => {
     const store = await makeStore({});
     const home = await makeReadonlyHome(store);
 
@@ -185,7 +185,7 @@ describe('kb scaffold', () => {
 
 // region | Helpers
 
-/** Stands up an isolated home registering `storePath` as a readonly KB named `mirror`; returns the home dir. */
+/** Creates an isolated home registering `storePath` as a readonly KB named `mirror`; returns the home dir. */
 async function makeReadonlyHome(storePath: string): Promise<string> {
   const home = await makeTempDir('kb-scaffold-home-');
   await seedRegistry(getRegistryPathFor(home), `kbs:\n  mirror:\n    path: ${storePath}\n    readonly: true\n`);

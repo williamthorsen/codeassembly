@@ -12,7 +12,7 @@ Commands:
   create       Scaffold a new knowledge base and register it in the kb.yaml registry.
   scaffold     Write into an existing knowledge base any canonical file that it lacks.
   set-default  Set, clear, or choose the default knowledge base.
-  taxonomy     Derive a knowledge base's taxonomy from the notes it already holds.
+  taxonomy     Derive a knowledge base's taxonomy from the notes that it already contains.
 
 Run "kb <command> --help" for command options.
 `;

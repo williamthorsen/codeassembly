@@ -15,7 +15,7 @@ export async function writeAtomic(path: string, content: string): Promise<void> 
     try {
       await unlink(tempPath);
     } catch {
-      // The write failure is what the caller needs; a failed cleanup must not mask it.
+      // The caller needs the write failure; a failed cleanup must not mask it.
     }
     throw error;
   }

@@ -18,7 +18,8 @@ export type SelectKbPrompt = (input: {
 
 /**
  * Renders the numbered selection list: each registered KB (marking the current default) followed by a trailing
- * `(none)` option numbered `entries.length + 1`. When no default is set, `(none)` carries the current marker instead.
+ * `(none)` option numbered `entries.length + 1`. When no default is set, the current marker appears on `(none)`
+ * instead.
  */
 export function formatKbSelection(entries: readonly KbRegistryEntry[], currentDefaultName?: string): string {
   const lines = ['Select the default knowledge base:'];
@@ -27,7 +28,7 @@ export function formatKbSelection(entries: readonly KbRegistryEntry[], currentDe
     lines.push(`  ${String(index + 1)}) ${entry.name}${suffix}`);
   }
   const noneSuffix = currentDefaultName === undefined ? '  (current)' : '';
-  lines.push(`  ${String(entries.length + 1)}) (none) — no default${noneSuffix}`);
+  lines.push(`  ${String(entries.length + 1)}) (none): no default${noneSuffix}`);
   return `${lines.join('\n')}\n`;
 }
 

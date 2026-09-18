@@ -2,7 +2,7 @@ import { Document, parseDocument, stringify } from 'yaml';
 
 import { isRecord } from '../type-guards.ts';
 
-// Type-blind parse/render of a note's frontmatter as an ordered field map. This module is the canonical home for the
+// Type-blind parse/render of a note's frontmatter as an ordered field map. This module owns the
 // YAML quoting decisions: it quotes exactly the strings that would otherwise re-parse as a non-string and keeps
 // round-trip-safe strings plain, so any record type rendered through it round-trips faithfully.
 const SCALAR_STRINGIFY_OPTIONS = {
@@ -61,7 +61,7 @@ function renderFlowList(values: readonly string[]): string {
 }
 
 /**
- * Renders a string scalar, delegating the quoting decision to the `yaml` core-schema stringifier so the result
+ * Renders a string scalar, delegating the quoting decision to the `yaml` core-schema stringifier so that the result
  * re-parses to the same string. A value containing a newline yields a multi-line block scalar that cannot occupy a
  * single `key: value` line, so it is re-rendered as a double-quoted scalar whose `\n` escapes round-trip faithfully.
  */

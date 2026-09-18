@@ -54,7 +54,7 @@ describe(renderEditorconfigSeed, () => {
 
     const resolved = await resolveConfig(join(storePath, 'note.md'), { editorconfig: true });
 
-    // Prettier maps these from `.editorconfig` rather than from `.prettierrc.yaml`, which is what lets one file serve
+    // Prettier maps these from `.editorconfig` rather than from `.prettierrc.yaml`, which lets one file serve
     // the editor and the formatter alike. Without it the width would fall back to Prettier's default of 80.
     expect(resolved).toMatchObject({ endOfLine: 'lf', printWidth: 120, tabWidth: 2, useTabs: false });
   });

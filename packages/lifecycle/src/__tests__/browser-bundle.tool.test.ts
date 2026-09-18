@@ -1,4 +1,4 @@
-// Executable gate for the browser-safety contract: the public surface must bundle for the browser, so an exported
+// Executable gate for the browser-safety contract: The public surface must bundle for the browser, so an exported
 // module that gains a Node builtin import fails this test rather than the first downstream web build.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

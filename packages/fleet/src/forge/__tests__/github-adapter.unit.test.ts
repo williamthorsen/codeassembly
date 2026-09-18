@@ -117,7 +117,7 @@ describe('createGithubAdapter', () => {
       await adapter.fetchRepoState({ repo: REPO, branches: ['feature-x'], ticketIds: [] });
     }
 
-    // The initial poll caches the absence; the interval-boundary poll clears it and re-probes — twice total, not once.
+    // The initial poll caches the absence; the interval-boundary poll clears it and re-probes: twice total, not once.
     expect(calls.filter((args) => args[0] === 'pr' && args[1] === 'view')).toHaveLength(2);
   });
 
@@ -153,14 +153,14 @@ describe('createGithubAdapter', () => {
     expect(tickets['7']).toBeUndefined();
   });
 
-  it('surfaces malformed pr list output as a thrown error', async () => {
+  it('throws on malformed pr list output', async () => {
     const { run } = createRunner({ prList: 'this is not json {' });
     const adapter = createGithubAdapter({ runProcess: run });
 
     await expect(adapter.fetchRepoState({ repo: REPO, branches: ['feature-x'], ticketIds: [] })).rejects.toThrow();
   });
 
-  it('surfaces a pull request missing required fields as a thrown error', async () => {
+  it('throws on a pull request missing required fields', async () => {
     const { run } = createRunner({ prList: [{ headRefName: 'feature-x', title: 'no number here' }] });
     const adapter = createGithubAdapter({ runProcess: run });
 
@@ -170,12 +170,12 @@ describe('createGithubAdapter', () => {
 
 // region | Helpers
 
-/** A raw `gh` CheckRun rollup entry with the lifecycle `status` and result `conclusion` real output carries. */
+/** A raw `gh` CheckRun rollup entry with the lifecycle `status` and result `conclusion` that real output contains. */
 function composeCheckRun(status: string, conclusion: string): Record<string, unknown> {
   return { __typename: 'CheckRun', name: 'ci', status, conclusion };
 }
 
-/** An error shaped like a failed `gh` invocation, carrying the `stderr` the runner rejects with. */
+/** An error shaped like a failed `gh` invocation; the runner rejects with its `stderr`. */
 function composeGhError(stderr: string): Error {
   return Object.assign(new Error('gh exited non-zero'), { stderr });
 }

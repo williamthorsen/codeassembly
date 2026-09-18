@@ -39,7 +39,7 @@ describe(checkVaultIntegrity, () => {
     const findings = checkVaultIntegrity([note('a/Guide.md', body, 5)]);
 
     // bodyStartLine 5 + four preceding newlines = file line 9. Masking blanks the fenced line in place and leaves
-    // every newline where it was, which is what lets the line count read the unmasked body at a scanned offset.
+    // every newline where it was, which lets the line count read the unmasked body at a scanned offset.
     expect(findings[0]?.line).toBe(9);
   });
 
@@ -129,7 +129,7 @@ describe(checkVaultIntegrity, () => {
     expect(checkVaultIntegrity(notes, options({ fde: resolvedStore('content/Shared assertion.md') }))).toEqual([]);
   });
 
-  it('resolves a qualified link carrying an alias or an anchor', () => {
+  it('resolves a qualified link with an alias or an anchor', () => {
     const notes = [
       note('a/One.md', 'See [[fde:Shared assertion|the assertion]].'),
       note('a/Two.md', 'See [[fde:Shared assertion#Findings]].'),
@@ -153,12 +153,12 @@ function note(path: string, body = '# body', bodyStartLine = 1): VaultIntegrityN
   return { path, body, bodyStartLine };
 }
 
-/** Builds options for a private source store over a `name -> outcome` map of the stores its links name. */
+/** Builds options for a private source store over a `name -> outcome` map of the stores named by its links. */
 function options(foreignStores: Record<string, ForeignStore>): VaultIntegrityOptions {
   return { foreignStores: new Map(Object.entries(foreignStores)), sourceVisibility: 'private' };
 }
 
-/** Builds a resolved store whose index carries the given note paths. */
+/** Builds a resolved store whose index contains the given note paths. */
 function resolvedStore(...paths: string[]): ForeignStore {
   return { status: 'resolved', index: buildVaultIndex(paths.map((path) => ({ path }))) };
 }

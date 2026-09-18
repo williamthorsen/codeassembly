@@ -14,23 +14,23 @@ import {
 import { renderAliasesSeed, renderConfigSeed, renderEditorconfigSeed, renderPrettierSeed } from './render-seeds.ts';
 
 /**
- * What {@link scaffold} did about one canonical path: `created` where it was absent, `present` where it was left as
- * found, `replaced` where `force` overwrote it.
+ * What {@link scaffold} did about one canonical path: `created` when it was absent, `present` when it was left as
+ * found, `replaced` when `force` overwrote it.
  */
 export type ScaffoldAction = 'created' | 'present' | 'replaced';
 
 /** One canonical path and what the scaffold did about it. */
 export interface ScaffoldEntry {
-  /** The store-relative path, directories carrying a trailing slash. */
+  /** The store-relative path, directories with a trailing slash. */
   path: string;
   action: ScaffoldAction;
 }
 
 /**
- * Writes the canonical files and directories every knowledge-base store holds, leaving an existing file as it found it
- * unless `force` is set. Directories are ensured either way, since a directory has no content to replace.
+ * Writes the canonical files and directories that every knowledge-base store contains, leaving an existing file as it
+ * found it unless `force` is set. Directories are ensured either way, since a directory has no content to replace.
  *
- * The function asserts nothing about the store: a caller that requires one to exist, or requires one not to, checks
+ * The function asserts nothing about the store: A caller that requires one to exist, or requires one not to, checks
  * that itself.
  */
 export async function scaffold(input: { storePath: string; force?: boolean }): Promise<readonly ScaffoldEntry[]> {
@@ -63,9 +63,9 @@ export async function scaffold(input: { storePath: string; force?: boolean }): P
 // region | Helpers
 
 // The canonical set: what a store holds regardless of when it was created. `kb create` and `kb scaffold` both write it
-// from here, so a file added to either list reaches both commands and neither can drift from the other.
+// from here, so a file added to either list is written by both commands and neither can drift from the other.
 //
-// `.kb/taxonomy.yaml` is not canonical: `kb taxonomy init` derives its content from the notes a store holds rather
+// `.kb/taxonomy.yaml` is not canonical: `kb taxonomy init` derives its content from a store's notes rather
 // than writing a fixed template. Nor is `content/assertions/`: `kb-add` creates its target folder on demand.
 
 const CANONICAL_DIRECTORIES: readonly string[] = [CONTENT_DIR, EVENTS_DIR];

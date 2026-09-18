@@ -39,7 +39,7 @@ export async function loadKbConfig(input: { kbRoot: KbRoot }): Promise<KbConfig>
 
   const result = configFileShape.safeParse(parsed ?? {});
   if (!result.success) {
-    throw new KbLoaderError(`${path}: invalid config.yaml — ${result.error.issues[0]?.message ?? 'unknown error'}`);
+    throw new KbLoaderError(`${path}: invalid config.yaml: ${result.error.issues[0]?.message ?? 'unknown error'}`);
   }
 
   return {

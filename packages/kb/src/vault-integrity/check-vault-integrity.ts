@@ -5,47 +5,48 @@ import { countNewlines, lookupKey, type ScannedWikilink, scanWikilinks } from '.
 
 /**
  * Checks whole-vault integrity over a type-blind note set: unresolved `[[link]]` targets and basename collisions.
- * Projects no records and reads no frontmatter — a note is just its path and body.
+ * Projects no records and reads no frontmatter: A note is just its path and body.
  *
  * A `[[Target]]` whose basename resolves to zero notes is an error (`wikilinks.unresolved`), reported at its
  * file-absolute line. A basename shared by two or more notes is a single vault-wide warning (`wikilinks.basename`),
  * reported once per basename independent of whether any link references it. An ambiguous link (a basename that several
- * notes share) is not flagged per-link — the vault-wide basename warning subsumes it.
+ * notes share) is not flagged per-link: The vault-wide basename warning subsumes it.
  *
- * A `[[store:Target]]` resolves against `options.foreignStores` instead, and never joins this store's own basename
- * index, so the basename warning stays store-scoped. Without `options`, a qualified target is treated as a bare one.
+ * A `[[store:Target]]` resolves against `options.foreignStores` instead, and is never added to this store's own
+ * basename index, so the basename warning stays store-scoped. Without `options`, a qualified target is treated as a
+ * bare one.
  */
 export function checkVaultIntegrity(notes: readonly VaultIntegrityNote[], options?: VaultIntegrityOptions): Finding[] {
   const vaultIndex = buildVaultIndex(notes);
   return [...linkFindings(notes, vaultIndex, options), ...basenameFindings(vaultIndex)];
 }
 
-/** What a check run found when it looked up a store one of its links names. */
+/** What a check run found when it looked up a store named by one of its links. */
 export type ForeignStore =
   /** The name matches no entry in the merged registry. */
   | { status: 'unknown' }
   /** The store is registered but cannot be read on this machine, so its links are unverifiable rather than broken. */
   | { status: 'unavailable'; reason: string }
-  /** The store is less shareable than the source, so a link into it would widen disclosure. */
+  /** Because the store is less shareable than the source, a link into it would widen disclosure. */
   | { status: 'disallowed'; visibility: StoreVisibility }
-  /** The store was read; `index` holds its basenames. */
+  /** The store was read; `index` contains its basenames. */
   | { status: 'resolved'; index: VaultIndex };
 
 /** A note reduced to what vault integrity inspects. */
 export interface VaultIntegrityNote {
-  /** Path or label the note was read from; used as the index value and the finding path. */
+  /** Path or label from which the note was read; used as the index value and the finding path. */
   path: string;
   /** The note body (everything after the frontmatter block). */
   body: string;
-  /** 1-based file line where the body begins, so link findings report file-absolute lines. */
+  /** 1-based file line where the body begins, so that link findings report file-absolute lines. */
   bodyStartLine: number;
 }
 
 /** What a run needs to evaluate a store-qualified link. */
 export interface VaultIntegrityOptions {
-  /** What the run found for each store name its links qualify, keyed by that name. */
+  /** What the run found for each store name that qualifies one of its links, keyed by that name. */
   foreignStores: ReadonlyMap<string, ForeignStore>;
-  /** The visibility of the store being checked, which decides the direction a qualified link may take. */
+  /** The visibility of the store being checked, which decides the direction that a qualified link may take. */
   sourceVisibility: StoreVisibility;
 }
 
@@ -97,7 +98,7 @@ function describeForeignDefect(
     return {
       rule: 'wikilinks.disallowed-store',
       severity: 'error',
-      message: `${link} targets "${store}", a ${foreignStore.visibility} store, which a ${options.sourceVisibility} store may not link into: the link discloses the target's title`,
+      message: `${link} targets "${store}", a ${foreignStore.visibility} store, which a ${options.sourceVisibility} store may not link into: The link discloses the target's title`,
     };
   }
 

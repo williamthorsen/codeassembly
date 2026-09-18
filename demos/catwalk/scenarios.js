@@ -14,7 +14,7 @@ export const GROUND_Y = 340;
 export const CHUTE_TOP = CATWALK_Y + 48;
 export const CHUTE_BOT = GROUND_Y - 20;
 
-// Horizontal layout — computed after PHASES so gaps between outermost agents are uniform
+// Horizontal layout: Computed after PHASES so that gaps between outermost agents are uniform
 export let STATION_X; // assigned by computeDefaultPositions()
 
 // Agent sizing
@@ -36,13 +36,13 @@ export const PAUSE_DURATION = 300;
 
 // Station colors (CGA-16)
 export const STATION_COLORS = [
-  '#5555FF', // 0: architecture — blue
-  '#55FF55', // 1: planning — green
-  '#FFFF55', // 2: implementation — yellow/amber
-  '#FF5555', // 3: review — red
-  '#FF55FF', // 4: simplifier — magenta
-  '#55FFFF', // 5: holistic — cyan
-  '#FFFFFF', // 6: outputs — white
+  '#5555FF', // 0: Architecture (blue)
+  '#55FF55', // 1: Planning (green)
+  '#FFFF55', // 2: Implementation (yellow/amber)
+  '#FF5555', // 3: Review (red)
+  '#FF55FF', // 4: Simplifier (magenta)
+  '#55FFFF', // 5: Holistic (cyan)
+  '#FFFFFF', // 6: Outputs (white)
 ];
 
 export const ARTIFACT_COLORS = {
@@ -60,7 +60,7 @@ export const ARTIFACT_COLORS = {
 
 export const ORCH_COLOR = '#FFD700';
 
-// Verdict icon config — maps reviewer criticality to glyph + color.
+// Verdict icon config: Maps reviewer criticality to glyph + color.
 export const VERDICT_DISPLAY = {
   none: { glyph: '✓', color: '#55FF55' },
   low: { glyph: '!', color: '#FFFF55' },
@@ -214,7 +214,7 @@ export function agentX(stationIndex, agentIndex, agentCount) {
   return cx - totalWidth / 2 + agentIndex * spacing;
 }
 
-// § STEP WEIGHTS — relative time consumed by each step type
+// § STEP WEIGHTS: Relative time consumed by each step type
 
 const STEP_WEIGHTS = {
   inputs: 0.5,

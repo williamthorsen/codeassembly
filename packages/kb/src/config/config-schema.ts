@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { CONTENT_DIR } from '../layout/index.ts';
 
 /**
- * The on-disk `.kb/config.yaml` shape. Every field is optional so a file may override only the key it cares about; an
- * absent field falls back to {@link defaultKbConfig}.
+ * The on-disk `.kb/config.yaml` shape. Every field is optional so that a file may override only the key that it cares
+ * about; an absent field falls back to {@link defaultKbConfig}.
  */
 export const configFileShape = z.object({
   targets: z.array(z.string()).optional(),
@@ -25,7 +25,7 @@ export const defaultKbConfig: KbConfig = {
 
 /**
  * Whether a link from a store of `source` visibility may resolve into one of `target` visibility. A link never
- * increases disclosure: it may point at a store as shareable as its own or more so, never at a less shareable one.
+ * increases disclosure: It may point at a store as shareable as its own or more so, never at a less shareable one.
  */
 export function isAtLeastAsShareable(input: { source: StoreVisibility; target: StoreVisibility }): boolean {
   return VISIBILITY_RANK[input.target] >= VISIBILITY_RANK[input.source];
@@ -41,12 +41,14 @@ export interface KbConfig {
   visibility: StoreVisibility;
 }
 
-/** How widely a store is published: `shared` reaches collaborators through a remote, `private` reaches nobody else. */
+/**
+ * How widely a store is published: `shared` is available to collaborators through a remote, `private` to nobody else.
+ */
 export type StoreVisibility = NonNullable<z.infer<typeof configFileShape>['visibility']>;
 
 // region | Helpers
 
-/** Orders the visibility values so a link's direction is a numeric comparison. */
+/** Orders the visibility values so that a link's direction is a numeric comparison. */
 const VISIBILITY_RANK: Record<StoreVisibility, number> = {
   private: 0,
   shared: 1,
