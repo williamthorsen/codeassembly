@@ -9,9 +9,7 @@ import { findMatchingSentences } from './span-text.ts';
 import type { ProseSpan, WhereCandidate } from './types.ts';
 
 /**
- * Scans every span for the word `where`, returning one candidate per sentence that holds it, in reading order. The
- * phrase is the sentence because one word resolves to nothing: A rejection recorded against it would match every other
- * `where` in the file.
+ * Scans every span for the word `where`, returning one candidate per sentence that holds it, in reading order.
  */
 export function detectWhereUses(spans: readonly ProseSpan[]): WhereCandidate[] {
   return spans.flatMap((span) =>

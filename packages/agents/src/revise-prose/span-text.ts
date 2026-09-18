@@ -144,13 +144,13 @@ export function listSentenceBounds(text: string): Array<{ start: number; end: nu
 
 // region | Helpers
 
-/** Fewest words that a string literal must contain to read as prose rather than as data. */
+/** Fewest words that a string literal must contain to read as prose. */
 const MIN_LITERAL_WORDS = 3;
 
 /** Matches a sentence terminator: a period, question mark, or exclamation mark before whitespace or the end. */
 const SENTENCE_BOUNDARY = /[.!?](?=\s|$)/g;
 
-/** Counts the word-like tokens in a string literal, which is how prose is told from data. */
+/** Counts the word-like tokens in a string literal. */
 function countWords(text: string): number {
   return text.split(/\s+/).filter((word) => /[a-z]{2}/i.test(word)).length;
 }

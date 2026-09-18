@@ -6,16 +6,9 @@
  * punctuation licensing the join. Three of the four shapes announce that new phrase with a closed-class word; the
  * bare-noun shape announces nothing, and is anchored on a plural subject instead.
  *
- * Detection is deliberately over-inclusive: Precision is the agent's, which adjudicates each candidate with the
- * sentence in view. Five things are nonetheless decided here, because each is decidable without a reading. The
- * rulebook's two out-of-scope heads, the fused head and the adjunct relative, are rejected by head type, as is the
- * predicate of a degree question, which no copula after it turns into a head noun. A word
- * carrying verbal morphology is read as a head noun only when a determiner makes it one, which is what keeps a main
- * clause and most participial phrases out. A bare-noun subject is held to plural agreement. And a clause with no gap
- * left for the head noun to fill is rejected: A passive has promoted its own object, so it reports only when a
- * stranded preposition, an infinitival complement, or a ditransitive leaves a second one open, and an intransitive
- * verb reports only when it strands a preposition. A copula takes no object at all, and closes a clause only at the
- * end of one, where the head fills its complement slot.
+ * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
+ * A candidate is rejected here only where a reading cannot change the answer, and each test carries the reason for
+ * its own rejection.
  *
  * An inline code span reads as one placeholder token, which heads no phrase, opens no subject, and closes no
  * clause. Because it holds its slot all the same, a site that a code span interrupts stays reachable.
@@ -204,9 +197,8 @@ const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
 
 /**
  * Past-tense forms that no suffix marks as a verb, so nothing but a lexicon recognizes one. Admission follows the
- * rule that {@link BARE_VERBS} states: Every entry is a word that no reading takes as a noun, which keeps `cost`,
- * `cut`, `hit`, `put`, `run`, `saw`, `set`, `split`, and `spread` out. A past participle needs no entry, since
- * {@link resolveAuxiliaryChain} admits whatever an auxiliary carries.
+ * rule that {@link BARE_VERBS} states, which keeps `cost`, `put`, `set`, and `spread` out. A past participle needs no
+ * entry, since {@link resolveAuxiliaryChain} admits whatever an auxiliary carries.
  */
 const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
   'began',
@@ -263,8 +255,7 @@ const CARRIED_VERB_WINDOW = 3;
 
 /**
  * Comparative adjectives. One before a pro-form makes that pro-form its phrase's head rather than a subject.
- * Admission follows the rule that {@link BARE_VERBS} states: Every entry is a word that no reading takes as a noun,
- * which keeps `header`, `parser`, and their like out.
+ * Admission follows the rule that {@link BARE_VERBS} states, which keeps `header` and `parser` out.
  */
 const COMPARATIVE_ADJECTIVES: ReadonlySet<string> = new Set([
   'better',

@@ -11,8 +11,7 @@ import type { ProseSpan, SecondPersonCandidate } from './types.ts';
 
 /**
  * Scans every span outside a skill or subagent body for a second-person pronoun, returning one candidate per sentence
- * that holds one, in reading order. The phrase is the sentence because one pronoun resolves to nothing: A rejection
- * recorded against it would match every other pronoun in the file.
+ * that holds one, in reading order.
  */
 export function detectSecondPersonPronouns(spans: readonly ProseSpan[]): SecondPersonCandidate[] {
   return spans

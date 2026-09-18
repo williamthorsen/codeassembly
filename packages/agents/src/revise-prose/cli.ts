@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and this module runs `main` only behind the `isEntryPoint()` guard, never when imported as a library; throwing-to-set-exitCode would lose the explicit failure-exit contract. */
-/* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard. */
+/* eslint unicorn/no-process-exit: off -- same as above. */
 /**
  * CLI entry for the prose sweep.
  *
@@ -84,7 +84,6 @@ async function main(): Promise<void> {
         : await runDetect({ argv: stripCommand(argv), root: process.cwd() });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
-    // System failures (unexpected throws) take the catch arm below.
   } catch (error) {
     process.stderr.write(`revise-prose: ${describeError(error)}\n`);
     process.exit(1);
@@ -234,10 +233,9 @@ export async function runDetect(input: {
 }
 
 /**
- * Folds one run's outcome into the repository's record and writes it. This is the record's only write path, which is
- * what keeps its YAML deterministic rather than hand-edited into drift. A rule's coverage records whether the helper
- * has its detector, which is what lets a detector added later run over files already covered. A prior rejection's
- * site is looked for in its file as the file stands when the command runs.
+ * Folds one run's outcome into the repository's record and writes it. A rule's coverage records whether the helper has
+ * its detector, which is what lets a detector added later run over files already covered. A prior rejection's site is
+ * looked for in its file as the file stands when the command runs.
  *
  * @internal - Exported to allow testing.
  */
@@ -426,7 +424,7 @@ function summarize(input: {
   planned: readonly Batch[];
 }): CandidateSummary {
   const counts = new Map<string, number>();
-  // Keyed in the order the rulebook ranks the shapes, so a shape with no candidates still reads as zero.
+  // Keyed in the order the rulebook ranks the shapes.
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
   const byRule: Record<RuleId, number> = {
     'em-dash': 0,

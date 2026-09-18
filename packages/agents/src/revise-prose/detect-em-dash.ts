@@ -11,8 +11,6 @@ import type { EmDashCandidate, ProseSpan } from './types.ts';
 
 /**
  * Scans every span for em-dashes, returning one candidate per sentence that contains at least one, in reading order.
- * The phrase is the sentence because a dash on its own resolves to nothing: A rejection recorded against one character
- * would match every other dash in the file.
  */
 export function detectEmDashes(spans: readonly ProseSpan[]): EmDashCandidate[] {
   return spans.flatMap((span) =>

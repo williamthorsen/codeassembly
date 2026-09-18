@@ -2,10 +2,9 @@
  * Target-set resolution and prose extraction for the revise-prose sweep.
  *
  * The sweep reads what git tracks plus what git would track, which respects `.gitignore` and so keeps `node_modules/`
- * and `dist/` out for free. Extraction is per file type: Markdown body text, comments and multi-word string literals
- * in TypeScript and JavaScript, `#` comments in shell, and comments, block scalars, and multi-word values in YAML.
- * Everything mechanical about scope is decided here, so that the detector sees prose alone and the agent never
- * adjudicates a candidate from a file that it may not edit.
+ * and `dist/` out for free. Extraction is per file type, each extractor stating what it reads. Everything mechanical
+ * about scope is decided here, so that the detector sees prose alone and the agent never adjudicates a candidate from
+ * a file that it may not edit.
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -106,7 +105,6 @@ export async function collectProse(input: {
       continue;
     }
 
-    // Skip a YAML file that contains no prose.
     if (kind === 'yaml' && extracted.length === 0) continue;
 
     scannedFiles.push({ file, bytes: Buffer.byteLength(content, 'utf8') });
