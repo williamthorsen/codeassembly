@@ -7,7 +7,7 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
+ * Creates a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
  * `SmokeTestInvocation` that pipes a Claude `SessionStart` payload at the relay exactly as the harness would.
  *
  * The bundle is the only place the relay's stdin read is exercised against a real pipe: The unit suite hands `runRelay`

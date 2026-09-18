@@ -10,7 +10,7 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up an event store plus an isolated home registering it as `default_kb`, and a throwaway git repo with an
+ * Creates an event store plus an isolated home registering it as `default_kb`, and a throwaway git repo with an
  * `origin` remote, then returns a `SmokeTestInvocation` that captures a single event against them with `--store
  * @default`. Exercises the full `@default` sentinel resolution → validate the `event` record's spine via `parseEvent` →
  * write pipeline end to end, which is the only path that wires the bundled resolver, the per-type record layer, and the

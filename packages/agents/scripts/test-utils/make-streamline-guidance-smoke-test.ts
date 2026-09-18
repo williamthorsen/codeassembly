@@ -11,7 +11,7 @@ const PARTIAL = 'skills/_partials/shared.md';
 const TARGET = 'skills/demo/SKILL.md';
 
 /**
- * Stands up a throwaway git repository containing one content root, whose skill includes one partial, and returns a
+ * Creates a throwaway git repository containing one content root, whose skill includes one partial, and returns a
  * `SmokeTestInvocation` that resolves the skill. Exercises the git listing, the include listing, and the transitive-file
  * pipeline end to end. `HOME` is overridden to the fixture directory so that the run reads none of the developer's own
  * preferences.
