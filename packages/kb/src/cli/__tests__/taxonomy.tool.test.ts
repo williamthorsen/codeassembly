@@ -133,7 +133,7 @@ describe('kb taxonomy init', () => {
     const result = await run({ argv: ['taxonomy', 'init'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('no assertion folders hold notes');
+    expect(result.stdout).toContain('no assertion folders contain notes');
     await expect(readTaxonomy(store)).rejects.toThrow(/ENOENT/);
   });
 

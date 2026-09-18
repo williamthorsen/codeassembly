@@ -161,7 +161,7 @@ async function initTaxonomy(input: { kbRoot: KbRoot; merge: boolean }): Promise<
   const domains = deriveDomains(notes.map((note) => note.relativePath));
 
   if (domains.length === 0) {
-    return { exitCode: 0, stdout: `no assertion folders hold notes; ${TAXONOMY_FILE} not written\n`, stderr: '' };
+    return { exitCode: 0, stdout: `no assertion folders contain notes; ${TAXONOMY_FILE} not written\n`, stderr: '' };
   }
 
   const { added } = await writeTaxonomy({

@@ -30,13 +30,13 @@ describe(taxonomyFindings, () => {
     expect(messageFor(findings, 'taxonomy.undeclared')).toContain('"engineering"');
   });
 
-  it('reports a declared domain that holds no notes', () => {
+  it('reports a declared domain that contains no notes', () => {
     const findings = run({ notes: ['engineering/note.md'], declared: ['engineering', 'languages'] });
 
     expect(messageFor(findings, 'taxonomy.unused')).toContain('"languages"');
   });
 
-  it('does not report a grouping domain whose descendants hold notes', () => {
+  it('does not report a grouping domain whose descendants contain notes', () => {
     const findings = run({
       notes: ['engineering/tooling/versioning/note.md'],
       declared: ['engineering', 'engineering/tooling', 'engineering/tooling/versioning'],
@@ -108,9 +108,9 @@ describe(taxonomyFindings, () => {
     expect(
       findings.filter((finding) => finding.rule === 'taxonomy.undeclared').map((finding) => finding.message),
     ).toEqual([
-      'folder "engineering" holds notes but no domain declares it',
-      'folder "languages" holds notes but no domain declares it',
-      'folder "tools" holds notes but no domain declares it',
+      'folder "engineering" contains notes but no domain declares it',
+      'folder "languages" contains notes but no domain declares it',
+      'folder "tools" contains notes but no domain declares it',
     ]);
   });
 });

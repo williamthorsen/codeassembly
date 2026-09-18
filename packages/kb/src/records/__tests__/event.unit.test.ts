@@ -174,7 +174,7 @@ describe(renderEvent, () => {
     expect(keys).not.toContain('addressed-by');
   });
 
-  it('emits tags and addressed-by after the spine and before extra', () => {
+  it('emits tags and addressed-by after the leading fields and before extra', () => {
     const parsed = parseEvent({ ...validFields, repo: 'owner/name', tags: ['fix'], 'addressed-by': ['#849'] }, '');
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;

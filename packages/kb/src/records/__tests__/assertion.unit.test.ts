@@ -119,7 +119,7 @@ describe(renderAssertion, () => {
     expect(keys).not.toContain('superseded-by');
   });
 
-  it('emits the typed fields in order after the spine and before extra', () => {
+  it('emits the typed fields in order after the leading fields and before extra', () => {
     const parsed = parseAssertion(
       {
         ...validFields,

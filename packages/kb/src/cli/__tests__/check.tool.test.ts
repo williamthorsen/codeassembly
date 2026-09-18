@@ -414,7 +414,7 @@ describe('kb check vault-scoped findings', () => {
     expect(result.stdout).toContain('"engineering"');
   });
 
-  it('stays silent on a store that declares no taxonomy', async () => {
+  it('reports no finding for a store that declares no taxonomy', async () => {
     const store = await makeStore({ 'content/assertions/engineering/Note.md': VALID });
 
     const result = await run({ argv: ['check'], cwd: store });
@@ -422,7 +422,7 @@ describe('kb check vault-scoped findings', () => {
     expect(result.stdout).toBe('✓ no findings (1 notes checked)\n');
   });
 
-  it('carries the scope through the JSON report', async () => {
+  it('includes the scope in the JSON report', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
     stubVaultFinding();
 
@@ -435,7 +435,7 @@ describe('kb check vault-scoped findings', () => {
 
 // region | Helpers
 
-/** Stands up an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
+/** Creates an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
 async function makeHome(name: string, storePath: string): Promise<string> {
   const home = await makeTempDir('kb-cli-home-');
   await seedRegistry(getRegistryPathFor(home), `kbs:\n  ${name}:\n    path: ${storePath}\n`);
@@ -443,8 +443,8 @@ async function makeHome(name: string, storePath: string): Promise<string> {
 }
 
 /**
- * Makes the next `check` call return its real result plus one vault-scoped finding, so the CLI's handling of a finding
- * that describes the store rather than a note can be exercised independently of the rules that produce them.
+ * Makes the next `check` call return its real result plus one vault-scoped finding, so that the CLI's handling of a
+ * finding that describes the store rather than a note can be exercised independently of the rules that produce them.
  */
 function stubVaultFinding(): void {
   vi.mocked(check).mockImplementationOnce(async (input) => {
@@ -458,7 +458,7 @@ function stubVaultFinding(): void {
           scope: 'vault',
           rule: 'taxonomy.undeclared',
           severity: 'warning',
-          message: 'folder "engineering" holds notes but no domain declares it',
+          message: 'folder "engineering" contains notes but no domain declares it',
         },
       ],
     };
