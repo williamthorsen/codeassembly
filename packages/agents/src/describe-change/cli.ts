@@ -137,17 +137,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Runs the helper end to end: parses the arguments, then dispatches to the subcommand that they name.
  *
- * A subcommand loads its own inputs and nothing else, so a defect affects only the subcommands that read it. The
- * runners below state their own inputs; three of those inputs can fail, and each failure has one policy:
- *
- * - A subcommand that loads the title templates refuses any template that cannot round-trip, naming the surface and
- *   the defect. Verification needs the taxonomy. `render-titles` runs without one and renders from unverified
- *   templates.
- * - A subcommand that loads the taxonomy refuses when `dataDir` contains no readable one. `render-titles` is again the
- *   exception: It warns and renders anyway.
- * - A subcommand that resolves the project root never refuses when git finds no repository. It warns, reads `cwd` as
- *   the root, and continues: the preferences under `home` still supply the templates, and a missing label map maps
- *   no label.
+ * A subcommand loads its own inputs and nothing else, so a defect affects only the subcommands that read it. A
+ * subcommand refuses when an input that it loads fails. Two exceptions warn and continue instead: the project-root
+ * resolution, which reads `cwd`, and `render-titles`, which renders without a taxonomy and from unverified templates.
  *
  * @internal - Exported to allow testing.
  */

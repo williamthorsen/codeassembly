@@ -6,8 +6,7 @@ import { validate } from '../change-grammar/validate.ts';
 import type { RawCommit } from './read-commits.ts';
 
 /**
- * Derives what a branch of commits adds up to: the entries that it declares, the record to which they consolidate, the
- * subjects matched by no template, and the entries whose breaking marker disagrees with their type's policy.
+ * Derives what a branch of commits adds up to.
  *
  * A commit with `Change:` trailers contributes those entries and not its subject. Because a condensed commit's subject
  * renders the record to which its trailers already consolidate, reading both would count the branch's entries twice.

@@ -10,8 +10,8 @@ import { isRecord } from '../lib/type-guards.ts';
  * `renderChangeRecordBlock`: the body contains no block, contains one that cannot be read, or contains one that reads.
  *
  * A block without a `title` does not read. `consolidated_record` and `overrides` normalize as the renderer normalizes
- * them, so a scope override of `*` is kept. Because a key that the grammar does not declare is ignored, a later
- * addition to the block does not break this reader. A declared key whose value is null reads as absent.
+ * them. Because a key that the grammar does not declare is ignored, a later addition to the block does not break this
+ * reader. A declared key whose value is null reads as absent.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const lines = splitLines(body);
@@ -34,8 +34,7 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
 }
 
 /**
- * Renders the fenced `change-record` block that a pull-request body contains as its final block: the title, the
- * consolidated record of the branch, and any override applied by the author.
+ * Renders the fenced `change-record` block that a pull-request body contains as its final block.
  *
  * The payload is YAML rather than a surface template, because `consolidated_record` and `overrides` nest and a template
  * renders one flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip

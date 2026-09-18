@@ -74,10 +74,9 @@ if (isEntryPoint()) {
 /**
  * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: The exemplars that a drafter needs are
  * the ones written under its own work type, and `--tier` serves a caller whose dispatch resolved no type, so that
- * the fallback is a narrower request rather than an invented type. `--with-pair` widens what each exemplar reports to
- * the agent lede, the merged lede, and the author's comment, for a caller calibrating an edit rather than a draft; it
- * changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir`
- * each fall back to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
+ * the fallback is a narrower request rather than an invented type. `--with-pair` serves a caller calibrating an edit
+ * rather than a draft and changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir` each fall back
+ * to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
  * sparse is not filtered down to nothing. The `@default` sentinel is refused: It names whichever store a machine
  * defaults to rather than this corpus, and reading the wrong corpus yields plausible exemplars drawn from nothing
  * relevant.

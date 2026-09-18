@@ -8,10 +8,9 @@
  * re-opens its rejections for review instead of discarding the judgment behind them. A sweep at the new version is that
  * review, and recording it retires the stale rejections under its roots.
  *
- * A rejection resolves to a site by containment rather than by an exact string: See {@link applyRejections}. The record
- * and the detector describe one site in spans of different lengths, so a phrase is what a reader locates the site by
- * rather than a string that the detector must reproduce. Retiring one entry for another is the stricter test, since
- * two spans that merely overlap are not the same judgment: {@link rejectionKey} compares the whole phrase, normalized.
+ * A rejection resolves to a site by containment, so that a phrase is what a reader locates the site by rather than a
+ * string that the detector must reproduce. Retiring one entry for another is the stricter test, two spans that merely
+ * overlap not being the same judgment.
  *
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record. The helper's `record` command is the one
  * write path, which is what keeps the YAML deterministic rather than hand-edited into drift.
@@ -53,7 +52,6 @@ const RuleNameSchema = z.string().regex(RULE_NAME_PATTERN, 'rule must be a lower
 /** An ISO date, which is the precision that a sweep is dated to; a sweep is not an event with a time of day. */
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be an ISO calendar date (YYYY-MM-DD)');
 
-/** A rule's coverage: the sweep version swept, when it was last swept, whether its detector ran, and the roots covered. */
 const RuleCoverageSchema = z.object({
   version: z.string().min(1),
   'swept-at': DateSchema,
@@ -348,9 +346,8 @@ export function selectPriorRejections(
 }
 
 /**
- * Renders a record as YAML, with rules keyed in sorted order and rejections sorted by rule, file, and phrase, each
- * entry's fields in a fixed order. Re-writing an unchanged record is byte-identical, which keeps the file out of
- * the diff.
+ * Renders a record as YAML in a fixed key order. Re-writing an unchanged record is byte-identical, which keeps the
+ * file out of the diff.
  */
 export function stringifyRecord(record: ProseRecord): string {
   const rules = Object.fromEntries(

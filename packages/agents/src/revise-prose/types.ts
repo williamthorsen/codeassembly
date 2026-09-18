@@ -2,7 +2,7 @@
 // written to stdout.
 //
 // The helper reports; it never writes. Repair selection is judgment, so the payload includes everything an adjudicator
-// needs to decide without reading the file: the sentence, the matched phrase, and the shape that ranks the cost.
+// needs to decide without reading the file.
 
 /** A detected site, discriminated on the rule whose detector reported it. */
 export type Candidate =
@@ -18,7 +18,8 @@ export interface CandidateBase {
   line: number;
   /**
    * The span that a repair rewrites. Distinctive within its file, which is what lets a recorded rejection resolve to
-   * one site without a line number that the next edit invalidates.
+   * one site without a line number that the next edit invalidates. A rule whose site is one character or one word
+   * takes the whole sentence, nothing shorter being distinctive.
    */
   phrase: string;
   /** The whole sentence containing the phrase, so that adjudication needs no file read. */
@@ -27,15 +28,11 @@ export interface CandidateBase {
   stale?: boolean;
 }
 
-/** One em-dash site. Its phrase is the whole sentence, a character being nothing a rejection could resolve against. */
 export interface EmDashCandidate extends CandidateBase {
   rule: 'em-dash';
 }
 
-/**
- * One over-inclusive site: a head noun whose relative clause may be missing its relativizer. Its phrase runs from the
- * head noun through the verb.
- */
+/** One over-inclusive site: a head noun whose relative clause may be missing its relativizer. */
 export interface ObjectRelativeCandidate extends CandidateBase {
   rule: 'reduced-object-relative';
   /** The embedded subject's form, which ranks the construction's cost and points at the likeliest repair. */
@@ -48,12 +45,10 @@ export interface ObjectRelativeCandidate extends CandidateBase {
   verb: string;
 }
 
-/** One second-person site. Its phrase is the whole sentence, one pronoun being nothing a rejection could resolve against. */
 export interface SecondPersonCandidate extends CandidateBase {
   rule: 'second-person';
 }
 
-/** One `so` site. Its phrase is the whole sentence, one word being nothing a rejection could resolve against. */
 export interface SoCandidate extends CandidateBase {
   rule: 'so';
   /** Why the sentence was reported, which tells the adjudicator what to check. */
@@ -66,7 +61,6 @@ export interface SoCandidate extends CandidateBase {
  */
 export type SoTrigger = 'bare' | 'repeat';
 
-/** One `where` site. Its phrase is the whole sentence, one word being nothing a rejection could resolve against. */
 export interface WhereCandidate extends CandidateBase {
   rule: 'where';
 }
@@ -103,10 +97,7 @@ export interface ScannedFile {
   bytes: number;
 }
 
-/**
- * What the record stores for one rule: the sweep version swept, when it was last swept, whether its detector ran, and
- * the path roots covered at that version.
- */
+/** What the record stores for one rule. */
 export interface RuleCoverage {
   /** The rule's sweep version at the time of the sweep. */
   version: string;
