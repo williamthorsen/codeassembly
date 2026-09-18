@@ -42,9 +42,8 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
     // A throw here means the real catalog failed to expand/rewrite/write end-to-end.
     await installCommand(makeOptions(), tempDir);
 
-    // Each installed harness's skill count matches the source enumeration of non-skill support entries (no `SKILL.md`).
-    // Harness skills and the general catalog now deploy per-project via `sync`, so only support entries
-    // (directories without a `SKILL.md`) count toward the install delivery.
+    // Install delivers support entries alone, so each installed harness's skill count matches the source enumeration
+    // of directories without a `SKILL.md`.
     const contentDir = resolveContentDir();
     const supportEntries = await listInstalledSupportEntries(path.join(contentDir, 'skills'));
     for (const harnessId of ALL_HARNESS_IDS) {
@@ -107,7 +106,7 @@ const INSTALLED_TIERS: ReadonlyArray<string> = [
 /**
  * Returns the visible entries under `content/skills/` that install delivers as support directories: those without a
  * readable `SKILL.md` (e.g. `_data`). Skill directories (those containing a `SKILL.md`) are excluded, since `sync`
- * delivers them per-project. Mirrors install's own skill-vs-support gate.
+ * delivers them per-project. The gate must agree with install's own.
  */
 async function listInstalledSupportEntries(skillsSrcDir: string): Promise<Array<string>> {
   const entries = (await readdir(skillsSrcDir)).filter(

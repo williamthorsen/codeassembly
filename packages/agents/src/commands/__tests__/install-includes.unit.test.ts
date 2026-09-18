@@ -29,12 +29,10 @@ describe('install support-directory _partials exclusion', () => {
   }
 
   // Install transforms and deploys support directories (e.g. `_data`) via the `renderSkillDirectory` walk, which
-  // drops `_partials` at every depth. The remaining include/tool-name/link transform behavior is covered by the
-  // `skill-transform`, `directive-expander`, `subagent-transform`, `sync`, and `install-reviewer-partials` suites.
+  // drops `_partials` at every depth.
   it('skips _partials nested at any depth inside an installed support directory', async () => {
     await buildContentTree(contentDir);
 
-    // Create a support directory (no SKILL.md) with _partials nested inside; install must exclude them.
     const supportSrc = path.join(contentDir, 'skills', 'nested-support');
     await mkdir(path.join(supportSrc, 'modules', '_partials'), { recursive: true });
     await writeFile(path.join(supportSrc, 'modules', 'sub.md'), '# Sub\n', 'utf8');

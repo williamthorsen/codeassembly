@@ -105,20 +105,15 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    // Install
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Create a manual file that should NOT be removed
     const manualFile = path.join(claudeHome, 'agents', 'manual-agent.md');
     await writeFile(manualFile, 'manual content', 'utf8');
 
-    // Uninstall
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
-    // Manual file should still exist
     expect(existsSync(manualFile)).toBe(true);
 
-    // Manifest should no longer have claude harness
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude).toBeUndefined();
   });
@@ -127,7 +122,6 @@ describe('uninstallCommand', () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });
 
-    // Should not throw when no installation exists
     await expect(uninstallCommand({ harness: 'claude', force: false }, tempDir)).resolves.not.toThrow();
   });
 
@@ -136,20 +130,15 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    // Install first
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Modify an installed script file
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
-    // Uninstall without force
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
-    // Modified file should still exist
     expect(existsSync(scriptPath)).toBe(true);
 
-    // Harness manifest entry should be retained because some files were skipped
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude).toBeDefined();
   });
@@ -159,17 +148,13 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    // Install
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Modify one installed script file
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
-    // Uninstall without force: Modified file is skipped, others are removed
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
-    // Harness manifest should contain only the skipped entry
     const manifest = await readManifest(getManifestPath(tempDir));
     const claudeEntries = manifest.harnesses.claude?.entries;
     assert.ok(claudeEntries, 'Expected claude harness entries to be defined');
@@ -182,20 +167,15 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    // Install first
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Modify an installed script file
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
-    // Uninstall with force
     await uninstallCommand({ harness: 'claude', force: true }, tempDir);
 
-    // Modified file should be removed
     expect(existsSync(scriptPath)).toBe(false);
 
-    // Harness manifest entry should be removed
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude).toBeUndefined();
   });
