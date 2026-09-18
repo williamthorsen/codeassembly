@@ -60,9 +60,9 @@ See [`work-types.json`](../../skills/_data/work-types.json) for the canonical ta
 
 This section governs every work-type resolution: one commit, a multi-commit pull request, and a merge commit alike.
 
-Pick the type that best describes the change's dominant purpose. A type applies only where the change meets that type's own description in `work-types.json`; a type whose description the change does not meet is out of the running, and the tiebreak below never reaches it. Where more than one type genuinely applies, tiebreak in favor of the higher tier (public > internal > process), then by earlier listing within a tier. The tiebreak is not a promotion rule: Raising the tier raises both the audience and the strength of the claim.
+Pick the type that best describes the change's dominant purpose. A type applies only when the change meets that type's own description in `work-types.json`; a type whose description the change does not meet is out of the running, and the tiebreak below never reaches it. When more than one type genuinely applies, tiebreak in favor of the higher tier (public > internal > process), then by earlier listing within a tier. The tiebreak is not a promotion rule: Raising the tier raises both the audience and the strength of the claim.
 
-The tiebreak resolves the type. Having applied it, act on the result: A rule that resolves an input determines it, and re-presenting its output as a choice spends the developer's attention on a settled decision. Where the result looks wrong for a specific change, apply it, state the outcome and the reservation in one sentence, and continue.
+The tiebreak resolves the type. Having applied it, act on the result: A rule that resolves an input determines it, and re-presenting its output as a choice spends the developer's attention on a settled decision. When the result looks wrong for a specific change, apply it, state the outcome and the reservation in one sentence, and continue.
 
 ### Breaking changes
 
