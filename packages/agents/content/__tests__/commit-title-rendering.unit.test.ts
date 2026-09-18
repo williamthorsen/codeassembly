@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// One statement of the `describe-change.mjs` invocation keeps a correction to its contract -- the flags, the JSON
-// parse, the fallback -- from having to be applied in every skill that invokes it.
+// One statement of the `describe-change.mjs` invocation keeps a correction to its contract, such as the flags, the
+// JSON parse, and the fallback, from having to be applied in every skill that invokes it.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the invocation; every consumer reaches it through an include. */
