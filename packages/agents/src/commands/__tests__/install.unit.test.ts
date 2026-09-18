@@ -80,7 +80,6 @@ describe(installCommand, () => {
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
-    // Support directory _data is installed.
     expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
     // No skill directory is planted: Harness skills and catalog skills deploy via sync, not install.
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(false);
@@ -238,15 +237,11 @@ describe(installCommand, () => {
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
     const skills = await readdir(path.join(claudeHome, 'skills'));
-    // The _data support tree installs.
     expect(skills).toContain('_data');
-    // No skill directory is planted: not harness skills, not general-catalog skills.
     expect(skills).not.toContain('claude-only');
     expect(skills).not.toContain('alpha');
     expect(skills).not.toContain('beta');
-    // Subagents do not install unconditionally.
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
-    // Scripts install as before.
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
   });
 
@@ -354,7 +349,6 @@ describe(installCommand, () => {
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
-      // The broken config is left alone, and the rest of the install still completes and is tracked.
       expect(await readFile(settingsPath, 'utf8')).toBe('{ not json');
       const manifest = await readManifest(getManifestPath(tempDir));
       expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);

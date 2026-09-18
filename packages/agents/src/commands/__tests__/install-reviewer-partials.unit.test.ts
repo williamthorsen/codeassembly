@@ -19,7 +19,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
  * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
  * shared partials fully inlined: no leftover include directives, and the key prose blocks present. They reproduce
  * `sync`'s subagent-deploy transform (expand includes, then `renderSubagentForHarness`), so they assert the exact
- * body written by `sync`; install no longer deploys subagents.
+ * body written by `sync`.
  */
 describe('reviewer and coder partials render correctly', () => {
   const contentDir = resolveContentDir();
@@ -119,7 +119,7 @@ describe('reviewer and coder partials render correctly', () => {
     expect(content).not.toContain('<!-- include:');
     expect(content).not.toContain('<!-- /include -->');
     expect(content).not.toContain('<!-- children -->');
-    // Key landmarks from each of the four coder partials
+    // Key landmarks from each coder partial
     expect(content).toContain('Single-task implementation plans are exempt');
     expect(content).toContain("The change-summary is the orchestrator's primary state-transfer channel");
     expect(content).toContain('### Implementation-mode scaffold');

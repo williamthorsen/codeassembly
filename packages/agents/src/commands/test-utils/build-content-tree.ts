@@ -29,10 +29,7 @@ export interface ContentTreeOptions {
 /**
  * Writes a minimal but realistic CodeAssembly content tree into `contentDir` for use as the third argument to
  * `installCommand`, so that install-command tests exercise the full pipeline against a small fixture. The default tree
- * contains every shape on which the integration tests rely: a relative-link skill, an opt-out skill
- * (`user-invocable: false`), a `_data` support file, one claude-only and one rovo-only harness skill, a subagent with
- * overlay-merged frontmatter and a `{harness_home_dir}` script token, a script, shared guidance, and per-harness
- * guidance that inlines the shared file via include directives. Provided options shallow-merge over the defaults by
+ * contains every shape on which the integration tests rely. Provided options shallow-merge over the defaults by
  * top-level key.
  */
 export async function buildContentTree(contentDir: string, options: ContentTreeOptions = {}): Promise<string> {

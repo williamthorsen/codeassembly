@@ -19,7 +19,7 @@ interface ExecError {
   readonly code: number;
 }
 
-/** Type guard for child_process exec errors. */
+/** Reports whether `error` is a `child_process` exec error. */
 function isExecError(error: unknown): error is ExecError {
   return (
     isRecord(error) &&

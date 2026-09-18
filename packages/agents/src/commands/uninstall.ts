@@ -20,8 +20,7 @@ export async function uninstallCommand(
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
   // Retire the withdrawn `~/.agents/` tier ahead of the harness-detection return, so that a home that targets no
-  // harness is still cleared. `install` runs the same pass, and a user who upgrades and uninstalls without
-  // installing first reaches it only here.
+  // harness is still cleared.
   const didRetire = await retireSharedGuidance(manifest, { force: options.force, dryRun: false }, baseDir);
 
   if (harnesses.length === 0) {
@@ -57,7 +56,6 @@ export async function uninstallCommand(
     const paths = resolveHarnessPaths(harnessId, baseDir);
     const skippedEntries = await removeTrackedEntries(harnessManifest.entries, paths.harnessHome, options.force);
 
-    // Remove harness from manifest or retain only skipped entries
     if (skippedEntries.length === 0) {
       const { [harnessId]: _removed, ...rest } = remainingHarnesses;
       remainingHarnesses = rest;

@@ -428,16 +428,11 @@ async function reconcileDomain(
   // those dirs. The collision gate has already proven the two namespaces disjoint.
   await reconcileRulebookSkills(skillOrphansByDir, resolved, resolveRulebookContext);
 
-  // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
-  // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
 
-  // Deliver each source's support entries into its own namespace, then retract the namespaces claimed by no source.
   await reconcileSourceSupport(harnessSkillTargets, sourceSupportPlans);
 
-  // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
-  // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
-  // transform applied and the ownership marker stamped.
+  // Reconcile independently of the skill passes, whose dirs are disjoint from the subagents dir.
   await reconcileDeclaredSubagents(
     harnessSubagentTargets,
     subagentOrphansByDir,
@@ -454,9 +449,8 @@ async function reconcileDomain(
 // region | Helpers
 
 /**
- * Concatenates per-type seed sets into the one set that seeds closure resolution. Deduping is deliberately left out:
- * `resolveClosure` already dedupes by slug as it walks, so a slug both declared directly and enumerated from a
- * package's catalog is visited once.
+ * Concatenates per-type seed sets into the one set that seeds closure resolution, leaving duplicates in: `resolveClosure`
+ * dedupes by slug as it walks.
  */
 function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
   const merged: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };

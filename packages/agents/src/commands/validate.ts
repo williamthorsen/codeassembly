@@ -21,9 +21,6 @@ export interface ValidateOptions {
  * Validates a content root and reports what it found, returning whether the root is clean. Returns a boolean rather
  * than throwing so that the caller can exit non-zero on a multi-line report without the CLI's top-level handler
  * prefixing it with `Error:`. The report is a list of findings, not one failure.
- *
- * `cwd` is injectable so that a test can point the `package.json` route at a fixture rather than the process's own
- * directory.
  */
 export async function validateCommand(options: ValidateOptions, cwd: string = process.cwd()): Promise<boolean> {
   const root = await resolveContentRoot(options.content, cwd);

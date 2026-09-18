@@ -21,9 +21,9 @@ export async function resolveCurrentBranch(cwd: string): Promise<string> {
 }
 
 /**
- * Sanitizes a branch name for filesystem use: replace `/` with `-`, trim trailing `-`.
- * Mirrors the sanitization performed by `resolve-frontmatter.sh` so that previously-written manifests
- * remain reachable. Underscores are deliberately preserved (see `_data/branch-format.md`).
+ * Sanitizes a branch name for filesystem use: replace `/` with `-`, trim trailing `-`. The transform must match
+ * `resolve-frontmatter.sh`'s, or a previously-written manifest becomes unreachable. Underscores are preserved; see
+ * `_data/branch-format.md`.
  */
 export function sanitizeBranch(branch: string): string {
   let sanitized = branch.trim().replaceAll('/', '-');

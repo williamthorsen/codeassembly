@@ -12,7 +12,7 @@ import type { Retirement } from './legacy-retirement.ts';
 import type { SourceSupportPlan } from './source-support.ts';
 import type { MissingDeclaration, ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';
 
-/** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
+/** Rank used to group resolution entries by type before the within-type slug sort. */
 const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
   rulebook: 0,
   skill: 1,
@@ -178,7 +178,7 @@ function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> 
   );
 }
 
-/** The sentence naming a host whose ambient region no transform may touch, shared by every path that reports one. */
+/** The sentence naming a host whose ambient region no transform may touch. */
 function describeDamagedRegion(hostPath: string): string {
   return `${hostPath} has a damaged ambient region.`;
 }
