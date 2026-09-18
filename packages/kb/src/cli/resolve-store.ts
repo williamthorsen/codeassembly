@@ -6,15 +6,15 @@ import type { StoreRef } from './format.ts';
 export type ResolveStoreOutcome = { ok: true; store: StoreRef; readonly: boolean } | { ok: false; message: string };
 
 /**
- * Resolves the store a command runs against. An explicit `--kb <name>` is looked up in the merged registry
- * (`tryLoadKbRegistry` with `projectDir: cwd`, so project-local `.agents/kb.yaml` entries join the user-global
- * registry); without a flag, the nearest ancestor `.kb/` directory is used. An unknown `--kb` name or a missing `.kb/`
- * fails for exit 2.
+ * Resolves the store against which a command runs. An explicit `--kb <name>` is looked up in the merged registry
+ * (`tryLoadKbRegistry` with `projectDir: cwd`, so the registry includes project-local `.agents/kb.yaml` entries as
+ * well as user-global ones); without a flag, the nearest ancestor `.kb/` directory is used. An unknown `--kb` name or
+ * a missing `.kb/` fails for exit 2.
  *
- * The registry's `readonly` flag is reported rather than enforced: a command that writes into the store refuses on it,
- * and a read-only command ignores it. It is kept off {@link StoreRef}, which carries the identity a report renders. A
- * discovered store is cross-referenced against the registry by path, so a vault marked readonly is reported as such
- * however it was named; one with no registry entry has no metadata to consult and is reported writable.
+ * The registry's `readonly` flag is reported rather than enforced: A command that writes into the store refuses on it,
+ * and a read-only command ignores it. It is kept off {@link StoreRef}, which contains the identity that a report
+ * renders. A discovered store is cross-referenced against the registry by path, so a vault marked readonly is reported
+ * as such however it was named; one with no registry entry has no metadata to consult and is reported writable.
  */
 export async function resolveStore(input: {
   explicitKb: string | null;

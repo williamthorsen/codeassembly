@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off -- The bin's resolved exit code must reach the OS, and this module is loaded only by `bin/kb.js`. */
-/* eslint unicorn/no-process-exit: off -- The bin's resolved exit code must reach the OS, and this module is loaded only by `bin/kb.js`. */
+/* eslint n/no-process-exit: off -- The OS must receive the bin's resolved exit code, and this module is loaded only by `bin/kb.js`. */
+/* eslint unicorn/no-process-exit: off -- The OS must receive the bin's resolved exit code, and this module is loaded only by `bin/kb.js`. */
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
@@ -14,8 +14,8 @@ import { readlineSelectKbPrompt } from './select-kb-prompt.ts';
  * the resolved streams, and exits with the resolved code.
  *
  * An unexpected throw from a command, such as a rule-engine crash that `runCheck` re-propagates, is caught here and
- * exits 2. Uncaught, it would reach the bin wrapper's "failed to load" branch and exit 1, which is reserved for
- * error-severity findings.
+ * exits 2. Without that catch, the bin wrapper's "failed to load" branch would catch it and exit 1, which is reserved
+ * for error-severity findings.
  */
 async function main(): Promise<void> {
   let output: CommandOutput;
