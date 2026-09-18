@@ -1,26 +1,26 @@
 // The pure lane fold. Accumulation (`applySessionEvent`) is separated from derivation (`deriveSessionStatus` /
-// `deriveLaneStatus`): an incremental caller folds per append and derives only when it renders. Time arrives as
-// `nowMs` and server-side facts as probe results — nothing here reads the filesystem or the clock.
+// `deriveLaneStatus`): An incremental caller folds per append and derives only when it renders. The caller passes
+// time as `nowMs` and server-side facts as probe results; nothing here reads the filesystem or the clock.
 //
 // Working/waiting derives from the `turn.*` boundaries alone; `skill.*` supplies narration and never flips the phase,
-// so a session with missing boundaries reads as `idle` while still narrating its skill.
+// so a session with missing boundaries stays `idle` while still narrating its skill.
 
 import type { EventEnvelope } from './envelope.ts';
 import { parseTicketRef, type TicketRef } from './ticket-ref.ts';
 
-/** Where a session stands in its conversation loop, derived from the latest boundary event. */
+/** A session's position in its conversation loop, derived from the latest boundary event. */
 export type SessionPhase = 'idle' | 'working' | 'waiting' | 'ended';
 
 /**
  * Accumulated per-session state: what the fold knows after applying the session's events in order. Fields are
- * `undefined` rather than absent so reducer updates stay plain spreads.
+ * `undefined` rather than absent so that reducer updates stay plain spreads.
  */
 export interface SessionState {
-  /** The latest boundary the session crossed; `idle` until a boundary event arrives. */
+  /** The latest boundary that the session crossed; `idle` until a boundary event arrives. */
   phase: SessionPhase;
-  /** The harness from the most recent event that carried one. */
+  /** The harness from the most recent event that included one. */
   harness: string | undefined;
-  /** The working directory the most recent event ran from — the session's worktree. */
+  /** The working directory from which the most recent event ran: the session's worktree. */
   cwd: string | undefined;
   /** The skill currently narrating work; cleared at every turn and session boundary. */
   currentSkill: string | undefined;
@@ -32,20 +32,20 @@ export interface SessionState {
 /** Display state derived from a session: its phase plus narration, pending ask, and the staleness overlay. */
 export interface SessionStatus {
   phase: SessionPhase;
-  /** The skill the session is narrating, when one is running. */
+  /** The skill that the session is narrating, when one is running. */
   skill: string | undefined;
-  /** The pending ask's payload — what a `waiting` session is waiting on. */
+  /** The pending ask's payload: what a `waiting` session is waiting on. */
   ask: Record<string, unknown> | undefined;
   /** True when a `working` session has gone quiet past the threshold. Quiet is normal in every other phase. */
   stale: boolean;
   lastEventTs: string | undefined;
 }
 
-/** One lane: a repo × sanitized-branch event group, holding its sessions and derived ticket attribution. */
+/** One lane: a repo × sanitized-branch event group, containing its sessions and derived ticket attribution. */
 export interface LaneState {
   /** `owner/name` repo key. */
   repo: string;
-  /** Sanitized branch name — the lane key within the repo. */
+  /** Sanitized branch name: the lane key within the repo. */
   branch: string;
   /** Ticket attribution parsed from the branch name; `undefined` for a non-conforming name. */
   ticketRef: TicketRef | undefined;
@@ -55,7 +55,7 @@ export interface LaneState {
 
 /** Server-side probe results fed into lane derivation. Every field is `undefined` when unprobed. */
 export interface LaneProbes {
-  /** False when the lane's worktree is known to be gone — the merge/cleanup closure signal. */
+  /** False when the lane's worktree is known to be gone: the merge/cleanup closure signal. */
   worktreeExists?: boolean;
 }
 
@@ -70,7 +70,7 @@ export interface LaneStatus {
   lastEventTs: string | undefined;
 }
 
-/** Folds one event into `lane`, creating the session's state on first sight. Pure: returns a new lane. */
+/** Folds one event into `lane`, creating the session's state on its first event. Pure: returns a new lane. */
 export function applyLaneEvent(lane: LaneState, input: { sessionId: string; envelope: EventEnvelope }): LaneState {
   const current = lane.sessions[input.sessionId] ?? createSessionState();
   return {
@@ -120,7 +120,7 @@ export function createLaneState(input: { repo: string; branch: string }): LaneSt
   return { repo: input.repo, branch: input.branch, ticketRef: parseTicketRef(input.branch), sessions: {} };
 }
 
-/** A session no events have been applied to. */
+/** A session to which no events have been applied. */
 export function createSessionState(): SessionState {
   return {
     phase: 'idle',
@@ -134,8 +134,8 @@ export function createSessionState(): SessionState {
 
 /**
  * Derives a lane's open/closed state. Closure signals in precedence order: a probe reporting the worktree gone, every
- * session ended, then lane-wide quiet past `closeAfterMs`. A lane with none of them — recent activity, or no events at
- * all — is open.
+ * session ended, then lane-wide quiet past `closeAfterMs`. A lane with none of them (recent activity, or no events at
+ * all) is open.
  */
 export function deriveLaneStatus(
   lane: LaneState,
@@ -164,7 +164,7 @@ export function deriveSessionStatus(state: SessionState, input: { nowMs: number;
   return { phase: state.phase, skill: state.currentSkill, ask: state.ask, stale, lastEventTs: state.lastEventTs };
 }
 
-/** The `cwd` of the lane's most recently active session — its worktree — or `undefined` when no session has one. */
+/** The `cwd` of the lane's most recently active session (its worktree), or `undefined` when no session has one. */
 export function resolveLaneCwd(lane: LaneState): string | undefined {
   let newestMs = -1;
   let cwd: string | undefined;
@@ -178,7 +178,7 @@ export function resolveLaneCwd(lane: LaneState): string | undefined {
   return cwd;
 }
 
-/** The newest last-event timestamp across a lane's sessions, or `undefined` when none carries one. */
+/** The newest last-event timestamp across a lane's sessions, or `undefined` when none has one. */
 export function resolveLaneRecency(lane: LaneState): string | undefined {
   let newest: string | undefined;
   for (const session of Object.values(lane.sessions)) {
@@ -191,7 +191,7 @@ export function resolveLaneRecency(lane: LaneState): string | undefined {
 
 // region | Helpers
 
-/** The `skill` narration label an event's payload carries, when it carries one. */
+/** The `skill` narration label from an event's payload, when the payload includes one. */
 function readSkill(envelope: EventEnvelope): string | undefined {
   const { skill } = envelope.payload;
   return typeof skill === 'string' ? skill : undefined;

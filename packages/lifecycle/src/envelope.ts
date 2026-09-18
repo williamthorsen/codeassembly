@@ -1,12 +1,12 @@
 /**
  * The v0 session-lifecycle vocabulary, ordered by the sequence in which a session emits the types, so the list doubles
- * as the shape of a session: session boundaries enclose turns, which enclose the skills a turn runs.
- * Membership is convention, not a gate: an undeclared type is still a valid event, so an emitter can use a new type
- * before the vocabulary catches up.
+ * as the shape of a session: Session boundaries enclose turns, which enclose the skills that a turn runs.
+ * Membership is convention, not a gate: Because an undeclared type is still a valid event, an emitter can use a new
+ * type before the vocabulary catches up.
  *
  * Two channels feed the vocabulary. The `session.*` and `turn.*` boundaries come from the harness, relayed from its
- * event hooks — a session ends and a turn completes at moments no skill is running to observe. The rest is work
- * narration an instrumented skill emits about itself.
+ * event hooks: A session ends and a turn completes at moments when no skill is running to observe them. The rest is
+ * work narration that an instrumented skill emits about itself.
  */
 export const EVENT_TYPES = [
   'session.started',
@@ -23,7 +23,7 @@ export const EVENT_TYPES = [
 
 export type EventType = (typeof EVENT_TYPES)[number];
 
-/** Membership index over the vocabulary, widened to `string` so an arbitrary type can be tested against it. */
+/** Membership index over the vocabulary, widened to `string` so that an arbitrary type can be tested against it. */
 const DECLARED_TYPES: ReadonlySet<string> = new Set(EVENT_TYPES);
 
 /** True when `value` names a declared v0 event type. */
@@ -35,7 +35,7 @@ export function isEventType(value: string): value is EventType {
  * One appended event.
  *
  * An optional field is absent when its value is unknown. For `repo`, `branch`, and `session`, the file path
- * substitutes a placeholder so that the event still lands somewhere; the absent key is what tells a consumer that the
+ * substitutes a placeholder so that the event is still written to a file; the absent key tells a consumer that the
  * field was not resolved.
  */
 export interface EventEnvelope {

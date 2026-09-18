@@ -9,7 +9,7 @@ import { initRun } from './tools/init-run.ts';
 import { registerArtifact } from './tools/register-artifact.ts';
 
 const STALE_BUILD_WARNING =
-  '\u{26A0}\u{FE0F} MCP server build is stale \u{2014} source files are newer than compiled output. Run `nmr -F codeassembly-mcp build` to rebuild.\n\n';
+  '\u{26A0}\u{FE0F} MCP server build is stale: Source files are newer than compiled output. Run `nmr -F codeassembly-mcp build` to rebuild.\n\n';
 
 /** Creates and configures an MCP server with run-data management tools. */
 export function createServer(): McpServer {
@@ -21,7 +21,7 @@ export function createServer(): McpServer {
     'init_run',
     {
       description:
-        'Initialize a new orchestrated run: create run directory, write run-index.json, and emit run_started event.',
+        'Initializes a new orchestrated run: creates the run directory, writes run-index.json, and emits a run_started event.',
       inputSchema: {
         projectSlug: z.string(),
         projectRoot: z.string(),
@@ -49,7 +49,7 @@ export function createServer(): McpServer {
   server.registerTool(
     'emit_event',
     {
-      description: 'Append a validated run event to the JSONL log.',
+      description: 'Appends a validated run event to the JSONL log.',
       inputSchema: {
         runDir: z.string(),
         event: z.record(z.string(), z.unknown()),
@@ -73,7 +73,7 @@ export function createServer(): McpServer {
   server.registerTool(
     'register_artifact',
     {
-      description: 'Register an artifact by emitting an artifact_written event.',
+      description: 'Registers an artifact by emitting an artifact_written event.',
       inputSchema: {
         runDir: z.string(),
         filename: z.string(),
@@ -105,7 +105,7 @@ export function createServer(): McpServer {
     'complete_run',
     {
       description:
-        'Complete a run: emit run_completed (or run_failed when status is failed) event and stamp completedAt on run-index.json.',
+        'Completes a run: emits a run_completed event (or run_failed when status is failed) and stamps completedAt on run-index.json.',
       inputSchema: {
         runDir: z.string(),
         status: z.enum(['completed', 'failed', 'needs_manual_review']),
@@ -130,7 +130,7 @@ export function createServer(): McpServer {
   server.registerTool(
     'get_run_state',
     {
-      description: 'Read and fold run events to reconstruct the current CanonicalRunStatus.',
+      description: 'Reads and folds run events to reconstruct the current CanonicalRunStatus.',
       inputSchema: {
         runDir: z.string(),
       },
@@ -150,7 +150,7 @@ export function createServer(): McpServer {
 }
 
 /**
- * Creates a one-shot gate that returns a content item holding the staleness warning on
+ * Creates a one-shot gate that returns a content item containing the staleness warning on
  * its first call, provided the build is stale, and an empty array on every call after.
  *
  * The warning is a separate content item so that data content (typically JSON)
@@ -169,7 +169,7 @@ function createStaleWarningGate(): () => Promise<Array<{ type: 'text'; text: str
       if (!(await isBuildStale())) return [];
       return [{ type: 'text', text: STALE_BUILD_WARNING }];
     } catch {
-      // Belt-and-suspenders: never let staleness detection break tool execution.
+      // Fail-safe: Never let staleness detection break tool execution.
       return [];
     }
   };
