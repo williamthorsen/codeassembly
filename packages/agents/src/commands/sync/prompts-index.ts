@@ -13,8 +13,7 @@ import type { SyncDomain } from './sync-domain.ts';
  * skills dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file,
  * preserving any foreign entries; when no skills remain, the region is stripped, and the file deleted when nothing
  * foreign is left. A no-op for non-Rovo Dev harnesses and for a file with no codeassembly region. Both domains share
- * this one path, so the home file is merged rather than whole-file overwritten, matching the repo file's
- * non-clobbering shape.
+ * this one path, so the home file is merged rather than whole-file overwritten.
  */
 export async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): Promise<void> {
   for (const harnessId of harnessIds) {
@@ -31,8 +30,6 @@ export async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, do
       continue;
     }
 
-    // No skills remain: Strip our region, deleting the file when nothing foreign survives. A file that we never owned
-    // (no region) is left untouched.
     if (!hasPromptsRegion(existing)) {
       continue;
     }

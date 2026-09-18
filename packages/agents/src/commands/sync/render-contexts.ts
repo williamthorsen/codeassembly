@@ -153,7 +153,7 @@ export function resolveSkillTarget(
 /**
  * Resolves one harness's project-local subagents dir together with the per-harness inputs that the deploy transform
  * needs: the link anchor, the home-dir segment, and the harness id. Passing `projectRoot` as the base keeps delivery
- * project-scoped, matching the skill passes.
+ * project-scoped.
  */
 export function resolveSubagentTarget(
   harnessId: HarnessId,
@@ -181,8 +181,7 @@ export function resolveSubagentTarget(
 
 /**
  * The per-harness inputs on which a rulebook render depends: the harness config's own segments and sigils, the anchor
- * through which its link targets resolve, and the deployed rulebooks indexed by slug, so that a `{rulebook:<slug>}`
- * token renders the skill name under which its target deploys.
+ * through which its link targets resolve, and the rulebook invocation catalog.
  */
 function buildRulebookRenderContext(
   harnessId: HarnessId,

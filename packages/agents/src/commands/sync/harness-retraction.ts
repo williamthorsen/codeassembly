@@ -44,9 +44,9 @@ export type HostRetraction =
  * holding anything. Every path that it names is gated on a sync provenance marker or a well-formed sync-owned region,
  * so an install-managed or hand-authored file is never claimed.
  *
- * Retraction follows the declaration alone, matching `install`'s pass. Under `flag`, `--harness claude` names the
- * run's target rather than declaring rovo unwanted; under `detection`, a harness that detection misses has no
- * directory holding stale files. Either origin yields an empty result.
+ * Retraction follows the declaration alone. A `flag` origin names the run's target without declaring any harness
+ * unwanted, and a harness missed by `detection` has no directory holding stale files; either origin yields an empty
+ * result.
  *
  * The candidate set is every known harness minus the targeted ones, unfiltered by directory existence: Each scan
  * returns nothing for an absent directory, and a harness holding nothing is left out of the result, so the report
