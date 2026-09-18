@@ -13,7 +13,7 @@ function expandTilde(value: string, home: string): string {
 /**
  * Resolves the projects directory using a preference cascade:
  *
- * 1. `AI_PROJECTS_PATH` env var (used directly — already points to projects dir)
+ * 1. `AI_PROJECTS_PATH` env var (used directly, because it already points to the projects dir)
  * 2. `artifacts.base_dir` from `{projectRoot}/.agents/preferences.yaml` + `/projects`
  * 3. `artifacts.base_dir` from `~/.agents/preferences.yaml` + `/projects`
  * 4. Default: `~/.ai/projects`

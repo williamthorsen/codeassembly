@@ -78,7 +78,7 @@ describe('discoverRunDirectories', () => {
     mockReaddirResult(['proj']);
     mockStatDirectory();
     mockReaddirResult(['tickets', 'OTHER-1']);
-    // Pattern 1: scan tickets/
+    // Pattern 1: Scan tickets/
     mockReaddirResult(['TICKET-1']);
     mockStatDirectory();
     mockReaddirResult(['run-1']);
@@ -119,7 +119,7 @@ describe('discoverRunDirectories', () => {
     mockReaddirResult(['TICKET-1']);
     mockStatDirectory();
     mockReaddirResult(['run-1-interactive', 'run-2']);
-    // No stat for -interactive — skipped before stat
+    // No stat for -interactive: skipped before stat
     mockStatDirectory(); // stat for run-2
 
     const result = await discoverRunDirectories('/base');
