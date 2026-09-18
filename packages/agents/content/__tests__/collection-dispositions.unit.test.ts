@@ -57,8 +57,8 @@ const OPT_IN_COLLECTIONS: ReadonlyArray<string> = ['atlassian'];
 const VETTED_COLLECTIONS: ReadonlyArray<string> = VETTED_CLOSURES.map(({ collection }) => collection);
 
 /**
- * Every claim that records a disposition. Membership in a collection outside this set is a plain-bundle claim: it
- * It says nothing about the artifact, so it neither satisfies coverage nor conflicts with any disposition.
+ * Every claim that records a disposition. Membership in a collection outside this set is a plain-bundle claim: It
+ * says nothing about the artifact, so it neither satisfies coverage nor conflicts with any disposition.
  */
 const DISPOSITIONS: ReadonlySet<string> = new Set([...VETTED_COLLECTIONS, STANDALONE_DISPOSITION, TRIAGE_DISPOSITION]);
 

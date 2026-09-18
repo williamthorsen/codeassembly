@@ -5,10 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Four documents stated the rules of an authored title, and the fourth was written because its author found no home to
-// point at: `wrap-up` grew a local copy that duplicated the imperative-voice rule and added one that existed nowhere
-// else. Nothing stopped it, and nothing would stop the next one. The ticket criterion behind this suite names three
-// documents; the invariant is wider than any enumeration, since a subagent restating a rule is the same defect.
+// One file states the rules of an authored title, and every other site points at it. A site that restates a rule
+// instead duplicates it and can add one that exists nowhere else. The invariant covers the whole corpus rather than an
+// enumerated set of documents, since a subagent restating a rule is the same defect.
 //
 // Each probe keys on a string distinctive enough that only a restatement matches it. That catches the copy-and-adapt
 // path that the duplication actually took and misses a paraphrase written from scratch, which is the weaker half of

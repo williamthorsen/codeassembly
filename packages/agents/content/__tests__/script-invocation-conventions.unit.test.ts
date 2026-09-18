@@ -121,7 +121,6 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
           // partial matches inside longer tokens are ignored.
           const charBefore = idx === 0 ? '' : line.charAt(idx - 1);
           if (charBefore && /[A-Za-z0-9]/.test(charBefore)) continue;
-          // Skip occurrences that are already correctly prefixed.
           const prefixStart = idx - REQUIRED_PREFIX.length;
           if (prefixStart >= 0 && line.slice(prefixStart, idx) === REQUIRED_PREFIX) continue;
           const after = line.slice(searchFrom);

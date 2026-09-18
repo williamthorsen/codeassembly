@@ -102,7 +102,7 @@ describe('support entry invocation tokens', () => {
 
 // A host addresses a support entry's section by a link fragment, and that is the granularity at which it dispatches an
 // agent into a procedure. So the declaration is required of the hosts that name the section containing the token, not
-// of every host that links the file: Ten skills link `ticket-source-resolution.md` bare for its resolution rules,
+// of every host that links the file: Many skills link `ticket-source-resolution.md` bare for its resolution rules,
 // and requiring each to declare a Jira editing skill would bloat every closure to satisfy a branch that none of them
 // takes.
 //
