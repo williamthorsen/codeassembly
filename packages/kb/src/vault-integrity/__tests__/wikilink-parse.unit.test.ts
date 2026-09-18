@@ -11,11 +11,11 @@ describe(splitStoreQualifier, () => {
     expect(splitStoreQualifier('Note title')).toEqual({ target: 'Note title' });
   });
 
-  it('leaves a title whose prefix carries whitespace store-local', () => {
+  it('leaves a title whose prefix contains whitespace store-local', () => {
     expect(splitStoreQualifier('Rovo MCP: what it reads')).toEqual({ target: 'Rovo MCP: what it reads' });
   });
 
-  it('leaves a target whose prefix carries a slash store-local', () => {
+  it('leaves a target whose prefix contains a slash store-local', () => {
     expect(splitStoreQualifier('notes/draft:one')).toEqual({ target: 'notes/draft:one' });
   });
 
@@ -27,7 +27,7 @@ describe(splitStoreQualifier, () => {
     expect(splitStoreQualifier('fde:')).toEqual({ target: 'fde:' });
   });
 
-  it('splits the same store and target from a link carrying an alias or an anchor', () => {
+  it('splits the same store and target from a link with an alias or an anchor', () => {
     const fromAlias = splitStoreQualifier(extractTarget('fde:Note title|the assertion') ?? '');
     const fromAnchor = splitStoreQualifier(extractTarget('fde:Note title#Findings') ?? '');
 

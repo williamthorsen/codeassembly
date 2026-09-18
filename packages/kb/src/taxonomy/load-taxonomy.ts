@@ -14,7 +14,7 @@ import { describeKeyDefect, type Taxonomy, type TaxonomyEntry, taxonomyFileShape
 /**
  * Loads `.kb/taxonomy.yaml` into a single keyed map, returning an empty taxonomy when the file is absent or declares
  * nothing. The two on-disk blocks are a file-format concern: a consumer looks a domain up once and reads `provisional`
- * off the entry it finds.
+ * off the entry that it finds.
  *
  * Structural defects (malformed YAML, a wrong type, a malformed key, a path declared in both blocks) throw a
  * {@link KbLoaderError} naming the file. I/O errors other than a missing file propagate.
@@ -55,8 +55,8 @@ export async function loadTaxonomy(input: { kbRoot: KbRoot }): Promise<Taxonomy>
 // region | Helpers
 
 /**
- * Adds one on-disk block's declarations to the accumulating map, rejecting a malformed key and a path the other block
- * already declared.
+ * Adds one on-disk block's declarations to the accumulating map, rejecting a malformed key and a path already
+ * declared by the other block.
  */
 function collectBlock(input: {
   entries: Map<string, TaxonomyEntry>;
@@ -81,14 +81,14 @@ function collectBlock(input: {
   }
 }
 
-/** Renders a schema failure's first issue, naming the key at fault so a malformed block is identifiable. */
+/** Renders a schema failure's first issue, naming the key at fault so that a malformed block is identifiable. */
 function describeIssueLocation(error: ZodError): string {
   const issue = error.issues[0];
   if (issue === undefined) {
-    return ' — unknown error';
+    return ': unknown error';
   }
   const location = issue.path.length > 0 ? ` at ${issue.path.join('.')}` : '';
-  return `${location} — ${issue.message}`;
+  return `${location}: ${issue.message}`;
 }
 
 // endregion | Helpers

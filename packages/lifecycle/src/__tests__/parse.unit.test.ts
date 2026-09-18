@@ -15,7 +15,7 @@ function composeLine(overrides: Record<string, unknown> = {}): string {
 }
 
 describe('parseEventLine', () => {
-  it('parses a full envelope, carrying optional fields through', () => {
+  it('parses a full envelope, passing optional fields through', () => {
     const line = composeLine({ repo: 'owner/name', branch: '1035', session: 'abc', harness: 'claude' });
 
     const envelope = parseEventLine(line);

@@ -65,7 +65,7 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe('provisional:\n  engineering:\n  languages:\n  tools:\n');
   });
 
-  it('routes each declaration to the block its provisional flag names', async () => {
+  it('writes each declaration to the block that its provisional flag names', async () => {
     const kbRoot = await makeKbRoot();
 
     await writeTaxonomy({
@@ -99,7 +99,7 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe(SEEDED);
   });
 
-  it('skips a path the other block declares rather than duplicating it across blocks', async () => {
+  it('skips a path declared by the other block rather than duplicating it across blocks', async () => {
     const kbRoot = await makeKbRoot({ taxonomy: SEEDED });
 
     const { added } = await writeTaxonomy({ kbRoot, declarations: [{ path: 'engineering', provisional: true }] });
@@ -266,7 +266,7 @@ describe(writeTaxonomy, () => {
 
 // region | Helpers
 
-/** Reads the store's taxonomy file as raw text, so a test can assert on formatting rather than parsed content. */
+/** Reads the store's taxonomy file as raw text, so that a test can assert on formatting rather than parsed content. */
 function readTaxonomy(kbRoot: KbRoot): Promise<string> {
   return readFile(join(kbRoot.path, TAXONOMY_FILE), 'utf8');
 }

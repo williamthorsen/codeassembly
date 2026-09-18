@@ -8,8 +8,8 @@ export type VaultIndex = ReadonlyMap<string, ReadonlySet<string>>;
 
 /**
  * Builds a basename → set-of-paths index from a set of notes, mapping each note's `.md` basename (sans extension) to
- * the note paths that share it. Reads only each note's `path`, so it is type-blind — it needs no frontmatter or record
- * projection. A note's `path` is used verbatim as the index value, so callers control whether entries are
+ * the note paths that share it. Reads only each note's `path`, so it is type-blind: It needs no frontmatter or record
+ * projection. Because a note's `path` is used verbatim as the index value, callers control whether entries are
  * vault-relative or absolute.
  */
 export function buildVaultIndex(notes: readonly { path: string }[]): VaultIndex {

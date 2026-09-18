@@ -7,7 +7,7 @@ export function isEnoent(error: unknown): boolean {
 }
 
 /**
- * Returns true when `error` carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`).
+ * Returns true when `error` has the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`).
  * @internal
  */
 export function isErrorCode(error: unknown, code: string): boolean {

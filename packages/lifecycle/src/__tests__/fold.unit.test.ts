@@ -31,7 +31,7 @@ function foldSession(events: readonly EventEnvelope[]): SessionState {
 }
 
 describe('applySessionEvent', () => {
-  it('starts idle and works the turn boundaries', () => {
+  it('starts idle and changes phase at the turn boundaries', () => {
     expect(createSessionState().phase).toBe('idle');
     expect(foldSession([composeEvent('turn.started')]).phase).toBe('working');
     expect(foldSession([composeEvent('turn.started'), composeEvent('turn.completed')]).phase).toBe('waiting');
@@ -102,7 +102,7 @@ describe('applySessionEvent', () => {
     expect(state.cwd).toBe('/work/repo.984.2');
   });
 
-  it('keeps the harness from the most recent event that carried one', () => {
+  it('keeps the harness from the most recent event that declared one', () => {
     const state = foldSession([composeEvent('session.started', { harness: 'claude' }), composeEvent('turn.started')]);
 
     expect(state.harness).toBe('claude');
@@ -135,7 +135,7 @@ describe('deriveSessionStatus', () => {
     expect(status.stale).toBe(true);
   });
 
-  it('never marks a waiting session stale — quiet is its normal state', () => {
+  it('never marks a waiting session stale, because quiet is its normal state', () => {
     const waiting = foldSession([composeEvent('turn.started'), composeEvent('turn.completed')]);
 
     const status = deriveSessionStatus(waiting, { nowMs: BASE_MS + 100_000, staleMs: 90_000 });
