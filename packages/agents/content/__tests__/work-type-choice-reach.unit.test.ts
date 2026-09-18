@@ -21,6 +21,7 @@ const RULE_HEADLINE = 'Whom a change affects decides its type';
 const RULE_PHRASES: ReadonlyArray<string> = [
   RULE_HEADLINE,
   'Never infer a type from how earlier changes were typed',
+  '`fix` requires a defect that a consumer meets',
   'Repo-agnostic guidance is source code',
   'Guidance on working in one repository is `ai`',
   'Guidance to agents is never `docs`',
