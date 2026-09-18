@@ -428,12 +428,11 @@ async function reconcileDomain(
   // those dirs. The collision gate has already proven the two namespaces disjoint.
   await reconcileRulebookSkills(skillOrphansByDir, resolved, resolveRulebookContext);
 
-  // Reconciled independently of the rulebook-skill pass above, which shares the same dirs.
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
 
   await reconcileSourceSupport(harnessSkillTargets, sourceSupportPlans);
 
-  // Reconciled independently of the skill passes, whose dirs are disjoint from the subagents dir.
+  // Reconcile independently of the skill passes, whose dirs are disjoint from the subagents dir.
   await reconcileDeclaredSubagents(
     harnessSubagentTargets,
     subagentOrphansByDir,

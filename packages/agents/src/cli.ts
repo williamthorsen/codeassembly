@@ -60,7 +60,7 @@ async function main(): Promise<void> {
       case 'status':
         await statusCommand({ harness: options.harness });
         break;
-      // Exits here because a defect report is a multi-line list of findings, which the `catch` below would prefix
+      // Exit here because a defect report is a multi-line list of findings, which the `catch` below would prefix
       // with `Error:` as though it were one failure.
       case 'validate':
         if (!(await validateCommand({ content, harness: options.harness }))) {

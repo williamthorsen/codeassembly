@@ -180,8 +180,8 @@ export function resolveSubagentTarget(
 // region | Helpers
 
 /**
- * The per-harness inputs on which a rulebook render depends: the harness config's own segments and sigils, the anchor
- * through which its link targets resolve, and the rulebook invocation catalog.
+ * The per-harness inputs on which a rulebook render depends: the harness config's own segments and sigils, and the
+ * anchor through which its link targets resolve.
  */
 function buildRulebookRenderContext(
   harnessId: HarnessId,
