@@ -100,7 +100,6 @@ async function runBundle(target: BundleTarget, invocation: SmokeTestInvocation):
   const args = invocation.args ?? [];
 
   return new Promise<string>((resolve, reject) => {
-    // Pass `cwd` and `env` only when supplied so that existing entries continue to inherit the parent's environment.
     const spawnOptions: { cwd?: string; env?: NodeJS.ProcessEnv } = {
       ...(invocation.cwd !== undefined && { cwd: invocation.cwd }),
       ...(invocation.env !== undefined && { env: invocation.env }),

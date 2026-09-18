@@ -15,7 +15,6 @@ set -euo pipefail
 
 readonly PROG="$(basename "$0")"
 
-# Main flow
 main() {
   # Resolve the monorepo root from this script's location, then locate tsx and the toolbox entry point.
   local script_dir repo_root tsx_bin cli_entry

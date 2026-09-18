@@ -15,9 +15,8 @@ readonly PROG="$(basename "$0")"
 readonly DEFAULT_PREFIX="/usr/local/bin"
 readonly SCRIPTS=(feedback-memories.sh)
 
-# Main flow
 main() {
-  # Show help (manual check: getopts cannot parse long options)
+  # Show help (manual check: the option loop below recognizes -h alone)
   if [[ "${1:-}" == "--help" ]]; then
     show_usage 0
   fi

@@ -9,14 +9,9 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle with
- * `--bump-updated` against it. Exercises the load → mutate → write-back pipeline end to end, which is the only
- * code path that wires the bundled record parse, mutation, and atomic write together. `HOME` is overridden to
- * the fixture dir so that the dev's real `~/.claude/kb.yaml` does not pollute KB resolution.
- *
- * The fixture is process-lifetime: `mkdtempSync` runs when the smoke-test runner loads and the OS reclaims
- * short-lived temp directories without explicit cleanup. The seed note's `updated:` field is rewritten to the
- * current instant on every invocation.
+ * Builds a fixture KB with a single seed note and returns an invocation that runs the bundle with
+ * `--bump-updated` against it, exercising the load → mutate → write-back pipeline. The seed note's `updated:`
+ * field is rewritten to the current instant on every invocation.
  */
 export function makeKbEditSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-edit-smoke-'));

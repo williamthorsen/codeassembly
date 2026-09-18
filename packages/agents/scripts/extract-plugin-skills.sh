@@ -18,10 +18,8 @@ repo_root="$(git rev-parse --show-toplevel)"
 plugin_cache="$HOME/.claude/plugins/cache/claude-plugins-official"
 output_base="$repo_root/agents/rovo/skills"
 
-# -- Main flow --
-
 main() {
-  # Show help (manual check -- getopts cannot parse long options)
+  # Show help (manual check: getopts cannot parse long options)
   if [[ "${1:-}" == "--help" ]]; then
     show_usage 0
   fi
@@ -113,6 +111,8 @@ main() {
 }
 
 # region | Helper functions
+
+# Displays command-line syntax.
 show_usage() {
   cat >&2 <<USAGE
 Extract skills from Claude Code plugins for Rovo Dev.

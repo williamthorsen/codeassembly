@@ -7,15 +7,13 @@ import { isRecord } from './is-record.ts';
 import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
- * Stands up a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then returns a
- * `SmokeTestInvocation` that emits one event against them. Exercises the full context-autofill → envelope → append
- * pipeline: The git-derived `repo` and `branch`, the relayed `--session`, and the single-line append are only wired
- * together in the built bundle.
+ * Builds a throwaway git repo on a known branch with an `origin` remote, plus a fixture events root, then
+ * returns an invocation that emits one event against them. Exercises the context-autofill → envelope → append
+ * pipeline over the git-derived `repo` and `branch`, the relayed `--session`, and the single-line append.
  *
- * The branch is pinned via `--initial-branch` so that the expected path is deterministic; the ambient git config could
- * otherwise name the initial branch anything. `--home` points the events root at the fixture rather than overriding
- * `HOME`, which would break PATH-resolution tools that depend on the real one (the hazard documented by the deriver's
- * smoke test).
+ * The branch is pinned via `--initial-branch` so that the expected path is deterministic; the ambient git
+ * config could otherwise name the initial branch anything. `--home` points the events root at the fixture
+ * rather than overriding `HOME`, which would break PATH resolution for tools that depend on the real one.
  */
 export function makeEmitEventSmokeTest(): SmokeTestInvocation {
   const home = mkdtempSync(path.join(tmpdir(), 'emit-event-home-'));

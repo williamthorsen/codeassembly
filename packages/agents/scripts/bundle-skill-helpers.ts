@@ -12,8 +12,6 @@
  * reaches through the `{harness_home_dir}/scripts/` prefix) bundles into `content/scripts/`, alongside the shell
  * helpers that install to every harness home.
  *
- * The bundle list is a plain array of `BundleTarget` entries. To register a new helper, append one.
- *
  * The bundles are tracked files, so `--check` guards them: It builds every target into a temporary directory and
  * compares the result against what git records at `HEAD`. The working tree is not a usable comparison target, since
  * this build step and the smoke test both rewrite `content/` in place before any check runs.
@@ -37,7 +35,6 @@ export interface BundleDrift {
   reason: DriftReason;
 }
 
-/** One helper to bundle: its TypeScript entry point and the `.mjs` output that it produces. */
 export interface BundleTarget {
   /** Path to the helper's entry module, relative to the package root. */
   entry: string;
@@ -45,7 +42,6 @@ export interface BundleTarget {
   outFile: string;
 }
 
-/** Why a bundle counts as drifted. */
 export type DriftReason = 'differs' | 'orphaned' | 'unrecorded';
 
 /** The bundles that git records at `HEAD`, which a fresh build is checked against. */
@@ -56,7 +52,6 @@ export interface RecordedBundles {
   tracked: readonly string[];
 }
 
-/** Every helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
 export const targets: BundleTarget[] = [
   {
     entry: 'src/kb-add/cli.ts',

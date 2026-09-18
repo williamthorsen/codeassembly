@@ -6,7 +6,7 @@
  * the literal instead of resolving it passes on the very wiring that it exists to reject.
  *
  * Claude Code also reads no import out of a fenced code block or a code span, which is how a document shows an
- * import without declaring one. Because both are blanked before matching, an example never counts as live wiring.
+ * import without declaring one.
  */
 
 import { homedir } from 'node:os';
@@ -18,7 +18,6 @@ const FENCE_CLOSER_PATTERN = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
 const FENCE_OPENER_PATTERN = /^ {0,3}(`{3,}|~{3,})/;
 const IMPORT_PATTERN = /(?<=^|\s)@\S+/g;
 
-/** Where a document's raw `@` imports point, and whether one of them reaches the guidance file. */
 export interface GuidanceImportOutcome {
   readonly doesReachGuidance: boolean;
   readonly resolvedPaths: ReadonlyArray<string>;
