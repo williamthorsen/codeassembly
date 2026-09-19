@@ -243,6 +243,7 @@ function collected(key: string, sourceRoot: string | undefined): DeployedPath {
     role: 'other',
     harnessId: 'claude',
     sourceRoot,
+    authored: undefined,
   };
 }
 

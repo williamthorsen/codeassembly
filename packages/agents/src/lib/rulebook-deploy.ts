@@ -15,6 +15,10 @@ export function indexRulebooksBySlug(resolved: ReadonlyArray<ResolvedRulebook>):
 /** A declared rulebook resolved against its owning source: its neutral body and which delivery modes it requests. */
 export interface ResolvedRulebook {
   readonly slug: string;
+  /** Absolute path of the authored Markdown file from which the body was read. */
+  readonly srcPath: string;
+  /** Absolute content root against which the body's include directives resolved. */
+  readonly contentRoot: string;
   readonly skillName: string;
   readonly body: string;
   readonly ambient: boolean;
@@ -59,6 +63,8 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
   const { rulebook, body } = parseRulebookFile(content, `${slug}.md`);
   return {
     slug,
+    srcPath,
+    contentRoot: resolved.dir,
     skillName: resolveSkillName(slug, rulebook['skill-name']),
     body: `${body.trim()}\n`,
     ambient: rulebook.delivery.includes('ambient'),
