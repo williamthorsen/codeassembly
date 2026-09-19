@@ -32,7 +32,7 @@ describe(reportSummary, () => {
           },
         ],
       }),
-      {},
+      { width: 120 },
     );
 
     expect(output).toContain('Project');
@@ -58,7 +58,7 @@ describe(reportSummary, () => {
           },
         ],
       }),
-      { verbose: true },
+      { verbose: true, width: 120 },
     );
 
     expect(output).toContain('📦 app: 1 memory');
@@ -108,7 +108,7 @@ describe(reportSummary, () => {
           { path: '/app/memory/feedback-worse.md', reason: 'bad yaml' },
         ],
       }),
-      {},
+      { width: 120 },
     );
 
     expect(output).toContain('1 feedback memory across 1 project');
@@ -132,7 +132,7 @@ describe(reportSummary, () => {
         ],
         skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }],
       }),
-      { verbose: true },
+      { verbose: true, width: 120 },
     );
 
     expect(output).toContain('1 file skipped (unreadable)');
@@ -140,16 +140,15 @@ describe(reportSummary, () => {
   });
 
   it('reports skipped files even when no readable memories remain', () => {
-    const output = reportSummary(
-      summary({ skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }] }),
-      {},
-    );
+    const output = reportSummary(summary({ skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }] }), {
+      width: 120,
+    });
 
     expect(output).toContain('No feedback memories found.');
     expect(output).toContain('1 file skipped (unreadable)');
   });
 
   it('reports the empty case plainly', () => {
-    expect(reportSummary(summary(), {})).toBe('No feedback memories found.');
+    expect(reportSummary(summary(), { width: 120 })).toBe('No feedback memories found.');
   });
 });

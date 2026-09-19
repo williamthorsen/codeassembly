@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { resolveTerminalWidth } from '../lib/resolve-terminal-width.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { deleteMemories } from './delete-memory.ts';
 import { enumerateFeedbackMemories } from './enumerate.ts';
@@ -24,8 +25,6 @@ async function main(): Promise<void> {
       argv: process.argv.slice(2),
       stdin: process.stdin,
       env: process.env,
-      // `columns` is typed as `number` but is `undefined` when stdout is not a TTY (e.g. piped).
-      columns: process.stdout.columns,
     });
     const rendered = result.render === 'text' ? result.value : JSON.stringify(result.value, null, 2);
     process.stdout.write(`${rendered}\n`);
@@ -74,12 +73,7 @@ export async function runFeedbackMemories(input: {
     if (!summary.ok) {
       return json(summary);
     }
-    return text(
-      reportSummary(summary, {
-        verbose: parsed.verbose,
-        ...(input.columns !== undefined && { width: input.columns }),
-      }),
-    );
+    return text(reportSummary(summary, { verbose: parsed.verbose, width: input.columns ?? resolveTerminalWidth() }));
   }
 
   if (subcommand === 'enumerate') {

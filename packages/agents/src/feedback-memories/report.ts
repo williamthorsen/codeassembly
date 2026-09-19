@@ -1,7 +1,6 @@
 import type { FeedbackMemorySummary, ProjectSummary, SkippedMemory } from './types.ts';
 
 const EMOJI = '📦';
-const FALLBACK_WIDTH = 120;
 const GAP = '  ';
 const INDENT = ' '.repeat(3);
 
@@ -9,15 +8,14 @@ const INDENT = ' '.repeat(3);
  * Renders a feedback-memory summary as human-readable text: a three-column table by default, or, under `verbose`, each
  * project followed by its memories. Grouping, counting, and sorting belong to `summarizeFeedbackMemories`.
  */
-export function reportSummary(summary: FeedbackMemorySummary, options: { verbose?: boolean; width?: number }): string {
+export function reportSummary(summary: FeedbackMemorySummary, options: { verbose?: boolean; width: number }): string {
   const verbose = options.verbose ?? false;
   const footer = skippedFooter(summary.skipped, verbose);
 
   if (summary.projects.length === 0) {
     return footer === '' ? 'No feedback memories found.' : `No feedback memories found.\n${footer}`;
   }
-  const width = options.width ?? FALLBACK_WIDTH;
-  const body = verbose ? verboseBody(summary.projects, width) : tableBody(summary.projects);
+  const body = verbose ? verboseBody(summary.projects, options.width) : tableBody(summary.projects);
   const totals = footer === '' ? totalLine(summary) : `${totalLine(summary)}\n${footer}`;
   return `${body}\n\n${totals}`;
 }
