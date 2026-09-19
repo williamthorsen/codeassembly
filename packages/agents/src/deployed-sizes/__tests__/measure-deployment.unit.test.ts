@@ -160,6 +160,8 @@ describe(measureDeployment, () => {
 
     expect(measured).toEqual({
       files: {},
+      expansions: {},
+      documentExpansions: {},
       aggregates: {
         alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
         onInvocation: 0,

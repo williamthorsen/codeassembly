@@ -12,6 +12,11 @@ const DeployedFileSchema = z.object({
   kind: z.enum(['asset', 'document']),
 });
 
+const ExpansionUnitSchema = z.object({
+  bytes: ByteCountSchema,
+  reach: ByteCountSchema,
+});
+
 const AlwaysLoadedAggregateSchema = z.object({
   total: ByteCountSchema,
   ambientRegions: ByteCountSchema,
@@ -32,6 +37,9 @@ const SizeSnapshotSchema = z.object({
   version: z.string().min(1),
   sourceCommit: z.string().min(1).optional(),
   files: z.record(z.string().min(1), DeployedFileSchema),
+  // Optional at this schema version: bumping the version would make every line written before the block exists
+  // unreadable, which would re-report every document once.
+  expansions: z.record(z.string().min(1), ExpansionUnitSchema).optional(),
   aggregates: SizeAggregatesSchema,
 });
 

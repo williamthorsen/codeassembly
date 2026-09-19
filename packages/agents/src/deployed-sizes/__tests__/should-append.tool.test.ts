@@ -175,6 +175,8 @@ function measure(
   const total = components.ambientRegions + components.skillDescriptions + components.subagentDescriptions;
   return {
     files,
+    expansions: {},
+    documentExpansions: {},
     aggregates: {
       alwaysLoaded: { total, ...components },
       onInvocation: Object.values(files).reduce((sum, file) => sum + (file.kind === 'document' ? file.bytes : 0), 0),

@@ -10,6 +10,7 @@ const SNAPSHOT: SizeSnapshot = {
   version: '0.15.0',
   sourceCommit: '9b4f4b9a',
   files: { 'skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' } },
+  expansions: { 'partial:library/_partials/shared.md': { bytes: 300, reach: 4 } },
   aggregates: {
     alwaysLoaded: { total: 300, ambientRegions: 100, skillDescriptions: 150, subagentDescriptions: 50 },
     onInvocation: 1_200,
@@ -26,6 +27,18 @@ describe(parseSnapshotLine, () => {
     const { sourceCommit, ...withoutCommit } = SNAPSHOT;
 
     expect(parseSnapshotLine(JSON.stringify(withoutCommit))).toEqual(withoutCommit);
+  });
+
+  it('parses a snapshot line that states no expansions, as one written before the block existed does', () => {
+    const { expansions, ...withoutExpansions } = SNAPSHOT;
+
+    expect(parseSnapshotLine(JSON.stringify(withoutExpansions))).toEqual(withoutExpansions);
+  });
+
+  it('rejects an expansion whose reach is not a whole count', () => {
+    const fractional = { ...SNAPSHOT, expansions: { 'partial:library/a.md': { bytes: 10, reach: 1.5 } } };
+
+    expect(parseSnapshotLine(JSON.stringify(fractional))).toBeUndefined();
   });
 
   it('rejects a truncated line', () => {

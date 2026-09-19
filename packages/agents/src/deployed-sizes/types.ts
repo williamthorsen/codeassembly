@@ -29,6 +29,16 @@ export interface DeployedFile {
 }
 
 /**
+ * One measured unit that deploys inside documents rather than as a file of its own: its own bytes, and the deployed
+ * documents that inline it. A change to the unit moves every document that it reaches, so `reach` is what turns its
+ * own delta into the deployed bytes that the change explains.
+ */
+export interface ExpansionUnit {
+  readonly bytes: number;
+  readonly reach: number;
+}
+
+/**
  * One deployment's whole size vector, keyed by deployed path relative to the harness root. A line states a complete
  * state rather than a change, because the deltas that a report derives compare complete states.
  *
@@ -44,5 +54,11 @@ export interface SizeSnapshot {
   /** Commit that the source tree was on, absent when the source is not a git tree (an npm install has none). */
   readonly sourceCommit?: string | undefined;
   readonly files: Readonly<Record<string, DeployedFile>>;
+  /**
+   * Every unit that deploys inside the documents rather than as itself, keyed by `{kind}:{source}/{relPath}`. Absent
+   * on a line written before the block existed, which states that nothing was measured; empty states that the
+   * measurement found none.
+   */
+  readonly expansions?: Readonly<Record<string, ExpansionUnit>> | undefined;
   readonly aggregates: SizeAggregates;
 }

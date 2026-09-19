@@ -386,14 +386,17 @@ function options(overrides: Partial<InstallOptions> = {}): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
 }
 
-/** Plan sources naming one declared skill deployed into `skillsDir`. */
+/**
+ * Plan sources naming one declared skill deployed into `skillsDir`. The skill is authored under `skillsDir` itself,
+ * which gives the expansion pass a small content root to walk rather than the directory that the suite runs from.
+ */
 function planWithSkill(slug: string, skillsDir: string): DeployedPathSources {
   return {
     ambientHosts: [],
     harnessSkillTargets: [{ harnessId: 'claude', skillsDir }],
     harnessSubagentTargets: [],
     resolved: [],
-    resolvedSkills: [{ slug, srcDir: '', contentRoot: '', source: undefined }],
+    resolvedSkills: [{ slug, srcDir: path.join(skillsDir, slug), contentRoot: skillsDir, source: undefined }],
     resolvedSubagents: [],
     sourceSupportPlans: [],
     targets: { harnessIds: ['claude'] },

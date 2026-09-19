@@ -1,16 +1,18 @@
-import { stat } from 'node:fs/promises';
-
 import { parse as parseYaml } from 'yaml';
 
 import type { DeployedPath, DeployedPathSet } from '../commands/sync/collect-deployed-paths.ts';
 import { extractAmbientRegionContent } from '../lib/ambient-region.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
-import { readFileOrEmpty } from '../lib/fs-helpers.ts';
-import { isMissingFile, isRecord } from '../lib/type-guards.ts';
+import { readFileOrEmpty, readFileSize } from '../lib/fs-helpers.ts';
+import { isRecord } from '../lib/type-guards.ts';
+import { type ExpansionMeasurement, measureExpansions } from './measure-expansions.ts';
 import type { DeployedFile, SizeAggregates } from './types.ts';
 
-/** One deployment's measured size vector: every file's bytes, and the three totals derived from them. */
-export interface DeploymentMeasurement {
+/**
+ * One deployment's measured size vector: every file's bytes, the three totals derived from them, and the units that
+ * deploy inside the documents rather than as files of their own.
+ */
+export interface DeploymentMeasurement extends ExpansionMeasurement {
   readonly files: Record<string, DeployedFile>;
   readonly aggregates: SizeAggregates;
 }
@@ -27,6 +29,7 @@ export interface DeploymentMeasurement {
  */
 export async function measureDeployment(set: DeployedPathSet): Promise<DeploymentMeasurement> {
   const files: Record<string, DeployedFile> = {};
+  const documents: Array<DeployedPath> = [];
   let onInvocation = 0;
   let assets = 0;
   let skillDescriptions = 0;
@@ -40,6 +43,7 @@ export async function measureDeployment(set: DeployedPathSet): Promise<Deploymen
     files[file.key] = { bytes: size, kind: file.kind };
     if (file.kind === 'document') {
       onInvocation += size;
+      documents.push(file);
     } else {
       assets += size;
     }
@@ -59,8 +63,14 @@ export async function measureDeployment(set: DeployedPathSet): Promise<Deploymen
     ambientRegions += byteLength(extractAmbientRegionContent(await readFileOrEmpty(hostPath)) ?? '');
   }
 
+  // Measured over the documents that are still on disk, so that a document removed between the deployment and the
+  // measurement counts toward no unit's reach.
+  const { expansions, documentExpansions } = await measureExpansions(documents);
+
   return {
     files,
+    expansions,
+    documentExpansions,
     aggregates: {
       alwaysLoaded: {
         total: ambientRegions + skillDescriptions + subagentDescriptions,
@@ -97,18 +107,6 @@ async function measureDescription(file: DeployedPath): Promise<number> {
     return 0;
   }
   return isRecord(parsed) && typeof parsed.description === 'string' ? byteLength(parsed.description) : 0;
-}
-
-/** Reads one file's size, or `undefined` when it is no longer on disk. */
-async function readFileSize(absPath: string): Promise<number | undefined> {
-  try {
-    return (await stat(absPath)).size;
-  } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      return undefined;
-    }
-    throw error;
-  }
 }
 
 // endregion | Helpers

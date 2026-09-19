@@ -186,6 +186,8 @@ describe(buildSizeReport, () => {
     const report = buildSizeReport({
       measured: {
         files: { 'a.md': { bytes: 10, kind: 'document' }, 'b.mjs': { bytes: 20, kind: 'asset' } },
+        expansions: {},
+        documentExpansions: {},
         aggregates: aggregates({ onInvocation: 10, assets: 20 }),
       },
       previous: undefined,
@@ -249,7 +251,7 @@ function collected(key: string, sourceRoot: string | undefined): DeployedPath {
 
 /** A measurement stating `files` as its vector, with aggregates that no assertion here reads. */
 function measurement(files: Record<string, DeployedFile>): DeploymentMeasurement {
-  return { files, aggregates: aggregates() };
+  return { files, expansions: {}, documentExpansions: {}, aggregates: aggregates() };
 }
 
 /** A previous snapshot stating `files` as its vector. */
