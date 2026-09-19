@@ -348,7 +348,7 @@ describe('deployed sizes', () => {
     expect(output).toContain('-8.1 KiB  claude/skills/old/SKILL.md  (removed)');
   });
 
-  it('states a changed partial once, naming the explained bytes, its own delta, its reach, and its size', () => {
+  it('states a changed partial once, naming the explained bytes, its own delta, its documents, and its size', () => {
     const output = textOf(
       renderSyncReport(
         withSizes({
@@ -358,7 +358,7 @@ describe('deployed sizes', () => {
               key: 'partial:library/_partials/plain-speech.md',
               bytes: 1_229,
               delta: 132,
-              reach: 17,
+              explainedDocumentCount: 17,
             },
           ],
         }),
@@ -368,11 +368,19 @@ describe('deployed sizes', () => {
     expect(output).toContain('+2.2 KiB  library/_partials/plain-speech.md  (+132 B × 17 documents, 1.2 KiB)');
   });
 
-  it('states one document for a partial that reaches one', () => {
+  it('states one document for a partial that explains one document', () => {
     const output = textOf(
       renderSyncReport(
         withSizes({
-          changes: [{ kind: 'expansion', key: 'partial:library/_partials/only.md', bytes: 300, delta: 100, reach: 1 }],
+          changes: [
+            {
+              kind: 'expansion',
+              key: 'partial:library/_partials/only.md',
+              bytes: 300,
+              delta: 100,
+              explainedDocumentCount: 1,
+            },
+          ],
         }),
       ),
     );
@@ -398,7 +406,13 @@ describe('deployed sizes', () => {
     const lines = renderSyncReport(
       withSizes({
         changes: [
-          { kind: 'expansion', key: 'partial:library/_partials/wide.md', bytes: 300, delta: 500, reach: 20 },
+          {
+            kind: 'expansion',
+            key: 'partial:library/_partials/wide.md',
+            bytes: 300,
+            delta: 500,
+            explainedDocumentCount: 20,
+          },
           { kind: 'resized', key: 'a.md', bytes: 1_100, delta: 100, explained: 0 },
         ],
       }),

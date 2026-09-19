@@ -30,8 +30,9 @@ export interface DeployedFile {
 
 /**
  * One measured unit that deploys inside documents rather than as a file of its own: its own bytes, and the deployed
- * documents that inline it. A change to the unit moves every document that it reaches, so `reach` is what turns its
- * own delta into the deployed bytes that the change explains.
+ * documents that inline it. `reach` states the deployment as measured; what a change to the unit explains is derived
+ * from the documents whose bytes it actually moved, which is fewer whenever a document it reaches was added, removed,
+ * or left unchanged.
  */
 export interface ExpansionUnit {
   readonly bytes: number;

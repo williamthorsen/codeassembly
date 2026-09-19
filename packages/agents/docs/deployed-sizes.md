@@ -62,7 +62,7 @@ A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source
 | `bytes` | The unit's own bytes on disk, never its expanded bytes      |
 | `reach` | The deployed documents whose include closure holds the unit |
 
-`reach` counts deployed documents rather than source documents, so one skill deployed to two harnesses counts twice and the number matches the document lines that the collapse removes.
+`reach` counts deployed documents rather than source documents, so one skill deployed to two harnesses counts twice. It states the deployment as measured; what a change to the unit explains is derived separately, from the documents whose bytes it actually moved.
 
 The block is optional at schema version 1. Absent means that nothing was measured, which is what a line written before the block existed states; empty means that the measurement ran and found none. Bumping the schema version instead would make every earlier line unreadable, and every document would be re-reported once.
 
@@ -127,7 +127,7 @@ Assets:         2378.5 KiB
 Run `codeassembly sizes` to rank every deployed document by size.
 ```
 
-Each line leads with the bytes that it accounts for. A document's line then states its deployed path and its size after the deployment; a removed document states no size, and a removal's figure is its previous bytes negated, which puts a large removal where a large addition would be. An expansion's line states the unit under its key's `{source}/{relPath}` tail, then its own per-document delta, the documents that it reaches, and its own size. The two kinds interleave in one list ordered by the bytes that each accounts for, largest first, and by key where two are equal, so a one-byte partial edit sorts by the deployment that it caused rather than by its own size. Assets contribute no line, matching what `sizes` ranks.
+Each line leads with the bytes that it accounts for. A document's line then states its deployed path and its size after the deployment; a removed document states no size, and a removal's figure is its previous bytes negated, which puts a large removal where a large addition would be. An expansion's line states the unit under its key's `{source}/{relPath}` tail, then its own per-document delta, the documents whose change it explains, and its own size. That document count is the one that makes the line's own arithmetic check out, and it is the unit's `reach` less the documents that the collapse never reduces. The two kinds interleave in one list ordered by the bytes that each accounts for, largest first, and by key where two are equal, so a one-byte partial edit sorts by the deployment that it caused rather than by its own size. Assets contribute no line, matching what `sizes` ranks.
 
 The list is uncapped. A partial or guidance-hook edit fans out to dozens of documents, and a cap would hide exactly the fan-out that the reader needs to see.
 
@@ -137,10 +137,13 @@ A changed unit is reported once. For each resized document, the report sums the 
 
 - A document whose delta equals that sum is explained in full and contributes no line, which is what keeps one partial edit from printing one line per includer.
 - A document that moved beyond that sum reports the residual: its line is led by the bytes that its own content accounts for and marked `(residual, …)`.
+- A unit that explains no document's delta contributes no line either. Extracting a partial from text that already stood in its includers leaves every deployed document byte-identical, since the expander inlines a partial to the same bytes that it replaced; a line claiming the extracted bytes as growth would head a block that states what a deployment cost.
+
+A unit's line therefore accounts for the bytes that it removed from the document lines, never for its own delta across every document that holds it. The two kinds of line sum to the deployment's whole document delta: Every byte that one accounts for is a byte that the other does not.
 
 Three cases attribute nothing, and report as they did before the block existed:
 
-- **An added or removed document**, whose whole bytes are not a change for a unit to explain.
+- **An added or removed document**, whose whole bytes are not a change for a unit to explain. A unit reaching only such a document explains nothing and states no line.
 - **A unit that the previous snapshot held and this measurement does not.** Attributing a deleted partial needs each document's previous closure, which no snapshot records, and crediting it against the current closures would count the same bytes twice.
 - **A previous snapshot stating no `expansions`**, which suppresses the pass entirely and leaves every document to report its own change.
 

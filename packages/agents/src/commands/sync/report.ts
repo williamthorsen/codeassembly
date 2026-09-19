@@ -272,12 +272,13 @@ function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
 
 /**
  * What one changed expansion unit deployed: the bytes that its change explains, the unit, its per-document delta, the
- * documents that it reaches, and its own size. The unit is named without its key's kind prefix, which puts it in the
- * same column as the deployed paths beside it.
+ * documents whose change it explains, and its own size. The unit is named without its key's kind prefix, which puts
+ * it in the same column as the deployed paths beside it, and the document count is the one that makes the line's own
+ * arithmetic check out.
  */
 function describeExpansionChange(change: ExpansionChange, deltaWidth: number): ReportLine {
-  const documents = `${change.reach} document${change.reach === 1 ? '' : 's'}`;
-  const detail = `${formatDelta(change.delta)} × ${documents}, ${formatBytes(change.bytes)}`;
+  const count = change.explainedDocumentCount;
+  const detail = `${formatDelta(change.delta)} × ${count} document${count === 1 ? '' : 's'}, ${formatBytes(change.bytes)}`;
   return describeSizeChangeLine(change, deltaWidth, stripKeyKind(change.key), detail);
 }
 
