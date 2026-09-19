@@ -22,6 +22,13 @@ const SKILL_FILENAME = 'SKILL.md';
  */
 export type DeployedFileRole = 'other' | 'skill' | 'subagent';
 
+/**
+ * Maps a declared source's name to the canonical directory from which it resolves, and `undefined` to the built-in
+ * library's content directory. One mapping covers all three artifact types, since every resolved artifact already
+ * names the source from which it came.
+ */
+export type ResolveSourceRoot = (source: string | undefined) => string | undefined;
+
 /** One deployed file: where it is, the key under which it is recorded, and whether a harness loads it into context. */
 export interface DeployedPath {
   /**
@@ -33,6 +40,12 @@ export interface DeployedPath {
   readonly kind: DeployedFileKind;
   readonly role: DeployedFileRole;
   readonly harnessId: HarnessId;
+  /**
+   * Canonical directory of the source from which the artifact resolved, or `undefined` for a file that no declared
+   * artifact backs: an install-manifest entry or a source-support delivery. Report-time provenance alone, which is
+   * what lets a report decide whether the reader can edit what a deployed file came from; no snapshot records it.
+   */
+  readonly sourceRoot: string | undefined;
 }
 
 /**
@@ -43,9 +56,13 @@ export interface DeployedPathSources {
   readonly ambientHosts: ReadonlyArray<{ readonly hostPath: string }>;
   readonly harnessSkillTargets: ReadonlyArray<{ readonly harnessId: HarnessId; readonly skillsDir: string }>;
   readonly harnessSubagentTargets: ReadonlyArray<{ readonly harnessId: HarnessId; readonly subagentsDir: string }>;
-  readonly resolved: ReadonlyArray<{ readonly skill: boolean; readonly skillName: string }>;
+  readonly resolved: ReadonlyArray<{
+    readonly skill: boolean;
+    readonly skillName: string;
+    readonly source: string | undefined;
+  }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
-  readonly resolvedSubagents: ReadonlyArray<{ readonly slug: string }>;
+  readonly resolvedSubagents: ReadonlyArray<{ readonly slug: string; readonly source: string | undefined }>;
   readonly sourceSupportPlans: ReadonlyArray<{
     readonly sourcesRoot: string;
     readonly destDir: string;
@@ -53,6 +70,16 @@ export interface DeployedPathSources {
     readonly kind: 'deliver' | 'retract' | 'none';
   }>;
   readonly targets: { readonly harnessIds: ReadonlyArray<HarnessId> };
+}
+
+/**
+ * What every path collected by one pass shares: the harness that loads it, the base against which its key resolves,
+ * and the source root that the pass attributes its files to.
+ */
+interface CollectionContext {
+  readonly harnessId: HarnessId;
+  readonly base: string;
+  readonly sourceRoot: string | undefined;
 }
 
 /** One deployment's measurable surface: the files it wrote, and the guidance files whose ambient region it fills. */
@@ -79,19 +106,25 @@ export async function collectDeployedPaths(
   plan: DeployedPathSources,
   domain: SyncDomain,
   homeDir: string,
+  resolveSourceRoot: ResolveSourceRoot,
 ): Promise<DeployedPathSet> {
   const base = domain.ambient === 'harness-home' ? homeDir : domain.baseDir;
   const collected = new Map<string, DeployedPath>();
 
-  const rulebookSkillDirs = plan.resolved.filter((rulebook) => rulebook.skill).map((rulebook) => rulebook.skillName);
+  const rulebookSkillDirs = plan.resolved
+    .filter((rulebook) => rulebook.skill)
+    .map((rulebook) => ({ dir: rulebook.skillName, source: rulebook.source }));
   for (const target of plan.harnessSkillTargets) {
     const { harnessId, skillsDir } = target;
     const skillDirs = [
-      ...plan.resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+      ...plan.resolvedSkills
+        .filter((skill) => skillTargetsHarness(skill, harnessId))
+        .map((skill) => ({ dir: skill.slug, source: skill.source })),
       ...rulebookSkillDirs,
     ];
-    for (const dir of skillDirs) {
-      await collectDirectory(collected, path.join(skillsDir, dir), harnessId, base, true);
+    for (const { dir, source } of skillDirs) {
+      const context = { harnessId, base, sourceRoot: resolveSourceRoot(source) };
+      await collectDirectory(collected, path.join(skillsDir, dir), context, true);
     }
     // Delivered support entries are named file by file, so they are read from the plan rather than walked.
     const sourcesRoot = path.join(skillsDir, SOURCE_SUPPORT_DIR);
@@ -100,14 +133,16 @@ export async function collectDeployedPaths(
         continue;
       }
       for (const entry of supportPlan.entries) {
-        addPath(collected, path.join(supportPlan.destDir, ...entry.relPath.split('/')), harnessId, base);
+        const destPath = path.join(supportPlan.destDir, ...entry.relPath.split('/'));
+        addPath(collected, destPath, { harnessId, base, sourceRoot: undefined });
       }
     }
   }
 
   for (const target of plan.harnessSubagentTargets) {
     for (const subagent of plan.resolvedSubagents) {
-      addPath(collected, path.join(target.subagentsDir, `${subagent.slug}.md`), target.harnessId, base, 'subagent');
+      const context = { harnessId: target.harnessId, base, sourceRoot: resolveSourceRoot(subagent.source) };
+      addPath(collected, path.join(target.subagentsDir, `${subagent.slug}.md`), context, 'subagent');
     }
   }
 
@@ -130,19 +165,19 @@ export async function collectDeployedPaths(
 function addPath(
   collected: Map<string, DeployedPath>,
   absPath: string,
-  harnessId: HarnessId,
-  base: string,
+  context: CollectionContext,
   role: DeployedFileRole = 'other',
 ): void {
   if (collected.has(absPath)) {
     return;
   }
   collected.set(absPath, {
-    key: resolveKey(absPath, harnessId, base),
+    key: resolveKey(absPath, context.harnessId, context.base),
     absPath,
     kind: classifyFile(absPath),
     role,
-    harnessId,
+    harnessId: context.harnessId,
+    sourceRoot: context.sourceRoot,
   });
 }
 
@@ -163,8 +198,7 @@ function classifyFile(absPath: string): DeployedFileKind {
 async function collectDirectory(
   collected: Map<string, DeployedPath>,
   dir: string,
-  harnessId: HarnessId,
-  base: string,
+  context: CollectionContext,
   skillRoot: boolean,
 ): Promise<void> {
   const entries = await readDirEntriesRecursively(dir);
@@ -173,7 +207,7 @@ async function collectDirectory(
       continue;
     }
     const isSkillBody = skillRoot && entry.parentPath === dir && entry.name === SKILL_FILENAME;
-    addPath(collected, path.join(entry.parentPath, entry.name), harnessId, base, isSkillBody ? 'skill' : 'other');
+    addPath(collected, path.join(entry.parentPath, entry.name), context, isSkillBody ? 'skill' : 'other');
   }
 }
 
@@ -193,12 +227,13 @@ async function collectManifestPaths(
     const entries = manifest.harnesses[harnessId]?.entries ?? [];
     for (const entry of entries) {
       const absPath = path.join(harnessHome, entry.relativePath);
+      const context = { harnessId, base: homeDir, sourceRoot: undefined };
       if (entry.contentHash.startsWith(DIRECTORY_HASH_PREFIX)) {
-        await collectDirectory(collected, absPath, harnessId, homeDir, false);
+        await collectDirectory(collected, absPath, context, false);
         continue;
       }
       if (existsSync(absPath)) {
-        addPath(collected, absPath, harnessId, homeDir);
+        addPath(collected, absPath, context);
       }
     }
   }

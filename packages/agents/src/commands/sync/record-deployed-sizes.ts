@@ -10,7 +10,7 @@ import type { SizeSnapshot } from '../../deployed-sizes/types.ts';
 import { readSourceCommit } from '../../lib/home-provenance.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import { resolveRepo } from '../../shared/resolve-repo.ts';
-import { collectDeployedPaths, type DeployedPathSources } from './collect-deployed-paths.ts';
+import { collectDeployedPaths, type DeployedPathSources, type ResolveSourceRoot } from './collect-deployed-paths.ts';
 import type { SyncDomain } from './sync-domain.ts';
 
 /**
@@ -23,19 +23,21 @@ import type { SyncDomain } from './sync-domain.ts';
  * Every failure is swallowed after one warning naming what could not be recorded. The pass runs after the last write,
  * where a throw would report a completed deployment as a failure, and no size condition may fail a sync.
  */
-export async function recordDeployedSizes(
-  plan: DeployedPathSources,
-  domain: SyncDomain,
-  homeDir: string,
-  packageRoot: string,
-): Promise<void> {
+export async function recordDeployedSizes(input: {
+  plan: DeployedPathSources;
+  domain: SyncDomain;
+  homeDir: string;
+  packageRoot: string;
+  resolveSourceRoot: ResolveSourceRoot;
+}): Promise<void> {
+  const { plan, domain, homeDir, packageRoot, resolveSourceRoot } = input;
   try {
     const recordPath = resolveRecordPath(
       domain.ambient === 'harness-home'
         ? { home: homeDir, domain: 'home' }
         : { home: homeDir, domain: 'repo', repo: await resolveRepo(domain.baseDir) },
     );
-    const measured = await measureDeployment(await collectDeployedPaths(plan, domain, homeDir));
+    const measured = await measureDeployment(await collectDeployedPaths(plan, domain, homeDir, resolveSourceRoot));
     const previous = await readLatestSnapshot(recordPath);
     // The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch
     // is the one the gate must judge; the home domain's comes from the running package.

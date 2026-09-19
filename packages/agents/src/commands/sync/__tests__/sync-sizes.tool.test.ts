@@ -11,7 +11,7 @@ import { readLatestSnapshot } from '../../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../../deployed-sizes/resolve-record-path.ts';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
-import type { DeployedPathSources } from '../collect-deployed-paths.ts';
+import type { DeployedPathSources, ResolveSourceRoot } from '../collect-deployed-paths.ts';
 import { recordDeployedSizes } from '../record-deployed-sizes.ts';
 import { syncCommand } from '../sync.ts';
 import type { SyncDomain } from '../sync-domain.ts';
@@ -43,7 +43,13 @@ describe(recordDeployedSizes, () => {
     const body = '---\nname: plan\n---\n\n# Plan\n';
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), body);
 
-    await recordDeployedSizes(planWithSkill('plan', skillsDir), homeDomain(homeDir), homeDir, packageRoot);
+    await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
 
     const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
     expect(snapshot?.files).toEqual({
@@ -55,7 +61,13 @@ describe(recordDeployedSizes, () => {
     const { skillsDir } = resolveHarnessPaths('claude', projectRoot);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), '---\nname: plan\n---\n\n# Plan\n');
 
-    await recordDeployedSizes(planWithSkill('plan', skillsDir), repoDomain(projectRoot), homeDir, packageRoot);
+    await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: repoDomain(projectRoot),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
 
     const homeRecord = resolveRecordPath({ home: homeDir, domain: 'home' });
     const repoRecord = resolveRecordPath({ home: homeDir, domain: 'repo', repo: undefined });
@@ -67,7 +79,13 @@ describe(recordDeployedSizes, () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
-    await recordDeployedSizes(planWithSkill('plan', skillsDir), homeDomain(homeDir), homeDir, packageRoot);
+    await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
 
     const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
     expect(snapshot?.version).toMatch(/^\d+\.\d+\.\d+/);
@@ -79,8 +97,8 @@ describe(recordDeployedSizes, () => {
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
     const plan = planWithSkill('plan', skillsDir);
 
-    await recordDeployedSizes(plan, homeDomain(homeDir), homeDir, packageRoot);
-    await recordDeployedSizes(plan, homeDomain(homeDir), homeDir, packageRoot);
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
 
     expect(await countLines(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(1);
   });
@@ -90,10 +108,10 @@ describe(recordDeployedSizes, () => {
     const body = path.join(skillsDir, 'plan', 'SKILL.md');
     await writeDeployedFile(body, 'body');
     const plan = planWithSkill('plan', skillsDir);
-    await recordDeployedSizes(plan, homeDomain(homeDir), homeDir, packageRoot);
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
 
     await writeDeployedFile(body, 'a much longer body than before');
-    await recordDeployedSizes(plan, homeDomain(homeDir), homeDir, packageRoot);
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
 
     expect(await countLines(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(2);
   });
@@ -103,7 +121,13 @@ describe(recordDeployedSizes, () => {
     const { skillsDir } = resolveHarnessPaths('claude', consumerRoot);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
-    await recordDeployedSizes(planWithSkill('plan', skillsDir), repoDomain(consumerRoot), homeDir, packageRoot);
+    await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: repoDomain(consumerRoot),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
 
     expect(existsSync(recordRoot(homeDir))).toBe(false);
   });
@@ -112,7 +136,13 @@ describe(recordDeployedSizes, () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
-    await recordDeployedSizes(planWithSkill('plan', skillsDir), homeDomain(homeDir), homeDir, packageRoot);
+    await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
 
     expect(existsSync(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(true);
   });
@@ -125,7 +155,13 @@ describe(recordDeployedSizes, () => {
     await writeDeployedFile(path.join(homeDir, '.codeassembly', 'deployed-sizes'), 'not a directory');
 
     await expect(
-      recordDeployedSizes(planWithSkill('plan', skillsDir), homeDomain(homeDir), homeDir, packageRoot),
+      recordDeployedSizes({
+        plan: planWithSkill('plan', skillsDir),
+        domain: homeDomain(homeDir),
+        homeDir,
+        packageRoot,
+        resolveSourceRoot,
+      }),
     ).resolves.toBeUndefined();
 
     expect(warn).toHaveBeenCalledTimes(1);
@@ -270,6 +306,9 @@ function planWithSkill(slug: string, skillsDir: string): DeployedPathSources {
     targets: { harnessIds: ['claude'] },
   };
 }
+
+/** Every artifact resolves from the library, whose directory these tests never assert against. */
+const resolveSourceRoot: ResolveSourceRoot = () => undefined;
 
 /** The repo domain, rooted at a project directory. */
 function repoDomain(projectRoot: string): SyncDomain {
