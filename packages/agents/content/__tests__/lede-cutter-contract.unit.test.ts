@@ -4,11 +4,12 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// The cutter deletes candidates and returns the survivors unchanged. Three edits would defeat that quietly: granting
-// it a diff, which restores the attachment removed by the fresh context; softening the deletion-only authority into a
-// license to reword, which the caller's byte-identity check then rejects on every run; and dropping the exemplar
-// floor, which calibrates the cut against ledes that the author never approved. None of the three fails at runtime --
-// each yields a plausible shorter lede -- so the guard has to be here.
+// The cutter deletes candidates and returns the survivors unchanged. Four edits would defeat that quietly: granting
+// it a diff, which restores the attachment removed by the fresh context; granting it the change's title, against
+// which the bullet stating what the change does looks redundant; softening the deletion-only authority into a license
+// to reword, which the caller's byte-identity check then rejects on every run; and dropping the exemplar floor, which
+// calibrates the cut against ledes that the author never approved. None of the four fails at runtime -- each yields a
+// plausible shorter lede -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The cutter's assignment, which selects what survives. */
@@ -43,8 +44,8 @@ const REJECTION_CODES: ReadonlyArray<string> = ['not-a-subset', 'empty-cut'];
  */
 const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not work on it', 'works in this codebase'];
 
-/** The instruction that closes the bullet restating the title that the reader has already met. */
-const TITLE_PHRASE = 'The title is already on the page';
+/** The phrase naming the title among the inputs that the cutter is not given. */
+const WITHHELD_TITLE_PHRASE = "The change's title, the diff, the ticket";
 
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'lede-cutter.md'), CONTENT_ROOT);
 
@@ -76,11 +77,12 @@ describe('lede-cutter contract', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('tells the cutter that the title is already on the page', async () => {
+  it('withholds the change title from the cutter', async () => {
     const message =
-      'Every surface renders the title above the lede, so a bullet restating it is the first cut. Without this the ' +
-      'cutter weighs that bullet on its own merits, which is how the duplication survives.';
-    expect(await EXPANDED, message).toContain(TITLE_PHRASE);
+      'The cutter judges each candidate against the reader alone. A cutter granted the title judges against it too, ' +
+      'and the bullet stating what the change does is the one that then looks redundant, so the lede loses the ' +
+      'statement that the reader came for.';
+    expect(await EXPANDED, message).toContain(WITHHELD_TITLE_PHRASE);
   });
 
   it('requires the cut to keep a candidate', async () => {
