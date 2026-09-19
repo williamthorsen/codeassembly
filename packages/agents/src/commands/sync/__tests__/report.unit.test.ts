@@ -334,9 +334,9 @@ describe('deployed sizes', () => {
       renderSyncReport(
         withSizes({
           changes: [
-            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 12_698, delta: 1_331 },
-            { kind: 'added', key: 'claude/skills/new/SKILL.md', bytes: 512, delta: 512 },
-            { kind: 'removed', key: 'claude/skills/old/SKILL.md', bytes: 0, delta: -8_294 },
+            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 12_698, delta: 1_331, explained: 0 },
+            { kind: 'added', key: 'claude/skills/new/SKILL.md', bytes: 512, delta: 512, explained: 0 },
+            { kind: 'removed', key: 'claude/skills/old/SKILL.md', bytes: 0, delta: -8_294, explained: 0 },
           ],
         }),
       ),
@@ -346,6 +346,69 @@ describe('deployed sizes', () => {
     expect(output).toContain('+1.3 KiB  claude/skills/plan/SKILL.md  (12.4 KiB)');
     expect(output).toContain('+512 B  claude/skills/new/SKILL.md  (added, 512 B)');
     expect(output).toContain('-8.1 KiB  claude/skills/old/SKILL.md  (removed)');
+  });
+
+  it('states a changed partial once, naming the explained bytes, its own delta, its reach, and its size', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          changes: [
+            {
+              kind: 'expansion',
+              key: 'partial:library/_partials/plain-speech.md',
+              bytes: 1_229,
+              delta: 132,
+              reach: 17,
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(output).toContain('+2.2 KiB  library/_partials/plain-speech.md  (+132 B × 17 documents, 1.2 KiB)');
+  });
+
+  it('states one document for a partial that reaches one', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          changes: [{ kind: 'expansion', key: 'partial:library/_partials/only.md', bytes: 300, delta: 100, reach: 1 }],
+        }),
+      ),
+    );
+
+    expect(output).toContain('× 1 document,');
+  });
+
+  it('marks a document line as a residual when its partials explain part of its growth', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          changes: [
+            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 73_600, delta: 1_000, explained: 400 },
+          ],
+        }),
+      ),
+    );
+
+    expect(output).toContain('+600 B  claude/skills/plan/SKILL.md  (residual, 71.9 KiB)');
+  });
+
+  it('aligns the delta column across both kinds of change', () => {
+    const lines = renderSyncReport(
+      withSizes({
+        changes: [
+          { kind: 'expansion', key: 'partial:library/_partials/wide.md', bytes: 300, delta: 500, reach: 20 },
+          { kind: 'resized', key: 'a.md', bytes: 1_100, delta: 100, explained: 0 },
+        ],
+      }),
+    );
+    const changeLines = lines.filter((line) => line.text.includes('  (')).map((line) => line.text);
+
+    expect(changeLines).toStrictEqual([
+      '  +9.8 KiB  library/_partials/wide.md  (+500 B × 20 documents, 300 B)',
+      '    +100 B  a.md  (1.1 KiB)',
+    ]);
   });
 
   it('states the three aggregates and the command that ranks every document', () => {
@@ -408,7 +471,7 @@ describe('deployed sizes', () => {
   it('sends each growth warning to the warning stream and the rest of the block to the info stream', () => {
     const lines = renderSyncReport(
       withSizes({
-        changes: [{ kind: 'resized', key: 'a.md', bytes: GROWTH_CEILING_BYTES, delta: 1 }],
+        changes: [{ kind: 'resized', key: 'a.md', bytes: GROWTH_CEILING_BYTES, delta: 1, explained: 0 }],
         warnings: [{ key: 'a.md', bytes: GROWTH_CEILING_BYTES, mayStreamline: false }],
       }),
     );

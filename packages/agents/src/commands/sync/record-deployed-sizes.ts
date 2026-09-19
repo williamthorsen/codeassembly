@@ -69,6 +69,7 @@ export async function recordDeployedSizes(input: {
         version: readRunningPackageVersion(),
         ...(sourceCommit !== undefined && { sourceCommit }),
         files: measured.files,
+        expansions: measured.expansions,
         aggregates: measured.aggregates,
       };
       await appendSnapshot(recordPath, snapshot);

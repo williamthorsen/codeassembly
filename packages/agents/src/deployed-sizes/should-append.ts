@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 
 import { isRecord } from '../lib/type-guards.ts';
 import type { DeploymentMeasurement } from './measure-deployment.ts';
-import type { DeployedFile, SizeAggregates, SizeSnapshot } from './types.ts';
+import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from './types.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -17,10 +17,12 @@ const GIT_LOOKUP_TIMEOUT_MS = 5_000;
  * Decides whether a measured vector enters the record. Two conditions must hold: The vector differs from the previous
  * snapshot, and the tree whose content was deployed is on a commit that the remote-tracking default branch contains.
  *
- * The compared vector is the measurement entire, files and aggregates alike. An ambient region is a span inside a
- * guidance file that the deployment does not own outright, so it reaches `aggregates.alwaysLoaded` and no file row;
- * comparing the aggregates is what lets an edit confined to one be recorded. Any later measured quantity that no
- * single file backs is covered by the same comparison.
+ * The compared vector is the measurement entire: files, expansions, and aggregates alike. An ambient region is a span
+ * inside a guidance file that the deployment does not own outright, so it reaches `aggregates.alwaysLoaded` and no
+ * file row; comparing the aggregates is what lets an edit confined to one be recorded. Any later measured quantity
+ * that no single file backs is covered by the same comparison. Comparing the expansions covers a rewiring that moves
+ * a partial's reach without moving anyone's bytes, and it makes the first measurement after the block existed differ
+ * from a previous snapshot that states none.
  *
  * The ancestry condition keeps a feature branch's deployment out of the record, so that the record tracks the
  * default branch's sizes rather than those of each branch under development. A source tree that is not a git tree
@@ -48,6 +50,28 @@ export async function shouldAppend(input: {
  */
 function haveSameAggregates(aggregates: SizeAggregates, previous: SizeAggregates): boolean {
   return stringifyWithSortedKeys(aggregates) === stringifyWithSortedKeys(previous);
+}
+
+/**
+ * Reports whether two expansion blocks state the same units, each at the same bytes and the same reach. A previous
+ * snapshot stating none differs from any measurement, so that the first run after the block existed records it.
+ */
+function haveSameExpansions(
+  expansions: Readonly<Record<string, ExpansionUnit>>,
+  previous: Readonly<Record<string, ExpansionUnit>> | undefined,
+): boolean {
+  if (previous === undefined) {
+    return false;
+  }
+  const keys = Object.keys(expansions);
+  if (keys.length !== Object.keys(previous).length) {
+    return false;
+  }
+  return keys.every((key) => {
+    const before = previous[key];
+    const after = expansions[key];
+    return before !== undefined && after !== undefined && before.bytes === after.bytes && before.reach === after.reach;
+  });
 }
 
 /**
@@ -88,9 +112,16 @@ async function isOnDefaultBranch(sourceRoot: string): Promise<boolean> {
   }
 }
 
-/** Reports whether two measurements state the same thing: the same files at the same sizes, and the same aggregates. */
+/**
+ * Reports whether two measurements state the same thing: the same files at the same sizes, the same expansions, and
+ * the same aggregates.
+ */
 function isUnchanged(measured: DeploymentMeasurement, previous: SizeSnapshot): boolean {
-  return haveSameFiles(measured.files, previous.files) && haveSameAggregates(measured.aggregates, previous.aggregates);
+  return (
+    haveSameFiles(measured.files, previous.files) &&
+    haveSameExpansions(measured.expansions, previous.expansions) &&
+    haveSameAggregates(measured.aggregates, previous.aggregates)
+  );
 }
 
 /**

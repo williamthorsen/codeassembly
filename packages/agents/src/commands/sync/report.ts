@@ -1,9 +1,12 @@
 import path from 'node:path';
 
 import {
+  countAccountedBytes,
   type DocumentChange,
+  type ExpansionChange,
   GROWTH_CEILING_BYTES,
   type GrowthWarning,
+  type SizeChange,
   type SizeReport,
 } from '../../deployed-sizes/build-size-report.ts';
 import { formatBytes, formatDelta } from '../../deployed-sizes/format-bytes.ts';
@@ -176,7 +179,8 @@ function describeChangeDetail(change: DocumentChange): string {
     case 'removed':
       return 'removed';
     case 'resized':
-      return formatBytes(change.bytes);
+      // A document whose growth its partials partly explain leads with the residual, which the word marks as such.
+      return change.explained === 0 ? formatBytes(change.bytes) : `residual, ${formatBytes(change.bytes)}`;
   }
 }
 
@@ -227,8 +231,7 @@ function describeDeliveries(plan: SyncPlan): string {
 
 /** What this deployment did to one document: its change, its key, and its size after the deployment. */
 function describeDocumentChange(change: DocumentChange, deltaWidth: number): ReportLine {
-  const detail = describeChangeDetail(change);
-  return { level: 'info', text: `  ${formatDelta(change.delta).padStart(deltaWidth)}  ${change.key}  (${detail})` };
+  return describeSizeChangeLine(change, deltaWidth, change.key, describeChangeDetail(change));
 }
 
 /**
@@ -265,6 +268,17 @@ function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
           ...removals.map((text): ReportLine => ({ level: 'info', text: `  ${text}` })),
         ];
   });
+}
+
+/**
+ * What one changed expansion unit deployed: the bytes that its change explains, the unit, its per-document delta, the
+ * documents that it reaches, and its own size. The unit is named without its key's kind prefix, which puts it in the
+ * same column as the deployed paths beside it.
+ */
+function describeExpansionChange(change: ExpansionChange, deltaWidth: number): ReportLine {
+  const documents = `${change.reach} document${change.reach === 1 ? '' : 's'}`;
+  const detail = `${formatDelta(change.delta)} × ${documents}, ${formatBytes(change.bytes)}`;
+  return describeSizeChangeLine(change, deltaWidth, stripKeyKind(change.key), detail);
 }
 
 /**
@@ -432,6 +446,12 @@ function describeRetirement(retirement: Retirement, performed: boolean): ReportL
   };
 }
 
+/** One change's line: the bytes that it accounts for, the name that it is reported under, and its own detail. */
+function describeSizeChangeLine(change: SizeChange, deltaWidth: number, name: string, detail: string): ReportLine {
+  const accounted = formatDelta(countAccountedBytes(change)).padStart(deltaWidth);
+  return { level: 'info', text: `  ${accounted}  ${name}  (${detail})` };
+}
+
 /**
  * The size block that closes a live run's report: what changed, what has just grown past the ceiling, the three
  * aggregates, and the command that ranks every deployed document.
@@ -540,9 +560,14 @@ function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
   if (report.isFirstRecorded) {
     lines.push({ level: 'info', text: '  This is the first recorded deployment here, so nothing is compared to it.' });
   }
-  const deltaWidth = Math.max(0, ...report.changes.map((change) => formatDelta(change.delta).length));
+  // Computed across both kinds of change, so that the column stays aligned where the two interleave.
+  const deltaWidth = Math.max(0, ...report.changes.map((change) => formatDelta(countAccountedBytes(change)).length));
   lines.push(
-    ...report.changes.map((change) => describeDocumentChange(change, deltaWidth)),
+    ...report.changes.map((change) =>
+      change.kind === 'expansion'
+        ? describeExpansionChange(change, deltaWidth)
+        : describeDocumentChange(change, deltaWidth),
+    ),
     ...report.warnings.map(describeGrowthWarning),
     { level: 'info', text: '' },
     ...renderAggregates(report.aggregates, report.documentCount),
@@ -550,6 +575,12 @@ function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
     { level: 'info', text: 'Run `codeassembly sizes` to rank every deployed document by size.' },
   );
   return lines;
+}
+
+/** The name under which one expansion key is reported: its `{source}/{relPath}` tail, without the kind that leads it. */
+function stripKeyKind(key: string): string {
+  const separator = key.indexOf(':');
+  return separator === -1 ? key : key.slice(separator + 1);
 }
 
 // endregion | Helpers
