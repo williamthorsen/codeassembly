@@ -323,9 +323,6 @@ function buildSources(input: {
   };
 }
 
-/** Maps each declared source's name to a directory named after it, and the library to its own. */
-const resolveSourceRoot: ResolveSourceRoot = (source) => (source === undefined ? LIBRARY_DIR : `/sources/${source}`);
-
 /** The home domain, whose base is the home directory that the collection is given. */
 function homeDomain(homeDir: string): SyncDomain {
   return { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' };
@@ -336,14 +333,17 @@ function projectDomain(projectRoot: string): SyncDomain {
   return { baseDir: projectRoot, ambient: 'project-local', anchorBase: projectRoot };
 }
 
-/** The source root attributed to each collected file, keyed by the key under which it is recorded. */
-function sourceRootsByKey(set: DeployedPathSet): Record<string, string | undefined> {
-  return Object.fromEntries(set.files.map((file) => [file.key, file.sourceRoot]));
-}
+/** Maps each declared source's name to a directory named after it, and the library to its own. */
+const resolveSourceRoot: ResolveSourceRoot = (source) => (source === undefined ? LIBRARY_DIR : `/sources/${source}`);
 
 /** The collected keys, ordered so that an assertion does not depend on collection order. */
 function sortedKeys(set: DeployedPathSet): ReadonlyArray<string> {
   return set.files.map((file) => file.key).toSorted();
+}
+
+/** The source root attributed to each collected file, keyed by the key under which it is recorded. */
+function sourceRootsByKey(set: DeployedPathSet): Record<string, string | undefined> {
+  return Object.fromEntries(set.files.map((file) => [file.key, file.sourceRoot]));
 }
 
 /** Writes one deployed file, creating its enclosing directories. */
