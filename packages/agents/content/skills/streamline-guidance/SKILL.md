@@ -62,13 +62,13 @@ The helper prints one JSON object. On failure it contains `ok: false`, an `error
 
 On success it contains:
 
-- `targets` and `transitive`: Each file's repository-relative `file`, its `bytes`, whether it is `dirty`, and its `generatedRegions` as line ranges. A target named as a deployed copy contains `redirectedFrom`, and its `file` is the source. A transitive file contains `via`, the edges by which a target reaches it: `include` or `link`.
+- `targets` and `transitive`: Each file's repository-relative `file`, its source `bytes`, its `deployedBytes`, whether it is `dirty`, and its `generatedRegions` as line ranges. `deployedBytes` is a document's size once its includes are expanded, and, for a file that deploys only inside the documents that include it, its own size times the number of documents that it reaches; it is absent for a file that deploys nothing. A target named as a deployed copy contains `redirectedFrom`, and its `file` is the source. A transitive file contains `via`, the edges by which a target reaches it: `include` or `link`.
 - `declined`: The cuts that the user declined on earlier runs whose text is still present, each with its `file`, `phrase`, and `class`.
 - `rejected`: Each named path that cannot be a target, with its `reason`.
 
 Report every rejected path and every redirect. Stop if `targets` is empty. Stop if any target or transitive file is `dirty`, and name those files: The run's commit must contain only the run's edits.
 
-Keep the `bytes` of each file for the summary.
+Keep the `deployedBytes` of each file for the summary: A cut is worth what it removes from what an agent loads, which for a partial is its own saving times its reach.
 
 ### 2. Compose the candidates
 
@@ -158,15 +158,16 @@ Emit the summary per [Summary format](#summary-format). For the sizes after the 
 ```
 streamline-guidance summary (moderate)
 
-| File                 | Before | After | Saved |
-| -------------------- | ------ | ----- | ----- |
-| skills/demo/SKILL.md | 9,412  | 9,248 | 164   |
-| Total                | 9,412  | 9,248 | 164   |
+| File                 | Deployed before | Deployed after | Saved |
+| -------------------- | --------------- | -------------- | ----- |
+| skills/demo/SKILL.md | 11,048          | 10,872         | 176   |
+| _partials/shared.md  | 2,436           | 2,400          | 36    |
+| Total                | 13,484          | 13,272         | 212   |
 
 Applied 2, declined 1, deferred 0.
 Follow-up: {skill?:revise-prose} skills/demo/SKILL.md
 ```
 
-List each target and each edited transitive file, in bytes. Name the follow-up only if a cut was applied.
+List each target and each edited transitive file. A document's figure contains its partials' bytes, so a partial on a row of its own is counted in both. Name the follow-up only if a cut was applied.
 
 <!-- include: ../_partials/action-items.md / -->
