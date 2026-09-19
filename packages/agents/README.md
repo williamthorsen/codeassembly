@@ -37,6 +37,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `init`              | Scaffold `.agents/codeassembly.yaml` for the project, or `--global` for `~/.agents/codeassembly.yaml`      |
 | `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
+| `sizes`             | Rank the last recorded deployment's documents by size, with the context aggregates beneath them            |
 | `status`            | Show the current state of installed items                                                                  |
 | `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
@@ -543,6 +544,10 @@ A failed `sync` reports every defect found by its pre-write gates, grouped by fi
 **Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: The build has already succeeded by then. The tree is usable, and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync reached before the build stops at the `codeassembly` wrapper's build-output gate instead of deploying skill directories without the helper bundles that the build produces. That same gate is why this trigger cannot move to `postinstall`: Pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
 
 A repo whose bootstrap always follows its install needs only the post-build trigger, which covers its package-borne artifacts too. Re-running `sync` on unchanged content rewrites nothing, so a repo with reason to wire both pays only the second run's startup. Either trigger is a no-op in a project that declares no artifacts.
+
+Each live `sync` also records what the deployment costs: It measures every file that it and `install` wrote and appends a size snapshot to a machine-local record under `~/.codeassembly/deployed-sizes/`, outside every repository. The `sizes` command reads that record and ranks the deployment's documents by size, with the always-loaded, on-invocation, and asset totals beneath them; `--global` reads the home deployment's record whatever the working directory. No size condition can fail a sync, and `--dry-run` records nothing.
+
+For the record's path and line shape, the conditions under which a snapshot is appended, and how the three aggregates are computed, see [Deployed sizes](docs/deployed-sizes.md).
 
 ## Preferences
 
