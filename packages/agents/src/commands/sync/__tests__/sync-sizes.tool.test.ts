@@ -15,6 +15,7 @@ import type { DeployedPathSources, ResolveSourceRoot } from '../collect-deployed
 import { recordDeployedSizes } from '../record-deployed-sizes.ts';
 import { syncCommand } from '../sync.ts';
 import type { SyncDomain } from '../sync-domain.ts';
+import { renderReportText } from '../test-utils/render-report-text.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -147,25 +148,99 @@ describe(recordDeployedSizes, () => {
     expect(existsSync(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(true);
   });
 
-  it('prints one warning and throws nothing when the pass fails', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('reports a failure in the pass rather than throwing one', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
     // A file where the record's directory belongs, so that the append cannot create it.
     await writeDeployedFile(path.join(homeDir, '.codeassembly', 'deployed-sizes'), 'not a directory');
 
-    await expect(
-      recordDeployedSizes({
-        plan: planWithSkill('plan', skillsDir),
-        domain: homeDomain(homeDir),
-        homeDir,
-        packageRoot,
-        resolveSourceRoot,
-      }),
-    ).resolves.toBeUndefined();
+    const outcome = await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
 
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0]?.[0]).toContain("The deployment's sizes were not recorded");
+    expect(outcome.kind).toBe('failed');
+  });
+
+  it('reports the documents that this deployment resized, against the previous snapshot', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', homeDir);
+    const bodyPath = path.join(skillsDir, 'plan', 'SKILL.md');
+    const before = 'body';
+    const after = 'a much longer body than before';
+    await writeDeployedFile(bodyPath, before);
+    const plan = planWithSkill('plan', skillsDir);
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+
+    await writeDeployedFile(bodyPath, after);
+    const outcome = await recordDeployedSizes({
+      plan,
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
+
+    expect(outcome.kind === 'measured' && outcome.report.changes).toEqual([
+      {
+        kind: 'resized',
+        key: 'claude/skills/plan/SKILL.md',
+        bytes: after.length,
+        delta: after.length - before.length,
+      },
+    ]);
+  });
+
+  it('reports a deployment whose vector is unchanged as changing nothing', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', homeDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+    const plan = planWithSkill('plan', skillsDir);
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+
+    const outcome = await recordDeployedSizes({
+      plan,
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
+
+    expect(outcome.kind === 'measured' && outcome.report.changes).toEqual([]);
+    expect(outcome.kind === 'measured' && outcome.report.isFirstRecorded).toBe(false);
+  });
+
+  it('reports a deployment that the record holds no snapshot for as the first recorded one', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', homeDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+
+    const outcome = await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
+
+    expect(outcome.kind === 'measured' && outcome.report.isFirstRecorded).toBe(true);
+  });
+
+  it('reports a diff on a feature branch, whose deployment the append gate keeps out of the record', async () => {
+    const consumerRoot = await initRepoOnFeatureBranch(scratch);
+    const { skillsDir } = resolveHarnessPaths('claude', consumerRoot);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+
+    const outcome = await recordDeployedSizes({
+      plan: planWithSkill('plan', skillsDir),
+      domain: repoDomain(consumerRoot),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
+
+    expect(outcome.kind === 'measured' && outcome.report.documentCount).toBe(1);
+    expect(existsSync(recordRoot(homeDir))).toBe(false);
   });
 });
 
@@ -205,11 +280,29 @@ describe('sync --dry-run', () => {
     expect(existsSync(recordRoot(homeDir))).toBe(false);
   });
 
+  it('reports no size line', async () => {
+    const outcome = await syncCommand(options({ dryRun: true }), projectRoot, contentDir, homeDir);
+
+    expect(renderReportText(outcome, { dryRun: true })).not.toContain('Deployed sizes:');
+  });
+
   it('leaves the report and the exit path of a live sync unchanged', async () => {
     const outcome = await syncCommand(options(), projectRoot, contentDir, homeDir);
 
     expect(outcome.kind).toBe('reconciled');
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(true);
+  });
+
+  it('closes a live sync with the size block and the command that ranks every document', async () => {
+    const outcome = await syncCommand(options(), projectRoot, contentDir, homeDir);
+    const report = renderReportText(outcome);
+
+    expect(report).toContain('Deployed sizes:');
+    expect(report).toContain('This is the first recorded deployment here');
+    expect(report).toContain('Always loaded:');
+    expect(report).toContain('On invocation:');
+    expect(report).toContain('Assets:');
+    expect(report).toContain('Run `codeassembly sizes` to rank every deployed document by size.');
   });
 });
 

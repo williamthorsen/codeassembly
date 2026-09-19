@@ -452,7 +452,7 @@ async function reconcileDomain(
 
   // Last of all, so that the measurement reads the tree that every pass above left. Cannot fail: No size condition
   // may fail a sync.
-  await recordDeployedSizes({
+  const sizes = await recordDeployedSizes({
     plan,
     domain,
     homeDir,
@@ -460,7 +460,7 @@ async function reconcileDomain(
     resolveSourceRoot: (source) => sourceRoots.get(source),
   });
 
-  return { kind: 'reconciled', plan };
+  return { kind: 'reconciled', plan, sizes };
 }
 
 // region | Helpers

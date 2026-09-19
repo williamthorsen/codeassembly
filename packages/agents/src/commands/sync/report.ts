@@ -1,5 +1,13 @@
 import path from 'node:path';
 
+import {
+  type DocumentChange,
+  GROWTH_CEILING_BYTES,
+  type GrowthWarning,
+  type SizeReport,
+} from '../../deployed-sizes/build-size-report.ts';
+import { formatBytes, formatDelta } from '../../deployed-sizes/format-bytes.ts';
+import { renderAggregates } from '../../deployed-sizes/render-aggregates.ts';
 import type { ArtifactType } from '../../lib/artifact-types.ts';
 import { describeMissingSource } from '../../lib/declared-sources.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
@@ -9,6 +17,7 @@ import type { AmbientHostPlan, AmbientSkipReason } from './ambient-hosts.ts';
 import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
 import type { GuidanceHookAdvisory } from './hook-bindings.ts';
 import type { Retirement } from './legacy-retirement.ts';
+import type { SizeReportOutcome } from './record-deployed-sizes.ts';
 import type { SourceSupportPlan } from './source-support.ts';
 import type { MissingDeclaration, ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';
 
@@ -107,7 +116,8 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   if (plan.undeclaredPackages.length > 0) {
     lines.push({ level: 'info', text: renderPackageAdvice(plan.undeclaredPackages) });
   }
-  lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory));
+  // The size block closes the report: the bulkiest part, placed after the advisories, which name things to act on.
+  lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory), ...describeSizes(outcome.sizes));
   return lines;
 }
 
@@ -158,6 +168,18 @@ function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): strin
   }
 }
 
+/** The parenthesized detail beside one change: its size after the deployment, or the word that a size cannot state. */
+function describeChangeDetail(change: DocumentChange): string {
+  switch (change.kind) {
+    case 'added':
+      return `added, ${formatBytes(change.bytes)}`;
+    case 'removed':
+      return 'removed';
+    case 'resized':
+      return formatBytes(change.bytes);
+  }
+}
+
 /**
  * The warning for each dropped harness whose ambient host the sweep declines to touch. Emitted at the report's top
  * level, beside the ambient-delivery skips that it mirrors, rather than inside the harness's block: Nothing was
@@ -203,6 +225,12 @@ function describeDeliveries(plan: SyncPlan): string {
   );
 }
 
+/** What this deployment did to one document: its change, its key, and its size after the deployment. */
+function describeDocumentChange(change: DocumentChange, deltaWidth: number): ReportLine {
+  const detail = describeChangeDetail(change);
+  return { level: 'info', text: `  ${formatDelta(change.delta).padStart(deltaWidth)}  ${change.key}  (${detail})` };
+}
+
 /**
  * The lines naming what one dropped harness still holds: one for each path removed and each region stripped. `verbs`
  * supplies the tense, so a preview reads as what a run would do and a run as what it did.
@@ -237,6 +265,20 @@ function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
           ...removals.map((text): ReportLine => ({ level: 'info', text: `  ${text}` })),
         ];
   });
+}
+
+/**
+ * The warning for one document that has just reached the growth ceiling. It names `streamline-guidance` only where
+ * the reader maintains the source behind the document; elsewhere the crossing is worth stating and the remedy is not
+ * theirs to apply.
+ */
+function describeGrowthWarning(warning: GrowthWarning): ReportLine {
+  const remedy = warning.mayStreamline ? ' Run the `streamline-guidance` skill on its source to reduce it.' : '';
+  const ceiling = formatBytes(GROWTH_CEILING_BYTES);
+  return {
+    level: 'warn',
+    text: `⚠️ ${warning.key} has passed the ${ceiling} growth ceiling (${formatBytes(warning.bytes)}).${remedy}`,
+  };
 }
 
 /**
@@ -391,6 +433,24 @@ function describeRetirement(retirement: Retirement, performed: boolean): ReportL
 }
 
 /**
+ * The size block that closes a live run's report: what changed, what has just grown past the ceiling, the three
+ * aggregates, and the command that ranks every deployed document.
+ *
+ * The aggregates carry no overlap disclaimer here. The block labels the three totals separately and prints no
+ * combined total, so nothing implies that they sum, and the closing line points at the command that carries the
+ * explanation.
+ */
+function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<ReportLine> {
+  if (sizes === undefined) {
+    return [];
+  }
+  if (sizes.kind === 'failed') {
+    return [{ level: 'warn', text: `⚠️ The deployment's sizes were not recorded: ${sizes.message}` }];
+  }
+  return renderSizeReport(sizes.report);
+}
+
+/**
  * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
  * because their source ships nothing, and which ones retraction removes because no source claims them.
  */
@@ -469,6 +529,27 @@ function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
   const plural = shadows.length === 1 ? '' : 's';
   const verb = shadows.length === 1 ? 's' : '';
   return `⚠️ ${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
+}
+
+/** Renders one measured deployment's size block, in the order stated by `describeSizes`. */
+function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
+  const lines: Array<ReportLine> = [
+    { level: 'info', text: '' },
+    { level: 'info', text: 'Deployed sizes:' },
+  ];
+  if (report.isFirstRecorded) {
+    lines.push({ level: 'info', text: '  This is the first recorded deployment here, so nothing is compared to it.' });
+  }
+  const deltaWidth = Math.max(0, ...report.changes.map((change) => formatDelta(change.delta).length));
+  lines.push(
+    ...report.changes.map((change) => describeDocumentChange(change, deltaWidth)),
+    ...report.warnings.map(describeGrowthWarning),
+    { level: 'info', text: '' },
+    ...renderAggregates(report.aggregates, report.documentCount),
+    { level: 'info', text: '' },
+    { level: 'info', text: 'Run `codeassembly sizes` to rank every deployed document by size.' },
+  );
+  return lines;
 }
 
 // endregion | Helpers
