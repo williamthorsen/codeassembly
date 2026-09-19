@@ -71,18 +71,40 @@ describe(buildIncludeGraph, () => {
   });
 
   describe('documents', () => {
-    it('counts every Markdown file outside the partial, harness, and test trees', async () => {
-      await writeFiles(root, {
-        '__tests__/fixtures/case.md': 'Fixture.\n',
-        'guidance/_harnesses/retired.md': 'Retired.\n',
-      });
+    it('counts a Markdown file that nothing includes, wherever it lies', async () => {
+      await writeFiles(root, { 'guidance/_harnesses/claude/CLAUDE.md': 'Claude.\n' });
       const graph = await buildIncludeGraph(root);
 
       expect([...graph.documents].map((file) => path.relative(root, file)).toSorted()).toStrictEqual([
+        'guidance/_harnesses/claude/CLAUDE.md',
         'guidance/shared/AGENTS.md',
         'skills/demo/SKILL.md',
         'skills/plain/SKILL.md',
       ]);
+    });
+
+    it('treats a file that another file includes as deploying inside it, wherever it lies', async () => {
+      await writeFiles(root, {
+        'guidance/_harnesses/claude/CLAUDE.md': '<!-- include: ../../shared/AGENTS.md / -->\n',
+      });
+      const graph = await buildIncludeGraph(root);
+
+      expect([...graph.documents].map((file) => path.relative(root, file))).not.toContain('guidance/shared/AGENTS.md');
+      expect(graph.countReach(path.join(root, 'guidance/shared/AGENTS.md'))).toBe(1);
+    });
+
+    it('counts no file of the collection, partial, and test trees', async () => {
+      await writeFiles(root, {
+        '__tests__/fixtures/case.md': 'Fixture.\n',
+        'collections/all.md': 'All.\n',
+      });
+      const graph = await buildIncludeGraph(root);
+
+      const files = [...graph.documents].map((file) => path.relative(root, file));
+      expect(files).not.toContain('__tests__/fixtures/case.md');
+      expect(files).not.toContain('_partials/shared.md');
+      expect(files).not.toContain('collections/all.md');
+      expect(graph.countReach(path.join(root, 'collections/all.md'))).toBe(0);
     });
 
     it("counts a partial's reach at every depth, and reports zero for one that no document includes", async () => {

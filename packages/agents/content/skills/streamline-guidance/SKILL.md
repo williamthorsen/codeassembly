@@ -62,7 +62,7 @@ The helper prints one JSON object. On failure it contains `ok: false`, an `error
 
 On success it contains:
 
-- `targets` and `transitive`: Each file's repository-relative `file`, its source `bytes`, its `deployedBytes`, whether it is `dirty`, and its `generatedRegions` as line ranges. `deployedBytes` is a document's size once its includes are expanded, and a partial's own size times the number of documents that it reaches; it is absent for a file that deploys nothing. A target named as a deployed copy contains `redirectedFrom`, and its `file` is the source. A transitive file contains `via`, the edges by which a target reaches it: `include` or `link`.
+- `targets` and `transitive`: Each file's repository-relative `file`, its source `bytes`, its `deployedBytes`, whether it is `dirty`, and its `generatedRegions` as line ranges. `deployedBytes` is a document's size once its includes are expanded, and, for a file that deploys only inside the documents that include it, its own size times the number of documents that it reaches; it is absent for a file that deploys nothing. A target named as a deployed copy contains `redirectedFrom`, and its `file` is the source. A transitive file contains `via`, the edges by which a target reaches it: `include` or `link`.
 - `declined`: The cuts that the user declined on earlier runs whose text is still present, each with its `file`, `phrase`, and `class`.
 - `rejected`: Each named path that cannot be a target, with its `reason`.
 

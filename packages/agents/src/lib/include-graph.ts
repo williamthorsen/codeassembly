@@ -2,14 +2,14 @@
  * The include graph of one content root: what each Markdown file transitively includes, and how many documents each
  * included file reaches.
  *
- * A document is a Markdown file that deploys as itself. A partial deploys only inside the documents that include it,
- * so its reach is what a change to it costs. Both halves are properties of the whole root rather than of one file,
- * which is why the graph is built over the root and then queried.
+ * A document is a Markdown file that deploys as itself; a file that another file includes deploys inside that file
+ * instead, so its reach is what a change to it costs. Which of the two a file is therefore depends on the whole root
+ * rather than on the file, which is why the graph is built over the root and then queried.
  */
 import path from 'node:path';
 
 import { DirectiveExpansionError, listIncludeTargets } from './directive-expander.ts';
-import { isTestDirectory, readDirEntriesRecursively } from './fs-helpers.ts';
+import { isTestDirectory, isUnderTestDirectory, readDirEntriesRecursively } from './fs-helpers.ts';
 
 /**
  * Builds the include graph of one content root. A file whose own directives do not resolve contributes no include
@@ -38,7 +38,17 @@ export async function buildIncludeGraph(contentRoot: string): Promise<IncludeGra
     return walkIncludes(path.resolve(file), directIncludes);
   }
 
-  const documents = new Set(files.filter((file) => isDocument(path.relative(root, file))));
+  const included = new Set<string>();
+  for (const [file, targets] of directIncludes) {
+    if (isUnderTestDirectory(path.relative(root, file))) {
+      continue;
+    }
+    for (const target of targets) {
+      included.add(target);
+    }
+  }
+
+  const documents = new Set(files.filter((file) => isDocument(path.relative(root, file), included.has(file))));
   const reach = new Map<string, number>();
   for (const document of documents) {
     for (const member of listClosure(document).files) {
@@ -82,14 +92,21 @@ export interface IncludeGraph {
 
 // region | Helpers
 
-/** Directory names whose Markdown files deploy only inside the documents that include them, or not at all. */
-const NON_DOCUMENT_DIRECTORY_NAMES: ReadonlySet<string> = new Set(['_harnesses', '_partials']);
+/**
+ * Directory names whose Markdown files deploy no file of their own: a partial renders only inside its includers, and
+ * a collection declares its members and has no body to deploy.
+ */
+const NON_DEPLOYING_TREES: ReadonlySet<string> = new Set(['_partials', 'collections']);
 
-/** Reports whether a root-relative path names a document rather than a partial, a retired tree, or test content. */
-function isDocument(relativePath: string): boolean {
-  return relativePath
-    .split(/[/\\]/)
-    .every((segment) => !NON_DOCUMENT_DIRECTORY_NAMES.has(segment) && !isTestDirectory(segment));
+/**
+ * Reports whether a file deploys as itself. A file that another file includes renders inside that file instead, and
+ * so does every file of a non-deploying tree; test content deploys nowhere.
+ */
+function isDocument(relativePath: string, isIncluded: boolean): boolean {
+  return (
+    !isIncluded &&
+    relativePath.split(/[/\\]/).every((segment) => !NON_DEPLOYING_TREES.has(segment) && !isTestDirectory(segment))
+  );
 }
 
 /**

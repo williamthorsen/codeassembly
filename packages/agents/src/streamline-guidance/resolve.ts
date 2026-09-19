@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import { expandIncludes } from '../lib/directive-expander.ts';
+import { DirectiveExpansionError, expandIncludes } from '../lib/directive-expander.ts';
 import { buildIncludeGraph, type IncludeGraph } from '../lib/include-graph.ts';
 import { MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
@@ -362,9 +362,9 @@ async function loadIncludeGraph(contentRoot: string, context: ResolutionContext)
 }
 
 /**
- * Measures what each file deploys: for a document, its size once its includes are expanded; for a partial, its own
- * size times the number of documents that it reaches. A file in no content root, and one whose includes do not
- * resolve, is absent from the result, which reports it as deploying nothing.
+ * Measures what each file deploys: for a document, its size once its includes are expanded; for a file that deploys
+ * only inside the documents that include it, its own size times the number of documents that it reaches. A file in
+ * no content root, and one whose includes cannot be expanded, is absent from the result.
  *
  * The transforms that a deployment applies per harness are excluded: the provenance header, the ownership marker,
  * path rewriting, and guidance-hook injection. A hook's bound rulebooks are declared in the machine's agent
@@ -386,14 +386,30 @@ async function measureDeployedBytes(
     if (graph.hasUnresolvedIncludes(absolutePath)) {
       continue;
     }
-    measured.set(
-      file,
-      graph.documents.has(absolutePath)
-        ? new TextEncoder().encode(await expandIncludes(absolutePath, contentRoot)).length
-        : statSync(absolutePath).size * graph.countReach(absolutePath),
-    );
+    const deployed = graph.documents.has(absolutePath)
+      ? await measureExpandedBytes(absolutePath, contentRoot)
+      : statSync(absolutePath).size * graph.countReach(absolutePath);
+    if (deployed !== undefined) {
+      measured.set(file, deployed);
+    }
   }
   return measured;
+}
+
+/**
+ * Measures a document's body once its includes are expanded, and reports undefined when they cannot be expanded.
+ *
+ * Expansion rejects directive shapes that the include graph accepts: an unclosed open directive, an orphan close, a
+ * slot with no `<!-- children -->` placeholder to fill, and a cycle, which the graph's walk terminates rather than
+ * refuses. A file carrying one deploys nothing that this helper can size, which an absent figure already reports.
+ */
+async function measureExpandedBytes(file: string, contentRoot: string): Promise<number | undefined> {
+  try {
+    return new TextEncoder().encode(await expandIncludes(file, contentRoot)).length;
+  } catch (error) {
+    if (!(error instanceof DirectiveExpansionError)) throw error;
+    return undefined;
+  }
 }
 
 /** Resolves a Markdown link target to an absolute path, or undefined for a target naming no local file. */

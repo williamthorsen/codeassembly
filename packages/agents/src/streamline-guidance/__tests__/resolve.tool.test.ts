@@ -216,6 +216,29 @@ describe(runResolve, () => {
       ]);
     });
 
+    it.each([
+      {
+        shape: 'an unclosed open directive',
+        body: ['Text.', '<!-- include: ../../_partials/inner.md -->', ''].join('\n'),
+      },
+      {
+        shape: 'an include cycle',
+        body: ['Text.', '<!-- include: ../../_partials/loop.md / -->', ''].join('\n'),
+      },
+    ])('omits the field for a file carrying $shape, and keeps it a target', async ({ body }) => {
+      await writeFiles(repository, {
+        'lib/_partials/loop.md': '<!-- include: ./loop-back.md / -->\n',
+        'lib/_partials/loop-back.md': '<!-- include: ./loop.md / -->\n',
+        'lib/skills/broken/SKILL.md': body,
+      });
+
+      const result = expectSuccess(await resolve('lib/skills/broken/SKILL.md'));
+
+      expect(result.rejected).toStrictEqual([]);
+      expect(result.targets).toHaveLength(1);
+      expect(result.targets[0]).not.toHaveProperty('deployedBytes');
+    });
+
     it('omits the field for a file that lies in no content root', async () => {
       const result = expectSuccess(await resolve('AGENTS.md'));
 
