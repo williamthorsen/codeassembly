@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
@@ -10,6 +9,7 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
+import { resolveTerminalWidth } from '../lib/resolve-terminal-width.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { SUPPORTED_HARNESSES_KEY } from '../lib/skill-deploy.ts';
 import { isRecord } from '../lib/type-guards.ts';
@@ -50,8 +50,6 @@ const NO_DELIVERY_MODE = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
 
-/** Width assumed for piped output, for which no terminal width is available. */
-const DEFAULT_WIDTH = 100;
 const COLUMN_GAP = 2;
 /** Display cells occupied by a type emoji. All chosen emoji are East-Asian wide (two cells). */
 const EMOJI_DISPLAY_WIDTH = 2;
@@ -70,10 +68,7 @@ export async function libraryListCommand(contentDir: string = resolveContentDir(
     }
   }
 
-  // `columns` is absent (undefined at runtime, despite its `number` type) when stdout is piped; fall back to a
-  // fixed width there so that redirected and captured output stays deterministic.
-  const width = process.stdout.isTTY ? process.stdout.columns : DEFAULT_WIDTH;
-  console.info(renderLibraryTable(rows, width));
+  console.info(renderLibraryTable(rows, resolveTerminalWidth()));
 }
 
 /** Prints usage information for the `library` command. */
