@@ -182,9 +182,9 @@ run_id: <run id> # optional: set only by callers that write into, or link back t
 ---
 ```
 
-Directly below the closing `---` comes the seal marker, which `resolve-frontmatter.sh` emits in its default YAML mode. An artifact that has no frontmatter, such as the `pull-request` and `merge` records, opens with the marker instead:
+The `pull-request` and `merge` records carry no frontmatter. Each opens with a marker naming the reader that a silent rewrite damages, and no other artifact states one:
 
-<!-- include: ../../_partials/seal-marker.md / -->
+<!-- include: ../../_partials/record-marker.md / -->
 
 ### Field naming convention
 
