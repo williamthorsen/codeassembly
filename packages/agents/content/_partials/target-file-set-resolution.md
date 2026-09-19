@@ -14,7 +14,7 @@ The two forms together cover what git tracks plus what it would track, and both 
 **What never enters the set.** Three kinds of file are excluded, each because an edit to it would be discarded or would rewrite a record:
 
 - **Deployed output.** A file containing a `GENERATED FILE` or `<!-- codeassembly-` marker, and anything beneath a harness's own `skills/` or `scripts/` directory. Because the next sync overwrites it, the edit belongs to the source from which it was copied.
-- **Sealed artifacts.** Anything beneath the artifact base directory, typically `~/ai-artifacts/`. A saved artifact records a moment and stays as written.
+- **Saved artifacts.** Anything beneath the artifact base directory, typically `~/ai-artifacts/`.
 - **Text that nobody here authored.** Vendored third-party sources, generated data, and test fixtures, whatever they contain.
 
 <HARD-GATE>
